@@ -1,0 +1,9 @@
+.worktrees/
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+web/data.json
+
+.agent/

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Scalping Bot - Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* UI UX Pro Max: Dark Mode (OLED) Fintech Palette */
+            --bg: #020617;
+            --surface: #0F172A;
+            --surface-hover: #1E293B;
+            --primary: #38BDF8; /* Sky 400 for branding */
+            --primary-glow: rgba(56, 189, 248, 0.2);
+            --success: #22C55E;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --border: #1E293B;
+            
+            /* Typography */
+            --font-sans: 'Fira Sans', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* --- HEADER --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-weight: 700;
+            margin: 0;
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        /* --- BADGES & STATUS --- */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .badge.running {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        
+        .badge.running .status-dot {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse-green 2s infinite;
+        }
+
+        .badge.stopped {
+             background-color: rgba(239, 68, 68, 0.1);
+             color: var(--danger);
+             border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .badge.stopped .status-dot {
+            background-color: var(--danger);
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* --- BENTO GRID LAYOUT --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            border-color: var(--surface-hover);
+        }
+
+        /* Top highlight accent */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            opacity: 0.3;
+        }
+
+        /* Bento Grid Span Configurations */
+        .card-market { grid-column: span 4; }
+        .card-equity { grid-column: span 4; }
+        .card-risk { grid-column: span 4; }
+        .card-table { grid-column: span 12; }
+
+        @media (max-width: 1024px) {
+            .card-market { grid-column: span 6; }
+            .card-equity { grid-column: span 6; }
+            .card-risk { grid-column: span 12; }
+        }
+        
+        @media (max-width: 768px) {
+            .card-market, .card-equity, .card-risk { grid-column: span 12; }
+        }
+
+        /* --- TYPOGRAPHY INSIDE CARDS --- */
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            color: var(--primary);
+        }
+
+        .card h3 {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric {
+            font-family: var(--font-mono);
+            font-size: 2.25rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+            text-shadow: 0 0 10px rgba(248, 250, 252, 0.1);
+        }
+
+        .metric span.currency {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+            margin-top: auto;
+        }
+
+        .pnl-positive { color: var(--success); text-shadow: 0 0 8px rgba(34, 197, 94, 0.3); }
+        .pnl-negative { color: var(--danger); text-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+
+        /* --- TABLES --- */
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .orders-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .orders-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            font-family: var(--font-mono);
+        }
+
+        .orders-table tr:hover td {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .dir-buy { color: var(--success); font-weight: 600; }
+        .dir-sell { color: var(--danger); font-weight: 600; }
+
+        .footer-note {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title-wrapper">
+                <!-- Lucide SVG Logo -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <h1>ALGO COMMAND CENTER</h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="color: var(--text-muted); font-size: 0.875rem; font-family: var(--font-mono);" id="last-updated">Waiting...</div>
+                <div id="status-badge" class="badge stopped">
+                    <div class="status-dot"></div>
+                    <span id="status-text">OFFLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Market Card -->
+            <div class="card card-market">
+                <div class="card-header">
+                    <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="20" x2="12" y2="10"></line>
+                        <line x1="18" y1="20" x2="18" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="16"></line>
+                    </svg>
+                    <h3>Live Market (<span id="symbol">--</span>)</h3>
+                </div>
+                <div class="metric">
+                    <span class="currency">$</span>
+                    <span id="price">0.00</span>
+                </div>
+                <div class="meta-row">
+                    <span>Interval: <strong id="interval" style="color: var(--text-main);">--</strong></span>
+                    <span>State: <strong id="candle-status" style="color: var(--text-main);">--</strong></span>
+                </div>
+                <div class="meta-row">
+                    <span>Source: <strong id="data-source" style="color: var(--text-main);">--</strong></span>
+                    <span>Last Bar: <strong id="last-bar" style="color: var(--text-main);">--</strong></span>
+                </div>
+            </div>
+
+            <!-- Equity Card -->
+            <div class="card card-equity">
+                <div class="card-header">
+                    <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                    <h3>Total Equity</h3>
+                </div>
+                <div class="metric" id="equity-container">
+                    <span class="currency">$</span>
+                    <span id="capital">0.00</span>
+                </div>
+                <div class="meta-row">
+                    <span>ROI</span>
+                    <strong id="roi" style="font-family: var(--font-mono);">0.00%</strong>
+                </div>
+            </div>
+
+            <!-- Risk Card -->
+            <div class="card card-risk">
+                <div class="card-header">
+                    <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <h3>Risk Gatekeeper</h3>
+                </div>
+                <div class="metric" style="font-size: 1.5rem; margin-bottom: auto;">
+                    Status: <span id="kill-switch" style="color: var(--success); margin-left: 0.5rem; text-shadow: 0 0 10px rgba(34, 197, 94, 0.3);">ARMED</span>
+                </div>
+                <div class="meta-row">
+                    <span>High Water Mark</span>
+                    <strong style="color: var(--text-main); font-family: var(--font-mono);">$<span id="hwm">0.00</span></strong>
+                </div>
+            </div>
+            
+            <!-- Executions Card -->
+            <div class="card card-table">
+                <div class="card-header">
+                    <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <h3>Execution Log</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Side</th>
+                                <th>Execution Price</th>
+                                <th>Size</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-body">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active orders in session.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            // UI UX PRO MAX // OLED FINTECH PROFILE // VECTOR ENGINE V1.0 //
+        </div>
+    </div>
+
+    <script>
+        async function fetchState() {
+            try {
+                const response = await fetch('data.json?t=' + new Date().getTime());
+                if (!response.ok) throw new Error("Could not load data.json");
+                
+                const data = await response.json();
+                updateUI(data);
+            } catch (err) {
+                console.log("Waiting for bot to generate data.json...", err.message);
+                const badge = document.getElementById('status-badge');
+                badge.className = 'badge stopped';
+                document.getElementById('status-text').textContent = 'OFFLINE';
+            }
+        }
+
+        function updateUI(data) {
+            // Header
+            document.getElementById('last-updated').textContent = new Date(data.timestamp).toLocaleTimeString();
+            
+            const badge = document.getElementById('status-badge');
+            const statusText = document.getElementById('status-text');
+            if (data.status === 'RUNNING') {
+                badge.className = 'badge running';
+                statusText.textContent = 'RUNNING LIVE';
+            } else {
+                badge.className = 'badge stopped';
+                statusText.textContent = 'STOPPED';
+            }
+
+            // Market
+            document.getElementById('symbol').textContent = data.symbol;
+            document.getElementById('price').textContent = data.market.current_price.toLocaleString(undefined, {minimumFractionDigits: 2});
+            const intervalRaw = data.interval;
+            const intervalNum = Number(intervalRaw);
+            if (!Number.isNaN(intervalNum)) {
+                document.getElementById('interval').textContent = `${intervalNum * 60}`;
+            } else {
+                document.getElementById('interval').textContent = intervalRaw;
+            }
+            document.getElementById('candle-status').textContent = data.market.is_closed ? 'Closed' : 'Building...';
+            document.getElementById('data-source').textContent = data.market.data_source || '--';
+            if (data.market.last_update_ts) {
+                const ts = Number(data.market.last_update_ts);
+                const dt = new Date(ts);
+                document.getElementById('last-bar').textContent = dt.toLocaleTimeString();
+            } else {
+                document.getElementById('last-bar').textContent = '--';
+            }
+
+            // Equity
+            const cap = data.capital.current;
+            const init = data.capital.initial;
+            document.getElementById('capital').textContent = cap.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            const roi = ((cap - init) / init) * 100;
+            const roiEl = document.getElementById('roi');
+            roiEl.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`;
+            if (roi > 0) roiEl.className = 'pnl-positive';
+            else if (roi < 0) roiEl.className = 'pnl-negative';
+            else roiEl.className = '';
+
+            // Risk
+            const ks = document.getElementById('kill-switch');
+            if (data.capital.kill_switch) {
+                ks.textContent = 'HALTED';
+                ks.style.color = 'var(--danger)';
+                ks.style.textShadow = '0 0 10px rgba(239, 68, 68, 0.3)';
+            } else {
+                ks.textContent = 'ARMED (SAFE)';
+                ks.style.color = 'var(--success)';
+                ks.style.textShadow = '0 0 10px rgba(34, 197, 94, 0.3)';
+            }
+            document.getElementById('hwm').textContent = data.capital.high_water_mark.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // Executions
+            const executions = data.executions || [];
+            const tbody = document.getElementById('orders-body');
+            if (!executions.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No executions in session.</td></tr>';
+            } else {
+                const rows = executions.slice(-20).reverse().map((o) => {
+                    const side = o.direction || '--';
+                    const price = Number(o.price || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                    const qty = Number(o.qty || 0).toLocaleString(undefined, {minimumFractionDigits: 6});
+                    const status = o.status || '--';
+                    return `
+                        <tr>
+                            <td>${o.id || '--'}</td>
+                            <td>${side}</td>
+                            <td>${price}</td>
+                            <td>${qty}</td>
+                            <td>${status}</td>
+                        </tr>`;
+                }).join('');
+                tbody.innerHTML = rows;
+            }
+
+            // Orders
+            const tbody = document.getElementById('orders-body');
+            if (!data.active_orders || data.active_orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active orders in session.</td></tr>';
+            } else {
+                // Sorting orders so newest are at the top, though usually limited in number
+                const reversedOrders = [...data.active_orders].reverse();
+                tbody.innerHTML = reversedOrders.map(o => `
+                    <tr>
+                        <td style="color: var(--text-muted);">${o.id}</td>
+                        <td class="${o.direction === 'BUY' ? 'dir-buy' : 'dir-sell'}">${o.direction}</td>
+                        <td style="color: var(--text-main);">$${o.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td style="color: var(--text-main);">${o.qty.toFixed(6)}</td>
+                        <td><span class="badge" style="border: 1px solid var(--border); color: var(--text-muted);">${o.status}</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Poll every 1 second
+        setInterval(fetchState, 1000);
+        fetchState();
+    </script>
+</body>
+</html>

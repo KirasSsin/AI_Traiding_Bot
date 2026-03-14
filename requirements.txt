@@ -1,0 +1,4 @@
+aiohttp
+pandas
+numpy
+-e /Users/Apple/Documents/AI_Traiding_Bot/pybit-master

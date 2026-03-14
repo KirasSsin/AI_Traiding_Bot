@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package marketdata;
+
+// Represents a single real-time market trade or tick
+message Tick {
+    string symbol = 1;
+    double price = 2;
+    double volume = 3;
+    bool is_buyer_maker = 4;
+    int64 timestamp = 5;
+}
+
+// Represents a generated trading signal based on HTF/LTF alignment and ML
+message Signal {
+    string symbol = 1;
+    string direction = 2; // "BUY" or "SELL"
+    double entry_price = 3;
+    double expected_sl = 4;
+    double expected_tp = 5;
+    double confidence = 6;
+    int64 timestamp = 7;
+}
+
+// Gateway orchestrates receiving tick data and dispatching it to strategies
+service MarketDataGateway {
+    // Client (e.g., C++ WebSocket) streams ticks to the Python engine
+    rpc StreamTicks(stream Tick) returns (TickResponse) {}
+    
+    // Engine streams back generated signals
+    rpc StreamSignals(SignalRequest) returns (stream Signal) {}
+}
+
+message TickResponse {
+    bool success = 1;
+    int32 ticks_processed = 2;
+}
+
+message SignalRequest {
+    string symbol = 1;
+}
