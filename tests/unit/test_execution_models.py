@@ -1,9 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
 from pydantic import ValidationError
-
 from src.execution.models import Fill, Order, OrderSide, OrderStatus, OrderType
 
 
@@ -18,8 +17,8 @@ def test_order_valid():
         orig_qty=Decimal("0.001"),
         executed_qty=Decimal("0"),
         price=None,
-        created_at=datetime(2026, 4, 20, 1, tzinfo=timezone.utc),
-        updated_at=datetime(2026, 4, 20, 1, tzinfo=timezone.utc),
+        created_at=datetime(2026, 4, 20, 1, tzinfo=UTC),
+        updated_at=datetime(2026, 4, 20, 1, tzinfo=UTC),
     )
     assert o.status == OrderStatus.NEW
 
@@ -36,8 +35,8 @@ def test_order_executed_not_exceed_orig():
             orig_qty=Decimal("0.001"),
             executed_qty=Decimal("0.002"),
             price=None,
-            created_at=datetime(2026, 4, 20, 1, tzinfo=timezone.utc),
-            updated_at=datetime(2026, 4, 20, 1, tzinfo=timezone.utc),
+            created_at=datetime(2026, 4, 20, 1, tzinfo=UTC),
+            updated_at=datetime(2026, 4, 20, 1, tzinfo=UTC),
         )
 
 
@@ -50,6 +49,6 @@ def test_fill_valid():
         fee=Decimal("0.06"),
         fee_asset="USDT",
         is_maker=False,
-        filled_at=datetime(2026, 4, 20, 1, tzinfo=timezone.utc),
+        filled_at=datetime(2026, 4, 20, 1, tzinfo=UTC),
     )
     assert f.qty == Decimal("0.001")

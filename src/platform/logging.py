@@ -1,4 +1,5 @@
 """structlog configuration — JSON output to stdout + rotating file."""
+
 import logging
 import sys
 from typing import Any

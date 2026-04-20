@@ -1,10 +1,9 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
-
 from src.signalgen.models import Signal, SignalSide
 
 
@@ -13,8 +12,8 @@ def test_signal_valid():
         signal_id=uuid4(),
         symbol="BTCUSDT",
         side=SignalSide.LONG,
-        bar_close_time=datetime(2026, 4, 20, 1, 0, tzinfo=timezone.utc),
-        generated_at=datetime(2026, 4, 20, 1, 0, 1, tzinfo=timezone.utc),
+        bar_close_time=datetime(2026, 4, 20, 1, 0, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 20, 1, 0, 1, tzinfo=UTC),
         ema_fast=Decimal("60100"),
         ema_slow=Decimal("60050"),
         adx_14=Decimal("28"),
@@ -33,8 +32,8 @@ def test_signal_generated_after_bar_close():
             signal_id=uuid4(),
             symbol="BTCUSDT",
             side=SignalSide.LONG,
-            bar_close_time=datetime(2026, 4, 20, 1, 0, tzinfo=timezone.utc),
-            generated_at=datetime(2026, 4, 20, 0, 59, tzinfo=timezone.utc),
+            bar_close_time=datetime(2026, 4, 20, 1, 0, tzinfo=UTC),
+            generated_at=datetime(2026, 4, 20, 0, 59, tzinfo=UTC),
             ema_fast=Decimal("60100"),
             ema_slow=Decimal("60050"),
             adx_14=Decimal("28"),
@@ -51,8 +50,8 @@ def test_signal_flat_side_allowed():
         signal_id=uuid4(),
         symbol="BTCUSDT",
         side=SignalSide.FLAT,
-        bar_close_time=datetime(2026, 4, 20, 1, 0, tzinfo=timezone.utc),
-        generated_at=datetime(2026, 4, 20, 1, 0, 1, tzinfo=timezone.utc),
+        bar_close_time=datetime(2026, 4, 20, 1, 0, tzinfo=UTC),
+        generated_at=datetime(2026, 4, 20, 1, 0, 1, tzinfo=UTC),
         ema_fast=Decimal("60100"),
         ema_slow=Decimal("60050"),
         adx_14=Decimal("18"),

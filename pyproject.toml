@@ -35,6 +35,12 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "ARG", "RET"]
 ignore = ["E501"]
 
+[tool.ruff.lint.per-file-ignores]
+# Legacy code — оставляется untouched до соответствующих спринтов (S3-S5).
+"src/core/*" = ["ALL"]
+"src/backtest/*" = ["ALL"]
+"src/risk/risk_manager.py" = ["ALL"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
@@ -44,6 +50,11 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = ["binance.*", "pyarrow.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Legacy modules — MVP v0.1 scope только platform/marketdata/signalgen/execution.
+module = ["src.core.*", "src.backtest.*", "src.risk.*"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

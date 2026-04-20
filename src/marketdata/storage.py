@@ -1,4 +1,5 @@
 """Parquet writer for OHLCV bars (OLAP storage)."""
+
 from collections.abc import Iterable
 from pathlib import Path
 

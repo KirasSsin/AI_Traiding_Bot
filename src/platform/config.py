@@ -1,4 +1,5 @@
 """Application settings loaded from environment / .env."""
+
 from pathlib import Path
 from typing import Literal
 

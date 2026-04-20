@@ -1,4 +1,5 @@
 """Signal-generation domain models."""
+
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -38,7 +39,5 @@ class Signal(BaseModel):
     @model_validator(mode="after")
     def _generated_after_close(self) -> "Signal":
         if self.generated_at < self.bar_close_time:
-            raise ValueError(
-                "generated_at must be >= bar_close_time (look-ahead invariant)"
-            )
+            raise ValueError("generated_at must be >= bar_close_time (look-ahead invariant)")
         return self

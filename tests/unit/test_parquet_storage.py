@@ -1,15 +1,14 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
 import pyarrow.parquet as pq
-
 from src.marketdata.models import Bar, DataQuality
 from src.marketdata.storage import ParquetBarWriter
 
 
 def _bar(i: int) -> Bar:
-    base = datetime(2026, 4, 20, 0, tzinfo=timezone.utc)
+    base = datetime(2026, 4, 20, 0, tzinfo=UTC)
     return Bar(
         symbol="BTCUSDT",
         interval="1h",
@@ -37,8 +36,15 @@ def test_writer_creates_file_and_persists_bars(tmp_path: Path) -> None:
     table = pq.read_table(files[0])
     assert table.num_rows == 3
     assert set(table.schema.names) >= {
-        "open_time", "close_time", "open", "high", "low", "close",
-        "volume", "trade_count", "data_quality",
+        "open_time",
+        "close_time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "trade_count",
+        "data_quality",
     }
 
 

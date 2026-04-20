@@ -1,4 +1,5 @@
 """SQLite connection helpers + schema migrations."""
+
 import sqlite3
 from pathlib import Path
 
@@ -22,8 +23,7 @@ def init_db(db_path: Path, migrations_dir: Path) -> None:
             "(filename TEXT PRIMARY KEY, applied_at TEXT NOT NULL)"
         )
         applied = {
-            row[0]
-            for row in conn.execute("SELECT filename FROM schema_migrations").fetchall()
+            row[0] for row in conn.execute("SELECT filename FROM schema_migrations").fetchall()
         }
         for sql_file in sorted(migrations_dir.glob("*.sql")):
             if sql_file.name in applied:
@@ -31,8 +31,7 @@ def init_db(db_path: Path, migrations_dir: Path) -> None:
             with sql_file.open("r", encoding="utf-8") as f:
                 conn.executescript(f.read())
             conn.execute(
-                "INSERT INTO schema_migrations (filename, applied_at) "
-                "VALUES (?, datetime('now'))",
+                "INSERT INTO schema_migrations (filename, applied_at) VALUES (?, datetime('now'))",
                 (sql_file.name,),
             )
             conn.commit()
