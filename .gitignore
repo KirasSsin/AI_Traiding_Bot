@@ -38,3 +38,11 @@ web/data.json
 /tests/opencode/
 /tests/skill-triggering/
 /tests/subagent-driven-dev/
+
+# Python dev artifacts (Sprint 1)
+.env
+data/
+logs/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
