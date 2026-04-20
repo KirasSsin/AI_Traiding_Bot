@@ -7,3 +7,34 @@ __pycache__/
 web/data.json
 
 .agent/
+
+# macOS
+.DS_Store
+
+# Superpowers plugin artifacts (installed into worktree root, not project files)
+/AGENTS.md
+/CLAUDE.md
+/CODE_OF_CONDUCT.md
+/GEMINI.md
+/LICENSE
+/README.md
+/RELEASE-NOTES.md
+/agents/
+/commands/
+/hooks/
+/skills/
+/scripts/
+/package.json
+/gemini-extension.json
+/docs/README.codex.md
+/docs/README.opencode.md
+/docs/testing.md
+/docs/windows/
+/docs/plans/
+/docs/superpowers/
+/tests/brainstorm-server/
+/tests/claude-code/
+/tests/explicit-skill-requests/
+/tests/opencode/
+/tests/skill-triggering/
+/tests/subagent-driven-dev/
