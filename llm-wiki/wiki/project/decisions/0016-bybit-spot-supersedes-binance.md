@@ -51,8 +51,24 @@ Order/Fill, event sourcing, circuit breakers, Kelly sizing) — **не завя�
 ### Ключевые параметры дизайна
 
 - **SDK:** `pybit>=5.11` — `HTTP` client (REST) + `WebSocket` (stream).
-- **Category:** `spot` (V5 unified endpoint). Готовность к `linear` как v0.2
-  extension — не хардкодить category в интерфейсе `BybitRESTClient`.
+- **API version:** V5 (Unified Trading API). URL pattern `{host}/v5/{module}/{endpoint}`.
+- **Account type:** Unified Trading Account (user testnet — UTA). Balance читается через `/v5/account/wallet-balance?accountType=UNIFIED`.
+- **Category:** `spot` (единственное значение для v0.1). Готовность к `linear` как v0.2 extension — не хардкодить category в интерфейсе `BybitRESTClient`.
+
+### V5 модули и endpoints, используемые в v0.1
+
+| Module | Endpoint | Назначение | Auth |
+|--------|----------|------------|------|
+| `market/` | `GET /v5/market/time` | serverTime для clock-drift check | public |
+| `market/` | `GET /v5/market/instruments-info?category=spot&symbol=BTCUSDT` | filters (lotSize/priceFilter) | public |
+| `market/` | `GET /v5/market/kline?category=spot&symbol=BTCUSDT&interval=60` | historical klines seed/backfill | public |
+| `market/` | WS `spot.kline.60.BTCUSDT` | live kline stream (1H), `confirm:true` = bar closed | public |
+| `order/` | `POST /v5/order/create` | place MARKET order (spot-MVP only) | private |
+| `order/` | `GET /v5/order/realtime?category=spot&orderId=X` | query order status (post-reconnect reconciliation) | private |
+| `account/` | `GET /v5/account/wallet-balance?accountType=UNIFIED` | balance (pre-trade check) | private |
+| `execution/` | WS private `execution` stream | executionReport events (fill notifications) | private |
+
+Модули **не используемые** в v0.1: `position/` (spot без позиций в Bybit-terms), `asset/` (transfers между под-счетами — не нужно), `spot-lever-token/`, `spot-margin-trade/` (явно вне scope).
 - **Symbol:** `BTCUSDT` (совпадает с Binance naming).
 - **Interval:** `60` (1H, Bybit numeric convention).
 - **Public WS stream:** `spot.kline.60.BTCUSDT` на `wss://stream-testnet.bybit.com/v5/public/spot`.
