@@ -30,6 +30,14 @@ dev = [
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
+extend-exclude = [
+  "tests/claude-code",
+  "tests/brainstorm-server",
+  "tests/explicit-skill-requests",
+  "tests/opencode",
+  "tests/skill-triggering",
+  "tests/subagent-driven-dev",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "ARG", "RET"]
