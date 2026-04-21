@@ -143,3 +143,25 @@ def test_get_klines_paginates_over_1000_limit(mock_http_cls: MagicMock) -> None:
         )
     assert call_count == 3
     assert len(bars) == 2400
+
+
+def test_get_klines_excludes_end_ms_boundary(mock_http_cls: MagicMock) -> None:
+    """Contract is [start_ms, end_ms); a bar with open_time == end_ms must be dropped."""
+    start_ms = 1745193600000
+    step = 3_600_000
+    # Bybit V5 `end` is inclusive — simulate it returning the boundary row.
+    rows = [_kline_row(start_ms + i * step) for i in range(4)]  # includes end_ms
+    mock_http_cls.return_value.get_kline.return_value = {
+        "retCode": 0,
+        "result": {"list": list(reversed(rows))},
+    }
+    with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
+        client = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
+        bars = client.get_klines(
+            symbol="BTCUSDT",
+            interval="60",
+            start_ms=start_ms,
+            end_ms=start_ms + 3 * step,  # exclusive — bar at index 3 must be dropped
+        )
+    assert len(bars) == 3
+    assert all(int(b.open_time.timestamp() * 1000) < start_ms + 3 * step for b in bars)

@@ -77,6 +77,8 @@ class BybitRESTClient:
                 break
             for row in rows:
                 open_ms = int(row[0])
+                if open_ms >= end_ms:  # enforce [start_ms, end_ms) — Bybit end is inclusive
+                    continue
                 open_time = datetime.fromtimestamp(open_ms / 1000, tz=UTC)
                 close_time = open_time + timedelta(milliseconds=step_ms)
                 bars.append(
