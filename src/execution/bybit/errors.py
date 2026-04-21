@@ -26,6 +26,6 @@ _MAP: dict[int, ReasonCode] = {
 }
 
 
-def map_error(ret_code: int, _ret_msg: str = "") -> ReasonCode:  # noqa: ARG001
+def map_error(ret_code: int, ret_msg: str = "") -> ReasonCode:  # noqa: ARG001
     """Return matching ReasonCode, or UNKNOWN_ERROR if ret_code not mapped."""
     return _MAP.get(ret_code, ReasonCode.UNKNOWN_ERROR)
