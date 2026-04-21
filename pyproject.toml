@@ -1,0 +1,77 @@
+[project]
+name = "ai-trading-bot"
+version = "0.1.0-alpha.1"
+description = "Binance Spot BTC/USDT 1H trading bot (MVP v0.1)"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.6",
+  "pydantic-settings>=2.2",
+  "structlog>=24.1",
+  "pyarrow>=15.0",
+  "pybit>=5.11",
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "scipy>=1.12",
+  "uvloop>=0.19; sys_platform != 'win32'",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "hypothesis>=6.98",
+  "ruff>=0.3",
+  "mypy>=1.9",
+  "pre-commit>=3.6",
+  "types-pyyaml",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = [
+  "tests/claude-code",
+  "tests/brainstorm-server",
+  "tests/explicit-skill-requests",
+  "tests/opencode",
+  "tests/skill-triggering",
+  "tests/subagent-driven-dev",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "ARG", "RET"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Legacy code — оставляется untouched до соответствующих спринтов (S3-S5).
+"src/core/*" = ["ALL"]
+"src/backtest/*" = ["ALL"]
+"src/risk/risk_manager.py" = ["ALL"]
+# Test names follow spec (V5, BybitFilters) — uppercase intentional.
+"tests/unit/test_filters.py" = ["N802"]
+"tests/unit/test_bybit_rest.py" = ["N802"]
+# FilterViolation name is part of the public API contract from the task spec.
+"src/marketdata/filters.py" = ["N818"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["src"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["pybit.*", "pyarrow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Legacy modules — MVP v0.1 scope только platform/marketdata/signalgen/execution.
+module = ["src.core.*", "src.backtest.*", "src.risk.*"]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+asyncio_mode = "auto"
+markers = [
+  "integration: requires live Bybit testnet (env-gated)",
+]
