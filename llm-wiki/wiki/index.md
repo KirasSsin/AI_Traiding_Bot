@@ -52,10 +52,14 @@ _(пусто — v0.2+)_
 
 ## Project — Components
 
-- [[project/components/config]] — `Settings` (pydantic-settings v2): env/.env, Binance creds, trading_enabled/live_trading invariant, paths.
+- [[project/components/config]] — `Settings` (pydantic-settings v2): env/.env, Bybit creds, trading_enabled/live_trading invariant, paths.
 - [[project/components/logging]] — structlog JSON pipeline → stdout, обязательные ключи event/level/timestamp, contextvars.
 - [[project/components/models]] — pydantic v2 domain models: Bar / Signal / Order / Fill с инвариантами (OHLC, look-ahead, executed_qty ≤ orig_qty).
 - [[project/components/storage]] — SQLite WAL (OLTP, 8 таблиц + migrations runner) + Parquet snappy writer (OLAP).
+- [[project/components/bybit-rest]] — BybitRESTClient (pybit V5 HTTP wrapper): server_time, instruments_info, paginated klines.
+- [[project/components/bybit-ws]] — BybitWSConsumer: pybit WebSocket callback → asyncio iteration мост.
+- [[project/components/bar-builder]] — venue-agnostic aggregator: confirm-gate + dedup + out-of-order + gap synthesis.
+- [[project/components/bybit-adapter]] — MARKET spot execution: filter-validate + place_order + retCode→ReasonCode.
 
 ## Project — Experiments
 
@@ -78,6 +82,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0013-circuit-breakers-l1-l2-l3-flash]] — L1/L2/L3/flash hierarchy.
 - [[project/decisions/0014-walk-forward-train2000-test500]] — train=2000 / test=500, K=5, embargo 1%.
 - [[project/decisions/0015-sign-flip-mc-permutations-n2000]] — sign-flip MC N=2000 как primary test.
+- [[project/decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot supersedes 0004; pybit>=5.11; V5 Unified endpoint map.
 
 ## Queries (saved answers)
 
