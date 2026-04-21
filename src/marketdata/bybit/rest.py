@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from pybit.unified_trading import HTTP
 
 if TYPE_CHECKING:
     from src.marketdata.filters import BybitFilters
+    from src.marketdata.models import Bar
 
 
 class BybitAPIError(RuntimeError):
@@ -40,3 +42,59 @@ class BybitRESTClient:
 
         resp = self._http.get_instruments_info(category="spot", symbol=symbol)
         return BybitFilters.from_instruments_info(resp)
+
+    def get_klines(
+        self,
+        symbol: str,
+        interval: str,
+        start_ms: int,
+        end_ms: int,
+        limit_per_call: int = 1000,
+    ) -> list[Bar]:
+        """Fetch OHLCV bars in [start_ms, end_ms). Paginates if > 1000 rows."""
+        from src.marketdata.models import Bar, DataQuality
+
+        interval_map = {"60": "1h"}  # extend when adding more TFs
+        interval_ms = {"60": 3_600_000}
+        step_ms = interval_ms[interval]
+        domain_interval = interval_map[interval]
+
+        bars: list[Bar] = []
+        cur_start = start_ms
+        while cur_start < end_ms:
+            resp = self._http.get_kline(
+                category="spot",
+                symbol=symbol,
+                interval=interval,
+                start=cur_start,
+                end=end_ms,
+                limit=limit_per_call,
+            )
+            if resp["retCode"] != 0:
+                raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""))
+            rows = list(reversed(resp["result"]["list"]))  # oldest-first
+            if not rows:
+                break
+            for row in rows:
+                open_ms = int(row[0])
+                open_time = datetime.fromtimestamp(open_ms / 1000, tz=UTC)
+                close_time = open_time + timedelta(milliseconds=step_ms)
+                bars.append(
+                    Bar(
+                        symbol=symbol,
+                        interval=domain_interval,
+                        open_time=open_time,
+                        close_time=close_time,
+                        open=Decimal(row[1]),
+                        high=Decimal(row[2]),
+                        low=Decimal(row[3]),
+                        close=Decimal(row[4]),
+                        volume=Decimal(row[5]),
+                        trade_count=0,
+                        is_closed=True,
+                        data_quality=DataQuality.OK,
+                    )
+                )
+            last_open_ms = int(rows[-1][0])
+            cur_start = last_open_ms + step_ms
+        return bars
