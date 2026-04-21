@@ -1,4 +1,5 @@
 """Tests for Settings (pydantic-settings v2) per ADR 0016."""
+
 import pytest
 from pydantic import ValidationError
 from src.platform.config import Settings

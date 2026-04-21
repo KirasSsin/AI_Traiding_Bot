@@ -1,4 +1,5 @@
 """Runtime Settings per ADR 0016 (Bybit Spot testnet MVP)."""
+
 from pathlib import Path
 from typing import Literal
 
