@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck clean install check
+.PHONY: test lint typecheck clean install check test-integration
 
 install:
 	pip install -e ".[dev]"
@@ -15,6 +15,9 @@ typecheck:
 	mypy --strict src
 
 check: lint typecheck test
+
+test-integration:
+	pytest tests/integration -v -m integration
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache

@@ -70,5 +70,8 @@ module = ["src.core.*", "src.backtest.*", "src.risk.*"]
 ignore_errors = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests/unit"]
 asyncio_mode = "auto"
+markers = [
+  "integration: requires live Bybit testnet (env-gated)",
+]
