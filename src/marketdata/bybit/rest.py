@@ -1,8 +1,14 @@
 """Thin wrapper over pybit.unified_trading.HTTP — see ADR 0016."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from pybit.unified_trading import HTTP
+
+if TYPE_CHECKING:
+    from src.marketdata.filters import BybitFilters
 
 
 class BybitAPIError(RuntimeError):
@@ -27,3 +33,10 @@ class BybitRESTClient:
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""))
         ts_s = int(resp["result"]["timeSecond"])
         return datetime.fromtimestamp(ts_s, tz=UTC)
+
+    def get_filters(self, symbol: str) -> BybitFilters:
+        """Fetch `/v5/market/instruments-info?category=spot&symbol=X` → filters."""
+        from src.marketdata.filters import BybitFilters
+
+        resp = self._http.get_instruments_info(category="spot", symbol=symbol)
+        return BybitFilters.from_instruments_info(resp)

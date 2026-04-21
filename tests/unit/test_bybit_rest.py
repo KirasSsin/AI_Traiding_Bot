@@ -46,3 +46,32 @@ def test_get_server_time_raises_on_non_zero_retcode(mock_http_cls: MagicMock) ->
         client = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
         with pytest.raises(RuntimeError, match="retCode=10002"):
             client.get_server_time()
+
+
+def test_get_filters_parses_via_BybitFilters(mock_http_cls: MagicMock) -> None:
+    from decimal import Decimal
+
+    mock_http_cls.return_value.get_instruments_info.return_value = {
+        "retCode": 0,
+        "result": {
+            "list": [
+                {
+                    "symbol": "BTCUSDT",
+                    "lotSizeFilter": {
+                        "basePrecision": "0.000001",
+                        "quotePrecision": "0.00000001",
+                        "minOrderQty": "0.000048",
+                        "maxOrderQty": "71.73956243",
+                        "minOrderAmt": "1",
+                        "maxOrderAmt": "4000000",
+                    },
+                    "priceFilter": {"tickSize": "0.01"},
+                }
+            ]
+        },
+    }
+    with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
+        client = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
+        f = client.get_filters("BTCUSDT")
+    assert f.symbol == "BTCUSDT"
+    assert f.tick_size == Decimal("0.01")

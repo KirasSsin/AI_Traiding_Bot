@@ -48,6 +48,11 @@ ignore = ["E501"]
 "src/core/*" = ["ALL"]
 "src/backtest/*" = ["ALL"]
 "src/risk/risk_manager.py" = ["ALL"]
+# Test names follow spec (V5, BybitFilters) — uppercase intentional.
+"tests/unit/test_filters.py" = ["N802"]
+"tests/unit/test_bybit_rest.py" = ["N802"]
+# FilterViolation name is part of the public API contract from the task spec.
+"src/marketdata/filters.py" = ["N818"]
 
 [tool.mypy]
 python_version = "3.12"
