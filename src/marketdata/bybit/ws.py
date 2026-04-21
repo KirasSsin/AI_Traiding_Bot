@@ -25,7 +25,7 @@ class BybitWSConsumer:
 
     def start(self) -> None:
         """Start underlying pybit WebSocket — must be called from an async context."""
-        self._loop = asyncio.get_event_loop()
+        self._loop = asyncio.get_running_loop()
         self._ws = WebSocket(testnet=self._testnet, channel_type="spot")
         self._ws.kline_stream(
             interval=self._interval,
