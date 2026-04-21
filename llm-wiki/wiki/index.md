@@ -36,9 +36,16 @@ _(пусто — v0.2+)_
 - [[project/architecture/migration-plan]] — 10 спринтов, 3-4 месяца, local-first; Docker/deploy → v0.2.
 - [[project/architecture/development-workflow]] — Superpowers pipeline (7 скиллов) маппится на 10 спринтов v0.1.
 
+## Project — Sprints
+
+- [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
+- [[project/sprints/sprint-01-foundation]] — S1 (2026-04-20): DDD skeleton + platform + models + storage; tag `v0.1.0-alpha.1`.
+- [[project/sprints/sprint-02-bybit-venue-migration]] — S2 (2026-04-21 → 22): Bybit venue migration + MarketData ingest + BybitMarketAdapter; tag `v0.1.0-alpha.2`, PR #1.
+
 ## Project — Plans
 
 - [[project/plans/2026-04-20-sprint-1-foundation]] — implementation plan Sprint 1 (storage + pydantic v2 + cleanup).
+- [[project/plans/2026-04-21-sprint-2-bybit-venue-migration]] — implementation plan Sprint 2 (pybit migration + MarketData + Execution ACL).
 - [[project/architecture/stack-v0.1]] — Python 3.12 + asyncio/uvloop + TA-Lib + pydantic v2 + structlog; Docker-compose sketch.
 - [[project/architecture/bounded-contexts]] — 5 DDD контекстов: Market Data / Signal Gen / Risk / Execution / Analytics.
 - [[project/architecture/domain-events]] — 20 domain events + event sourcing SQL + happy/error/reconnect paths.
