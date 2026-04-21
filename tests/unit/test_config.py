@@ -1,53 +1,64 @@
-from pathlib import Path
-
+"""Tests for Settings (pydantic-settings v2) per ADR 0016."""
 import pytest
 from pydantic import ValidationError
 from src.platform.config import Settings
 
 
-def test_settings_loads_from_env(monkeypatch, tmp_path):
-    monkeypatch.setenv("BINANCE_API_KEY", "test-key")
-    monkeypatch.setenv("BINANCE_API_SECRET", "test-secret")
-    monkeypatch.setenv("BINANCE_ENV", "testnet")
-    monkeypatch.setenv("TRADING_ENABLED", "false")
-    monkeypatch.setenv("LIVE_TRADING", "false")
-    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("LOG_DIR", str(tmp_path / "logs"))
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "data" / "oltp.db"))
-    monkeypatch.setenv("PARQUET_DIR", str(tmp_path / "data" / "parquet"))
-
-    s = Settings()
-
-    assert s.binance_api_key == "test-key"
-    assert s.binance_env == "testnet"
+def test_defaults_load_testnet_keys() -> None:
+    """Testnet keys are hardcoded defaults per user directive 2026-04-21."""
+    s = Settings(
+        data_dir="/tmp/data",
+        log_dir="/tmp/logs",
+        db_path="/tmp/data/bot.db",
+        parquet_dir="/tmp/data/parquet",
+    )
+    assert s.bybit_api_key == "VjRb6cNnpbJ9lPOtw2"
+    assert s.bybit_api_secret.startswith("QnMRFSKNDsn7zkpBN04wh9")
+    assert s.testnet is True
     assert s.trading_enabled is False
     assert s.live_trading is False
-    assert isinstance(s.data_dir, Path)
 
 
-def test_settings_invalid_env_rejected(monkeypatch, tmp_path):
-    monkeypatch.setenv("BINANCE_API_KEY", "k")
-    monkeypatch.setenv("BINANCE_API_SECRET", "s")
-    monkeypatch.setenv("BINANCE_ENV", "invalid")
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("LOG_DIR", str(tmp_path))
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "db"))
-    monkeypatch.setenv("PARQUET_DIR", str(tmp_path))
+def test_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Env vars override hardcoded defaults."""
+    monkeypatch.setenv("BYBIT_API_KEY", "override_key")
+    monkeypatch.setenv("BYBIT_API_SECRET", "override_secret")
+    monkeypatch.setenv("TESTNET", "false")
+    monkeypatch.setenv("TRADING_ENABLED", "true")
+    s = Settings(
+        data_dir="/tmp/data",
+        log_dir="/tmp/logs",
+        db_path="/tmp/data/bot.db",
+        parquet_dir="/tmp/data/parquet",
+    )
+    assert s.bybit_api_key == "override_key"
+    assert s.bybit_api_secret == "override_secret"
+    assert s.testnet is False
 
-    with pytest.raises(ValidationError):
-        Settings()
+
+def test_live_trading_requires_mainnet() -> None:
+    """live_trading=True requires testnet=False (safety invariant)."""
+    with pytest.raises(ValidationError, match="live_trading requires testnet=False"):
+        Settings(
+            data_dir="/tmp/data",
+            log_dir="/tmp/logs",
+            db_path="/tmp/data/bot.db",
+            parquet_dir="/tmp/data/parquet",
+            trading_enabled=True,
+            live_trading=True,
+            testnet=True,
+        )
 
 
-def test_live_trading_requires_trading_enabled(monkeypatch, tmp_path):
-    monkeypatch.setenv("BINANCE_API_KEY", "k")
-    monkeypatch.setenv("BINANCE_API_SECRET", "s")
-    monkeypatch.setenv("BINANCE_ENV", "testnet")
-    monkeypatch.setenv("TRADING_ENABLED", "false")
-    monkeypatch.setenv("LIVE_TRADING", "true")
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("LOG_DIR", str(tmp_path))
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "db"))
-    monkeypatch.setenv("PARQUET_DIR", str(tmp_path))
-
-    with pytest.raises(ValidationError, match="live_trading"):
-        Settings()
+def test_live_trading_requires_trading_enabled() -> None:
+    """live_trading=True requires trading_enabled=True."""
+    with pytest.raises(ValidationError, match="live_trading requires trading_enabled"):
+        Settings(
+            data_dir="/tmp/data",
+            log_dir="/tmp/logs",
+            db_path="/tmp/data/bot.db",
+            parquet_dir="/tmp/data/parquet",
+            trading_enabled=False,
+            live_trading=True,
+            testnet=False,
+        )
