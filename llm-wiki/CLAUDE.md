@@ -361,6 +361,39 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 **Skip навсегда:** `agent-browser`, `frontend-slides`, `audio-transcriber`, `deep-research` (vendor conflict — OpenAI), `openrouter` (vendor conflict), `humanizer`, `file-organizer`.
 
+### Layer 1 — claude-mem (thedotmack) sub-skill policy
+
+7 sub-skills входят в плагин. Используем по триггерам:
+
+| Skill | Use | Why |
+|---|---|---|
+| `mem-search` | KEEP | Уникальная функция — search past sessions, "did we already solve X?" |
+| `version-bump` | KEEP | Semver tagging при выпуске спринтов (`v0.1.0-alpha.N`) |
+| `knowledge-agent` | KEEP (rare) | Knowledge bases из observation history |
+| `timeline-report` | KEEP (rare) | Sprint retrospective narrative |
+| `make-plan` | **SKIP** | Дублирует Superpowers `writing-plans` (Layer 3 wins) |
+| `do` | **SKIP** | Дублирует Superpowers `subagent-driven-development` (Layer 3 wins) |
+| `smart-explore` | CONDITIONAL | Tree-sitter AST search — если нужен structural search быстрее `Grep`, иначе `Grep`/`Glob` |
+
+### Curated agent set (~/.claude/agents/)
+
+**Active (4 — все per ADR 0017):**
+- `python-reviewer.md` (sonnet) — generic Python review
+- `data-integrity-reviewer.md` (sonnet) — SQLite/Parquet/migrations
+- `quant-stats-reviewer.md` (opus) — formulas/Wilson/Kelly/MC/CB thresholds
+- `trading-logic-reviewer.md` (opus) — look-ahead/timing/FSM/reason codes/venue
+
+**Recommended add (gaps):**
+- `security-auditor` (opus, VoltAgent voltagent-qa-sec) — нет у нас security-domain reviewer; critical для override.py / API keys / Bybit signing.
+- `architect-reviewer` (opus, VoltAgent voltagent-qa-sec) — для S12 manager.py + cross-module S5+ refactors.
+
+**Skip from VoltAgent (overlap):** `code-reviewer`, `python-pro`, `risk-manager`, `fintech-engineer`, `quant-analyst`, `database-administrator`, `git-workflow-manager` — все покрыты нашими 4 + Layer 3/4.
+
+### Cleanup history (для трассировки)
+
+- 2026-04-23: 14 duplicate Superpowers skill-stubs из `~/.claude/skills/` перенесены в `~/.claude/skills/_backup_superpowers_dups/` — каждый был 4KB stub, конфликтовал с plugin-cache версией.
+- 2026-04-23: `~/.claude/agents/Python Reviewer.md` → `python-reviewer.md` (filename normalization).
+
 ### Anti-bloat rule
 
 Не dispatch'и каждую возможную проверку — меряй по риску изменения:
