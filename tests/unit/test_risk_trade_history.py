@@ -251,3 +251,44 @@ def test_persistence_across_repo_instances(db):
     now = datetime.now(timezone.utc)
     assert len(repo2.load_recent(window_days=1, now=now)) == 1
     assert repo2.count() == 1
+
+
+# ---------------------------------------------------------------------------
+# Blocker 1: AwareDatetime
+# ---------------------------------------------------------------------------
+
+def test_naive_datetime_rejected():
+    """TradeRecord must reject naive datetimes (Blocker 1)."""
+    from src.risk.trade_history import TradeRecord
+
+    naive = datetime(2024, 1, 1, 12, 0, 0)  # no tzinfo
+    with pytest.raises(ValidationError):
+        _make_record(entry_ts=naive)
+
+
+def test_aware_datetime_accepted():
+    """TradeRecord accepts aware UTC datetimes (Blocker 1)."""
+    from src.risk.trade_history import TradeRecord
+
+    aware = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    record = _make_record(entry_ts=aware)
+    assert record.entry_ts == aware
+
+
+# ---------------------------------------------------------------------------
+# Blocker 2: UNIQUE entry_signal_id — duplicate insert returns existing id
+# ---------------------------------------------------------------------------
+
+def test_duplicate_entry_signal_id_returns_existing_id(db):
+    """Second insert with same entry_signal_id returns first trade_id, count == 1 (Blocker 2)."""
+    from src.risk.trade_history import TradeHistoryRepository
+
+    repo = TradeHistoryRepository(db)
+    sig_id = uuid4()
+    record = _make_record(entry_signal_id=sig_id)
+
+    first_id = repo.insert_closed_trade(record)
+    second_id = repo.insert_closed_trade(record)
+
+    assert second_id == first_id
+    assert repo.count() == 1

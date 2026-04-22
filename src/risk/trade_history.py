@@ -9,7 +9,7 @@ from sqlite3 import Connection
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from src.risk.reason_codes import ReasonCode
 
@@ -22,8 +22,8 @@ class TradeRecord(BaseModel):
     trade_id: int | None = None  # None pre-insert; set by AUTOINCREMENT
     symbol: str
     entry_signal_id: UUID
-    entry_ts: datetime
-    exit_ts: datetime
+    entry_ts: AwareDatetime
+    exit_ts: AwareDatetime
     qty: Decimal = Field(..., gt=0)
     entry_price: Decimal = Field(..., gt=0)
     exit_price: Decimal = Field(..., gt=0)
@@ -32,7 +32,7 @@ class TradeRecord(BaseModel):
     fees_paid: Decimal = Field(..., ge=0)
     reason_code: ReasonCode
     kelly_phase: Literal[1, 2, 3, 4]
-    recorded_at: datetime
+    recorded_at: AwareDatetime
 
 
 class TradeHistoryRepository:
@@ -42,31 +42,38 @@ class TradeHistoryRepository:
         self._conn = conn
 
     def insert_closed_trade(self, record: TradeRecord) -> int:
-        """Insert and return new trade_id."""
-        cursor = self._conn.execute(
-            """INSERT INTO trade_history (
-                symbol, entry_signal_id, entry_ts, exit_ts, qty,
-                entry_price, exit_price, pnl_quote, pnl_pct, fees_paid,
-                reason_code, kelly_phase, recorded_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                record.symbol,
-                str(record.entry_signal_id),
-                record.entry_ts.isoformat(),
-                record.exit_ts.isoformat(),
-                str(record.qty),
-                str(record.entry_price),
-                str(record.exit_price),
-                str(record.pnl_quote),
-                str(record.pnl_pct),
-                str(record.fees_paid),
-                record.reason_code.value,
-                record.kelly_phase,
-                record.recorded_at.isoformat(),
-            ),
-        )
-        self._conn.commit()
-        return int(cursor.lastrowid)
+        """Insert and return trade_id. Idempotent on duplicate entry_signal_id."""
+        with self._conn:
+            cursor = self._conn.execute(
+                """INSERT OR IGNORE INTO trade_history (
+                    symbol, entry_signal_id, entry_ts, exit_ts, qty,
+                    entry_price, exit_price, pnl_quote, pnl_pct, fees_paid,
+                    reason_code, kelly_phase, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    record.symbol,
+                    str(record.entry_signal_id),
+                    record.entry_ts.isoformat(),
+                    record.exit_ts.isoformat(),
+                    str(record.qty),
+                    str(record.entry_price),
+                    str(record.exit_price),
+                    str(record.pnl_quote),
+                    str(record.pnl_pct),
+                    str(record.fees_paid),
+                    record.reason_code.value,
+                    record.kelly_phase,
+                    record.recorded_at.isoformat(),
+                ),
+            )
+        if cursor.lastrowid and cursor.rowcount > 0:
+            return int(cursor.lastrowid)
+        # Duplicate — fetch existing
+        row = self._conn.execute(
+            "SELECT trade_id FROM trade_history WHERE entry_signal_id = ?",
+            (str(record.entry_signal_id),),
+        ).fetchone()
+        return int(row[0])
 
     def load_recent(
         self, *, window_days: int = 90, now: datetime | None = None
@@ -97,8 +104,8 @@ class TradeHistoryRepository:
             trade_id=row[0],
             symbol=row[1],
             entry_signal_id=UUID(row[2]),
-            entry_ts=datetime.fromisoformat(row[3]),
-            exit_ts=datetime.fromisoformat(row[4]),
+            entry_ts=datetime.fromisoformat(row[3]).astimezone(timezone.utc),
+            exit_ts=datetime.fromisoformat(row[4]).astimezone(timezone.utc),
             qty=Decimal(row[5]),
             entry_price=Decimal(row[6]),
             exit_price=Decimal(row[7]),
@@ -107,5 +114,5 @@ class TradeHistoryRepository:
             fees_paid=Decimal(row[10]),
             reason_code=ReasonCode(row[11]),
             kelly_phase=row[12],
-            recorded_at=datetime.fromisoformat(row[13]),
+            recorded_at=datetime.fromisoformat(row[13]).astimezone(timezone.utc),
         )

@@ -52,4 +52,4 @@ def test_init_db_idempotent(tmp_path: Path) -> None:
         applied = conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0]
     finally:
         conn.close()
-    assert applied == 2
+    assert applied == 3
