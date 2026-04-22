@@ -394,6 +394,70 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 - 2026-04-23: 14 duplicate Superpowers skill-stubs из `~/.claude/skills/` перенесены в `~/.claude/skills/_backup_superpowers_dups/` — каждый был 4KB stub, конфликтовал с plugin-cache версией.
 - 2026-04-23: `~/.claude/agents/Python Reviewer.md` → `python-reviewer.md` (filename normalization).
 
+### Trigger cascade — единый источник истины
+
+Когда контроллер (главный Claude) встречает событие → активирует layer per таблице. Цель — НЕ дispatch'ить лишнее, использовать минимально достаточный layer.
+
+| Event / context | Layer cascade | Skip if |
+|---|---|---|
+| Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
+| Subagent dispatch (implementer) | L4b prompt-master inline (tight brief, explicit output budget) → L3 subagent-driven-development → TDD strict | Single Bash command |
+| Subagent brief > 200 слов / output > 30KB | L4b prompt-master refine ОБЯЗАТЕЛЬНО | Always apply |
+| Code change в `src/risk/`, `src/signalgen/`, `src/execution/` | L5 trading-logic-reviewer ОБЯЗАТЕЛЬНО after DONE | Pure docs change |
+| Code change в `src/risk/**`, `src/backtest/**`, `src/analytics/**` (math) | L5 quant-stats-reviewer ОБЯЗАТЕЛЬНО | No formula touched |
+| Code change в `migrations/`, `src/marketdata/`, `src/platform/storage/` | L5 data-integrity-reviewer ОБЯЗАТЕЛЬНО | No persistence touched |
+| Любой `*.py` change (generic safety net) | L5 python-reviewer (sonnet) — после domain reviewer'ов | Domain reviewer cleared, < 100 LoC, только tests |
+| Money / API key / signing / override file | L4 AS `security-and-hardening` + (recommended) VoltAgent `security-auditor` | No I/O boundary |
+| Wiki conflict: domain reviewer flag'нул "code↔ADR drift" | L4b fact-checker → решает источник истины → update wiki OR amend ADR | Trivial wording |
+| Sprint complete, готовимся к merge | L3 finishing-a-development-branch → L1 consolidate-memory → ADR sync hook auto-fires при push | — |
+| Long-running task (>10 min) | L1 chapter mark (`mcp__ccd_session__mark_chapter`) | Quick task |
+
+### Decision algorithms (controller behavior)
+
+**Anti-bloat:**
+- < 50 LoC + tests pass → L5 domain reviewer (если scope hit) ИЛИ ничего; никаких generic-reviewers
+- 50-200 LoC → L5 domain + опционально L4 `code-review-and-quality`
+- > 200 LoC ИЛИ money/security/persistence → full L5 + L4 (`code-review-and-quality` + `security-and-hardening`)
+- Архитектурное (cross-module) → L3 brainstorm + plan first
+
+**Batch criteria** (объединяем tasks в один dispatch):
+- Same domain (e.g. 2 pydantic models — Tasks 3+4 batched)
+- Same file group (e.g. CLI + entry point — Tasks 13)
+- ≤ 5 RED→GREEN cycles total в одном subagent
+
+**Parallel dispatch** (multiple Agent calls в одном message):
+- Все dispatches — independent (no shared state)
+- Каждый делает Write/Edit на разные файлы
+- Reviewers на разные коммиты — всегда parallel
+
+**Sequential** (когда parallel НЕ применять):
+- Implementer → review → fix → re-review (внутри одного task)
+- Migration runner → tests reading DB (depends on schema)
+
+**Read-tool guard** (см. также секцию выше):
+- Unknown file → `wc -c` first
+- > 50KB → Grep + offset Read
+
+### Defer / "когда вернёмся"
+
+| Item | Status | Trigger to revisit |
+|---|---|---|
+| **caveman** (token compression) | Deferred — install fails (credit balance) | После refill пользователем; install + start с Lite mode |
+| VoltAgent `security-auditor` | Recommended, не установлен | При работе с `override.py`, API keys, Bybit signing — приоритет в S5/S10 |
+| VoltAgent `architect-reviewer` | Recommended, не установлен | При S12 manager.py orchestration / cross-module S5+ |
+| Claude mem `make-plan` / `do` | Skipped (overlap) | Никогда — Superpowers Layer 3 wins |
+
+### Rejected packages registry
+
+Отказались от установки с обоснованием:
+
+| Package | Repo | Reason |
+|---|---|---|
+| **everything-claude-code** | affaan-m/everything-claude-code | 48 agents + 183 skills + 79 commands + 20 hooks = массовый bloat. Дублирует Superpowers, Agent Skills, VoltAgent, наши 4 reviewers одновременно. Нарушает наш anti-bloat принцип. (Их 14 MCP integrations — можно cherry-pick если конкретно понадобится.) |
+| **get-shit-done** | gsd-build/get-shit-done | Phase-driven workflow конфликтует с Superpowers Layer 3 (две конкурирующие process-orchestrator системы = хаос). "atomic git commits" — мы уже так делаем. Defer до v0.2 если Superpowers упрётся. |
+| Большая часть VoltAgent (90+ subagents) | VoltAgent/awesome-claude-code-subagents | Не релевантны нашему домену (UI/mobile/wordpress/healthcare/blockchain). Кроме `security-auditor` + `architect-reviewer`. |
+| Claude mem `make-plan`, `do`, `smart-explore`* | thedotmack/claude-mem (sub-skills) | Overlap с Superpowers `writing-plans` / `subagent-driven-development` / `Grep`+`Glob`. Используем claude-mem только для `mem-search`, `version-bump`, `knowledge-agent`, `timeline-report`. |
+
 ### Anti-bloat rule
 
 Не dispatch'и каждую возможную проверку — меряй по риску изменения:
