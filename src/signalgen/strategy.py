@@ -65,6 +65,10 @@ class EmaCrossoverAdxRsiStrategy:
         if bar.symbol != self._symbol:
             return None
 
+        # Dedup + out-of-order guard: monotonic close_time only.
+        if self._bars and bar.close_time <= self._bars[-1].close_time:
+            return None
+
         self._bars.append(bar)
         if len(self._bars) > self._buffer_size:
             self._bars = self._bars[-self._buffer_size :]

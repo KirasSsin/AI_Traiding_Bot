@@ -272,3 +272,44 @@ def test_strategy_emits_flat_on_signal_flip() -> None:
     first_long = next(i for i, s in enumerate(signals) if s.side == SignalSide.LONG)
     first_flat = next(i for i, s in enumerate(signals) if s.side == SignalSide.FLAT)
     assert first_long < first_flat, f"LONG must precede FLAT; got order {sides!r}"
+
+
+def test_strategy_ignores_duplicate_bar() -> None:
+    """Одинаковый close_time дважды → второй bar игнорируется."""
+    strat = EmaCrossoverAdxRsiStrategy(
+        symbol="BTCUSDT",
+        ema_fast=12,
+        ema_slow=26,
+        adx_period=14,
+        adx_threshold=Decimal("25"),
+        rsi_period=14,
+        rsi_oversold=Decimal("30"),
+        rsi_overbought=Decimal("70"),
+        atr_period=14,
+    )
+    b = _bar(100.0, 0)
+    assert strat.on_bar(b) is None
+    buf_before = len(strat._bars)  # type: ignore[attr-defined]
+    assert strat.on_bar(b) is None
+    assert len(strat._bars) == buf_before  # type: ignore[attr-defined]
+
+
+def test_strategy_rejects_out_of_order_bar() -> None:
+    """Bar с close_time <= last close_time → игнор."""
+    strat = EmaCrossoverAdxRsiStrategy(
+        symbol="BTCUSDT",
+        ema_fast=12,
+        ema_slow=26,
+        adx_period=14,
+        adx_threshold=Decimal("25"),
+        rsi_period=14,
+        rsi_oversold=Decimal("30"),
+        rsi_overbought=Decimal("70"),
+        atr_period=14,
+    )
+    b0 = _bar(100.0, 5)
+    b1 = _bar(101.0, 3)
+    strat.on_bar(b0)
+    buf_before = len(strat._bars)  # type: ignore[attr-defined]
+    strat.on_bar(b1)
+    assert len(strat._bars) == buf_before  # type: ignore[attr-defined]
