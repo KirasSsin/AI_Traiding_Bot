@@ -250,6 +250,31 @@ Chronological, append-only. Каждая запись начинается с ф
 - **Язык.** Содержание wiki — на русском (язык проекта). Имена файлов, тегов, type-полей — на английском.
 - **Источники обязательны.** Каждое нетривиальное утверждение должно быть отслеживаемо до raw-файла или помечено как `[speculation]` / `[my-analysis]`.
 
+## Безопасное чтение больших файлов (Read tool overflow guard)
+
+Read tool — hard-limit **~25,000 токенов** (~90KB markdown / ~80KB кода) на один вызов. Превышение проваливает turn субагента полностью.
+
+**Перед `Read` неизвестного файла:**
+
+1. Проверь размер: `wc -c <path>` через Bash, или `Glob` + stat.
+2. **Эмпирический ratio:** для нашего markdown ~3.3 bytes/token. Безопасный порог = **50KB ≈ 15k токенов** (запас до 25k hard-limit).
+3. Если **> 50KB**:
+   - `Read` с `offset` + `limit` (1500–2000 строк за вызов).
+   - ИЛИ `Grep` чтобы локализовать секцию, потом `Read` с `offset`.
+   - **Никогда** не вызывай `Read` без `limit` на > 50KB.
+4. **Banned-from-full-read** (только Grep + offset Read):
+   - `Docs/00-All.md` (~350k tokens)
+   - `Docs/reference/Mimo_bot/00-All.md` (~350k tokens, дубликат)
+   - `Docs/MVP/FINAL-CONSOLIDATED.md` (~30k tokens)
+   - `Docs/reference/Mimo_bot/FINAL-CONSOLIDATED-DOCUMENT.md.md` (~30k tokens)
+   - `wiki/project/plans/2026-04-21-sprint-2-bybit-venue-migration.md` (~28k tokens) — split TODO
+
+**Свои wiki-страницы** (`wiki/**`) держим **< 50KB ≈ 15k токенов**. Если близко — разбивай на под-страницы:
+- `<topic>.md` — оглавление + кросс-ссылки на под-части.
+- `<topic>-part-1.md`, `<topic>-part-2.md` — содержимое.
+
+**Output budget субагента:** одна `Write`/`Edit` ≤ 40KB. Большие артефакты (планы спринтов, детальные ADR) — дай субагенту Write+Edit права и инструкцию писать chunked: Write skeleton → Edit append секции.
+
 ## Что LLM НЕ делает
 
 - Не модифицирует файлы в `raw/`.
