@@ -155,3 +155,60 @@ def test_strategy_emits_long_on_cross_with_gates() -> None:
     assert s.ema_fast > s.ema_slow
     assert s.atr_14 > 0
     assert s.generated_at >= s.bar_close_time  # look-ahead invariant
+
+
+def test_strategy_rejects_when_adx_below_threshold() -> None:
+    """Слабый тренд (ADX<threshold) — no signal даже при cross up.
+
+    Искусственно задираем threshold=99 — ADX никогда не превысит.
+    """
+    strat = EmaCrossoverAdxRsiStrategy(
+        symbol="BTCUSDT",
+        ema_fast=12,
+        ema_slow=26,
+        adx_period=14,
+        adx_threshold=Decimal("99"),
+        rsi_period=14,
+        rsi_oversold=Decimal("30"),
+        rsi_overbought=Decimal("70"),
+        atr_period=14,
+    )
+    bars = _crafted_bars_for_long_entry()
+    signals = [s for b in bars if (s := strat.on_bar(b)) is not None]
+    assert all(s.side != SignalSide.LONG for s in signals), "ADX>99 никогда не проходит"
+
+
+def test_strategy_rejects_when_rsi_overbought() -> None:
+    """Низкий rsi_overbought гейт (10) — RSI крафтового рельефа всегда выше."""
+    strat = EmaCrossoverAdxRsiStrategy(
+        symbol="BTCUSDT",
+        ema_fast=12,
+        ema_slow=26,
+        adx_period=14,
+        adx_threshold=Decimal("25"),
+        rsi_period=14,
+        rsi_oversold=Decimal("5"),
+        rsi_overbought=Decimal("10"),
+        atr_period=14,
+    )
+    bars = _crafted_bars_for_long_entry()
+    signals = [s for b in bars if (s := strat.on_bar(b)) is not None]
+    assert all(s.side != SignalSide.LONG for s in signals), "RSI<10 никогда не выполняется на rally"
+
+
+def test_strategy_ignores_wrong_symbol() -> None:
+    """Бары с чужим символом не буферизируются и не триггерят сигналы."""
+    strat = EmaCrossoverAdxRsiStrategy(
+        symbol="BTCUSDT",
+        ema_fast=12,
+        ema_slow=26,
+        adx_period=14,
+        adx_threshold=Decimal("25"),
+        rsi_period=14,
+        rsi_oversold=Decimal("30"),
+        rsi_overbought=Decimal("70"),
+        atr_period=14,
+    )
+    eth_bar = _bar(2000.0, 0, symbol="ETHUSDT")
+    assert strat.on_bar(eth_bar) is None
+    assert len(strat._bars) == 0  # type: ignore[attr-defined]
