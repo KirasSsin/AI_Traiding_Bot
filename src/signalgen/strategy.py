@@ -6,10 +6,14 @@ Invariant: signal on close(T) → execution at open(T+1)
   (wiki/project/architecture/execution-timing.md).
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
+from uuid import uuid4
+
+import numpy as np
 
 from src.marketdata.models import Bar
+from src.signalgen.indicators import adx, atr, ema, minus_di, plus_di, rsi
 from src.signalgen.models import Signal, SignalSide
 
 
@@ -71,5 +75,77 @@ class EmaCrossoverAdxRsiStrategy:
         if len(self._bars) < min_required:
             return None
 
-        # Signal emission logic — Tasks 9-12.
+        # Compute indicators on full buffer (simple — recompute each call).
+        closes = np.array([float(b.close) for b in self._bars], dtype=np.float64)
+        highs = np.array([float(b.high) for b in self._bars], dtype=np.float64)
+        lows = np.array([float(b.low) for b in self._bars], dtype=np.float64)
+
+        ema_fast_arr = ema(closes, self._ema_fast_n, mode="classical")
+        ema_slow_arr = ema(closes, self._ema_slow_n, mode="classical")
+        adx_arr = adx(highs, lows, closes, self._adx_n)
+        pdi_arr = plus_di(highs, lows, closes, self._adx_n)
+        mdi_arr = minus_di(highs, lows, closes, self._adx_n)
+        rsi_arr = rsi(closes, self._rsi_n)
+        atr_arr = atr(highs, lows, closes, self._atr_n)
+
+        snapshot = {
+            "ema_fast": ema_fast_arr[-1],
+            "ema_slow": ema_slow_arr[-1],
+            "adx": adx_arr[-1],
+            "plus_di": pdi_arr[-1],
+            "minus_di": mdi_arr[-1],
+            "rsi": rsi_arr[-1],
+            "atr": atr_arr[-1],
+        }
+        # Any NaN in latest → indicators not yet warm.
+        if any(np.isnan(v) for v in snapshot.values()):
+            return None
+
+        # Entry rule (LONG): cross up EMA_fast×EMA_slow at T-1→T, ADX>threshold,
+        # +DI>-DI, RSI<overbought. Cross = fast[T] > slow[T] AND fast[T-1] <= slow[T-1].
+        cross_up = bool(
+            ema_fast_arr[-1] > ema_slow_arr[-1] and ema_fast_arr[-2] <= ema_slow_arr[-2]
+        )
+        trend_strong = Decimal(str(snapshot["adx"])) > self._adx_threshold
+        bullish_dir = snapshot["plus_di"] > snapshot["minus_di"]
+        not_overbought = Decimal(str(snapshot["rsi"])) < self._rsi_overbought
+
+        if (
+            cross_up
+            and trend_strong
+            and bullish_dir
+            and not_overbought
+            and self._current_side == SignalSide.FLAT
+        ):
+            self._current_side = SignalSide.LONG
+            return self._build_signal(
+                bar,
+                SignalSide.LONG,
+                snapshot,
+                reason="ENTRY_LONG_EMA_CROSS_UP",
+            )
+
         return None
+
+    def _build_signal(
+        self,
+        bar: Bar,
+        side: SignalSide,
+        snapshot: dict[str, float],
+        reason: str,
+    ) -> Signal:
+        return Signal(
+            signal_id=uuid4(),
+            symbol=self._symbol,
+            side=side,
+            bar_close_time=bar.close_time,
+            generated_at=datetime.now(UTC),
+            ema_fast=Decimal(str(snapshot["ema_fast"])),
+            ema_slow=Decimal(str(snapshot["ema_slow"])),
+            adx_14=Decimal(str(snapshot["adx"])),
+            plus_di_14=Decimal(str(snapshot["plus_di"])),
+            minus_di_14=Decimal(str(snapshot["minus_di"])),
+            rsi_14=Decimal(str(snapshot["rsi"])),
+            atr_14=Decimal(str(snapshot["atr"])),
+            reason=reason,
+        )
