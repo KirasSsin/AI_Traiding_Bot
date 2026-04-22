@@ -41,11 +41,13 @@ _(пусто — v0.2+)_
 - [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
 - [[project/sprints/sprint-01-foundation]] — S1 (2026-04-20): DDD skeleton + platform + models + storage; tag `v0.1.0-alpha.1`.
 - [[project/sprints/sprint-02-bybit-venue-migration]] — S2 (2026-04-21 → 22): Bybit venue migration + MarketData ingest + BybitMarketAdapter; tag `v0.1.0-alpha.2`, PR #1.
+- [[project/sprints/sprint-03-strategy-port]] — S3 (2026-04-22): EMA crossover + ADX/RSI/ATR через TA-Lib, on_bar контракт, FLAT/LONG FSM; tag `v0.1.0-alpha.3`.
 
 ## Project — Plans
 
 - [[project/plans/2026-04-20-sprint-1-foundation]] — implementation plan Sprint 1 (storage + pydantic v2 + cleanup).
 - [[project/plans/2026-04-21-sprint-2-bybit-venue-migration]] — implementation plan Sprint 2 (pybit migration + MarketData + Execution ACL).
+- [[project/plans/2026-04-22-sprint-3-strategy-port]] — implementation plan Sprint 3 (TA-Lib indicators + EmaCrossoverAdxRsiStrategy + look-ahead property test).
 - [[project/architecture/stack-v0.1]] — Python 3.12 + asyncio/uvloop + TA-Lib + pydantic v2 + structlog; Docker-compose sketch.
 - [[project/architecture/bounded-contexts]] — 5 DDD контекстов: Market Data / Signal Gen / Risk / Execution / Analytics.
 - [[project/architecture/domain-events]] — 20 domain events + event sourcing SQL + happy/error/reconnect paths.
@@ -67,6 +69,8 @@ _(пусто — v0.2+)_
 - [[project/components/bybit-ws]] — BybitWSConsumer: pybit WebSocket callback → asyncio iteration мост.
 - [[project/components/bar-builder]] — venue-agnostic aggregator: confirm-gate + dedup + out-of-order + gap synthesis.
 - [[project/components/bybit-adapter]] — MARKET spot execution: filter-validate + place_order + retCode→ReasonCode.
+- [[project/components/indicators]] — TA-Lib wrappers: EMA classical/wilder + ADX/±DI/RSI/ATR Wilder.
+- [[project/components/strategy]] — EmaCrossoverAdxRsiStrategy: on_bar(Bar) → Signal | None, FLAT/LONG FSM.
 
 ## Project — Experiments
 
