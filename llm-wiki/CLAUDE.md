@@ -302,6 +302,66 @@ Wiki-maintainer workflow (ingest / query / lint) — **параллелен** м
 
 Когда LLM-мейнтейнер читает CLAUDE.md — он читает **оба** workflow: wiki-maintenance (этот файл) + Superpowers (активируется автоматически при code-tasks).
 
+## Skills hierarchy & integration
+
+Три (теперь четыре) пакета скиллов работают **слоями**, не альтернативами. Когда два скилла перекрываются — читай таблицу conflict resolution ниже.
+
+### 5 layers
+
+```
+Layer 5: Domain reviewers (ADR 0017)         ←  triggered by file paths
+         trading-logic / quant-stats / data-integrity / python-reviewer
+Layer 4: Discipline & reference (addyosmani/agent-skills)
+         20 skills + 7 slash-cmd + checklists (security/perf/test/a11y)
+Layer 3: Process orchestration (obra/superpowers)
+         brainstorming → writing-plans → subagent-driven-development → finishing
+Layer 2: Project knowledge (этот wiki)
+         wiki/ = source of truth; Docs/ = immutable references
+Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
+         session bookends + chapter marks
+```
+
+### Conflict resolution (overlapping skills)
+
+| Topic | TRIGGER (process owner) | DEPTH (reference owner) |
+|---|---|---|
+| TDD | Superpowers `test-driven-development` (RED→GREEN cycle) | Agent Skills TDD: anti-patterns, pyramid 80/15/5, DAMP, Beyonce Rule |
+| Code review | Layer 5 (domain) **first** → AS `code-review-and-quality` (5-axis) | — |
+| Planning | Superpowers `writing-plans` (bite-sized) | AS `planning-and-task-breakdown` (AC templates) |
+| Debugging | Superpowers `systematic-debugging` (4-phase) | AS `debugging-and-error-recovery` (5-step triage) |
+| Spec | Superpowers `brainstorming` | AS `spec-driven-development` (PRD checklist) |
+| Ship | Superpowers `finishing-a-development-branch` | AS `git-workflow-and-versioning`, `shipping-and-launch`, `ci-cd-and-automation` |
+
+**Правило:** TRIGGER оркестрирует процесс, DEPTH углубляет при необходимости.
+
+### Phase mapping для AI Trading Bot v0.1
+
+| Phase | Sequence |
+|---|---|
+| Define | Superpowers brainstorming → AS spec-driven-development checklist → wiki/plans/<date>-spec.md |
+| Plan | Superpowers writing-plans → AS planning-and-task-breakdown checklist → wiki/plans/<date>-plan.md |
+| Build | Superpowers subagent-driven-development + TDD (cycle Superpowers, depth AS); AS incremental-implementation slices |
+| Verify | Superpowers verification-before-completion + AS debugging-and-error-recovery |
+| Review | Layer 5 (domain) → AS security-and-hardening (если I/O boundary) → AS code-review-and-quality |
+| Ship | Superpowers finishing-a-development-branch + AS git-workflow + AS documentation-and-adrs |
+
+**Skipped для v0.1 (не релевантно):** `frontend-ui-engineering`, `browser-testing-with-devtools`, `accessibility-checklist` — нет UI слоя.
+
+**Особо ценны для AI Trading Bot:** AS `security-and-hardening` (API keys, override.py), AS `documentation-and-adrs` (наш ADR процесс), AS `deprecation-and-migration` (legacy `risk_manager.py` и пр.).
+
+### Anti-bloat rule
+
+Не dispatch'и каждую возможную проверку — меряй по риску изменения:
+- < 50 строк кода, тесты есть → Layer 5 reviewer (если scope попал) + tests pass = достаточно
+- > 200 строк ИЛИ затрагивает money/security/persistence → +full Layer 4 (`security-and-hardening` + `code-review-and-quality`)
+- Архитектурное изменение → Layer 3 brainstorming + plan, потом всё остальное
+
+### Memory hygiene (Layer 1)
+
+- **Session start:** загружай project memory через `consolidate-memory` или claude-mem.
+- **Significant work boundary:** ставь chapter mark (`mcp__ccd_session__mark_chapter`) — облегчает навигацию в transcript'е.
+- **Session end:** пробеги consolidate, чтобы устаревшие факты не загрязняли следующую сессию.
+
 ## Связь с review-агентами
 
 Поверх Superpowers подключены **доменные ревьюеры** (ADR 0017, файлы в `~/.claude/agents/`). Они вызываются главным Claude **после** того, как реализующий subagent доложил `DONE`, и **до** того, как изменения уйдут в merge. Каждый агент перед ревью читает конкретные wiki-страницы и ADR — wiki является source of truth для них.
