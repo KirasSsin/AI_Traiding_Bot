@@ -212,3 +212,63 @@ def test_strategy_ignores_wrong_symbol() -> None:
     eth_bar = _bar(2000.0, 0, symbol="ETHUSDT")
     assert strat.on_bar(eth_bar) is None
     assert len(strat._bars) == 0  # type: ignore[attr-defined]
+
+
+def test_strategy_emits_flat_on_signal_flip() -> None:
+    """После LONG, если EMA12 < EMA26 AND +DI < -DI → FLAT signal."""
+    t0 = datetime(2026, 1, 1, tzinfo=UTC)
+    bars: list[Bar] = []
+    price = 100.0
+
+    def _push(i: int, o: float, h: float, lo: float, c: float) -> None:
+        ot = t0 + timedelta(hours=i)
+        ct = ot + timedelta(hours=1) - timedelta(microseconds=1)
+        bars.append(
+            Bar(
+                symbol="BTCUSDT",
+                interval="1h",
+                open_time=ot,
+                close_time=ct,
+                open=Decimal(str(o)),
+                high=Decimal(str(h)),
+                low=Decimal(str(lo)),
+                close=Decimal(str(c)),
+                volume=Decimal("1.0"),
+                trade_count=1,
+                is_closed=True,
+                data_quality=DataQuality.OK,
+            )
+        )
+
+    # Phase A: 60 bars downtrend -0.2 per bar.
+    for i in range(60):
+        price -= 0.2
+        _push(i, price + 0.1, price + 0.3, price - 0.3, price)
+    # Phase B: 30 bars gentle rally +0.2 per bar (triggers LONG per Task 9).
+    for i in range(60, 90):
+        price += 0.2
+        _push(i, price - 0.1, price + 0.3, price - 0.3, price)
+    # Phase C: 60 bars downtrend reversal -0.3 per bar (stronger to force flip).
+    for i in range(90, 150):
+        price -= 0.3
+        _push(i, price + 0.1, price + 0.4, price - 0.4, price)
+
+    strat = EmaCrossoverAdxRsiStrategy(
+        symbol="BTCUSDT",
+        ema_fast=12,
+        ema_slow=26,
+        adx_period=14,
+        adx_threshold=Decimal("25"),
+        rsi_period=14,
+        rsi_oversold=Decimal("30"),
+        rsi_overbought=Decimal("70"),
+        atr_period=14,
+    )
+    signals = [s for b in bars if (s := strat.on_bar(b)) is not None]
+    sides = [s.side for s in signals]
+    assert SignalSide.LONG in sides, f"Expected LONG before FLAT; got {sides!r}"
+    assert SignalSide.FLAT in sides, f"Expected FLAT after reversal; got {sides!r}"
+    # LONG must precede FLAT in emission order.
+    first_long = next(i for i, s in enumerate(signals) if s.side == SignalSide.LONG)
+    first_flat = next(i for i, s in enumerate(signals) if s.side == SignalSide.FLAT)
+    assert first_long < first_flat, f"LONG must precede FLAT; got order {sides!r}"

@@ -125,6 +125,19 @@ class EmaCrossoverAdxRsiStrategy:
                 reason="ENTRY_LONG_EMA_CROSS_UP",
             )
 
+        # Exit rule (FLAT): если current LONG, и EMA flips down + -DI доминирует → FLAT.
+        if self._current_side == SignalSide.LONG:
+            flip_down = ema_fast_arr[-1] < ema_slow_arr[-1]
+            bearish_dir = snapshot["minus_di"] > snapshot["plus_di"]
+            if flip_down and bearish_dir:
+                self._current_side = SignalSide.FLAT
+                return self._build_signal(
+                    bar,
+                    SignalSide.FLAT,
+                    snapshot,
+                    reason="EXIT_FLAT_SIGNAL_FLIP",
+                )
+
         return None
 
     def _build_signal(
