@@ -112,3 +112,21 @@
 - Subagent execution: 14 dispatches (haiku × 7 mechanical, sonnet × 6 standard TDD, opus × 1 для critical LONG entry с numerical tuning).
 - Decisions/deviations: (1) Wilder EMA — own implementation (TA-Lib не поддерживает); (2) crafted-bars fixture для LONG entry retuned — резкий rally (+1.5) толкал RSI > 70 раньше cross-up'а, изменено на gentler (+0.2 × 30); (3) duplicate/OOO guard добавлен в on_bar() как defense-in-depth.
 - Notes: Stage 3 Sprint 3 закрыт. Готово к Sprint 4 (Risk — 4-phase Kelly + CB L1/L2/L3/flash) per migration-plan §S4.
+
+## [2026-04-22] ingest | Review-agent harness (ADR 0017)
+- Added (agents): ~/.claude/agents/trading-logic-reviewer.md (opus), ~/.claude/agents/quant-stats-reviewer.md (opus), ~/.claude/agents/data-integrity-reviewer.md (sonnet).
+- Added (wiki): wiki/project/decisions/0017-review-agent-harness.md.
+- Modified (wiki): index.md (Project — Decisions +1), llm-wiki/CLAUDE.md (новая секция "Связь с review-агентами").
+- Existing: ~/.claude/agents/Python Reviewer.md (generic Python hygiene) сохранён.
+- Rationale: generic superpowers review + python-reviewer не покрывают доменные риски (look-ahead, Wilder/classical EMA, Kelly phases, OHLCV invariants). Альтернатива из 14 "персон" отклонена — overlap 60-70%, конфликт выбора. Выбраны 3 консолидированных агента с non-overlapping scope и MUST-BE-USED триггерами в description.
+- When invoke: матрица в ADR 0017 (по спринтам S3-S9). Доменные ревьюеры заменяют generic quality reviewer на соответствующих файлах.
+- Notes: агенты обязаны читать конкретные wiki/ADR перед ревью — операционализация wiki как source of truth. Stale wiki выявляется через "Follow-ups for wiki" секцию отчёта.
+
+## [2026-04-22] ingest | ADR ↔ Agent sync hook (автоматизация 0017)
+- Added (infra): ~/.claude/hooks/adr-agent-sync-check.sh (+x), регистрация в ~/.claude/settings.json (hooks.PreToolUse → Bash).
+- Added (wiki): wiki/project/components/adr-agent-sync-hook.md (полная спецификация + алгоритм + fail-open policy + acknowledge flow).
+- Modified (wiki): wiki/project/decisions/0017-review-agent-harness.md (consequences: "Минус закрыт — автоматизировано"), llm-wiki/CLAUDE.md (добавлен параграф про автоматический sync-контроль), wiki/index.md (Project — Components +1).
+- Механика: hook срабатывает на PreToolUse Bash, фильтрует `git push`, сверяет `git log base..HEAD -- wiki/project/decisions/` с max mtime `~/.claude/agents/*.md`. Drift → exit 2 + stderr → push заблокирован. Fail-open для всего нерелевантного.
+- Acknowledge flow: `touch ~/.claude/agents/<any>.md` продвигает mtime — явный ack, если ADR не требует agent-update.
+- Verification: non-push → exit 0 ✅; push в worktree без committed ADR → exit 0 ✅ (ожидаемо — ADR 0017 пока не закоммичен); fail-closed ветка проверится на первом реальном ADR-коммите при PR'е.
+- Notes: YAGNI-граница пройдена — sync-чек назван в CLAUDE.md, но без автоматизации он обречён забываться. Drift в prompt'ах агентов = молчаливая потеря корректности ревью. Теперь блокирующий.

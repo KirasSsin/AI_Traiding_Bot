@@ -71,6 +71,7 @@ _(пусто — v0.2+)_
 - [[project/components/bybit-adapter]] — MARKET spot execution: filter-validate + place_order + retCode→ReasonCode.
 - [[project/components/indicators]] — TA-Lib wrappers: EMA classical/wilder + ADX/±DI/RSI/ATR Wilder.
 - [[project/components/strategy]] — EmaCrossoverAdxRsiStrategy: on_bar(Bar) → Signal | None, FLAT/LONG FSM.
+- [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
 
 ## Project — Experiments
 
@@ -94,6 +95,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0014-walk-forward-train2000-test500]] — train=2000 / test=500, K=5, embargo 1%.
 - [[project/decisions/0015-sign-flip-mc-permutations-n2000]] — sign-flip MC N=2000 как primary test.
 - [[project/decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot supersedes 0004; pybit>=5.11; V5 Unified endpoint map.
+- [[project/decisions/0017-review-agent-harness]] — 3 доменных ревьюера (trading-logic / quant-stats / data-integrity) + python-reviewer; non-overlapping scope, MUST-BE-USED триггеры.
 
 ## Queries (saved answers)
 
