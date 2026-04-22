@@ -13,3 +13,15 @@ def test_python_binance_not_installed() -> None:
     import importlib.util
 
     assert importlib.util.find_spec("binance") is None
+
+
+def test_talib_importable() -> None:
+    """TA-Lib native + Python binding должны быть доступны для indicators."""
+    import talib
+
+    assert hasattr(talib, "EMA")
+    assert hasattr(talib, "ADX")
+    assert hasattr(talib, "RSI")
+    assert hasattr(talib, "ATR")
+    assert hasattr(talib, "PLUS_DI")
+    assert hasattr(talib, "MINUS_DI")

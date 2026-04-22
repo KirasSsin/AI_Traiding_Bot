@@ -63,3 +63,23 @@ def test_live_trading_requires_trading_enabled() -> None:
             live_trading=True,
             testnet=False,
         )
+
+
+def test_settings_strategy_params_defaults() -> None:
+    """Strategy params defaults from trading/strategies/ema-crossover-adx-rsi.md v0.1."""
+    from decimal import Decimal
+
+    s = Settings(
+        data_dir="/tmp/data",
+        log_dir="/tmp/logs",
+        db_path="/tmp/data/bot.db",
+        parquet_dir="/tmp/data/parquet",
+    )
+    assert s.strategy_ema_fast == 12
+    assert s.strategy_ema_slow == 26
+    assert s.strategy_adx_period == 14
+    assert s.strategy_adx_threshold == Decimal("25")
+    assert s.strategy_rsi_period == 14
+    assert s.strategy_rsi_oversold == Decimal("30")
+    assert s.strategy_rsi_overbought == Decimal("70")
+    assert s.strategy_atr_period == 14
