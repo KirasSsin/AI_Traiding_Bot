@@ -349,6 +349,18 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 **Особо ценны для AI Trading Bot:** AS `security-and-hardening` (API keys, override.py), AS `documentation-and-adrs` (наш ADR процесс), AS `deprecation-and-migration` (legacy `risk_manager.py` и пр.).
 
+### Layer 4b — meta-skills augment (3 strong-fit)
+
+| Skill | Триггер |
+|---|---|
+| `process-interviewer` | После 3 вопросов в `brainstorming` user даёт расплывчатые ответы, ИЛИ архитектурное решение affects > 1 sprint, ИЛИ есть hidden assumptions → escalate. Relentless extraction. |
+| `prompt-master` | Перед dispatch'ем subagent'а с любым из: brief > 200 слов, ожидаемый output > 30KB (риск truncation), Read файла > 50KB в контекст агента, critical correctness (Kelly формулы, look-ahead). |
+| `fact-checker` | Когда Layer 5 reviewer flag'ит "Follow-up for wiki: code↔ADR drift" → fact-check определяет источник истины. |
+
+**Defer'нуты (потенциал v0.2+):** `mcp-builder`, `decision-toolkit`, `find-skills`.
+
+**Skip навсегда:** `agent-browser`, `frontend-slides`, `audio-transcriber`, `deep-research` (vendor conflict — OpenAI), `openrouter` (vendor conflict), `humanizer`, `file-organizer`.
+
 ### Anti-bloat rule
 
 Не dispatch'и каждую возможную проверку — меряй по риску изменения:
