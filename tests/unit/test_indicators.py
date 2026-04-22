@@ -132,3 +132,49 @@ def test_atr_positive() -> None:
     close = np.linspace(99.5, 109.5, 30)
     result = atr(high, low, close, period=14)
     assert np.all(result[~np.isnan(result)] >= 0)
+
+
+def test_adx_plus_di_minus_di_match_talib() -> None:
+    import talib
+
+    rng = np.random.default_rng(11)
+    n = 80
+    close = 100 + np.cumsum(rng.standard_normal(n))
+    high = close + rng.uniform(0.1, 1.0, n)
+    low = close - rng.uniform(0.1, 1.0, n)
+
+    from src.signalgen.indicators import adx, minus_di, plus_di
+
+    adx_actual = adx(high, low, close, period=14)
+    pdi_actual = plus_di(high, low, close, period=14)
+    mdi_actual = minus_di(high, low, close, period=14)
+
+    np.testing.assert_allclose(
+        adx_actual[~np.isnan(adx_actual)],
+        talib.ADX(high, low, close, timeperiod=14)[~np.isnan(adx_actual)],
+        rtol=1e-9,
+    )
+    np.testing.assert_allclose(
+        pdi_actual[~np.isnan(pdi_actual)],
+        talib.PLUS_DI(high, low, close, timeperiod=14)[~np.isnan(pdi_actual)],
+        rtol=1e-9,
+    )
+    np.testing.assert_allclose(
+        mdi_actual[~np.isnan(mdi_actual)],
+        talib.MINUS_DI(high, low, close, timeperiod=14)[~np.isnan(mdi_actual)],
+        rtol=1e-9,
+    )
+
+
+def test_adx_bounds_0_100() -> None:
+    """ADX [0, 100] per Wilder 1978."""
+    from src.signalgen.indicators import adx
+
+    rng = np.random.default_rng(5)
+    n = 60
+    close = 100 + np.cumsum(rng.standard_normal(n))
+    high = close + 1.0
+    low = close - 1.0
+    result = adx(high, low, close, period=14)
+    non_nan = result[~np.isnan(result)]
+    assert np.all((non_nan >= 0) & (non_nan <= 100))

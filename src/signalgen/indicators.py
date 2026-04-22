@@ -77,8 +77,37 @@ def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) 
     Returns:
         Array same length as inputs, первые `period` значений = NaN. Всегда >= 0.
     """
+    _validate_hlc(high, low, close, period)
+    return talib.ATR(high, low, close, timeperiod=period)
+
+
+def adx(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
+    """Average Directional Index (Wilder 1978).
+
+    ADX = Wilder-smooth(DX, period); DX = 100 · |+DI - -DI| / (+DI + -DI).
+    Range [0, 100]; >25 → trending.
+
+    Returns:
+        1-D array; warm-up ≈ 2·period - 1 баров NaN (double-smoothing).
+    """
+    _validate_hlc(high, low, close, period)
+    return talib.ADX(high, low, close, timeperiod=period)
+
+
+def plus_di(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
+    """+DI per Wilder 1978. Range [0, 100]."""
+    _validate_hlc(high, low, close, period)
+    return talib.PLUS_DI(high, low, close, timeperiod=period)
+
+
+def minus_di(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
+    """-DI per Wilder 1978. Range [0, 100]."""
+    _validate_hlc(high, low, close, period)
+    return talib.MINUS_DI(high, low, close, timeperiod=period)
+
+
+def _validate_hlc(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int) -> None:
     if not (high.shape == low.shape == close.shape) or high.ndim != 1:
         raise ValueError("high, low, close must be 1-D and same shape")
     if period < 2:
         raise ValueError(f"period must be >= 2, got {period}")
-    return talib.ATR(high, low, close, timeperiod=period)
