@@ -47,6 +47,21 @@ class Settings(BaseSettings):
     sentry_dsn: str | None = None
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
+    # Risk-module parameters (Sprint 4 Task 2 — locked design)
+    risk_max_position_pct_cap: Decimal = Decimal("0.05")
+    risk_sl_atr_multiplier: Decimal = Decimal("1.5")
+    risk_tp_atr_multiplier: Decimal = Decimal("3.0")
+    risk_cb_l1_dd: Decimal = Decimal("0.15")
+    risk_cb_l2_dd: Decimal = Decimal("0.22")
+    risk_cb_l3_dd: Decimal = Decimal("0.30")
+    risk_cb_flash_abs: Decimal = Decimal("0.08")
+    risk_cb_flash_atr_mult: Decimal = Decimal("3.0")
+    risk_kelly_phase1_cap: Decimal = Decimal("0.01")
+    risk_kelly_phase2_cap: Decimal = Decimal("0.02")
+    risk_kelly_phase3_cap: Decimal = Decimal("0.03")
+    risk_kelly_phase4_cap: Decimal = Decimal("0.05")
+    risk_override_path: Path = Path("./state/cb_override.json")
+
     @model_validator(mode="after")
     def _live_trading_guards(self) -> "Settings":
         if self.live_trading and not self.trading_enabled:
@@ -54,3 +69,12 @@ class Settings(BaseSettings):
         if self.live_trading and self.testnet:
             raise ValueError("live_trading requires testnet=False (mainnet-only)")
         return self
+
+    def config_hash(self) -> str:
+        """SHA-256 of canonical JSON dump (sorted keys, Decimals as str)."""
+        import hashlib
+        import json
+
+        data = self.model_dump(mode="json")
+        canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), default=str)
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
