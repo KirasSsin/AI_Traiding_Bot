@@ -42,3 +42,23 @@ def ema(close: np.ndarray, period: int, mode: EmaMode = "classical") -> np.ndarr
     for t in range(period, len(close)):
         result[t] = alpha * close[t] + (1.0 - alpha) * result[t - 1]
     return result
+
+
+def rsi(close: np.ndarray, period: int = 14) -> np.ndarray:
+    """Relative Strength Index (Wilder 1978).
+
+    TA-Lib `RSI` использует Wilder smoothing по умолчанию (α=1/n) per ADR 0011.
+
+    Args:
+        close: 1-D float array of close prices.
+        period: period (default 14 per Wilder).
+
+    Returns:
+        Array same length as `close`, первые `period` значений — NaN.
+        Диапазон [0, 100].
+    """
+    if period < 2:
+        raise ValueError(f"period must be >= 2, got {period}")
+    if close.ndim != 1:
+        raise ValueError("close must be 1-D")
+    return talib.RSI(close, timeperiod=period)

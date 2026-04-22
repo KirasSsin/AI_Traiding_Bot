@@ -72,3 +72,34 @@ def test_ema_rejects_bad_inputs() -> None:
         ema(close, period=1)
     with pytest.raises(ValueError, match="1-D"):
         ema(close.reshape(2, 5), period=3)
+
+
+def test_rsi_wilder_matches_talib() -> None:
+    """RSI(14) Wilder: сверяем с прямым вызовом talib.RSI (который использует Wilder)."""
+    import talib
+
+    rng = np.random.default_rng(42)
+    close = 100 + np.cumsum(rng.standard_normal(100))
+
+    from src.signalgen.indicators import rsi
+
+    result = rsi(close, period=14)
+    expected = talib.RSI(close, timeperiod=14)
+
+    # Warm-up: первые 14 NaN
+    assert np.all(np.isnan(result[:14]))
+
+    np.testing.assert_allclose(result[14:], expected[14:], rtol=1e-9)
+
+
+def test_rsi_extremes() -> None:
+    """RSI=100 при монотонном росте, RSI=0 при монотонном падении."""
+    from src.signalgen.indicators import rsi
+
+    up = np.arange(1.0, 30.0)
+    result = rsi(up, period=14)
+    assert result[-1] == pytest.approx(100.0, abs=1e-6)
+
+    down = np.arange(30.0, 1.0, -1.0)
+    result = rsi(down, period=14)
+    assert result[-1] == pytest.approx(0.0, abs=1e-6)
