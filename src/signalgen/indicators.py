@@ -32,4 +32,13 @@ def ema(close: np.ndarray, period: int, mode: EmaMode = "classical") -> np.ndarr
         raise ValueError("close must be 1-D")
     if mode == "classical":
         return talib.EMA(close, timeperiod=period)
-    raise NotImplementedError(f"mode={mode} implemented in Task 3")
+    # Wilder: α = 1/period; seed = SMA(close[0..period-1]); recurrence на t >= period.
+    result = np.full_like(close, np.nan, dtype=np.float64)
+    if len(close) < period:
+        return result
+    seed = np.mean(close[:period])
+    result[period - 1] = seed
+    alpha = 1.0 / period
+    for t in range(period, len(close)):
+        result[t] = alpha * close[t] + (1.0 - alpha) * result[t - 1]
+    return result

@@ -45,3 +45,30 @@ def test_ema_classical_matches_talib_formula() -> None:
 
     # EMA[6] = (1/3)·7 + (2/3)·4 = 5.0
     assert result[6] == pytest.approx(5.0, abs=1e-12)
+
+
+def test_ema_wilder_matches_manual_recurrence() -> None:
+    """EMA(n) Wilder: α=1/n; seed = SMA первых n; recurrence на всех t >= n."""
+    close = np.arange(1.0, 21.0)  # 1..20
+
+    result = ema(close, period=5, mode="wilder")
+
+    # Warm-up: первые 4 значения NaN
+    assert np.all(np.isnan(result[:4]))
+
+    # Wilder seed: SMA(1..5) = 3.0
+    assert result[4] == pytest.approx(3.0, abs=1e-12)
+
+    # α = 1/5 = 0.2
+    # EMA[5] = 0.2·6 + 0.8·3 = 1.2 + 2.4 = 3.6
+    assert result[5] == pytest.approx(3.6, abs=1e-12)
+    # EMA[6] = 0.2·7 + 0.8·3.6 = 1.4 + 2.88 = 4.28
+    assert result[6] == pytest.approx(4.28, abs=1e-12)
+
+
+def test_ema_rejects_bad_inputs() -> None:
+    close = np.arange(1.0, 11.0)
+    with pytest.raises(ValueError, match="period must be >= 2"):
+        ema(close, period=1)
+    with pytest.raises(ValueError, match="1-D"):
+        ema(close.reshape(2, 5), period=3)
