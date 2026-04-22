@@ -62,3 +62,23 @@ def rsi(close: np.ndarray, period: int = 14) -> np.ndarray:
     if close.ndim != 1:
         raise ValueError("close must be 1-D")
     return talib.RSI(close, timeperiod=period)
+
+
+def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
+    """Average True Range (Wilder 1978).
+
+    TR = max(high-low, |high-prev_close|, |low-prev_close|).
+    ATR[t] = Wilder-smooth(TR, period) per ADR 0011.
+
+    Args:
+        high, low, close: 1-D arrays same length.
+        period: period (default 14).
+
+    Returns:
+        Array same length as inputs, первые `period` значений = NaN. Всегда >= 0.
+    """
+    if not (high.shape == low.shape == close.shape) or high.ndim != 1:
+        raise ValueError("high, low, close must be 1-D and same shape")
+    if period < 2:
+        raise ValueError(f"period must be >= 2, got {period}")
+    return talib.ATR(high, low, close, timeperiod=period)

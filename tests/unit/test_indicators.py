@@ -103,3 +103,32 @@ def test_rsi_extremes() -> None:
     down = np.arange(30.0, 1.0, -1.0)
     result = rsi(down, period=14)
     assert result[-1] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_atr_wilder_matches_talib() -> None:
+    import talib
+
+    rng = np.random.default_rng(7)
+    n = 80
+    close = 100 + np.cumsum(rng.standard_normal(n))
+    high = close + rng.uniform(0.1, 1.0, n)
+    low = close - rng.uniform(0.1, 1.0, n)
+
+    from src.signalgen.indicators import atr
+
+    result = atr(high, low, close, period=14)
+    expected = talib.ATR(high, low, close, timeperiod=14)
+
+    assert np.all(np.isnan(result[:14]))
+    np.testing.assert_allclose(result[14:], expected[14:], rtol=1e-9)
+
+
+def test_atr_positive() -> None:
+    """ATR всегда >= 0 (true range неотрицателен)."""
+    from src.signalgen.indicators import atr
+
+    high = np.linspace(100, 110, 30)
+    low = np.linspace(99, 109, 30)
+    close = np.linspace(99.5, 109.5, 30)
+    result = atr(high, low, close, period=14)
+    assert np.all(result[~np.isnan(result)] >= 0)
