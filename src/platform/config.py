@@ -1,5 +1,6 @@
 """Runtime Settings per ADR 0016 (Bybit Spot testnet MVP)."""
 
+from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
@@ -25,6 +26,16 @@ class Settings(BaseSettings):
     # Runtime flags
     trading_enabled: bool = False
     live_trading: bool = False
+
+    # Strategy parameters (v0.1 defaults — см. trading/strategies/ema-crossover-adx-rsi.md)
+    strategy_ema_fast: int = 12
+    strategy_ema_slow: int = 26
+    strategy_adx_period: int = 14
+    strategy_adx_threshold: Decimal = Decimal("25")
+    strategy_rsi_period: int = 14
+    strategy_rsi_oversold: Decimal = Decimal("30")
+    strategy_rsi_overbought: Decimal = Decimal("70")
+    strategy_atr_period: int = 14
 
     # Paths (required)
     data_dir: Path
