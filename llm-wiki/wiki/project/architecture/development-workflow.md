@@ -1,127 +1,547 @@
 ---
-title: Development Workflow — Superpowers pipeline для проекта
+title: Development Workflow — Ultimatum SOP v3 (session-persistent)
 type: architecture
-tags: [workflow, superpowers, methodology, tdd, v0.1]
+tags: [workflow, superpowers, agent-skills, claude-mem, caveman, llmwiki, tdd, hooks, mcp, token-economy, sprint-state, session-continuity, v0.1]
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-23
 status: stable
-sources: [obra/superpowers README, llm-wiki/CLAUDE.md, migration-plan.md]
+sources:
+  - llmwiki pattern (obra)
+  - obra/superpowers README
+  - addyosmani/agent-skills README
+  - JuliusBrussee/caveman README
+  - thedotmack/claude-mem README
+  - llm-wiki/CLAUDE.md (Skills hierarchy & integration)
+  - ~/.claude/CLAUDE.md (global rules)
+  - project/decisions/0017-review-agent-harness.md
 ---
 
-# Development Workflow
+# Development Workflow — Ultimatum SOP v3
 
-**TL;DR:** Проект использует **Superpowers** — методологию из 7 скиллов, автоматически триггерящихся на соответствующих фазах (brainstorm → worktree → plan → subagent exec / TDD / review → finish). Каждый спринт v0.1 проходит полный цикл; wiki (`llm-wiki/`) держит артефакты всех фаз.
+**TL;DR:** Session continuity через `SPRINT_STATE.md` (первое чтение каждой сессии). 5 инструментов (llmWiki + Caveman + Agent Skills + Superpowers + claude-mem) покрывают все фазы. Anti-bloat через model dispatch + trigger cascade. KPD = качество × скорость / токены.
 
-## Superpowers pipeline (7 шагов)
+---
 
-| # | Skill | Активируется | Output |
-|---|-------|-------------|--------|
-| 1 | `brainstorming` | любой новый scope (feature, спринт, subsystem) | `design-spec` (у нас — страницы в `wiki/project/architecture/`) |
-| 2 | `using-git-worktrees` | после approve spec | изолированный worktree на новой ветке + clean baseline |
-| 3 | `writing-plans` | approved spec в руках | implementation plan в `wiki/project/plans/YYYY-MM-DD-<slug>.md` |
-| 4a | `subagent-driven-development` | approved plan | fresh subagent на task → two-stage review (spec compliance → code quality) |
-| 4b | `executing-plans` | approved plan (альтернатива) | batch execution inline + human checkpoints |
-| 5 | `test-driven-development` | во время implementation | RED → GREEN → REFACTOR, коммит на зелёном |
-| 6 | `requesting-code-review` | между tasks / перед merge | issues по severity (critical блокирует) |
-| 7 | `finishing-a-development-branch` | tasks завершены | merge / PR / keep / discard + cleanup worktree |
-
-Дополнительно при отладке: `systematic-debugging` (4-phase root cause), `verification-before-completion`.
-
-## Маппинг на стадии нашего v0.1
-
-| Stage | Наша активность | Superpowers skill |
-|-------|-----------------|-------------------|
-| **Stage 1 — Docs ingest** | чтение MVP-спеки, создание wiki (41 страница: architecture + ADRs + strategies + indicators + concepts) | не применялся (чистый wiki-ingest) |
-| **Stage 2 — Migration plan** | `wiki/project/architecture/migration-plan.md` через обсуждение scope/детализации | ✅ `brainstorming` |
-| **Stage 3 — Sprint-by-sprint** | цикл per-sprint (см. ниже) | ✅ все 7 скиллов |
-
-## Sprint lifecycle (применяется к каждому из 10 спринтов)
+## КРИТИЧЕСКОЕ ПРАВИЛО: Первое действие каждой сессии
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. brainstorming                                            │
-│    (опционально; если scope спринта из migration-plan       │
-│     ясен — пропускаем, идём сразу к writing-plans)          │
-│                                                             │
-│ 2. using-git-worktrees                                      │
-│    - уже внутри worktree elastic-noyce-046edb               │
-│    - per-sprint: sub-branch sprint/S<N>-<slug>              │
-│                                                             │
-│ 3. writing-plans                                            │
-│    → wiki/project/plans/YYYY-MM-DD-sprint-<N>-<slug>.md     │
-│                                                             │
-│ 4. subagent-driven-development (рекомендовано)              │
-│    или executing-plans (inline, когда контекст короткий)    │
-│                                                             │
-│ 5. test-driven-development (enforced в каждом task)         │
-│    - failing test → run → impl → pass → commit              │
-│                                                             │
-│ 6. requesting-code-review (после каждых 3-5 tasks)          │
-│    - critical blocks / major / minor / suggestion           │
-│                                                             │
-│ 7. finishing-a-development-branch                           │
-│    - merge sprint branch → main                             │
-│    - tag v0.1.0-alpha.<N>                                   │
-│    - wiki update: components/ + log.md                      │
-└─────────────────────────────────────────────────────────────┘
+ОБЯЗАТЕЛЬНО — до любого кода, до любых вопросов:
+
+1. Read: llm-wiki/wiki/project/SPRINT_STATE.md
+   → Понять: sprint N, phase X, completed tasks, next action
+
+2. git branch --show-current && git log --oneline -3
+   → Код state: на какой ветке, что последнее
+
+3. git status (если видно незакоммиченное)
+   → Есть ли orphaned changes
+
+4. mcp__ccd_session__mark_chapter "Sprint N — session resume"
 ```
 
-## Артефакты на фазу
+**SPRINT_STATE.md = рабочая память между сессиями.**  
+Если там написано "Task 3 in-progress: implement FSM transitions" — начинай именно оттуда.  
+Не перечитывай весь план. Не спрашивай "где мы?" у пользователя.
 
-| Skill | Артефакт | Куда сохраняется |
-|-------|----------|------------------|
-| `brainstorming` | design spec | `wiki/project/architecture/<topic>.md` |
-| `writing-plans` | implementation plan | `wiki/project/plans/YYYY-MM-DD-<slug>.md` |
-| `subagent-driven-development` | per-task commits + review notes | git history + `wiki/log.md` |
-| `test-driven-development` | failing-then-passing test sequences | `tests/unit/`, `tests/integration/`, `tests/property/` |
-| `requesting-code-review` | review report | `wiki/queries/YYYY-MM-DD-review-<slug>.md` (опционально) |
-| `finishing-a-development-branch` | tag + changelog entry | `CHANGELOG.md` + git tag |
+---
 
-## Связь с глобальным CLAUDE.md
+## Token economy — зачем этот flow
 
-Пользовательский `~/.claude/CLAUDE.md` требует:
-- **Plan Mode сначала** → покрывается `brainstorming` + `writing-plans`.
-- **TDD** → `test-driven-development`.
-- **YAGNI / KISS / DRY** → enforced в `brainstorming` (design-review) и `writing-plans` (scope-check).
-- **Минимальные изменения** → `subagent-driven-development` two-stage review ловит scope creep.
-- **Conventional commits** → коммиты в каждом TDD-цикле следуют формату `feat:/fix:/docs:/refactor:/test:/chore:`.
+| Проблема | Без flow | С flow | Выигрыш |
+|---|---|---|---|
+| "Где мы?" после перерыва | Перечитываем весь план + ADR (~15KB) | SPRINT_STATE.md (≤2KB) + git log | 7× меньше токенов |
+| Повторное чтение ADR | Raw ADR каждую сессию (~8KB) | wiki/components/ (2-3KB, compiled) | 4× меньше |
+| Длинные ответы | Prose с вводными | Caveman active (65% сжатие) | 65% меньше output |
+| Все задачи на opus | Дорого, медленно | haiku/sonnet/opus dispatch | 10-50× экономия |
+| "Решали ли X?" | Перечитываем ADRs | mem-search за секунды | 10× быстрее |
+| Ревьюеры последовательно | Ждём каждого | Параллельный dispatch | 2-3× быстрее |
+| Пропуск quality gates | "Кажется правильным" | Agent Skills + L5 reviewers | 0 регрессий |
 
-Superpowers — **надстройка** над глобальными правилами, не конфликт.
+---
 
-## Связь с wiki-maintainer workflow (CLAUDE.md llm-wiki)
+## Карта инструментов (что решает каждый)
 
-Наш `llm-wiki/CLAUDE.md` описывает **отдельный** workflow: ingest / query / lint — это **wiki maintenance**, не разработка кода. Superpowers skills активируются при **code work** (sprint execution). Оба workflow сосуществуют:
+```
+claude-mem     → память между сессиями (автоматически: 7 хуков)
+               → явно: mem-search "did we solve X?" Phase 1
 
-- **Code-work спринт** (Superpowers) → генерирует событие → **wiki-ingest** документирует в `wiki/project/components/` и дописывает в `wiki/log.md`.
-- **Wiki lint** (llm-wiki schema) может выявить расхождение между wiki и актуальным кодом → триггерит **новый brainstorming** (Superpowers) для resolution.
+llmWiki        → compiled knowledge (wiki-first, не raw ADR)
+               → SPRINT_STATE.md = working memory между сессиями
 
-## Когда пропускаем скиллы
+Superpowers    → process orchestration (brainstorm→plan→code→review→ship)
+               → subagent-driven = свежий контекст per task
 
-- `brainstorming` — пропускается, когда scope уже утверждён в `migration-plan.md` и не изменился (спринты S1-S10 имеют готовые AC).
-- `using-git-worktrees` — уже в worktree; для спринтов — sub-branch достаточно.
-- `requesting-code-review` — **не** пропускаем, но на мелких patch'ах делаем light-review inline.
-- `finishing-a-development-branch` — применяется **только** в конце sprint/release, не на каждом коммите.
+Agent Skills   → depth checklists (TDD, security, context-engineering)
+               → context-engineering skill для subagent briefs
 
-## Red flags (когда skill НЕ соблюдается)
+Caveman        → output compression (65% savings)
+               → caveman-compress для CLAUDE.md files (47% на старте)
 
-Из `superpowers:using-superpowers`:
+Domain reviewers → trading-domain correctness (ADR 0017)
+                → L5: parallel dispatch, не sequential
+```
 
-| Мысль | Реальность |
-|-------|-----------|
-| "Это простой спринт, skill излишен" | Skill-check быстрый; запуск гарантирует дисциплину. |
-| "Сначала посмотрю код, потом подумаю о плане" | `writing-plans` требует design first. Исследование — часть `brainstorming`. |
-| "Напишу код, потом тест" | **Нарушение `test-driven-development`.** Код без теста удаляется. |
-| "Чуть-чуть расширю scope задачи" | `requesting-code-review` поймает; лучше явный `brainstorming` на новый scope. |
+---
 
-## Sources
+## Sprint lifecycle — 9 фаз
 
-- [obra/superpowers](https://github.com/obra/superpowers) — репозиторий + README (установка через `/plugin install superpowers@claude-plugins-official`).
-- `skills/writing-skills/SKILL.md` — гайд по расширению.
-- Наш `llm-wiki/CLAUDE.md` — wiki-maintainer schema (параллельный workflow).
+### PHASE 0a — Session start (РУЧНОЙ, первые 2 минуты)
+
+```
+ДЕЙСТВИЯ:
+1. Read llm-wiki/wiki/project/SPRINT_STATE.md
+   → sprint, phase, next action, key decisions
+
+2. git branch --show-current && git log --oneline -3
+   → где находимся в git
+
+3. Если SPRINT_STATE.phase = "4-execution" и есть in-progress task:
+   a. git status → незакоммиченные изменения?
+   b. pytest tests/unit -x --tb=short -q → тесты проходят?
+   c. Начинай с "Следующее действие" из SPRINT_STATE.md
+
+4. mcp__ccd_session__mark_chapter "Sprint N — resume phase X"
+
+SKIP: шаг 2-3 только если SPRINT_STATE.phase = "between-sprints"
+```
+
+### PHASE 0b — Session start (АВТОМАТИЧЕСКИ, хуки)
+
+```
+[AUTO] claude-mem SessionStart:
+  → inject 50 релевантных observations (SQLite FTS5 + Chroma)
+  → semantic session summary
+
+[AUTO] CLAUDE.md загрузка:
+  → ~/.claude/CLAUDE.md (global rules + model dispatch + token economy)
+  → llm-wiki/CLAUDE.md (project schema + skills hierarchy + sprint orient)
+
+[AUTO] Agent Skills meta:
+  → using-agent-skills flowchart
+
+[AUTO] Caveman:
+  → CAVEMAN MODE ACTIVE (full)
+```
+
+**Что делать если SPRINT_STATE.md устарел (нет файла / phase = "between-sprints" но помним что начали):**
+```
+git log --oneline -10          → найти последний sprint commit
+cat llm-wiki/wiki/log.md | tail -20  → последние wiki events
+mem-search "sprint N in-progress"    → контекст из claude-mem
+```
+
+---
+
+### PHASE 1 — Sprint orient (если новый спринт или неясно где мы)
+
+```
+Только если SPRINT_STATE.phase = "between-sprints" или неопределённо.
+Если already in-progress → пропустить, перейти к Phase 4.
+
+1. mem-search "sprint N" / "ADR NNNN" / "known issue X"
+   Tool: mcp__plugin_claude-mem_mcp-search__smart_search
+   → prior decisions, patterns, unresolved concerns
+
+2. Read wiki/log.md (последние 10 entries)
+
+3. Read wiki/index.md (top 50 lines)
+
+4. mcp__ccd_session__mark_chapter "Sprint N — orient"
+```
+
+---
+
+### PHASE 2 — Brainstorming + ADR
+
+```
+TRIGGER: новый scope (НЕ approved ADR)
+SKIP: executing approved ADR → Phase 3
+
+1. Skill("brainstorming") [Superpowers L3]
+2. Escalate: Skill("process-interviewer") если < 3 раунда + impact > 1 sprint [L4b]
+3. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed)
+4. User approves → status: accepted
+
+SPRINT_STATE update:
+  phase: 2-brainstorming
+  sprint: N
+  next_action: "ADR NNNN review by user"
+```
+
+---
+
+### PHASE 3 — Plan writing
+
+```
+1. Skill("writing-plans") [Superpowers L3]
+   → bite-sized tasks (2-5 min), TDD structure, YAGNI
+   → trace map: sub-decision N → Tasks X,Y,Z (ОБЯЗАТЕЛЬНО)
+
+2. Skill("planning-and-task-breakdown") [Agent Skills L4]
+   → acceptance criteria depth
+
+3. wc -c plan.md → > 50KB = split на part-1.md, part-2.md
+
+4. Save: wiki/project/plans/YYYY-MM-DD-sprint-N-<slug>.md
+
+5. git checkout -b feature/sprint-N-<slug>
+
+SPRINT_STATE update:
+  phase: 3-planning → 4-execution
+  branch: feature/sprint-N-<slug>
+  plan: wiki/project/plans/YYYY-MM-DD-sprint-N-<slug>.md
+  next_action: "Start Task 1: [description]"
+  completed: []
+  in_progress: ["Task 1: [description]"]
+```
+
+---
+
+### PHASE 4 — Per-task execution loop
+
+#### Model selection (выбери ДО dispatch)
+
+```
+haiku  → mechanical: DDL, config, fixtures, README, simple models
+sonnet → standard: business logic, FSM, coordinator methods, tests (DEFAULT)
+opus   → judgment: Kelly/HMAC/security, multi-file refactor, hard debug
+
+ПРАВИЛО: начни sonnet.
+         BLOCKED дважды → escalate opus.
+         Pure mechanical после анализа → downgrade haiku.
+```
+
+#### Brief construction (перед каждым dispatch)
+
+```
+≤ 200 слов, output ≤ 30KB:
+  → пиши напрямую
+
+> 200 слов / output > 30KB / critical correctness (Kelly, FSM, security):
+  1. Skill("context-engineering") [Agent Skills L4] — как pack context
+  2. prompt-master refine [L4b]
+  3. Маркер в brief: "DO NOT compress technical specs below: [specs]"
+```
+
+#### Dispatch + TDD цикл
+
+```
+1. Agent(model=selected, prompt=brief)
+   → DONE: переход к review
+   → DONE_WITH_CONCERNS: прочитай concerns
+   → NEEDS_CONTEXT: предоставь, re-dispatch
+   → BLOCKED (1): контекст, re-dispatch sonnet
+   → BLOCKED (2): escalate opus
+
+2. TDD strict:
+   RED:    failing test → run → confirm FAIL
+   GREEN:  minimal code → run → confirm PASS
+   COMMIT: conventional commit (feat:/fix:/test:/chore:)
+
+3. Two-stage review:
+   spec-reviewer → "matches spec?" → NO: fix loop
+   code-quality-reviewer → "well-built?" → NO: fix loop
+
+4. TodoWrite: task DONE
+```
+
+#### Parallel dispatch (ОБЯЗАТЕЛЬНО знать)
+
+```
+ALWAYS PARALLEL (один message, несколько Agent calls):
+  → trading-logic-reviewer + python-reviewer
+  → trading-logic-reviewer + quant-stats-reviewer
+  → spec-reviewer task N + implementer task N+1
+  → два независимых implementer (разные файлы, 0 shared state)
+
+NEVER PARALLEL:
+  → implementer → fix → re-review (зависимые)
+  → migration runner → tests reading DB
+  → task N+1 если импортирует код task N
+```
+
+#### SPRINT_STATE update (после каждого DONE task)
+
+```
+completed: добавить task
+in_progress: убрать task, добавить следующий
+next_action: "Task N+1: [конкретное описание]"
+             "Run: pytest tests/unit/test_X.py -x"
+phase: 4-execution
+updated: YYYY-MM-DD
+```
+
+---
+
+### PHASE 5 — Domain review (Layer 5, ADR 0017)
+
+#### Trigger cascade
+
+```
+src/signalgen/**, src/execution/**, src/risk/**, src/backtest/**:
+  → trading-logic-reviewer (sonnet)   ОБЯЗАТЕЛЬНО
+  SKIP: pure docs
+
+src/risk/**, src/backtest/**, src/analytics/** (формулы):
+  → quant-stats-reviewer (opus)       ОБЯЗАТЕЛЬНО
+  SKIP: no formula
+
+migrations/**, src/marketdata/**, src/platform/storage/**:
+  → data-integrity-reviewer (sonnet)  ОБЯЗАТЕЛЬНО
+  SKIP: no persistence
+
+любой *.py:
+  → python-reviewer (sonnet)          если нет domain hit ИЛИ domain cleared
+  SKIP: < 100 LoC + только tests + domain cleared
+
+API keys/money/signing/override:
+  → + security-and-hardening [Agent Skills L4]
+```
+
+#### Review output
+
+```
+❌ Blockers → fix loop (новый implementer → re-review)
+⚠️ Concerns → SPRINT_STATE.blockers_concerns + defer sprint page
+Follow-ups for wiki → wiki update в этом sprint (не defer)
+code↔ADR drift → Skill("fact-checker") [L4b]
+```
+
+---
+
+### PHASE 6 — Wiki update (continuous)
+
+```
+После каждого task DONE:
+  Edit wiki/project/components/<name>.md    → что делает теперь
+  Edit wiki/project/sprints/sprint-NN.md   → task complete
+  Edit wiki/log.md                          → append entry
+  Edit wiki/index.md                        → если новая страница
+
+ПРАВИЛО: wiki/components/ — primary reference.
+         Raw ADR — только при явном несоответствии.
+         Размер страниц < 50KB (иначе split).
+```
+
+---
+
+### PHASE 7 — Tests
+
+```
+Per-task (TDD внутри Phase 4):
+  tests/unit/    → каждый RED→GREEN цикл
+  tests/property/→ Hypothesis: FSM, look-ahead, orderLinkId
+
+Gate перед Phase 8:
+  pytest tests/unit tests/property -x     ← must be green
+
+Opt-in integration:
+  pytest tests/integration -x -m demo    ← если env keys
+
+Stage F (только S6+, venue API):
+  scripts/spot_oco_probe_testnet.py --probe B2
+  scripts/spot_oco_probe_testnet.py --probe v3-D
+  → результаты в sprint page Stage F table
+```
+
+---
+
+### PHASE 8 — Finishing branch
+
+```
+1. Skill("finishing-a-development-branch") [Superpowers L3]
+
+2. Skill("git-workflow-and-versioning") [Agent Skills L4]
+   → atomic commits, conventional format
+
+3. Skill("documentation-and-adrs") [Agent Skills L4]
+   → ADR format correct, consequences documented
+
+4. ADR ↔ agent prompt sync:
+   Edit ~/.claude/agents/<name>.md (если ADR изменён)
+   (PreToolUse hook проверит на push)
+
+5. Sprint page finalize:
+   Edit wiki/project/sprints/sprint-NN-*.md
+   → Stage F results, review follow-ups, plan drift
+
+6. Merge + tag:
+   git merge feature/sprint-N-<slug>
+   git tag v0.1.0-alpha.N
+
+7. Push (PreToolUse hook fires):
+   git push origin main
+   git push origin v0.1.0-alpha.N
+
+SPRINT_STATE update:
+  sprint: N-complete
+  phase: between-sprints
+  tag: v0.1.0-alpha.N
+  branch: main
+  next_action: "Begin Sprint N+1. Start brainstorming."
+  completed: [все tasks]
+  in_progress: []
+  blockers_concerns: [deferred to S(N+1)]
+```
+
+---
+
+### PHASE 9 — Session end
+
+**ОБЯЗАТЕЛЬНО перед закрытием приложения:**
+
+```
+1. Update SPRINT_STATE.md:
+   → Текущий статус (sprint / phase)
+   → in_progress → что конкретно осталось
+   → next_action → КОНКРЕТНОЕ действие с командой если применимо
+   → key_decisions → нетривиальные решения сессии
+   → updated: YYYY-MM-DD
+
+2. Append wiki/log.md:
+   ## [YYYY-MM-DD] session-end | Sprint N Phase X
+   → что сделано, что отложено
+
+3. mcp__ccd_session__mark_chapter "Sprint N — session end"
+
+[AUTO] claude-mem SessionEnd hook:
+   → session summary → SQLite + Chroma embedding
+   → доступно через mem-search в следующей сессии
+```
+
+**Если прерывание (приложение закрылось без phase 9):**  
+При следующем старте: SPRINT_STATE.md + `git log --oneline -5` + `git status` дают достаточно контекста.
+
+---
+
+## SPRINT_STATE.md — формат и правила
+
+```markdown
+---
+title: Sprint State
+type: state
+updated: YYYY-MM-DD
+sprint: N или "N-complete"
+phase: between-sprints | 2-brainstorming | 3-planning | 4-execution | 8-finishing
+branch: feature/sprint-N-xxx или main
+tag: v0.1.0-alpha.N (если tagged)
+plan: wiki/project/plans/YYYY-MM-DD-sprint-N-slug.md
+---
+
+## Текущий статус
+[1 строка: Sprint N — Topic. Phase X.]
+
+## Завершённые задачи
+- [x] Task 1: description
+- [x] Task 2: description
+
+## В процессе
+- [ ] Task 3: description (model: sonnet, N/M RED→GREEN done)
+
+## Следующее действие
+[Конкретно. Команда если применимо.]
+Run: pytest tests/unit/test_X.py -x
+
+## Ключевые решения последней сессии
+- [только нетривиальное, не очевидное из кода]
+
+## Блокеры / concerns (отложены)
+- [item] — defer sprint N+1
+```
+
+**Правила файла:**
+- Размер ≤ 2KB ВСЕГДА (иначе теряется смысл — быстрое чтение)
+- "Следующее действие" = конкретный следующий шаг (не "продолжать")
+- Обновляй после каждого task DONE и перед закрытием сессии
+- Не history — только CURRENT state
+
+---
+
+## Hooks (автоматические)
+
+| Hook | Когда | Action |
+|---|---|---|
+| SessionStart:compact (claude-mem) | start | inject 50 observations |
+| SessionStart:compact (caveman) | start | activate full mode |
+| SessionStart:compact (agent-skills) | start | load meta flowchart |
+| UserPromptSubmit (claude-mem) | каждый prompt | capture observation |
+| UserPromptSubmit (caveman) | каждый prompt | re-assert caveman |
+| PostToolUse (claude-mem) | каждый tool result | capture (кроме SKIP_TOOLS) |
+| Stop (claude-mem) | каждый мой ответ | capture response |
+| SessionEnd (claude-mem) | конец сессии | summary + Chroma embedding |
+| PreToolUse → git push | push attempt | ADR-agent sync check |
+
+---
+
+## Одноразовая настройка (выполнить один раз)
+
+```bash
+# Compress rule files → ~47% экономия токенов каждую сессию
+/caveman:compress ~/.claude/CLAUDE.md
+/caveman:compress llm-wiki/CLAUDE.md
+/caveman:compress ~/.claude/agents/trading-logic-reviewer.md
+/caveman:compress ~/.claude/agents/quant-stats-reviewer.md
+# Результат: *.original.md (backup) + compressed main file
+# Re-run после значительных обновлений файлов
+```
+
+---
+
+## Skip matrix (anti-bloat)
+
+| Шаг | Skip if |
+|---|---|
+| Phase 1 orient | SPRINT_STATE.phase = "4-execution" (уже в процессе) |
+| brainstorming | executing approved ADR |
+| process-interviewer | первые 3 ответа чёткие |
+| context-engineering для brief | ≤ 200 слов, output ≤ 30KB |
+| trading-logic-reviewer | pure docs, 0 logic |
+| quant-stats-reviewer | 0 формул |
+| data-integrity-reviewer | 0 persistence |
+| python-reviewer | domain cleared, < 100 LoC, только tests |
+| security-and-hardening | 0 I/O boundary |
+| Stage F probes | спринт не касается venue API |
+| version-bump skill | git tag уже проставлен |
+
+---
+
+## Parallel dispatch map
+
+```
+ВСЕГДА ПАРАЛЛЕЛЬНО (один message):
+  trading-logic-reviewer + python-reviewer
+  trading-logic-reviewer + quant-stats-reviewer
+  spec-reviewer(task N) + implementer(task N+1)
+  два независимых implementer (разные файлы)
+
+ВСЕГДА ПОСЛЕДОВАТЕЛЬНО:
+  implementer → fix → re-review
+  migration → tests reading DB
+  task N+1 если импортирует task N код
+```
+
+---
+
+## Red flags
+
+| Симптом | Fix |
+|---|---|
+| Читаю raw ADR без wiki-страницы | wiki/components/ FIRST |
+| "Где мы?" — спрашиваю пользователя | Read SPRINT_STATE.md FIRST |
+| Sonnet BLOCKED дважды | escalate opus |
+| git push заблокирован hook | Edit ~/.claude/agents/<name>.md → retry |
+| SPRINT_STATE.md устарел/нет | git log -10 + wiki/log.md tail -20 + mem-search |
+| Brief > 200 слов без context-engineering | Skill("context-engineering") СНАЧАЛА |
+| Читаю весь план при resume | Read только SPRINT_STATE.md → next_action |
+| Ревьюеры последовательно | dispatch параллельно (один message) |
+
+---
 
 ## Related
 
-- [[migration-plan]] — 10 спринтов, где применяется этот workflow.
-- [[overview]] — target v0.1.
-- [[../plans/2026-04-20-sprint-1-foundation]] — первый пример plan-артефакта.
-- `~/.claude/CLAUDE.md` (private) — глобальные правила пользователя (TDD, Plan-Mode, YAGNI).
+- [[../decisions/0017-review-agent-harness]] — L5 domain reviewers spec
+- [[../decisions/0020-sprint-6-execution-spot-oco-emulation]] — пример полного цикла
+- [[../components/adr-agent-sync-hook]] — PreToolUse hook
+- [[../sprints/sprint-06-spot-oco-emulation]] — sprint narrative S6
+- [[../SPRINT_STATE]] — живое состояние проекта (читай первым)
+- [[migration-plan]] — 10 спринтов v0.1

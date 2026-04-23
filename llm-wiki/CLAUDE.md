@@ -284,23 +284,32 @@ Read tool — hard-limit **~25,000 токенов** (~90KB markdown / ~80KB ко
 
 ## Связь с Superpowers (методология разработки кода)
 
-Wiki-maintainer workflow (ingest / query / lint) — **параллелен** методологии разработки кода. Когда пользователь просит **писать/менять код бота** (не wiki), активируются скиллы Superpowers:
+**ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального):**
+```
+1. Read: llm-wiki/wiki/project/SPRINT_STATE.md
+   → sprint, phase, completed tasks, next action
+2. git branch --show-current && git log --oneline -3
+3. mcp__ccd_session__mark_chapter "Sprint N — session resume"
+```
 
-1. `brainstorming` — Socratic refinement, design spec.
-2. `using-git-worktrees` — изолированный workspace.
-3. `writing-plans` — implementation plan (артефакт → `wiki/project/plans/YYYY-MM-DD-<slug>.md`).
-4. `subagent-driven-development` (рекомендуемый) или `executing-plans` — исполнение.
-5. `test-driven-development` — RED → GREEN → REFACTOR enforced.
-6. `requesting-code-review` — между tasks / перед merge.
-7. `finishing-a-development-branch` — merge / tag / cleanup.
+**ПОСЛЕДНЕЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (перед закрытием):**
+```
+1. Edit SPRINT_STATE.md: обнови phase, in_progress, next_action, updated
+2. Append wiki/log.md
+3. mcp__ccd_session__mark_chapter "Sprint N — session end"
+```
 
-Полный маппинг workflow на наши 10 спринтов v0.1 — см. [[wiki/project/architecture/development-workflow]].
+**MASTER SOP:** [[wiki/project/architecture/development-workflow]] — полный sprint lifecycle (9 фаз, session continuity, token economy, parallel dispatch, model selection, skip matrix).
+
+**Wiki-first rule:** читай `wiki/project/components/<name>.md` ДО сырого ADR. Wiki (2-3KB compiled) vs raw ADR (8-15KB). 4-7× экономия токенов. Raw ADR только при явном несоответствии.
+
+Wiki-maintainer workflow (ingest / query / lint) — **параллелен** методологии разработки кода. При code-tasks активируются Superpowers skills (brainstorming → writing-plans → subagent-driven-development → test-driven-development → finishing-a-development-branch).
 
 **Принцип сосуществования:**
-- Завершение code-work (sprint task, merge) **триггерит** wiki-ingest — документирование в `wiki/project/components/<name>.md` + запись в `wiki/log.md`.
-- Wiki-lint может выявить расхождение wiki ↔ актуальный код → триггерит новый `brainstorming` на resolution.
+- Завершение code-work → wiki-ingest: `wiki/project/components/<name>.md` + `wiki/log.md`.
+- Wiki-lint выявляет расхождение wiki ↔ код → триггерит новый `brainstorming`.
 
-Когда LLM-мейнтейнер читает CLAUDE.md — он читает **оба** workflow: wiki-maintenance (этот файл) + Superpowers (активируется автоматически при code-tasks).
+Когда LLM-мейнтейнер читает CLAUDE.md — читает **оба** workflow: wiki-maintenance + code-work.
 
 ## Skills hierarchy & integration
 
@@ -320,6 +329,58 @@ Layer 2: Project knowledge (этот wiki)
 Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
          session bookends + chapter marks
 ```
+
+### Token economy — ключевые принципы (KPD)
+
+| Принцип | Правило | Выигрыш |
+|---|---|---|
+| Wiki-first | `wiki/components/` → `wiki/decisions/` → raw ADR (только при несоответствии) | 4-7× меньше токенов на orient |
+| caveman-compress | Сжать CLAUDE.md + agent prompts один раз (см. одноразовая настройка) | ~47% меньше каждую сессию |
+| Model dispatch | haiku=mechanical, sonnet=standard, opus=judgment (начни sonnet, escalate только при 2× BLOCKED) | до 50× экономия |
+| mem-search first | `mcp__plugin_claude-mem_mcp-search__smart_search` до чтения файлов | "did we solve X?" за секунды |
+| Parallel reviewers | trading-logic + python-reviewer в одном message (разные Agent calls) | 2-3× быстрее |
+| Brief via context-engineering | Agent Skills `context-engineering` для briefs > 200 слов | меньше re-dispatches |
+
+### Одноразовая настройка (выполнить один раз)
+
+```bash
+# Compress rule files → ~47% экономия токенов каждую сессию
+/caveman:compress ~/.claude/CLAUDE.md
+/caveman:compress llm-wiki/CLAUDE.md
+/caveman:compress ~/.claude/agents/trading-logic-reviewer.md
+/caveman:compress ~/.claude/agents/quant-stats-reviewer.md
+# После: оригинал → *.original.md (backup для редактирования)
+# Re-run после значительных обновлений файлов
+```
+
+### Sprint orient sequence (Phase 1, каждый спринт)
+
+```
+1. mem-search "sprint N" / "ADR NNNN" / "blocker X"
+   → mcp__plugin_claude-mem_mcp-search__smart_search
+   → surface prior decisions, patterns, unresolved concerns
+
+2. Read wiki/log.md (tail -10 entries)
+   → что делали недавно
+
+3. Read wiki/index.md (top 50 lines)
+   → текущий state wiki
+
+4. Если возобновляем спринт: Read wiki/project/sprints/sprint-NN.md
+   НЕ читать raw план (~10KB) — wiki sprint page (~3KB)
+
+5. mcp__ccd_session__mark_chapter "Sprint N — orient"
+```
+
+### Model selection (anti-bloat dispatch)
+
+| Model | Когда | Примеры задач |
+|---|---|---|
+| **haiku** | Mechanical: 1-2 файла, чёткий spec, 0 judgment | Schema DDL, config files, README, simple fixtures |
+| **sonnet** | Standard TDD: business logic, moderate judgment | pydantic models, FSM transitions, coordinator methods, tests |
+| **opus** | Judgment-heavy: многофайловый refactor, security, debug | Kelly formulas, HMAC override, legacy cleanup, трудный FSM bug |
+
+**Правило:** начни sonnet. Escalate к opus только если sonnet BLOCKED дважды. Downgrade к haiku если task = pure mechanical после анализа.
 
 ### Conflict resolution (overlapping skills)
 
@@ -429,8 +490,8 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 | Event / context | Layer cascade | Skip if |
 |---|---|---|
 | Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
-| Subagent dispatch (implementer) | L4b prompt-master inline (tight brief, explicit output budget) → L3 subagent-driven-development → TDD strict | Single Bash command |
-| Subagent brief > 200 слов / output > 30KB | L4b prompt-master refine ОБЯЗАТЕЛЬНО | Always apply |
+| Subagent dispatch (implementer) | AS `context-engineering` (brief construction) → L4b prompt-master (если > 200 слов) → L3 subagent-driven-development → TDD strict | Single Bash command |
+| Subagent brief > 200 слов / output > 30KB / critical correctness | AS `context-engineering` СНАЧАЛА → L4b prompt-master refine ОБЯЗАТЕЛЬНО | Always apply |
 | Code change в `src/risk/`, `src/signalgen/`, `src/execution/` | L5 trading-logic-reviewer ОБЯЗАТЕЛЬНО after DONE | Pure docs change |
 | Code change в `src/risk/**`, `src/backtest/**`, `src/analytics/**` (math) | L5 quant-stats-reviewer ОБЯЗАТЕЛЬНО | No formula touched |
 | Code change в `migrations/`, `src/marketdata/`, `src/platform/storage/` | L5 data-integrity-reviewer ОБЯЗАТЕЛЬНО | No persistence touched |
@@ -454,13 +515,13 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 - ≤ 5 RED→GREEN cycles total в одном subagent
 
 **Parallel dispatch** (multiple Agent calls в одном message):
-- Все dispatches — independent (no shared state)
-- Каждый делает Write/Edit на разные файлы
-- Reviewers на разные коммиты — всегда parallel
-
-**Sequential** (когда parallel НЕ применять):
-- Implementer → review → fix → re-review (внутри одного task)
-- Migration runner → tests reading DB (depends on schema)
+- ALWAYS: trading-logic-reviewer + python-reviewer (разные scope)
+- ALWAYS: trading-logic-reviewer + quant-stats-reviewer (разные scope)
+- ALWAYS: spec-reviewer task N + implementer task N+1 (если spec review ~5 min)
+- ALWAYS: два independents implementer (разные файлы, 0 shared state)
+- NEVER: implementer → fix → re-review (зависимые)
+- NEVER: migration runner → tests reading DB (depends on schema)
+- NEVER: task N+1 если N+1 imports N's code
 
 **Read-tool guard** (см. также секцию выше):
 - Unknown file → `wc -c` first
