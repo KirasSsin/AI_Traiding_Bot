@@ -188,3 +188,33 @@ def test_entry_pending_heal_blocked_by_staleness(monkeypatch):
     assert r.verdict == "DIVERGENCE"
     assert r.halt_reason == "HALT_BOOTSTRAP_AMBIGUOUS"
     assert (r.heal_context or {}).get("sub_reason") == "stale_age"
+
+
+# ---------------------------------------------------------------------------
+# Task 15: EXIT_PENDING classification
+# ---------------------------------------------------------------------------
+
+def test_exit_pending_exited_when_position_flat_no_open_orders():
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("0"),
+        open_orders=[],
+        entry_order=None,
+    )
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.001"), entry_order_id=None)
+    r = reco.reconcile(local, expected_state=ExecutionState.EXIT_PENDING)
+    assert r.verdict == "EXITED"
+    assert r.halt_reason is None
+
+
+def test_exit_pending_halt_when_position_still_there():
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("0.001"),  # still open
+        open_orders=[],
+        entry_order=None,
+    )
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.001"), entry_order_id=None)
+    r = reco.reconcile(local, expected_state=ExecutionState.EXIT_PENDING)
+    assert r.verdict == "DIVERGENCE"
+    assert r.halt_reason == "HALT_EXIT_RECONCILE_DIVERGENCE"
