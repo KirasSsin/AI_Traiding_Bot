@@ -36,6 +36,14 @@ _TERMINAL_STATES: frozenset[ExecutionState] = frozenset({
     ExecutionState.ERROR,
 })
 
+_RECONCILABLE_STATES: frozenset[ExecutionState] = frozenset({
+    ExecutionState.ENTRY_PENDING,
+    ExecutionState.EXIT_PENDING,
+    ExecutionState.OCO_ARMING,
+    ExecutionState.EXIT_SIBLING_CANCELLING,
+    ExecutionState.EXIT_SL_RESIDUAL,
+})
+
 
 def _now_iso() -> str:
     return datetime.now(tz=UTC).isoformat()
@@ -58,6 +66,69 @@ class Coordinator:
         self._reconciler = reconciler
         self._symbol = symbol
         self._base_coin = base_coin
+
+    def on_ws_reconnect(self) -> None:
+        """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
+
+        Called by WS consumer on disconnect AND by bootstrap.
+        Routes through RECONCILING state; dispatches on verdict.
+        """
+        row = self._repo.get(self._symbol)
+        if row is None:
+            return
+        state = row.state
+        if state not in _RECONCILABLE_STATES:
+            _log.debug("on_ws_reconnect: state=%s not reconcilable; noop", state.name)
+            return
+        self._transition(ExecutionEvent.WS_RECONNECT)  # → RECONCILING
+        local = self._build_local_state(row)
+        result = self._reconciler.reconcile(local, expected_state=state)
+        if result.verdict == "HEAL_ENTRY_FILLED":
+            self._apply_heal_entry_filled(result)
+            self._transition(ExecutionEvent.RECONCILE_ENTRY_FILLED)  # → LONG_OPEN
+            return
+        if result.verdict == "EXITED":
+            self._apply_exited()
+            self._transition(ExecutionEvent.RECONCILE_EXITED)  # → FLAT
+            return
+        if result.verdict == "AGREE":
+            self._transition(ExecutionEvent.RECONCILE_OK)  # → OCO_ARMED (existing S6 path)
+            return
+        # DIVERGENCE
+        self._set_halt(
+            reason=result.halt_reason or "HALT_RECONCILE_DIVERGENCE",
+            last_event=ExecutionEvent.WS_RECONNECT,
+            extra=result.heal_context or {},
+        )
+        self._transition(ExecutionEvent.RECONCILE_DIVERGENCE)  # → HALTED
+
+    def _build_local_state(self, row: "ExecutionStateRow") -> "LocalState":
+        """Build reconciler LocalState from current repo row."""
+        from src.execution.reconciler import LocalState
+        return LocalState(
+            state=row.state.name,
+            position_qty=row.position_qty,
+            entry_price=row.entry_price,
+            bracket_id=row.bracket_id,
+            symbol=self._symbol,
+            entry_order_id=row.oco_main_order_id,
+            expected_entry_qty=row.expected_oco_qty,
+            updated_at=datetime.fromisoformat(row.updated_at) if row.updated_at else None,
+        )
+
+    def _apply_heal_entry_filled(self, result: Any) -> None:
+        self._upsert_fields(
+            position_qty=result.exch_qty,
+            entry_price=result.entry_price,
+            last_reconcile_at=_now_iso(),
+        )
+
+    def _apply_exited(self) -> None:
+        self._upsert_fields(
+            position_qty=Decimal("0"),
+            last_exit_reason="EXIT_RECONCILE_DETECTED",
+            last_reconcile_at=_now_iso(),
+        )
 
     def bootstrap(self) -> None:
         """ADR 0020 sub-decision 9: discover highest prior attempt# from exchange evidence,
