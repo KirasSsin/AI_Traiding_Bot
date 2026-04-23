@@ -1,8 +1,10 @@
 """SQLite persistence for execution FSM state. ADR 0019 sub-decision 3 + ADR 0020 sub-decision 2."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from src.execution.state_machine import ExecutionState
@@ -92,6 +94,37 @@ class ExecutionStateRepo:
         if r is None:
             return None
         return _row_to_dataclass(r)
+
+    def _set_halt(self, *, symbol: str, reason: str, context: dict) -> None:
+        """Persist HALT (ADR 0021 sub-decision 5 — γ pattern).
+
+        Idempotency rule: ``halt_reason`` column accepts the FIRST non-null
+        write only (primary wins); subsequent halts leave the column unchanged.
+        ``halt_log`` always appends — chronological audit trail of every halt
+        event the coordinator emitted.
+
+        Safe to call when no execution_state row exists yet (bootstrap path):
+        only the audit log is written.
+        """
+        ts = datetime.now(tz=UTC).isoformat()
+        ctx_json = json.dumps(context, default=str, sort_keys=True)
+        with self._conn:
+            cur = self._conn.execute(
+                "SELECT halt_reason FROM execution_state WHERE symbol = ?",
+                (symbol,),
+            )
+            existing = cur.fetchone()
+            if existing is not None and existing[0] is None:
+                self._conn.execute(
+                    "UPDATE execution_state SET halt_reason = ?, updated_at = ? "
+                    "WHERE symbol = ? AND halt_reason IS NULL",
+                    (reason, ts, symbol),
+                )
+            self._conn.execute(
+                "INSERT INTO halt_log (symbol, ts, reason, context_json) "
+                "VALUES (?, ?, ?, ?)",
+                (symbol, ts, reason, ctx_json),
+            )
 
 
 def _row_to_dataclass(r: tuple) -> ExecutionStateRow:

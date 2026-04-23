@@ -220,6 +220,11 @@ class Coordinator:
                 symbol=self._symbol, side="Sell", qty=leaves_qty,
             )
         except Exception:
+            self._set_halt(
+                reason="HALT_FLATTEN_FAILED",
+                last_event=ExecutionEvent.FLATTEN_FAILED,
+                extra={"flatten_path": "ioc_residual", "leaves_qty": str(leaves_qty)},
+            )
             self._transition(ExecutionEvent.FLATTEN_FAILED)
             return
         self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
@@ -314,6 +319,14 @@ class Coordinator:
         retry_qty = self._step_floor(qty - qty_step, qty_step)
         if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
             return
+        self._set_halt(
+            reason="HALT_FLATTEN_FAILED",
+            last_event=ExecutionEvent.FLATTEN_FAILED,
+            extra={
+                "flatten_path": "emergency",
+                "trigger_reason": reason.value if hasattr(reason, "value") else str(reason),
+            },
+        )
         self._transition(ExecutionEvent.FLATTEN_FAILED)
 
     def _best_effort_cancel(self, order_id: str) -> None:
@@ -373,6 +386,11 @@ class Coordinator:
         current = now if now is not None else datetime.now(tz=UTC)
         age = (current - started).total_seconds()
         if age > ttl_seconds:
+            self._set_halt(
+                reason="HALT_OCO_ARM_TIMEOUT",
+                last_event=ExecutionEvent.BRACKET_TIMEOUT,
+                extra={"ttl_seconds": ttl_seconds, "age_seconds": str(age)},
+            )
             self._transition(ExecutionEvent.BRACKET_TIMEOUT)
 
     def _upsert_fields(self, **changes: object) -> None:
@@ -434,5 +452,40 @@ class Coordinator:
                 arming_started_at=current.arming_started_at,
                 last_attempt_num=current.last_attempt_num,
                 updated_at=_now_iso(),
+                halt_reason=current.halt_reason,
+                last_exit_reason=current.last_exit_reason,
+                last_reconcile_at=current.last_reconcile_at,
+                bootstrap_at=current.bootstrap_at,
             )
         )
+
+    def _set_halt(
+        self,
+        *,
+        reason: str,
+        last_event: ExecutionEvent,
+        extra: dict | None = None,
+    ) -> None:
+        """ADR 0021 sub-decision 5 γ persistence — capture row state BEFORE transition.
+
+        Required ctx keys: state_at_halt, position_qty, oco_tp_id, oco_sl_id,
+        expected_qty, last_event, last_attempt_num, arming_started_at.
+        """
+        row = self._repo.get(self._symbol)
+        ctx: dict[str, object] = {
+            "state_at_halt": row.state.name if row is not None else None,
+            "position_qty": str(row.position_qty) if row is not None else "0",
+            "oco_tp_id": row.oco_tp_order_id if row is not None else None,
+            "oco_sl_id": row.oco_sl_order_id if row is not None else None,
+            "expected_qty": (
+                str(row.expected_oco_qty)
+                if row is not None and row.expected_oco_qty is not None
+                else None
+            ),
+            "last_event": last_event.name,
+            "last_attempt_num": row.last_attempt_num if row is not None else 0,
+            "arming_started_at": row.arming_started_at if row is not None else None,
+        }
+        if extra:
+            ctx.update(extra)
+        self._repo._set_halt(symbol=self._symbol, reason=reason, context=ctx)
