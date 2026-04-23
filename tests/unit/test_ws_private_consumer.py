@@ -93,3 +93,35 @@ def test_parser_forwards_new_unfilled_event_without_fees():
     }]}
     c._on_order_raw(msg)
     coord.on_order_event.assert_called_once()
+
+
+def test_wallet_event_routed_to_reconciler():
+    reco = MagicMock()
+    c = BybitPrivateWSConsumer(
+        api_key="k", api_secret="s",
+        endpoint="wss://stream-demo.bybit.com/v5/private",
+        coordinator=MagicMock(), reconciler=reco,
+    )
+    msg = {"data": [{
+        "accountType": "UNIFIED",
+        "coin": [{"coin": "BTC", "walletBalance": "0.001234"}],
+    }]}
+    c._on_wallet_raw(msg)
+    reco.on_wallet_event.assert_called_once_with({"coin": "BTC", "walletBalance": "0.001234"})
+
+
+def test_wallet_event_multi_coin_dispatched_individually():
+    reco = MagicMock()
+    c = BybitPrivateWSConsumer(
+        api_key="k", api_secret="s",
+        endpoint="wss://stream-demo.bybit.com/v5/private",
+        coordinator=MagicMock(), reconciler=reco,
+    )
+    msg = {"data": [{
+        "coin": [
+            {"coin": "BTC", "walletBalance": "0.001"},
+            {"coin": "USDT", "walletBalance": "1000.0"},
+        ],
+    }]}
+    c._on_wallet_raw(msg)
+    assert reco.on_wallet_event.call_count == 2
