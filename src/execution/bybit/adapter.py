@@ -26,6 +26,15 @@ class OrderAck:
     order_link_id: str | None
 
 
+@dataclass(frozen=True)
+class CancelResult:
+    """Result of a cancel_order call. cancelled=False+reason=REJECT_ORDER_ALREADY_TERMINAL
+    means the order was already Filled (non-fatal race per ADR 0020 sub-decision 6)."""
+
+    cancelled: bool
+    reason_code: ReasonCode | None = None
+
+
 class BybitAPIError(RuntimeError):
     """Bybit `place_order` returned non-zero retCode."""
 
@@ -171,3 +180,21 @@ class BybitMarketAdapter:
             order_id=resp["result"]["orderId"],
             order_link_id=resp["result"].get("orderLinkId"),
         )
+
+    def cancel_order(self, *, symbol: str, order_id: str) -> CancelResult:
+        """ADR 0020 sub-decision 6: cancel-of-Filled returns 110001, classified non-fatal."""
+        payload = {"category": "spot", "symbol": symbol, "orderId": order_id}
+        resp = self._rest._http.cancel_order(**payload)
+        if resp["retCode"] == 0:
+            return CancelResult(cancelled=True)
+        reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+        if reason is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
+            return CancelResult(cancelled=False, reason_code=reason)
+        raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+
+    def cancel_all_orders(self, *, symbol: str) -> None:
+        """Bulk cancel — used by flatten cascade and emergency halt."""
+        resp = self._rest._http.cancel_all_orders(category="spot", symbol=symbol)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
