@@ -40,6 +40,14 @@ Schema `execution_state` (PK = `symbol`), `migrations/0003_execution_state.sql`.
 - `(state, event) not in TRANSITIONS` → `IllegalTransitionError`.
 - `WS_RECONNECT` валиден только для LONG_OPEN / OCO_ARMED / PARTIAL_FILL.
 
+## Known limitations (v0.1, defer to S6)
+
+Зафиксировано post-merge ревью S5 (commits 67622b5..b5d79cc, ADR 0019 follow-up):
+
+- **Нет startup reconcile.** `Coordinator.handle_ws_reconnect` на `INIT` (local=None) короткозамыкается без вызова reconciler. Если на старте на бирже уже есть позиция от прошлой crashed-сессии — она не подхватится. **S6:** добавить `Coordinator.bootstrap()` который вызывает `reconciler.reconcile(symbol, None)` всегда и при divergence уходит в HALTED.
+- **`ENTRY_PENDING` / `EXIT_PENDING` без `WS_RECONNECT`.** Если WS падает между place_order и fill, после reconnect FSM остаётся в pending state — silent drift, если ордер тем временем заполнился. **S6:** добавить `(ENTRY_PENDING|EXIT_PENDING, WS_RECONNECT) → RECONCILING` + reconciler verdicts промотируют в LONG_OPEN/FLAT/HALTED по exchange truth.
+- **`_persist` берёт первый open order как OCO main leg.** v0.1 single-symbol BTC/USDT обычно безопасно (один OCO активен), но fragile. **S6:** matching по `orderLinkId` префиксу (`s5-open-`/`s5-oco-`).
+
 ## Related
 
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).

@@ -193,3 +193,16 @@
 - Verification: full unit suite green; testnet integration SKIPPED без `PYTEST_RUN_INTEGRATION=1`.
 - Plan drift fixes: tasks 8/9 brief signatures корректировались — actual `BybitMarketAdapter.place_market_order` + nested `ExchangeState.position` API использовался.
 - Deferred: partial-fill testnet scenario, WS-divergence injected test, `OCO_PARTIAL_TIMEOUT` watchdog daemon → S5.5/S6.
+
+## [2026-04-23] review | S5 post-merge audit + fix-PR
+- Reviewers: `trading-logic-reviewer` (opus) + `python-reviewer` (sonnet) parallel on commits `7fa328f..76b88ba` (PR #6).
+- trading-logic: no blockers; 6 concerns (startup-reconcile, ENTRY_PENDING/EXIT_PENDING WS, `_normalize_position` `"0"`, testnet wallet-balance scope, `_persist` first-order assumption, count mismatch ADR↔wiki↔test).
+- python: 1 BLOCKER (`_persist` untyped `result`), 4 CONCERN (ReconcileVerdict forward ref, bare `open()` test path, `_normalize_position` `"0"`, line >88), 5 NITs.
+- Cross-flagged real bug: `_normalize_position` accepts `avgPrice="0"` as valid → `entry_price=Decimal("0")` пишется в `execution_state`. **Fix shipped (TDD red→green)**.
+- Fix-PR commits (branch `fix/sprint-5-review-followup`):
+  - `67622b5` fix(execution): normalize avgPrice='0' to None
+  - `2485a0d` style(execution): type hint + import order + line length cleanups
+  - `b5d79cc` test(execution): harden migration path + transitions count assertion
+- Updated (wiki): `components/execution-state-machine.md` (Known limitations section: startup-reconcile defer, ENTRY_PENDING/EXIT_PENDING WS defer, `_persist` first-order assumption defer — все → S6).
+- Verification: 66/66 S5 unit tests green после fix-PR.
+- Deferred → S6: startup `Coordinator.bootstrap()`, ENTRY_PENDING/EXIT_PENDING `WS_RECONNECT` wiring, `orderLinkId`-based OCO main matching.
