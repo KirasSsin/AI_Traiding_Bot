@@ -207,7 +207,9 @@ class BybitMarketAdapter:
         if resp["retCode"] == 0:
             return CancelResult(cancelled=True)
         reason = map_error(resp["retCode"], resp.get("retMsg", ""))
-        if reason is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
+        # Defense-in-depth: pin classifier to retCode==110001 (not the reason alone),
+        # so future _MAP additions can't silently swallow a different error as "already terminal".
+        if resp["retCode"] == 110001 and reason is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
             return CancelResult(cancelled=False, reason_code=reason)
         raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
 
