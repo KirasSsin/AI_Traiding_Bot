@@ -66,6 +66,7 @@ class Coordinator:
         self._reconciler = reconciler
         self._symbol = symbol
         self._base_coin = base_coin
+        self._bootstrap_done: bool = False
 
     def on_ws_reconnect(self) -> None:
         """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
@@ -131,11 +132,26 @@ class Coordinator:
         )
 
     def bootstrap(self) -> None:
-        """ADR 0020 sub-decision 9: discover highest prior attempt# from exchange evidence,
-        so resume after crash never reuses an old orderLinkId.
+        """ADR 0021 sub-decision 1: unified reconcile path on cold-/warm-start.
+
+        Flow:
+          1. No persisted row → cold start, mark _bootstrap_done = True, noop.
+          2. Recover last_attempt_num from exchange evidence (S6 sub-decision 9).
+          3. Delegate to on_ws_reconnect — reuses live reconcile path.
+          4. Stamp bootstrap_at, mark _bootstrap_done = True.
         """
         row = self._repo.get(self._symbol)
-        if row is None or row.bracket_id is None:
+        if row is None:
+            self._bootstrap_done = True
+            return
+        self._recover_attempt_num(row)
+        self.on_ws_reconnect()
+        self._upsert_fields(bootstrap_at=_now_iso())
+        self._bootstrap_done = True
+
+    def _recover_attempt_num(self, row: "ExecutionStateRow") -> None:
+        """Extracted from pre-S7 bootstrap body (ADR 0020 sub-decision 9)."""
+        if row.bracket_id is None:
             return
         open_orders = self._adapter.get_open_orders(symbol=self._symbol)
         history = self._adapter.get_order_history(symbol=self._symbol, limit=50)
@@ -175,6 +191,7 @@ class Coordinator:
         TP/SL legs are armed later in on_entry_filled (Task 19 arm_oco).
         Returns the generated 8-char bracket_id (UUIDv4 prefix fits Bybit 36-char orderLinkId).
         """
+        assert self._bootstrap_done, "bootstrap must complete before start_bracket"
         bracket_id = str(uuid.uuid4())[:8]
         params = BracketParams(
             symbol=self._symbol,
@@ -230,6 +247,7 @@ class Coordinator:
         warning; an IllegalTransitionError from the FSM is logged but never
         propagated, so a stale echo cannot kill the executor worker.
         """
+        assert self._bootstrap_done, "bootstrap must complete before on_order_event"
         link_id = evt.get("orderLinkId", "")
         status = evt.get("orderStatus", "")
         role = self._role_from_link_id(link_id)
