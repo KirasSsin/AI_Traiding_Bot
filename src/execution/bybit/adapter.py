@@ -35,6 +35,10 @@ class BybitMarketAdapter:
         side: OrderSide,
         qty: Decimal,
         reference_price: Decimal,
+        *,
+        take_profit: Decimal | None = None,
+        stop_loss: Decimal | None = None,
+        tpsl_mode: str | None = None,
     ) -> Order:
         """Place MARKET order; validate via filters; return Order.
 
@@ -44,14 +48,22 @@ class BybitMarketAdapter:
         self._filters.validate_order(qty=qty, price=reference_price)
         now = datetime.now(tz=UTC)
 
-        resp = self._rest._http.place_order(
-            category="spot",
-            symbol=self._filters.symbol,
-            side=_SIDE_MAP[side],
-            orderType="Market",
-            qty=str(qty),
-            orderLinkId=client_order_id,
-        )
+        payload = {
+            "category": "spot",
+            "symbol": self._filters.symbol,
+            "side": _SIDE_MAP[side],
+            "orderType": "Market",
+            "qty": str(qty),
+            "orderLinkId": client_order_id,
+        }
+        if take_profit is not None:
+            payload["takeProfit"] = str(take_profit)
+        if stop_loss is not None:
+            payload["stopLoss"] = str(stop_loss)
+        if tpsl_mode is not None:
+            payload["tpslMode"] = tpsl_mode
+
+        resp = self._rest._http.place_order(**payload)
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)

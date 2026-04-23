@@ -180,3 +180,16 @@
 - Modified (wiki): 0018-sprint-4-risk-decisions.md (added sub-decision 9 — full security audit hardening, 8 sub-fixes); risk-manager.md (invariants table 9→14; settings section с allowlist + HMAC key; tags +security; sources +override.py +config.py).
 - Modified (code): src/platform/config.py, src/risk/override.py, src/risk/manager.py, src/risk/equity_tracker.py, src/risk/resume_cb.py + 5 test files.
 - Deferred follow-ups (M3/M4/L1/L2): clock injection в `OverrideStore.read_active` (testability), `force=True` flag для overwriting existing override (S5 ops), structured logging fields (S5 observability), magic numbers в test fixtures (S5 cleanup).
+
+## [2026-04-23] sprint | 5 completed
+- Branch: `feature/sprint-5-execution` (commits `7fa328f..HEAD`)
+- Merged PR: `#TBD` (pending)
+- Added (code): `src/execution/{state_machine,state_repo,oco,reconciler,coordinator}.py`, `src/execution/bybit/adapter.py` (extended), `src/risk/reason_codes.py` (+2 codes).
+- Added (migrations): `migrations/0003_execution_state.sql`.
+- Added (tests): `tests/unit/test_{reason_codes,oco,bybit_adapter_oco,reconciler_fetch,reconciler_diff,coordinator_reconcile}.py` + state_repo + state_machine; `tests/integration/test_execution_oco_testnet.py` (opt-in).
+- Added (wiki): ADR `0019-sprint-5-execution-decisions.md`, components `{oco,reconciler,execution-state-machine}.md`, sprint summary `sprint-05-execution.md`.
+- Updated (wiki): `components/bybit-adapter.md` (S5 tpslMode section), `trading/concepts/reason-codes.md` (29→31), `index.md`, this log.
+- Reason codes: 29 → 31 (`HALT_RECONCILE_DIVERGENCE`, `EXIT_OCO_PARTIAL_TIMEOUT`).
+- Verification: full unit suite green; testnet integration SKIPPED без `PYTEST_RUN_INTEGRATION=1`.
+- Plan drift fixes: tasks 8/9 brief signatures корректировались — actual `BybitMarketAdapter.place_market_order` + nested `ExchangeState.position` API использовался.
+- Deferred: partial-fill testnet scenario, WS-divergence injected test, `OCO_PARTIAL_TIMEOUT` watchdog daemon → S5.5/S6.
