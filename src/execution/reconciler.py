@@ -167,5 +167,7 @@ def _normalize_position(symbol: str, raw: dict | None) -> PositionSnapshot:
     qty = Decimal(raw.get("size", "0"))
     if qty == 0:
         return PositionSnapshot(symbol=symbol, qty=Decimal("0"), avg_price=None)
-    avg_price = Decimal(raw["avgPrice"]) if raw.get("avgPrice") else None
+    avg_price = (
+        Decimal(raw["avgPrice"]) if raw.get("avgPrice") not in (None, "", "0") else None
+    )
     return PositionSnapshot(symbol=symbol, qty=qty, avg_price=avg_price)

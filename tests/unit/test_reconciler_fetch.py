@@ -67,6 +67,33 @@ def test_fetch_exchange_state_position_with_zero_size_treated_as_flat():
     assert state.position.avg_price is None
 
 
+def test_fetch_exchange_state_nonzero_qty_with_zero_avg_price_normalizes_to_none():
+    """Defensive: avgPrice='0' on a non-zero position is invalid → avg_price=None.
+
+    Matches _normalize_order pattern (treats '0' as missing-data sentinel).
+    Prevents Coordinator._persist from writing entry_price=Decimal('0') to state.
+    """
+    client = Mock()
+    client.get_open_orders.return_value = []
+    client.get_position.return_value = {"size": "0.5", "avgPrice": "0"}
+
+    state = Reconciler(client).fetch_exchange_state("BTCUSDT")
+
+    assert state.position.qty == Decimal("0.5")
+    assert state.position.avg_price is None
+
+
+def test_fetch_exchange_state_nonzero_qty_with_empty_avg_price_normalizes_to_none():
+    client = Mock()
+    client.get_open_orders.return_value = []
+    client.get_position.return_value = {"size": "0.5", "avgPrice": ""}
+
+    state = Reconciler(client).fetch_exchange_state("BTCUSDT")
+
+    assert state.position.qty == Decimal("0.5")
+    assert state.position.avg_price is None
+
+
 def test_fetch_exchange_state_calls_client_with_symbol():
     client = Mock()
     client.get_open_orders.return_value = []
