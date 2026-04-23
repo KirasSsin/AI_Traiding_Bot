@@ -35,6 +35,25 @@ class CancelResult:
     reason_code: ReasonCode | None = None
 
 
+@dataclass(frozen=True)
+class OrderSnapshot:
+    order_id: str
+    order_link_id: str
+    order_status: str
+    cum_exec_qty: Decimal
+    cum_exec_fee: Decimal
+    fee_currency: str
+    avg_price: Decimal | None
+
+
+@dataclass(frozen=True)
+class WalletSnapshot:
+    coin: str
+    wallet_balance: Decimal
+    available: Decimal
+    locked: Decimal
+
+
 class BybitAPIError(RuntimeError):
     """Bybit `place_order` returned non-zero retCode."""
 
@@ -198,3 +217,51 @@ class BybitMarketAdapter:
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+
+    def get_order(self, *, symbol: str, order_id: str) -> OrderSnapshot:
+        """Used by sibling-cancel-on-Triggered handler + Reconciler order-history sweep.
+
+        Bybit V5 shape: result.list[0] contains the order fields.
+        """
+        resp = self._rest._http.get_order(category="spot", symbol=symbol, orderId=order_id)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        items = resp["result"].get("list") or []
+        if not items:
+            raise BybitAPIError(-1, f"order {order_id} not found", ReasonCode.UNKNOWN_ERROR)
+        raw = items[0]
+        return OrderSnapshot(
+            order_id=raw["orderId"],
+            order_link_id=raw.get("orderLinkId", ""),
+            order_status=raw["orderStatus"],
+            cum_exec_qty=Decimal(raw.get("cumExecQty") or "0"),
+            cum_exec_fee=Decimal(raw.get("cumExecFee") or "0"),
+            fee_currency=raw.get("feeCurrency", ""),
+            avg_price=Decimal(raw["avgPrice"]) if raw.get("avgPrice") else None,
+        )
+
+    def get_wallet_balance(self, *, coin: str) -> WalletSnapshot:
+        """ADR 0020 sub-decision 4: canonical Spot position truth (no get_position on Spot V5).
+
+        Bybit V5 shape: result.list[0].coin[0] contains the per-coin balance.
+        availableToWithdraw='' means funds fully locked — coerce empty string to Decimal('0').
+        """
+        resp = self._rest._http.get_wallet_balance(accountType="UNIFIED", coin=coin)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        items = resp["result"].get("list") or []
+        if not items:
+            raise BybitAPIError(-1, f"wallet for {coin} not found", ReasonCode.UNKNOWN_ERROR)
+        coin_rows = items[0].get("coin") or []
+        if not coin_rows:
+            raise BybitAPIError(-1, f"coin {coin} not in wallet", ReasonCode.UNKNOWN_ERROR)
+        raw = coin_rows[0]
+        avail_str = raw.get("availableToWithdraw") or "0"  # coerce '' to '0'
+        return WalletSnapshot(
+            coin=raw.get("coin", coin),
+            wallet_balance=Decimal(raw.get("walletBalance") or "0"),
+            available=Decimal(avail_str),
+            locked=Decimal(raw.get("locked") or "0"),
+        )
