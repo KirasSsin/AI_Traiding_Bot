@@ -14,7 +14,12 @@ def connect(db_path: Path) -> sqlite3.Connection:
 
 
 def init_db(db_path: Path, migrations_dir: Path) -> None:
-    """Apply all `.sql` migrations in lexicographic order. Idempotent."""
+    """Apply all `.sql` migrations in lexicographic order.
+
+    Each migration body + its schema_migrations tracking row are applied as a
+    single atomic transaction: either both commit or both roll back. Prevents
+    partial application on crash (data-integrity review — ADR 0021 follow-up).
+    """
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = connect(db_path)
     try:
@@ -22,18 +27,36 @@ def init_db(db_path: Path, migrations_dir: Path) -> None:
             "CREATE TABLE IF NOT EXISTS schema_migrations "
             "(filename TEXT PRIMARY KEY, applied_at TEXT NOT NULL)"
         )
+        conn.commit()
         applied = {
             row[0] for row in conn.execute("SELECT filename FROM schema_migrations").fetchall()
         }
         for sql_file in sorted(migrations_dir.glob("*.sql")):
             if sql_file.name in applied:
                 continue
-            with sql_file.open("r", encoding="utf-8") as f:
-                conn.executescript(f.read())
-            conn.execute(
-                "INSERT INTO schema_migrations (filename, applied_at) VALUES (?, datetime('now'))",
-                (sql_file.name,),
+            script_sql = sql_file.read_text(encoding="utf-8")
+            # Inline tracking INSERT inside the migration transaction so both
+            # commit atomically via executescript()'s BEGIN/COMMIT wrapper.
+            # sql_file.name comes from Path.glob() of a controlled directory
+            # and cannot contain quotes; safe to format in.
+            if "'" in sql_file.name:
+                raise ValueError(f"migration filename contains quote: {sql_file.name!r}")
+            atomic_script = (
+                "BEGIN;\n"
+                f"{script_sql}\n"
+                "INSERT INTO schema_migrations (filename, applied_at) "
+                f"VALUES ('{sql_file.name}', datetime('now'));\n"
+                "COMMIT;\n"
             )
-            conn.commit()
+            try:
+                conn.executescript(atomic_script)
+            except Exception:
+                # executescript auto-rollbacks on error within its BEGIN/COMMIT;
+                # ensure no dangling transaction state.
+                try:
+                    conn.execute("ROLLBACK")
+                except sqlite3.OperationalError:
+                    pass  # no transaction open
+                raise
     finally:
         conn.close()
