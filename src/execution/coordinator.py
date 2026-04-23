@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from src.execution.bracket import BracketParams, build_bracket
+from src.execution.bracket import BracketParams, build_bracket, make_order_link_id
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
 from src.execution.state_machine import ExecutionEvent, ExecutionState, apply
 from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
@@ -135,6 +135,64 @@ class Coordinator:
             self._transition(ExecutionEvent.FLATTEN_FAILED)
             return
         self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
+
+    def arm_oco(
+        self,
+        *,
+        tp_price: Decimal,
+        sl_trigger_price: Decimal,
+        oco_qty: Decimal,
+    ) -> None:
+        """ADR 0020 sub-decisions 2+9: place TP+SL legs with deterministic orderLinkId.
+
+        Bumps last_attempt_num on every call so retry orderLinkIds are unique
+        (Bybit rejects duplicate orderLinkId with retCode 10006). Re-entrant from
+        LONG_OPEN (first attempt) and OCO_ARMING (retry after partial-arm).
+        On leg-place failure, persists bumped attempt + leaves state for caller
+        to handle (FSM stays in OCO_ARMING so retry can resume).
+        """
+        row = self._repo.get(self._symbol)
+        if row is None or row.bracket_id is None:
+            raise RuntimeError("arm_oco called without active bracket_id")
+        attempt = row.last_attempt_num + 1
+        tp_lid = make_order_link_id(bracket_id=row.bracket_id, role="tp", attempt=attempt)
+        sl_lid = make_order_link_id(bracket_id=row.bracket_id, role="sl", attempt=attempt)
+        # Persist attempt + arming_started_at upfront so a crash mid-arm doesn't reuse the number
+        self._upsert_fields(
+            last_attempt_num=attempt,
+            arming_started_at=_now_iso(),
+            expected_oco_qty=oco_qty,
+        )
+        try:
+            tp_ack = self._adapter.place_limit_order(
+                symbol=self._symbol, side="Sell", qty=oco_qty,
+                price=tp_price, order_link_id=tp_lid,
+            )
+            self._upsert_fields(oco_tp_order_id=tp_ack.order_id)
+            # Transition LONG_OPEN→OCO_ARMING only on first attempt (already there on retry)
+            current = self._repo.get(self._symbol)
+            if current is not None and current.state == ExecutionState.LONG_OPEN:
+                self._transition(ExecutionEvent.TP_PLACED)
+        except Exception:
+            return
+        try:
+            sl_ack = self._adapter.place_stop_market_order(
+                symbol=self._symbol, side="Sell", qty=oco_qty,
+                trigger_price=sl_trigger_price, order_link_id=sl_lid,
+            )
+            self._upsert_fields(oco_sl_order_id=sl_ack.order_id)
+            self._transition(ExecutionEvent.SL_PLACED)
+        except Exception:
+            return
+
+    def _upsert_fields(self, **changes: object) -> None:
+        """Read current row, replace named fields, upsert. Bumps updated_at."""
+        from dataclasses import replace
+        cur = self._repo.get(self._symbol)
+        if cur is None:
+            return
+        new_row = replace(cur, updated_at=_now_iso(), **changes)  # type: ignore[arg-type]
+        self._repo.upsert(new_row)
 
     def _cancel_sibling(self, *, role_to_cancel: str) -> None:
         """Cancel the surviving sibling leg once its pair fired.
