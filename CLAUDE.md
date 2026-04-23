@@ -1,0 +1,74 @@
+# CLAUDE.md — AI Trading Bot v0.1 (repo root)
+
+Этот файл — bootstrap anchor. Claude Code авто-грузит его при старте сессии в этом репозитории.
+
+## ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального)
+
+```
+1. Read: llm-wiki/wiki/project/SPRINT_STATE.md
+   → sprint N, phase X, completed tasks, next_action
+2. Read: llm-wiki/CLAUDE.md
+   → wiki workflow + 5-layer skills hierarchy + token economy + trigger cascade
+3. git branch --show-current && git log --oneline -3
+4. mcp__ccd_session__mark_chapter "Sprint N — session resume"
+```
+
+**Если `SPRINT_STATE.md` говорит `phase = 4-execution` и есть `in_progress` task:**
+```
+git status → pytest tests/unit -x -q → продолжай с next_action
+```
+
+## ПОСЛЕДНЕЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (перед закрытием)
+
+```
+1. Edit llm-wiki/wiki/project/SPRINT_STATE.md:
+   → phase, in_progress, next_action, updated date
+2. Append llm-wiki/wiki/log.md session-end entry
+3. mcp__ccd_session__mark_chapter "Sprint N — session end"
+4. git commit -m "docs(sprint): update SPRINT_STATE phase/progress"
+```
+
+## Ключевые файлы (navigation anchors)
+
+| Файл | Роль |
+|------|------|
+| `llm-wiki/wiki/project/SPRINT_STATE.md` | Living sprint state (≤2KB) — FIRST READ |
+| `llm-wiki/CLAUDE.md` | Wiki maintainer rules + 5-layer skills hierarchy + trigger cascade |
+| `llm-wiki/wiki/project/architecture/development-workflow.md` | MASTER SOP — 9-phase sprint lifecycle |
+| `llm-wiki/wiki/index.md` | Wiki catalog (all pages) |
+| `llm-wiki/wiki/log.md` | Chronological sprint journal |
+| `llm-wiki/wiki/project/decisions/` | ADRs (0001-0020) |
+| `llm-wiki/wiki/project/components/` | Component docs (wiki-first reads before raw ADR) |
+
+## Project constraints (short form)
+
+- **Python**: 3.12 (pyproject.toml). Venv: `.venv/` at repo root.
+- **Test cmd**: `pytest -x -q` (unit), `pytest -m integration` (opt-in), `pytest -m property`.
+- **Branch**: feature/<sprint-N-slug>. PR to main. Conventional commits.
+- **Current state**: Sprint 6 COMPLETE (tag `v0.1.0-alpha.6`). Between sprints. Next = S7 brainstorm.
+
+## Minimum behavior (overrides по запросу)
+
+- Code/identifiers/files → **English**.
+- Comments/discussion → **Russian**.
+- Read before edit. TDD strict (RED→GREEN→COMMIT).
+- YAGNI, DRY, KISS. No "улучшения" сверх scope.
+- Token economy: wiki-first (components/ before raw ADR), mem-search first (`mcp__plugin_claude-mem_mcp-search__smart_search`), parallel reviewers, model dispatch (sonnet default, opus for judgment-heavy, haiku for mechanical).
+
+## Skills hierarchy (5 layers — detail в `llm-wiki/CLAUDE.md`)
+
+```
+L5: Domain reviewers     (trading-logic / quant-stats / data-integrity / python-reviewer)
+L4: Agent Skills + Caveman (depth checklists, compression)
+L3: Superpowers          (brainstorm → plan → subagent-driven → TDD → finishing)
+L2: llm-wiki             (source of truth — read THIS BEFORE raw files)
+L1: claude-mem + ccd_session (session bookends + chapter marks)
+```
+
+## Read tool guard (большие файлы)
+
+Hard-limit ~25k токенов = ~90KB. Если файл > 50KB — `Read` с `offset`+`limit` или `Grep`-first. Полный список banned-from-full-read файлов → `~/.claude/CLAUDE.md` секция 9.
+
+---
+
+**Полная методология** → `llm-wiki/CLAUDE.md` + `llm-wiki/wiki/project/architecture/development-workflow.md`.

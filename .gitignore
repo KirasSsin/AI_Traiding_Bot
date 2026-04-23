@@ -12,8 +12,9 @@ web/data.json
 .DS_Store
 
 # Superpowers plugin artifacts (installed into worktree root, not project files)
+# NOTE: /CLAUDE.md removed — repo-root CLAUDE.md is our session bootstrap anchor.
+# Worktree-local CLAUDE.md from Superpowers lives under .claude/worktrees/*/ anyway.
 /AGENTS.md
-/CLAUDE.md
 /CODE_OF_CONDUCT.md
 /GEMINI.md
 /LICENSE
