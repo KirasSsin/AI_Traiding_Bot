@@ -85,6 +85,44 @@ Sprint 4 имплементировал risk-модуль (Kelly + CB + RiskMana
 
 **Forward-only:** ADR изменяет wiki header, не enum. Enum codes immutable per concept page §2 правило.
 
+## Sub-decision 6 — Decimal hot path для Quarter/Half-Kelly
+
+**Question:** В `phase_adjusted_fraction` для phases 3/4 — оригинал использовал `Decimal(str(f * 0.25))`. Float multiply ДО Decimal cast нарушает invariant "monetary fraction is Decimal" (ADR 0007).
+
+**Decision:** Сначала перевести `f` (float) в Decimal через `Decimal(str(f))`, затем умножать на `Decimal("0.25")`/`Decimal("0.5")` в Decimal domain, и квантовать результат до 10dp (`Decimal("1e-10")`) — это убирает trailing IEEE-754 noise унаследованный от float `f`, оставаясь far above бизнес-precision (≤5 sig digits в практических kelly fractions).
+
+**Rationale:** Quant-stats reviewer flag (commit 4aae547): `f * 0.25` для f=0.30000000000000004 даёт 0.07500000000000001, что приводит к `Decimal("0.07500000000000001")` → пропагирует в qty calc. Decimal multiply: `Decimal("0.30000000000000004") * Decimal("0.25") = Decimal("0.0750000000000000100")` — та же ошибка магнитуды, но bounded. Quantize до 1e-10 → `Decimal("0.0750000000")` ≡ `Decimal("0.075")`.
+
+**Code ref:** `src/risk/kelly.py::phase_adjusted_fraction`, lines 119-127.
+**Test:** `tests/unit/test_risk_kelly.py::test_phase{3,4}_decimal_no_float_contamination`.
+
+## Sub-decision 7 — Atomic equity flush через `_no_commit` API
+
+**Question:** Trading-logic reviewer (commit 4aae547) flag'нул: `EquityTracker.record` вызывает `self._conn.commit()` сразу после INSERT, затем `StateRepository.update_many` открывает отдельную `with self._conn:` транзакцию. Две независимые транзакции вместо одной — нарушение invariant #5 (risk-manager.md: "equity snapshot + state в одной транзакции"). Crash между ними оставляет equity persisted, halt level lagging.
+
+**Decision:**
+1. Добавить `EquityTracker.record_no_commit(...)` — INSERT без commit, возвращает lastrowid.
+2. Добавить `StateRepository.update_many_no_commit(...)` — multi-key UPSERT без `with self._conn:` обёртки.
+3. `RiskManager.update_equity` оборачивает оба вызова в один `with self._conn:` блок. Любое исключение → rollback обоих.
+
+**Test:** `tests/unit/test_risk_manager.py::test_update_equity_atomic_rollback_on_state_failure` — monkeypatches `update_many_no_commit` чтобы raise, verifies equity_snapshots row count не изменился.
+
+**Code refs:** `src/risk/equity_tracker.py:39-61`, `src/risk/state_repo.py:60-77`, `src/risk/manager.py::update_equity`.
+
+**Rationale:** Старые `record()` / `update_many()` сохранены для use-cases вне orchestrator (тесты, ad-hoc CLI, future repositories) — обратная совместимость не сломана.
+
+## Sub-decision 8 — LONG-only `assess()` контракт + ROUND_DOWN qty + prev_close persistence
+
+**Three small fixes batched** (one ADR amendment to avoid bloat):
+
+**8a. LONG-only gate в `assess()`:** ранее SL/TP формулы (lines 184-185) и hardcoded `ENTRY_LONG_TREND_FOLLOWING` reason были silently LONG-only. Quant-stats reviewer flag: либо gate на `signal.side == LONG` с raise, либо branch SL/TP по side. Решено: explicit `ValueError` если `side != LONG`, поскольку v0.1 FSM = LONG+FLAT only, а FLAT — exit semantics handled outside Risk per Strategy contract. Code: `src/risk/manager.py::assess` (после look-ahead gate). Test: `test_assess_rejects_non_long_signal`.
+
+**8b. ROUND_DOWN qty quantize:** ранее `qty.quantize(Decimal("0.00000001"))` использовал default `ROUND_HALF_EVEN`. Trading-logic reviewer flag: для Bybit Spot BUY правило rounding = step-floor (round-down), round-up рискует rejection (insufficient balance / oversize). Fix: `quantize(..., rounding=ROUND_DOWN)`. Code: `src/risk/manager.py:181`. Test: `test_qty_quantize_rounds_down` (mocks compute_qty=`0.123456789`, asserts result=`0.12345678` not `0.12345679`).
+
+**8c. `_prev_close` persistence across restart:** ранее `load_state()` восстанавливал только `_current_halt`, не `_prev_close`. После restart первый bar пропускал flash detection silently. Fix: `on_bar_close` персистит `risk:cb:prev_close` в state table; `load_state` восстанавливает. Code: `src/risk/manager.py::on_bar_close` + `load_state`. Tests: `test_on_bar_close_persists_prev_close`, `test_load_state_restores_prev_close`.
+
+**Rationale (общее):** все три fix'а — bounded, well-localized, без contract changes наружу (только дополнительные guarantees). LONG-only была implicit assumption — теперь explicit. ROUND_DOWN — venue compliance, не семантика. prev_close — operational continuity gap, не invariant violation.
+
 ## Consequences
 
 **Positive:**
@@ -96,6 +134,8 @@ Sprint 4 имплементировал risk-модуль (Kelly + CB + RiskMana
 **Negative:**
 - Wilson lower bound теряет ~10-20% edge upside на phases 3/4 (intentional trade-off).
 - `REJECT_MIN_NOTIONAL` сейчас несёт две семантики (true filter violation + zero-qty after quantize). Audit-log queries должны учитывать.
+- `EquityTracker.record` (commit-each-call) и `record_no_commit` (caller owns tx) — два API. Документировано в docstrings.
+- LONG-only `assess()` raise — если в S5+ появится SHORT, потребуется explicit ADR + branch.
 
 **Neutral:**
 - R:R 2:1 — стартовый default; Sprint 7 (backtest) может предложить тюнинг.

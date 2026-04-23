@@ -42,19 +42,20 @@ class RiskManager:
 ```
                        ┌────────────────────────┐
 signal + mark_price → │  1. clock() → assessed_at │
-                       │  2. assert assessed_at >= signal.generated_at  ← LOOK-AHEAD GATE
-                       │  3. override = OverrideStore.read_active(now, expected_config_hash)
-                       │  4. if prev_close: check_flash → maybe escalate to FLASH
-                       │  5. if current_halt != L0:
+                       │  2. assert signal.side == LONG (v0.1 LONG-only)  ← FSM GATE
+                       │  3. assert assessed_at >= signal.generated_at    ← LOOK-AHEAD GATE
+                       │  4. override = OverrideStore.read_active(now, expected_config_hash)
+                       │  5. if prev_close: check_flash → maybe escalate to FLASH
+                       │  6. if current_halt != L0:
                        │        if override matches level → continue
                        │        else → reject(HALT_DRAWDOWN_L*|HALT_FLASH_CRASH)
-                       │  6. n = trades.count(); phase = phase_from_trade_count(n)
-                       │  7. p, b = _compute_p_b(phase)   ← Wilson lower bound for 3/4
-                       │  8. f = phase_adjusted_fraction(phase, p, b, KellyCaps)
-                       │  9. qty = compute_qty(equity, f, atr, price, k=sl_mult)
-                       │ 10. qty = quantize(8dp); if qty <= 0 → REJECT_MIN_NOTIONAL
-                       │ 11. sl = price - sl_mult·ATR; tp = price + tp_mult·ATR
-                       │ 12. return RiskAssessment(approved=True, qty, sl, tp, ...)
+                       │  7. n = trades.count(); phase = phase_from_trade_count(n)
+                       │  8. p, b = _compute_p_b(phase)   ← Wilson lower bound for 3/4
+                       │  9. f = phase_adjusted_fraction(phase, p, b, KellyCaps)
+                       │ 10. qty = compute_qty(equity, f, atr, price, k=sl_mult)
+                       │ 11. qty = quantize(8dp, ROUND_DOWN); if qty <= 0 → REJECT_MIN_NOTIONAL
+                       │ 12. sl = price - sl_mult·ATR; tp = price + tp_mult·ATR  (LONG-only)
+                       │ 13. return RiskAssessment(approved=True, qty, sl, tp, ...)
                        └────────────────────────┘
 ```
 
@@ -66,8 +67,11 @@ signal + mark_price → │  1. clock() → assessed_at │
 | 2 | **Halt severity ordering:** L3 > L2 > L1 > L0; FLASH > L3 | `_halt_severity` table + `if new > current: escalate` |
 | 3 | **Wilson lower bound for phases 3/4** | `_compute_p_b` returns `wilson_95_ci(...)[0]`, not `wins/total` |
 | 4 | **Override match required:** override применяется ТОЛЬКО если `override.level == current_halt` | step 5 check |
-| 5 | **Atomic equity flush:** equity snapshot + state update в одной транзакции | `EquityTracker.record` + `StateRepository.update_many` (no separate commits) |
-| 6 | **Decimal everywhere monetary:** `qty`, `sl`, `tp`, `equity`, `fraction` — Decimal; `p, b` — float (statistical) | type signatures + tests |
+| 5 | **Atomic equity flush:** equity snapshot + state update в одной транзакции | `update_equity` оборачивает `EquityTracker.record_no_commit` + `StateRepository.update_many_no_commit` в один `with conn:` блок (test: `test_update_equity_atomic_rollback_on_state_failure`) |
+| 6 | **Decimal everywhere monetary:** `qty`, `sl`, `tp`, `equity`, `fraction` — Decimal; `p, b` — float (statistical) | type signatures + tests; `phase_adjusted_fraction` использует Decimal multiply (no float×float contamination, ADR 0007) |
+| 7 | **LONG-only contract:** `assess()` принимает только `side==LONG`, иначе ValueError | v0.1 FSM (FLAT signals — exit semantics, обрабатываются вне Risk) |
+| 8 | **qty step-floor:** quantize(8dp) с `ROUND_DOWN` — Bybit Spot BUY rounding direction | `Decimal.quantize(..., rounding=ROUND_DOWN)` |
+| 9 | **Flash CB continuity across restart:** `_prev_close` персистится в `state` table (`risk:cb:prev_close`), восстанавливается в `load_state` | `on_bar_close` → `state.set`; `load_state` → restore |
 
 ## Reason code mapping
 
@@ -86,9 +90,11 @@ signal + mark_price → │  1. clock() → assessed_at │
 
 - `trade_history` — closed trades (UNIQUE INDEX on `entry_signal_id` для idempotent insert)
 - `equity_snapshots` — каждый equity update (`realized`, `unrealized`, `source`)
-- `state` (existing) — CB current level + override metadata
+- `state` (existing) — KV store, ключи:
+  - `risk:cb:current_level` — `{"level": "L0|L1|L2|L3|FLASH", "triggered_at", "peak_equity", "dd_pct"}`
+  - `risk:cb:prev_close` — `{"value": "<decimal_str>"}` — для flash continuity across restart
 
-CB level survive restart через `RiskManager.load_state()` → читает `risk:cb:current_level` из `state` table.
+CB level + prev_close survive restart через `RiskManager.load_state()`.
 
 ## Settings (config_hash anti-replay)
 
