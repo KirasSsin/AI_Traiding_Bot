@@ -1,7 +1,8 @@
 """Build OCO bracket orders. ADR 0019 sub-decision 1."""
 from __future__ import annotations
+
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_DOWN, ROUND_UP
+from decimal import ROUND_DOWN, ROUND_UP, Decimal
 
 
 @dataclass(frozen=True)

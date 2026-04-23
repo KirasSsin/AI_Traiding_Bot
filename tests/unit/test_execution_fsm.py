@@ -47,5 +47,6 @@ def test_kill_terminal():
     with pytest.raises(IllegalTransitionError):
         apply(ExecutionState.KILLED, ExecutionEvent.STATE_LOADED)
 
-def test_transitions_count_at_least_28():
-    assert len(TRANSITIONS) >= 28
+def test_transitions_count_exact():
+    """Lock the exact transition count. Adding/removing requires ADR update."""
+    assert len(TRANSITIONS) == 29

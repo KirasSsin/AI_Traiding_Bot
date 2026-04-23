@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from src.execution.reconciler import Reconciler, ReconcileVerdict
+from src.execution.reconciler import Reconciler, ReconcileResult, ReconcileVerdict
 from src.execution.state_machine import (
     TRANSITIONS,
     ExecutionEvent,
@@ -61,7 +61,7 @@ class Coordinator:
         self._persist(final, result)
         return final
 
-    def _persist(self, state: ExecutionState, result) -> None:
+    def _persist(self, state: ExecutionState, result: ReconcileResult) -> None:
         """Write new state to repo using exchange-side truth as ADR 0019 dictates."""
         ex = result.exchange_state
         qty = ex.position.qty

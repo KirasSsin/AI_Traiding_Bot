@@ -48,6 +48,29 @@ class ExchangeState:
     position: PositionSnapshot
 
 
+class ReconcileVerdict(StrEnum):
+    OK = "OK"
+    DIVERGENCE = "DIVERGENCE"
+
+
+@dataclass(frozen=True)
+class ReconcileResult:
+    """Outcome of comparing local FSM state vs exchange state."""
+    verdict: ReconcileVerdict
+    exchange_state: ExchangeState
+    local_row: ExecutionStateRow | None
+    detail: str       # human-readable diff for audit log
+
+
+_QTY_EPS = Decimal("1e-8")
+_FLAT_STATES = {
+    ExecutionState.FLAT,
+    ExecutionState.INIT,
+    ExecutionState.COOLDOWN,
+    ExecutionState.KILLED,
+}
+
+
 class Reconciler:
     """Fetches exchange-side state. Diff/verdict is Task 7."""
 
@@ -128,24 +151,6 @@ class Reconciler:
         )
 
 
-class ReconcileVerdict(StrEnum):
-    OK = "OK"
-    DIVERGENCE = "DIVERGENCE"
-
-
-@dataclass(frozen=True)
-class ReconcileResult:
-    """Outcome of comparing local FSM state vs exchange state."""
-    verdict: ReconcileVerdict
-    exchange_state: ExchangeState
-    local_row: ExecutionStateRow | None
-    detail: str       # human-readable diff for audit log
-
-
-_QTY_EPS = Decimal("1e-8")
-_FLAT_STATES = {ExecutionState.FLAT, ExecutionState.INIT, ExecutionState.COOLDOWN, ExecutionState.KILLED}
-
-
 def _normalize_order(o: dict) -> OpenOrderSnapshot:
     """Bybit V5 open-order dict → OpenOrderSnapshot."""
     return OpenOrderSnapshot(
@@ -167,5 +172,7 @@ def _normalize_position(symbol: str, raw: dict | None) -> PositionSnapshot:
     qty = Decimal(raw.get("size", "0"))
     if qty == 0:
         return PositionSnapshot(symbol=symbol, qty=Decimal("0"), avg_price=None)
-    avg_price = Decimal(raw["avgPrice"]) if raw.get("avgPrice") else None
+    avg_price = (
+        Decimal(raw["avgPrice"]) if raw.get("avgPrice") not in (None, "", "0") else None
+    )
     return PositionSnapshot(symbol=symbol, qty=qty, avg_price=avg_price)

@@ -1,8 +1,10 @@
 """SQLite persistence for execution FSM state. ADR 0019 sub-decision 3."""
 from __future__ import annotations
+
+import sqlite3
 from dataclasses import dataclass
 from decimal import Decimal
-import sqlite3
+
 from src.execution.state_machine import ExecutionState
 
 
