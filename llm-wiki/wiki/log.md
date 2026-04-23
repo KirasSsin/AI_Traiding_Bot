@@ -194,6 +194,29 @@
 - Plan drift fixes: tasks 8/9 brief signatures корректировались — actual `BybitMarketAdapter.place_market_order` + nested `ExchangeState.position` API использовался.
 - Deferred: partial-fill testnet scenario, WS-divergence injected test, `OCO_PARTIAL_TIMEOUT` watchdog daemon → S5.5/S6.
 
+## [2026-04-23] adr | 0020 — Sprint 6 Spot OCO emulation (reverses 0019/1)
+- Added (wiki): `wiki/project/decisions/0020-sprint-6-execution-spot-oco-emulation.md` (13 sub-decisions).
+- Added (probe scripts): `scripts/spot_oco_probe_v2.py`, `scripts/spot_oco_probe_v3.py` + outputs `*_output.json`. Pre-existing `scripts/spot_oco_probe.py` covers v1 baseline (B1-B5).
+- Updated (wiki): `0019-sprint-5-execution-decisions.md` (sub-decision 1 marked SUPERSEDED with empirical evidence pointer), `index.md` (ADR 0020 entry).
+- **Empirical findings (14/14 assumptions B1-B5 + G1-G14 closed):**
+  - B2 = FALSE: `place_order(category=spot, orderType=Market, tpslMode=Full)` → ErrCode 170130 — native OCO impossible.
+  - v3-A: Spot Stop status sequence `[Untriggered, Triggered, Filled]` confirmed; Triggered+Filled same millisecond (race window = 0ms).
+  - v3-B (clean wallet): G5 fee formula reproduced — Sell at `cumExecQty=0.000644` → ErrCode 170131; Sell at `step_floor(cumExecQty - cumExecFee)=0.000643` → rc=0.
+  - v3-C: WS `wallet` topic shape `data[0].coin[]` verified (5 events captured).
+  - v3-D: Bybit Spot Stop silently rewrites submitted `timeInForce=GTC` → `IOC` in echo (all 3 events).
+  - S2/v2: marketUnit=quoteCoin returns `cumExecQty` with 16 decimal places below step boundary — **banned at adapter level**.
+  - G14: Demo keys invalid on api-testnet (10003) — Demo accepted as proxy with sub-decision 12 pre-mainnet checks.
+- **Reviewer:** trading-logic-reviewer (sonnet, 2 rounds, BLOCK→PROCEED-after-v3). Round 1 BLOCK exposed missing TIF override + Triggered race verification → drove v3 design. Round 2 PROCEED after v3 closed both gaps.
+- **Architectural delta vs ADR 0019:**
+  - OCO: native `tpslMode=Full` → 3-order emulated bracket with `bracket_id` UUID prefix in `orderLinkId`.
+  - FSM: 12 → 21 states (added OCO_ARMING, EXIT_SIBLING_CANCELLING/_FAILED, EXIT_SL_RESIDUAL + 5 HALT_* concept-subsets).
+  - Schema: forward-only ALTER ADD COLUMN migration `0004_execution_state_v2.sql` (bracket_id, oco_tp_order_id, oco_sl_order_id, expected_oco_qty, arming_started_at, last_attempt_num).
+  - Reason codes: 31 → 39 (HALT_BRACKET_INCOMPLETE, HALT_OCO_ARM_TIMEOUT, HALT_OCO_SIBLING_STUCK, HALT_PARTIAL_FILL_BELOW_MIN, HALT_FLATTEN_FAILED, HALT_PHANTOM_SL, EXIT_STOP_RESIDUAL_FLATTEN, REJECT_ORDER_ALREADY_TERMINAL).
+  - Adapter: removed dead `place_market_order(take_profit=, stop_loss=, tpsl_mode=)` path; banned 6 payload fields for Spot; added 6 new methods (place_limit_order, place_stop_market_order, cancel_order, cancel_all_orders, get_order, get_wallet_balance); banned `marketUnit=quoteCoin`.
+  - Position truth: `walletBalance(coin=BTC)` (no Spot get_position object); entry_price stays in local SQLite (split from Reconciler).
+- **Pre-mainnet acceptance gate (sub-decision 12):** re-run probe v1 (B2), v3-D (TIF override), v2 S2 (quoteCoin) on api-testnet with **separate testnet keys** before mainnet deploy. Any behavior diff → BLOCK + revisit ADR.
+- **Next:** Sprint 6 implementation plan via Superpowers `writing-plans` skill (~30 tasks: FSM v2 transitions, schema migration, reason-code tests, adapter API rework, Reconciler walletBalance integration, Coordinator sibling-cancel-on-Triggered, OCO_ARMING TTL, deterministic orderLinkId, flatten cascade, EXIT_SL_RESIDUAL, integration test on Demo).
+
 ## [2026-04-23] review | S5 post-merge audit + fix-PR
 - Reviewers: `trading-logic-reviewer` (opus) + `python-reviewer` (sonnet) parallel on commits `7fa328f..76b88ba` (PR #6).
 - trading-logic: no blockers; 6 concerns (startup-reconcile, ENTRY_PENDING/EXIT_PENDING WS, `_normalize_position` `"0"`, testnet wallet-balance scope, `_persist` first-order assumption, count mismatch ADR↔wiki↔test).

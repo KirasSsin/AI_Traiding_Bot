@@ -108,7 +108,8 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot supersedes 0004; pybit>=5.11; V5 Unified endpoint map.
 - [[project/decisions/0017-review-agent-harness]] — 3 доменных ревьюера (trading-logic / quant-stats / data-integrity) + python-reviewer; non-overlapping scope, MUST-BE-USED триггеры.
 - [[project/decisions/0018-sprint-4-risk-decisions]] — Sprint 4 sub-decisions: R:R 2:1, REJECT_INVALID_SIGNAL/ZERO_QTY не распаковываются, Wilson lower bound для phases 3/4, L0 explicit naming, reason-codes count fix (28→29).
-- [[project/decisions/0019-sprint-5-execution-decisions]] — Sprint 5: native Bybit `tpslMode` for OCO, 12-state FSM, reconcile-as-truth, +2 reason codes (29→31), testnet happy-path scope.
+- [[project/decisions/0019-sprint-5-execution-decisions]] — Sprint 5: native Bybit `tpslMode` for OCO (sub-decision 1 SUPERSEDED by 0020), 12-state FSM, reconcile-as-truth, +2 reason codes (29→31), testnet happy-path scope.
+- [[project/decisions/0020-sprint-6-execution-spot-oco-emulation]] — Sprint 6: 3-order Spot OCO emulation (reverses 0019/1), bracket_id schema v2, FSM 12→21, reason codes 31→39, fee-aware sizing (G5), client-side sibling cancel-on-Triggered, IOC override + EXIT_SL_RESIDUAL — backed by 14/14 empirical probes on Bybit Demo.
 
 ## Queries (saved answers)
 
