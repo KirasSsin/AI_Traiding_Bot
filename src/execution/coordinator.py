@@ -199,8 +199,18 @@ class Coordinator:
         OCO_ARMED → PARTIAL_FILL event → EXIT_SL_RESIDUAL.
         Then: RESIDUAL_FLATTENED → FLAT, or FLATTEN_FAILED → HALTED.
         Full flatten-cascade retry (Task 21) is out of scope here; single attempt only.
+
+        Sub-decision 6 race-fix: cancel the live TP sibling FIRST. If we
+        flatten the residual and transition to FLAT while the TP is still
+        on the book, an orphan TP can self-fill on the next bid spike →
+        phantom short on Spot (HALT_PHANTOM_SL). Cancellation is best-effort
+        and never blocks the safety-critical flatten path; even leavesQty=0
+        (SL fully filled in this echo) requires the TP cancel.
         """
         self._transition(ExecutionEvent.PARTIAL_FILL)  # OCO_ARMED → EXIT_SL_RESIDUAL
+        row = self._repo.get(self._symbol)
+        if row is not None and row.oco_tp_order_id is not None:
+            self._best_effort_cancel(row.oco_tp_order_id)
         leaves_qty = Decimal(evt.get("leavesQty", "0"))
         if leaves_qty <= 0:
             self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
