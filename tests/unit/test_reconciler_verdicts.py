@@ -162,3 +162,29 @@ def test_entry_pending_halt_when_orphan_open_orders_exist(tmp_path):
     )
     r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
     assert r.verdict == "DIVERGENCE"
+
+
+# ---------------------------------------------------------------------------
+# Task 14: staleness check (heal_max_age_seconds)
+# ---------------------------------------------------------------------------
+
+def test_entry_pending_heal_blocked_by_staleness(monkeypatch):
+    """ADR 0021 sub-decision 4: crash > heal_max_age_seconds → HALT not HEAL."""
+    monkeypatch.setenv("HEAL_MAX_AGE_SECONDS", "3600")
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("0.001"),
+        open_orders=[],
+        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+    )
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(
+        symbol="BTCUSDT",
+        position_qty=Decimal("0"),
+        entry_order_id="ent1",
+        expected_entry_qty=Decimal("0.001"),
+        updated_at=datetime.now(UTC) - timedelta(seconds=4000),  # stale > 3600
+    )
+    r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
+    assert r.verdict == "DIVERGENCE"
+    assert r.halt_reason == "HALT_BOOTSTRAP_AMBIGUOUS"
+    assert (r.heal_context or {}).get("sub_reason") == "stale_age"
