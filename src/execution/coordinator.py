@@ -116,7 +116,25 @@ class Coordinator:
             self._handle_sl_partial(evt)
 
     def _handle_sl_partial(self, evt: dict) -> None:
-        """Placeholder for IOC partial handling — Task 18 (ADR 0020 sub-decision 4)."""
+        """ADR 0020 sub-decision 7: SL IOC partial → flatten residual via Market Sell.
+
+        OCO_ARMED → PARTIAL_FILL event → EXIT_SL_RESIDUAL.
+        Then: RESIDUAL_FLATTENED → FLAT, or FLATTEN_FAILED → HALTED.
+        Full flatten-cascade retry (Task 21) is out of scope here; single attempt only.
+        """
+        self._transition(ExecutionEvent.PARTIAL_FILL)  # OCO_ARMED → EXIT_SL_RESIDUAL
+        leaves_qty = Decimal(evt.get("leavesQty", "0"))
+        if leaves_qty <= 0:
+            self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
+            return
+        try:
+            self._adapter.place_order(
+                symbol=self._symbol, side="Sell", qty=leaves_qty,
+            )
+        except Exception:
+            self._transition(ExecutionEvent.FLATTEN_FAILED)
+            return
+        self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
 
     def _cancel_sibling(self, *, role_to_cancel: str) -> None:
         """Cancel the surviving sibling leg once its pair fired.
