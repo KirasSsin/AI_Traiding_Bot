@@ -22,12 +22,17 @@ class ExecutionStateRow:
     arming_started_at: str | None  # ISO-8601 UTC; only set in OCO_ARMING
     last_attempt_num: int
     updated_at: str  # ISO-8601 UTC
+    halt_reason: str | None = None
+    last_exit_reason: str | None = None
+    last_reconcile_at: str | None = None  # ISO-8601 UTC; updated each reconcile call
+    bootstrap_at: str | None = None       # ISO-8601 UTC; set once per process startup
 
 
 _COLUMNS = (
     "symbol, state, position_qty, entry_price, oco_main_order_id, "
     "bracket_id, oco_tp_order_id, oco_sl_order_id, expected_oco_qty, "
-    "arming_started_at, last_attempt_num, updated_at"
+    "arming_started_at, last_attempt_num, updated_at, "
+    "halt_reason, last_exit_reason, last_reconcile_at, bootstrap_at"
 )
 
 
@@ -40,7 +45,7 @@ class ExecutionStateRepo:
             self._conn.execute(
                 f"""
                 INSERT INTO execution_state ({_COLUMNS})
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(symbol) DO UPDATE SET
                     state=excluded.state,
                     position_qty=excluded.position_qty,
@@ -52,7 +57,11 @@ class ExecutionStateRepo:
                     expected_oco_qty=excluded.expected_oco_qty,
                     arming_started_at=excluded.arming_started_at,
                     last_attempt_num=excluded.last_attempt_num,
-                    updated_at=excluded.updated_at
+                    updated_at=excluded.updated_at,
+                    halt_reason=excluded.halt_reason,
+                    last_exit_reason=excluded.last_exit_reason,
+                    last_reconcile_at=excluded.last_reconcile_at,
+                    bootstrap_at=excluded.bootstrap_at
                 """,
                 (
                     row.symbol,
@@ -67,6 +76,10 @@ class ExecutionStateRepo:
                     row.arming_started_at,
                     row.last_attempt_num,
                     row.updated_at,
+                    row.halt_reason,
+                    row.last_exit_reason,
+                    row.last_reconcile_at,
+                    row.bootstrap_at,
                 ),
             )
 
@@ -95,4 +108,8 @@ def _row_to_dataclass(r: tuple) -> ExecutionStateRow:
         arming_started_at=r[9],
         last_attempt_num=int(r[10]),
         updated_at=r[11],
+        halt_reason=r[12],
+        last_exit_reason=r[13],
+        last_reconcile_at=r[14],
+        bootstrap_at=r[15],
     )

@@ -20,6 +20,7 @@ def conn(tmp_path: Path) -> sqlite3.Connection:
         "001_initial.sql",
         "0003_execution_state.sql",
         "0004_execution_state_v2.sql",
+        "0005_halt_persistence.sql",
     ):
         db.executescript((MIGRATIONS / name).read_text())
     return db
