@@ -64,16 +64,26 @@ class EquityTracker:
         return int(cursor.lastrowid)
 
     def peak_equity_24h(self, *, now: datetime | None = None) -> Decimal | None:
-        """Max total_equity in trailing 24h. None if no snapshots in window."""
+        """Max total_equity in trailing 24h. None if no snapshots in window.
+
+        Ranking is performed in Python over Decimal values rather than via
+        SQL ``ORDER BY CAST(... AS REAL)`` — the latter downcasts a precise
+        monetary string to IEEE-754 double for sorting, which can pick the
+        wrong row when two equities differ only past 15 significant digits
+        (ADR 0007 Decimal-strict, ADR 0018 sub-decision 9 / audit I1).
+
+        Window is bounded (≤ ~24 rows for 1H bars + intra-bar snapshots
+        in v0.1), so loading and reducing in Python is O(N) and trivial.
+        """
         cutoff = (now or datetime.now(UTC)) - timedelta(hours=24)
-        row = self._conn.execute(
-            "SELECT total_equity FROM equity_snapshots WHERE ts >= ?"
-            " ORDER BY CAST(total_equity AS REAL) DESC LIMIT 1",
+        rows = self._conn.execute(
+            "SELECT total_equity FROM equity_snapshots WHERE ts >= ?",
             (cutoff.isoformat(),),
-        ).fetchone()
-        if row is None or row[0] is None:
+        ).fetchall()
+        values = [Decimal(r[0]) for r in rows if r[0] is not None]
+        if not values:
             return None
-        return Decimal(row[0])
+        return max(values)
 
     def current_total(self) -> Decimal | None:
         """Latest total_equity (by ts DESC). None if empty."""

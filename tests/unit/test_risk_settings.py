@@ -6,6 +6,11 @@ from pathlib import Path
 import pytest
 from src.platform.config import Settings
 
+# ADR 0018 sub-decision 9 — required credential fixtures (audit C1/H2).
+_TEST_API_KEY = "test_api_key_value"
+_TEST_API_SECRET = "test_api_secret_value"  # noqa: S105 — test fixture
+_TEST_HMAC_KEY = "x" * 32
+
 
 @pytest.fixture()
 def settings(tmp_path: Path) -> Settings:
@@ -15,6 +20,9 @@ def settings(tmp_path: Path) -> Settings:
         db_path=tmp_path / "bot.db",
         parquet_dir=tmp_path / "parquet",
         risk_override_path=tmp_path / "state" / "cb_override.json",
+        bybit_api_key=_TEST_API_KEY,
+        bybit_api_secret=_TEST_API_SECRET,
+        risk_override_hmac_key=_TEST_HMAC_KEY,
     )
 
 
@@ -45,20 +53,16 @@ def test_config_hash_is_deterministic(settings: Settings) -> None:
 
 
 def test_config_hash_changes_with_value(tmp_path: Path) -> None:
-    s1 = Settings(
+    common = dict(
         data_dir=tmp_path / "data",
         log_dir=tmp_path / "logs",
         db_path=tmp_path / "bot.db",
         parquet_dir=tmp_path / "parquet",
         risk_override_path=tmp_path / "state" / "cb_override.json",
-        risk_cb_l1_dd=Decimal("0.15"),
+        bybit_api_key=_TEST_API_KEY,
+        bybit_api_secret=_TEST_API_SECRET,
+        risk_override_hmac_key=_TEST_HMAC_KEY,
     )
-    s2 = Settings(
-        data_dir=tmp_path / "data",
-        log_dir=tmp_path / "logs",
-        db_path=tmp_path / "bot.db",
-        parquet_dir=tmp_path / "parquet",
-        risk_override_path=tmp_path / "state" / "cb_override.json",
-        risk_cb_l1_dd=Decimal("0.20"),  # changed
-    )
+    s1 = Settings(**common, risk_cb_l1_dd=Decimal("0.15"))
+    s2 = Settings(**common, risk_cb_l1_dd=Decimal("0.20"))  # changed
     assert s1.config_hash() != s2.config_hash()

@@ -39,6 +39,10 @@ def settings(tmp_path: Path) -> Settings:
         db_path=tmp_path / "test.db",
         parquet_dir=tmp_path / "parquet",
         risk_override_path=tmp_path / "cb_override.json",
+        # ADR 0018 sub-decision 9 — required fields, no committed defaults.
+        bybit_api_key="test_api_key_value",
+        bybit_api_secret="test_api_secret_value",  # noqa: S106 — fixture
+        risk_override_hmac_key="k" * 32,
     )
 
 
@@ -232,7 +236,7 @@ def test_override_resumes_l2(db, settings):
     # Write a valid override
     override_path = settings.risk_override_path
     override_path.parent.mkdir(parents=True, exist_ok=True)
-    store = OverrideStore(override_path)
+    store = OverrideStore(override_path, hmac_key=settings.risk_override_hmac_key)
     store.write(
         override=CbOverride(
             level="L2",
@@ -246,6 +250,48 @@ def test_override_resumes_l2(db, settings):
     signal = _make_signal()
     result = mgr.assess(signal, mark_price=Decimal("30000"))
     assert result.approved is True
+
+
+def test_override_is_consumed_after_bypass(db, settings):
+    """Audit H3 (CWE-672) — override is single-use; bypass consumes the file.
+
+    Without consume, a 1-hour override would authorise every trade in that
+    window. After the fix, a second assess() call sees no active override
+    and rejects with HALT_DRAWDOWN_L2.
+    """
+    peak = Decimal("10000")
+    current = peak * Decimal("0.775")  # L2
+
+    _seed_equity(db, realized=peak, ts=_T0 - timedelta(hours=1))
+    mgr = _make_manager(db, settings)
+    mgr.update_equity(realized=current, unrealized=Decimal("0"), ts=_T0)
+
+    override_path = settings.risk_override_path
+    override_path.parent.mkdir(parents=True, exist_ok=True)
+    store = OverrideStore(override_path, hmac_key=settings.risk_override_hmac_key)
+    store.write(
+        override=CbOverride(
+            level="L2",
+            reason="manual resume — single use",
+            config_hash=settings.config_hash(),
+            created_at=_T0 - timedelta(minutes=5),
+            expires_at=_T0 + timedelta(hours=2),
+        )
+    )
+
+    signal = _make_signal()
+    first = mgr.assess(signal, mark_price=Decimal("30000"))
+    assert first.approved is True
+    # Override file must be gone (renamed to *.consumed.<ts>.json).
+    assert not override_path.exists()
+    consumed = list(override_path.parent.glob("cb_override.consumed.*.json"))
+    assert len(consumed) == 1
+
+    # Second assess — no active override → halt re-applies.
+    # generated_at must be <= clock (_T0) per look-ahead invariant.
+    second = mgr.assess(_make_signal(generated_at=_T0 - timedelta(seconds=1)), mark_price=Decimal("30000"))
+    assert second.approved is False
+    assert second.reason_code == ReasonCode.HALT_DRAWDOWN_L2
 
 
 # ---------------------------------------------------------------------------
@@ -264,7 +310,7 @@ def test_override_invalid_hash_ignored(db, settings):
 
     override_path = settings.risk_override_path
     override_path.parent.mkdir(parents=True, exist_ok=True)
-    store = OverrideStore(override_path)
+    store = OverrideStore(override_path, hmac_key=settings.risk_override_hmac_key)
     store.write(
         override=CbOverride(
             level="L2",
@@ -297,7 +343,7 @@ def test_override_expired_ignored(db, settings):
 
     override_path = settings.risk_override_path
     override_path.parent.mkdir(parents=True, exist_ok=True)
-    store = OverrideStore(override_path)
+    store = OverrideStore(override_path, hmac_key=settings.risk_override_hmac_key)
     store.write(
         override=CbOverride(
             level="L2",

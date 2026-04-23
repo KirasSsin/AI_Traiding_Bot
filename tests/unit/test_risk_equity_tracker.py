@@ -188,6 +188,37 @@ def test_decimal_roundtrip_exact(tracker: EquityTracker) -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_peak_equity_24h_decimal_precision_beyond_double(tracker: EquityTracker) -> None:
+    """Two equities differing only past 15 sig digits must rank by Decimal.
+
+    ADR 0018 sub-decision 9 (audit I1) — previously the implementation used
+    SQL ``ORDER BY CAST(total_equity AS REAL)`` which collapsed the values
+    to IEEE-754 double for sorting. The two strings below round to the same
+    float, so the SQL sort would return whichever the engine happened to
+    place first — picking the wrong peak.
+    """
+    now = datetime(2026, 4, 23, 12, 0, 0, tzinfo=_UTC)
+    smaller = Decimal("12345.67890123450001")
+    larger = Decimal("12345.67890123450002")
+    # Sanity check: both collapse to the same float — proving the legacy
+    # SQL CAST could not distinguish them.
+    assert float(smaller) == float(larger)
+
+    tracker.record(
+        realized=smaller,
+        unrealized=Decimal("0"),
+        ts=now - timedelta(hours=2),
+        source="BAR_CLOSE",
+    )
+    tracker.record(
+        realized=larger,
+        unrealized=Decimal("0"),
+        ts=now - timedelta(hours=1),
+        source="BAR_CLOSE",
+    )
+    assert tracker.peak_equity_24h(now=now) == larger
+
+
 def test_iso8601_lexicographic_boundary(tracker: EquityTracker) -> None:
     """Timestamps spanning midnight compare correctly as ISO-8601 strings."""
     ts_2359 = datetime(2026, 4, 22, 23, 59, 0, tzinfo=_UTC)

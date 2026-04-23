@@ -48,6 +48,7 @@ def test_main_creates_override_file(tmp_path: Path):
 
     mock_settings = MagicMock()
     mock_settings.risk_override_path = override_path
+    mock_settings.risk_override_hmac_key = "k" * 32
     mock_settings.config_hash.return_value = "c" * 64
 
     with patch("src.risk.resume_cb.Settings", return_value=mock_settings):
@@ -56,10 +57,14 @@ def test_main_creates_override_file(tmp_path: Path):
     assert rc == 0
     assert override_path.exists()
 
-    data = json.loads(override_path.read_text())
-    assert data["level"] == "L2"
-    assert data["reason"] == "test override"
-    assert data["config_hash"] == "c" * 64
+    # ADR 0018 sub-decision 9 (audit H2) — file is now an HMAC envelope:
+    # {"payload": <CbOverride JSON>, "sig": <hex>}.
+    envelope = json.loads(override_path.read_text())
+    assert "sig" in envelope
+    payload = envelope["payload"]
+    assert payload["level"] == "L2"
+    assert payload["reason"] == "test override"
+    assert payload["config_hash"] == "c" * 64
 
 
 def test_main_default_expires_in(tmp_path: Path):
@@ -68,17 +73,18 @@ def test_main_default_expires_in(tmp_path: Path):
 
     mock_settings = MagicMock()
     mock_settings.risk_override_path = override_path
+    mock_settings.risk_override_hmac_key = "k" * 32
     mock_settings.config_hash.return_value = "d" * 64
 
     with patch("src.risk.resume_cb.Settings", return_value=mock_settings):
         rc = main(["--level", "FLASH", "--reason", "flash test"])
 
     assert rc == 0
-    data = json.loads(override_path.read_text())
-    from datetime import datetime, timezone
+    payload = json.loads(override_path.read_text())["payload"]
+    from datetime import datetime
 
-    created = datetime.fromisoformat(data["created_at"])
-    expires = datetime.fromisoformat(data["expires_at"])
+    created = datetime.fromisoformat(payload["created_at"])
+    expires = datetime.fromisoformat(payload["expires_at"])
     delta = expires - created
     assert abs(delta.total_seconds() - 3600) < 5  # within 5s tolerance
 
@@ -87,14 +93,31 @@ def test_main_l3_level(tmp_path: Path):
     override_path = tmp_path / "cb_override.json"
     mock_settings = MagicMock()
     mock_settings.risk_override_path = override_path
+    mock_settings.risk_override_hmac_key = "k" * 32
     mock_settings.config_hash.return_value = "e" * 64
 
     with patch("src.risk.resume_cb.Settings", return_value=mock_settings):
         rc = main(["--level", "L3", "--reason", "drawdown breach", "--expires-in", "2h"])
 
     assert rc == 0
-    data = json.loads(override_path.read_text())
-    assert data["level"] == "L3"
+    payload = json.loads(override_path.read_text())["payload"]
+    assert payload["level"] == "L3"
+
+
+def test_main_does_not_print_override_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    """Audit L3 (CWE-532) — absolute override path must not appear in stdout."""
+    override_path = tmp_path / "secret_dir" / "cb_override.json"
+    mock_settings = MagicMock()
+    mock_settings.risk_override_path = override_path
+    mock_settings.risk_override_hmac_key = "k" * 32
+    mock_settings.config_hash.return_value = "f" * 64
+
+    with patch("src.risk.resume_cb.Settings", return_value=mock_settings):
+        main(["--level", "L2", "--reason", "no leak", "--expires-in", "30m"])
+
+    captured = capsys.readouterr()
+    assert str(override_path) not in captured.out
+    assert "secret_dir" not in captured.out
 
 
 # ---------------------------------------------------------------------------

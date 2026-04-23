@@ -1,11 +1,11 @@
 ---
 title: RiskManager (orchestrator)
 type: component
-tags: [risk, orchestrator, look-ahead, v0.1]
+tags: [risk, orchestrator, look-ahead, security, v0.1]
 created: 2026-04-23
 updated: 2026-04-23
 status: stable
-sources: [src/risk/manager.py, ADR 0012, ADR 0013, ADR 0018]
+sources: [src/risk/manager.py, src/risk/override.py, src/platform/config.py, ADR 0012, ADR 0013, ADR 0018]
 ---
 
 # RiskManager — risk module orchestrator
@@ -72,6 +72,11 @@ signal + mark_price → │  1. clock() → assessed_at │
 | 7 | **LONG-only contract:** `assess()` принимает только `side==LONG`, иначе ValueError | v0.1 FSM (FLAT signals — exit semantics, обрабатываются вне Risk) |
 | 8 | **qty step-floor:** quantize(8dp) с `ROUND_DOWN` — Bybit Spot BUY rounding direction | `Decimal.quantize(..., rounding=ROUND_DOWN)` |
 | 9 | **Flash CB continuity across restart:** `_prev_close` персистится в `state` table (`risk:cb:prev_close`), восстанавливается в `load_state` | `on_bar_close` → `state.set`; `load_state` → restore |
+| 10 | **Override HMAC envelope** (ADR 0018 sub-dec 9 / H2): override file = `{"payload":..,"sig":..}`; verify через `hmac.compare_digest` с `Settings.risk_override_hmac_key` (≥32 chars). Tampered/wrong-key/missing-sig → `read_active` returns `None` + WARNING | `OverrideStore.read_active` fail-closed; `test_read_with_tampered_*` |
+| 11 | **Override single-use** (ADR 0018 sub-dec 9 / H3): после успешного матча `override.level == current_halt` → `consume()` **до** sizing. Файл → `cb_override.consumed.<ISO-ts>.json` | `RiskManager.assess` step 5; `test_override_is_consumed_after_bypass` |
+| 12 | **Override file mode** (ADR 0018 sub-dec 9 / M1+M2): `0o600` для файла, `0o700` для parent dir; write atomic через `os.open(O_WRONLY\|O_CREAT\|O_TRUNC, 0o600)` + `fsync` + `os.replace` | `OverrideStore.write`; `test_write_file_mode_is_0o600`, `test_write_overwrite_is_atomic` |
+| 13 | **`config_hash` allowlist** (ADR 0018 sub-dec 9 / H1): hash покрывает только 12 risk-threshold полей. Rotate API secret/HMAC key, поменять пути/log_level → hash invariant | `Settings._HASH_ALLOWLIST`; `test_config_hash_excludes_*` |
+| 14 | **`peak_equity_24h` Decimal-strict** (ADR 0018 sub-dec 9 / I1): ranking через Python `max([Decimal(...)])`, не SQL `CAST AS REAL` (collapse в IEEE-754 для значений > 15 sig digits — wrong peak) | `EquityTracker.peak_equity_24h`; `test_peak_equity_24h_decimal_precision_beyond_double` |
 
 ## Reason code mapping
 
@@ -96,9 +101,18 @@ signal + mark_price → │  1. clock() → assessed_at │
 
 CB level + prev_close survive restart через `RiskManager.load_state()`.
 
-## Settings (config_hash anti-replay)
+## Settings (config_hash anti-replay + HMAC envelope)
 
-`Settings.config_hash()` возвращает SHA-256 от `model_dump_json()` (sort keys). `OverrideStore.read_active` отвергает override с `config_hash` не совпадающим с текущим — защита от подмены конфига при активном override.
+**`Settings.config_hash()`** возвращает SHA-256 от **whitelisted** 12 risk-threshold полей (allowlist `_HASH_ALLOWLIST` в `src/platform/config.py`). Канонизация через `json.dumps(..., sort_keys=True, separators=(",",":"), default=str)`. `OverrideStore.read_active` отвергает override с `config_hash` не совпадающим с текущим — защита от подмены config при активном override.
+
+**Allowlist (intentionally excludes):**
+- API креды (`bybit_api_key`, `bybit_api_secret`) — rotate без invalidate overrides
+- `risk_override_hmac_key` — separate trust anchor
+- Paths, log_level, sentry_dsn — operational metadata, не risk decision
+
+**`Settings.risk_override_hmac_key`** — required `Field(..., min_length=32)`, separate from API secret. Используется для HMAC-SHA256 envelope подписи override file (см. invariant #10).
+
+См. ADR 0018 sub-decision 9 для полного rationale + threat model.
 
 ## Tests
 
@@ -109,6 +123,6 @@ CB level + prev_close survive restart через `RiskManager.load_state()`.
 
 - [[../decisions/0012-4-phase-kelly-sizing]] — Kelly source of truth
 - [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — CB source of truth
-- [[../decisions/0018-sprint-4-risk-decisions]] — Sprint 4 sub-decisions (R:R, reason codes mapping, Wilson lower bound contract, L0 naming)
+- [[../decisions/0018-sprint-4-risk-decisions]] — Sprint 4 sub-decisions (R:R, reason codes mapping, Wilson lower bound contract, L0 naming, **sub-dec 9: post-merge security audit hardening — C1+H1+H2+H3+M1+M2+I1+L3**)
 - [[kelly]] [[circuit-breakers]] [[sizing]] [[override]] — sub-components
 - [[../../trading/concepts/look-ahead-bias]] — invariant context

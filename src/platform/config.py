@@ -1,15 +1,44 @@
-"""Runtime Settings per ADR 0016 (Bybit Spot testnet MVP)."""
+"""Runtime Settings per ADR 0016 (Bybit Spot testnet MVP).
+
+Security:
+    Bybit API credentials are REQUIRED env vars (no defaults committed to git
+    per ADR 0018 sub-decision 9 — Sprint 4 security audit C1, CWE-798).
+    Override-store HMAC key (risk_override_hmac_key) is REQUIRED, separate
+    from the API secret, so that secret rotation does not invalidate active
+    overrides (ADR 0018 sub-decision 9, audit H2/CWE-345).
+"""
 
 from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Allowlist for config_hash() — only the risk thresholds operators reason
+# about when issuing a manual circuit-breaker override. Excludes secrets
+# (CWE-532), paths, observability flags, and strategy params that do not
+# bear on a halt-bypass decision. Source: ADR 0018 sub-decision 9 (audit H1).
+_HASH_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "risk_max_position_pct_cap",
+        "risk_sl_atr_multiplier",
+        "risk_tp_atr_multiplier",
+        "risk_cb_l1_dd",
+        "risk_cb_l2_dd",
+        "risk_cb_l3_dd",
+        "risk_cb_flash_abs",
+        "risk_cb_flash_atr_mult",
+        "risk_kelly_phase1_cap",
+        "risk_kelly_phase2_cap",
+        "risk_kelly_phase3_cap",
+        "risk_kelly_phase4_cap",
+    }
+)
 
 
 class Settings(BaseSettings):
-    """Loaded from env / .env. Testnet keys hardcoded per user directive."""
+    """Loaded from env / .env. Bybit creds + HMAC key REQUIRED — no defaults."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -18,9 +47,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Bybit credentials (testnet hardcoded; override via .env for mainnet)
-    bybit_api_key: str = "VjRb6cNnpbJ9lPOtw2"
-    bybit_api_secret: str = "QnMRFSKNDsn7zkpBN04wh9ARozGbblamkIa9"
+    # Bybit credentials (REQUIRED — no defaults; CWE-798)
+    bybit_api_key: str = Field(..., min_length=8)
+    bybit_api_secret: str = Field(..., min_length=8)
     testnet: bool = True
 
     # Runtime flags
@@ -61,6 +90,10 @@ class Settings(BaseSettings):
     risk_kelly_phase3_cap: Decimal = Decimal("0.03")
     risk_kelly_phase4_cap: Decimal = Decimal("0.05")
     risk_override_path: Path = Path("./state/cb_override.json")
+    # HMAC-SHA256 key for override file integrity (REQUIRED, separate from
+    # API secret so credential rotation does not invalidate operator
+    # overrides — ADR 0018 sub-decision 9, audit H2/CWE-345).
+    risk_override_hmac_key: str = Field(..., min_length=32)
 
     @model_validator(mode="after")
     def _live_trading_guards(self) -> "Settings":
@@ -71,10 +104,18 @@ class Settings(BaseSettings):
         return self
 
     def config_hash(self) -> str:
-        """SHA-256 of canonical JSON dump (sorted keys, Decimals as str)."""
+        """SHA-256 over the risk-threshold allowlist only.
+
+        Excludes secrets (CWE-532), paths, observability flags, strategy
+        params, and the HMAC key — only fields an operator weighs when
+        approving a manual halt-override are covered. ADR 0018 sub-dec 9.
+        """
         import hashlib
         import json
 
         data = self.model_dump(mode="json")
-        canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), default=str)
+        risk_only = {k: data[k] for k in sorted(_HASH_ALLOWLIST) if k in data}
+        canonical = json.dumps(
+            risk_only, sort_keys=True, separators=(",", ":"), default=str
+        )
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

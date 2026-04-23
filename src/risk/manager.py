@@ -56,7 +56,10 @@ class RiskManager:
         self._equity = EquityTracker(conn)
         self._trades = TradeHistoryRepository(conn)
         self._state = StateRepository(conn)
-        self._override = OverrideStore(settings.risk_override_path)
+        self._override = OverrideStore(
+            settings.risk_override_path,
+            hmac_key=settings.risk_override_hmac_key,
+        )
         self._current_halt: HaltState = HaltState.L0
         self._prev_close: Decimal | None = None
 
@@ -186,7 +189,12 @@ class RiskManager:
         # Halt check (Adjustment 3 — correct reason codes)
         if self._current_halt != HaltState.L0:
             if override and override.level == self._current_halt.value:
-                pass  # manual override — proceed to sizing
+                # Single-use semantics — consume the bypass token immediately
+                # so a forged override (audit H2) cannot authorise more than
+                # the trade it was issued for. Operator must reissue for the
+                # next attempt. ADR 0018 sub-decision 9 (audit H3, CWE-672).
+                self._override.consume(override=override)
+                # Bypass succeeded — proceed to sizing.
             else:
                 return self._reject(
                     signal, assessed_at, self._halt_to_reason(self._current_halt)

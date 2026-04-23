@@ -38,10 +38,14 @@ def main(argv: list[str] | None = None) -> int:
         created_at=now,
         expires_at=now + args.expires_in,
     )
-    store = OverrideStore(settings.risk_override_path)
+    store = OverrideStore(
+        settings.risk_override_path,
+        hmac_key=settings.risk_override_hmac_key,
+    )
     store.write(override=override)
-    print(f"Override written: {settings.risk_override_path}")
-    print(f"Level={args.level} expires_at={override.expires_at.isoformat()}")
+    # Path is intentionally omitted from stdout (audit L3 / CWE-532) — the
+    # operator who issued the command knows where they pointed it.
+    print(f"Override written: level={args.level} expires_at={override.expires_at.isoformat()}")
     return 0
 
 

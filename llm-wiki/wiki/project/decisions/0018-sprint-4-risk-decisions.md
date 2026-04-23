@@ -1,10 +1,10 @@
 ---
 title: 0018. Sprint 4 risk decisions — R:R, reason codes mapping, Wilson lower bound, L0 naming, reason-codes count
 type: decision
-tags: [adr, risk, kelly, circuit-breakers, reason-codes, sprint-4]
+tags: [adr, risk, kelly, circuit-breakers, reason-codes, sprint-4, security]
 created: 2026-04-23
 updated: 2026-04-23
-sources: [src/risk/manager.py, src/risk/kelly.py, src/risk/reason_codes.py]
+sources: [src/risk/manager.py, src/risk/kelly.py, src/risk/reason_codes.py, src/risk/override.py, src/platform/config.py, src/risk/equity_tracker.py, src/risk/resume_cb.py]
 status: accepted
 ---
 
@@ -123,6 +123,83 @@ Sprint 4 имплементировал risk-модуль (Kelly + CB + RiskMana
 
 **Rationale (общее):** все три fix'а — bounded, well-localized, без contract changes наружу (только дополнительные guarantees). LONG-only была implicit assumption — теперь explicit. ROUND_DOWN — venue compliance, не семантика. prev_close — operational continuity gap, не invariant violation.
 
+## Sub-decision 9 — Sprint 4 security audit hardening (post-merge review)
+
+**Context:** Перед merge'ом Sprint 4 PR прогнан full L4 review (Agent Skills `code-review-and-quality` + `security-and-hardening`) на полном diff. Аудиторы вернули **5 must-fix** (1 Critical + 3 High + 1 Important) + **3 Medium/Low** (M1, M2, L3). Все 8 вошли в один батч-патч поверх Sprint 4.
+
+### 9a. C1 — Bybit creds: убрать committed defaults (CWE-798)
+
+**Problem:** `Settings.bybit_api_key` и `bybit_api_secret` имели hardcoded defaults в `src/platform/config.py` ("changeme") — нарушает CWE-798 (use of hard-coded credentials), даже если "очевидно фейк".
+
+**Decision:** Оба поля → `Field(..., min_length=8)` (required, no default). Любой запуск без явного env var падает с pydantic `ValidationError`. Test fixtures передают тестовые значения явно.
+
+**Files:** `src/platform/config.py`, `tests/unit/test_config.py`, `tests/unit/test_risk_settings.py`, `tests/unit/test_risk_manager.py`, `tests/integration/test_resume_cb_cli.py`.
+
+### 9b. H1 — `config_hash()` allowlist (CWE-532)
+
+**Problem:** `config_hash()` хешировал весь `model_dump()`, включая API secret и пути логов. Это означало: rotate API secret → invalidate active risk overrides (operational footgun + потенциальный leak секрета через логи hash-mismatch).
+
+**Decision:** Whitelist'нуть **12 risk-threshold полей** (`risk_max_position_pct_cap`, `risk_sl_atr_multiplier`, `risk_tp_atr_multiplier`, `risk_cb_l1_dd`, `risk_cb_l2_dd`, `risk_cb_l3_dd`, `risk_cb_flash_abs`, `risk_cb_flash_atr_mult`, `risk_kelly_phase1_cap..4_cap`). Канонизация: `json.dumps(..., sort_keys=True, separators=(",",":"), default=str)` → SHA-256.
+
+**Invariant:** Rotate API secret/key, поменять `log_level`/`sentry_dsn`, поменять пути → hash **не меняется**. Изменить любой risk-threshold → hash меняется → active overrides invalidated.
+
+**Files:** `src/platform/config.py` (`_HASH_ALLOWLIST` frozenset).
+
+### 9c. H2 — Override file HMAC envelope (CWE-345 / CWE-306)
+
+**Problem:** `cb_override.json` был plain JSON. Любой process с правами на directory мог подделать override — bypass Circuit Breaker. Нет authenticity check.
+
+**Decision:** **HMAC-SHA256 envelope** `{"payload": <CbOverride>, "sig": <hex>}`. Подпись = `hmac.new(key, canonical_payload, sha256).hexdigest()`. Verify через `hmac.compare_digest` (constant-time).
+- Новое required Settings-поле: `risk_override_hmac_key: str = Field(..., min_length=32)` (separate from API secret — позволяет rotate creds без invalidate overrides, см. 9b).
+- `OverrideStore.__init__(path, *, hmac_key)` — keyword-only, валидирует `len >= 32`.
+- `read_active` fail-closed: missing sig / wrong key / tampered payload / tampered sig → `None` + WARNING log "override HMAC mismatch — possible tampering".
+
+**Files:** `src/risk/override.py`, `src/risk/resume_cb.py` (передаёт key в store), `src/risk/manager.py` (передаёт key в store).
+
+### 9d. H3 — Single-use override semantics (CWE-672)
+
+**Problem:** Override оставался активен до `expires_at` — можно было использовать один файл много раз. Если key утёк, атакующий получает persistent bypass окно.
+
+**Decision:** `consume()` вызывается **сразу** после успешного матча override→halt level в `RiskManager.assess`, **до** sizing. Файл переименовывается в `cb_override.consumed.<ISO-ts>.json` (audit trail сохраняется). Любой повторный assess видит "no active override" → halt re-applies.
+
+**Files:** `src/risk/manager.py::assess`. Test: `tests/unit/test_risk_manager.py::test_override_is_consumed_after_bypass`.
+
+### 9e. M1 — File mode 0o600 + parent 0o700 (CWE-276)
+
+**Decision:** `OverrideStore.write` → `os.open(tmp, O_WRONLY|O_CREAT|O_TRUNC, 0o600)` для файла; `mkdir(mode=0o700, parents=True)` для родителя. Только owner может читать секретный envelope.
+
+### 9f. M2 — Atomic write через `os.replace` (CWE-367 TOCTOU)
+
+**Decision:** Write в `<path>.tmp` → `fsync` → `os.replace(tmp, path)`. Concurrent reader никогда не видит partial file. На Posix `os.replace` — атомарный rename внутри того же FS.
+
+### 9g. I1 — Decimal-strict ranking в `peak_equity_24h` (ADR 0007)
+
+**Problem:** `EquityTracker.peak_equity_24h` использовал `ORDER BY CAST(total_equity AS REAL) DESC LIMIT 1`. CAST'ит Decimal-as-TEXT → IEEE-754 double для сортировки. Два значения, отличающиеся за 15-й значащей цифрой, collapsно в один float — SQL возвращает whoever first, **не** настоящий peak. Нарушает ADR 0007 ("monetary fraction is Decimal").
+
+**Decision:** Тянуть все строки в окне через `WHERE ts >= ?` → строить `[Decimal(r[0]) for r in rows]` → возвращать Python `max(values)`. Decimal сравнение exact. Окно 24h ограничивает memory (≤24·3600 = 86 400 rows worst case при 1Hz).
+
+**Files:** `src/risk/equity_tracker.py::peak_equity_24h`. Test: `test_peak_equity_24h_decimal_precision_beyond_double`.
+
+### 9h. L3 — Drop override path from stdout (CWE-532)
+
+**Decision:** `resume_cb.py` printит `level` + `expires_at`, но **не** абсолютный путь файла. Lateral movement не получает подсказку, где искать секреты.
+
+### Invariants добавленные этой sub-decision
+
+| # | Invariant | Test |
+|---|-----------|------|
+| H2 | Override file MUST be HMAC-SHA256 envelope; verify uses `hmac.compare_digest` | `test_read_with_tampered_signature_returns_none`, `test_read_with_wrong_hmac_key_returns_none`, `test_read_with_tampered_payload_returns_none` |
+| H3 | Override is single-use (consumed before sizing) | `test_override_is_consumed_after_bypass` |
+| M1 | Override file mode = 0o600, parent dir = 0o700 | `test_write_file_mode_is_0o600`, `test_write_parent_dir_mode_is_0o700` |
+| M2 | Override write is atomic (no partial file readable, no .tmp residue on success) | `test_write_does_not_leave_tmp_file`, `test_write_overwrite_is_atomic` |
+| H1 | `config_hash()` excludes credentials, paths, log/observability config | `test_config_hash_excludes_bybit_secret`, `test_config_hash_excludes_bybit_key`, `test_config_hash_excludes_hmac_key`, `test_config_hash_excludes_paths_and_observability` |
+| C1 | Bybit creds + HMAC key — no committed defaults; min_length enforced | `test_missing_api_key_raises`, `test_missing_api_secret_raises`, `test_missing_hmac_key_raises`, `test_short_hmac_key_raises` |
+| I1 | `peak_equity_24h` ranks by Python `max(Decimal)`, not SQL `CAST AS REAL` | `test_peak_equity_24h_decimal_precision_beyond_double` |
+
+### Rationale (общее)
+
+Аудит показал классический паттерн: код проходил unit tests, но pre-merge security review нашёл реальные attack surfaces (operator compromise, file tampering, credential rotation footgun, Decimal precision regression). Все 8 фиксов — bounded, well-tested, без contract changes наружу (только дополнительные guarantees). HMAC key как **отдельное** required поле решает chicken-and-egg "config_hash includes API secret → secret rotation invalidates active overrides".
+
 ## Consequences
 
 **Positive:**
@@ -136,6 +213,8 @@ Sprint 4 имплементировал risk-модуль (Kelly + CB + RiskMana
 - `REJECT_MIN_NOTIONAL` сейчас несёт две семантики (true filter violation + zero-qty after quantize). Audit-log queries должны учитывать.
 - `EquityTracker.record` (commit-each-call) и `record_no_commit` (caller owns tx) — два API. Документировано в docstrings.
 - LONG-only `assess()` raise — если в S5+ появится SHORT, потребуется explicit ADR + branch.
+- Sub-decision 9: deployment теперь требует **два** обязательных секрета (`BYBIT_API_SECRET` + `RISK_OVERRIDE_HMAC_KEY`), задокументировано в ops runbook (Sprint 9).
+- Sub-decision 9: rotate HMAC key инвалидирует все active overrides (intentional — HMAC = trust anchor).
 
 **Neutral:**
 - R:R 2:1 — стартовый default; Sprint 7 (backtest) может предложить тюнинг.

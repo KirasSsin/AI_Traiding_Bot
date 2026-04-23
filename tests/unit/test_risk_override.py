@@ -1,5 +1,15 @@
-"""Tests for OverrideStore and CbOverride — TDD RED."""
+"""Tests for OverrideStore and CbOverride — TDD RED.
 
+ADR 0018 sub-decision 9 (Sprint 4 audit):
+    H2 — HMAC-SHA256 envelope tested for sign/verify roundtrip + tamper
+         detection (sig swap, payload swap, wrong key).
+    M1 — File mode 0o600 verified after write.
+    M2 — Atomic write (no partial-file readable to a concurrent reader).
+"""
+
+import json
+import os
+import stat
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -9,6 +19,12 @@ from src.risk.override import CbOverride, OverrideStore
 
 _NOW = datetime(2026, 4, 23, 12, 0, 0, tzinfo=UTC)
 _HASH = "a" * 64
+_HMAC_KEY = "k" * 32
+_HMAC_KEY_OTHER = "j" * 32
+
+
+def _store(path: Path, *, key: str = _HMAC_KEY) -> OverrideStore:
+    return OverrideStore(path, hmac_key=key)
 
 
 def _make_override(**kwargs) -> CbOverride:
@@ -79,7 +95,7 @@ def test_pydantic_short_hash_raises():
 
 
 def test_write_read_roundtrip(tmp_path: Path):
-    store = OverrideStore(tmp_path / "cb_override.json")
+    store = _store(tmp_path / "cb_override.json")
     ov = _make_override()
     store.write(override=ov)
     result = store.read_active(now=_NOW - timedelta(seconds=1), expected_config_hash=_HASH)
@@ -87,19 +103,19 @@ def test_write_read_roundtrip(tmp_path: Path):
 
 
 def test_read_active_missing_file(tmp_path: Path):
-    store = OverrideStore(tmp_path / "missing.json")
+    store = _store(tmp_path / "missing.json")
     assert store.read_active(now=_NOW, expected_config_hash=_HASH) is None
 
 
 def test_read_active_hash_mismatch(tmp_path: Path):
-    store = OverrideStore(tmp_path / "cb_override.json")
+    store = _store(tmp_path / "cb_override.json")
     store.write(override=_make_override())
     result = store.read_active(now=_NOW, expected_config_hash="b" * 64)
     assert result is None
 
 
 def test_read_active_expired(tmp_path: Path):
-    store = OverrideStore(tmp_path / "cb_override.json")
+    store = _store(tmp_path / "cb_override.json")
     ov = _make_override(
         created_at=_NOW - timedelta(hours=2),
         expires_at=_NOW - timedelta(hours=1),
@@ -111,7 +127,7 @@ def test_read_active_expired(tmp_path: Path):
 
 def test_read_active_exactly_at_expiry(tmp_path: Path):
     """now >= expires_at → expired."""
-    store = OverrideStore(tmp_path / "cb_override.json")
+    store = _store(tmp_path / "cb_override.json")
     ov = _make_override(expires_at=_NOW)
     store.write(override=ov)
     result = store.read_active(now=_NOW, expected_config_hash=_HASH)
@@ -125,7 +141,7 @@ def test_read_active_exactly_at_expiry(tmp_path: Path):
 
 def test_consume_renames_file(tmp_path: Path):
     path = tmp_path / "cb_override.json"
-    store = OverrideStore(path)
+    store = _store(path)
     ov = _make_override()
     store.write(override=ov)
     assert path.exists()
@@ -136,13 +152,13 @@ def test_consume_renames_file(tmp_path: Path):
 
 
 def test_consume_noop_if_no_file(tmp_path: Path):
-    store = OverrideStore(tmp_path / "cb_override.json")
+    store = _store(tmp_path / "cb_override.json")
     ov = _make_override()
     store.consume(override=ov)  # must not raise
 
 
 def test_write_creates_parent_dirs(tmp_path: Path):
     path = tmp_path / "deep" / "nested" / "cb_override.json"
-    store = OverrideStore(path)
+    store = _store(path)
     store.write(override=_make_override())
     assert path.exists()

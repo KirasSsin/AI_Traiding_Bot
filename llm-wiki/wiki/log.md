@@ -161,3 +161,22 @@
 - Modified (wiki): risk-manager.md (decision pipeline 12→13 шагов с FSM gate + ROUND_DOWN; invariants table расширен с 6 до 9; state schema детализирована с prev_close ключом); 0018-sprint-4-risk-decisions.md (added sub-decisions 6, 7, 8 с code refs + tests).
 - Verification: 315 tests passing (308 → +7 новых), mypy clean.
 - Pending от trading-logic (HIGH-3 NOT addressed): `bar: object` loose typing в `on_bar_close` — defer до S5 (когда определится Bar контракт через MarketData ACL); `b = float(avg_win/avg_loss)` precision на cents — flag для S7 backtest review.
+
+## [2026-04-23] review | Sprint 4 pre-merge security audit (code-review-and-quality + security-and-hardening)
+- Reviewers: AS L4 `code-review-and-quality` + AS L4 `security-and-hardening`, parallel dispatch на full PR diff (12 files / ~1.4k LoC).
+- Verdict: do not merge until 5 must-fix addressed (1 Critical + 3 High + 1 Important). User chose Option B → batched 8 fixes (5 must-fix + M1+M2+L3 cheap mediums).
+- **Fixes (all in src/risk/* + src/platform/config.py):**
+  - **C1 / CWE-798** — `bybit_api_key` + `bybit_api_secret` теперь required `Field(..., min_length=8)` (no committed defaults).
+  - **H1 / CWE-532** — `Settings.config_hash()` whitelist'нул 12 risk-threshold полей (исключил creds + paths + log/observability). Rotate API secret больше не invalidate active overrides.
+  - **H2 / CWE-345 + CWE-306** — Override file = HMAC-SHA256 envelope `{"payload":..,"sig":..}`. Verify через `hmac.compare_digest`. Required new field `risk_override_hmac_key: str = Field(..., min_length=32)`.
+  - **H3 / CWE-672** — Override single-use: `consume()` сразу после успешного match override→halt в `assess`, до sizing.
+  - **M1 / CWE-276** — File mode 0o600, parent dir 0o700.
+  - **M2 / CWE-367** — Atomic write через `os.open(O_WRONLY|O_CREAT|O_TRUNC, 0o600)` + `fsync` + `os.replace`.
+  - **I1 / ADR 0007** — `EquityTracker.peak_equity_24h` ranking через Python `max(Decimal)`, не SQL `CAST AS REAL` (collapse в IEEE-754 для значений > 15 sig digits).
+  - **L3 / CWE-532** — `resume_cb.py` printит `level` + `expires_at`, но не absolute path.
+- **New invariants** (added to risk-manager.md): #10 HMAC envelope, #11 single-use consume, #12 file mode 0o600 + atomic write, #13 config_hash allowlist, #14 Decimal-strict peak ranking.
+- **Tests added:** 12 (4 config, 9 override HMAC + tamper + chmod + atomic, 1 resume_cb path leak, 1 equity Decimal precision, 1 manager consume).
+- **Verification:** 315 tests passing, 0 failures, 0 errors.
+- Modified (wiki): 0018-sprint-4-risk-decisions.md (added sub-decision 9 — full security audit hardening, 8 sub-fixes); risk-manager.md (invariants table 9→14; settings section с allowlist + HMAC key; tags +security; sources +override.py +config.py).
+- Modified (code): src/platform/config.py, src/risk/override.py, src/risk/manager.py, src/risk/equity_tracker.py, src/risk/resume_cb.py + 5 test files.
+- Deferred follow-ups (M3/M4/L1/L2): clock injection в `OverrideStore.read_active` (testability), `force=True` flag для overwriting existing override (S5 ops), structured logging fields (S5 observability), magic numbers в test fixtures (S5 cleanup).
