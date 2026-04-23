@@ -9,7 +9,7 @@ import pytest
 from src.platform.db import init_db
 
 
-def test_migration_runner_atomic_on_crash(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_migration_runner_atomic_on_crash(tmp_path: Path) -> None:
     """If executescript() crashes mid-migration, no partial commit and no tracking row.
 
     Simulates: migration body fails → re-run must be safe (no duplicate-column errors).

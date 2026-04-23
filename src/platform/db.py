@@ -1,7 +1,14 @@
 """SQLite connection helpers + schema migrations."""
 
+import re
 import sqlite3
 from pathlib import Path
+
+# Allowlist for migration filenames — alphanumerics, dot, underscore, hyphen.
+# Used by init_db() to gate filenames before f-string interpolation into the
+# atomic tracking INSERT (executescript does not accept SQL parameters).
+_MIGRATION_FILENAME_RE = re.compile(r"[A-Za-z0-9._-]+")
+
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
@@ -37,10 +44,13 @@ def init_db(db_path: Path, migrations_dir: Path) -> None:
             script_sql = sql_file.read_text(encoding="utf-8")
             # Inline tracking INSERT inside the migration transaction so both
             # commit atomically via executescript()'s BEGIN/COMMIT wrapper.
-            # sql_file.name comes from Path.glob() of a controlled directory
-            # and cannot contain quotes; safe to format in.
-            if "'" in sql_file.name:
-                raise ValueError(f"migration filename contains quote: {sql_file.name!r}")
+            # executescript() does not accept parameters, so the filename is
+            # f-string-formatted; gate on a strict allowlist (alnum + ._-) to
+            # block any SQL-injection vector through filename content.
+            if not _MIGRATION_FILENAME_RE.fullmatch(sql_file.name):
+                raise ValueError(
+                    f"migration filename outside allowlist [A-Za-z0-9._-]: {sql_file.name!r}"
+                )
             atomic_script = (
                 "BEGIN;\n"
                 f"{script_sql}\n"
@@ -48,15 +58,8 @@ def init_db(db_path: Path, migrations_dir: Path) -> None:
                 f"VALUES ('{sql_file.name}', datetime('now'));\n"
                 "COMMIT;\n"
             )
-            try:
-                conn.executescript(atomic_script)
-            except Exception:
-                # executescript auto-rollbacks on error within its BEGIN/COMMIT;
-                # ensure no dangling transaction state.
-                try:
-                    conn.execute("ROLLBACK")
-                except sqlite3.OperationalError:
-                    pass  # no transaction open
-                raise
+            # executescript() runs within its own BEGIN/COMMIT scope; on
+            # parse or execution error it rolls back automatically.
+            conn.executescript(atomic_script)
     finally:
         conn.close()
