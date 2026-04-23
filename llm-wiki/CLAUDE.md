@@ -349,13 +349,16 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 **Особо ценны для AI Trading Bot:** AS `security-and-hardening` (API keys, override.py), AS `documentation-and-adrs` (наш ADR процесс), AS `deprecation-and-migration` (legacy `risk_manager.py` и пр.).
 
-### Layer 4b — meta-skills augment (3 strong-fit)
+### Layer 4b — meta-skills augment (4 strong-fit)
 
 | Skill | Триггер |
 |---|---|
 | `process-interviewer` | После 3 вопросов в `brainstorming` user даёт расплывчатые ответы, ИЛИ архитектурное решение affects > 1 sprint, ИЛИ есть hidden assumptions → escalate. Relentless extraction. |
 | `prompt-master` | Перед dispatch'ем subagent'а с любым из: brief > 200 слов, ожидаемый output > 30KB (риск truncation), Read файла > 50KB в контекст агента, critical correctness (Kelly формулы, look-ahead). |
 | `fact-checker` | Когда Layer 5 reviewer flag'ит "Follow-up for wiki: code↔ADR drift" → fact-check определяет источник истины. |
+| `caveman` (compression) | Auto-active в session per `/caveman lite\|full\|ultra`. Drops articles/filler/hedging в обычных ответах. **Бойлерные исключения** (caveman сам опускает): code blocks, commits/PRs, security warnings, irreversible-action confirmations, multi-step procedures где fragment order risks misread. |
+
+**Caveman + subagent briefs — правило:** для briefs с техническими спеками (Kelly формулы, Wilder α=1/n, миграции SQL, look-ahead invariants, ADR refs) — пиши brief в нормальном режиме и помечай в начале `DO NOT compress technical specs below`. Caveman сжимает только обертку, не контент. Для briefs > 200 слов — сначала L4b `prompt-master` (он жмёт грамотнее, чем caveman dropping).
 
 **Defer'нуты (потенциал v0.2+):** `mcp-builder`, `decision-toolkit`, `find-skills`.
 
@@ -393,6 +396,7 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 - 2026-04-23: 14 duplicate Superpowers skill-stubs из `~/.claude/skills/` перенесены в `~/.claude/skills/_backup_superpowers_dups/` — каждый был 4KB stub, конфликтовал с plugin-cache версией.
 - 2026-04-23: `~/.claude/agents/Python Reviewer.md` → `python-reviewer.md` (filename normalization).
+- 2026-04-23: caveman@caveman v84cc3c14fa1e установлен (local scope) → Layer 4b active. 5 sub-skills (`caveman`, `caveman-commit`, `caveman-review`, `caveman-help`, `compress`) + 3 commands (`/caveman`, `/caveman-commit`, `/caveman-review`) + 3 hooks (activate/mode-tracker/statusline).
 
 ### Trigger cascade — единый источник истины
 
@@ -442,7 +446,6 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 | Item | Status | Trigger to revisit |
 |---|---|---|
-| **caveman** (token compression) | Deferred — install fails (credit balance) | После refill пользователем; install + start с Lite mode |
 | VoltAgent `security-auditor` | Recommended, не установлен | При работе с `override.py`, API keys, Bybit signing — приоритет в S5/S10 |
 | VoltAgent `architect-reviewer` | Recommended, не установлен | При S12 manager.py orchestration / cross-module S5+ |
 | Claude mem `make-plan` / `do` | Skipped (overlap) | Никогда — Superpowers Layer 3 wins |
