@@ -218,3 +218,37 @@ def test_exit_pending_halt_when_position_still_there():
     r = reco.reconcile(local, expected_state=ExecutionState.EXIT_PENDING)
     assert r.verdict == "DIVERGENCE"
     assert r.halt_reason == "HALT_EXIT_RECONCILE_DIVERGENCE"
+
+
+# ---------------------------------------------------------------------------
+# Task 16: _wallet_cache + on_wallet_event
+# ---------------------------------------------------------------------------
+
+def test_reconciler_reads_wallet_cache_first(monkeypatch):
+    """WS-fed cache hit → no REST call."""
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("99.9"),  # REST value — should NOT be used
+        open_orders=[],
+        entry_order=None,
+    )
+    rest_calls = []
+    orig_get_wallet = adapter.get_wallet_balance
+    def spy(*a, **kw):
+        rest_calls.append((a, kw))
+        return orig_get_wallet(*a, **kw)
+    adapter.get_wallet_balance = spy
+
+    reco = Reconciler(adapter=adapter)
+    reco.on_wallet_event({"coin": "BTC", "walletBalance": "0.001"})  # WS-fed
+    local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.001"), entry_order_id=None)
+    r = reco.reconcile(local)
+    assert r.exch_qty == Decimal("0.001")
+    assert rest_calls == []  # REST not called
+
+
+def test_reconciler_falls_back_to_rest_on_cache_miss():
+    adapter = _FakeAdapter(exch_qty=Decimal("0.002"), open_orders=[], entry_order=None)
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.002"), entry_order_id=None)
+    r = reco.reconcile(local)
+    assert r.exch_qty == Decimal("0.002")  # came from REST adapter

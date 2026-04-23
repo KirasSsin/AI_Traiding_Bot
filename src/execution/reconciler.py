@@ -83,6 +83,24 @@ class Reconciler:
         self._symbol = symbol
         self._dust_threshold = dust_threshold
         self._heal_max_age_seconds = heal_max_age_seconds
+        self._wallet_cache: dict[str, Decimal] = {}
+
+    def on_wallet_event(self, evt: dict) -> None:
+        """WS wallet topic event: update cache. ADR 0021 sub-decision 6."""
+        coin = evt["coin"]
+        self._wallet_cache[coin] = Decimal(str(evt["walletBalance"]))
+
+    def _fetch_exch_qty(self, symbol: str | None) -> Decimal:
+        """Fetch exchange qty: cache first, REST fallback on miss. ADR 0021 sub-decision 6."""
+        coin = self._base_coin or self._derive_base_coin(symbol)
+        if coin is not None:
+            cached = self._wallet_cache.get(coin)
+            if cached is not None:
+                return Decimal("0") if cached < self._dust_threshold else cached
+            snap = self._query.get_wallet_balance(coin=coin)
+            return (Decimal("0") if snap.wallet_balance < self._dust_threshold
+                    else snap.wallet_balance)
+        return Decimal("0")
 
     def fetch_exchange_state(self) -> ExchangeState:
         wallet = self._query.get_wallet_balance(coin=self._base_coin)
@@ -232,21 +250,17 @@ class Reconciler:
         ADR 0021 sub-decision 3.
         """
         if expected_state is None:
-            # S6 binary path: use base_coin/symbol from constructor
-            state = self.fetch_exchange_state()
-            exch_qty = self.derive_position_qty(state)
-            link_ids = tuple(o.get("orderLinkId", "") for o in state.open_orders)
+            # S6 binary path: cache-aware fetch, still uses constructor symbol for orders
+            sym_bin = local.symbol or self._symbol
+            exch_qty = self._fetch_exch_qty(sym_bin)
+            open_orders_bin = (self._query.get_open_orders(symbol=sym_bin)
+                               if sym_bin else [])
+            link_ids = tuple(o.get("orderLinkId", "") for o in open_orders_bin)
             return self._binary_verdict(local, exch_qty, link_ids)
 
         # New 4-valued path (ADR 0021)
         sym = local.symbol or self._symbol
-        coin = self._base_coin or self._derive_base_coin(sym)
-        wallet = self._query.get_wallet_balance(coin=coin) if coin else None
-        if wallet is not None:
-            exch_qty = (Decimal("0") if wallet.wallet_balance < self._dust_threshold
-                        else wallet.wallet_balance)
-        else:
-            exch_qty = local.position_qty
+        exch_qty = self._fetch_exch_qty(sym)
         open_orders = self._query.get_open_orders(symbol=sym) if sym else []
         get_order = getattr(self._query, "get_order", None)
         entry_order = (get_order(order_id=local.entry_order_id)
