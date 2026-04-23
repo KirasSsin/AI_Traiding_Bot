@@ -104,3 +104,34 @@ class BybitMarketAdapter:
             order_id=resp["result"]["orderId"],
             order_link_id=resp["result"].get("orderLinkId"),
         )
+
+    def place_limit_order(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        qty: Decimal,
+        price: Decimal,
+        order_link_id: str,
+    ) -> OrderAck:
+        """ADR 0020 sub-decision 2: TP leg of 3-order Spot OCO bracket (Limit Sell, GTC)."""
+        self._filters.validate_order(qty=qty, price=price)
+        payload: dict[str, Any] = {
+            "category": "spot",
+            "symbol": symbol,
+            "side": side,
+            "orderType": "Limit",
+            "timeInForce": "GTC",
+            "qty": str(qty),
+            "price": str(price),
+            "marketUnit": "baseCoin",
+            "orderLinkId": order_link_id,
+        }
+        resp = self._rest._http.place_order(**payload)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return OrderAck(
+            order_id=resp["result"]["orderId"],
+            order_link_id=resp["result"].get("orderLinkId"),
+        )
