@@ -1,12 +1,57 @@
-"""Bybit V5 MARKET order adapter — domain-friendly wrapper."""
+"""Bybit V5 MARKET order adapter — ADR 0020 sub-decisions 1 & 3."""
 
-from datetime import UTC, datetime
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
 from src.execution.bybit.errors import ReasonCode, map_error
-from src.execution.models import Order, OrderSide, OrderStatus, OrderType
 from src.marketdata.filters import BybitFilters
+
+# ADR 0020 sub-decision 3: these fields are rejected by Bybit Spot V5 with ErrCode 170130.
+_BANNED_SPOT_FIELDS = (
+    "tpslMode",
+    "takeProfit",
+    "stopLoss",
+    "tpOrderType",
+    "slOrderType",
+    "triggerDirection",
+)
+
+
+@dataclass(frozen=True)
+class OrderAck:
+    """Minimal acknowledgement returned by Bybit after a successful place_order."""
+
+    order_id: str
+    order_link_id: str | None
+
+
+@dataclass(frozen=True)
+class CancelResult:
+    """Result of a cancel_order call. cancelled=False+reason=REJECT_ORDER_ALREADY_TERMINAL
+    means the order was already Filled (non-fatal race per ADR 0020 sub-decision 6)."""
+
+    cancelled: bool
+    reason_code: ReasonCode | None = None
+
+
+@dataclass(frozen=True)
+class OrderSnapshot:
+    order_id: str
+    order_link_id: str
+    order_status: str
+    cum_exec_qty: Decimal
+    cum_exec_fee: Decimal
+    fee_currency: str
+    avg_price: Decimal | None
+
+
+@dataclass(frozen=True)
+class WalletSnapshot:
+    coin: str
+    wallet_balance: Decimal
+    available: Decimal
+    locked: Decimal
 
 
 class BybitAPIError(RuntimeError):
@@ -19,65 +64,226 @@ class BybitAPIError(RuntimeError):
         self.reason = reason
 
 
-_SIDE_MAP = {OrderSide.BUY: "Buy", OrderSide.SELL: "Sell"}
-
-
 class BybitMarketAdapter:
-    """MARKET spot orders only (v0.1 scope)."""
+    """MARKET spot orders only (v0.1 scope). ADR 0020."""
 
-    def __init__(self, rest_client: Any, filters: BybitFilters) -> None:
-        self._rest = rest_client
+    def __init__(self, *, rest: Any, filters: BybitFilters) -> None:
+        self._rest = rest
         self._filters = filters
 
-    def place_market_order(
+    def place_order(
         self,
-        client_order_id: str,
-        side: OrderSide,
-        qty: Decimal,
-        reference_price: Decimal,
         *,
-        take_profit: Decimal | None = None,
-        stop_loss: Decimal | None = None,
-        tpsl_mode: str | None = None,
-    ) -> Order:
-        """Place MARKET order; validate via filters; return Order.
+        symbol: str,
+        side: str,
+        qty: Decimal,
+        order_link_id: str | None = None,
+        extra_payload: dict[str, Any] | None = None,
+    ) -> OrderAck:
+        """Place a Spot MARKET order on Bybit V5.
 
-        `reference_price` is needed only for the notional (min_order_amt) check;
-        it does NOT go into the order — MARKET orders have no price parameter.
+        Guards (ADR 0020 sub-decision 3):
+        - Raises ValueError for any banned Spot field in extra_payload.
+        - Raises ValueError if marketUnit=quoteCoin is requested.
+        - Always pins marketUnit=baseCoin in the final payload.
+
+        Filter validation runs before the REST call; min-notional is skipped
+        because MARKET orders have no price at order-build time.
         """
-        self._filters.validate_order(qty=qty, price=reference_price)
-        now = datetime.now(tz=UTC)
+        extra = dict(extra_payload) if extra_payload else {}
 
-        payload = {
+        # Guard: banned Spot V5 fields
+        for banned in _BANNED_SPOT_FIELDS:
+            if banned in extra:
+                raise ValueError(
+                    f"Field {banned!r} is banned for Bybit Spot V5: {banned} "
+                    f"(probe v1 / ErrCode 170130, ADR 0020 sub-decision 3)"
+                )
+
+        # Guard: marketUnit=quoteCoin causes 16-dp accumulation drift (probe S2 v2)
+        market_unit = extra.pop("marketUnit", "baseCoin")
+        if market_unit == "quoteCoin":
+            raise ValueError(
+                "marketUnit=quoteCoin banned: causes 16-dp accumulation drift "
+                "(probe S2 v2, ADR 0020 sub-decision 3)"
+            )
+
+        # Filter validation — price=None skips min-notional (no ref price for MARKET)
+        self._filters.validate_order(qty=qty)
+
+        payload: dict[str, Any] = {
             "category": "spot",
-            "symbol": self._filters.symbol,
-            "side": _SIDE_MAP[side],
+            "symbol": symbol,
+            "side": side,
             "orderType": "Market",
             "qty": str(qty),
-            "orderLinkId": client_order_id,
+            "marketUnit": "baseCoin",
         }
-        if take_profit is not None:
-            payload["takeProfit"] = str(take_profit)
-        if stop_loss is not None:
-            payload["stopLoss"] = str(stop_loss)
-        if tpsl_mode is not None:
-            payload["tpslMode"] = tpsl_mode
+        if order_link_id:
+            payload["orderLinkId"] = order_link_id
+        payload.update(extra)
 
         resp = self._rest._http.place_order(**payload)
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
 
-        return Order(
-            client_order_id=client_order_id,
-            exch_order_id=resp["result"]["orderId"],
-            symbol=self._filters.symbol,
-            side=side,
-            type=OrderType.MARKET,
-            status=OrderStatus.NEW,
-            orig_qty=qty,
-            executed_qty=Decimal("0"),
-            price=None,
-            created_at=now,
-            updated_at=now,
+        return OrderAck(
+            order_id=resp["result"]["orderId"],
+            order_link_id=resp["result"].get("orderLinkId"),
+        )
+
+    def place_stop_market_order(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        qty: Decimal,
+        trigger_price: Decimal,
+        order_link_id: str,
+    ) -> OrderAck:
+        """ADR 0020 sub-decision 2: SL leg of 3-order Spot OCO bracket.
+
+        Bybit Spot silently rewrites timeInForce GTC→IOC (probe v3-D); we omit
+        timeInForce entirely and handle IOC partial-fills at EXIT_SL_RESIDUAL.
+        """
+        self._filters.validate_order(qty=qty)
+        payload: dict[str, Any] = {
+            "category": "spot",
+            "symbol": symbol,
+            "side": side,
+            "orderType": "Market",
+            "orderFilter": "StopOrder",
+            "qty": str(qty),
+            "triggerPrice": str(trigger_price),
+            "triggerBy": "LastPrice",
+            "marketUnit": "baseCoin",
+            "orderLinkId": order_link_id,
+        }
+        resp = self._rest._http.place_order(**payload)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return OrderAck(
+            order_id=resp["result"]["orderId"],
+            order_link_id=resp["result"].get("orderLinkId"),
+        )
+
+    def place_limit_order(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        qty: Decimal,
+        price: Decimal,
+        order_link_id: str,
+    ) -> OrderAck:
+        """ADR 0020 sub-decision 2: TP leg of 3-order Spot OCO bracket (Limit Sell, GTC)."""
+        self._filters.validate_order(qty=qty, price=price)
+        payload: dict[str, Any] = {
+            "category": "spot",
+            "symbol": symbol,
+            "side": side,
+            "orderType": "Limit",
+            "timeInForce": "GTC",
+            "qty": str(qty),
+            "price": str(price),
+            "marketUnit": "baseCoin",
+            "orderLinkId": order_link_id,
+        }
+        resp = self._rest._http.place_order(**payload)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return OrderAck(
+            order_id=resp["result"]["orderId"],
+            order_link_id=resp["result"].get("orderLinkId"),
+        )
+
+    def cancel_order(self, *, symbol: str, order_id: str) -> CancelResult:
+        """ADR 0020 sub-decision 6: cancel-of-Filled returns 110001, classified non-fatal."""
+        payload = {"category": "spot", "symbol": symbol, "orderId": order_id}
+        resp = self._rest._http.cancel_order(**payload)
+        if resp["retCode"] == 0:
+            return CancelResult(cancelled=True)
+        reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+        # Defense-in-depth: pin classifier to retCode==110001 (not the reason alone),
+        # so future _MAP additions can't silently swallow a different error as "already terminal".
+        if resp["retCode"] == 110001 and reason is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
+            return CancelResult(cancelled=False, reason_code=reason)
+        raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+
+    def cancel_all_orders(self, *, symbol: str) -> None:
+        """Bulk cancel — used by flatten cascade and emergency halt."""
+        resp = self._rest._http.cancel_all_orders(category="spot", symbol=symbol)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+
+    def get_order(self, *, symbol: str, order_id: str) -> OrderSnapshot:
+        """Used by sibling-cancel-on-Triggered handler + Reconciler order-history sweep.
+
+        Bybit V5 shape: result.list[0] contains the order fields.
+        """
+        resp = self._rest._http.get_order(category="spot", symbol=symbol, orderId=order_id)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        items = resp["result"].get("list") or []
+        if not items:
+            raise BybitAPIError(-1, f"order {order_id} not found", ReasonCode.UNKNOWN_ERROR)
+        raw = items[0]
+        return OrderSnapshot(
+            order_id=raw["orderId"],
+            order_link_id=raw.get("orderLinkId", ""),
+            order_status=raw["orderStatus"],
+            cum_exec_qty=Decimal(raw.get("cumExecQty") or "0"),
+            cum_exec_fee=Decimal(raw.get("cumExecFee") or "0"),
+            fee_currency=raw.get("feeCurrency", ""),
+            avg_price=Decimal(raw["avgPrice"]) if raw.get("avgPrice") else None,
+        )
+
+    def get_open_orders(self, *, symbol: str) -> list[dict]:
+        """ADR 0020 sub-decision 9: list active orders for prior-attempt detection.
+        V5 GET /v5/order/realtime — returns currently open (Untriggered/New/PartiallyFilled).
+        """
+        resp = self._rest._http.get_open_orders(category="spot", symbol=symbol)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return resp["result"].get("list") or []
+
+    def get_order_history(self, *, symbol: str, limit: int = 50) -> list[dict]:
+        """ADR 0020 sub-decision 9: recent terminal orders for prior-attempt detection.
+        V5 GET /v5/order/history — Filled/Cancelled/Rejected within ~7 days.
+        """
+        resp = self._rest._http.get_order_history(category="spot", symbol=symbol, limit=limit)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return resp["result"].get("list") or []
+
+    def get_wallet_balance(self, *, coin: str) -> WalletSnapshot:
+        """ADR 0020 sub-decision 4: canonical Spot position truth (no get_position on Spot V5).
+
+        Bybit V5 shape: result.list[0].coin[0] contains the per-coin balance.
+        availableToWithdraw='' means funds fully locked — coerce empty string to Decimal('0').
+        """
+        resp = self._rest._http.get_wallet_balance(accountType="UNIFIED", coin=coin)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        items = resp["result"].get("list") or []
+        if not items:
+            raise BybitAPIError(-1, f"wallet for {coin} not found", ReasonCode.UNKNOWN_ERROR)
+        coin_rows = items[0].get("coin") or []
+        if not coin_rows:
+            raise BybitAPIError(-1, f"coin {coin} not in wallet", ReasonCode.UNKNOWN_ERROR)
+        raw = coin_rows[0]
+        avail_str = raw.get("availableToWithdraw") or "0"  # coerce '' to '0'
+        return WalletSnapshot(
+            coin=raw.get("coin", coin),
+            wallet_balance=Decimal(raw.get("walletBalance") or "0"),
+            available=Decimal(avail_str),
+            locked=Decimal(raw.get("locked") or "0"),
         )

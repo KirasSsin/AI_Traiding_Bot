@@ -30,7 +30,7 @@ EXPECTED_CODES = {
     "ENTRY_SHORT_PULLBACK",
     "SCALE_IN_LONG",
     "SCALE_IN_SHORT",
-    # Scale / exits (8 — wiki lists EXIT_CIRCUIT_BREAKER here despite header saying 7)
+    # Scale / exits (10 — S5 added EXIT_OCO_PARTIAL_TIMEOUT; S6 added EXIT_STOP_RESIDUAL_FLATTEN)
     "SCALE_OUT_PARTIAL",
     "EXIT_SL_HIT",
     "EXIT_TP_HIT",
@@ -39,7 +39,9 @@ EXPECTED_CODES = {
     "EXIT_TIME_STOP",
     "EXIT_MANUAL_OVERRIDE",
     "EXIT_CIRCUIT_BREAKER",
-    # Rejects (8)
+    "EXIT_OCO_PARTIAL_TIMEOUT",
+    "EXIT_STOP_RESIDUAL_FLATTEN",
+    # Rejects (9 — S6 added REJECT_ORDER_ALREADY_TERMINAL for retCode 110001 race)
     "REJECT_RISK_EXCEEDED",
     "REJECT_INSUFFICIENT_BALANCE",
     "REJECT_STALE_DATA",
@@ -48,7 +50,8 @@ EXPECTED_CODES = {
     "REJECT_MIN_NOTIONAL",
     "REJECT_FILTER_PRICE",
     "REJECT_DUPLICATE_SIGNAL",
-    # Halts (7 — wiki lists 7 despite header saying 6)
+    "REJECT_ORDER_ALREADY_TERMINAL",
+    # Halts (14 — S5 added HALT_RECONCILE_DIVERGENCE; S6 added 6 OCO/bracket halts per ADR 0020)
     "HALT_DRAWDOWN_L1",
     "HALT_DRAWDOWN_L2",
     "HALT_DRAWDOWN_L3",
@@ -56,6 +59,13 @@ EXPECTED_CODES = {
     "HALT_DATA_QUALITY",
     "HALT_EXCHANGE_OUTAGE",
     "HALT_KILL_SWITCH",
+    "HALT_RECONCILE_DIVERGENCE",
+    "HALT_BRACKET_INCOMPLETE",
+    "HALT_OCO_ARM_TIMEOUT",
+    "HALT_OCO_SIBLING_STUCK",
+    "HALT_PARTIAL_FILL_BELOW_MIN",
+    "HALT_FLATTEN_FAILED",
+    "HALT_PHANTOM_SL",
 }
 
 
@@ -73,8 +83,8 @@ def test_all_codes_exact_set() -> None:
 
 
 def test_reason_code_count() -> None:
-    # 6 entry + 8 exits + 8 rejects + 7 halts = 29
-    assert len(ReasonCode) == 29
+    # 6 entry + 10 exits + 9 rejects + 14 halts = 39 (S6: ADR 0020 sub-decisions 6-11)
+    assert len(ReasonCode) == 39
 
 
 def test_reason_code_is_str() -> None:

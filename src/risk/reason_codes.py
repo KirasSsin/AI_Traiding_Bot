@@ -19,10 +19,10 @@ Prompt-spec names NOT in wiki and their resolutions:
 Follow-up: ADR amendment needed for RISK_REJECT_INVALID_SIGNAL and
 RISK_REJECT_ZERO_QTY if those become distinct audit categories.
 
---- Wiki arithmetic note ---
-wiki header says "6+7+8+7=28" but exits section lists 8 codes (not 7)
-and halts section lists 7 codes (not 6). True count: 6+8+8+7=29.
-Follow-up: ADR amendment to fix wiki header arithmetic.
+--- Wiki arithmetic note (post-ADR 0020) ---
+Pre-S5 wiki header said "6+7+8+7=28"; S5 added EXIT_OCO_PARTIAL_TIMEOUT +
+HALT_RECONCILE_DIVERGENCE → 31. ADR 0020 (Sprint 6) adds 8 more →
+True count: 6 entry + 10 scale/exits + 9 rejects + 14 halts = 39.
 """
 
 from enum import StrEnum
@@ -37,7 +37,7 @@ class ReasonCode(StrEnum):
     SCALE_IN_LONG = "SCALE_IN_LONG"
     SCALE_IN_SHORT = "SCALE_IN_SHORT"
 
-    # Scale / exits (8)
+    # Scale / exits (10)
     SCALE_OUT_PARTIAL = "SCALE_OUT_PARTIAL"
     EXIT_SL_HIT = "EXIT_SL_HIT"
     EXIT_TP_HIT = "EXIT_TP_HIT"
@@ -47,8 +47,9 @@ class ReasonCode(StrEnum):
     EXIT_MANUAL_OVERRIDE = "EXIT_MANUAL_OVERRIDE"
     EXIT_CIRCUIT_BREAKER = "EXIT_CIRCUIT_BREAKER"
     EXIT_OCO_PARTIAL_TIMEOUT = "EXIT_OCO_PARTIAL_TIMEOUT"
+    EXIT_STOP_RESIDUAL_FLATTEN = "EXIT_STOP_RESIDUAL_FLATTEN"
 
-    # Rejects (8)
+    # Rejects (9)
     REJECT_RISK_EXCEEDED = "REJECT_RISK_EXCEEDED"
     REJECT_INSUFFICIENT_BALANCE = "REJECT_INSUFFICIENT_BALANCE"
     REJECT_STALE_DATA = "REJECT_STALE_DATA"
@@ -57,8 +58,9 @@ class ReasonCode(StrEnum):
     REJECT_MIN_NOTIONAL = "REJECT_MIN_NOTIONAL"
     REJECT_FILTER_PRICE = "REJECT_FILTER_PRICE"
     REJECT_DUPLICATE_SIGNAL = "REJECT_DUPLICATE_SIGNAL"
+    REJECT_ORDER_ALREADY_TERMINAL = "REJECT_ORDER_ALREADY_TERMINAL"
 
-    # Halts (7)
+    # Halts (14)
     HALT_DRAWDOWN_L1 = "HALT_DRAWDOWN_L1"
     HALT_DRAWDOWN_L2 = "HALT_DRAWDOWN_L2"
     HALT_DRAWDOWN_L3 = "HALT_DRAWDOWN_L3"
@@ -67,3 +69,11 @@ class ReasonCode(StrEnum):
     HALT_EXCHANGE_OUTAGE = "HALT_EXCHANGE_OUTAGE"
     HALT_KILL_SWITCH = "HALT_KILL_SWITCH"
     HALT_RECONCILE_DIVERGENCE = "HALT_RECONCILE_DIVERGENCE"
+
+    # --- ADR 0020 sub-decision 7 — Sprint 6 Spot OCO emulation ---
+    HALT_BRACKET_INCOMPLETE = "HALT_BRACKET_INCOMPLETE"
+    HALT_OCO_ARM_TIMEOUT = "HALT_OCO_ARM_TIMEOUT"
+    HALT_OCO_SIBLING_STUCK = "HALT_OCO_SIBLING_STUCK"
+    HALT_PARTIAL_FILL_BELOW_MIN = "HALT_PARTIAL_FILL_BELOW_MIN"
+    HALT_FLATTEN_FAILED = "HALT_FLATTEN_FAILED"
+    HALT_PHANTOM_SL = "HALT_PHANTOM_SL"

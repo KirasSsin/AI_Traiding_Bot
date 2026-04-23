@@ -15,4 +15,39 @@ def test_exit_oco_partial_timeout_in_enum():
 
 
 def test_total_reason_codes_count():
-    assert len(ReasonCode) == 31  # was 29 → +2 in S5
+    assert len(ReasonCode) == 39  # was 31 → +8 in S6
+
+
+def test_v2_count_is_39() -> None:
+    assert len(list(ReasonCode)) == 39
+
+
+def test_new_halt_codes_present() -> None:
+    for name in (
+        "HALT_BRACKET_INCOMPLETE",
+        "HALT_OCO_ARM_TIMEOUT",
+        "HALT_OCO_SIBLING_STUCK",
+        "HALT_PARTIAL_FILL_BELOW_MIN",
+        "HALT_FLATTEN_FAILED",
+        "HALT_PHANTOM_SL",
+    ):
+        assert hasattr(ReasonCode, name), f"missing {name}"
+
+
+def test_new_exit_and_reject_codes_present() -> None:
+    assert hasattr(ReasonCode, "EXIT_STOP_RESIDUAL_FLATTEN")
+    assert hasattr(ReasonCode, "REJECT_ORDER_ALREADY_TERMINAL")
+
+
+def test_new_codes_string_value_matches_name() -> None:
+    for name in (
+        "HALT_BRACKET_INCOMPLETE",
+        "HALT_OCO_ARM_TIMEOUT",
+        "HALT_OCO_SIBLING_STUCK",
+        "HALT_PARTIAL_FILL_BELOW_MIN",
+        "HALT_FLATTEN_FAILED",
+        "HALT_PHANTOM_SL",
+        "EXIT_STOP_RESIDUAL_FLATTEN",
+        "REJECT_ORDER_ALREADY_TERMINAL",
+    ):
+        assert ReasonCode[name].value == name

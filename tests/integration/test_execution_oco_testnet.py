@@ -24,7 +24,7 @@ from src.execution.reconciler import Reconciler
 from src.marketdata.bybit.rest import BybitRESTClient
 from src.platform.config import Settings
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.skip(reason="ADR 0020 sub-decision 1: native tpsl path removed; superseded by Coordinator bracket (Sprint 6 Task 24)")
 
 
 def _skip_if_not_explicitly_opted_in() -> None:

@@ -23,7 +23,8 @@ web/data.json
 /commands/
 /hooks/
 /skills/
-/scripts/
+/scripts/*
+!/scripts/*.py
 /package.json
 /gemini-extension.json
 /docs/README.codex.md

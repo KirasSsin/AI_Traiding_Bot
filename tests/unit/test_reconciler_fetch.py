@@ -2,15 +2,21 @@
 
 ADR ref: wiki/project/decisions/0019-sprint-5-execution-decisions.md sub-decision 3
 """
+import pytest
+pytestmark = pytest.mark.skip(reason="ADR 0020 sub-decision 4: Reconciler Protocol rewritten (get_position removed); S5 tests superseded by test_reconciler_wallet_protocol.py + test_reconciler_fetch_v2.py + test_reconciler_entry_price.py. Preserved for history.")
+
 from decimal import Decimal
 from unittest.mock import Mock
 
-from src.execution.reconciler import (
-    ExchangeState,
-    OpenOrderSnapshot,
-    PositionSnapshot,
-    Reconciler,
-)
+try:
+    from src.execution.reconciler import (
+        ExchangeState,
+        OpenOrderSnapshot,
+        PositionSnapshot,
+        Reconciler,
+    )
+except ImportError:
+    ExchangeState = OpenOrderSnapshot = PositionSnapshot = Reconciler = None  # type: ignore[assignment,misc]
 
 
 def test_fetch_exchange_state_with_oco_order_and_position():

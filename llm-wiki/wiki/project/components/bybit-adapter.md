@@ -1,10 +1,10 @@
 ---
 title: Execution — BybitMarketAdapter
 type: component
-tags: [execution, bybit, adapter, anti-corruption-layer, sprint-5]
+tags: [execution, bybit, adapter, anti-corruption-layer, sprint-5, sprint-6, adr-0020]
 created: 2026-04-21
 updated: 2026-04-23
-sources: [src/execution/bybit/adapter.py, src/execution/bybit/errors.py, tests/unit/test_bybit_adapter.py, tests/unit/test_bybit_errors.py]
+sources: [src/execution/bybit/adapter.py, src/execution/bybit/errors.py, tests/unit/test_bybit_adapter.py, tests/unit/test_bybit_errors.py, project/decisions/0020-sprint-6-execution-spot-oco-emulation.md]
 status: stable
 ---
 
@@ -73,10 +73,55 @@ order = adapter.place_market_order(
 
 См. также: [[oco]] (builder для SL/TP уровней).
 
+## Sprint 6 additions (ADR 0020)
+
+### Banned Spot fields
+
+Следующие поля **запрещены** и гвардятся в `place_order` (ADR 0020 sub-decision 3). Bybit Spot V5 отклоняет их с `retCode 170130` (probe v1):
+
+```
+tpslMode, takeProfit, stopLoss, tpOrderType, slOrderType, triggerDirection
+```
+
+`marketUnit=quoteCoin` — также запрещён: вызывает накопление дрейфа на 16-й знак (probe v2 S2). Адаптер всегда пинит `marketUnit=baseCoin`.
+
+### Новые методы
+
+**`place_limit_order(symbol, side, qty, price, order_link_id) -> OrderAck`**
+TP-нога 3-ордерного Spot OCO bracket. Payload: `orderType=Limit, timeInForce=GTC`.
+
+**`place_stop_market_order(symbol, side, qty, trigger_price, order_link_id) -> OrderAck`**
+SL-нога Spot OCO. Payload: `orderType=Market, orderFilter=StopOrder, triggerBy=LastPrice`. `timeInForce` **опущен** — Bybit Spot Stop молча перезаписывает `GTC→IOC` (probe v3-D); IOC partial-fills обрабатываются на `EXIT_SL_RESIDUAL`.
+
+**`cancel_order(symbol, order_id) -> CancelResult`**
+`retCode 110001` → `CancelResult(cancelled=False, reason_code=REJECT_ORDER_ALREADY_TERMINAL)` — нефатальная гонка с Filled (ADR 0020 sub-decision 6).
+
+**`cancel_all_orders(symbol) -> None`**
+Bulk-отмена для flatten-каскада и emergency halt.
+
+**`get_order(symbol, order_id) -> OrderSnapshot`**
+Читает `cum_exec_qty / cum_exec_fee / fee_currency / avg_price`. V5 GET `/v5/order/realtime` с `orderId`.
+
+**`get_open_orders(symbol) -> list[dict]`**
+V5 GET `/v5/order/realtime` — активные ордера (Untriggered/New/PartiallyFilled). Используется при bootstrap для обнаружения prior-attempt (ADR 0020 sub-decision 9).
+
+**`get_order_history(symbol, limit=50) -> list[dict]`**
+V5 GET `/v5/order/history` — терминальные ордера за ~7 дней. Используется при bootstrap (ADR 0020 sub-decision 9).
+
+**`get_wallet_balance(coin) -> WalletSnapshot`**
+Канонический источник истины о Spot-позиции (ADR 0020 sub-decision 4). Возвращает `WalletSnapshot(coin, wallet_balance, available, locked)`.
+
+### TIF override note
+
+Bybit Spot Stop молча переписывает `timeInForce=GTC` → `IOC` (probe v3-D). Адаптер полностью опускает `timeInForce` в `place_stop_market_order`; IOC partial-fills обрабатываются на уровне состояния `EXIT_SL_RESIDUAL` в FSM.
+
 ## Related
 
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — error-map таблица.
+- [[../decisions/0020-sprint-6-execution-spot-oco-emulation]] — sub-decisions 1, 2, 3, 4, 6, 9.
 - [[../architecture/bounded-contexts]] — Execution ACL.
+- [[execution-state-machine]] — `OCO_ARMING`, `EXIT_SL_RESIDUAL`, `EXIT_SIBLING_CANCELLING`.
+- [[oco]] — builder SL/TP уровней, использует новые методы адаптера.
 - [[models]] — `Order`, `OrderSide`, `OrderType`, `OrderStatus`.
 - [[../../trading/concepts/reason-codes]] — 31 codes, subset покрыт v0.1.
 

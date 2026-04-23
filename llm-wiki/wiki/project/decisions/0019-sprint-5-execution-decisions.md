@@ -9,10 +9,11 @@ status: accepted
 
 # 0019. Sprint 5 — Execution advanced decisions
 
-**Status:** accepted
+**Status:** accepted (sub-decision 1 superseded by [[0020-sprint-6-execution-spot-oco-emulation]])
 **Date:** 2026-04-23
 **Sprint:** S5
 **Supersedes:** —
+**Superseded-in-part-by:** [[0020-sprint-6-execution-spot-oco-emulation]] (sub-decision 1 native `tpslMode=Full` empirically rejected for Spot V5; sub-decisions 2/3/4 amended — FSM 12→21 states, schema v2, reason codes 31→39)
 **Amends:** [[0018-sprint-4-risk-decisions]] (extends reason-code enum)
 **Related:** [[../architecture/migration-plan]] §S5
 
@@ -26,7 +27,15 @@ OCO bracket (SL+TP), partial-fill handling, post-reconnect reconciliation, 12-st
 
 ### Sub-decision 1 — Native Bybit `tpslMode` для OCO (НЕ эмулируем)
 
-**Decision:** используем нативный Bybit Spot V5 `tpslMode=Full` с `takeProfit` и `stopLoss`
+> **⚠️ SUPERSEDED by [[0020-sprint-6-execution-spot-oco-emulation]] sub-decision 1.**
+> Empirical probe v1 (`scripts/spot_oco_probe.py` line 20) confirmed that Bybit Spot V5
+> Market `place_order` rejects `tpslMode/takeProfit/stopLoss/tpOrderType/slOrderType`
+> with ErrCode 170130 ("Data sent for paramter '' is not valid"). These fields are
+> valid only for linear/inverse contracts, not Spot. ADR 0020 replaces this with a
+> 3-order emulated bracket (Entry Market → Limit Sell @ TP → Stop Market Sell @ SL)
+> + client-side sibling cancel-on-Triggered.
+
+**Decision (rejected):** используем нативный Bybit Spot V5 `tpslMode=Full` с `takeProfit` и `stopLoss`
 полями в одном `place_order` запросе. Не эмулируем OCO через два отдельных
 conditional ордера + cancel-on-fill wiring.
 

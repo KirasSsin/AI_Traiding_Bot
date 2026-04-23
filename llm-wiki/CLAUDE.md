@@ -334,6 +334,30 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 **Правило:** TRIGGER оркестрирует процесс, DEPTH углубляет при необходимости.
 
+### Skill behavior overrides (autonomous flow)
+
+Этот проект работает в **autonomous mode**: контроллер инвентаризует репо/wiki сам и не дёргает пользователя вопросами, на которые есть ответ в repo/wiki/`git log`. Следующие шаги внутри Superpowers/Agent-Skills скиллов **OVERRIDDEN**:
+
+| Skill / Step | Default behavior | Override (this project) |
+|---|---|---|
+| `superpowers:executing-plans` Step 1 "Raise concerns before starting" | Stop, ask human partner about every concern | **First**: inventarize via wiki + Glob + Grep + Bash (`git log`, `python --version`, `ls src/`). **Ask only** when answer is NOT discoverable from repo/wiki/env. |
+| `superpowers:executing-plans` Step "Worktree setup" | Mandatory `using-git-worktrees` | S1-S5 норма = `feature/<sprint-N-slug>` ветка в текущем repo (см. PR #1-#7). Worktree only on user request. |
+| `superpowers:writing-plans` Step "Spec coverage check" | Spec→plan trace map | Same — не overridden. Trace map обязателен. |
+| `superpowers:brainstorming` HARD-GATE "Get design approval" | Always ask before code | Skip when work is **execution of approved ADR** (ADR = approved design). Brainstorm только для new ADRs. |
+| AS `using-agent-skills` "Surface Assumptions before non-trivial work" | Print assumptions list | Skip when assumptions already documented in active ADR/plan/sprint page. |
+| AS `using-agent-skills` "Manage Confusion: STOP, ask" | Stop on inconsistency | First: check wiki+ADR+log for resolution. Stop+ask only after wiki/ADR cannot resolve. |
+
+**Default checklist before asking the user any "does X exist?" question:**
+1. `Glob` для path-проверки.
+2. `Grep` для symbol/string-проверки.
+3. `Bash` `git log -- <path>` или `wc -l <file>` для истории/размера.
+4. `Read` `wiki/log.md` (последние 10 entries) + `wiki/index.md` для project state.
+5. `Read` activе ADR/plan/sprint page для предполагаемого scope.
+
+Если 5/5 шагов не дают ответа — тогда вопрос пользователю.
+
+**Anti-pattern (что я делаю НЕ так):** прыгать сразу в "raise concerns" перед инвентаризацией. Skill говорит "raise concerns", но сначала **проверь что concern реальный**. Большинство concerns снимаются через Glob/Grep за 30 секунд.
+
 ### Phase mapping для AI Trading Bot v0.1
 
 | Phase | Sequence |

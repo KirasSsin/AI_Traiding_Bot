@@ -1,178 +1,86 @@
-"""Post-reconnect reconciler. ADR 0019 sub-decision 3."""
+"""Post-reconnect reconciler — ADR 0020 sub-decision 4 (walletBalance truth, no get_position)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from enum import StrEnum
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
-from src.execution.state_machine import ExecutionState
-from src.execution.state_repo import ExecutionStateRow
+from src.execution.bybit.adapter import WalletSnapshot
 
 
+@runtime_checkable
 class ExchangeQueryClient(Protocol):
-    """Minimal contract reconciler needs from the exchange.
+    """ADR 0020 sub-decision 4: Spot V5 has no get_position. Wallet balance is truth."""
 
-    Concrete impl wired in Task 8 (Coordinator) — likely a thin wrapper
-    over BybitRESTClient._http.get_open_orders / .get_positions.
-    """
-
-    def get_open_orders(self, symbol: str) -> list[dict]: ...
-    def get_position(self, symbol: str) -> dict | None: ...
+    def get_wallet_balance(self, *, coin: str) -> WalletSnapshot: ...
+    def get_open_orders(self, *, symbol: str) -> list[dict]: ...
 
 
-@dataclass(frozen=True)
-class OpenOrderSnapshot:
-    order_id: str
-    side: str           # "Buy" | "Sell"
-    order_type: str     # "Market" | "Limit" | ...
-    qty: Decimal
-    price: Decimal | None        # None for market
-    take_profit: Decimal | None
-    stop_loss: Decimal | None
-    order_link_id: str | None    # client_order_id
-
-
-@dataclass(frozen=True)
-class PositionSnapshot:
-    symbol: str
-    qty: Decimal           # 0 == flat
-    avg_price: Decimal | None  # None when flat
-
-
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ExchangeState:
-    """Normalized snapshot of exchange-side truth for one symbol."""
-    symbol: str
-    open_orders: tuple[OpenOrderSnapshot, ...]
-    position: PositionSnapshot
+    """Normalized exchange-side snapshot. ADR 0020 sub-decision 4."""
+    wallet: WalletSnapshot
+    open_orders: tuple[dict, ...]
 
 
-class ReconcileVerdict(StrEnum):
-    OK = "OK"
-    DIVERGENCE = "DIVERGENCE"
+@dataclass(frozen=True, slots=True)
+class LocalState:
+    state: str                    # FSM state name (str to decouple from ExecutionState enum)
+    position_qty: Decimal
+    entry_price: Decimal | None
+    bracket_id: str | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ReconcileResult:
-    """Outcome of comparing local FSM state vs exchange state."""
-    verdict: ReconcileVerdict
-    exchange_state: ExchangeState
-    local_row: ExecutionStateRow | None
-    detail: str       # human-readable diff for audit log
-
-
-_QTY_EPS = Decimal("1e-8")
-_FLAT_STATES = {
-    ExecutionState.FLAT,
-    ExecutionState.INIT,
-    ExecutionState.COOLDOWN,
-    ExecutionState.KILLED,
-}
+    verdict: str                              # "AGREE" | "DIVERGENCE"
+    position_qty: Decimal                     # exchange truth
+    entry_price: Decimal | None               # preserved from local on AGREE, None on DIVERGENCE
+    open_order_link_ids: tuple[str, ...]
+    recommended_state: str | None = None      # set on DIVERGENCE → "HALTED"
+    halt_reason: str | None = None            # set on DIVERGENCE → "HALT_RECONCILE_DIVERGENCE"
 
 
 class Reconciler:
-    """Fetches exchange-side state. Diff/verdict is Task 7."""
+    """Post-reconnect reconciler — ADR 0020 sub-decision 4."""
 
-    def __init__(self, client: ExchangeQueryClient) -> None:
-        self._client = client
+    def __init__(self, *, query: ExchangeQueryClient, base_coin: str, symbol: str,
+                 dust_threshold: Decimal = Decimal("0.00001")) -> None:
+        self._query = query
+        self._base_coin = base_coin
+        self._symbol = symbol
+        self._dust_threshold = dust_threshold
 
-    def fetch_exchange_state(self, symbol: str) -> ExchangeState:
-        """Pull open orders + position for `symbol`, normalize to ExchangeState."""
-        raw_orders = self._client.get_open_orders(symbol)
-        orders = tuple(_normalize_order(o) for o in raw_orders)
+    def fetch_exchange_state(self) -> ExchangeState:
+        wallet = self._query.get_wallet_balance(coin=self._base_coin)
+        orders = tuple(self._query.get_open_orders(symbol=self._symbol))
+        return ExchangeState(wallet=wallet, open_orders=orders)
 
-        raw_pos = self._client.get_position(symbol)
-        position = _normalize_position(symbol, raw_pos)
+    def derive_position_qty(self, state: ExchangeState) -> Decimal:
+        """ADR 0020 sub-decision 4: wallet < dust_threshold → FLAT (no phantom position)."""
+        if state.wallet.wallet_balance < self._dust_threshold:
+            return Decimal("0")
+        return state.wallet.wallet_balance
 
-        return ExchangeState(symbol=symbol, open_orders=orders, position=position)
-
-    def reconcile(
-        self, symbol: str, local: ExecutionStateRow | None
-    ) -> ReconcileResult:
-        """Diff local FSM state vs exchange snapshot. Caller acts on verdict.
-
-        Rules (v0.1, single-symbol LONG-only):
-        - local None or local.state in FLAT-set: exchange must be flat (qty 0
-          AND no open orders) → OK; otherwise DIVERGENCE.
-        - local in active set (LONG_OPEN, OCO_ARMED, PARTIAL_FILL,
-          ENTRY_PENDING, EXIT_PENDING, RECONCILING, HALTED, ERROR):
-            * exchange position qty must equal local.position_qty within eps
-            * if local.oco_main_order_id is set, exchange must have an open
-              order with matching orderId; otherwise DIVERGENCE.
+    def reconcile(self, local: LocalState) -> ReconcileResult:
+        """ADR 0020 sub-decision 4: exchange owns qty; local owns entry_price.
+        Preserve entry_price when qtys agree; clear it + halt on divergence.
         """
-        exchange = self.fetch_exchange_state(symbol)
-        ex_qty = exchange.position.qty
-        ex_has_orders = len(exchange.open_orders) > 0
-
-        # Case 1: no local row at all
-        if local is None:
-            if ex_qty == 0 and not ex_has_orders:
-                return ReconcileResult(
-                    ReconcileVerdict.OK, exchange, None,
-                    "no local state; exchange flat",
-                )
+        state = self.fetch_exchange_state()
+        exch_qty = self.derive_position_qty(state)
+        link_ids = tuple(o.get("orderLinkId", "") for o in state.open_orders)
+        if exch_qty != local.position_qty:
             return ReconcileResult(
-                ReconcileVerdict.DIVERGENCE, exchange, None,
-                f"no local state but exchange has qty={ex_qty} orders={len(exchange.open_orders)}",
+                verdict="DIVERGENCE",
+                position_qty=exch_qty,
+                entry_price=None,
+                open_order_link_ids=link_ids,
+                recommended_state="HALTED",
+                halt_reason="HALT_RECONCILE_DIVERGENCE",
             )
-
-        # Case 2: local says flat-equivalent
-        if local.state in _FLAT_STATES:
-            if ex_qty == 0 and not ex_has_orders:
-                return ReconcileResult(
-                    ReconcileVerdict.OK, exchange, local,
-                    f"local {local.state.value} matches exchange flat",
-                )
-            return ReconcileResult(
-                ReconcileVerdict.DIVERGENCE, exchange, local,
-                f"local {local.state.value} but exchange has qty={ex_qty} orders={len(exchange.open_orders)}",
-            )
-
-        # Case 3: local says active position
-        qty_diff = abs(ex_qty - local.position_qty)
-        if qty_diff > _QTY_EPS:
-            return ReconcileResult(
-                ReconcileVerdict.DIVERGENCE, exchange, local,
-                f"qty mismatch: local={local.position_qty} exchange={ex_qty} diff={qty_diff}",
-            )
-
-        if local.oco_main_order_id is not None:
-            ids = {o.order_id for o in exchange.open_orders}
-            if local.oco_main_order_id not in ids:
-                return ReconcileResult(
-                    ReconcileVerdict.DIVERGENCE, exchange, local,
-                    f"oco order {local.oco_main_order_id} missing on exchange (open_ids={sorted(ids)})",
-                )
-
         return ReconcileResult(
-            ReconcileVerdict.OK, exchange, local,
-            f"local {local.state.value} qty={local.position_qty} matches exchange",
+            verdict="AGREE",
+            position_qty=exch_qty,
+            entry_price=local.entry_price,
+            open_order_link_ids=link_ids,
         )
-
-
-def _normalize_order(o: dict) -> OpenOrderSnapshot:
-    """Bybit V5 open-order dict → OpenOrderSnapshot."""
-    return OpenOrderSnapshot(
-        order_id=o["orderId"],
-        side=o["side"],
-        order_type=o["orderType"],
-        qty=Decimal(o["qty"]),
-        price=Decimal(o["price"]) if o.get("price") not in (None, "", "0") else None,
-        take_profit=Decimal(o["takeProfit"]) if o.get("takeProfit") not in (None, "", "0") else None,
-        stop_loss=Decimal(o["stopLoss"]) if o.get("stopLoss") not in (None, "", "0") else None,
-        order_link_id=o.get("orderLinkId") or None,
-    )
-
-
-def _normalize_position(symbol: str, raw: dict | None) -> PositionSnapshot:
-    """Bybit position dict (or None) → PositionSnapshot. None == flat."""
-    if raw is None:
-        return PositionSnapshot(symbol=symbol, qty=Decimal("0"), avg_price=None)
-    qty = Decimal(raw.get("size", "0"))
-    if qty == 0:
-        return PositionSnapshot(symbol=symbol, qty=Decimal("0"), avg_price=None)
-    avg_price = (
-        Decimal(raw["avgPrice"]) if raw.get("avgPrice") not in (None, "", "0") else None
-    )
-    return PositionSnapshot(symbol=symbol, qty=qty, avg_price=avg_price)
