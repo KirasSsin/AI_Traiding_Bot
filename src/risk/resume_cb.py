@@ -2,11 +2,10 @@
 
 import argparse
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from src.platform.config import Settings
 from src.risk.override import CbOverride, OverrideStore
-
 
 _DURATION_RE = re.compile(r"^(\d+)([hmd])$")
 
@@ -31,7 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     settings = Settings()  # type: ignore[call-arg]
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     override = CbOverride(
         level=args.level,
         reason=args.reason,

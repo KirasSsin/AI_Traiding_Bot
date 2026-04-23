@@ -3,7 +3,7 @@
 Sprint 4 Task 7.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from sqlite3 import Connection
 from typing import Literal
@@ -81,7 +81,7 @@ class TradeHistoryRepository:
         """Load trades with exit_ts >= (now - window_days)."""
         if window_days < 0:
             raise ValueError("window_days must be non-negative")
-        cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=window_days)
+        cutoff = (now or datetime.now(UTC)) - timedelta(days=window_days)
         rows = self._conn.execute(
             """SELECT trade_id, symbol, entry_signal_id, entry_ts, exit_ts, qty,
                       entry_price, exit_price, pnl_quote, pnl_pct, fees_paid,
@@ -104,8 +104,8 @@ class TradeHistoryRepository:
             trade_id=row[0],
             symbol=row[1],
             entry_signal_id=UUID(row[2]),
-            entry_ts=datetime.fromisoformat(row[3]).astimezone(timezone.utc),
-            exit_ts=datetime.fromisoformat(row[4]).astimezone(timezone.utc),
+            entry_ts=datetime.fromisoformat(row[3]).astimezone(UTC),
+            exit_ts=datetime.fromisoformat(row[4]).astimezone(UTC),
             qty=Decimal(row[5]),
             entry_price=Decimal(row[6]),
             exit_price=Decimal(row[7]),
@@ -114,5 +114,5 @@ class TradeHistoryRepository:
             fees_paid=Decimal(row[10]),
             reason_code=ReasonCode(row[11]),
             kelly_phase=row[12],
-            recorded_at=datetime.fromisoformat(row[13]).astimezone(timezone.utc),
+            recorded_at=datetime.fromisoformat(row[13]).astimezone(UTC),
         )

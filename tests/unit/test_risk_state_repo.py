@@ -1,10 +1,8 @@
 """Tests for StateRepository — TDD RED."""
 
 import sqlite3
-from datetime import datetime, timezone
 
 import pytest
-
 from src.risk.state_repo import StateRepository
 
 

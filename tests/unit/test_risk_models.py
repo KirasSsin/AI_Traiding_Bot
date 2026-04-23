@@ -9,16 +9,14 @@ enumerated codes (all present in the wiki page) and assert len == 29.
 Follow-up: ADR amendment to fix wiki header arithmetic (6+8+8+7=29 not 28).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
-
 from src.risk.models import HaltState, RiskAssessment
 from src.risk.reason_codes import ReasonCode
-
 
 # ---------------------------------------------------------------------------
 # Task 3 — ReasonCode StrEnum
@@ -127,7 +125,7 @@ def _approved(**overrides) -> dict:
         kelly_fraction=Decimal("0.01"),
         halt_state=HaltState.L0,
         reason_code=ReasonCode.ENTRY_LONG_TREND_FOLLOWING,
-        assessed_at=datetime.now(timezone.utc),
+        assessed_at=datetime.now(UTC),
     )
     base.update(overrides)
     return base
@@ -144,7 +142,7 @@ def _rejected(**overrides) -> dict:
         kelly_fraction=Decimal("0"),
         halt_state=HaltState.L1,
         reason_code=ReasonCode.REJECT_RISK_EXCEEDED,
-        assessed_at=datetime.now(timezone.utc),
+        assessed_at=datetime.now(UTC),
     )
     base.update(overrides)
     return base

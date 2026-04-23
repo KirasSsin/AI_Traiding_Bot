@@ -3,9 +3,8 @@
 from decimal import Decimal
 
 import pytest
-
-from src.risk.models import HaltState
 from src.risk.circuit_breakers import CircuitBreakerConfig, CircuitBreakerDetector
+from src.risk.models import HaltState
 
 
 @pytest.fixture()

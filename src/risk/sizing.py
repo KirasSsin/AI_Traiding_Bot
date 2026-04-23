@@ -7,7 +7,7 @@ def compute_qty(
     equity: Decimal,
     fraction: Decimal,
     atr: Decimal,
-    price: Decimal,
+    price: Decimal,  # noqa: ARG001 — kept for API symmetry with signal.mark_price
     k: Decimal = Decimal("1.5"),
 ) -> Decimal:
     """Position-size formula: qty = (fraction * equity) / (k * atr).

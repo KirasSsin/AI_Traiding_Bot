@@ -1,15 +1,13 @@
 """Tests for OverrideStore and CbOverride — TDD RED."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
-
 from src.risk.override import CbOverride, OverrideStore
 
-
-_NOW = datetime(2026, 4, 23, 12, 0, 0, tzinfo=timezone.utc)
+_NOW = datetime(2026, 4, 23, 12, 0, 0, tzinfo=UTC)
 _HASH = "a" * 64
 
 

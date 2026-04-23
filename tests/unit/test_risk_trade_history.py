@@ -1,14 +1,13 @@
 """Tests for TradeHistoryRepository + TradeRecord (Sprint 4 Task 7)."""
 
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
-
 from src.platform.db import connect, init_db
 
 MIGRATIONS_DIR = Path(__file__).parents[2] / "migrations"
@@ -23,10 +22,10 @@ def db(tmp_path: Path) -> sqlite3.Connection:
 
 def _make_record(**overrides):
     """Build a valid TradeRecord with sensible defaults."""
-    from src.risk.trade_history import TradeRecord
     from src.risk.reason_codes import ReasonCode
+    from src.risk.trade_history import TradeRecord
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     defaults = dict(
         symbol="BTCUSDT",
         entry_signal_id=uuid4(),
@@ -95,7 +94,7 @@ def test_decimal_roundtrip_exact(db):
         fees_paid=Decimal("0.00000001"),
     )
     repo.insert_closed_trade(record)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     rows = repo.load_recent(window_days=1, now=now)
 
     assert len(rows) == 1
@@ -116,7 +115,7 @@ def test_load_recent_excludes_old_trade(db):
     from src.risk.trade_history import TradeHistoryRepository
 
     repo = TradeHistoryRepository(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     old_exit = now - timedelta(days=100)
     repo.insert_closed_trade(_make_record(exit_ts=old_exit, entry_ts=old_exit - timedelta(hours=1)))
 
@@ -128,7 +127,7 @@ def test_load_recent_includes_recent_trade(db):
     from src.risk.trade_history import TradeHistoryRepository
 
     repo = TradeHistoryRepository(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     repo.insert_closed_trade(_make_record(exit_ts=now - timedelta(days=10)))
 
     result = repo.load_recent(window_days=90, now=now)
@@ -139,7 +138,7 @@ def test_load_recent_default_window_90_days(db):
     from src.risk.trade_history import TradeHistoryRepository
 
     repo = TradeHistoryRepository(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     # 80 days ago — within 90-day window
     repo.insert_closed_trade(_make_record(exit_ts=now - timedelta(days=80)))
     # 100 days ago — outside
@@ -158,7 +157,7 @@ def test_load_recent_ordered_asc_by_exit_ts(db):
     from src.risk.trade_history import TradeHistoryRepository
 
     repo = TradeHistoryRepository(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     t1 = now - timedelta(days=5)
     t2 = now - timedelta(days=3)
     t3 = now - timedelta(days=1)
@@ -202,12 +201,12 @@ def test_invalid_kelly_phase_raises_before_insert(db):
 # ---------------------------------------------------------------------------
 
 def test_full_roundtrip_preserves_all_fields(db):
-    from src.risk.trade_history import TradeHistoryRepository
     from src.risk.reason_codes import ReasonCode
+    from src.risk.trade_history import TradeHistoryRepository
 
     repo = TradeHistoryRepository(db)
     sig_id = uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     entry = now - timedelta(hours=2)
 
     record = _make_record(
@@ -248,7 +247,7 @@ def test_persistence_across_repo_instances(db):
     repo1.insert_closed_trade(_make_record())
 
     repo2 = TradeHistoryRepository(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     assert len(repo2.load_recent(window_days=1, now=now)) == 1
     assert repo2.count() == 1
 
@@ -259,7 +258,6 @@ def test_persistence_across_repo_instances(db):
 
 def test_naive_datetime_rejected():
     """TradeRecord must reject naive datetimes (Blocker 1)."""
-    from src.risk.trade_history import TradeRecord
 
     naive = datetime(2024, 1, 1, 12, 0, 0)  # no tzinfo
     with pytest.raises(ValidationError):
@@ -268,9 +266,8 @@ def test_naive_datetime_rejected():
 
 def test_aware_datetime_accepted():
     """TradeRecord accepts aware UTC datetimes (Blocker 1)."""
-    from src.risk.trade_history import TradeRecord
 
-    aware = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    aware = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
     record = _make_record(entry_ts=aware)
     assert record.entry_ts == aware
 

@@ -4,7 +4,6 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-
 from src.platform.db import connect, init_db
 
 MIGRATIONS_DIR = Path(__file__).parents[2] / "migrations"

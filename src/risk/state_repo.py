@@ -1,7 +1,7 @@
 """JSON KV adapter for the `state` SQLite table."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from sqlite3 import Connection
 from typing import Any
 
@@ -34,7 +34,7 @@ class StateRepository:
                    ON CONFLICT(key) DO UPDATE SET
                      value_json = excluded.value_json,
                      updated_at = excluded.updated_at""",
-                (key, json.dumps(value, sort_keys=True), datetime.now(timezone.utc).isoformat()),
+                (key, json.dumps(value, sort_keys=True), datetime.now(UTC).isoformat()),
             )
 
     def update_many(self, updates: dict[str, dict[str, Any]]) -> None:
@@ -44,7 +44,7 @@ class StateRepository:
         """
         if not updates:
             return
-        ts = datetime.now(timezone.utc).isoformat()
+        ts = datetime.now(UTC).isoformat()
         with self._conn:
             for key, value in updates.items():
                 self._conn.execute(

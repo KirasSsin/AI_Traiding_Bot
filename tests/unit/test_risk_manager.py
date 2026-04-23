@@ -1,13 +1,12 @@
 """Tests for RiskManager orchestrator — Sprint 4 Task 12. TDD RED."""
 
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
-
 from src.platform.config import Settings
 from src.platform.db import connect, init_db
 from src.risk.models import HaltState
@@ -17,7 +16,7 @@ from src.risk.trade_history import TradeHistoryRepository, TradeRecord
 from src.signalgen.models import Signal, SignalSide
 
 MIGRATIONS_DIR = Path(__file__).parents[2] / "migrations"
-_UTC = timezone.utc
+_UTC = UTC
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +220,7 @@ def test_halt_l3_rejects_assessment(db, settings):
 # ---------------------------------------------------------------------------
 
 
-def test_override_resumes_l2(db, settings, tmp_path):
+def test_override_resumes_l2(db, settings):
     """Valid override with matching config_hash resumes trading at L2."""
     peak = Decimal("10000")
     current = peak * Decimal("0.775")  # L2
@@ -254,7 +253,7 @@ def test_override_resumes_l2(db, settings, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_override_invalid_hash_ignored(db, settings, tmp_path):
+def test_override_invalid_hash_ignored(db, settings):
     """Override with stale config_hash is ignored — halt remains active."""
     peak = Decimal("10000")
     current = peak * Decimal("0.775")  # L2
@@ -287,7 +286,7 @@ def test_override_invalid_hash_ignored(db, settings, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_override_expired_ignored(db, settings, tmp_path):
+def test_override_expired_ignored(db, settings):
     """Expired override is ignored — halt remains active."""
     peak = Decimal("10000")
     current = peak * Decimal("0.775")  # L2

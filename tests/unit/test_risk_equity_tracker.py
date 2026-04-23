@@ -1,18 +1,17 @@
 """Tests for EquityTracker — 24h rolling HWM. Task 8 Sprint 4."""
 
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
-
 from src.platform.db import connect, init_db
 from src.risk.equity_tracker import EquityTracker
 
 MIGRATIONS_DIR = Path(__file__).parents[2] / "migrations"
 
-_UTC = timezone.utc
+_UTC = UTC
 
 
 @pytest.fixture()
@@ -77,7 +76,7 @@ def test_record_accepts_negative_unrealized(tracker: EquityTracker) -> None:
     assert snap_id > 0
 
 
-def test_record_invalid_source_raises(tracker: EquityTracker, db: sqlite3.Connection) -> None:
+def test_record_invalid_source_raises(db: sqlite3.Connection) -> None:
     """CHECK constraint on source column must reject unknown values."""
     with pytest.raises(sqlite3.IntegrityError):
         db.execute(
@@ -173,7 +172,7 @@ def test_peak_equity_24h_uses_utc_now_by_default(tracker: EquityTracker) -> None
 
 def test_decimal_roundtrip_exact(tracker: EquityTracker) -> None:
     precise = Decimal("12345.6789012345")
-    snap_id = tracker.record(
+    tracker.record(
         realized=precise,
         unrealized=Decimal("0"),
         ts=datetime(2026, 4, 23, 12, 0, 0, tzinfo=_UTC),

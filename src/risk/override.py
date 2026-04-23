@@ -1,11 +1,10 @@
 """Manual circuit-breaker override — file-backed store."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
-
 
 OverrideLevel = Literal["L2", "L3", "FLASH"]
 
@@ -50,11 +49,11 @@ class OverrideStore:
             return None
         return override
 
-    def consume(self, *, override: CbOverride) -> None:
+    def consume(self, *, override: CbOverride) -> None:  # noqa: ARG002 — API kwarg kept for caller clarity
         """Move active file to <path-stem>.consumed.<ts>.json."""
         if not self._path.exists():
             return
         consumed = self._path.with_name(
-            f"{self._path.stem}.consumed.{int(datetime.now(timezone.utc).timestamp())}.json"
+            f"{self._path.stem}.consumed.{int(datetime.now(UTC).timestamp())}.json"
         )
         self._path.rename(consumed)

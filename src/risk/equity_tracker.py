@@ -1,6 +1,6 @@
 """EquityTracker — SQLite-backed equity snapshot store with 24h rolling HWM."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from sqlite3 import Connection
 from typing import Literal
@@ -37,7 +37,7 @@ class EquityTracker:
 
     def peak_equity_24h(self, *, now: datetime | None = None) -> Decimal | None:
         """Max total_equity in trailing 24h. None if no snapshots in window."""
-        cutoff = (now or datetime.now(timezone.utc)) - timedelta(hours=24)
+        cutoff = (now or datetime.now(UTC)) - timedelta(hours=24)
         row = self._conn.execute(
             "SELECT total_equity FROM equity_snapshots WHERE ts >= ?"
             " ORDER BY CAST(total_equity AS REAL) DESC LIMIT 1",

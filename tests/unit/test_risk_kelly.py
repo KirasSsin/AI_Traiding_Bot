@@ -6,7 +6,6 @@ from decimal import Decimal
 from math import isfinite
 
 import pytest
-
 from src.risk.kelly import (
     KellyCaps,
     kelly_fraction,
@@ -128,7 +127,7 @@ def test_wilson_95_ci_all_wins():
 def test_wilson_95_ci_no_wins():
     """wins == 0: lower should be 0, upper > 0."""
     lower, upper = wilson_95_ci(wins=0, total=100)
-    assert 0.0 <= lower
+    assert lower >= 0.0
     assert upper > lower
 
 
