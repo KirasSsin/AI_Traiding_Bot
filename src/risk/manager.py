@@ -6,9 +6,11 @@ Public API: update_equity, assess, on_bar_close, record_closed_trade,
 
 import logging
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from decimal import ROUND_DOWN, Decimal
 from sqlite3 import Connection
+
+UTC = timezone.utc
 
 from src.platform.config import Settings
 from src.risk.circuit_breakers import CircuitBreakerConfig, CircuitBreakerDetector
