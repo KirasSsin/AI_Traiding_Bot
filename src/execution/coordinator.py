@@ -14,11 +14,27 @@ from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
 from typing import Any
 
+import logging
+
 from src.execution.bracket import BracketParams, build_bracket, make_order_link_id
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
-from src.execution.state_machine import ExecutionEvent, ExecutionState, apply
+from src.execution.state_machine import (
+    ExecutionEvent,
+    ExecutionState,
+    IllegalTransitionError,
+    apply,
+)
 from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
 from src.risk.reason_codes import ReasonCode
+
+_log = logging.getLogger(__name__)
+
+_TERMINAL_STATES: frozenset[ExecutionState] = frozenset({
+    ExecutionState.FLAT,
+    ExecutionState.HALTED,
+    ExecutionState.KILLED,
+    ExecutionState.ERROR,
+})
 
 
 def _now_iso() -> str:
@@ -135,18 +151,47 @@ class Coordinator:
         residual-flatten handlers. The Triggered→Filled gap on Bybit Spot Stop
         is 0ms, so Triggered is the only window to cancel the sibling before
         it self-fills; a 110001 response is a non-fatal race (sub-decision 6).
+
+        Idempotency / late-event safety: Bybit WS may deliver duplicate or
+        out-of-order echoes (e.g. PartiallyFilled then Triggered, or a Filled
+        echo arriving after the bracket already halted). Events landing in a
+        terminal state (FLAT/HALTED/KILLED/ERROR) are silently dropped with a
+        warning; an IllegalTransitionError from the FSM is logged but never
+        propagated, so a stale echo cannot kill the executor worker.
         """
         link_id = evt.get("orderLinkId", "")
         status = evt.get("orderStatus", "")
         role = self._role_from_link_id(link_id)
-        if status == "Triggered" and role == "sl":
-            self._transition(ExecutionEvent.SL_TRIGGERED)
-            self._cancel_sibling(role_to_cancel="tp")
-        elif status == "Filled" and role == "tp":
-            self._transition(ExecutionEvent.TP_HIT)
-            self._cancel_sibling(role_to_cancel="sl")
-        elif status == "PartiallyFilled" and role == "sl":
-            self._handle_sl_partial(evt)
+        row = self._repo.get(self._symbol)
+        if row is None or row.state in _TERMINAL_STATES:
+            if row is not None and row.state in _TERMINAL_STATES:
+                _log.warning(
+                    "on_order_event.dropped_in_terminal_state state=%s status=%s role=%s link_id=%s",
+                    row.state, status, role, link_id,
+                )
+            return
+        try:
+            if role == "entry":
+                if status == "Filled":
+                    self._transition(ExecutionEvent.ENTRY_FILLED)
+                # PartiallyFilled / other entry statuses: no-op (Spot Market BUY
+                # fills atomically; defensive against future SDK changes).
+                return
+            if status == "Triggered" and role == "sl":
+                self._transition(ExecutionEvent.SL_TRIGGERED)
+                self._cancel_sibling(role_to_cancel="tp")
+            elif status == "Filled" and role == "tp":
+                self._transition(ExecutionEvent.TP_HIT)
+                self._cancel_sibling(role_to_cancel="sl")
+            elif status == "PartiallyFilled" and role == "sl":
+                self._handle_sl_partial(evt)
+        except IllegalTransitionError as e:
+            # Late / duplicate WS echo for an event the FSM has already routed
+            # past. Log + drop — never crash the executor on a stale echo.
+            _log.warning(
+                "on_order_event.illegal_transition_dropped error=%s status=%s role=%s link_id=%s",
+                e, status, role, link_id,
+            )
 
     def _handle_sl_partial(self, evt: dict) -> None:
         """ADR 0020 sub-decision 7: SL IOC partial → flatten residual via Market Sell.
