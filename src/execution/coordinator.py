@@ -15,6 +15,7 @@ from decimal import Decimal
 from typing import Any
 
 from src.execution.bracket import BracketParams, build_bracket
+from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
 from src.execution.state_machine import ExecutionEvent, ExecutionState, apply
 from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
 
@@ -93,3 +94,79 @@ class Coordinator:
             )
         )
         return bracket_id
+
+    def on_order_event(self, evt: dict) -> None:
+        """ADR 0020 sub-decisions 6+7: WS event router.
+
+        Routes Triggered/Filled/PartiallyFilled events to sibling-cancel and
+        residual-flatten handlers. The Triggered→Filled gap on Bybit Spot Stop
+        is 0ms, so Triggered is the only window to cancel the sibling before
+        it self-fills; a 110001 response is a non-fatal race (sub-decision 6).
+        """
+        link_id = evt.get("orderLinkId", "")
+        status = evt.get("orderStatus", "")
+        role = self._role_from_link_id(link_id)
+        if status == "Triggered" and role == "sl":
+            self._transition(ExecutionEvent.SL_TRIGGERED)
+            self._cancel_sibling(role_to_cancel="tp")
+        elif status == "Filled" and role == "tp":
+            self._transition(ExecutionEvent.TP_HIT)
+            self._cancel_sibling(role_to_cancel="sl")
+        elif status == "PartiallyFilled" and role == "sl":
+            self._handle_sl_partial(evt)
+
+    def _handle_sl_partial(self, evt: dict) -> None:
+        """Placeholder for IOC partial handling — Task 18 (ADR 0020 sub-decision 4)."""
+
+    def _cancel_sibling(self, *, role_to_cancel: str) -> None:
+        """Cancel the surviving sibling leg once its pair fired.
+
+        On a 110001 response (REJECT_ORDER_ALREADY_TERMINAL) the sibling had
+        already self-filled in the 0ms Triggered→Filled window — classify as
+        SIBLING_CANCELLED (non-fatal race, ADR 0020 sub-decision 6).
+        """
+        row = self._repo.get(self._symbol)
+        if row is None:
+            return
+        sibling_oid = row.oco_tp_order_id if role_to_cancel == "tp" else row.oco_sl_order_id
+        if sibling_oid is None:
+            self._transition(ExecutionEvent.SIBLING_CANCELLED)
+            return
+        res = self._adapter.cancel_order(symbol=self._symbol, order_id=sibling_oid)
+        if res.cancelled:
+            self._transition(ExecutionEvent.SIBLING_CANCELLED)
+        elif res.reason_code is AdapterReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
+            self._transition(ExecutionEvent.SIBLING_CANCELLED)
+        else:
+            self._transition(ExecutionEvent.SIBLING_CANCEL_FAILED)
+
+    def _role_from_link_id(self, link_id: str) -> str | None:
+        """Extract the role ('tp'/'sl'/'entry') from orderLinkId.
+
+        Pattern: oco-{bracket}-{role}-{attempt} → role is second-from-last token.
+        """
+        parts = link_id.split("-")
+        return parts[-2] if len(parts) >= 4 else None
+
+    def _transition(self, event: ExecutionEvent) -> None:
+        """Apply FSM event to persisted row and upsert with refreshed timestamp."""
+        current = self._repo.get(self._symbol)
+        if current is None:
+            return
+        new_state = apply(current.state, event)
+        self._repo.upsert(
+            ExecutionStateRow(
+                symbol=current.symbol,
+                state=new_state,
+                position_qty=current.position_qty,
+                entry_price=current.entry_price,
+                oco_main_order_id=current.oco_main_order_id,
+                bracket_id=current.bracket_id,
+                oco_tp_order_id=current.oco_tp_order_id,
+                oco_sl_order_id=current.oco_sl_order_id,
+                expected_oco_qty=current.expected_oco_qty,
+                arming_started_at=current.arming_started_at,
+                last_attempt_num=current.last_attempt_num,
+                updated_at=_now_iso(),
+            )
+        )
