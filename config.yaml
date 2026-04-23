@@ -1,0 +1,55 @@
+data:
+  source: "parquet"
+  parquet_path: "data/BTCUSDT_1h.parquet"
+  csv_path: "data/BTCUSDT_1h.csv"
+  symbol: "BTCUSDT"
+  timeframe: "1h"
+  start_date: "2023-01-01"
+  end_date: "2026-12-31"
+
+trading:
+  initial_balance: 10000.0
+  use_live_balance: false
+  commission_taker: 0.001
+  slippage: 0.0005
+  position_size_pct: 25.0
+  max_drawdown_pct: 20.0
+  max_risk_per_trade_pct: 1.0
+  long_only: true
+  seed: 42
+
+strategy:
+  indicators:
+    ema:
+      enabled: true
+      fast_period: 12
+      slow_period: 120
+    rsi:
+      enabled: true
+      period: 14
+      overbought: 68
+      oversold: 32
+    atr:
+      enabled: true
+      period: 14
+      sl_atr_mult: 2.5
+      tp_atr_mult: 8.0
+
+output:
+  directory: "output"
+  generate_html: true
+  generate_csv: true
+  generate_json: true
+
+live:
+  enabled: false
+  testnet: true
+  demo: true
+  category: "linear"
+  symbol: "BTCUSDT"
+  interval: "1"
+  rest_poll_interval_seconds: 1
+  startup_test_usd: 0.0
+  ui_port: 8000
+  api_key_env: "BYBIT_API_KEY"
+  api_secret_env: "BYBIT_API_SECRET"

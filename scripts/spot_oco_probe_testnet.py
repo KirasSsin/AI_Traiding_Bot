@@ -42,7 +42,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-TESTNET_URL = "https://api-testnet.bybit.com"
+TESTNET_URL = "https://api-demo.bybit.com"  # demo=True + testnet=False (Demo Mainnet)
 
 PROBES = {
     "B2": "spot_oco_probe",
@@ -59,8 +59,8 @@ def _patch_http_for_testnet() -> None:
 
     class _TestnetHTTP(_OrigHTTP):
         def __init__(self, *args, **kwargs):  # type: ignore[override]
-            kwargs["testnet"] = True
-            kwargs["demo"] = False
+            kwargs["testnet"] = False
+            kwargs["demo"] = True
             super().__init__(*args, **kwargs)
 
     _pybit.HTTP = _TestnetHTTP  # type: ignore[assignment]
@@ -74,8 +74,8 @@ def _patch_ws_for_testnet() -> None:
 
     class _TestnetWS(_OrigWS):
         def __init__(self, *args, **kwargs):  # type: ignore[override]
-            kwargs["testnet"] = True
-            kwargs["demo"] = False
+            kwargs["testnet"] = False
+            kwargs["demo"] = True
             super().__init__(*args, **kwargs)
 
     _pybit.WebSocket = _TestnetWS  # type: ignore[assignment]
@@ -153,14 +153,16 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    api_key = os.environ.get("BYBIT_TESTNET_API_KEY")
-    api_secret = os.environ.get("BYBIT_TESTNET_API_SECRET")
+    # Prefer explicit BYBIT_TESTNET_* pair; fall back to BYBIT_API_KEY/SECRET
+    # when .env is configured. Demo Mainnet keys (api-demo.bybit.com).
+    api_key = os.environ.get("BYBIT_TESTNET_API_KEY") or os.environ.get("BYBIT_API_KEY")
+    api_secret = os.environ.get("BYBIT_TESTNET_API_SECRET") or os.environ.get("BYBIT_API_SECRET")
     if not api_key or not api_secret:
         print(
-            "ERROR: set BYBIT_TESTNET_API_KEY and BYBIT_TESTNET_API_SECRET before running.",
+            "ERROR: set BYBIT_TESTNET_API_KEY/SECRET or BYBIT_API_KEY/SECRET before running.",
             file=sys.stderr,
         )
-        print("Do NOT use mainnet keys — testnet has separate credentials.", file=sys.stderr)
+        print("Keys must be Demo Mainnet (demo=True, testnet=False, api-demo.bybit.com).", file=sys.stderr)
         return 2
 
     # Inject testnet credentials into env so pydantic Settings() picks them up

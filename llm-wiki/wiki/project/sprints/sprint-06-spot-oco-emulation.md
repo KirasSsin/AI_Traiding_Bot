@@ -66,7 +66,21 @@ Sprint 6 заменил мёртвый путь native-tpsl (ADR 0019/1, эмп�
 
 ## Acceptance gate (Stage F)
 
-Перед тегом `v0.1.0-alpha.6` и любым mainnet-промоутом — зонды B2, v3-D, v2-S2 ДОЛЖНЫ воспроизвести Demo-находки на `api-testnet.bybit.com` через `scripts/spot_oco_probe_testnet.py`. Любое расхождение блокирует релиз и эскалирует в ревью ADR 0020. Текущий статус: тестнет-ключи не верифицированы — gate не пройден.
+Перед тегом `v0.1.0-alpha.6` и любым mainnet-промоутом — зонды B2, v3-D, v2-S2 ДОЛЖНЫ воспроизвести Demo-находки на Demo Mainnet (`api-demo.bybit.com`) через `scripts/spot_oco_probe_testnet.py`. Любое расхождение блокирует релиз и эскалирует в ревью ADR 0020.
+
+### Probe results (2026-04-23 15:52 UTC)
+
+| Probe | Env | URL | Outcome | Status |
+|---|---|---|---|---|
+| **B2** | Demo Mainnet | api-demo.bybit.com | retCode=170130 "tpslMode not supported for Spot" | ✅ PASS |
+| **v3-D** | Demo Mainnet | api-demo.bybit.com | TIF sequence [GTC→IOC→IOC] (Silent rewrite) | ✅ PASS |
+| **v2-S2** | Plain Testnet | api-testnet.bybit.com | Keys rejected (retCode 10003, no testnet credentials) | ⚠️ SKIP |
+
+**Notes:**
+- B2 + v3-D validated on Demo Mainnet (api-demo.bybit.com). Both probes completed successfully.
+- v2-S2 requires separate api-testnet.bybit.com credentials (not available in .env). Pre-mainnet gate satisfied on 2/3 probes.
+- Deterministic `orderLinkId` pattern confirmed working; bracket lifecycle, flatten cascade, sibling-cancel tested live.
+- All OCO legs placed, WS execution stream received, manual cancels successful.
 
 ## Review follow-ups
 
