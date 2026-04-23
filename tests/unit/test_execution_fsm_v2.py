@@ -45,8 +45,9 @@ from src.execution.state_machine import TRANSITIONS, apply
 
 def test_transitions_count_exact_v2() -> None:
     # S5 had 29; ADR 0020 sub-decision 8 adds 25 net new unique keys
-    # (27 entries minus 2 override-existing keys → 29+25=54).
-    assert len(TRANSITIONS) == 54
+    # (27 entries minus 2 override-existing keys → 29+25=54). Sub-decision 10
+    # (Task 22) adds (OCO_ARMED, FLATTEN_FAILED) → HALTED → 55.
+    assert len(TRANSITIONS) == 55
 
 
 def test_exit_sibling_cancel_failed_has_ws_reconnect_and_kill() -> None:

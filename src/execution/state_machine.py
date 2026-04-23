@@ -115,6 +115,9 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
     # Flatten cascade from EXIT_PENDING (sub-decision 11)
     (ExecutionState.EXIT_PENDING, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
+    # Flatten cascade from OCO_ARMED (sub-decision 10): emergency flatten on
+    # reconcile divergence / risk halt invoked while bracket is armed.
+    (ExecutionState.OCO_ARMED, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
     # WS reconnect from new states
     (ExecutionState.OCO_ARMING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,

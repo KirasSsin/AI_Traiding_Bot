@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from typing import Any
 
 from src.execution.bracket import BracketParams, build_bracket, make_order_link_id
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
 from src.execution.state_machine import ExecutionEvent, ExecutionState, apply
 from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
+from src.risk.reason_codes import ReasonCode
 
 
 def _now_iso() -> str:
@@ -216,6 +217,48 @@ class Coordinator:
             self._transition(ExecutionEvent.SL_PLACED)
         except Exception:
             return
+
+    def flatten(self, *, reason: ReasonCode) -> None:
+        """ADR 0020 sub-decision 10: emergency flatten cascade.
+
+        cancel_all_orders → read wallet → step-floor free qty →
+        Market Sell → on failure retry once with qty -= qty_step →
+        on second failure FLATTEN_FAILED event → HALTED.
+
+        ``reason`` is accepted for caller-API consistency (e.g.
+        HALT_RECONCILE_DIVERGENCE) but is not persisted on the row —
+        ExecutionStateRow has no halt_reason/last_exit_reason field.
+        It is conveyed to operators via the FSM event + structured logger.
+        """
+        self._adapter.cancel_all_orders(symbol=self._symbol)
+        wallet = self._adapter.get_wallet_balance(coin=self._base_coin)
+        free_qty = wallet.wallet_balance - wallet.locked
+        qty_step = self._qty_step()
+        qty = self._step_floor(free_qty, qty_step)
+        if qty <= Decimal("0"):
+            return  # already flat — no-op
+        if self._try_place_market_sell(qty):
+            return
+        retry_qty = self._step_floor(qty - qty_step, qty_step)
+        if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
+            return
+        self._transition(ExecutionEvent.FLATTEN_FAILED)
+
+    def _try_place_market_sell(self, qty: Decimal) -> bool:
+        try:
+            self._adapter.place_order(symbol=self._symbol, side="Sell", qty=qty)
+            return True
+        except Exception:
+            return False
+
+    def _qty_step(self) -> Decimal:
+        return self._adapter._filters.step_size
+
+    @staticmethod
+    def _step_floor(value: Decimal, step: Decimal) -> Decimal:
+        if step <= 0 or value <= 0:
+            return Decimal("0")
+        return (value / step).quantize(Decimal("1"), rounding=ROUND_DOWN) * step
 
     def reconcile_arming_ttl(
         self, *, now: datetime | None = None, ttl_seconds: int = 60
