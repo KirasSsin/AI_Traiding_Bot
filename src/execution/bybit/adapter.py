@@ -1,12 +1,29 @@
-"""Bybit V5 MARKET order adapter — domain-friendly wrapper."""
+"""Bybit V5 MARKET order adapter — ADR 0020 sub-decisions 1 & 3."""
 
-from datetime import UTC, datetime
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
 from src.execution.bybit.errors import ReasonCode, map_error
-from src.execution.models import Order, OrderSide, OrderStatus, OrderType
 from src.marketdata.filters import BybitFilters
+
+# ADR 0020 sub-decision 3: these fields are rejected by Bybit Spot V5 with ErrCode 170130.
+_BANNED_SPOT_FIELDS = (
+    "tpslMode",
+    "takeProfit",
+    "stopLoss",
+    "tpOrderType",
+    "slOrderType",
+    "triggerDirection",
+)
+
+
+@dataclass(frozen=True)
+class OrderAck:
+    """Minimal acknowledgement returned by Bybit after a successful place_order."""
+
+    order_id: str
+    order_link_id: str | None
 
 
 class BybitAPIError(RuntimeError):
@@ -19,65 +36,71 @@ class BybitAPIError(RuntimeError):
         self.reason = reason
 
 
-_SIDE_MAP = {OrderSide.BUY: "Buy", OrderSide.SELL: "Sell"}
-
-
 class BybitMarketAdapter:
-    """MARKET spot orders only (v0.1 scope)."""
+    """MARKET spot orders only (v0.1 scope). ADR 0020."""
 
-    def __init__(self, rest_client: Any, filters: BybitFilters) -> None:
-        self._rest = rest_client
+    def __init__(self, *, rest: Any, filters: BybitFilters) -> None:
+        self._rest = rest
         self._filters = filters
 
-    def place_market_order(
+    def place_order(
         self,
-        client_order_id: str,
-        side: OrderSide,
-        qty: Decimal,
-        reference_price: Decimal,
         *,
-        take_profit: Decimal | None = None,
-        stop_loss: Decimal | None = None,
-        tpsl_mode: str | None = None,
-    ) -> Order:
-        """Place MARKET order; validate via filters; return Order.
+        symbol: str,
+        side: str,
+        qty: Decimal,
+        order_link_id: str | None = None,
+        extra_payload: dict[str, Any] | None = None,
+    ) -> OrderAck:
+        """Place a Spot MARKET order on Bybit V5.
 
-        `reference_price` is needed only for the notional (min_order_amt) check;
-        it does NOT go into the order — MARKET orders have no price parameter.
+        Guards (ADR 0020 sub-decision 3):
+        - Raises ValueError for any banned Spot field in extra_payload.
+        - Raises ValueError if marketUnit=quoteCoin is requested.
+        - Always pins marketUnit=baseCoin in the final payload.
+
+        Filter validation runs before the REST call; min-notional is skipped
+        because MARKET orders have no price at order-build time.
         """
-        self._filters.validate_order(qty=qty, price=reference_price)
-        now = datetime.now(tz=UTC)
+        extra = dict(extra_payload) if extra_payload else {}
 
-        payload = {
+        # Guard: banned Spot V5 fields
+        for banned in _BANNED_SPOT_FIELDS:
+            if banned in extra:
+                raise ValueError(
+                    f"Field {banned!r} is banned for Bybit Spot V5: {banned} "
+                    f"(probe v1 / ErrCode 170130, ADR 0020 sub-decision 3)"
+                )
+
+        # Guard: marketUnit=quoteCoin causes 16-dp accumulation drift (probe S2 v2)
+        market_unit = extra.pop("marketUnit", "baseCoin")
+        if market_unit == "quoteCoin":
+            raise ValueError(
+                "marketUnit=quoteCoin banned: causes 16-dp accumulation drift "
+                "(probe S2 v2, ADR 0020 sub-decision 3)"
+            )
+
+        # Filter validation — price=None skips min-notional (no ref price for MARKET)
+        self._filters.validate_order(qty=qty)
+
+        payload: dict[str, Any] = {
             "category": "spot",
-            "symbol": self._filters.symbol,
-            "side": _SIDE_MAP[side],
+            "symbol": symbol,
+            "side": side,
             "orderType": "Market",
             "qty": str(qty),
-            "orderLinkId": client_order_id,
+            "marketUnit": "baseCoin",
         }
-        if take_profit is not None:
-            payload["takeProfit"] = str(take_profit)
-        if stop_loss is not None:
-            payload["stopLoss"] = str(stop_loss)
-        if tpsl_mode is not None:
-            payload["tpslMode"] = tpsl_mode
+        if order_link_id:
+            payload["orderLinkId"] = order_link_id
+        payload.update(extra)
 
         resp = self._rest._http.place_order(**payload)
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
 
-        return Order(
-            client_order_id=client_order_id,
-            exch_order_id=resp["result"]["orderId"],
-            symbol=self._filters.symbol,
-            side=side,
-            type=OrderType.MARKET,
-            status=OrderStatus.NEW,
-            orig_qty=qty,
-            executed_qty=Decimal("0"),
-            price=None,
-            created_at=now,
-            updated_at=now,
+        return OrderAck(
+            order_id=resp["result"]["orderId"],
+            order_link_id=resp["result"].get("orderLinkId"),
         )
