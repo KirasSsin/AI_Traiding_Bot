@@ -1,9 +1,9 @@
 ---
 title: Execution — BybitMarketAdapter
 type: component
-tags: [execution, bybit, adapter, anti-corruption-layer]
+tags: [execution, bybit, adapter, anti-corruption-layer, sprint-5]
 created: 2026-04-21
-updated: 2026-04-21
+updated: 2026-04-23
 sources: [src/execution/bybit/adapter.py, src/execution/bybit/errors.py, tests/unit/test_bybit_adapter.py, tests/unit/test_bybit_errors.py]
 status: stable
 ---
@@ -53,12 +53,32 @@ order: Order = adapter.place_market_order(
 - **client_order_id ≡ orderLinkId** (Bybit terminology).
 - **Spot category hardcoded** — linear (perps) добавляется v0.2 через расширение, не modification.
 
+## Sprint 5 extension — `tpslMode` for OCO bracket
+
+Per ADR 0019 sub-decision 1 (native Bybit `tpslMode=Full`, not emulated):
+
+```python
+order = adapter.place_market_order(
+    client_order_id=cid,
+    side=OrderSide.BUY,
+    qty=Decimal("0.001"),
+    reference_price=last_price,
+    take_profit=Decimal("75000"),
+    stop_loss=Decimal("65000"),
+    tpsl_mode="Full",
+)
+```
+
+Все три kwargs опциональны и keyword-only. Non-OCO путь (без kwargs) byte-identical к pre-S5 поведению. Биржа гарантирует cancel-on-fill для OCO ног.
+
+См. также: [[oco]] (builder для SL/TP уровней).
+
 ## Related
 
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — error-map таблица.
 - [[../architecture/bounded-contexts]] — Execution ACL.
 - [[models]] — `Order`, `OrderSide`, `OrderType`, `OrderStatus`.
-- [[../trading/concepts/reason-codes]] — 28 кодов, subset покрыт v0.1.
+- [[../../trading/concepts/reason-codes]] — 31 codes, subset покрыт v0.1.
 
 ## Sources
 

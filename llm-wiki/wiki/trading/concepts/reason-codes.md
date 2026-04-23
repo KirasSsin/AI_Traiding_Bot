@@ -1,7 +1,7 @@
 ---
-title: Reason Codes (29)
+title: Reason Codes (31)
 type: concept
-tags: [audit, reason-codes, v0.1]
+tags: [audit, reason-codes, v0.1, sprint-5]
 created: 2026-04-19
 updated: 2026-04-23
 status: stable
@@ -10,7 +10,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 
 # Reason Codes
 
-**TL;DR:** 29 стандартизированных enum-кодов для audit-log. Каждая сделка/отказ/halt получает один код. Используется в event `RiskRejected.reason`, `OrderCancelled.reason`, `CircuitBreakerTriggered.reason` и `trade_audit.reason_code`. Канонический enum — `src/risk/reason_codes.py::ReasonCode` (StrEnum, immutable).
+**TL;DR:** 31 стандартизированных enum-кодов для audit-log. Каждая сделка/отказ/halt получает один код. Используется в event `RiskRejected.reason`, `OrderCancelled.reason`, `CircuitBreakerTriggered.reason` и `trade_audit.reason_code`. Канонический enum — `src/risk/reason_codes.py::ReasonCode` (StrEnum, immutable).
 
 ## Enum
 
@@ -22,7 +22,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `SCALE_IN_LONG` — reserved v0.2+ (pyramid).
 - `SCALE_IN_SHORT` — reserved v0.2+.
 
-### Scale / exits (8)
+### Scale / exits (9)
 - `SCALE_OUT_PARTIAL` — частичное закрытие.
 - `EXIT_SL_HIT` — OCO stop-loss leg triggered.
 - `EXIT_TP_HIT` — OCO take-profit leg triggered.
@@ -31,6 +31,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `EXIT_TIME_STOP` — 48 bars timeout (опционально v0.1).
 - `EXIT_MANUAL_OVERRIDE` — operator intervention.
 - `EXIT_CIRCUIT_BREAKER` — принудительный close через CB L2/L3/flash.
+- `EXIT_OCO_PARTIAL_TIMEOUT` — partial OCO fill висит > N сек, force-close оставшегося qty (ADR 0019).
 
 ### Rejects (8)
 - `REJECT_RISK_EXCEEDED` — Kelly или max position fraction.
@@ -42,7 +43,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `REJECT_FILTER_PRICE` — filter violation `PRICE_FILTER` или `LOT_SIZE`.
 - `REJECT_DUPLICATE_SIGNAL` — повторный signal на тот же bar.
 
-### Halts (7)
+### Halts (8)
 - `HALT_DRAWDOWN_L1` — 15% DD warning.
 - `HALT_DRAWDOWN_L2` — 22% DD halt 24h.
 - `HALT_DRAWDOWN_L3` — 30% DD full stop.
@@ -50,10 +51,13 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `HALT_DATA_QUALITY` — consecutive missing bars, negative volume, OHLC inconsistency.
 - `HALT_EXCHANGE_OUTAGE` — HTTP 418, maintenance window, WS down >N min.
 - `HALT_KILL_SWITCH` — operator или `TRADING_ENABLED=false` env var.
+- `HALT_RECONCILE_DIVERGENCE` — local FSM state расходится с exchange после reconcile (ADR 0019).
 
-**Итого:** 6 + 8 + 8 + 7 = 29.
+**Итого:** 6 + 9 + 8 + 8 = 31.
 
 **Note (Sprint 4):** до S4 wiki header заявлял 28 (счёт sections был неверен: exits=7→8, halts=6→7). Code в `src/risk/reason_codes.py` всегда был source of truth. Исправлено в Sprint 4 wiki sync (см. ADR 0018).
+
+**Note (Sprint 5):** добавлены 2 новых кода (`HALT_RECONCILE_DIVERGENCE`, `EXIT_OCO_PARTIAL_TIMEOUT`). Total: 29 → 31. См. ADR [[../../project/decisions/0019-sprint-5-execution-decisions]] sub-decision 4.
 
 ## Использование
 
