@@ -3,7 +3,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
+from enum import StrEnum
 from typing import Protocol
+
+from src.execution.state_machine import ExecutionState
+from src.execution.state_repo import ExecutionStateRow
 
 
 class ExchangeQueryClient(Protocol):
@@ -59,6 +63,87 @@ class Reconciler:
         position = _normalize_position(symbol, raw_pos)
 
         return ExchangeState(symbol=symbol, open_orders=orders, position=position)
+
+    def reconcile(
+        self, symbol: str, local: ExecutionStateRow | None
+    ) -> ReconcileResult:
+        """Diff local FSM state vs exchange snapshot. Caller acts on verdict.
+
+        Rules (v0.1, single-symbol LONG-only):
+        - local None or local.state in FLAT-set: exchange must be flat (qty 0
+          AND no open orders) → OK; otherwise DIVERGENCE.
+        - local in active set (LONG_OPEN, OCO_ARMED, PARTIAL_FILL,
+          ENTRY_PENDING, EXIT_PENDING, RECONCILING, HALTED, ERROR):
+            * exchange position qty must equal local.position_qty within eps
+            * if local.oco_main_order_id is set, exchange must have an open
+              order with matching orderId; otherwise DIVERGENCE.
+        """
+        exchange = self.fetch_exchange_state(symbol)
+        ex_qty = exchange.position.qty
+        ex_has_orders = len(exchange.open_orders) > 0
+
+        # Case 1: no local row at all
+        if local is None:
+            if ex_qty == 0 and not ex_has_orders:
+                return ReconcileResult(
+                    ReconcileVerdict.OK, exchange, None,
+                    "no local state; exchange flat",
+                )
+            return ReconcileResult(
+                ReconcileVerdict.DIVERGENCE, exchange, None,
+                f"no local state but exchange has qty={ex_qty} orders={len(exchange.open_orders)}",
+            )
+
+        # Case 2: local says flat-equivalent
+        if local.state in _FLAT_STATES:
+            if ex_qty == 0 and not ex_has_orders:
+                return ReconcileResult(
+                    ReconcileVerdict.OK, exchange, local,
+                    f"local {local.state.value} matches exchange flat",
+                )
+            return ReconcileResult(
+                ReconcileVerdict.DIVERGENCE, exchange, local,
+                f"local {local.state.value} but exchange has qty={ex_qty} orders={len(exchange.open_orders)}",
+            )
+
+        # Case 3: local says active position
+        qty_diff = abs(ex_qty - local.position_qty)
+        if qty_diff > _QTY_EPS:
+            return ReconcileResult(
+                ReconcileVerdict.DIVERGENCE, exchange, local,
+                f"qty mismatch: local={local.position_qty} exchange={ex_qty} diff={qty_diff}",
+            )
+
+        if local.oco_main_order_id is not None:
+            ids = {o.order_id for o in exchange.open_orders}
+            if local.oco_main_order_id not in ids:
+                return ReconcileResult(
+                    ReconcileVerdict.DIVERGENCE, exchange, local,
+                    f"oco order {local.oco_main_order_id} missing on exchange (open_ids={sorted(ids)})",
+                )
+
+        return ReconcileResult(
+            ReconcileVerdict.OK, exchange, local,
+            f"local {local.state.value} qty={local.position_qty} matches exchange",
+        )
+
+
+class ReconcileVerdict(StrEnum):
+    OK = "OK"
+    DIVERGENCE = "DIVERGENCE"
+
+
+@dataclass(frozen=True)
+class ReconcileResult:
+    """Outcome of comparing local FSM state vs exchange state."""
+    verdict: ReconcileVerdict
+    exchange_state: ExchangeState
+    local_row: ExecutionStateRow | None
+    detail: str       # human-readable diff for audit log
+
+
+_QTY_EPS = Decimal("1e-8")
+_FLAT_STATES = {ExecutionState.FLAT, ExecutionState.INIT, ExecutionState.COOLDOWN, ExecutionState.KILLED}
 
 
 def _normalize_order(o: dict) -> OpenOrderSnapshot:
