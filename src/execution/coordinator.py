@@ -232,14 +232,31 @@ class Coordinator:
         row = self._repo.get(self._symbol)
         if row is None or row.bracket_id is None:
             raise RuntimeError("arm_oco called without active bracket_id")
+        # Sub-decision 9 race-fix: cancel stale TP/SL from a prior attempt
+        # BEFORE placing the new attempt. Without this, a retry from
+        # OCO_ARMING (after WS-reconnect, partial-arm crash, or arming-TTL
+        # halt-and-resume) leaves the old `oco-{bid}-tp-{N}` live alongside
+        # the new `oco-{bid}-tp-{N+1}` → double exit on Spot.
+        # Cancellation is best-effort: 110001 (already terminal) and
+        # transient adapter errors do NOT block re-placement, since the
+        # safety-critical path is getting fresh legs onto the book; any
+        # leftover stale leg is reaped by reconcile / bootstrap.
+        if row.oco_tp_order_id is not None:
+            self._best_effort_cancel(row.oco_tp_order_id)
+        if row.oco_sl_order_id is not None:
+            self._best_effort_cancel(row.oco_sl_order_id)
         attempt = row.last_attempt_num + 1
         tp_lid = make_order_link_id(bracket_id=row.bracket_id, role="tp", attempt=attempt)
         sl_lid = make_order_link_id(bracket_id=row.bracket_id, role="sl", attempt=attempt)
-        # Persist attempt + arming_started_at upfront so a crash mid-arm doesn't reuse the number
+        # Persist attempt + arming_started_at upfront so a crash mid-arm doesn't reuse the number;
+        # also clear stale TP/SL ids so a crash between cancel and new place doesn't
+        # leave us pointing at the cancelled order.
         self._upsert_fields(
             last_attempt_num=attempt,
             arming_started_at=_now_iso(),
             expected_oco_qty=oco_qty,
+            oco_tp_order_id=None,
+            oco_sl_order_id=None,
         )
         try:
             tp_ack = self._adapter.place_limit_order(
@@ -288,6 +305,27 @@ class Coordinator:
         if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
             return
         self._transition(ExecutionEvent.FLATTEN_FAILED)
+
+    def _best_effort_cancel(self, order_id: str) -> None:
+        """Best-effort cancel for stale arm_oco legs.
+
+        Treats 110001 (REJECT_ORDER_ALREADY_TERMINAL) as success — the
+        order had already self-filled or expired. Transient adapter errors
+        are swallowed + logged: the safety-critical path is placing the
+        fresh legs, and any orphan leg is reaped by reconcile / bootstrap.
+        """
+        try:
+            res = self._adapter.cancel_order(symbol=self._symbol, order_id=order_id)
+            if res.cancelled:
+                return
+            if res.reason_code is AdapterReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
+                return
+            _log.warning(
+                "arm_oco.stale_cancel_unknown_failure order_id=%s reason=%s",
+                order_id, res.reason_code,
+            )
+        except Exception as e:
+            _log.warning("arm_oco.stale_cancel_exception order_id=%s err=%s", order_id, e)
 
     def _try_place_market_sell(self, qty: Decimal) -> bool:
         try:
