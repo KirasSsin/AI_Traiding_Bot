@@ -1,5 +1,6 @@
 """12-state execution FSM. ADR 0019 sub-decision 2."""
 from __future__ import annotations
+
 from enum import StrEnum
 
 

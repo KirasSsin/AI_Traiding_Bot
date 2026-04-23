@@ -48,6 +48,29 @@ class ExchangeState:
     position: PositionSnapshot
 
 
+class ReconcileVerdict(StrEnum):
+    OK = "OK"
+    DIVERGENCE = "DIVERGENCE"
+
+
+@dataclass(frozen=True)
+class ReconcileResult:
+    """Outcome of comparing local FSM state vs exchange state."""
+    verdict: ReconcileVerdict
+    exchange_state: ExchangeState
+    local_row: ExecutionStateRow | None
+    detail: str       # human-readable diff for audit log
+
+
+_QTY_EPS = Decimal("1e-8")
+_FLAT_STATES = {
+    ExecutionState.FLAT,
+    ExecutionState.INIT,
+    ExecutionState.COOLDOWN,
+    ExecutionState.KILLED,
+}
+
+
 class Reconciler:
     """Fetches exchange-side state. Diff/verdict is Task 7."""
 
@@ -126,24 +149,6 @@ class Reconciler:
             ReconcileVerdict.OK, exchange, local,
             f"local {local.state.value} qty={local.position_qty} matches exchange",
         )
-
-
-class ReconcileVerdict(StrEnum):
-    OK = "OK"
-    DIVERGENCE = "DIVERGENCE"
-
-
-@dataclass(frozen=True)
-class ReconcileResult:
-    """Outcome of comparing local FSM state vs exchange state."""
-    verdict: ReconcileVerdict
-    exchange_state: ExchangeState
-    local_row: ExecutionStateRow | None
-    detail: str       # human-readable diff for audit log
-
-
-_QTY_EPS = Decimal("1e-8")
-_FLAT_STATES = {ExecutionState.FLAT, ExecutionState.INIT, ExecutionState.COOLDOWN, ExecutionState.KILLED}
 
 
 def _normalize_order(o: dict) -> OpenOrderSnapshot:
