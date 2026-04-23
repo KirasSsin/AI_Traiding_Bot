@@ -105,6 +105,42 @@ class BybitMarketAdapter:
             order_link_id=resp["result"].get("orderLinkId"),
         )
 
+    def place_stop_market_order(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        qty: Decimal,
+        trigger_price: Decimal,
+        order_link_id: str,
+    ) -> OrderAck:
+        """ADR 0020 sub-decision 2: SL leg of 3-order Spot OCO bracket.
+
+        Bybit Spot silently rewrites timeInForce GTC→IOC (probe v3-D); we omit
+        timeInForce entirely and handle IOC partial-fills at EXIT_SL_RESIDUAL.
+        """
+        self._filters.validate_order(qty=qty)
+        payload: dict[str, Any] = {
+            "category": "spot",
+            "symbol": symbol,
+            "side": side,
+            "orderType": "Market",
+            "orderFilter": "StopOrder",
+            "qty": str(qty),
+            "triggerPrice": str(trigger_price),
+            "triggerBy": "LastPrice",
+            "marketUnit": "baseCoin",
+            "orderLinkId": order_link_id,
+        }
+        resp = self._rest._http.place_order(**payload)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return OrderAck(
+            order_id=resp["result"]["orderId"],
+            order_link_id=resp["result"].get("orderLinkId"),
+        )
+
     def place_limit_order(
         self,
         *,
