@@ -25,7 +25,7 @@ _(пусто — v0.2+)_
 - [[trading/concepts/walk-forward-validation]] — train=2000, test=500, K=5, embargo=20 баров, OOS/IS≥0.7 gate.
 - [[trading/concepts/deflated-sharpe-ratio]] — DSR по Bailey–López de Prado, коррекция Sharpe на skew/kurt/N configs.
 - [[trading/concepts/monte-carlo-permutations]] — sign-flip N=2000 (primary) + block-bootstrap L=20-50 (secondary).
-- [[trading/concepts/reason-codes]] — 31 enum-кодов (6 entry + 9 scale/exit + 8 rejects + 8 halts).
+- [[trading/concepts/reason-codes]] — 39 enum-кодов (6 entry + 10 scale/exit + 9 rejects + 14 halts); расширены в S6 с 31.
 - [[trading/concepts/look-ahead-bias]] — 5 канонических форм, 6 invariants, CI gate detector, property tests.
 
 ## Project — Architecture
@@ -44,6 +44,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-03-strategy-port]] — S3 (2026-04-22): EMA crossover + ADX/RSI/ATR через TA-Lib, on_bar контракт, FLAT/LONG FSM; tag `v0.1.0-alpha.3`.
 - [[project/sprints/sprint-04-risk]] — S4 (2026-04-23): RiskManager (4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash CB + override + 50-bar integration); tag `v0.1.0-alpha.4`.
 - [[project/sprints/sprint-05-execution]] — S5 (2026-04-23): OCO native tpslMode + 12-state FSM + Reconciler (reconcile-as-truth) + 2 reason codes (29→31); tag `v0.1.0-alpha.5` (pending PR).
+- [[project/sprints/sprint-06-spot-oco-emulation]] — S6 (2026-04-23): 3-order Spot OCO emulation; FSM 12→16 states / 55 transitions; reason codes 31→39; tag v0.1.0-alpha.6.
 
 ## Project — Plans
 
@@ -80,9 +81,10 @@ _(пусто — v0.2+)_
 - [[project/components/sizing]] — `compute_qty(equity, fraction, atr, price, k)` ATR-based pure function.
 - [[project/components/risk-manager]] — orchestrator: assess(signal, mark_price) → RiskAssessment с look-ahead invariant.
 - [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
-- [[project/components/oco]] — pure-function OCO bracket builder (native tpslMode, ROUND_DOWN/UP snap).
+- [[project/components/oco]] — 3-order Spot OCO emulation: bracket builder + orderLinkId scheme + G5 fee-aware qty (S6 full rewrite; native tpslMode superseded by ADR 0020).
 - [[project/components/reconciler]] — post-reconnect exchange-vs-local diff with reconcile-as-truth verdict.
-- [[project/components/execution-state-machine]] — 12-state Harel FSM + 29 transitions + SQLite persistence.
+- [[project/components/execution-state-machine]] — 16-state Harel FSM + 55 transitions + SQLite persistence (S6: +4 states, +26 transitions).
+- [[project/runbooks/halt-recovery]] — manual operator procedures: HALT_FLATTEN_FAILED, HALT_OCO_SIBLING_STUCK, HALT_PHANTOM_SL, HALT_RECONCILE_DIVERGENCE.
 
 ## Project — Experiments
 
