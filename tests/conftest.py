@@ -1,7 +1,19 @@
 """Shared pytest fixtures. Populated in later sprints."""
+import os
 from decimal import Decimal
 
 import pytest
+
+
+def pytest_collection_modifyitems(config, items):
+    """ADR 0020 G14: Demo integration tests are opt-in via RUN_DEMO=1.
+    Preserves fast default CI runs while allowing manual pre-mainnet verification."""
+    if os.getenv("RUN_DEMO") == "1":
+        return
+    skip_demo = pytest.mark.skip(reason="Demo integration: set RUN_DEMO=1 to enable")
+    for item in items:
+        if "demo" in item.keywords:
+            item.add_marker(skip_demo)
 
 
 @pytest.fixture
