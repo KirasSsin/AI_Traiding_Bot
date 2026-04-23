@@ -30,3 +30,11 @@ def test_filter_violations_all_map_to_same_code() -> None:
 
 def test_unknown_code_maps_to_unknown() -> None:
     assert map_error(99999999, "unseen") is ReasonCode.UNKNOWN_ERROR
+
+
+def test_110001_maps_to_already_terminal() -> None:
+    assert map_error(110001, "order not exists or finished") is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL
+
+
+def test_already_terminal_in_enum() -> None:
+    assert "REJECT_ORDER_ALREADY_TERMINAL" in {r.value for r in ReasonCode}
