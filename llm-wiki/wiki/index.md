@@ -42,12 +42,14 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-01-foundation]] — S1 (2026-04-20): DDD skeleton + platform + models + storage; tag `v0.1.0-alpha.1`.
 - [[project/sprints/sprint-02-bybit-venue-migration]] — S2 (2026-04-21 → 22): Bybit venue migration + MarketData ingest + BybitMarketAdapter; tag `v0.1.0-alpha.2`, PR #1.
 - [[project/sprints/sprint-03-strategy-port]] — S3 (2026-04-22): EMA crossover + ADX/RSI/ATR через TA-Lib, on_bar контракт, FLAT/LONG FSM; tag `v0.1.0-alpha.3`.
+- [[project/sprints/sprint-04-risk]] — S4 (2026-04-23): RiskManager (4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash CB + override + 50-bar integration); tag `v0.1.0-alpha.4`.
 
 ## Project — Plans
 
 - [[project/plans/2026-04-20-sprint-1-foundation]] — implementation plan Sprint 1 (storage + pydantic v2 + cleanup).
 - [[project/plans/2026-04-21-sprint-2-bybit-venue-migration]] — implementation plan Sprint 2 (pybit migration + MarketData + Execution ACL).
 - [[project/plans/2026-04-22-sprint-3-strategy-port]] — implementation plan Sprint 3 (TA-Lib indicators + EmaCrossoverAdxRsiStrategy + look-ahead property test).
+- [[project/plans/2026-04-23-sprint-4-risk]] — implementation plan Sprint 4 (Risk module — split into tasks-1-8 / 9-13 / 14-17).
 - [[project/architecture/stack-v0.1]] — Python 3.12 + asyncio/uvloop + TA-Lib + pydantic v2 + structlog; Docker-compose sketch.
 - [[project/architecture/bounded-contexts]] — 5 DDD контекстов: Market Data / Signal Gen / Risk / Execution / Analytics.
 - [[project/architecture/domain-events]] — 20 domain events + event sourcing SQL + happy/error/reconnect paths.
@@ -71,6 +73,10 @@ _(пусто — v0.2+)_
 - [[project/components/bybit-adapter]] — MARKET spot execution: filter-validate + place_order + retCode→ReasonCode.
 - [[project/components/indicators]] — TA-Lib wrappers: EMA classical/wilder + ADX/±DI/RSI/ATR Wilder.
 - [[project/components/strategy]] — EmaCrossoverAdxRsiStrategy: on_bar(Bar) → Signal | None, FLAT/LONG FSM.
+- [[project/components/kelly]] — 4-phase Kelly + Wilson 95% CI; pure functions, KellyCaps from Settings.
+- [[project/components/circuit-breakers]] — L1/L2/L3/Flash detector (stateless); CircuitBreakerConfig from Settings.
+- [[project/components/sizing]] — `compute_qty(equity, fraction, atr, price, k)` ATR-based pure function.
+- [[project/components/risk-manager]] — orchestrator: assess(signal, mark_price) → RiskAssessment с look-ahead invariant.
 - [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
 
 ## Project — Experiments
@@ -96,6 +102,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0015-sign-flip-mc-permutations-n2000]] — sign-flip MC N=2000 как primary test.
 - [[project/decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot supersedes 0004; pybit>=5.11; V5 Unified endpoint map.
 - [[project/decisions/0017-review-agent-harness]] — 3 доменных ревьюера (trading-logic / quant-stats / data-integrity) + python-reviewer; non-overlapping scope, MUST-BE-USED триггеры.
+- [[project/decisions/0018-sprint-4-risk-decisions]] — Sprint 4 sub-decisions: R:R 2:1, REJECT_INVALID_SIGNAL/ZERO_QTY не распаковываются, Wilson lower bound для phases 3/4, L0 explicit naming, reason-codes count fix (28→29).
 
 ## Queries (saved answers)
 

@@ -130,3 +130,20 @@
 - Acknowledge flow: `touch ~/.claude/agents/<any>.md` продвигает mtime — явный ack, если ADR не требует agent-update.
 - Verification: non-push → exit 0 ✅; push в worktree без committed ADR → exit 0 ✅ (ожидаемо — ADR 0017 пока не закоммичен); fail-closed ветка проверится на первом реальном ADR-коммите при PR'е.
 - Notes: YAGNI-граница пройдена — sync-чек назван в CLAUDE.md, но без автоматизации он обречён забываться. Drift в prompt'ах агентов = молчаливая потеря корректности ревью. Теперь блокирующий.
+
+## [2026-04-23] ingest | Sprint 4 — Risk module delivered (Tasks 1-17)
+- Sources: src/risk/* (manager.py, kelly.py, circuit_breakers.py, sizing.py, equity_tracker.py, trade_history.py, override.py, state_repo.py, resume_cb.py, models.py, reason_codes.py), migrations/{002_risk,003_trade_history_unique}.sql, tests/{unit,integration}/test_risk_*.
+- Added (wiki/components, 4): kelly.md, circuit-breakers.md, sizing.md, risk-manager.md.
+- Added (wiki/sprints, 1): sprint-04-risk.md.
+- Added (wiki/decisions, 1): 0018-sprint-4-risk-decisions.md (5 sub-decisions: R:R 2:1, REJECT_INVALID_SIGNAL/ZERO_QTY не распакованы, Wilson lower bound для phases 3/4, L0 explicit naming, reason-codes count 28→29).
+- Modified (wiki): index.md (+1 sprint, +1 plan, +4 components, +1 decision), trading/concepts/reason-codes.md (header 28→29, exits 7→8, halts 6→7, total 6+8+8+7=29 + S4 note).
+- Implementation highlights: 4-phase Kelly с Wilson 95% CI lower bound для phases 3/4 (conservative edge); L1/L2/L3/Flash CB stateless detector + EquityTracker 24h rolling HWM; OverrideStore с config_hash anti-replay; RiskManager.assess enforces look-ahead invariant `assessed_at >= signal.generated_at`; 50-bar integration flow в test_risk_flow.py.
+- Removed: src/risk/risk_manager.py (legacy stub), src/core/math_engine.py (mock Kelly).
+- Verification: 308 tests passing (unit 12 файлов + integration 1), mypy + ruff clean.
+- Decisions/deviations: см. ADR 0018. Wiki ↔ code count discrepancy (28 vs 29) обнаружено и исправлено в S4 — code был всегда корректен.
+
+## [2026-04-23] ingest | Caveman plugin integrated (Layer 4b active)
+- Installed: caveman@caveman v84cc3c14fa1e (local scope, AI_Traiding_Bot project) — 5 sub-skills (caveman, caveman-commit, caveman-review, caveman-help, compress) + 3 commands (/caveman, /caveman-commit, /caveman-review) + 3 hooks.
+- Modified (wiki): llm-wiki/CLAUDE.md — Layer 4b расширен с 3 до 4 meta-skills + caveman-specific правило для subagent briefs ("DO NOT compress technical specs"); удалён из Defer registry; cleanup history дополнен install metadata.
+- Activation: `/caveman lite|full|ultra` per session. Auto-skips code blocks, commits/PRs, security warnings, irreversible actions, multi-step procedures.
+- Boundary: для subagent briefs со спеками (Kelly формулы, Wilder α=1/n, миграции SQL, look-ahead invariants) — пиши brief в нормальном режиме и помечай `DO NOT compress technical specs below`. Briefs > 200 слов проходят через L4b prompt-master, не caveman.
