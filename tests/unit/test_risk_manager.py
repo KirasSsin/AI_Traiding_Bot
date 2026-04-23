@@ -484,3 +484,110 @@ def test_halt_no_downgrade(db, settings):
     # Should still be L2 (no downgrade)
     assert result.halt_state == HaltState.L2
     assert result.reason_code == ReasonCode.HALT_DRAWDOWN_L2
+
+
+# ---------------------------------------------------------------------------
+# 17. LONG-only gate — v0.1 FSM does not support FLAT signals at assess()
+# ---------------------------------------------------------------------------
+
+
+def test_assess_rejects_non_long_signal(db, settings):
+    """v0.1 FSM is LONG+FLAT only; assess() expects LONG entries.
+
+    FLAT signals are exit semantics handled outside Risk; reaching assess()
+    with a non-LONG side is a contract violation that must raise.
+    """
+    _seed_equity(db, realized=Decimal("10000"))
+    mgr = _make_manager(db, settings)
+    flat_signal = Signal(
+        signal_id=uuid4(),
+        symbol="BTCUSDT",
+        side=SignalSide.FLAT,
+        bar_close_time=_T0 - timedelta(seconds=1),
+        generated_at=_T0,
+        ema_fast=Decimal("30100"),
+        ema_slow=Decimal("30000"),
+        adx_14=Decimal("28"),
+        plus_di_14=Decimal("30"),
+        minus_di_14=Decimal("20"),
+        rsi_14=Decimal("45"),
+        atr_14=Decimal("100"),
+        reason="exit_flip",
+    )
+    with pytest.raises(ValueError, match="LONG-only"):
+        mgr.assess(flat_signal, mark_price=Decimal("30000"))
+
+
+# ---------------------------------------------------------------------------
+# 18. Atomic state flush — equity snapshot rolls back on state failure
+# ---------------------------------------------------------------------------
+
+
+def test_update_equity_atomic_rollback_on_state_failure(db, settings, monkeypatch):
+    """If state write fails mid-flush, equity snapshot must NOT persist.
+
+    Invariant (risk-manager.md #5): equity snapshot + CB state in ONE transaction.
+    """
+    _seed_equity(db, realized=Decimal("10000"), ts=_T0 - timedelta(hours=1))
+    mgr = _make_manager(db, settings)
+    initial = db.execute("SELECT COUNT(*) FROM equity_snapshots").fetchone()[0]
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("simulated state-write failure")
+
+    monkeypatch.setattr(mgr._state, "update_many_no_commit", boom)
+
+    with pytest.raises(RuntimeError, match="simulated"):
+        mgr.update_equity(realized=Decimal("9000"), unrealized=Decimal("0"), ts=_T0)
+
+    final = db.execute("SELECT COUNT(*) FROM equity_snapshots").fetchone()[0]
+    assert final == initial, "equity snapshot leaked despite state failure"
+
+
+# ---------------------------------------------------------------------------
+# 19. qty quantize uses ROUND_DOWN (Bybit BUY step-floor compliance)
+# ---------------------------------------------------------------------------
+
+
+def test_qty_quantize_rounds_down(db, settings, monkeypatch):
+    """8dp quantize must use ROUND_DOWN (Bybit BUY step-floor per ADR 0007)."""
+    from src.risk import manager as mgr_mod
+
+    _seed_equity(db, realized=Decimal("10000"))
+    # Force compute_qty to return value with non-zero 9th decimal
+    monkeypatch.setattr(mgr_mod, "compute_qty", lambda **kw: Decimal("0.123456789"))
+    mgr = _make_manager(db, settings)
+    signal = _make_signal()
+    result = mgr.assess(signal, mark_price=Decimal("30000"))
+    # ROUND_DOWN: 0.123456789 → 0.12345678 (truncated)
+    # ROUND_HALF_EVEN: 0.123456789 → 0.12345679 (banker rounding up, 9>5)
+    assert result.qty == Decimal("0.12345678"), f"got {result.qty}"
+
+
+# ---------------------------------------------------------------------------
+# 20. _prev_close persistence across restart
+# ---------------------------------------------------------------------------
+
+
+def test_on_bar_close_persists_prev_close(db, settings):
+    """on_bar_close persists prev_close to state for flash-CB continuity."""
+    from src.risk.state_repo import StateRepository
+
+    mgr = _make_manager(db, settings)
+
+    class _Bar:
+        close = Decimal("30000")
+
+    mgr.on_bar_close(_Bar())
+    record = StateRepository(db).get("risk:cb:prev_close")
+    assert record == {"value": "30000"}
+
+
+def test_load_state_restores_prev_close(db, settings):
+    """After restart, _prev_close must be restored — no one-bar flash CB gap."""
+    from src.risk.state_repo import StateRepository
+
+    StateRepository(db).set("risk:cb:prev_close", {"value": "29500"})
+    mgr = _make_manager(db, settings)
+    mgr.load_state()
+    assert mgr._prev_close == Decimal("29500")

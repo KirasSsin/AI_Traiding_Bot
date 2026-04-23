@@ -56,6 +56,25 @@ class StateRepository:
                     (key, json.dumps(value, sort_keys=True), ts),
                 )
 
+    def update_many_no_commit(self, updates: dict[str, dict[str, Any]]) -> None:
+        """Multi-key update WITHOUT opening a transaction — caller owns commit.
+
+        Used by RiskManager.update_equity to flush equity_snapshot + state
+        in one outer ``with conn:`` block.
+        """
+        if not updates:
+            return
+        ts = datetime.now(UTC).isoformat()
+        for key, value in updates.items():
+            self._conn.execute(
+                """INSERT INTO state (key, value_json, updated_at)
+                   VALUES (?, ?, ?)
+                   ON CONFLICT(key) DO UPDATE SET
+                     value_json = excluded.value_json,
+                     updated_at = excluded.updated_at""",
+                (key, json.dumps(value, sort_keys=True), ts),
+            )
+
     def delete(self, key: str) -> None:
         with self._conn:
             self._conn.execute("DELETE FROM state WHERE key = ?", (key,))

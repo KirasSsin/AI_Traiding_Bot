@@ -2,7 +2,7 @@
 
 TDD: RED phase — all tests written before implementation.
 """
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from math import isfinite
 
 import pytest
@@ -225,7 +225,7 @@ def test_phase_adjusted_fraction_phase3_below_cap():
     # 0.25 * 0.0629 ≈ 0.01571 < 0.03 → not capped
     p, b = 0.52, 1.05
     f_star = kelly_fraction(p, b)
-    expected = Decimal(str(f_star * 0.25))
+    expected = (Decimal(str(f_star)) * Decimal("0.25")).quantize(Decimal("1e-10"))
     result = phase_adjusted_fraction(phase=3, p=p, b=b, caps=DEFAULT_CAPS)
     assert result == expected
     assert result < DEFAULT_CAPS.phase3
@@ -242,7 +242,7 @@ def test_phase_adjusted_fraction_phase4_below_cap():
     # p=0.52, b=1.05 → f* ≈ 0.0629, 0.5*0.0629 ≈ 0.0314 < 0.05 → not capped
     p, b = 0.52, 1.05
     f_star = kelly_fraction(p, b)
-    expected = Decimal(str(f_star * 0.5))
+    expected = (Decimal(str(f_star)) * Decimal("0.5")).quantize(Decimal("1e-10"))
     result = phase_adjusted_fraction(phase=4, p=p, b=b, caps=DEFAULT_CAPS)
     assert result == expected
     assert result < DEFAULT_CAPS.phase4
@@ -283,3 +283,35 @@ def test_phase_adjusted_fraction_phase4_zero_f_star():
     """If kelly_fraction returns 0 (no edge), phase 4 returns 0."""
     result = phase_adjusted_fraction(phase=4, p=0.3, b=1.0, caps=DEFAULT_CAPS)
     assert result == Decimal("0")
+
+
+# ---------------------------------------------------------------------------
+# Decimal hot path — ADR 0007 invariant (no float multiply before Decimal cast)
+# ---------------------------------------------------------------------------
+
+
+def test_phase3_decimal_no_float_contamination():
+    """Phase 3: must use Decimal arithmetic. f=0.3 → buggy float gives
+    0.07500000000000001; correct Decimal path gives exact 0.075.
+    """
+    high_caps = KellyCaps(
+        phase1=Decimal("0.01"),
+        phase2=Decimal("0.02"),
+        phase3=Decimal("0.20"),  # cap above expected result
+        phase4=Decimal("0.20"),
+    )
+    # p=0.65, b=1.0 → f* = 0.30 → Quarter-Kelly = 0.075 (exact)
+    result = phase_adjusted_fraction(phase=3, p=0.65, b=1.0, caps=high_caps)
+    assert result == Decimal("0.075"), f"float contamination detected: {result}"
+
+
+def test_phase4_decimal_no_float_contamination():
+    """Phase 4: same Decimal-arithmetic invariant. f=0.30 → Half-Kelly = 0.15."""
+    high_caps = KellyCaps(
+        phase1=Decimal("0.01"),
+        phase2=Decimal("0.02"),
+        phase3=Decimal("0.20"),
+        phase4=Decimal("0.20"),
+    )
+    result = phase_adjusted_fraction(phase=4, p=0.65, b=1.0, caps=high_caps)
+    assert result == Decimal("0.15"), f"float contamination detected: {result}"

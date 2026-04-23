@@ -116,8 +116,13 @@ def phase_adjusted_fraction(
     if phase == 2:
         return caps.phase2
     f = kelly_fraction(p, b)
+    # ADR 0007 — multiply in Decimal domain (no float×float contamination),
+    # then quantize to 10dp to drop IEEE-754 noise inherited from the float `f`.
+    # 10dp >> typical position fraction granularity (≤ 5 sig digits in practice).
+    f_dec = Decimal(str(f))
+    quant = Decimal("1e-10")
     if phase == 3:
-        return min(Decimal(str(f * 0.25)), caps.phase3)
+        return min((f_dec * Decimal("0.25")).quantize(quant), caps.phase3)
     if phase == 4:
-        return min(Decimal(str(f * 0.5)), caps.phase4)
+        return min((f_dec * Decimal("0.5")).quantize(quant), caps.phase4)
     raise ValueError(f"invalid phase: {phase}")

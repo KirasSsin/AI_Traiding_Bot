@@ -7,7 +7,7 @@ Public API: update_equity, assess, on_bar_close, record_closed_trade,
 import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from sqlite3 import Connection
 
 from src.platform.config import Settings
@@ -20,7 +20,7 @@ from src.risk.reason_codes import ReasonCode
 from src.risk.sizing import compute_qty
 from src.risk.state_repo import StateRepository
 from src.risk.trade_history import TradeHistoryRepository, TradeRecord
-from src.signalgen.models import Signal
+from src.signalgen.models import Signal, SignalSide
 
 logger = logging.getLogger(__name__)
 
@@ -65,10 +65,18 @@ class RiskManager:
     # ------------------------------------------------------------------
 
     def load_state(self) -> None:
-        """Restore halt level from state table."""
+        """Restore halt level + prev_close from state table.
+
+        Restoring `_prev_close` preserves flash-CB continuity across
+        restart (otherwise the first bar after restart would silently
+        skip flash detection).
+        """
         cb = self._state.get("risk:cb:current_level")
         if cb:
             self._current_halt = HaltState(cb["level"])
+        prev = self._state.get("risk:cb:prev_close")
+        if prev:
+            self._prev_close = Decimal(prev["value"])
 
     # ------------------------------------------------------------------
     # Equity update
@@ -77,12 +85,20 @@ class RiskManager:
     def update_equity(
         self, *, realized: Decimal, unrealized: Decimal, ts: datetime
     ) -> None:
-        """Snapshot equity, evaluate drawdown, persist state atomically."""
-        self._equity.record(
-            realized=realized, unrealized=unrealized, ts=ts, source="BAR_CLOSE"
-        )
-        peak = self._equity.peak_equity_24h(now=ts) or (realized + unrealized)
+        """Snapshot equity, evaluate drawdown, persist state atomically.
+
+        Invariant #5 (risk-manager.md): equity snapshot + CB state are
+        flushed in ONE SQLite transaction. If the state write fails, the
+        equity snapshot rolls back — preventing stale halt levels against
+        a higher peak on restart.
+        """
         current = realized + unrealized
+        # Compute halt BEFORE opening tx (read-only path uses peak_equity_24h
+        # over committed data; new snapshot affects only future ticks).
+        peak = self._equity.peak_equity_24h(now=ts) or current
+        # Include the about-to-write current snapshot in the peak comparison.
+        if current > peak:
+            peak = current
         new_halt = self._cb.check_drawdown(peak=peak, current=current)
 
         if self._halt_severity(new_halt) > self._halt_severity(self._current_halt):
@@ -92,35 +108,57 @@ class RiskManager:
                 self._current_halt, peak, current,
             )
 
-        # Atomic state flush (Adjustment 4)
-        self._state.update_many(
-            {
-                "risk:cb:current_level": {
-                    "level": self._current_halt.value,
-                    "triggered_at": ts.isoformat() if new_halt != HaltState.L0 else None,
-                    "peak_equity": str(peak),
-                    "dd_pct": str((peak - current) / peak) if peak > 0 else "0",
-                },
-            }
-        )
+        # Atomic flush — equity snapshot + CB state in ONE transaction.
+        with self._conn:
+            self._equity.record_no_commit(
+                realized=realized, unrealized=unrealized, ts=ts, source="BAR_CLOSE"
+            )
+            self._state.update_many_no_commit(
+                {
+                    "risk:cb:current_level": {
+                        "level": self._current_halt.value,
+                        "triggered_at": ts.isoformat() if new_halt != HaltState.L0 else None,
+                        "peak_equity": str(peak),
+                        "dd_pct": str((peak - current) / peak) if peak > 0 else "0",
+                    },
+                }
+            )
 
     # ------------------------------------------------------------------
     # Bar close hook
     # ------------------------------------------------------------------
 
     def on_bar_close(self, bar: object) -> None:
-        """Store prev_close for flash-CB detection on next assess."""
+        """Store prev_close for flash-CB detection on next assess.
+
+        Also persists to state table so restart preserves flash continuity.
+        """
         close = getattr(bar, "close", None)
         if close is not None:
             self._prev_close = Decimal(str(close))
+            self._state.set("risk:cb:prev_close", {"value": str(self._prev_close)})
 
     # ------------------------------------------------------------------
     # Main decision atom
     # ------------------------------------------------------------------
 
     def assess(self, signal: Signal, *, mark_price: Decimal) -> RiskAssessment:
-        """Return RiskAssessment with atomic snapshot of phase + halt + sizing."""
+        """Return RiskAssessment with atomic snapshot of phase + halt + sizing.
+
+        Contract: v0.1 FSM is LONG+FLAT only. assess() expects LONG entries;
+        FLAT signals are exit semantics handled by the strategy/execution
+        layer and must not reach Risk. The SL/TP formulas below
+        (mark_price ± k·ATR) are sign-asymmetric and only valid for LONG.
+        """
         assessed_at = self._clock()
+
+        # v0.1 LONG-only invariant (ADR 0018 sub-decision 1, FSM contract)
+        if signal.side != SignalSide.LONG:
+            raise ValueError(
+                f"LONG-only contract violated: assess() received "
+                f"side={signal.side} (v0.1 FSM is LONG+FLAT, exits handled "
+                f"outside Risk)"
+            )
 
         # Adjustment 1 — look-ahead invariant
         if assessed_at < signal.generated_at:
@@ -171,8 +209,9 @@ class RiskManager:
             price=mark_price,
             k=self._settings.risk_sl_atr_multiplier,
         )
-        # Round to 8 decimal places (Bybit exchange precision)
-        qty = qty.quantize(Decimal("0.00000001"))
+        # Round DOWN to 8 decimal places — Bybit Spot BUY step-floor
+        # (round-up would risk insufficient-balance / oversize rejection).
+        qty = qty.quantize(Decimal("0.00000001"), rounding=ROUND_DOWN)
 
         # Adjustment 3 — zero-qty after rounding → REJECT_MIN_NOTIONAL
         if qty <= 0:

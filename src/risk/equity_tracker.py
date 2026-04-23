@@ -22,7 +22,11 @@ class EquityTracker:
         ts: datetime,
         source: SnapshotSource,
     ) -> int:
-        """Insert snapshot and return snapshot_id. total_equity = realized + unrealized."""
+        """Insert snapshot and return snapshot_id. total_equity = realized + unrealized.
+
+        Commits its own transaction. For atomic multi-write flushes, use
+        :meth:`record_no_commit` and wrap with an outer ``with self._conn:``.
+        """
         if realized < 0:
             raise ValueError("realized must be >= 0")
         total = realized + unrealized
@@ -33,6 +37,30 @@ class EquityTracker:
             (ts.isoformat(), str(realized), str(unrealized), str(total), source),
         )
         self._conn.commit()
+        return int(cursor.lastrowid)
+
+    def record_no_commit(
+        self,
+        *,
+        realized: Decimal,
+        unrealized: Decimal,
+        ts: datetime,
+        source: SnapshotSource,
+    ) -> int:
+        """Insert snapshot WITHOUT committing — caller owns the transaction.
+
+        Used by RiskManager.update_equity to flush equity + CB state in
+        one atomic ``with conn:`` block (invariant #5 of risk-manager.md).
+        """
+        if realized < 0:
+            raise ValueError("realized must be >= 0")
+        total = realized + unrealized
+        cursor = self._conn.execute(
+            """INSERT INTO equity_snapshots
+               (ts, realized_equity, unrealized_pnl, total_equity, source)
+               VALUES (?, ?, ?, ?, ?)""",
+            (ts.isoformat(), str(realized), str(unrealized), str(total), source),
+        )
         return int(cursor.lastrowid)
 
     def peak_equity_24h(self, *, now: datetime | None = None) -> Decimal | None:
