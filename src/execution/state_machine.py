@@ -15,7 +15,7 @@ class ExecutionState(StrEnum):
     LONG_OPEN = "LONG_OPEN"
     OCO_ARMING = "OCO_ARMING"  # ADR 0020 sub-decision 8
     OCO_ARMED = "OCO_ARMED"
-    PARTIAL_FILL = "PARTIAL_FILL"
+    PARTIAL_FILL = "PARTIAL_FILL"  # legacy S5 — unreachable in v2 (PARTIAL_FILL event → EXIT_SL_RESIDUAL); kept for state-load back-compat
     EXIT_PENDING = "EXIT_PENDING"
     EXIT_SIBLING_CANCELLING = "EXIT_SIBLING_CANCELLING"  # ADR 0020 sub-decision 8
     EXIT_SIBLING_CANCEL_FAILED = "EXIT_SIBLING_CANCEL_FAILED"  # ADR 0020 sub-decision 8
@@ -105,6 +105,8 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCEL_FAILED): ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
     (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.SIBLING_CANCELLED): ExecutionState.FLAT,
     (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     # OVERRIDE legacy S5: TP_HIT/PARTIAL_FILL now route through bracket-aware paths
     (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT): ExecutionState.EXIT_SIBLING_CANCELLING,
     (ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL): ExecutionState.EXIT_SL_RESIDUAL,
