@@ -89,6 +89,10 @@ class Settings(BaseSettings):
     risk_kelly_phase2_cap: Decimal = Decimal("0.02")
     risk_kelly_phase3_cap: Decimal = Decimal("0.03")
     risk_kelly_phase4_cap: Decimal = Decimal("0.05")
+    # Sprint 6 — Spot OCO emulation (ADR 0020 sub-decisions 11/12)
+    oco_arming_ttl_seconds: int = 60
+    oco_dust_threshold_btc: Decimal = Decimal("0.00001")
+
     risk_override_path: Path = Path("./state/cb_override.json")
     # HMAC-SHA256 key for override file integrity (REQUIRED, separate from
     # API secret so credential rotation does not invalidate operator

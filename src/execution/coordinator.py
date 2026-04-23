@@ -217,6 +217,28 @@ class Coordinator:
         except Exception:
             return
 
+    def reconcile_arming_ttl(
+        self, *, now: datetime | None = None, ttl_seconds: int = 60
+    ) -> None:
+        """ADR 0020 sub-decision 11: stuck OCO_ARMING > TTL → BRACKET_TIMEOUT → HALTED.
+
+        Args:
+            now: clock injection for tests; defaults to datetime.now(tz=UTC).
+            ttl_seconds: TTL in seconds; defaults to 60 (match settings.oco_arming_ttl_seconds).
+        """
+        row = self._repo.get(self._symbol)
+        if (
+            row is None
+            or row.state != ExecutionState.OCO_ARMING
+            or row.arming_started_at is None
+        ):
+            return
+        started = datetime.fromisoformat(row.arming_started_at)
+        current = now if now is not None else datetime.now(tz=UTC)
+        age = (current - started).total_seconds()
+        if age > ttl_seconds:
+            self._transition(ExecutionEvent.BRACKET_TIMEOUT)
+
     def _upsert_fields(self, **changes: object) -> None:
         """Read current row, replace named fields, upsert. Bumps updated_at."""
         from dataclasses import replace
