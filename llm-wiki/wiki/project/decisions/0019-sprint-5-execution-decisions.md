@@ -115,7 +115,7 @@ S5 ставит SQLite-таблицу, S6 добавит event log паралл�
 - `HALT_RECONCILE_DIVERGENCE` — local FSM state разошёлся с exchange после reconcile.
 - `EXIT_OCO_PARTIAL_TIMEOUT` — OCO partial fill висит > N сек, force-close оставшегося qty.
 
-**Total enum:** 28 + 2 = **30 codes**.
+**Total enum:** 29 + 2 = **31 codes**. (Pre-S5 actual count was 29: 4 entry + 3 scale + 7 exit + 8 reject + 7 halt — earlier ADRs referenced 28 but actual enum had `SCALE_OUT_PARTIAL` already shipped in S4.)
 
 **Rationale:** существующий `HALT_EXCHANGE_OUTAGE` семантически про связь, не про
 divergence (биржа ответила, но факты разные). `EXIT_OCO_PARTIAL_TIMEOUT` отдельно

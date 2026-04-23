@@ -59,7 +59,7 @@ def test_exit_oco_partial_timeout_in_enum():
     assert ReasonCode.EXIT_OCO_PARTIAL_TIMEOUT.value == "EXIT_OCO_PARTIAL_TIMEOUT"
 
 def test_total_reason_codes_count():
-    assert len(ReasonCode) == 30  # was 28 → +2 in S5
+    assert len(ReasonCode) == 31  # was 29 → +2 in S5 (pre-S5 had 29, not 28 as earlier docs)
 ```
 
 - [ ] **Step 2: Run, expect FAIL**
@@ -1299,7 +1299,7 @@ git commit -m "docs(wiki): S5 reason codes (28\u219230), index, log, sprint-05 s
 - Illegal transitions \u2192 `IllegalTransitionError` \u2192 ERROR state. No silent fallthrough.
 - Reconcile-as-truth: on `WS_RECONNECT` reconciler diff exchange vs local, divergence \u2192 `HALT_RECONCILE_DIVERGENCE`.
 - OCO: native Bybit `tpslMode` only in v0.1, NOT emulated. SL = entry - 1.5\u00b7ATR (tick-DOWN), TP = entry + 3.0\u00b7ATR (tick-UP).
-- Reason codes total = 30 (28 from S4 + HALT_RECONCILE_DIVERGENCE + EXIT_OCO_PARTIAL_TIMEOUT).
+- Reason codes total = 31 (29 from S4 + HALT_RECONCILE_DIVERGENCE + EXIT_OCO_PARTIAL_TIMEOUT).
 ```
 
 - [ ] **Step 2: Commit (in repo, also touches mtime to satisfy hook)**
