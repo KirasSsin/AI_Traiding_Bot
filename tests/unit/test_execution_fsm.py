@@ -9,9 +9,11 @@ LEGAL = [
     (ExecutionState.FLAT, ExecutionEvent.ENTRY_PLACED, ExecutionState.ENTRY_PENDING),
     (ExecutionState.ENTRY_PENDING, ExecutionEvent.ENTRY_FILLED, ExecutionState.LONG_OPEN),
     (ExecutionState.LONG_OPEN, ExecutionEvent.OCO_PLACED, ExecutionState.OCO_ARMED),
-    (ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL, ExecutionState.PARTIAL_FILL),
+    # ADR 0020 sub-decision 8 — semantic override: see test_execution_fsm_v2.py
+    (ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL, ExecutionState.EXIT_SL_RESIDUAL),  # ADR 0020 sub-decision 8 override
     (ExecutionState.OCO_ARMED, ExecutionEvent.SL_HIT, ExecutionState.EXIT_PENDING),
-    (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT, ExecutionState.EXIT_PENDING),
+    # ADR 0020 sub-decision 8 — semantic override: see test_execution_fsm_v2.py
+    (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT, ExecutionState.EXIT_SIBLING_CANCELLING),  # ADR 0020 sub-decision 8 override
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.SL_HIT, ExecutionState.EXIT_PENDING),
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.TP_HIT, ExecutionState.EXIT_PENDING),
     (ExecutionState.EXIT_PENDING, ExecutionEvent.EXIT_FILLED, ExecutionState.FLAT),
@@ -49,4 +51,4 @@ def test_kill_terminal():
 
 def test_transitions_count_exact():
     """Lock the exact transition count. Adding/removing requires ADR update."""
-    assert len(TRANSITIONS) == 29
+    assert len(TRANSITIONS) == 52

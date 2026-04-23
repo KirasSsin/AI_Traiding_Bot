@@ -91,6 +91,39 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     (ExecutionState.HALTED, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     (ExecutionState.ERROR, ExecutionEvent.MANUAL_RESET): ExecutionState.FLAT,
+    # === ADR 0020 sub-decision 8: OCO emulation transitions (v2) ===
+    # Bracket arm path: entry filled → place TP → place SL → armed
+    (ExecutionState.LONG_OPEN, ExecutionEvent.TP_PLACED): ExecutionState.OCO_ARMING,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.SL_PLACED): ExecutionState.OCO_ARMED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.BRACKET_TIMEOUT): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.ENTRY_REJECTED): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.PARTIAL_FILL): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.SL_TRIGGERED): ExecutionState.HALTED,
+    # Sibling cancel path: TP fill or SL trigger → cancel sibling → FLAT
+    (ExecutionState.OCO_ARMED, ExecutionEvent.SL_TRIGGERED): ExecutionState.EXIT_SIBLING_CANCELLING,
+    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCELLED): ExecutionState.FLAT,
+    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCEL_FAILED): ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
+    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.SIBLING_CANCELLED): ExecutionState.FLAT,
+    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    # OVERRIDE legacy S5: TP_HIT/PARTIAL_FILL now route through bracket-aware paths
+    (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT): ExecutionState.EXIT_SIBLING_CANCELLING,
+    (ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL): ExecutionState.EXIT_SL_RESIDUAL,
+    # IOC residual path
+    (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.RESIDUAL_FLATTENED): ExecutionState.FLAT,
+    (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
+    # Flatten cascade from EXIT_PENDING (sub-decision 11)
+    (ExecutionState.EXIT_PENDING, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
+    # WS reconnect from new states
+    (ExecutionState.OCO_ARMING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    # Risk halt + kill switch from new states
+    (ExecutionState.OCO_ARMING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
+    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
+    (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
 }
 
 
