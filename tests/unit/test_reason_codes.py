@@ -3,15 +3,7 @@
 ADR ref: wiki/project/decisions/0019-sprint-5-execution-decisions.md sub-decision 4
 """
 
-import sys
-import pytest
-
-# Direct import to bypass config parsing in Python 3.9
-import importlib.util
-spec = importlib.util.spec_from_file_location("reason_codes", "src/risk/reason_codes.py")
-reason_codes_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(reason_codes_module)
-ReasonCode = reason_codes_module.ReasonCode
+from src.risk.reason_codes import ReasonCode
 
 
 def test_halt_reconcile_divergence_in_enum():
