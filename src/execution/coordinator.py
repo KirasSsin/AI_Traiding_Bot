@@ -42,6 +42,38 @@ class Coordinator:
         self._symbol = symbol
         self._base_coin = base_coin
 
+    def bootstrap(self) -> None:
+        """ADR 0020 sub-decision 9: discover highest prior attempt# from exchange evidence,
+        so resume after crash never reuses an old orderLinkId.
+        """
+        row = self._repo.get(self._symbol)
+        if row is None or row.bracket_id is None:
+            return
+        open_orders = self._adapter.get_open_orders(symbol=self._symbol)
+        history = self._adapter.get_order_history(symbol=self._symbol, limit=50)
+        max_attempt = self._extract_max_attempt(
+            bracket_id=row.bracket_id,
+            candidates=list(open_orders) + list(history),
+        )
+        if max_attempt > row.last_attempt_num:
+            self._upsert_fields(last_attempt_num=max_attempt)
+
+    @staticmethod
+    def _extract_max_attempt(*, bracket_id: str, candidates: list[dict]) -> int:
+        """Parse 'oco-{bracket_id}-{role}-{N}' orderLinkIds, return highest N seen (0 if none)."""
+        prefix = f"oco-{bracket_id}-"
+        max_n = 0
+        for c in candidates:
+            lid = c.get("orderLinkId", "") or ""
+            if not lid.startswith(prefix):
+                continue
+            try:
+                n = int(lid.split("-")[-1])
+                max_n = max(max_n, n)
+            except (ValueError, IndexError):
+                continue
+        return max_n
+
     def start_bracket(
         self,
         *,

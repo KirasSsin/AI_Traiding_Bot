@@ -243,6 +243,26 @@ class BybitMarketAdapter:
             avg_price=Decimal(raw["avgPrice"]) if raw.get("avgPrice") else None,
         )
 
+    def get_open_orders(self, *, symbol: str) -> list[dict]:
+        """ADR 0020 sub-decision 9: list active orders for prior-attempt detection.
+        V5 GET /v5/order/realtime — returns currently open (Untriggered/New/PartiallyFilled).
+        """
+        resp = self._rest._http.get_open_orders(category="spot", symbol=symbol)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return resp["result"].get("list") or []
+
+    def get_order_history(self, *, symbol: str, limit: int = 50) -> list[dict]:
+        """ADR 0020 sub-decision 9: recent terminal orders for prior-attempt detection.
+        V5 GET /v5/order/history — Filled/Cancelled/Rejected within ~7 days.
+        """
+        resp = self._rest._http.get_order_history(category="spot", symbol=symbol, limit=limit)
+        if resp["retCode"] != 0:
+            reason = map_error(resp["retCode"], resp.get("retMsg", ""))
+            raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
+        return resp["result"].get("list") or []
+
     def get_wallet_balance(self, *, coin: str) -> WalletSnapshot:
         """ADR 0020 sub-decision 4: canonical Spot position truth (no get_position on Spot V5).
 
