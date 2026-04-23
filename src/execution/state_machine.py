@@ -1,4 +1,8 @@
-"""12-state execution FSM. ADR 0019 sub-decision 2."""
+"""Execution FSM. ADR 0019 sub-decision 2 + ADR 0020 sub-decision 8 (v2 expansion).
+
+States: 12 base + 4 OCO-emulation (16 enum members; 5 conceptual halt-substates
+ride on HALTED + halt_reason: ReasonCode per ADR 0020 sub-decision 8).
+"""
 from __future__ import annotations
 
 from enum import StrEnum
@@ -9,9 +13,13 @@ class ExecutionState(StrEnum):
     FLAT = "FLAT"
     ENTRY_PENDING = "ENTRY_PENDING"
     LONG_OPEN = "LONG_OPEN"
+    OCO_ARMING = "OCO_ARMING"  # ADR 0020 sub-decision 8
     OCO_ARMED = "OCO_ARMED"
     PARTIAL_FILL = "PARTIAL_FILL"
     EXIT_PENDING = "EXIT_PENDING"
+    EXIT_SIBLING_CANCELLING = "EXIT_SIBLING_CANCELLING"  # ADR 0020 sub-decision 8
+    EXIT_SIBLING_CANCEL_FAILED = "EXIT_SIBLING_CANCEL_FAILED"  # ADR 0020 sub-decision 8
+    EXIT_SL_RESIDUAL = "EXIT_SL_RESIDUAL"  # ADR 0020 sub-decision 4 (IOC partial)
     RECONCILING = "RECONCILING"
     HALTED = "HALTED"
     COOLDOWN = "COOLDOWN"
@@ -24,10 +32,18 @@ class ExecutionEvent(StrEnum):
     ENTRY_PLACED = "ENTRY_PLACED"
     ENTRY_FILLED = "ENTRY_FILLED"
     ENTRY_REJECTED = "ENTRY_REJECTED"
-    OCO_PLACED = "OCO_PLACED"
+    OCO_PLACED = "OCO_PLACED"  # legacy S5 alias for "both legs Untriggered"
+    TP_PLACED = "TP_PLACED"  # ADR 0020 sub-decision 8
+    SL_PLACED = "SL_PLACED"  # ADR 0020 sub-decision 8
     PARTIAL_FILL = "PARTIAL_FILL"
     SL_HIT = "SL_HIT"
+    SL_TRIGGERED = "SL_TRIGGERED"  # ADR 0020 sub-decision 3 (Triggered != Filled)
     TP_HIT = "TP_HIT"
+    SIBLING_CANCELLED = "SIBLING_CANCELLED"  # ADR 0020 sub-decision 8
+    SIBLING_CANCEL_FAILED = "SIBLING_CANCEL_FAILED"  # ADR 0020 sub-decision 8
+    BRACKET_TIMEOUT = "BRACKET_TIMEOUT"  # ADR 0020 sub-decision 10 (TTL=60s)
+    RESIDUAL_FLATTENED = "RESIDUAL_FLATTENED"  # ADR 0020 sub-decision 4
+    FLATTEN_FAILED = "FLATTEN_FAILED"  # ADR 0020 sub-decision 11
     EXIT_FILLED = "EXIT_FILLED"
     EXIT_REJECTED = "EXIT_REJECTED"
     WS_RECONNECT = "WS_RECONNECT"
