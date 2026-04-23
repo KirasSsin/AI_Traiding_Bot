@@ -250,6 +250,31 @@ Chronological, append-only. Каждая запись начинается с ф
 - **Язык.** Содержание wiki — на русском (язык проекта). Имена файлов, тегов, type-полей — на английском.
 - **Источники обязательны.** Каждое нетривиальное утверждение должно быть отслеживаемо до raw-файла или помечено как `[speculation]` / `[my-analysis]`.
 
+## Безопасное чтение больших файлов (Read tool overflow guard)
+
+Read tool — hard-limit **~25,000 токенов** (~90KB markdown / ~80KB кода) на один вызов. Превышение проваливает turn субагента полностью.
+
+**Перед `Read` неизвестного файла:**
+
+1. Проверь размер: `wc -c <path>` через Bash, или `Glob` + stat.
+2. **Эмпирический ratio:** для нашего markdown ~3.3 bytes/token. Безопасный порог = **50KB ≈ 15k токенов** (запас до 25k hard-limit).
+3. Если **> 50KB**:
+   - `Read` с `offset` + `limit` (1500–2000 строк за вызов).
+   - ИЛИ `Grep` чтобы локализовать секцию, потом `Read` с `offset`.
+   - **Никогда** не вызывай `Read` без `limit` на > 50KB.
+4. **Banned-from-full-read** (только Grep + offset Read):
+   - `Docs/00-All.md` (~350k tokens)
+   - `Docs/reference/Mimo_bot/00-All.md` (~350k tokens, дубликат)
+   - `Docs/MVP/FINAL-CONSOLIDATED.md` (~30k tokens)
+   - `Docs/reference/Mimo_bot/FINAL-CONSOLIDATED-DOCUMENT.md.md` (~30k tokens)
+   - `wiki/project/plans/2026-04-21-sprint-2-bybit-venue-migration.md` (~28k tokens) — split TODO
+
+**Свои wiki-страницы** (`wiki/**`) держим **< 50KB ≈ 15k токенов**. Если близко — разбивай на под-страницы:
+- `<topic>.md` — оглавление + кросс-ссылки на под-части.
+- `<topic>-part-1.md`, `<topic>-part-2.md` — содержимое.
+
+**Output budget субагента:** одна `Write`/`Edit` ≤ 40KB. Большие артефакты (планы спринтов, детальные ADR) — дай субагенту Write+Edit права и инструкцию писать chunked: Write skeleton → Edit append секции.
+
 ## Что LLM НЕ делает
 
 - Не модифицирует файлы в `raw/`.
@@ -276,6 +301,178 @@ Wiki-maintainer workflow (ingest / query / lint) — **параллелен** м
 - Wiki-lint может выявить расхождение wiki ↔ актуальный код → триггерит новый `brainstorming` на resolution.
 
 Когда LLM-мейнтейнер читает CLAUDE.md — он читает **оба** workflow: wiki-maintenance (этот файл) + Superpowers (активируется автоматически при code-tasks).
+
+## Skills hierarchy & integration
+
+Три (теперь четыре) пакета скиллов работают **слоями**, не альтернативами. Когда два скилла перекрываются — читай таблицу conflict resolution ниже.
+
+### 5 layers
+
+```
+Layer 5: Domain reviewers (ADR 0017)         ←  triggered by file paths
+         trading-logic / quant-stats / data-integrity / python-reviewer
+Layer 4: Discipline & reference (addyosmani/agent-skills)
+         20 skills + 7 slash-cmd + checklists (security/perf/test/a11y)
+Layer 3: Process orchestration (obra/superpowers)
+         brainstorming → writing-plans → subagent-driven-development → finishing
+Layer 2: Project knowledge (этот wiki)
+         wiki/ = source of truth; Docs/ = immutable references
+Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
+         session bookends + chapter marks
+```
+
+### Conflict resolution (overlapping skills)
+
+| Topic | TRIGGER (process owner) | DEPTH (reference owner) |
+|---|---|---|
+| TDD | Superpowers `test-driven-development` (RED→GREEN cycle) | Agent Skills TDD: anti-patterns, pyramid 80/15/5, DAMP, Beyonce Rule |
+| Code review | Layer 5 (domain) **first** → AS `code-review-and-quality` (5-axis) | — |
+| Planning | Superpowers `writing-plans` (bite-sized) | AS `planning-and-task-breakdown` (AC templates) |
+| Debugging | Superpowers `systematic-debugging` (4-phase) | AS `debugging-and-error-recovery` (5-step triage) |
+| Spec | Superpowers `brainstorming` | AS `spec-driven-development` (PRD checklist) |
+| Ship | Superpowers `finishing-a-development-branch` | AS `git-workflow-and-versioning`, `shipping-and-launch`, `ci-cd-and-automation` |
+
+**Правило:** TRIGGER оркестрирует процесс, DEPTH углубляет при необходимости.
+
+### Phase mapping для AI Trading Bot v0.1
+
+| Phase | Sequence |
+|---|---|
+| Define | Superpowers brainstorming → AS spec-driven-development checklist → wiki/plans/<date>-spec.md |
+| Plan | Superpowers writing-plans → AS planning-and-task-breakdown checklist → wiki/plans/<date>-plan.md |
+| Build | Superpowers subagent-driven-development + TDD (cycle Superpowers, depth AS); AS incremental-implementation slices |
+| Verify | Superpowers verification-before-completion + AS debugging-and-error-recovery |
+| Review | Layer 5 (domain) → AS security-and-hardening (если I/O boundary) → AS code-review-and-quality |
+| Ship | Superpowers finishing-a-development-branch + AS git-workflow + AS documentation-and-adrs |
+
+**Skipped для v0.1 (не релевантно):** `frontend-ui-engineering`, `browser-testing-with-devtools`, `accessibility-checklist` — нет UI слоя.
+
+**Особо ценны для AI Trading Bot:** AS `security-and-hardening` (API keys, override.py), AS `documentation-and-adrs` (наш ADR процесс), AS `deprecation-and-migration` (legacy `risk_manager.py` и пр.).
+
+### Layer 4b — meta-skills augment (4 strong-fit)
+
+| Skill | Триггер |
+|---|---|
+| `process-interviewer` | После 3 вопросов в `brainstorming` user даёт расплывчатые ответы, ИЛИ архитектурное решение affects > 1 sprint, ИЛИ есть hidden assumptions → escalate. Relentless extraction. |
+| `prompt-master` | Перед dispatch'ем subagent'а с любым из: brief > 200 слов, ожидаемый output > 30KB (риск truncation), Read файла > 50KB в контекст агента, critical correctness (Kelly формулы, look-ahead). |
+| `fact-checker` | Когда Layer 5 reviewer flag'ит "Follow-up for wiki: code↔ADR drift" → fact-check определяет источник истины. |
+| `caveman` (compression) | Auto-active в session per `/caveman lite\|full\|ultra`. Drops articles/filler/hedging в обычных ответах. **Бойлерные исключения** (caveman сам опускает): code blocks, commits/PRs, security warnings, irreversible-action confirmations, multi-step procedures где fragment order risks misread. |
+
+**Caveman + subagent briefs — правило:** для briefs с техническими спеками (Kelly формулы, Wilder α=1/n, миграции SQL, look-ahead invariants, ADR refs) — пиши brief в нормальном режиме и помечай в начале `DO NOT compress technical specs below`. Caveman сжимает только обертку, не контент. Для briefs > 200 слов — сначала L4b `prompt-master` (он жмёт грамотнее, чем caveman dropping).
+
+**Defer'нуты (потенциал v0.2+):** `mcp-builder`, `decision-toolkit`, `find-skills`.
+
+**Skip навсегда:** `agent-browser`, `frontend-slides`, `audio-transcriber`, `deep-research` (vendor conflict — OpenAI), `openrouter` (vendor conflict), `humanizer`, `file-organizer`.
+
+### Layer 1 — claude-mem (thedotmack) sub-skill policy
+
+7 sub-skills входят в плагин. Используем по триггерам:
+
+| Skill | Use | Why |
+|---|---|---|
+| `mem-search` | KEEP | Уникальная функция — search past sessions, "did we already solve X?" |
+| `version-bump` | KEEP | Semver tagging при выпуске спринтов (`v0.1.0-alpha.N`) |
+| `knowledge-agent` | KEEP (rare) | Knowledge bases из observation history |
+| `timeline-report` | KEEP (rare) | Sprint retrospective narrative |
+| `make-plan` | **SKIP** | Дублирует Superpowers `writing-plans` (Layer 3 wins) |
+| `do` | **SKIP** | Дублирует Superpowers `subagent-driven-development` (Layer 3 wins) |
+| `smart-explore` | CONDITIONAL | Tree-sitter AST search — если нужен structural search быстрее `Grep`, иначе `Grep`/`Glob` |
+
+### Curated agent set (~/.claude/agents/)
+
+**Active (4 — все per ADR 0017):**
+- `python-reviewer.md` (sonnet) — generic Python review
+- `data-integrity-reviewer.md` (sonnet) — SQLite/Parquet/migrations
+- `quant-stats-reviewer.md` (opus) — formulas/Wilson/Kelly/MC/CB thresholds
+- `trading-logic-reviewer.md` (opus) — look-ahead/timing/FSM/reason codes/venue
+
+**Recommended add (gaps):**
+- `security-auditor` (opus, VoltAgent voltagent-qa-sec) — нет у нас security-domain reviewer; critical для override.py / API keys / Bybit signing.
+- `architect-reviewer` (opus, VoltAgent voltagent-qa-sec) — для S12 manager.py + cross-module S5+ refactors.
+
+**Skip from VoltAgent (overlap):** `code-reviewer`, `python-pro`, `risk-manager`, `fintech-engineer`, `quant-analyst`, `database-administrator`, `git-workflow-manager` — все покрыты нашими 4 + Layer 3/4.
+
+### Cleanup history (для трассировки)
+
+- 2026-04-23: 14 duplicate Superpowers skill-stubs из `~/.claude/skills/` перенесены в `~/.claude/skills/_backup_superpowers_dups/` — каждый был 4KB stub, конфликтовал с plugin-cache версией.
+- 2026-04-23: `~/.claude/agents/Python Reviewer.md` → `python-reviewer.md` (filename normalization).
+- 2026-04-23: caveman@caveman v84cc3c14fa1e установлен (local scope) → Layer 4b active. 5 sub-skills (`caveman`, `caveman-commit`, `caveman-review`, `caveman-help`, `compress`) + 3 commands (`/caveman`, `/caveman-commit`, `/caveman-review`) + 3 hooks (activate/mode-tracker/statusline).
+
+### Trigger cascade — единый источник истины
+
+Когда контроллер (главный Claude) встречает событие → активирует layer per таблице. Цель — НЕ дispatch'ить лишнее, использовать минимально достаточный layer.
+
+| Event / context | Layer cascade | Skip if |
+|---|---|---|
+| Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
+| Subagent dispatch (implementer) | L4b prompt-master inline (tight brief, explicit output budget) → L3 subagent-driven-development → TDD strict | Single Bash command |
+| Subagent brief > 200 слов / output > 30KB | L4b prompt-master refine ОБЯЗАТЕЛЬНО | Always apply |
+| Code change в `src/risk/`, `src/signalgen/`, `src/execution/` | L5 trading-logic-reviewer ОБЯЗАТЕЛЬНО after DONE | Pure docs change |
+| Code change в `src/risk/**`, `src/backtest/**`, `src/analytics/**` (math) | L5 quant-stats-reviewer ОБЯЗАТЕЛЬНО | No formula touched |
+| Code change в `migrations/`, `src/marketdata/`, `src/platform/storage/` | L5 data-integrity-reviewer ОБЯЗАТЕЛЬНО | No persistence touched |
+| Любой `*.py` change (generic safety net) | L5 python-reviewer (sonnet) — после domain reviewer'ов | Domain reviewer cleared, < 100 LoC, только tests |
+| Money / API key / signing / override file | L4 AS `security-and-hardening` + (recommended) VoltAgent `security-auditor` | No I/O boundary |
+| Wiki conflict: domain reviewer flag'нул "code↔ADR drift" | L4b fact-checker → решает источник истины → update wiki OR amend ADR | Trivial wording |
+| Sprint complete, готовимся к merge | L3 finishing-a-development-branch → L1 consolidate-memory → ADR sync hook auto-fires при push | — |
+| Long-running task (>10 min) | L1 chapter mark (`mcp__ccd_session__mark_chapter`) | Quick task |
+
+### Decision algorithms (controller behavior)
+
+**Anti-bloat:**
+- < 50 LoC + tests pass → L5 domain reviewer (если scope hit) ИЛИ ничего; никаких generic-reviewers
+- 50-200 LoC → L5 domain + опционально L4 `code-review-and-quality`
+- > 200 LoC ИЛИ money/security/persistence → full L5 + L4 (`code-review-and-quality` + `security-and-hardening`)
+- Архитектурное (cross-module) → L3 brainstorm + plan first
+
+**Batch criteria** (объединяем tasks в один dispatch):
+- Same domain (e.g. 2 pydantic models — Tasks 3+4 batched)
+- Same file group (e.g. CLI + entry point — Tasks 13)
+- ≤ 5 RED→GREEN cycles total в одном subagent
+
+**Parallel dispatch** (multiple Agent calls в одном message):
+- Все dispatches — independent (no shared state)
+- Каждый делает Write/Edit на разные файлы
+- Reviewers на разные коммиты — всегда parallel
+
+**Sequential** (когда parallel НЕ применять):
+- Implementer → review → fix → re-review (внутри одного task)
+- Migration runner → tests reading DB (depends on schema)
+
+**Read-tool guard** (см. также секцию выше):
+- Unknown file → `wc -c` first
+- > 50KB → Grep + offset Read
+
+### Defer / "когда вернёмся"
+
+| Item | Status | Trigger to revisit |
+|---|---|---|
+| VoltAgent `security-auditor` | Recommended, не установлен | При работе с `override.py`, API keys, Bybit signing — приоритет в S5/S10 |
+| VoltAgent `architect-reviewer` | Recommended, не установлен | При S12 manager.py orchestration / cross-module S5+ |
+| Claude mem `make-plan` / `do` | Skipped (overlap) | Никогда — Superpowers Layer 3 wins |
+
+### Rejected packages registry
+
+Отказались от установки с обоснованием:
+
+| Package | Repo | Reason |
+|---|---|---|
+| **everything-claude-code** | affaan-m/everything-claude-code | 48 agents + 183 skills + 79 commands + 20 hooks = массовый bloat. Дублирует Superpowers, Agent Skills, VoltAgent, наши 4 reviewers одновременно. Нарушает наш anti-bloat принцип. (Их 14 MCP integrations — можно cherry-pick если конкретно понадобится.) |
+| **get-shit-done** | gsd-build/get-shit-done | Phase-driven workflow конфликтует с Superpowers Layer 3 (две конкурирующие process-orchestrator системы = хаос). "atomic git commits" — мы уже так делаем. Defer до v0.2 если Superpowers упрётся. |
+| Большая часть VoltAgent (90+ subagents) | VoltAgent/awesome-claude-code-subagents | Не релевантны нашему домену (UI/mobile/wordpress/healthcare/blockchain). Кроме `security-auditor` + `architect-reviewer`. |
+| Claude mem `make-plan`, `do`, `smart-explore`* | thedotmack/claude-mem (sub-skills) | Overlap с Superpowers `writing-plans` / `subagent-driven-development` / `Grep`+`Glob`. Используем claude-mem только для `mem-search`, `version-bump`, `knowledge-agent`, `timeline-report`. |
+
+### Anti-bloat rule
+
+Не dispatch'и каждую возможную проверку — меряй по риску изменения:
+- < 50 строк кода, тесты есть → Layer 5 reviewer (если scope попал) + tests pass = достаточно
+- > 200 строк ИЛИ затрагивает money/security/persistence → +full Layer 4 (`security-and-hardening` + `code-review-and-quality`)
+- Архитектурное изменение → Layer 3 brainstorming + plan, потом всё остальное
+
+### Memory hygiene (Layer 1)
+
+- **Session start:** загружай project memory через `consolidate-memory` или claude-mem.
+- **Significant work boundary:** ставь chapter mark (`mcp__ccd_session__mark_chapter`) — облегчает навигацию в transcript'е.
+- **Session end:** пробеги consolidate, чтобы устаревшие факты не загрязняли следующую сессию.
 
 ## Связь с review-агентами
 

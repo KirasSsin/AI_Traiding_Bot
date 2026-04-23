@@ -130,3 +130,53 @@
 - Acknowledge flow: `touch ~/.claude/agents/<any>.md` продвигает mtime — явный ack, если ADR не требует agent-update.
 - Verification: non-push → exit 0 ✅; push в worktree без committed ADR → exit 0 ✅ (ожидаемо — ADR 0017 пока не закоммичен); fail-closed ветка проверится на первом реальном ADR-коммите при PR'е.
 - Notes: YAGNI-граница пройдена — sync-чек назван в CLAUDE.md, но без автоматизации он обречён забываться. Drift в prompt'ах агентов = молчаливая потеря корректности ревью. Теперь блокирующий.
+
+## [2026-04-23] ingest | Sprint 4 — Risk module delivered (Tasks 1-17)
+- Sources: src/risk/* (manager.py, kelly.py, circuit_breakers.py, sizing.py, equity_tracker.py, trade_history.py, override.py, state_repo.py, resume_cb.py, models.py, reason_codes.py), migrations/{002_risk,003_trade_history_unique}.sql, tests/{unit,integration}/test_risk_*.
+- Added (wiki/components, 4): kelly.md, circuit-breakers.md, sizing.md, risk-manager.md.
+- Added (wiki/sprints, 1): sprint-04-risk.md.
+- Added (wiki/decisions, 1): 0018-sprint-4-risk-decisions.md (5 sub-decisions: R:R 2:1, REJECT_INVALID_SIGNAL/ZERO_QTY не распакованы, Wilson lower bound для phases 3/4, L0 explicit naming, reason-codes count 28→29).
+- Modified (wiki): index.md (+1 sprint, +1 plan, +4 components, +1 decision), trading/concepts/reason-codes.md (header 28→29, exits 7→8, halts 6→7, total 6+8+8+7=29 + S4 note).
+- Implementation highlights: 4-phase Kelly с Wilson 95% CI lower bound для phases 3/4 (conservative edge); L1/L2/L3/Flash CB stateless detector + EquityTracker 24h rolling HWM; OverrideStore с config_hash anti-replay; RiskManager.assess enforces look-ahead invariant `assessed_at >= signal.generated_at`; 50-bar integration flow в test_risk_flow.py.
+- Removed: src/risk/risk_manager.py (legacy stub), src/core/math_engine.py (mock Kelly).
+- Verification: 308 tests passing (unit 12 файлов + integration 1), mypy + ruff clean.
+- Decisions/deviations: см. ADR 0018. Wiki ↔ code count discrepancy (28 vs 29) обнаружено и исправлено в S4 — code был всегда корректен.
+
+## [2026-04-23] ingest | Caveman plugin integrated (Layer 4b active)
+- Installed: caveman@caveman v84cc3c14fa1e (local scope, AI_Traiding_Bot project) — 5 sub-skills (caveman, caveman-commit, caveman-review, caveman-help, compress) + 3 commands (/caveman, /caveman-commit, /caveman-review) + 3 hooks.
+- Modified (wiki): llm-wiki/CLAUDE.md — Layer 4b расширен с 3 до 4 meta-skills + caveman-specific правило для subagent briefs ("DO NOT compress technical specs"); удалён из Defer registry; cleanup history дополнен install metadata.
+- Activation: `/caveman lite|full|ultra` per session. Auto-skips code blocks, commits/PRs, security warnings, irreversible actions, multi-step procedures.
+- Boundary: для subagent briefs со спеками (Kelly формулы, Wilder α=1/n, миграции SQL, look-ahead invariants) — пиши brief в нормальном режиме и помечай `DO NOT compress technical specs below`. Briefs > 200 слов проходят через L4b prompt-master, не caveman.
+
+## [2026-04-23] review | Sprint 4 domain-reviewer fixes (quant-stats + trading-logic)
+- Reviewers: quant-stats-reviewer (opus) + trading-logic-reviewer (opus), parallel dispatch на коммиты `01c6b3f` (CB Task 9) + `df4e4e5` (RiskManager Task 12).
+- **Quant-stats — 2 must-fix, обоих закрыт:**
+  1. `src/risk/kelly.py:120,122` — `Decimal(str(f * 0.25))` делал float×float multiply ДО Decimal cast (нарушает ADR 0007). Fix: `Decimal(str(f)) * Decimal("0.25")`, затем `.quantize(Decimal("1e-10"))` чтобы убрать унаследованный IEEE noise. Tests: `test_phase{3,4}_decimal_no_float_contamination`.
+  2. `src/risk/manager.py:184-185` — SL/TP формулы LONG-only без explicit gate; `ENTRY_LONG_TREND_FOLLOWING` hardcoded. Fix: explicit `ValueError if signal.side != LONG` в начале `assess()` (per ADR 0018 sub-decision 1, v0.1 FSM = LONG+FLAT). Test: `test_assess_rejects_non_long_signal`.
+- **Trading-logic — 1 BLOCKER, закрыт:**
+  - `src/risk/manager.py::update_equity` — invariant #5 ("equity snapshot + state в одной транзакции") нарушен: `EquityTracker.record` коммитил INSERT, потом `StateRepository.update_many` открывал отдельную транзакцию. Fix: добавлены `record_no_commit` / `update_many_no_commit` методы; `update_equity` оборачивает оба в один `with self._conn:` блок. Test: `test_update_equity_atomic_rollback_on_state_failure` (monkeypatches inner write to raise, asserts equity rollback).
+- **Trading-logic — 2 concerns, закрыты:**
+  - `src/risk/manager.py:175` — qty quantize использовал default ROUND_HALF_EVEN. Bybit Spot BUY rounding rule = step-floor. Fix: `quantize(..., rounding=ROUND_DOWN)`. Test: `test_qty_quantize_rounds_down`.
+  - `src/risk/manager.py:67-71` — `load_state` восстанавливал halt level, но не `_prev_close` → flash CB пропускал первый bar после restart. Fix: `on_bar_close` персистит `risk:cb:prev_close` в state; `load_state` восстанавливает. Tests: `test_on_bar_close_persists_prev_close`, `test_load_state_restores_prev_close`.
+- Modified (wiki): risk-manager.md (decision pipeline 12→13 шагов с FSM gate + ROUND_DOWN; invariants table расширен с 6 до 9; state schema детализирована с prev_close ключом); 0018-sprint-4-risk-decisions.md (added sub-decisions 6, 7, 8 с code refs + tests).
+- Verification: 315 tests passing (308 → +7 новых), mypy clean.
+- Pending от trading-logic (HIGH-3 NOT addressed): `bar: object` loose typing в `on_bar_close` — defer до S5 (когда определится Bar контракт через MarketData ACL); `b = float(avg_win/avg_loss)` precision на cents — flag для S7 backtest review.
+
+## [2026-04-23] review | Sprint 4 pre-merge security audit (code-review-and-quality + security-and-hardening)
+- Reviewers: AS L4 `code-review-and-quality` + AS L4 `security-and-hardening`, parallel dispatch на full PR diff (12 files / ~1.4k LoC).
+- Verdict: do not merge until 5 must-fix addressed (1 Critical + 3 High + 1 Important). User chose Option B → batched 8 fixes (5 must-fix + M1+M2+L3 cheap mediums).
+- **Fixes (all in src/risk/* + src/platform/config.py):**
+  - **C1 / CWE-798** — `bybit_api_key` + `bybit_api_secret` теперь required `Field(..., min_length=8)` (no committed defaults).
+  - **H1 / CWE-532** — `Settings.config_hash()` whitelist'нул 12 risk-threshold полей (исключил creds + paths + log/observability). Rotate API secret больше не invalidate active overrides.
+  - **H2 / CWE-345 + CWE-306** — Override file = HMAC-SHA256 envelope `{"payload":..,"sig":..}`. Verify через `hmac.compare_digest`. Required new field `risk_override_hmac_key: str = Field(..., min_length=32)`.
+  - **H3 / CWE-672** — Override single-use: `consume()` сразу после успешного match override→halt в `assess`, до sizing.
+  - **M1 / CWE-276** — File mode 0o600, parent dir 0o700.
+  - **M2 / CWE-367** — Atomic write через `os.open(O_WRONLY|O_CREAT|O_TRUNC, 0o600)` + `fsync` + `os.replace`.
+  - **I1 / ADR 0007** — `EquityTracker.peak_equity_24h` ranking через Python `max(Decimal)`, не SQL `CAST AS REAL` (collapse в IEEE-754 для значений > 15 sig digits).
+  - **L3 / CWE-532** — `resume_cb.py` printит `level` + `expires_at`, но не absolute path.
+- **New invariants** (added to risk-manager.md): #10 HMAC envelope, #11 single-use consume, #12 file mode 0o600 + atomic write, #13 config_hash allowlist, #14 Decimal-strict peak ranking.
+- **Tests added:** 12 (4 config, 9 override HMAC + tamper + chmod + atomic, 1 resume_cb path leak, 1 equity Decimal precision, 1 manager consume).
+- **Verification:** 315 tests passing, 0 failures, 0 errors.
+- Modified (wiki): 0018-sprint-4-risk-decisions.md (added sub-decision 9 — full security audit hardening, 8 sub-fixes); risk-manager.md (invariants table 9→14; settings section с allowlist + HMAC key; tags +security; sources +override.py +config.py).
+- Modified (code): src/platform/config.py, src/risk/override.py, src/risk/manager.py, src/risk/equity_tracker.py, src/risk/resume_cb.py + 5 test files.
+- Deferred follow-ups (M3/M4/L1/L2): clock injection в `OverrideStore.read_active` (testability), `force=True` flag для overwriting existing override (S5 ops), structured logging fields (S5 observability), magic numbers в test fixtures (S5 cleanup).
