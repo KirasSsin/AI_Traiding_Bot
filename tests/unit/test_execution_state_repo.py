@@ -1,16 +1,21 @@
 # tests/unit/test_execution_state_repo.py
-from decimal import Decimal
 import sqlite3
+from decimal import Decimal
+from pathlib import Path
+
 import pytest
-from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
+
 from src.execution.state_machine import ExecutionState
+from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
+
+_MIGRATION = Path(__file__).resolve().parents[2] / "migrations" / "0003_execution_state.sql"
 
 
 @pytest.fixture
 def conn(tmp_path):
     db = tmp_path / "exec.db"
     conn = sqlite3.connect(db)
-    conn.executescript(open("migrations/0003_execution_state.sql").read())
+    conn.executescript(_MIGRATION.read_text())
     return conn
 
 
