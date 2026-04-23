@@ -2,15 +2,21 @@
 
 ADR ref: wiki/project/decisions/0019-sprint-5-execution-decisions.md sub-decision 3
 """
+import pytest
+pytestmark = pytest.mark.skip(reason="ADR 0020 sub-decision 4: Reconciler Protocol rewritten (get_position removed); S5 tests superseded by test_reconciler_wallet_protocol.py + test_reconciler_fetch_v2.py + test_reconciler_entry_price.py. Preserved for history.")
+
 from decimal import Decimal
 from unittest.mock import Mock
 
-from src.execution.reconciler import (
-    Reconciler,
-    ReconcileVerdict,
-)
-from src.execution.state_machine import ExecutionState
-from src.execution.state_repo import ExecutionStateRow
+try:
+    from src.execution.reconciler import (
+        Reconciler,
+        ReconcileVerdict,
+    )
+    from src.execution.state_machine import ExecutionState
+    from src.execution.state_repo import ExecutionStateRow
+except ImportError:
+    Reconciler = ReconcileVerdict = ExecutionState = ExecutionStateRow = None  # type: ignore[assignment,misc]
 
 
 def _row(state, qty="0", oco_id=None, entry=None):
