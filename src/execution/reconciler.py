@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Literal, Protocol, runtime_checkable
 
@@ -114,18 +114,114 @@ class Reconciler:
             open_order_link_ids=link_ids,
         )
 
+    def _derive_base_coin(self, symbol: str | None) -> str | None:
+        """BTCUSDT → BTC. Convention: strip USDT/USDC suffix for spot pairs."""
+        if symbol is None:
+            return None
+        if symbol.endswith("USDT"):
+            return symbol[:-4]
+        if symbol.endswith("USDC"):
+            return symbol[:-4]
+        return symbol  # unknown format — pass through
+
+    def _belongs_to_current_bracket(self, o: dict, local: LocalState) -> bool:
+        """Return True if open order belongs to (or could belong to) current bracket."""
+        if local.bracket_id is None:
+            # Pre-bootstrap: can't identify bracket membership; any open order is suspect.
+            return True
+        return o.get("orderLinkId", "").startswith(f"oco-{local.bracket_id}-")
+
     def _classify(self, local: LocalState, expected_state: object,
                   exch_qty: Decimal, open_orders: list[dict],
-                  entry_order: dict | None) -> ReconcileResult:
-        """Stub classifier for ADR 0021 4-valued path. Tasks 13-15 implement logic."""
+                  entry_order: object | None) -> ReconcileResult:
+        """ADR 0021 4-valued path classifier. Tasks 13-15 implement logic."""
+        from src.execution.state_machine import ExecutionState  # avoid circular at module level
+        if expected_state == ExecutionState.ENTRY_PENDING:
+            return self._classify_entry_pending(local, exch_qty, open_orders, entry_order)
+        if expected_state == ExecutionState.EXIT_PENDING:
+            return self._classify_exit_pending(local, exch_qty, open_orders)
+        # Other hint-provided states fall through to binary
+        return self._binary_verdict(local, exch_qty, ())
+
+    def _classify_entry_pending(
+        self, local: LocalState, exch_qty: Decimal,
+        open_orders: list[dict], entry_order: object | None,
+    ) -> ReconcileResult:
+        """ADR 0021 sub-decision 3: classify ENTRY_PENDING state."""
+        # Precondition: entry order must be Filled
+        if entry_order is None or entry_order.status != "Filled":
+            return ReconcileResult(
+                verdict="DIVERGENCE",
+                exch_qty=exch_qty,
+                entry_price=None,
+                halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
+                heal_context=None,
+            )
+
+        # Qty check: exchange must have at least expected qty (minus dust)
+        expected_qty = local.expected_entry_qty or Decimal("0")
+        if exch_qty < expected_qty - self._dust_threshold:
+            return ReconcileResult(
+                verdict="DIVERGENCE",
+                exch_qty=exch_qty,
+                entry_price=None,
+                halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
+                heal_context=None,
+            )
+
+        # Orphan bracket orders check
+        bracket_orders = [o for o in open_orders if self._belongs_to_current_bracket(o, local)]
+        if bracket_orders:
+            return ReconcileResult(
+                verdict="DIVERGENCE",
+                exch_qty=exch_qty,
+                entry_price=None,
+                halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
+                heal_context=None,
+            )
+
+        # Staleness check (Task 14 adds this)
+        if local.updated_at is not None:
+            age_seconds = (datetime.now(UTC) - local.updated_at).total_seconds()
+            if age_seconds > self._heal_max_age_seconds:
+                return ReconcileResult(
+                    verdict="DIVERGENCE",
+                    exch_qty=exch_qty,
+                    entry_price=None,
+                    halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
+                    heal_context={"sub_reason": "stale_age", "age_seconds": age_seconds},
+                )
+
+        # All checks passed → HEAL
+        return ReconcileResult(
+            verdict="HEAL_ENTRY_FILLED",
+            exch_qty=exch_qty,
+            entry_price=entry_order.avgPrice,
+            halt_reason=None,
+            heal_context={
+                "avgPrice": str(entry_order.avgPrice),
+                "cumExecFee": getattr(entry_order, "cumExecFee", None),
+            },
+        )
+
+    def _classify_exit_pending(
+        self, local: LocalState, exch_qty: Decimal, open_orders: list[dict],
+    ) -> ReconcileResult:
+        """ADR 0021 sub-decision 3: classify EXIT_PENDING state."""
+        if exch_qty < self._dust_threshold and len(open_orders) == 0:
+            return ReconcileResult(
+                verdict="EXITED",
+                exch_qty=exch_qty,
+                entry_price=None,
+                halt_reason=None,
+                heal_context=None,
+            )
         return ReconcileResult(
             verdict="DIVERGENCE",
-            position_qty=exch_qty,
             exch_qty=exch_qty,
             entry_price=None,
-            halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
+            halt_reason="HALT_EXIT_RECONCILE_DIVERGENCE",
             heal_context=None,
-            open_order_link_ids=(),
         )
 
     def reconcile(self, local: LocalState, *, expected_state: object = None) -> ReconcileResult:
@@ -144,7 +240,7 @@ class Reconciler:
 
         # New 4-valued path (ADR 0021)
         sym = local.symbol or self._symbol
-        coin = self._base_coin
+        coin = self._base_coin or self._derive_base_coin(sym)
         wallet = self._query.get_wallet_balance(coin=coin) if coin else None
         if wallet is not None:
             exch_qty = (Decimal("0") if wallet.wallet_balance < self._dust_threshold

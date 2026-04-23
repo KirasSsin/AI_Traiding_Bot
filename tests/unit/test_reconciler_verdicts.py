@@ -89,3 +89,76 @@ def test_reconcile_accepts_expected_state_entry_pending():
     r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
     # Classification in next task; just verify call doesn't crash.
     assert r.verdict in ("AGREE", "DIVERGENCE", "HEAL_ENTRY_FILLED", "EXITED")
+
+
+# ---------------------------------------------------------------------------
+# Task 13: ENTRY_PENDING HEAL_ENTRY_FILLED path
+# ---------------------------------------------------------------------------
+
+from datetime import UTC, datetime, timedelta  # noqa: E402
+
+
+class _EntryOrder:
+    def __init__(self, status: str, avgPrice: Decimal):
+        self.status = status
+        self.avgPrice = avgPrice
+
+
+def test_entry_pending_heal_when_filled_position_matches_no_orphans(tmp_path):
+    """ADR 0021 sub-decision 3: all 3 conditions → HEAL_ENTRY_FILLED."""
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("0.001"),
+        open_orders=[],  # no orphan TP/SL
+        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+    )
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(
+        symbol="BTCUSDT",
+        position_qty=Decimal("0"),
+        entry_order_id="ent1",
+        expected_entry_qty=Decimal("0.001"),
+        updated_at=datetime.now(UTC) - timedelta(seconds=30),  # fresh
+    )
+    r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
+    assert r.verdict == "HEAL_ENTRY_FILLED"
+    assert r.entry_price == Decimal("62000")
+    assert r.heal_context and r.heal_context["avgPrice"] == "62000"
+
+
+def test_entry_pending_halt_when_position_short_of_expected(tmp_path):
+    """Partial fill + no orphans → still DIVERGENCE (HEAL requires exact/overfill above dust)."""
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("0.0001"),  # way below expected 0.001
+        open_orders=[],
+        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+    )
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(
+        symbol="BTCUSDT",
+        position_qty=Decimal("0"),
+        entry_order_id="ent1",
+        expected_entry_qty=Decimal("0.001"),
+        updated_at=datetime.now(UTC),
+    )
+    r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
+    assert r.verdict == "DIVERGENCE"
+    assert r.halt_reason == "HALT_BOOTSTRAP_AMBIGUOUS"
+
+
+def test_entry_pending_halt_when_orphan_open_orders_exist(tmp_path):
+    """If any open orders exist for bracket → not narrow HEAL (that's OCO_ARMING path)."""
+    adapter = _FakeAdapter(
+        exch_qty=Decimal("0.001"),
+        open_orders=[{"orderLinkId": "oco-abc-TP-1", "orderId": "tp1"}],
+        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+    )
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(
+        symbol="BTCUSDT",
+        position_qty=Decimal("0"),
+        entry_order_id="ent1",
+        expected_entry_qty=Decimal("0.001"),
+        updated_at=datetime.now(UTC),
+    )
+    r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
+    assert r.verdict == "DIVERGENCE"
