@@ -4,6 +4,8 @@ ADR 0022 sub-decision 5.
 """
 from __future__ import annotations
 
+import os
+
 import pytest
 
 
@@ -41,9 +43,6 @@ def test_cmd_kill_writes_to_configured_path(tmp_path, monkeypatch):
     rc = main(["kill"])
     assert rc == 0
     assert custom.exists()
-
-
-import os
 
 
 def test_cmd_kill_atomic_no_partial_on_simulated_error(tmp_path, monkeypatch):
