@@ -3,9 +3,9 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-24
 sprint: 8b
-phase: 8-ship
-branch: feature/sprint-8b-carryover
-tag: v0.1.0-alpha.8a
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.8b
 ---
 
 # SPRINT STATE
@@ -15,46 +15,43 @@ tag: v0.1.0-alpha.8a
 
 ## Текущий статус
 
-**Sprint 8b — Carry-over fixes (S8a) + ADR 0023 — PHASE 8 (ship).**
+**Между спринтами. S8b shipped: tag `v0.1.0-alpha.8b`, PR #9 squash-merged into main (`5a4d074`).**
 
-Все 9 tasks done. pytest 643 passed / 4 pre-existing failed / 0 new regress. mypy --strict src/ = 44 errors (main baseline = 45; T3 fix снизил на 1). Property tests 8/8. Per-task domain reviews APPROVED (T1 trading-logic, T2 python, T3 spec+python, T4 spec+python, T7 trading-logic). Final sweep skip — quota exhausted, anti-bloat per CLAUDE.md.
+S8b complete — 9 tasks, TDD throughout, per-task domain reviews APPROVED. pytest 604 passed / 24 skipped / 3 pre-existing test_config env-pollution failures (carry-over к S8c). mypy --strict src/ = 44 errors (vs main baseline 45; T3 fix net -1).
 
-## Завершённые задачи (S8b)
+## Последний спринт (S8b)
 
-- [x] T1 Coordinator.request_halt — FSM transit fix (`37b7535` + `32db325` + `150870d` count addendum)
-- [x] T2 BarSource — fail-fast 13-interval validator (`7cd5b48` + `6583b05`)
-- [x] T3 main() mypy no-any-return — typed `Callable[[Namespace], int]` dispatch (`5f811c2`)
-- [x] T4 _cmd_kill atomic — os.open + os.replace + finally cleanup (`ac2ddba` + `df3b007`)
-- [x] T5 ADR 0023 — halt-code → FSM event mapping invariant (`1f46877`)
-- [x] T6 trading-logic-reviewer.md CRITICAL section "Halt-code mapping" (outside repo, no commit)
-- [x] T7 property test + (FLAT, RISK_HALT) row symmetry (`351b49f` + `97ec79b`)
-- [x] T8 Wiki Stage E sync — runtime-manager + bar-poller + index + log + ADR (`08084b2`)
-- [x] T9 Verify (this entry) — pytest + mypy + property green; ship next
-
-## В процессе
-
-T9 Step 4 — PR via `superpowers:finishing-a-development-branch`. Then tag `v0.1.0-alpha.8b`.
+- [x] T1 Coordinator.request_halt — FSM transit fix
+- [x] T2 BarSource — fail-fast 13-interval validator
+- [x] T3 main() mypy no-any-return — typed `Callable[[Namespace], int]` dispatch
+- [x] T4 _cmd_kill atomic — os.open + os.replace + finally cleanup
+- [x] T5 ADR 0023 — halt-code → FSM event mapping invariant
+- [x] T6 trading-logic-reviewer.md CRITICAL section "Halt-code mapping"
+- [x] T7 property test + (FLAT, RISK_HALT) row symmetry — caught real production bug
+- [x] T8 Wiki Stage E sync — runtime-manager + bar-poller + index + log + ADR 0023
+- [x] T9 Ship — PR #9 → squash-merge → tag v0.1.0-alpha.8b
 
 ## Следующее действие
 
 ```
-git push -u origin feature/sprint-8b-carryover
-gh pr create --title "Sprint 8b — S8a carry-over fixes" ...
-# squash merge → tag v0.1.0-alpha.8b → SPRINT_STATE между-sprints
+PHASE 1 (orient) для S8c:
+1. mem-search "sprint 8a" "sprint 8b" → surface unresolved concerns
+2. Read llm-wiki/wiki/log.md (last 10 entries)
+3. PHASE 2 brainstorm S8c scope (см. carry-over ниже + новые цели)
 ```
 
-## Carry-over в S8c (concerns не блокирующие S8b merge)
+## Carry-over в S8c
 
 - `_set_halt(reason: str)` internal wrapper signature всё ещё `str` — `request_halt(reason: ReasonCode)` уже типизирован; cleanup в S8c.
-- `coordinator.md` wiki page отсутствует — request_halt FSM-transit semantics только в commit log + ADR 0023; создать в dedicated wiki sprint.
-- ADR 0022 narrative transition count = 73; live = 74 после T7 fix-up. Update at next ADR amendment.
-- Pre-existing test_config.py 3 failures (env-pollution от .env) + test_risk_flow OverrideStore signature drift — не S8b regression.
-- Pre-existing mypy 44 errors в `src/execution/coordinator.py` (LocalState undef, dict[Any,Any]), `src/marketdata/storage.py|gaps.py` (untyped pyarrow calls), `src/execution/reconciler.py` (None union-attr) — pre-existing technical debt.
+- `coordinator.md` wiki page отсутствует — request_halt FSM-transit semantics только в commit log + ADR 0023; создать.
+- ADR 0022 narrative transition count = 73; live = 74 после T7 fix-up. Amend at next ADR touch.
+- Pre-existing test_config.py 3 env-pollution failures + test_risk_flow OverrideStore signature drift.
+- Pre-existing mypy 44 errors в coordinator.py (LocalState undef, dict[Any,Any]), storage.py|gaps.py (untyped pyarrow), reconciler.py (None union-attr).
 
 ## Ключевые решения S8b (для истории)
 
-- **Allow-list contract** для `_REQUEST_HALT_CODES` (3 codes) — explicit, NOT prefix-based selector. Future drift mitigated by trading-logic-reviewer CRITICAL section + ADR 0023.
-- **(FLAT, RISK_HALT) → HALTED** — surfaced by property test, prevents `RuntimeManager.run()` exception → split-brain (halt_reason persisted, FSM stays FLAT).
+- **Allow-list contract** для `_REQUEST_HALT_CODES` (3 codes) — explicit, NOT prefix-based. Drift mitigated by trading-logic-reviewer CRITICAL section + ADR 0023 + property test.
+- **(FLAT, RISK_HALT) → HALTED** — surfaced by property test, prevents `RuntimeManager.run()` exception → split-brain.
 - **Atomic kill-switch** mirror `src/risk/override.py:82-95` minus fsync (paper-trade scope, trader-expert verdict).
 - **HALTED-guard** в `request_halt` — `current.state != HALTED` перед `_transition` — preserves S7 γ idempotency.
 - **`os` module-level import** в `src/__main__.py` — needed для `monkeypatch.setattr("src.__main__.os.replace", ...)` resolution в T4 atomicity test.
