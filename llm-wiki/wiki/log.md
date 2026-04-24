@@ -303,3 +303,16 @@
 - S8 split: S8a (this ADR) = live runtime; S8b (later ADR) = Analytics per-fill + execution topic + WS+REST epsilon-halt. Deferred until S8a merge.
 - SPRINT_STATE.md → sprint=8a-live-runtime, phase=3-planning.
 - Next: PHASE 3 writing-plans → branch feature/sprint-8a-live-runtime.
+
+## [2026-04-24] session-end | S8a — Live Runtime merged
+
+- Closed: ADR 0021 line 364 deferral (KILL_SWITCH wired via sentinel-file CLI).
+- New: RuntimeManager (bootstrap → kill→alive→poll→strategy→bracket → shutdown), BarSource (REST kline + dedup + stall).
+- Lock policy: Coordinator RLock (6 methods), Reconciler Lock (2 methods) — Task 0 mandatory.
+- Reason codes: 42 → 45 (HALT_RUNTIME_CRASH, HALT_BAR_POLL_STALL, KILL_SWITCH_REQUESTED).
+- FSM: KILL_SWITCH_REQUESTED event → HALTED from 10 active states.
+- Removed: src/controller.py, main.py (orphans broken since S2).
+- Entry-point: `python -m src` (run / backfill / reconcile-only / kill).
+- Tests: 13 task suites + 1 opt-in Demo integration scaffold.
+- ADR: 0022 accepted.
+- Wiki updated: index.md (runtime-manager, bar-poller components), log.md (this entry), SPRINT_STATE.md (sprint 8a, phase 8-ship).
