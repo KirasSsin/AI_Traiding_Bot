@@ -85,6 +85,7 @@ _(пусто — v0.2+)_
 - [[project/components/circuit-breakers]] — L1/L2/L3/Flash detector (stateless); CircuitBreakerConfig from Settings.
 - [[project/components/sizing]] — `compute_qty(equity, fraction, atr, price, k)` ATR-based pure function.
 - [[project/components/risk-manager]] — orchestrator: assess(signal, mark_price) → RiskAssessment с look-ahead invariant.
+- [[project/components/risk-override]] — manual CB resume gate (HMAC-SHA256 signed JSON file + config_hash anti-replay + atomic write 0o600). ADR 0018.
 - [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
 - [[project/components/oco]] — 3-order Spot OCO emulation: bracket builder + orderLinkId scheme + G5 fee-aware qty + S7 entry_order_id capture для HEAL.
 - [[project/components/reconciler]] — 4-valued verdict (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED) + heal_max_age_seconds=3600.

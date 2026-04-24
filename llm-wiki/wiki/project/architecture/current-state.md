@@ -25,7 +25,7 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **22** | `wiki/project/components/*.md` | S8b + pre-S8c batch (coordinator.md added 2026-04-25) |
+| Component pages | **23** | `wiki/project/components/*.md` | S8c T5 (risk-override.md added 2026-04-25) |
 | ADRs | **23** | `wiki/project/decisions/*.md` (0001-0023) | S8b (ADR 0023) |
 | Sprint pages | **9** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-07 + sprint-08a + sprint-08b) | pre-S8c batch (sprint-08a/8b created 2026-04-25) |
 
@@ -50,7 +50,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | `execution/` | coordinator (628), state_machine (170), state_repo (148), reconciler (278), bracket (oco-builder, ADR 0020 sub-decision 2, 101 LoC), models, bybit/{adapter, ws_private, rest} | ~1500 | [[../components/coordinator]], [[../components/execution-state-machine]], [[../components/reconciler]], [[../components/oco]], [[../components/bybit-adapter]], [[../components/ws-private-consumer]] | S5/S6/S7/S8a/S8b |
 | `marketdata/` | bar_builder, clock, filters, gaps, models, pipeline, storage | ~600 | [[../components/bar-builder]], [[../components/storage]] | S2 |
 | `platform/` | config, db, logging | ~350 | [[../components/config]], [[../components/logging]] | S1 |
-| `risk/` | manager (315), kelly (128), reason_codes, override (147), trade_history (118), circuit_breakers, equity_tracker, sizing, resume_cb, models | ~1100 | [[../components/risk-manager]], [[../components/kelly]], [[../components/sizing]], [[../components/circuit-breakers]] (open gaps: override.md, trade-history.md — S8c) | S4/S7 |
+| `risk/` | manager (315), kelly (128), reason_codes, override (147), trade_history (118), circuit_breakers, equity_tracker, sizing, resume_cb, models | ~1100 | [[../components/risk-manager]], [[../components/kelly]], [[../components/sizing]], [[../components/circuit-breakers]], [[../components/risk-override]] (open gap: trade-history.md — T6 in progress) | S4/S7 |
 | `runtime/` | manager (231), bar_source (~150) | ~380 | [[../components/runtime-manager]], [[../components/bar-poller]] | S8a |
 | `signalgen/` | strategy (181), indicators (113), models | ~340 | [[../components/strategy]], [[../components/indicators]], [[../components/models]] | S3 |
 
