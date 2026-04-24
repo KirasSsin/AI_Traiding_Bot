@@ -3,7 +3,7 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
 sprint: 8c
-phase: 4-execution
+phase: 8-ship
 branch: feature/sprint-8c-wiki-backfill
 tag: v0.1.0-alpha.8b
 plan: wiki/project/plans/2026-04-25-sprint-8c-wiki-backfill.md
