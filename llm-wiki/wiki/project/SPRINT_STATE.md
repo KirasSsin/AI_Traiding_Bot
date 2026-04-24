@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-24
-sprint: 8a
-phase: between-sprints
-branch: main
+sprint: 8b
+phase: 4-execution
+branch: feature/sprint-8b-carryover
 tag: v0.1.0-alpha.8a
 ---
 
@@ -15,12 +15,13 @@ tag: v0.1.0-alpha.8a
 
 ## Текущий статус
 
-**Sprint 8a — Live Runtime (ADR 0022) — MERGED + TAGGED.**
-Merge commit `2205743`, tag `v0.1.0-alpha.8a`. Branch `feature/sprint-8a-live-runtime` сохранена локально (S6/S7 pattern).
+**Sprint 8b — Carry-over fixes (S8a) + ADR 0023 — PHASE 4 (execution).**
 
-Финальная статистика: 570 unit pass / 24 skip (clean env). 73 новых S8a-specific test'а. 3 reviewers (trading-logic opus + python-reviewer sonnet + data-integrity sonnet) — все BLOCKERS закрыты pre-merge.
+Brainstorm split: S8b сужен до 5 carry-over concerns (T1-T5) + ADR 0023 (halt-class ReasonCode dispatch invariant). Analytics per-fill + WS+REST epsilon отложены до S8c (separate brainstorm).
 
-S7 Resilience (ADR 0021) tag `v0.1.0-alpha.7` ранее merged.
+Plan committed `90efae9` на main: `wiki/project/plans/2026-04-24-sprint-8b-carryover.md` (9 tasks). Spec: `docs/superpowers/specs/2026-04-24-sprint-8b-carryover-design.md` (gitignored, local). Trader-expert verdict round 2: 5/5 CONFIRM (no scope changes).
+
+S8a Live Runtime (ADR 0022) tag `v0.1.0-alpha.8a` ранее merged. S7 Resilience (ADR 0021) tag `v0.1.0-alpha.7` ранее merged.
 
 ## Завершённые задачи (S8a)
 
@@ -37,15 +38,11 @@ S7 Resilience (ADR 0021) tag `v0.1.0-alpha.7` ранее merged.
 
 ## В процессе
 
-(none — between-sprints)
+Task 1 — Coordinator.request_halt FSM transit fix (10 KILL_SWITCH_REQUESTED dead transitions). RED→GREEN cycle. Sonnet implementer.
 
 ## Следующее действие
 
-**Open S8b brainstorm** — Sprint 8b — Analytics per-fill table + WS+REST epsilon-halt.
-
-Старт: `/superpowers:brainstorming` → questionnaire → trader-expert → writing-plans → subagent-driven-development.
-
-Опционально: `git push origin main && git push --tags` если нужно publish.
+Dispatch Task 1 implementer (sonnet) → spec reviewer → code quality reviewer → Task 2 (BarSource _INTERVAL_MS 13-key + validator).
 
 ## Carry-over в S8b (concerns не блокирующие S8a merge)
 
