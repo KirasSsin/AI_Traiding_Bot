@@ -45,7 +45,19 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 - **Python**: 3.12 (pyproject.toml). Venv: `.venv/` at repo root.
 - **Test cmd**: `pytest -x -q` (unit), `pytest -m integration` (opt-in), `pytest -m property`.
 - **Branch**: feature/<sprint-N-slug>. PR to main. Conventional commits.
-- **Current state**: Sprint 6 COMPLETE (tag `v0.1.0-alpha.6`). Between sprints. Next = S7 brainstorm.
+- **Current state**: Sprint 8b COMPLETE (tag `v0.1.0-alpha.8b`). Between sprints. Next = S8c brainstorm.
+
+## Python venv discipline (MANDATORY for all Bash invocations)
+
+System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' from 'enum'` on any `src.execution.state_machine` import. Bare `python` does not exist on PATH (exit 127). Project uses `StrEnum`, PEP 604 unions, modern `pydantic-settings` — needs **3.12**.
+
+**Rule for controller AND every subagent brief:**
+- ALWAYS prefix Python invocations with venv:
+  - `source /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/activate && python -c "..."`
+  - OR direct path: `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/python -c "..."`
+- Same for tools: `.venv/bin/pytest`, `.venv/bin/mypy`, `.venv/bin/ruff`.
+- NEVER bare `python` / `python3` — fails or returns wrong-Python results.
+- When dispatching subagent that may run Python — explicitly include venv path in brief.
 
 ## Minimum behavior (overrides по запросу)
 
