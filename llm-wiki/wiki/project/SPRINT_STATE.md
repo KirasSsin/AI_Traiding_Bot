@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-24-pre-s8-audit
-sprint: 7-resilience
-phase: 9-merged
+updated: 2026-04-24-s8a-adr-accepted
+sprint: 8a-live-runtime
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.7
 ---
@@ -15,8 +15,10 @@ tag: v0.1.0-alpha.7
 
 ## Текущий статус
 
-**Sprint 7 — Resilience (ADR 0021) — COMPLETE & MERGED. Tag `v0.1.0-alpha.7` создан.**
-Phase G re-scoped к Demo Mainnet (v0.1 ops target). Mainnet promotion (v0.2+) gated через `require_mainnet_gate_passed`.
+**Sprint 8a — Live Runtime (ADR 0022) — phase 3 (planning).**
+ADR 0022 ACCEPTED 2026-04-24. Trader-expert verdicts: round 1 (10 CONFIRM / 7 REVISE / 1 DEFER, 18 questions), round 2 (U1 REVISE: stall threshold 12→24). U2 user choice: sentinel-file CLI for KILL_SWITCH.
+
+S7 Resilience (ADR 0021) merged, tag `v0.1.0-alpha.7`. S8b (Analytics per-fill) deferred until S8a merge.
 
 ## Завершённые задачи (S7, 25 tasks)
 
@@ -36,35 +38,47 @@ Phase G re-scoped к Demo Mainnet (v0.1 ops target). Mainnet promotion (v0.2+) g
 
 ## В процессе
 
-Между спринтами. S8 brainstorm pending (driver loop для WS consumer + manager.py orchestration + Analytics).
-Pre-S8 audit DONE (2026-04-24): 5 agents synced (trading-logic v3 / data-integrity +ADR 0021 / quant-stats +Analytics / python-reviewer +Decimal/asyncio/structlog / trader-expert +HEAL+bootstrap), SOP PHASE 0a step 5 (staleness check) + PHASE 2 orchestration note added, ADR 0017 amended.
-Open question for S8 brainstorm: создавать ли `orchestration-reviewer` (asyncio supervision / backpressure / queue invariants) или покрытие 4-х reviewers + trader-expert достаточно. Defer pending S8 PHASE 2.
+S8a PHASE 3 — writing-plans для ADR 0022 (~30 TDD tasks). Plan path: `wiki/project/plans/2026-04-24-sprint-8a-live-runtime.md`.
 
 ## Следующее действие
 
-S8 brainstorm: scope = WS consumer driver loop, manager.py orchestration, Analytics per-fill table. Triggers: `superpowers:brainstorming` skill.
+Dispatch writing-plans для S8a. После plan approval → branch `feature/sprint-8a-live-runtime` + PHASE 4 subagent-driven execution. Task 0 = threading lock policy (mandatory prerequisite).
 
-Опционально перед S8: `git push origin main && git push --tags` — оператор-driven (если ещё не сделано).
+Опционально (operator): `git push origin main && git push --tags` если S7 ещё не запушен.
 
-## Ключевые решения последней сессии (S7)
+## Ключевые решения S8a brainstorm
 
-- B1 narrow scope: только passive WS consumer; driver loop отнесён в S8.
-- pybit on_disconnect: wired via inner WebSocketApp.on_close + heartbeat watchdog backstop (pybit upgrade resilient).
-- 4-valued verdicts с recommended_state hint — coordinator делегирует FSM-выбор reconciler'у.
-- halt_reason primary-wins semantics (first non-null sticks до MANUAL_RESET) + halt_log append-only audit.
-- heal_max_age_seconds = 3600 (1H bar period) — heal только если fill свежее.
+- **S8 split:** S8a (live runtime) + S8b (Analytics + WS+REST epsilon). Один subsystem per sprint (B1 principle).
+- **Concurrency:** sync + 2 threads (main + pybit). NO asyncio в v0.1. Mandatory Task 0 = threading.RLock на Coordinator + threading.Lock на Reconciler.
+- **Bar feed:** REST kline @ 5s (NO WS kline — partial bar updates incompatible с close-on-close signal).
+- **Stall threshold = 24** (120s; trader-expert round 2: bar-poller stall ≠ position-safety event, OCO bracket exchange-side preserves capital). Validator 6 ≤ N ≤ 720.
+- **KILL_SWITCH = sentinel-file CLI** (`python -m src kill` writes `.kill_switch`). Cross-platform, no signal collision (vs SIGUSR1 alternative rejected).
+- **check_alive INLINE** в bar-poll loop (eliminates same-cadence race с separate worker thread).
+- **REST canonical wallet truth** (per ADR 0020 sub-decision 4) — drop wallet_disagreement_epsilon (defer to S8b).
+- **3 new reason codes (42→45):** 43=HALT_RUNTIME_CRASH, 44=HALT_BAR_POLL_STALL, 45=KILL_SWITCH_REQUESTED.
+- **Entry-point:** `python -m src` + argparse subcommands (run/backfill/reconcile-only/kill).
+- **DELETE:** `src/controller.py` + `main.py` (orphans broken since S2).
 
 ## Блокеры / concerns
 
 - Pre-existing test_risk_flow OverrideStore signature drift (unrelated to S7).
 - pyarrow/talib/asyncio test gaps (28 skipped) — defer до S8+.
 
-## Активные файлы (где работаем)
+## Активные файлы (где работаем — S8a)
 
-- `src/execution/coordinator.py` — bootstrap + 4-valued verdicts + entry_ack capture
-- `src/execution/reconciler.py` — 4-valued + heal_max_age + OrderSnapshot snake_case
-- `src/execution/bybit/ws_private.py` — close-hook + check_alive watchdog
-- `migrations/0005_halt_persistence.sql` — halt_reason + halt_log
+**NEW:**
+- `src/runtime/__init__.py` + `manager.py` + `bar_source.py` — RuntimeManager owns lifecycle
+- `src/__main__.py` — argparse entry-point
+
+**MODIFY:**
+- `src/execution/coordinator.py` — Task 0: RLock на 6 методов
+- `src/execution/reconciler.py` — Task 0: Lock на 2 метода
+- `src/platform/config.py` — 5 new runtime_* settings + validator
+- `src/execution/reason_codes.py` — +43, +44, +45
+
+**DELETE:**
+- `src/controller.py` (orphan, broken since S2)
+- `main.py` (root, ImportError на src.controller)
 
 ## Как обновлять этот файл
 

@@ -294,3 +294,12 @@
 - Amended wiki/project/decisions/0017-review-agent-harness.md: +trader-expert в Related; filename normalization "Python Reviewer.md" → "python-reviewer.md"; Amendments section с подтверждением model assignments и устранением drift.
 - Updated SPRINT_STATE.md: pre-S8 audit DONE summary; open question for S8 — orchestration-reviewer create vs defer (decided: defer pending S8 PHASE 2 brainstorm).
 - Decision: orchestration-reviewer NOT created pre-S8 (anti-bloat) — trading-logic + python-reviewer (asyncio) + data-integrity + trader-expert cover scope. Re-evaluate в S8 brainstorm если выявится gap.
+
+## [2026-04-24] sprint-start | S8a brainstorm + ADR 0022 accepted
+- Trader-expert verdict round 1: 18 questions → 10 CONFIRM / 7 REVISE / 1 DEFER. Key REVISEs: Q1/CC1 mandatory threading lock policy (Task 0); Q4 KILL_SWITCH wired в S8a (closes ADR 0021 line 364); Q5 HALT_RUNTIME_CRASH mandatory; Q6 check_alive INLINE; Q8 REST-only wallet truth (defer epsilon-halt); Q10 `python -m src` entry; Q13 +3 reason codes (43/44/45); Q16 settings drop epsilon+check_alive_interval; Q17 delete controller.py + main.py.
+- Trader-expert verdict round 2 (single item): U1 stall threshold REVISE 12→24 (120s; bar-poller stall ≠ position-safety event, OCO bracket exchange-side; false-halt cost dominates). Validator 6 ≤ N ≤ 720.
+- User U2: sentinel-file CLI (`.kill_switch`) — chosen over SIGUSR1 (supervisor collision risk).
+- ADR 0022 created (396 lines, 14 sub-decisions, 7 alternatives rejected, 7 deferred to S8b+, 12-item verification checklist) — status accepted by maintainer.
+- S8 split: S8a (this ADR) = live runtime; S8b (later ADR) = Analytics per-fill + execution topic + WS+REST epsilon-halt. Deferred until S8a merge.
+- SPRINT_STATE.md → sprint=8a-live-runtime, phase=3-planning.
+- Next: PHASE 3 writing-plans → branch feature/sprint-8a-live-runtime.
