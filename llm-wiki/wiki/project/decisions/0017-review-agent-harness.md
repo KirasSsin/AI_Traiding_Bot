@@ -89,4 +89,3 @@ Sprint 3 завершён. Стек ревью к этому моменту:
 ## Amendments
 
 - **2026-04-24 (post-S7):** Добавлен `trader-expert` (sonnet) в curated agent set как decision-maker последней инстанции в PHASE 2 brainstorming. Не reviewer (не вызывается в PHASE 5), но обязателен в PHASE 2 если есть unresolved scope/architecture questions перед PHASE 3. Filename: `~/.claude/agents/trader-expert.md`.
-- **2026-04-24:** Подтверждён model assignment per file frontmatter после агент audit: `trading-logic-reviewer = opus`, `quant-stats-reviewer = opus`, `data-integrity-reviewer = sonnet`, `python-reviewer = sonnet`, `trader-expert = sonnet`. Drift между ADR и frontmatter устранён (был sonnet в trading-logic-reviewer.md — исправлено на opus).
