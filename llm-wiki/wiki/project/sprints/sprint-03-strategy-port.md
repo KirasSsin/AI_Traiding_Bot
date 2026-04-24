@@ -87,6 +87,6 @@ status: done
 - Plan: [[../plans/2026-04-22-sprint-3-strategy-port]]
 - Components: [[../components/indicators]], [[../components/strategy]], [[../components/models]]
 - Architecture: [[../architecture/migration-plan]] §S3, [[../architecture/execution-timing]]
-- ADR: [[../decisions/0011-wilder-ema-for-adx-rsi-classical-for-crossover]]
+- ADR: [[../decisions/0011-wilder-ema-for-adx-rsi-classical-for-crossover]], [[../decisions/0017-review-agent-harness]] (review-agent harness first activated в S3)
 - Trading: [[../../trading/strategies/ema-crossover-adx-rsi]], [[../../trading/indicators/ema]], [[../../trading/indicators/adx]], [[../../trading/indicators/rsi]], [[../../trading/indicators/atr]]
 - Prior sprint: [[sprint-02-bybit-venue-migration]]

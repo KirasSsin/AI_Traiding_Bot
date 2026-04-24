@@ -11,8 +11,8 @@ status: done
 # Sprint 4 — Risk module
 
 **Dates:** 2026-04-23
-**Plan:** [[../plans/2026-04-23-sprint-4-risk]] (split into tasks-1-8 / 9-13 / 14-17)
-**Tag:** `v0.1.0-alpha.4` (pending PR merge)
+**Plan:** [[../plans/2026-04-23-sprint-4-risk]] (split into [[../plans/2026-04-23-sprint-4-risk-tasks-1-8]] / [[../plans/2026-04-23-sprint-4-risk-tasks-9-13]] / [[../plans/2026-04-23-sprint-4-risk-tasks-14-17]])
+**Tag:** skipped — S4 merged into `v0.1.0-alpha.6` (consolidates S4+S5+S6 ship). Drift note: original plan tagged `v0.1.0-alpha.4 (pending PR merge)` 2026-04-23, но tag `alpha.4` never created. Reconciled 2026-04-25.
 **Commit range:** `a5d38a8..HEAD` (17 commits включая wiki delivery)
 
 ## Goal

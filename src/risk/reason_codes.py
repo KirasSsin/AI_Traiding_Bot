@@ -40,7 +40,7 @@ class ReasonCode(StrEnum):
     SCALE_IN_LONG = "SCALE_IN_LONG"
     SCALE_IN_SHORT = "SCALE_IN_SHORT"
 
-    # Scale / exits (10)
+    # Scale / exits (11 — including EXIT_RECONCILE_DETECTED defined below in ADR 0021 block for ADR traceability)
     SCALE_OUT_PARTIAL = "SCALE_OUT_PARTIAL"
     EXIT_SL_HIT = "EXIT_SL_HIT"
     EXIT_TP_HIT = "EXIT_TP_HIT"
@@ -84,6 +84,9 @@ class ReasonCode(StrEnum):
     # --- ADR 0021 — Sprint 7 Resilience (bootstrap + reconcile) ---
     HALT_BOOTSTRAP_AMBIGUOUS = "HALT_BOOTSTRAP_AMBIGUOUS"
     HALT_EXIT_RECONCILE_DIVERGENCE = "HALT_EXIT_RECONCILE_DIVERGENCE"
+    # NOTE: EXIT_RECONCILE_DETECTED is an exit-class code (counted under
+    # "Scale / exits" total = 11 in wiki/architecture/reason-codes-schema.md);
+    # placed here for ADR-0021 grouping/traceability, not categorization.
     EXIT_RECONCILE_DETECTED = "EXIT_RECONCILE_DETECTED"
 
     # --- ADR 0022 — Sprint 8a Live runtime ---

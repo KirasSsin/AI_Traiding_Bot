@@ -93,6 +93,7 @@ _tick()
 
 ## Related
 
+- [[coordinator]] — central orchestrator: RuntimeManager calls `coordinator.bootstrap()` + `start_bracket()` + `request_halt()` + `flatten()`; lock policy on Coordinator's 6 RLock-protected methods
 - [[bar-poller]] — REST kline source feeds tick loop
 - [[ws-private-consumer]] — pybit thread side; check_alive called inline from tick
 - [[execution-state-machine]] — KILL_SWITCH_REQUESTED transitions

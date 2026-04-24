@@ -63,3 +63,6 @@ else:
 - ADR 0021 sub-decision 4 — γ halt persistence (primary-wins) объясняет почему `_set_halt` отделён от `_transition`.
 - `src/execution/coordinator.py:600-625` — canonical `request_halt` implementation (post-S8b T1).
 - `tests/property/test_request_halt_mapping.py` — invariant test (S8b T7).
+
+**Implementation plan:** [[../plans/2026-04-24-sprint-8b-carryover]].
+**Sprint page:** [[../sprints/sprint-08b-carryover]] — delivery record (S8a carry-over fixes + ADR 0023, FSM 70→74, tag `v0.1.0-alpha.8b`).

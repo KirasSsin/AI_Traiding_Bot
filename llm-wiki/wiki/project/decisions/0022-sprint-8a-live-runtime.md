@@ -394,3 +394,5 @@ runtime.shutdown             {reason, in_flight_orders}
 ---
 
 **Approved:** 2026-04-24 by maintainer (user) after trader-expert verdict (rounds 1+2).
+**Implementation plan:** [[../plans/2026-04-24-sprint-8a-live-runtime]].
+**Sprint page:** [[../sprints/sprint-08a-live-runtime]] — delivery record (37 commits, +11 KILL_SWITCH_REQUESTED transitions 59→70, reason codes 42→45, tag `v0.1.0-alpha.8a`).

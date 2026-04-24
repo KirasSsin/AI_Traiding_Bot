@@ -226,3 +226,4 @@ Sprint 4 имплементировал risk-модуль (Kelly + CB + RiskMana
 - [[../components/risk-manager]] — implementation reference.
 - [[../../trading/concepts/reason-codes]] — wiki page updated by sub-decision 5.
 - `src/risk/manager.py`, `src/risk/kelly.py`, `src/risk/reason_codes.py`.
+- [[../sprints/sprint-04-risk]] — sprint delivery record (S4 ship summary).

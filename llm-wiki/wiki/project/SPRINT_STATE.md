@@ -1,10 +1,10 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-24
-sprint: 8b
-phase: between-sprints
-branch: main
+updated: 2026-04-25
+sprint: pre-8c
+phase: 4-execution
+branch: feature/pre-s8c-wiki-backfill
 tag: v0.1.0-alpha.8b
 ---
 

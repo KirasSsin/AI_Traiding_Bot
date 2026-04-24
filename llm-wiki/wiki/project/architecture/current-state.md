@@ -1,148 +1,154 @@
 ---
-title: Current State — инвентаризация существующего кода
+title: Current State — post-S8b inventory + canonical counts
 type: architecture
-tags: [current-state, inventory, baseline]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-8b]
 created: 2026-04-19
-updated: 2026-04-19
+updated: 2026-04-25
 status: stable
-sources: [src/, Docs/current_bot/README_RU.md, Docs/current_bot/IMPLEMENTATION_NOTES.md]
+sources:
+  - src/
+  - project/sprints/sprint-08b-carryover.md
+  - project/decisions/0023-halt-code-fsm-event-mapping.md
 ---
 
-# Current State (на 2026-04-19)
+# Current State (post-S8b, 2026-04-25)
 
-**TL;DR:** Существующий код — **Phase 1 MVP на Bybit** (perpetual futures, linear, 1m bars, EMA+RSI+ATR). **НЕ** Binance Spot 1H. Математический стек (Hurst, Kelly, CVaR, HMM) заложен, но XGBPredictor и HMM не задействованы в live-сигнале. Нет TA-Lib, pydantic, SQLite/Parquet, DDD-структурирования.
+**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.8b`. 9 sprints completed (S1, S2, S3, S4, S5, S6, S7, S8a, S8b). Codebase = ~5454 LoC src + ~11354 LoC tests (2:1 ratio). Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation (Entry Market + TP Limit + SL StopMarket IOC). 16-state Harel FSM. Live runtime: `python -m src run` (S8a). Demo Mainnet ready. Pre-production hardening continues.
 
-## Структура `src/`
+**Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
-| Модуль | Файлы | Назначение |
-|--------|-------|-----------|
-| `core/` | `models.py`, `math_engine.py` | Dataclass-модели (Kline, Signal, Order) + базовая математика (Hurst, ADF, Kelly, CVaR). |
-| `data/` | `consumer.py` | `BybitDataConsumer` — интеграция с pybit (WS + REST fallback), буфер свечей в памяти, REST seed. |
-| `strategy/` | `strategy.py`, `hmm_regime.py`, `order_flow.py` | `AdvancedStrategy` (EMA12/26 + RSI + ATR), HMM regime-detector (скелет), OrderFlowAnalyzer (OBI, Kyle's Lambda). |
-| `risk/` | `risk_manager.py` | `RiskManager` с kill-switch (5% DD), fractional Kelly (0.5-Kelly), fixed fractional risk (1%/trade), CVaR tracking. |
-| `execution/` | `executor.py` | `BybitExecutor` — market orders, normalize qty/step, testnet/demo/live modes, mock при `live_trading=False`. |
-| `gateway/` | `market_data_pb2.py`, `..._grpc.py` | gRPC stubs (заготовка для микросервисной архитектуры, не интегрирована). |
-| `backtest/` | `vector_backtest.py` | `VectorBacktester` — pandas-based, KPI (Return, MaxDD, Sharpe). |
-| `ml/` | `models.py` | `XGBPredictor` (binary classification, **не используется** в live). |
-| `controller.py` | — | `TradingController` — оркестратор, asyncio event loop, sync с Bybit executions, export → `web/data.json`. |
-| `main.py` (top-level) | — | Entry point: `asyncio.run(controller.start())` + HTTP сервер для `web/dashboard.html`. |
+## Canonical counts (live, MUST be kept current per dev-workflow.md PHASE 8 step 5a HARD-GATE)
 
-## Стек реально используется
+| Metric | Value | Source of truth | Last update |
+|--------|-------|-----------------|-------------|
+| FSM states | **16** | `src/execution/state_machine.py` `ExecutionState` enum | S6 (ADR 0020) |
+| FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
+| FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
+| Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
+| Component pages | **22** | `wiki/project/components/*.md` | S8b + pre-S8c batch (coordinator.md added 2026-04-25) |
+| ADRs | **23** | `wiki/project/decisions/*.md` (0001-0023) | S8b (ADR 0023) |
+| Sprint pages | **9** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-07 + sprint-08a + sprint-08b) | pre-S8c batch (sprint-08a/8b created 2026-04-25) |
 
-```
-Python (version ?)
-├── asyncio                    ✓ (везде async/await)
-├── pandas                     ✓ (буфер свечей, EMA через .ewm())
-├── numpy                      ✓ (math engine)
-├── aiohttp                    ✓ (через pybit)
-├── pybit (локальная, v5)      ✓ (Bybit Unified Trading)
-├── scipy                      ✓ (linregress, norm, t — в math_engine)
-├── statsmodels                ✓ (adfuller — ADF test)
-├── hmmlearn                   ✓ (скелет GaussianHMM, без fit)
-├── xgboost                    ✓ (import, не используется)
-└── pytest                     ✓ (4 теста в test_math.py)
+**Verify counts live (CI-safe):**
 
-НЕ используется:
-├── TA-Lib                     ✗
-├── pydantic (v2)              ✗ (используются @dataclass)
-├── uvloop                     ✗
-├── SQLAlchemy / SQLite        ✗ (всё в памяти)
-├── Parquet                    ✗
-├── structlog                  ✗
-└── grpcio (runtime)           ✗ (только stubs)
+```bash
+source /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/activate
+python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, ExecutionEvent; from src.risk.reason_codes import ReasonCode; print(f'states={len(list(ExecutionState))}, events={len(list(ExecutionEvent))}, transitions={len(TRANSITIONS)}, reason_codes={len(list(ReasonCode))}')"
 ```
 
-## Биржа и символ
+Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 
-- **Venue:** Bybit Linear (perpetual futures, category `linear`).
-- **Symbol:** BTCUSDT.
-- **Timeframe:** **1m** (в `main.py` interval="1"; MVP-спека требует 1H).
-- **Modes:** `testnet=True` / `demo=True` / `live_trading=False` (по умолчанию mock).
-- **Keys:** жёстко вписаны в `main.py` (тестовые).
-- **Data source:** pybit WebSocket kline + REST fallback (polling 1-2s).
+## Структура `src/` (post-S8b)
 
-## Стратегия (AdvancedStrategy)
+| Module | Files | LoC | Wiki page | Sprint origin |
+|--------|-------|-----|-----------|---------------|
+| `__main__.py` | entry | 117 | (open gap — S8c) | S8a (ADR 0022 G6) |
+| `analytics/` | __init__ stub | <50 | — | (S8c+ scope) |
+| `backtest/` | replay_engine, vector_backtest, reporter, indicators, data_collector, replay | ~700 | (open gap — S8c) | S2 |
+| `core/` | models | <50 | (legacy stub) | pre-S1 (mostly removed) |
+| `data/` | __init__ stub | <50 | — | pre-S1 (replaced by marketdata/) |
+| `execution/` | coordinator (628), state_machine (170), state_repo (148), reconciler (278), oco, bracket (legacy 100), models, bybit/{adapter, ws_private, rest} | ~1500 | [[../components/coordinator]], [[../components/execution-state-machine]], [[../components/reconciler]], [[../components/oco]], [[../components/bybit-adapter]], [[../components/ws-private-consumer]] | S5/S6/S7/S8a/S8b |
+| `marketdata/` | bar_builder, clock, filters, gaps, models, pipeline, storage | ~600 | [[../components/bar-builder]], [[../components/storage]] | S2 |
+| `platform/` | config, db, logging | ~350 | [[../components/config]], [[../components/logging]] | S1 |
+| `risk/` | manager (315), kelly (128), reason_codes, override (147), trade_history (118), circuit_breakers, equity_tracker, sizing, resume_cb, models | ~1100 | [[../components/risk-manager]], [[../components/kelly]], [[../components/sizing]], [[../components/circuit-breakers]] (open gaps: override.md, trade-history.md — S8c) | S4/S7 |
+| `runtime/` | manager (231), bar_source (~150) | ~380 | [[../components/runtime-manager]], [[../components/bar-poller]] | S8a |
+| `signalgen/` | strategy (181), indicators (113), models | ~340 | [[../components/strategy]], [[../components/indicators]], [[../components/models]] | S3 |
 
-- EMA12, EMA26 (через pandas `.ewm()` — classical EMA).
-- RSI14 (через pandas, Wilder?).
-- ATR14 (через pandas).
-- Hurst exponent — вычисляется, в сигнале **не участвует** (только логирование).
-- XGBPredictor, HMM — скелеты, не используются.
+**Total:** ~4693 LoC (`wc -l src/*/*.py` excluding `__pycache__`).
 
-**Сигнал:** `fast_ema > slow_ema` → LONG, наоборот → SHORT (futures), если RSI не в крайности. ADX **не реализован**.
+## Стек реально используется (post-S8b)
 
-## Risk management
+| Layer | Tech | Sprint introduced |
+|-------|------|-------------------|
+| Language | Python 3.12 (StrEnum, PEP 604) | S1 (ADR 0002) |
+| Models | pydantic v2 | S1 (ADR 0006) |
+| Storage | SQLite WAL (state) + Parquet snappy (OHLCV) | S1 (ADR 0003) |
+| Exchange | Bybit V5 Spot (pybit>=5.11) | S2 (ADR 0016 supersedes 0004 Binance) |
+| TA library | TA-Lib (Wilder EMA + classical EMA crossover) | S3 (ADR 0011) |
+| Statistics | scipy>=1.12, numpy>=1.26 | S4 |
+| Logging | structlog | S1 (ADR 0008) |
+| Tests | pytest + property-based + integration (opt-in `RUN_DEMO=1`) | S1+ |
+| Lint/Type | ruff + mypy --strict | S1 |
+| Concurrency | sync + threading.RLock (Coordinator) + threading.Lock (Reconciler) | S8a (ADR 0022 sub-decision 1) |
 
-- **Kill-switch:** daily DD > 5% → блокировка.
-- **Fixed fractional:** 1% от капитала на трейд.
-- **Fractional Kelly:** 0.5-Kelly при n ≥ 10 сделок.
-- **CVaR:** история последних 100 трейдов.
-- **Нет** многоуровневых circuit breakers (L1/L2/L3/flash).
-- **Нет** Kelly 4 фаз.
+**NOT used (rejected/deferred):**
+- gRPC (`src/gateway/` skeleton удалён в S2)
+- HMM regime detection (`src/strategy/hmm_regime.py` legacy — удалён в S2)
+- XGBPredictor / `src/ml/` (deferred → v0.2)
+- asyncio/uvloop (deferred → S9+)
+- TimescaleDB / DuckDB (rejected по ADR 0003)
 
-## Execution
+## Карта спринтов
 
-- MARKET orders на Bybit linear.
-- Normalization: qty → qtyStep, minOrderQty check через `get_instruments_info`.
-- Mock-режим при `live_trading=False` (безопасность MVP).
-- Sync executions каждую минуту через `get_executions`.
-- **Нет:** OCO, limit orders, trailing stop, partial-fill handling.
+| Sprint | ADR | Tag | Date | Theme |
+|--------|-----|-----|------|-------|
+| S1 | 0001-0015 (foundational) | v0.1.0-alpha.1 | 2026-04-20 | DDD skeleton + platform + models + storage |
+| S2 | 0016 | v0.1.0-alpha.2 | 2026-04-21 | Bybit venue migration + MarketData + adapter |
+| S3 | 0017 | v0.1.0-alpha.3 | 2026-04-22 | EMA/ADX/RSI/ATR strategy port (Wilder + classical) |
+| S4 | 0018 | (skipped, → alpha.6) | 2026-04-23 | Risk module (Kelly + Wilson + L1-L3+flash + override) |
+| S5 | 0019 | (skipped, → alpha.6) | 2026-04-23 | Execution layer (OCO + 12-state FSM + Reconciler) |
+| S6 | 0020 | v0.1.0-alpha.6 | 2026-04-23 | 3-order Spot OCO emulation (FSM 12→16, +8 events) |
+| S7 | 0021 | v0.1.0-alpha.7 | 2026-04-24 | Resilience (bootstrap + 4-valued reconcile + γ halt persistence) |
+| S8a | 0022 | v0.1.0-alpha.8a | 2026-04-24 | Live Runtime (RuntimeManager + bar poller + KILL_SWITCH + threading) |
+| S8b | 0023 | v0.1.0-alpha.8b | 2026-04-24 | S8a carry-over fixes + ADR 0023 halt-code mapping invariant |
 
-## Data
+**Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
-- **REST seed:** 1000 свечей при старте (прогрев индикаторов).
-- **WS:** kline stream с pybit.
-- **Fallback:** REST polling при WS down.
-- **Хранение:** **в памяти** (Python list до 1000 Kline objects).
-- **Нет:** SQLite, Parquet, persistent storage.
+## Test/quality state (live)
 
-## Backtest
+- pytest unit: 604 passed / 24 skipped / 3 pre-existing test_config env-pollution failures (carry-over → S8c)
+- pytest property: 8/8
+- pytest integration: opt-in `RUN_DEMO=1` (Demo Mainnet)
+- mypy --strict src/: 44 errors (pre-existing tech debt, не S8b regression)
+- ruff: clean on S8 src + tests; legacy `src/core/`, `src/backtest/*` excluded в pyproject.toml pending retirement
 
-- `VectorBacktester` — векторизованный, требует pre-populated DataFrame с `signal` column.
-- KPI: Return %, MaxDD %, Sharpe (normalized на 365·24·60 для 1m).
-- **Нет:** walk-forward, K-fold CV, Monte Carlo permutations, DSR.
+---
 
-## ML (вне MVP v0.1)
+## Pre-S1 Legacy (archived, для исторического контекста)
 
-- `XGBPredictor` — скелет, 100 trees, depth 5, lr 0.05 — не используется в live.
-- HMM — 3-компонент GaussianHMM, скелет без fit — не используется.
+> Этот раздел описывает codebase ДО Sprint 1 (2026-04-19 baseline). Зафиксирован для исторической трассируемости; **не отражает текущее состояние**. Большая часть legacy modules удалена в S2-S5 (см. `git log --oneline -- src/controller.py main.py`).
 
-## Tests
+**Pre-S1 TL;DR (2026-04-19):** Existing code = Phase 1 MVP на Bybit (perpetual futures, linear, 1m bars, EMA+RSI+ATR). НЕ Binance Spot 1H. Math stack (Hurst, Kelly, CVaR, HMM) заложен, но XGBPredictor + HMM не задействованы в live signal. Нет TA-Lib, pydantic, SQLite/Parquet, DDD-структурирования.
 
-- `tests/test_math.py` — 4 теста (hurst_random_walk, hurst_mean_reverting, cvar, fractional_kelly).
-- **Нет:** unit tests для strategy, executor, risk_manager, data consumer.
-- **Нет:** integration tests, property tests, lookahead detector.
+**Pre-S1 src/ structure (REMOVED/REPLACED):**
 
-## Controller & main
+| Pre-S1 module | Status post-S8b |
+|---------------|------------------|
+| `src/core/{models, math_engine}.py` | math_engine удалён в S4; models ужал stub |
+| `src/data/consumer.py` | удалён в S2, заменён `src/marketdata/` + pybit |
+| `src/strategy/{strategy, hmm_regime, order_flow}.py` | удалены в S3, заменены `src/signalgen/` |
+| `src/risk/risk_manager.py` | удалён в S4, заменён `src/risk/manager.py` |
+| `src/execution/executor.py` | удалён в S5, заменён `src/execution/coordinator.py` + adapter |
+| `src/gateway/` (gRPC stubs) | удалены в S2 |
+| `src/backtest/vector_backtest.py` | сохранён, расширен `src/backtest/replay_engine.py` (S2) |
+| `src/ml/models.py` | удалён → deferred v0.2 |
+| `src/controller.py` | удалён в S8a (broken since S2) |
+| `main.py` (top-level) | удалён в S8a |
 
-- Event loop: `asyncio.run(controller.start())`.
-- Flow: new kline → `on_new_kline` → `strategy.on_kline()` → `risk_manager.evaluate()` → `executor.execute_signal()`.
-- State export: каждую секунду → `web/data.json`.
-- Sync trades: каждую минуту → `get_executions` → merge with local.
-- Startup test: опциональная покупка+продажа на 100 USDT (проверка live-ключей).
+**Pre-S1 stack notes:**
 
-## Документация в `Docs/current_bot/`
+- pybit (V5) — kept, upgraded in S2
+- `pandas==2.x`, `numpy==1.x` — без pinning. **Сейчас:** pinned `>=` floor in pyproject.toml.
+- structlog — добавлен в S1.
+- pydantic — добавлен в S1.
+- `python-dotenv` — kept.
+- `xgboost`, `hmmlearn`, `joblib` — deferred / removed.
+- TA-Lib — добавлен в S3.
+- Нет DDD bounded contexts — добавлены в S1.
 
-| Файл | Содержание |
-|------|-----------|
-| `README_RU.md` | Инструкция запуска на Bybit Testnet (6 шагов). |
-| `IMPLEMENTATION_NOTES.md` | Реализованные фичи + ограничения MVP. |
-| `Specification-Trading-Bot.md` | Фундаментальная спека (SMA/EMA/RSI/MACD/BB/ATR, GBM, HMM, order-flow, ML). |
-| `Specification-Logic.md` | Расширенная математическая спека (Hurst, FFT, GBM+Jumps, OU, ADF, GARCH, microstructure) — **Phase 2/3**. |
+**Pre-S1 не было:**
+- DDD bounded contexts
+- Pydantic schemas
+- SQLite WAL persist
+- Parquet OHLCV storage
+- ADR repository
+- Test suite (unit/property/integration)
+- Domain reviewer agents
+- llm-wiki/
 
-## Что НЕ в scope v0.1 (согласно MVP-спеке)
+## Sources
 
-Текущий код содержит много "лишнего" для MVP v0.1:
-
-- **ML (XGBoost, HMM)** → вне scope v0.1 (MVP спека явно Python + TA-Lib без ML).
-- **Order-flow (OBI, Kyle's Lambda)** → L2-стратегия, v0.3+.
-- **gRPC gateway** → микросервис, v0.3+.
-- **Hurst / ADF / FFT** → sophisticated regime detection, v0.2+.
-
-Эти модули нужно либо **заморозить** (move to `legacy/` branch), либо **удалить** при миграции на MVP.
-
-## Related
-
-- [[overview]] — MVP v0.1 target.
-- [[gap-analysis]] — разница current vs MVP.
-- [[migration-plan]] — план перехода (создаётся на Этапе 2).
+- `src/` (live tree)
+- `project/sprints/sprint-08b-carryover.md` (latest sprint)
+- `project/decisions/0023-halt-code-fsm-event-mapping.md` (latest ADR)
+- `Docs/current_bot/README_RU.md` + `IMPLEMENTATION_NOTES.md` (pre-S1 baseline reference)

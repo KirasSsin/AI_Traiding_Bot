@@ -30,7 +30,12 @@ Sprint-page ссылается на всё это, но не дублирует.
 ## Именование
 
 - `sprint-NN-<kebab-slug>.md`, где NN — двузначный номер, slug — короткое имя спринта.
+- Sub-sprint suffix допускается: `sprint-08a-...`, `sprint-08b-...` (когда спринт N split на independent ADR shipments).
 - Синхронизирован с тегом: Sprint 1 → `v0.1.0-alpha.1`, Sprint 2 → `v0.1.0-alpha.2`, и т.д.
+
+**Tag exceptions (для истории):**
+- S4 + S5 — tags `v0.1.0-alpha.4` + `v0.1.0-alpha.5` skipped. Sprint pages были created 2026-04-23 с frontmatter "pending PR merge", но тэги never создавались — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6` (2026-04-23). Reconciled 2026-04-25 в pre-S8c batch (см. `wiki/project/pre-s8c-backlog.md` Bucket A5).
+- Будущие спринты — PHASE 8 step 5/6 HARD-GATE (см. dev-workflow.md) blocks tag push если sprint-NN.md или index.md sync missing → drift не должен повторяться.
 
 ## Шаблон
 
