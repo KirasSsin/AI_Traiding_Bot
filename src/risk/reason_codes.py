@@ -24,6 +24,8 @@ Pre-S5 wiki header said "6+7+8+7=28"; S5 added EXIT_OCO_PARTIAL_TIMEOUT +
 HALT_RECONCILE_DIVERGENCE → 31. ADR 0020 (Sprint 6) adds 8 more → 39.
 ADR 0021 (Sprint 7) adds 3 more → True count:
 6 entry + 11 scale/exits + 9 rejects + 16 halts = 42.
+ADR 0022 (Sprint 8a) adds 3 more → True count:
+6 entry + 11 scale/exits + 9 rejects + 19 halts = 45.
 """
 
 from enum import StrEnum
@@ -61,7 +63,7 @@ class ReasonCode(StrEnum):
     REJECT_DUPLICATE_SIGNAL = "REJECT_DUPLICATE_SIGNAL"
     REJECT_ORDER_ALREADY_TERMINAL = "REJECT_ORDER_ALREADY_TERMINAL"
 
-    # Halts (14)
+    # Halts (19)
     HALT_DRAWDOWN_L1 = "HALT_DRAWDOWN_L1"
     HALT_DRAWDOWN_L2 = "HALT_DRAWDOWN_L2"
     HALT_DRAWDOWN_L3 = "HALT_DRAWDOWN_L3"
@@ -83,3 +85,8 @@ class ReasonCode(StrEnum):
     HALT_BOOTSTRAP_AMBIGUOUS = "HALT_BOOTSTRAP_AMBIGUOUS"
     HALT_EXIT_RECONCILE_DIVERGENCE = "HALT_EXIT_RECONCILE_DIVERGENCE"
     EXIT_RECONCILE_DETECTED = "EXIT_RECONCILE_DETECTED"
+
+    # --- ADR 0022 — Sprint 8a Live runtime ---
+    HALT_RUNTIME_CRASH = "HALT_RUNTIME_CRASH"           # 43: unhandled exception in RuntimeManager.run()
+    HALT_BAR_POLL_STALL = "HALT_BAR_POLL_STALL"         # 44: N consecutive REST kline failures (default N=24)
+    KILL_SWITCH_REQUESTED = "KILL_SWITCH_REQUESTED"     # 45: sentinel-file `.kill_switch` detected (operator-initiated)

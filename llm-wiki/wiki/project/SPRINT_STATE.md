@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-24-s8a-adr-accepted
-sprint: 8a-live-runtime
-phase: 3-planning
+updated: 2026-04-24
+sprint: 8a
+phase: 8-ship
 branch: main
 tag: v0.1.0-alpha.7
 ---
@@ -15,12 +15,14 @@ tag: v0.1.0-alpha.7
 
 ## Текущий статус
 
-**Sprint 8a — Live Runtime (ADR 0022) — phase 3 (planning).**
-ADR 0022 ACCEPTED 2026-04-24. Trader-expert verdicts: round 1 (10 CONFIRM / 7 REVISE / 1 DEFER, 18 questions), round 2 (U1 REVISE: stall threshold 12→24). U2 user choice: sentinel-file CLI for KILL_SWITCH.
+**Sprint 8a — Live Runtime (ADR 0022) — MERGED.**
+ADR 0022 ACCEPTED. Trader-expert verdicts: round 1 (10 CONFIRM / 7 REVISE / 1 DEFER), round 2 (stall threshold 12→24). Sentinel-file CLI adopted for KILL_SWITCH.
+
+S8a COMPLETE: RuntimeManager + BarSource lifecycle management, lock policy (RLock/Lock), 3 new reason codes (43-45), entry-point `python -m src`, orphan removal. Tests: 13 suites + 1 Demo integration. Tag: `v0.1.0-alpha.8a` pending.
 
 S7 Resilience (ADR 0021) merged, tag `v0.1.0-alpha.7`. S8b (Analytics per-fill) deferred until S8a merge.
 
-## Завершённые задачи (S7, 25 tasks)
+## Завершённые задачи (S8a, Tasks 1-30)
 
 - [x] Migration 0005_halt_persistence.sql (halt_reason + last_exit_reason + bootstrap_at + halt_log audit)
 - [x] FSM v3: 16 states / 29 events / 59 transitions (-2 silent dups, +6 reconcile/timeout)
@@ -38,11 +40,11 @@ S7 Resilience (ADR 0021) merged, tag `v0.1.0-alpha.7`. S8b (Analytics per-fill) 
 
 ## В процессе
 
-S8a PHASE 3 — writing-plans для ADR 0022 (~30 TDD tasks). Plan path: `wiki/project/plans/2026-04-24-sprint-8a-live-runtime.md`.
+(none — sprint complete)
 
 ## Следующее действие
 
-Dispatch writing-plans для S8a. После plan approval → branch `feature/sprint-8a-live-runtime` + PHASE 4 subagent-driven execution. Task 0 = threading lock policy (mandatory prerequisite).
+Tag v0.1.0-alpha.8a, open S8b brainstorm (Analytics per-fill + WS+REST epsilon-halt).
 
 Опционально (operator): `git push origin main && git push --tags` если S7 ещё не запушен.
 

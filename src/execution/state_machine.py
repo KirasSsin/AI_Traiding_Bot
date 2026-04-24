@@ -53,6 +53,7 @@ class ExecutionEvent(StrEnum):
     HALT_RESUME = "HALT_RESUME"
     COOLDOWN_DONE = "COOLDOWN_DONE"
     KILL_SWITCH = "KILL_SWITCH"
+    KILL_SWITCH_REQUESTED = "KILL_SWITCH_REQUESTED"  # ADR 0022 sub-decision 5 — operator HALT (NOT terminal)
     MANUAL_RESET = "MANUAL_RESET"
     OCO_PARTIAL_TIMEOUT = "OCO_PARTIAL_TIMEOUT"
     # ADR 0021 sub-decision 2: HEAL-narrow + clean-exited reconcile outcomes
@@ -138,6 +139,18 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.EXIT_PENDING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
     (ExecutionState.RECONCILING, ExecutionEvent.RECONCILE_ENTRY_FILLED): ExecutionState.LONG_OPEN,
     (ExecutionState.RECONCILING, ExecutionEvent.RECONCILE_EXITED): ExecutionState.FLAT,
+    # === ADR 0022 sub-decision 5: KILL_SWITCH_REQUESTED — operator HALT (NOT terminal) ===
+    (ExecutionState.FLAT, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.ENTRY_PENDING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.LONG_OPEN, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMED, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.EXIT_PENDING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.PARTIAL_FILL, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.RECONCILING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
 }
 
 

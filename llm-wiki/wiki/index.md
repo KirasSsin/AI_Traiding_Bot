@@ -86,6 +86,8 @@ _(пусто — v0.2+)_
 - [[project/components/reconciler]] — 4-valued verdict (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED) + heal_max_age_seconds=3600.
 - [[project/components/execution-state-machine]] — 16-state FSM + 29 events + 59 transitions + γ halt persistence (S7).
 - [[project/components/ws-private-consumer]] — Bybit V5 private WS (order + wallet) с pybit close-hook + check_alive watchdog (S7 ADR 0021 sub-decision 6).
+- [[project/components/runtime-manager]] — RuntimeManager: process lifecycle owner (bootstrap → loop → shutdown). S8a.
+- [[project/components/bar-poller]] — BarSource: REST kline poller с dedup + stall counter. S8a.
 - [[project/runbooks/halt-recovery]] — manual operator procedures: HALT_FLATTEN_FAILED, HALT_OCO_SIBLING_STUCK, HALT_PHANTOM_SL, HALT_RECONCILE_DIVERGENCE, HALT_BOOTSTRAP_AMBIGUOUS (S7), HALT_EXIT_RECONCILE_DIVERGENCE (S7).
 
 ## Project — Experiments

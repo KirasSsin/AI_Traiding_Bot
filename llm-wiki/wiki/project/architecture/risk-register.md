@@ -76,6 +76,19 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §13]
 - ISO 31000:2018 *Risk Management — Guidelines*.
 - NIST SP 800-30 Rev.1 *Guide for Conducting Risk Assessments*.
 
+### POLL_STALL_MID_BAR_FILL (S8a, degradation)
+
+| Field | Value |
+|---|---|
+| Scenario | REST kline poller stall длиной > 30 минут перед bar close |
+| Trigger | Bybit REST API outage cluster (10-90s typical, multiplied) |
+| Impact | Mid-bar fill вместо open(T+1) fill — slippage, не correctness |
+| Severity | LOW (slippage) — НЕ position-safety event |
+| Mitigation | `runtime_bar_poll_stall_threshold` (default 24 = 120s) emits `HALT_BAR_POLL_STALL` задолго до bar close |
+| Detection | structlog `runtime.bar_poll_stall` event с `consecutive_failures` field |
+| Owner | RuntimeManager + BarSource |
+| Source | [[../decisions/0022-sprint-8a-live-runtime]] sub-decision 3 |
+
 ## Related
 
 - [[edge-cases]] — operational responses.

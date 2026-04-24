@@ -360,6 +360,63 @@ WHERE symbol='BTCUSDT' ORDER BY ts DESC LIMIT 20;
 
 ---
 
+## HALT_RUNTIME_CRASH (43)
+
+**Source:** unhandled exception в `RuntimeManager.run()` → top-level `except Exception` в `src/runtime/manager.py` (ADR 0022 sub-decision 6).
+
+**Investigation steps:**
+1. Найти crash log:
+   ```bash
+   grep "runtime.crash" $LOG_DIR/*.log | tail -20
+   ```
+2. Извлечь exception:
+   ```sql
+   SELECT ts, reason, context_json
+   FROM halt_log
+   WHERE symbol = ? AND reason = 'HALT_RUNTIME_CRASH'
+   ORDER BY ts DESC LIMIT 5;
+   ```
+3. Reproduce in dev — fix bug → новый ADR amendment if invariant changed.
+4. Operator MANUAL_RESET требуется (как любой halt).
+
+## HALT_BAR_POLL_STALL (44)
+
+**Source:** `BarSource.consecutive_failures >= settings.runtime_bar_poll_stall_threshold` (default 24 × 5s = 120s) — ADR 0022 sub-decision 3.
+
+**Halt class:** signal-pipeline (НЕ position-safety). OCO bracket exchange-side; existing positions защищены.
+
+**Investigation steps:**
+1. Bybit REST status:
+   ```bash
+   curl -s https://api.bybit.com/v5/market/time | jq
+   ```
+2. Recent failure cluster:
+   ```bash
+   grep "bar_source.poll_failed" $LOG_DIR/*.log | tail -50
+   ```
+3. Если cluster < 5 минут — likely transient, можно MANUAL_RESET без эскалации. Если > 30 минут — investigate network / API key / Bybit incident page.
+4. После reset BarSource counter автоматически сбрасывается на первом успешном poll.
+
+## KILL_SWITCH_REQUESTED (45)
+
+**Source:** sentinel-file `.kill_switch` detected (`python -m src kill`) — ADR 0022 sub-decision 5.
+
+**Operator-initiated** — нормальный shutdown path. Не error.
+
+**Recovery:**
+1. Verify intent — почему оператор kill'нул?
+2. Cleanup sentinel:
+   ```bash
+   rm -f $RUNTIME_KILL_SWITCH_PATH   # default ".kill_switch"
+   ```
+3. Перед restart — MANUAL_RESET halt_reason (как и любой halt):
+   ```sql
+   UPDATE execution_state
+   SET halt_reason = NULL
+   WHERE symbol = ?;
+   ```
+4. Restart: `python -m src run` (sentinel автоматически cleanup-нится на startup в `RuntimeManager.run()`).
+
 ## Связанные материалы
 
 - [[../decisions/0020-sprint-6-execution-spot-oco-emulation]]

@@ -123,6 +123,14 @@ Reconciler(
 - `[[../../trading/concepts/reason-codes]]` — `HALT_RECONCILE_DIVERGENCE`, `HALT_BOOTSTRAP_AMBIGUOUS`, `HALT_EXIT_RECONCILE_DIVERGENCE`, `EXIT_RECONCILE_DETECTED`.
 - `[[bybit-rest]]` — источник данных (через `_http`).
 
+## Concurrency / Lock policy (S8a)
+
+`Reconciler._lock` (`threading.Lock`, non-reentrant — ADR 0022 sub-decision 1) wraps:
+- `on_wallet_event(evt)` — pybit thread WS callback
+- `reconcile(local, expected_state=None)` — main thread (bootstrap / on_ws_reconnect via Coordinator)
+
+Lock не reentrant: пути не вкладываются (`reconcile` не вызывает `on_wallet_event` и наоборот). См. [[runtime-manager]] для общей таблицы lock policy.
+
 ## Sources
 
 - `src/execution/reconciler.py`, `tests/unit/test_reconciler_{fetch,diff}.py`.

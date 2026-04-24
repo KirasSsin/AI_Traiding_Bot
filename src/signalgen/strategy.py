@@ -58,20 +58,33 @@ class EmaCrossoverAdxRsiStrategy:
         self._last_signal_close_time: datetime | None = None
         self._current_side: SignalSide = SignalSide.FLAT
 
-    def on_bar(self, bar: Bar) -> Signal | None:
-        """Main entry point. Called once per closed bar by MarketData pipeline."""
+    def _append_bar(self, bar: Bar) -> bool:
+        """Filter + dedup + append + buffer truncate. Returns True if bar landed in buffer."""
         if not bar.is_closed:
-            return None
+            return False
         if bar.symbol != self._symbol:
-            return None
-
+            return False
         # Dedup + out-of-order guard: monotonic close_time only.
         if self._bars and bar.close_time <= self._bars[-1].close_time:
-            return None
-
+            return False
         self._bars.append(bar)
         if len(self._bars) > self._buffer_size:
             self._bars = self._bars[-self._buffer_size :]
+        return True
+
+    def warmup(self, bar: Bar) -> None:
+        """Feed historical bar to rolling buffer WITHOUT signal emission.
+
+        ADR 0022 sub-decision 2 — catch-up на startup защищает от look-ahead
+        trade events на bars из прошлого. Buffer seeds identically to on_bar,
+        only the signal-eval branch is skipped. Returns None always.
+        """
+        self._append_bar(bar)
+
+    def on_bar(self, bar: Bar) -> Signal | None:
+        """Main entry point. Called once per closed bar by MarketData pipeline."""
+        if not self._append_bar(bar):
+            return None
 
         # Warm-up: need >= max(ema_slow, 2·adx_period) + 1 closed bars
         # (ADX needs 2·adx_period for double-smoothing seeding).

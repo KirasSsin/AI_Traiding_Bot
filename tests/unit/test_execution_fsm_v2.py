@@ -32,8 +32,8 @@ def test_state_total_is_16() -> None:
     assert len(list(ExecutionState)) == 16
 
 
-def test_event_total_is_29() -> None:
-    assert len(list(ExecutionEvent)) == 29
+def test_event_total_is_30() -> None:
+    assert len(list(ExecutionEvent)) == 30  # +1 KILL_SWITCH_REQUESTED (ADR 0022 sub-decision 5)
 
 
 def test_legacy_oco_placed_kept_as_alias() -> None:
@@ -48,7 +48,8 @@ def test_transitions_count_exact_v2() -> None:
     # (27 entries minus 2 override-existing keys → 29+25=54). Sub-decision 10
     # (Task 22) adds (OCO_ARMED, FLATTEN_FAILED) → HALTED → 55.
     # ADR 0021 sub-decision 2 (S7) adds 4 new transitions → 59.
-    assert len(TRANSITIONS) == 59
+    # ADR 0022 sub-decision 5 (S8a) adds 11 new KILL_SWITCH_REQUESTED transitions (+PARTIAL_FILL) → 70.
+    assert len(TRANSITIONS) == 70
 
 
 def test_exit_sibling_cancel_failed_has_ws_reconnect_and_kill() -> None:

@@ -99,6 +99,16 @@ Endpoint URL содержит маркер площадки:
 - `[[bybit-adapter]]` — REST partner (выставляет ордера, consumer слушает их события).
 - `[[oco]]` — bracket lifecycle, реагирует на order events.
 
+## Driver loop (S8a closed)
+
+До S8a `BybitPrivateWSConsumer` был passive: `start()` / `stop()` без owner. Sprint 8a (ADR 0022) ввёл [[runtime-manager]] как driver:
+
+- `RuntimeManager.run()` вызывает `ws_consumer.start()` после `coordinator.bootstrap()`.
+- `ws_consumer.check_alive(max_silence_seconds=...)` вызывается **inline** в каждом tick'е main thread'а — НЕ из отдельного worker thread (ADR 0022 sub-decision 4 — устраняет same-cadence race с bar-поллером).
+- `RuntimeManager._shutdown(reason)` вызывает `ws_consumer.stop()` (idempotent).
+
+См. таблицу lock policy в [[runtime-manager]] — Coordinator-side callbacks (`on_order_event`, `on_ws_reconnect`) acquire `Coordinator._lock` (RLock).
+
 ## Sources
 
 - `src/execution/bybit/ws_private.py`

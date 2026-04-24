@@ -51,8 +51,9 @@ EXPECTED_CODES = {
     "REJECT_FILTER_PRICE",
     "REJECT_DUPLICATE_SIGNAL",
     "REJECT_ORDER_ALREADY_TERMINAL",
-    # Halts (16 — S5 added HALT_RECONCILE_DIVERGENCE; S6 added 6 OCO/bracket halts per ADR 0020;
-    #         S7 added HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE per ADR 0021)
+    # Halts (19 — S5 added HALT_RECONCILE_DIVERGENCE; S6 added 6 OCO/bracket halts per ADR 0020;
+    #         S7 added HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE per ADR 0021;
+    #         S8a added HALT_RUNTIME_CRASH + HALT_BAR_POLL_STALL per ADR 0022)
     "HALT_DRAWDOWN_L1",
     "HALT_DRAWDOWN_L2",
     "HALT_DRAWDOWN_L3",
@@ -69,8 +70,12 @@ EXPECTED_CODES = {
     "HALT_PHANTOM_SL",
     "HALT_BOOTSTRAP_AMBIGUOUS",
     "HALT_EXIT_RECONCILE_DIVERGENCE",
+    "HALT_RUNTIME_CRASH",
+    "HALT_BAR_POLL_STALL",
     # Reconcile-detected exit (S7 ADR 0021 sub-decision 3)
     "EXIT_RECONCILE_DETECTED",
+    # Sentinel-triggered kill (S8a ADR 0022 sub-decision 12)
+    "KILL_SWITCH_REQUESTED",
 }
 
 
@@ -88,9 +93,9 @@ def test_all_codes_exact_set() -> None:
 
 
 def test_reason_code_count() -> None:
-    # 6 entry + 11 exits + 9 rejects + 16 halts = 42
-    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42)
-    assert len(ReasonCode) == 42
+    # 6 entry + 11 exits + 9 rejects + 19 halts = 45
+    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45)
+    assert len(ReasonCode) == 45
 
 
 def test_reason_code_is_str() -> None:
