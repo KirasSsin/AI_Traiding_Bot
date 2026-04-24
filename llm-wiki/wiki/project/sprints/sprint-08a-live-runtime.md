@@ -56,7 +56,7 @@ Sprint 8a закрывает критический gap из S7: до S8a Coordi
 
 ### Threading lock policy (G4) — Task 0 mandatory
 
-- `src/execution/coordinator.py` — `threading.RLock` (reentrant) wraps 6 public methods: `bootstrap`, `start_bracket`, `on_order_event`, `on_ws_reconnect`, `arm_oco`, `flatten`, `request_halt`
+- `src/execution/coordinator.py` — `threading.RLock` (reentrant) wraps 8 public methods: `bootstrap`, `start_bracket`, `on_order_event`, `on_ws_reconnect`, `arm_oco`, `flatten`, `request_halt`, `reconcile_arming_ttl`
 - `src/execution/reconciler.py` — `threading.Lock` (non-reentrant) wraps 2 methods: `on_wallet_event`, `reconcile`
 - Защищает от pybit thread (event callbacks) × main thread (RuntimeManager tick) race на shared FSM row
 

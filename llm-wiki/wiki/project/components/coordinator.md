@@ -22,7 +22,7 @@ status: stable
 
 # Coordinator — execution orchestrator
 
-**TL;DR:** Central FSM owner и bracket-lifecycle orchestrator. Файл: `src/execution/coordinator.py` (628 LoC). Owns: `_lock` (threading.RLock, ADR 0022 Task 0), `_bootstrap_done` invariant, `_repo` (`ExecutionStateRepo`), `_reconciler`, `_adapter` (Bybit). Public surface: 7 methods (bootstrap, on_ws_reconnect, on_order_event, start_bracket, arm_oco, flatten, request_halt) + reconcile_arming_ttl. Все mutation paths go через `_transition(event)` → `apply(state, event)` → `_repo.upsert()`. Halt path отдельный: `_set_halt()` (γ persistence S7) + `_transition()` dispatch (ADR 0023 invariant).
+**TL;DR:** Central FSM owner и bracket-lifecycle orchestrator. Файл: `src/execution/coordinator.py` (628 LoC). Owns: `_lock` (threading.RLock, ADR 0022 Task 0), `_bootstrap_done` invariant, `_repo` (`ExecutionStateRepo`), `_reconciler`, `_adapter` (Bybit). Public surface: **8 methods** (bootstrap, on_ws_reconnect, on_order_event, start_bracket, arm_oco, flatten, request_halt, reconcile_arming_ttl). Все mutation paths go через `_transition(event)` → `apply(state, event)` → `_repo.upsert()`. Halt path отдельный: `_set_halt()` (γ persistence S7) + `_transition()` dispatch (ADR 0023 invariant).
 
 ## Definition / Purpose
 
@@ -63,7 +63,7 @@ class Coordinator:
 
 ## Threading lock policy (ADR 0022 Task 0 — MANDATORY)
 
-Все 7 публичных методов wrapped в `with self._lock:` block. `_lock = threading.RLock()` (reentrant — нужен потому что `bootstrap()` вызывает `on_ws_reconnect()` внутри собственного lock'а).
+Все 8 публичных методов wrapped в `with self._lock:` block. `_lock = threading.RLock()` (reentrant — нужен потому что `bootstrap()` вызывает `on_ws_reconnect()` внутри собственного lock'а).
 
 | Method | Lock acquisition | Why |
 |--------|------------------|-----|

@@ -132,7 +132,7 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 8 (v2 expansion: +4 states, +8 events).
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decisions 1, 3, 5, 9 (bootstrap reconcile + 4-valued verdicts + halt persistence).
-- `[[coordinator]]` — owns FSM dispatch (`_transition`) и halt mechanics (`request_halt` + ADR 0023 invariant); 6 RLock-protected methods (S8a).
+- `[[coordinator]]` — owns FSM dispatch (`_transition`) и halt mechanics (`request_halt` + ADR 0023 invariant); 8 RLock-protected methods (S8a).
 - `[[reconciler]]` — 4-valued verdict consumer (`AGREE`/`DIVERGENCE`/`HEAL_ENTRY_FILLED`/`EXITED`).
 - `[[oco]]` — builder SL/TP уровней, приводит к OCO_ARMING → OCO_ARMED.
 - `[[ws-private-consumer]]` — pybit close-hook + check_alive watchdog → triggers `WS_RECONNECT`.

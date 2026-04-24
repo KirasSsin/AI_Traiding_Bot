@@ -71,7 +71,7 @@ _tick()
 
 ## Lock policy reference
 
-Все публичные методы Coordinator (6 шт.) и Reconciler (2 шт.) обёрнуты thread-safe locks (RLock на Coordinator, Lock на Reconciler) — см. ADR 0022 sub-decision 1. Это защищает от race между pybit thread (`on_order_event` / `on_wallet_event`) и main thread (`start_bracket` / `flatten` / `bootstrap`).
+Все публичные методы Coordinator (8 шт.) и Reconciler (2 шт.) обёрнуты thread-safe locks (RLock на Coordinator, Lock на Reconciler) — см. ADR 0022 sub-decision 1. Это защищает от race между pybit thread (`on_order_event` / `on_wallet_event`) и main thread (`start_bracket` / `flatten` / `bootstrap`).
 
 | Component | Lock type | Methods wrapped |
 |---|---|---|
@@ -93,7 +93,7 @@ _tick()
 
 ## Related
 
-- [[coordinator]] — central orchestrator: RuntimeManager calls `coordinator.bootstrap()` + `start_bracket()` + `request_halt()` + `flatten()`; lock policy on Coordinator's 6 RLock-protected methods
+- [[coordinator]] — central orchestrator: RuntimeManager calls `coordinator.bootstrap()` + `start_bracket()` + `request_halt()` + `flatten()`; lock policy on Coordinator's 8 RLock-protected methods
 - [[bar-poller]] — REST kline source feeds tick loop
 - [[ws-private-consumer]] — pybit thread side; check_alive called inline from tick
 - [[execution-state-machine]] — KILL_SWITCH_REQUESTED transitions
