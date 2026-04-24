@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import sqlite3
 import threading
 from datetime import UTC, datetime
@@ -154,16 +155,14 @@ def test_coordinator_concurrent_on_order_event_and_start_bracket_safe(tmp_path):
             barrier.wait()
             # start_bracket from ENTRY_PENDING will hit FLAT check on current row
             # or see a non-FLAT state; either way it's a mutation attempt.
-            # We wrap in try/except because FSM may raise IllegalTransitionError.
-            try:
+            # FSM may raise IllegalTransitionError — expected, suppress it.
+            with contextlib.suppress(Exception):
                 coord.start_bracket(
                     entry_qty=Decimal("0.001"),
                     entry_side="Buy",
                     tp_price=Decimal("65000"),
                     sl_trigger_price=Decimal("58000"),
                 )
-            except Exception:
-                pass  # Expected: FSM may reject transition from ENTRY_PENDING
         except Exception as e:
             errors.append(e)
 
