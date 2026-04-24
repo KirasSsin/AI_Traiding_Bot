@@ -117,6 +117,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0019-sprint-5-execution-decisions]] — Sprint 5: native Bybit `tpslMode` for OCO (sub-decision 1 SUPERSEDED by 0020), 12-state FSM, reconcile-as-truth, +2 reason codes (29→31), testnet happy-path scope.
 - [[project/decisions/0020-sprint-6-execution-spot-oco-emulation]] — Sprint 6: 3-order Spot OCO emulation (reverses 0019/1), bracket_id schema v2, FSM 12→21, reason codes 31→39, fee-aware sizing (G5), client-side sibling cancel-on-Triggered, IOC override + EXIT_SL_RESIDUAL — backed by 14/14 empirical probes on Bybit Demo.
 - [[project/decisions/0021-sprint-7-resilience]] — Sprint 7: 9 sub-decisions (bootstrap reconcile + 4-valued reconciler + WS-reconnect wiring + heal_max_age=3600s + γ halt persistence + halt_log audit + ws_private close-hook); FSM 16/29/59; reason codes 39→42; B1 narrow scope (passive consumer).
+- [[project/decisions/0023-halt-code-fsm-event-mapping]] — Sprint 8b ADR. Halt-class ReasonCode dispatch invariant in Coordinator.request_halt + 3-layer enforcement (ADR + reviewer prompt + property test).
 
 ## Queries (saved answers)
 

@@ -354,3 +354,29 @@
 - Documented в `llm-wiki/CLAUDE.md` (Curated agent set → Subagent path discipline section + Cleanup history entry).
 - Maintainer rule: future Agent briefs тоже использовать absolute paths.
 - Out-of-band fix (отдельно от S8b PR — agents lives outside repo, wiki update единственный repo-side artefact).
+
+## [2026-04-24] sprint-8b | Carry-over fixes complete
+
+### What shipped
+- Coordinator.request_halt — FSM transit fix (T1) + signature ReasonCode (mypy)
+- Coordinator state_machine — (FLAT, RISK_HALT) → HALTED row (T7 fix-up; surfaced by property test, prevents idle-state halt-path crash)
+- BarSource — fail-fast interval validator + 13-interval dict (T2)
+- main() mypy no-any-return — typed dispatch via `Callable[[argparse.Namespace], int]` (T3)
+- _cmd_kill — atomic sentinel write via os.open + os.replace, mirrors override.py minus fsync (T4)
+- ADR 0023 — halt-code → FSM event mapping invariant (T5)
+- trading-logic-reviewer.md — CRITICAL section "Halt-code mapping" (T6, agent prompt outside repo)
+- tests/property/test_request_halt_mapping.py — coverage invariant 3 codes (T7)
+
+### Wiki updates (Stage E)
+- components/runtime-manager.md — atomic kill-switch sub-section
+- components/bar-poller.md — supported intervals + fail-fast
+- index.md — ADR 0023 link
+- decisions/0023-halt-code-fsm-event-mapping.md — NEW
+
+### Open wiki gaps (follow-up, not blocking S8b)
+- components/coordinator.md — missing entirely; request_halt FSM-transit semantics + (FLAT, RISK_HALT) row currently only in commit log + ADR 0023. Create in dedicated wiki sprint.
+- ADR 0023 / 0022 transition count — narrative may reference 73; live count is 74 after T7 fix-up. Update when next ADR amendment lands.
+- _set_halt(reason: str) internal wrapper signature still str while request_halt now accepts ReasonCode — clean up in next sprint.
+
+### Tag (planned)
+- v0.1.0-alpha.8b
