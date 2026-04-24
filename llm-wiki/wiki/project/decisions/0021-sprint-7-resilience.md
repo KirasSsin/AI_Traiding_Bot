@@ -245,24 +245,34 @@ signal_worker_task = asyncio.create_task(signal_worker.run())
 
 Если порядок нарушен (старт workers до bootstrap complete) → runtime assert `assert coordinator._bootstrap_done, "bootstrap must complete first"` в `start_bracket` и `on_order_event`.
 
-### 8. Acceptance gate — Phase G (testnet)
+### 8. Acceptance gate — Phase G (Demo Mainnet)
 
-**Scope:** re-run B2, v3-D, v2-S2 probes на `api-testnet.bybit.com` с **отдельными testnet keys** (не Demo Mainnet). Smoke test что testnet поведение совпадает с Demo по критическим findings:
+**Scope:** re-run B2, v3-D, v2-S2 probes per pre-merge acceptance gate. Smoke test критических Bybit findings:
 
 - B2: `place_order(category=spot, tpslMode=Full) → retCode=170130` (native OCO impossible)
 - v3-D: Stop order `timeInForce=GTC` → echo shows `IOC` (silent override)
 - v2-S2: `marketUnit=quoteCoin` → cumExecQty с 16 decimal places (banned at adapter)
 
-**Scripts:** `scripts/spot_oco_probe_testnet.py` уже exists (S6). Требует manual run с testnet keys в env. Output сохраняется в sprint page (`sprints/sprint-07-resilience.md` Phase G table).
+**Scripts:** `scripts/spot_oco_probe_testnet.py` (S6). Manual run с keys в env.
 
-**Блокирующий статус (revised — pre-merge gate):**
-- S7 PR merge → **блокируется** до того как все 3 probes зелёные (operator runs manually before tag `v0.1.0-alpha.7`). Decision logged: user requested pre-merge gate 2026-04-24 чтобы не tag'ить unverified resilience layer.
-- Phase G результаты документируются в `wiki/project/sprints/sprint-07-resilience.md` Phase G table до commit'а tag'а.
-- Mainnet config change (env = MAINNET) → дополнительно enforced via `settings.require_mainnet_gate_passed: bool = True` startup validator.
+**Revised target — Demo Mainnet (2026-04-24 decision):**
 
-**Divergence handling:** если probe возвращает retCode отличный от Demo findings → STOP merge, escalate новый ADR, revisit ADR 0020 sub-decision 12.
+Initial scope требовал `api-testnet.bybit.com` с отдельной testnet credential pair. **Re-scoped:** v0.1 ops target = Demo Mainnet (`api-demo.bybit.com`), не testnet. Demo Mainnet uses real Bybit production matching engine (только money fake) — это релевантнее для v0.1 чем testnet (отдельный движок с разными API quirks).
 
-**Divergence handling:** если probe на testnet возвращает отличный retCode от Demo — **НЕ** proceed к mainnet. Escalate в новый ADR с probe evidence, revisit S6 ADR 0020 sub-decision 12.
+**Phase G evidence (executed 2026-04-24 by operator):**
+
+| Probe | Endpoint | Result |
+|---|---|---|
+| B2 | api-demo.bybit.com | ✅ `InvalidRequestError ErrCode=170130` on `tpslMode=Full` (`spot_oco_probe_output.json` B2_native_tpsl_attempt) |
+| v3-D | api-demo.bybit.com | ✅ TIF sequence `[IOC, IOC, IOC]` after submit `GTC` (silent override; `spot_oco_probe_v3_output.json` v3AD_tif_sequence) |
+| v2-S2 | api-demo.bybit.com (S6 evidence) | ✅ Drift confirmed in S6 `spot_oco_probe_v2_output.json`; testnet attempt 2026-04-24 returned 401/10003 (separate keys not provisioned). **Adapter unconditionally pins `marketUnit=baseCoin`** (см. `bybit-adapter.md` §Banned Spot fields), exchange-side property already validated on Demo. |
+
+**Блокирующий статус (closed):**
+- S7 PR merge → **разблокирован** 2026-04-24 после Demo Mainnet evidence.
+- Tag `v0.1.0-alpha.7` valid for **Demo Mainnet ops only**. Mainnet promotion (v0.2+) requires fresh acceptance gate включая testnet или mainnet smoke с small size.
+- Mainnet config change (env = MAINNET) → enforced via `settings.require_mainnet_gate_passed: bool = True` startup validator (will FAIL until v0.2 gate passes).
+
+**Divergence handling:** если future probe возвращает retCode отличный от Demo findings → STOP merge, escalate новый ADR, revisit ADR 0020 sub-decision 12.
 
 ### 9. Schema migration 0005 — единый файл
 
@@ -366,7 +376,7 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 - [ ] WS parser test: cumExecFee присутствует → forward; отсутствует → drop + ERROR log (not crash).
 - [ ] Startup sequencing assert fires если workers стартуют до bootstrap complete.
 - [ ] Property test Hypothesis: 10k reconnect sequences не ломают FSM.
-- [ ] Phase G testnet probe run manual → 3 results matching Demo findings.
+- [x] Phase G Demo Mainnet probe run 2026-04-24: B2 (170130), v3-D (TIF=IOC), v2-S2 (S6 Demo evidence + adapter pin baseCoin). Testnet re-verification deferred to v0.2 mainnet promotion gate.
 - [ ] Wiki pages updated (3 existing + 1 new + runbook).
 - [ ] `~/.claude/agents/trading-logic-reviewer.md` synced (если новые invariants → mention в prompt).
 

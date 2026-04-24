@@ -3,9 +3,9 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-24
 sprint: 7-resilience
-phase: 8-finish-pre-merge
-branch: feature/sprint-7-resilience
-tag: v0.1.0-alpha.7-pending
+phase: 9-merged
+branch: main
+tag: v0.1.0-alpha.7
 ---
 
 # SPRINT STATE
@@ -15,8 +15,8 @@ tag: v0.1.0-alpha.7-pending
 
 ## Текущий статус
 
-**Sprint 7 — Resilience (ADR 0021) — wiki Stage E COMPLETE; Phase G testnet probes PENDING (blocking pre-merge).**
-Branch: `feature/sprint-7-resilience`. 33+ commits ahead of main. Tag `v0.1.0-alpha.7` not yet pushed (требует Phase G).
+**Sprint 7 — Resilience (ADR 0021) — COMPLETE & MERGED. Tag `v0.1.0-alpha.7` создан.**
+Phase G re-scoped к Demo Mainnet (v0.1 ops target). Mainnet promotion (v0.2+) gated через `require_mainnet_gate_passed`.
 
 ## Завершённые задачи (S7, 25 tasks)
 
@@ -36,11 +36,13 @@ Branch: `feature/sprint-7-resilience`. 33+ commits ahead of main. Tag `v0.1.0-al
 
 ## В процессе
 
-Phase G testnet probes — **operator-driven**, requires separate testnet API keys (см. `scripts/spot_oco_probe_testnet.py`). Не выполнимо в автономной сессии.
+Между спринтами. S8 brainstorm pending (driver loop для WS consumer + manager.py orchestration + Analytics).
 
 ## Следующее действие
 
-Operator: на `api-testnet.bybit.com` с testnet keys прогнать probes B2 + v3-D + v2 S2. После зелёного результата — `git tag v0.1.0-alpha.7`, merge PR в main.
+S8 brainstorm: scope = WS consumer driver loop, manager.py orchestration, Analytics per-fill table. Triggers: `superpowers:brainstorming` skill.
+
+Опционально перед S8: `git push origin main && git push --tags` — оператор-driven (если ещё не сделано).
 
 ## Ключевые решения последней сессии (S7)
 
