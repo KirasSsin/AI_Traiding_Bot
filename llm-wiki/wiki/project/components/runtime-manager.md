@@ -64,9 +64,9 @@ _tick()
   2. _check_alive_inline       → ws.check_alive(max_silence=settings.runtime_ws_check_alive_max_silence)
   3. _poll_bar_and_strategy    → bar = bar_source.poll(); if should_halt: request_halt(HALT_BAR_POLL_STALL)
                                  if bar: signal = strategy.on_bar(bar)
-                                 FSM pre-check: row.state == FLAT (else skip — one-open-order invariant)
-                                 risk_manager.assess(signal, mark_price=bar.close) → assessment
-                                 if assessment.approved: coord.start_bracket(entry_qty=, entry_side=, tp_price=, sl_trigger_price=)
+                                 FSM=FLAT pre-check: skip if state ≠ FLAT (one-open-order invariant)
+                                 assessment = risk_manager.assess(signal, mark_price=bar.close)
+                                 if approved: coord.start_bracket(...)
 ```
 
 ## Lock policy reference
