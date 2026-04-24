@@ -5,7 +5,7 @@ ADR 0022 sub-decisions 2 + 3.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.platform.logging import get_logger
 
@@ -18,9 +18,30 @@ logger = get_logger(__name__)
 class BarSource:
     """Poll latest closed bar via REST kline; dedup by close_time."""
 
-    _INTERVAL_MS = {"60": 3_600_000}
+    # Bybit V5 kline intervals: https://bybit-exchange.github.io/docs/v5/market/kline
+    # M (month) = 30d nominal, used only for start_ms window sizing.
+    _INTERVAL_MS: ClassVar[dict[str, int]] = {
+        "1": 60_000,
+        "3": 180_000,
+        "5": 300_000,
+        "15": 900_000,
+        "30": 1_800_000,
+        "60": 3_600_000,
+        "120": 7_200_000,
+        "240": 14_400_000,
+        "360": 21_600_000,
+        "720": 43_200_000,
+        "D": 86_400_000,
+        "W": 604_800_000,
+        "M": 2_592_000_000,
+    }
 
     def __init__(self, *, adapter: Any, symbol: str, interval: str = "60") -> None:
+        if interval not in self._INTERVAL_MS:
+            raise ValueError(
+                f"BarSource: unsupported interval={interval!r}; "
+                f"valid={sorted(self._INTERVAL_MS)}"
+            )
         self._adapter = adapter
         self._symbol = symbol
         self._interval = interval
