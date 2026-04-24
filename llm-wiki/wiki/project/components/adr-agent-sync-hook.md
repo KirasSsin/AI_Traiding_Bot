@@ -131,6 +131,7 @@ Required action — one of:
 - **mtime ≠ семантический sync.** Пользователь может открыть агент в редакторе без изменений и сохранить — mtime обновится, hook пропустит. Но это сознательный trade-off: автоматически определить "реальный" sync невозможно без manifest'а, а manifest — over-engineering до первого инцидента.
 - **Worktree scope.** Hook срабатывает при push из любого worktree проекта (все они видят `llm-wiki/wiki/project/decisions/`). Этого достаточно для v0.1.
 - **Для второго репозитория.** Если понадобится расширить (например, агенты для второго проекта), добавить per-project `.claude/settings.json` с своим hook-скриптом. Текущая реализация глобальная через `~/.claude/settings.json`.
+- **Hook self-test guard (added 2026-04-25):** PreToolUse matcher `"Bash"` triggers hook на ANY Bash invocation. Test commands (`echo '{"tool_input":{"command":"git push ..."}}' | bash hook.sh`) substring-matched `"git push"` через `case` pattern → false-positive blocks. Guard skips if `$command_str` references hook script paths (`adr-agent-sync-check.sh` ИЛИ `adr-index-sync-check.sh` ИЛИ `hooks/*sync-check*`). Real `git push` commands не reference hook scripts, so guard is safe. См. `~/.claude/hooks/adr-agent-sync-check.sh:42-49`.
 
 ## Verification
 

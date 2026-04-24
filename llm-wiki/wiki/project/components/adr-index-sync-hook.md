@@ -128,6 +128,7 @@ Required action:
 - **Grep по NNNN-prefix.** Если в index.md есть строка `0024-sprint-9-...` хотя бы где-то (даже в комментарии), хук пропустит. Это позволяет гибко форматировать entry без жёсткого regexp ADR-URL.
 - **Worktree scope.** Срабатывает при push из любого worktree проекта. Все worktrees видят общий `wiki/index.md`.
 - **Cross-platform.** Скрипт не использует `stat` или `find -printf` (в отличие от adr-agent-sync-check). Чистый bash + python3 + git — работает на macOS и Linux.
+- **Hook self-test guard (added 2026-04-25):** PreToolUse matcher `"Bash"` triggers hook на ANY Bash invocation. Test commands (`echo '{"tool_input":{"command":"git push ..."}}' | bash hook.sh`) substring-matched `"git push"` через `case` pattern → false-positive blocks. Guard skips if `$command_str` references hook script paths (`adr-agent-sync-check.sh` ИЛИ `adr-index-sync-check.sh` ИЛИ `hooks/*sync-check*`). Real `git push` commands не reference hook scripts, so guard is safe. См. `~/.claude/hooks/adr-index-sync-check.sh:39-46`.
 
 ## Verification
 
