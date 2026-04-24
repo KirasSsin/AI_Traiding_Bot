@@ -40,7 +40,7 @@ class BarSource:
         if interval not in self._INTERVAL_MS:
             raise ValueError(
                 f"BarSource: unsupported interval={interval!r}; "
-                f"valid={sorted(self._INTERVAL_MS)}"
+                f"valid={list(self._INTERVAL_MS)}"
             )
         self._adapter = adapter
         self._symbol = symbol

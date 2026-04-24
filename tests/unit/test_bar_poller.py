@@ -8,7 +8,9 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+import pytest
 from src.marketdata.models import Bar, DataQuality
+from src.runtime.bar_source import BarSource
 
 
 def _bar(open_ms: int, close_ms: int) -> Bar:
@@ -139,11 +141,6 @@ def test_bar_source_recovery_resets_counter():
     src.poll()  # recovery
     assert src.consecutive_failures == 0
     assert src.should_halt(threshold=24) is False
-
-
-import pytest
-
-from src.runtime.bar_source import BarSource
 
 
 @pytest.mark.parametrize(
