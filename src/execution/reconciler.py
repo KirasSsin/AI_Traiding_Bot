@@ -1,7 +1,8 @@
 """Post-reconnect reconciler — ADR 0020 sub-decision 4 (walletBalance truth, no get_position)."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import threading
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Literal, Protocol, runtime_checkable
@@ -84,11 +85,13 @@ class Reconciler:
         self._dust_threshold = dust_threshold
         self._heal_max_age_seconds = heal_max_age_seconds
         self._wallet_cache: dict[str, Decimal] = {}
+        self._lock: threading.Lock = threading.Lock()  # ADR 0022 sub-decision 1 — non-reentrant
 
     def on_wallet_event(self, evt: dict) -> None:
         """WS wallet topic event: update cache. ADR 0021 sub-decision 6."""
-        coin = evt["coin"]
-        self._wallet_cache[coin] = Decimal(str(evt["walletBalance"]))
+        with self._lock:
+            coin = evt["coin"]
+            self._wallet_cache[coin] = Decimal(str(evt["walletBalance"]))
 
     def _fetch_exch_qty(self, symbol: str | None) -> Decimal:
         """Fetch exchange qty: cache first, REST fallback on miss. ADR 0021 sub-decision 6."""
@@ -255,20 +258,21 @@ class Reconciler:
         If expected_state is provided → 4-valued with HEAL_ENTRY_FILLED/EXITED possible.
         ADR 0021 sub-decision 3.
         """
-        if expected_state is None:
-            # S6 binary path: cache-aware fetch, still uses constructor symbol for orders
-            sym_bin = local.symbol or self._symbol
-            exch_qty = self._fetch_exch_qty(sym_bin)
-            open_orders_bin = (self._query.get_open_orders(symbol=sym_bin)
-                               if sym_bin else [])
-            link_ids = tuple(o.get("orderLinkId", "") for o in open_orders_bin)
-            return self._binary_verdict(local, exch_qty, link_ids)
+        with self._lock:
+            if expected_state is None:
+                # S6 binary path: cache-aware fetch, still uses constructor symbol for orders
+                sym_bin = local.symbol or self._symbol
+                exch_qty = self._fetch_exch_qty(sym_bin)
+                open_orders_bin = (self._query.get_open_orders(symbol=sym_bin)
+                                   if sym_bin else [])
+                link_ids = tuple(o.get("orderLinkId", "") for o in open_orders_bin)
+                return self._binary_verdict(local, exch_qty, link_ids)
 
-        # New 4-valued path (ADR 0021)
-        sym = local.symbol or self._symbol
-        exch_qty = self._fetch_exch_qty(sym)
-        open_orders = self._query.get_open_orders(symbol=sym) if sym else []
-        get_order = getattr(self._query, "get_order", None)
-        entry_order = (get_order(symbol=sym, order_id=local.entry_order_id)
-                       if (local.entry_order_id and sym and get_order is not None) else None)
-        return self._classify(local, expected_state, exch_qty, open_orders, entry_order)
+            # New 4-valued path (ADR 0021)
+            sym = local.symbol or self._symbol
+            exch_qty = self._fetch_exch_qty(sym)
+            open_orders = self._query.get_open_orders(symbol=sym) if sym else []
+            get_order = getattr(self._query, "get_order", None)
+            entry_order = (get_order(symbol=sym, order_id=local.entry_order_id)
+                           if (local.entry_order_id and sym and get_order is not None) else None)
+            return self._classify(local, expected_state, exch_qty, open_orders, entry_order)
