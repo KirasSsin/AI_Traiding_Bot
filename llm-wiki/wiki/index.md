@@ -73,6 +73,7 @@ _(пусто — v0.2+)_
 - [[project/components/logging]] — structlog JSON pipeline → stdout, обязательные ключи event/level/timestamp, contextvars.
 - [[project/components/models]] — pydantic v2 domain models: Bar / Signal / Order / Fill с инвариантами (OHLC, look-ahead, executed_qty ≤ orig_qty).
 - [[project/components/storage]] — SQLite WAL (OLTP, 8 таблиц + migrations runner) + Parquet snappy writer (OLAP).
+- [[project/components/backtest-harness]] — backtest pipeline: replay engine + vector backtest + reporter + indicators + data collector. S2-era reference, S9+ DSR/MC/WFA deferred.
 - [[project/components/bybit-rest]] — BybitRESTClient (pybit V5 HTTP wrapper): server_time, instruments_info, paginated klines.
 - [[project/components/bybit-ws]] — BybitWSConsumer: pybit WebSocket callback → asyncio iteration мост.
 - [[project/components/bar-builder]] — venue-agnostic aggregator: confirm-gate + dedup + out-of-order + gap synthesis.

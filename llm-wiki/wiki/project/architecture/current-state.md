@@ -44,7 +44,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 |--------|-------|-----|-----------|---------------|
 | `__main__.py` | entry | 117 | (open gap — S8c) | S8a (ADR 0022 G6) |
 | `analytics/` | __init__ stub | <50 | — | (S8c+ scope) |
-| `backtest/` | replay_engine, vector_backtest, reporter, indicators, data_collector, replay | ~700 | (open gap — S8c) | S2 |
+| `backtest/` | replay_engine, vector_backtest, reporter, indicators, data_collector, replay | ~700 | [[../components/backtest-harness]] | S2 |
 | `core/` | models | <50 | (legacy stub) | pre-S1 (mostly removed) |
 | `data/` | __init__ stub | <50 | — | pre-S1 (replaced by marketdata/) |
 | `execution/` | coordinator (628), state_machine (170), state_repo (148), reconciler (278), bracket (oco-builder, ADR 0020 sub-decision 2, 101 LoC), models, bybit/{adapter, ws_private, rest} | ~1500 | [[../components/coordinator]], [[../components/execution-state-machine]], [[../components/reconciler]], [[../components/oco]], [[../components/bybit-adapter]], [[../components/ws-private-consumer]] | S5/S6/S7/S8a/S8b |
