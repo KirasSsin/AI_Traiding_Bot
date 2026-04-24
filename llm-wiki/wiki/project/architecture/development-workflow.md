@@ -466,6 +466,14 @@ Stage F (только S6+, venue API):
    - If exists → finalize Stage F results, review follow-ups, plan drift.
    - Source content: log.md sprint-end entry + commit log + plan trace map.
 
+5a. **HARD-GATE — Canonical counts sync (BLOCKS step 6 if FSM/reason codes/
+    components count changed this sprint):**
+   - If FSM transitions count changed → Update `wiki/project/components/execution-state-machine.md` TL;DR + footer "Last sync: Sprint N (count = X)".
+   - If reason codes count changed → Update `wiki/project/architecture/reason-codes-schema.md` (or `current-state.md` canonical-counts table) with new total + delta + ADR ref.
+   - If new component added → Update `wiki/project/architecture/current-state.md` module inventory.
+   - If trader-expert.md domain priors hardcode any of above → either update OR refactor to reference current-state.md (lazy load).
+   - **Anti-pattern:** stale TL;DR / hardcoded counts in trader prompt → trader gives stale verdicts → bad sprint decisions (D2/D3 in pre-S8c-backlog).
+
 6. **HARD-GATE — Wiki sync (BLOCKS step 7 if missing):**
    - All new ADRs (этого спринта) added to `wiki/index.md` `## Project — Decisions` section.
    - All new component pages added to `wiki/index.md` `## Project — Components` section.

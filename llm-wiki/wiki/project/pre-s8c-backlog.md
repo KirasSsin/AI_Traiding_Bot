@@ -50,6 +50,27 @@ User flagged "пара багов" 2026-04-24. Awaiting specifics. Когда п
 - [ ] **B1** TBD (waiting user input)
 - [ ] **B2** TBD (waiting user input)
 
+## Bucket DRIFT — Doc/wiki staleness (deeper investigation 2026-04-24)
+
+Found на 2-м проходе после user's "ты должен найти такие места" challenge. CRITICAL category — wiki dev'aет stale facts → trader gets stale verdicts → bad sprint decisions.
+
+| # | Drift | Evidence | Fix | Priority |
+|---|-------|----------|-----|----------|
+| D1 | `wiki/project/architecture/current-state.md` frozen 2026-04-19 — описывает PRE-S1 legacy codebase (`src/core/`, `controller.py` top-level — давно удалены). 9 спринтов never reflected | Frontmatter `updated: 2026-04-19`. Body lists modules не существующие в HEAD | Either rewrite to reflect post-S8b state OR archive (`status: superseded`) + create new `current-state-v0.1-alpha.8b.md`. **Recommend rewrite + add to PHASE 8 mandatory update list** | CRITICAL |
+| D2 | `~/.claude/agents/trader-expert.md` line 8 hardcoded "29 events / 59 transitions / 42 reason codes" stale by 2 sprints. Real = 74 / 45. Trader делает domain decisions на stale facts | Direct read | Replace hardcoded numbers with reference: "current state (see `wiki/project/architecture/current-state.md` for live counts; FSM total grows per ADRs 0019-0023)". Lazy-load pattern | CRITICAL |
+| D3 | `wiki/project/components/execution-state-machine.md` TL;DR "59 пар, S7 после dedup" — real 74 | Direct read line 13 | Update TL;DR + amend "Last sync" footer | HIGH |
+| D4 | Reason codes count drift — нет canonical statement. Chain через ADR 0019→0020→0021→0022 to find live value | grep `wiki/` for "reason codes" returns 6 different counts (31, 39, 42, 44, 45) in different files | Create `wiki/project/architecture/canonical-counts.md` ИЛИ extend `current-state.md` с table: { FSM states / events / transitions / reason codes } + "Last update: ADR XXXX". All other wiki refs → link there | HIGH |
+| D5 | `sprints/README.md` template line 35 "Sprint N → v0.1.0-alpha.N" — S4/S5 broke pattern (no tags), README не упоминает exception | Read README.md | Add exception note: "S4/S5 — tags skipped, merged into alpha.6 (см. backlog A5 / sprint pages)" | LOW |
+
+**Estimate D1-D5:** +60 min (D1 = 30 min rewrite, D2 = 5 min, D3 = 5 min, D4 = 15 min, D5 = 5 min). Combine with Bucket A batch.
+
+### Pattern (для kit update)
+
+- **CANONICAL counts source:** `current-state.md` (или dedicated `canonical-counts.md`) держит single source of truth для FSM/reason codes/components counts.
+- **All other wiki refs** должны link там, NOT inline number. Если number встречается inline где-то — это drift по умолчанию.
+- **PHASE 8 step 5 HARD-GATE** должен включать: "Update `current-state.md` if FSM/reason codes/components numbers changed this sprint."
+- **trader-expert.md** не hardcode numbers — он Reads `current-state.md` per Sprint context priming. Numbers automatically fresh.
+
 ## Bucket C — Process improvements (kit updates, applied inline)
 
 Чтобы будущих спринтах gaps не повторялись — обновлены 2026-04-24:
