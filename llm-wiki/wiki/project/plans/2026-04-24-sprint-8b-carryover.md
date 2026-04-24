@@ -30,6 +30,22 @@ tags: [sprint-8b, carry-over, fsm, halt, bar-source, kill-switch, mypy, tdd, adr
 
 ---
 
+## Trace map (retro-added 2026-04-25 в S8c per Bucket C5)
+
+| Spec / source | Tasks |
+|---------------|-------|
+| S8a carry-over (request_halt FSM transit fix) | T1 |
+| S8a carry-over (BarSource KeyError guard — interval validator) | T2 |
+| S8a carry-over (main() mypy no-any-return) | T3 |
+| S8a carry-over (sentinel-file atomic write) | T4 |
+| ADR 0023 (halt-code → FSM event mapping invariant) | T5 |
+| trading-logic-reviewer.md CRITICAL section | T6 |
+| Property test + (FLAT, RISK_HALT) row | T7 |
+| Wiki Stage E sync | T8 |
+| Ship | T9 |
+
+---
+
 ## File Structure
 
 **New files:**
