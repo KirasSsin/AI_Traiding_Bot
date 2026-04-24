@@ -38,6 +38,23 @@ pytest --collect-only 2>&1 | tail -5  # expect: existing test count
 
 ---
 
+## Trace map (retro-added 2026-04-25 в S8c per Bucket C5)
+
+| Spec / sub-decision | Tasks |
+|---------------------|-------|
+| ADR 0019 sub-decision 1 (native tpslMode OCO — REVERTED in ADR 0020) | T4, T5 |
+| ADR 0019 sub-decision 2 (12-state FSM) | T2 |
+| ADR 0019 sub-decision 3 (Reconcile-as-truth + coordinator wiring) | T3, T6, T7, T8 |
+| ADR 0019 sub-decision 4 (+2 reason codes) | T1 |
+| ADR 0019 sub-decision 5 (testnet happy-path scope) | T9 |
+| Stage A — models, FSM, persistence | T1, T2, T3 |
+| Stage B — OCO bracket | T4, T5 |
+| Stage C — reconciler | T6, T7, T8 |
+| Stage D — testnet integration | T9 |
+| Stage E — wiki + agent prompts + sprint summary | T10, T11, T12 |
+
+---
+
 ## Stage A — Models, FSM, persistence
 
 ### Task 1: Extend ReasonCode enum (+2 codes)

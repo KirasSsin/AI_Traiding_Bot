@@ -27,6 +27,26 @@ tags: [sprint-7, resilience, execution, fsm, reconcile, ws-reconnect, halt-persi
 
 ---
 
+## Trace map (retro-added 2026-04-25 в S8c per Bucket C5)
+
+| Spec / sub-decision | Tasks |
+|---------------------|-------|
+| ADR 0021 sub-decision 1 (bootstrap reconcile — delegates to on_ws_reconnect) | T21 |
+| ADR 0021 sub-decision 2 (FSM v3 +2 events +4 transitions) | T4, T5, T6, T7, T8 |
+| ADR 0021 sub-decision 3 (4-valued reconciler verdict) | T11, T12, T13, T14, T15 |
+| ADR 0021 sub-decision 4 (heal_max_age=3600) | T3, T14 |
+| ADR 0021 sub-decision 5 (γ halt persistence primary-wins) | T1, T2, T9, T10 |
+| ADR 0021 sub-decision 6 (WS-reconnect wiring — order+wallet topics) | T16, T17, T18, T19 |
+| ADR 0021 sub-decision 7 (halt_log audit) | T9, T10 |
+| ADR 0021 sub-decision 8 (ws_private close-hook / require_mainnet_gate_passed) | T3 |
+| ADR 0021 sub-decision 9 (KILL_SWITCH external defer → S8a) | T1 (migration only; feature deferred) |
+| Coordinator.on_ws_reconnect unified path | T20 |
+| Startup sequencing assert | T22 |
+| Property + integration tests | T23, T24 |
+| Wiki + Phase G probes + ship | T25 |
+
+---
+
 ## File Structure
 
 **New files:**

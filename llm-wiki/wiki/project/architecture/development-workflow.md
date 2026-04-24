@@ -272,6 +272,18 @@ SPRINT_STATE update:
    → bite-sized tasks (2-5 min), TDD structure, YAGNI
    → trace map: sub-decision N → Tasks X,Y,Z (ОБЯЗАТЕЛЬНО)
 
+1a. **HARD-GATE — Trace map mandatory section (BLOCKS PHASE 4 if missing):**
+   - Plan MUST include `## Trace map` section formatted as table:
+     ```markdown
+     ## Trace map
+     | Spec / decision | Tasks |
+     |-----------------|-------|
+     | <ADR sub-decision N OR Bucket X item> | T<N>, T<N+1>, ... |
+     | ... | ... |
+     ```
+   - Maps each ADR sub-decision / spec requirement / backlog item → concrete task ID(s).
+   - Rationale: writing-plans skill self-review checklist requires "spec coverage" trace; retro-discovered S5/S7/S8b plans missing this caused PHASE 2 verdict drift (см. S8c plan example для format).
+
 2. Skill("planning-and-task-breakdown") [Agent Skills L4]
    → acceptance criteria depth
 
