@@ -5,6 +5,7 @@ ADR 0022 sub-decisions 2 + 3.
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -15,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 class BarSource:
     """Poll latest closed bar via REST kline; dedup by close_time."""
+
+    _INTERVAL_MS = {"60": 3_600_000}
 
     def __init__(self, *, adapter: Any, symbol: str, interval: str = "60") -> None:
         self._adapter = adapter
@@ -46,5 +49,12 @@ class BarSource:
         return latest
 
     def _fetch(self) -> list[Bar]:
-        # Wraps adapter call (separate method for stall task to monkey-patch).
-        return self._adapter.get_klines(symbol=self._symbol, interval=self._interval, limit=2)  # type: ignore[no-any-return]
+        step_ms = self._INTERVAL_MS[self._interval]
+        end_ms = int(time.time() * 1000)
+        start_ms = end_ms - step_ms * 2  # last 2 bars window
+        return self._adapter.get_klines(  # type: ignore[no-any-return]
+            symbol=self._symbol,
+            interval=self._interval,
+            start_ms=start_ms,
+            end_ms=end_ms,
+        )

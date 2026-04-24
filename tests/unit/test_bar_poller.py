@@ -55,3 +55,44 @@ def test_bar_source_emits_new_bar_on_close() -> None:
     src = BarSource(adapter=adapter, symbol="BTCUSDT", interval="60")
     assert src.poll() == bar1
     assert src.poll() == bar2
+
+
+def test_bar_source_calls_adapter_with_recent_window(monkeypatch):
+    """_fetch must call adapter.get_klines with last 2 bars worth of window (start/end_ms)."""
+    from src.runtime.bar_source import BarSource
+
+    captured: dict = {}
+
+    class FakeAdapter:
+        def get_klines(self, *, symbol, interval, start_ms, end_ms, limit_per_call=1000):  # noqa: ARG002
+            captured["symbol"] = symbol
+            captured["interval"] = interval
+            captured["start_ms"] = start_ms
+            captured["end_ms"] = end_ms
+            return []
+
+    src = BarSource(adapter=FakeAdapter(), symbol="BTCUSDT", interval="60")
+    # Freeze "now" via monkeypatch on time.time used inside _fetch
+    monkeypatch.setattr("src.runtime.bar_source.time.time", lambda: 1_700_010_000.0)
+    src.poll()
+
+    assert captured["symbol"] == "BTCUSDT"
+    assert captured["interval"] == "60"
+    # Window = at least last 2 bars (interval=60 → 7_200_000 ms)
+    assert captured["end_ms"] - captured["start_ms"] >= 7_200_000
+    # end_ms ≈ now (1_700_010_000_000 ± 1s)
+    assert abs(captured["end_ms"] - 1_700_010_000_000) < 1_000
+
+
+def test_bar_source_failure_increments_counter():
+    from src.runtime.bar_source import BarSource
+
+    class BadAdapter:
+        def get_klines(self, **_):
+            raise RuntimeError("network down")
+
+    src = BarSource(adapter=BadAdapter(), symbol="BTCUSDT", interval="60")
+    assert src.poll() is None
+    assert src.consecutive_failures == 1
+    assert src.poll() is None
+    assert src.consecutive_failures == 2
