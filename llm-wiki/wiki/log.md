@@ -275,3 +275,10 @@
 - SPRINT_STATE.md → phase=9-merged, branch=main, tag=v0.1.0-alpha.7.
 - Push tags + main → operator-driven (not in autonomous session).
 - Next sprint: S8 brainstorm (driver loop для WS consumer + manager.py orchestration + Analytics per-fill).
+
+## [2026-04-24] workflow | trader-expert subagent + PHASE 2 update
+- Added: ~/.claude/agents/trader-expert.md (sonnet) — domain expert decision-maker для open brainstorming questions.
+- Updated: llm-wiki/wiki/project/architecture/development-workflow.md PHASE 2 — добавлен step 3 "Trader-expert delegation" (3a structured questionnaire → 3b dispatch → 3c per-item verdict → 3d apply → 3e escalate to user если есть items beyond expert authority).
+- Updated: llm-wiki/CLAUDE.md "Curated agent set" — 4 → 5 active agents; trigger cascade row "Новый sprint / архитектурное решение" extended с L5 trader-expert step.
+- Verdict format: CONFIRM | REVISE | DEFER | EXPAND per question, плюс cross-cutting concerns + escalation list.
+- Trigger: PHASE 3 (plan writing) НЕ начинается пока все open brainstorm questions не получили verdict.

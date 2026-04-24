@@ -465,11 +465,12 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 ### Curated agent set (~/.claude/agents/)
 
-**Active (4 — все per ADR 0017):**
-- `python-reviewer.md` (sonnet) — generic Python review
-- `data-integrity-reviewer.md` (sonnet) — SQLite/Parquet/migrations
-- `quant-stats-reviewer.md` (opus) — formulas/Wilson/Kelly/MC/CB thresholds
-- `trading-logic-reviewer.md` (opus) — look-ahead/timing/FSM/reason codes/venue
+**Active (5):**
+- `python-reviewer.md` (sonnet) — generic Python review (per ADR 0017)
+- `data-integrity-reviewer.md` (sonnet) — SQLite/Parquet/migrations (per ADR 0017)
+- `quant-stats-reviewer.md` (opus) — formulas/Wilson/Kelly/MC/CB thresholds (per ADR 0017)
+- `trading-logic-reviewer.md` (opus) — look-ahead/timing/FSM/reason codes/venue (per ADR 0017)
+- `trader-expert.md` (sonnet) — PHASE 2 brainstorming decision-maker; принимает structured questionnaire (questions + maintainer recommendation + alternatives + reasoning) → возвращает per-item CONFIRM/REVISE/DEFER/EXPAND verdict; ОБЯЗАТЕЛЬНО dispatch'ить если есть unresolved scope/architecture questions перед PHASE 3.
 
 **Recommended add (gaps):**
 - `security-auditor` (opus, VoltAgent voltagent-qa-sec) — нет у нас security-domain reviewer; critical для override.py / API keys / Bybit signing.
@@ -489,7 +490,7 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 | Event / context | Layer cascade | Skip if |
 |---|---|---|
-| Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
+| Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → **L5 trader-expert (questionnaire dispatch если остались open questions)** → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
 | Subagent dispatch (implementer) | AS `context-engineering` (brief construction) → L4b prompt-master (если > 200 слов) → L3 subagent-driven-development → TDD strict | Single Bash command |
 | Subagent brief > 200 слов / output > 30KB / critical correctness | AS `context-engineering` СНАЧАЛА → L4b prompt-master refine ОБЯЗАТЕЛЬНО | Always apply |
 | Code change в `src/risk/`, `src/signalgen/`, `src/execution/` | L5 trading-logic-reviewer ОБЯЗАТЕЛЬНО after DONE | Pure docs change |

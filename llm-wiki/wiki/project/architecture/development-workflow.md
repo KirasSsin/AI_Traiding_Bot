@@ -159,13 +159,43 @@ SKIP: executing approved ADR → Phase 3
 
 1. Skill("brainstorming") [Superpowers L3]
 2. Escalate: Skill("process-interviewer") если < 3 раунда + impact > 1 sprint [L4b]
-3. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed)
-4. User approves → status: accepted
+
+3. Trader-expert delegation (ОБЯЗАТЕЛЬНО если есть unresolved scope/architecture
+   questions после brainstorming round'а — НЕ пропускать в PHASE 3 пока не пройдено):
+
+   3a. Maintainer собирает structured questionnaire — markdown list, по каждому
+       open question:
+         - Question text (verbatim, точная формулировка проблемы)
+         - Recommended option (рекомендация maintainer'а: какой выбрать)
+         - Alternatives considered (2-3 альтернативы которые рассмотрели)
+         - Reasoning (почему recommended option, ссылки на wiki/ADR/код)
+         - Risk/concern (что может сломаться, если решение неверное)
+
+   3b. Dispatch Agent(subagent_type="trader-expert", model=sonnet) с brief:
+         - Sprint N context (из SPRINT_STATE + log tail)
+         - Полный questionnaire из шага 3a
+         - Constraints: ссылки на active ADR, схему, FSM состояние
+
+   3c. Trader-expert возвращает per-question verdict (CONFIRM/REVISE/DEFER/EXPAND)
+       + cross-cutting concerns + escalation list для user'а.
+
+   3d. Maintainer применяет verdicts:
+         - CONFIRM → option лочится, идёт в ADR.
+         - REVISE → новая опция лочится, идёт в ADR с rationale из verdict.
+         - DEFER → вопрос → "Open questions → deferred to S{N+1}+" в ADR.
+         - EXPAND → re-brainstorm на reframed question → возможен второй round 3a-3c.
+
+   3e. Если trader-expert escalated items → пользователю (1 message с конкретными
+       вопросами). Без user-ответа PHASE 3 не начинается.
+
+4. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed)
+   → каждое решение из шагов 3c-3d попадает в ADR с reference на verdict.
+5. User approves → status: accepted
 
 SPRINT_STATE update:
   phase: 2-brainstorming
   sprint: N
-  next_action: "ADR NNNN review by user"
+  next_action: "Trader-expert verdict round K" → "ADR NNNN review by user"
 ```
 
 ---
