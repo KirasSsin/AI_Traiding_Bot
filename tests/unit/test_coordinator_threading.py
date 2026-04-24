@@ -110,7 +110,7 @@ def test_coordinator_concurrent_on_order_event_and_start_bracket_safe(tmp_path):
     coord, repo = _build(tmp_path)
 
     # Give the adapter a fresh order_ack for each call (thread-safe return)
-    def _fresh_ack(*args, **kwargs):
+    def _fresh_ack(*_args, **_kwargs):
         ack = MagicMock()
         ack.order_id = "mock-order-" + threading.current_thread().name
         return ack
