@@ -6,11 +6,11 @@ via Coordinator/Reconciler RLock/Lock).
 """
 from __future__ import annotations
 
-import logging
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from src.platform.logging import get_logger
 from src.risk.reason_codes import ReasonCode
 from src.signalgen.models import SignalSide
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from src.runtime.bar_source import BarSource
     from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy as Strategy
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RuntimeManager:
@@ -32,13 +32,13 @@ class RuntimeManager:
     def __init__(
         self,
         *,
-        coordinator: "Coordinator",
-        reconciler: "Reconciler",
-        ws_consumer: "BybitPrivateWSConsumer",
-        bar_source: "BarSource",
-        strategy: "Strategy",
-        risk_manager: "RiskManager",
-        settings: "Settings",
+        coordinator: Coordinator,
+        reconciler: Reconciler,
+        ws_consumer: BybitPrivateWSConsumer,
+        bar_source: BarSource,
+        strategy: Strategy,
+        risk_manager: RiskManager,
+        settings: Settings,
     ) -> None:
         self._coordinator = coordinator
         self._reconciler = reconciler
@@ -75,7 +75,8 @@ class RuntimeManager:
         except Exception as e:  # noqa: BLE001 — top-level guard per ADR 0022 sub-decision 6
             logger.exception(
                 "runtime.crash",
-                extra={"exc_type": type(e).__name__, "exc_msg": str(e)},
+                exc_type=type(e).__name__,
+                exc_msg=str(e),
             )
             self._coordinator.request_halt(ReasonCode.HALT_RUNTIME_CRASH)
             self._shutdown(reason="HALT_RUNTIME_CRASH")
@@ -108,7 +109,7 @@ class RuntimeManager:
         if self._kill_switch_path.exists():
             logger.info(
                 "runtime.kill_switch_detected",
-                extra={"sentinel_path": str(self._kill_switch_path)},
+                sentinel_path=str(self._kill_switch_path),
             )
             self._coordinator.request_halt(ReasonCode.KILL_SWITCH_REQUESTED)
             self._stopping = True
@@ -134,17 +135,15 @@ class RuntimeManager:
         if self._bar_source.should_halt(threshold=self._settings.runtime_bar_poll_stall_threshold):
             logger.error(
                 "runtime.bar_poll_stall",
-                extra={
-                    "consecutive_failures": self._bar_source.consecutive_failures,
-                    "threshold": self._settings.runtime_bar_poll_stall_threshold,
-                },
+                consecutive_failures=self._bar_source.consecutive_failures,
+                threshold=self._settings.runtime_bar_poll_stall_threshold,
             )
             self._coordinator.request_halt(ReasonCode.HALT_BAR_POLL_STALL)
             self._stopping = True
             return
         if bar is None:
             return
-        logger.info("runtime.bar_tick", extra={"bar_close_ts": bar.close_time.isoformat()})
+        logger.info("runtime.bar_tick", bar_close_ts=bar.close_time.isoformat())
         signal = self._strategy.on_bar(bar)
         if signal is None or signal.side == SignalSide.FLAT:
             return
@@ -158,14 +157,29 @@ class RuntimeManager:
         if row is None or row.state != ExecutionState.FLAT:
             logger.debug(
                 "runtime.signal_skipped_non_flat_state",
-                extra={"side": str(signal.side), "current_state": row.state.value if row else "MISSING"},
+                side=str(signal.side),
+                current_state=row.state.value if row else "MISSING",
             )
             return
         assessment = self._risk_manager.assess(signal, mark_price=bar.close)
         if not assessment.approved:
             logger.info(
                 "runtime.signal_rejected",
-                extra={"side": str(signal.side), "reason_code": assessment.reason_code.value},
+                side=str(signal.side),
+                reason_code=assessment.reason_code.value,
+            )
+            return
+        # Defense-in-depth + mypy type-narrowing.
+        # RiskAssessment._consistency validator guarantees these are non-None when
+        # approved=True, but mypy can't see that — explicit guard preserves invariant
+        # if the validator ever changes and silences `arg-type` errors at the call site.
+        if assessment.qty is None or assessment.tp_price is None or assessment.sl_price is None:
+            logger.error(
+                "runtime.assessment_missing_prices",
+                side=str(signal.side),
+                qty=str(assessment.qty),
+                tp_price=str(assessment.tp_price),
+                sl_price=str(assessment.sl_price),
             )
             return
         # SignalSide is LONG only at this point — translate to Bybit "Buy" string
@@ -191,7 +205,7 @@ class RuntimeManager:
         try:
             self._ws_consumer.stop()
         except Exception as e:  # noqa: BLE001 — best-effort drain
-            logger.error("runtime.shutdown_ws_stop_failed", extra={"err": str(e)})
+            logger.error("runtime.shutdown_ws_stop_failed", err=str(e))
 
         # In-flight order count snapshot — best-effort, never raise
         in_flight = 0
@@ -210,7 +224,7 @@ class RuntimeManager:
         except Exception:  # noqa: BLE001 — snapshot is best-effort
             pass
 
-        logger.info("runtime.shutdown", extra={"reason": reason, "in_flight_orders": in_flight})
+        logger.info("runtime.shutdown", reason=reason, in_flight_orders=in_flight)
 
     def shutdown(self, *, reason: str) -> None:
         """Public alias — operator-callable graceful shutdown."""

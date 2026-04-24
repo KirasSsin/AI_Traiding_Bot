@@ -4,14 +4,15 @@ ADR 0022 sub-decisions 2 + 3.
 """
 from __future__ import annotations
 
-import logging
 import time
 from typing import TYPE_CHECKING, Any
+
+from src.platform.logging import get_logger
 
 if TYPE_CHECKING:
     from src.marketdata.models import Bar
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BarSource:
@@ -34,7 +35,8 @@ class BarSource:
             self.consecutive_failures += 1
             logger.warning(
                 "bar_source.poll_failed",
-                extra={"err": str(e), "consecutive_failures": self.consecutive_failures},
+                err=str(e),
+                consecutive_failures=self.consecutive_failures,
             )
             return None
 
