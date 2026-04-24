@@ -146,20 +146,20 @@ mem-search "sprint N in-progress"    → контекст из claude-mem
 
 ### PHASE 1 — Sprint orient (если новый спринт или неясно где мы)
 
-```
-Только если SPRINT_STATE.phase = "between-sprints" или неопределённо.
-Если already in-progress → пропустить, перейти к Phase 4.
+**Implementation:** Skill `sprint-orient` (`.claude/skills/sprint-orient/SKILL.md`) — auto-triggered by description match ("где мы", "ориентируйся", session start, после `/clear`).
 
-1. mem-search "sprint N" / "ADR NNNN" / "known issue X"
-   Tool: mcp__plugin_claude-mem_mcp-search__smart_search
-   → prior decisions, patterns, unresolved concerns
+**Trigger:** SPRINT_STATE.phase = "between-sprints" OR неопределённо. Skip если already in-progress (continue к Phase 4).
 
-2. Read wiki/log.md (последние 10 entries)
+**Что делает skill:**
+1. Read `SPRINT_STATE.md` → sprint/phase/branch/tag/next_action
+2. Verify git state (branch + last commits)
+3. Read `log.md` tail (offset+limit, файл 51KB банен)
+4. Read `current-state.md` canonical-counts table
+5. Optional: mem-search для specific concerns
+6. mcp__ccd_session__mark_chapter "Sprint N — orient"
+7. Optional: Load mental-map.md если open-ended query
 
-3. Read wiki/index.md (top 50 lines)
-
-4. mcp__ccd_session__mark_chapter "Sprint N — orient"
-```
+**Не дублировать inline здесь** — skill загружается at-need per progressive disclosure.
 
 ---
 
@@ -169,82 +169,15 @@ mem-search "sprint N in-progress"    → контекст из claude-mem
 TRIGGER: новый scope (НЕ approved ADR)
 SKIP: executing approved ADR → Phase 3
 
-1. Skill("brainstorming") [Superpowers L3]
+1. Skill("brainstorming") [Superpowers L3] — initial divergent exploration
 2. Escalate: Skill("process-interviewer") если < 3 раунда + impact > 1 sprint [L4b]
 
-3. Trader-expert delegation (ОБЯЗАТЕЛЬНО если есть unresolved scope/architecture
-   questions после brainstorming round'а — НЕ пропускать в PHASE 3 пока не пройдено):
+3. **Skill `brainstorm-init`** (`.claude/skills/brainstorm-init/SKILL.md`) — auto-triggered when scope/architecture questions surface. Implements binding PHASE 2 protocol: structured questionnaire → trader-expert ROUND 1 → iterative justify ROUND 2 на REVISE-disagreement (CONFIRM_REVISE / CHANGED, BINDING, no round 3) → user escalation only из trader's escalation list → backlog persistence.
 
-   3a. Maintainer собирает structured questionnaire — markdown list, по каждому
-       open question:
-         - Question text (verbatim, точная формулировка проблемы)
-         - Recommended option (рекомендация maintainer'а: какой выбрать)
-         - Alternatives considered (2-3 альтернативы которые рассмотрели)
-         - Reasoning (почему recommended option, ссылки на wiki/ADR/код)
-         - Risk/concern (что может сломаться, если решение неверное)
+   **Полная procedure** (структурированный questionnaire 5-field, dispatch protocol, iterative justify loop, anti-patterns) — см. SKILL.md. Не дублировать inline здесь.
 
-   3b. Dispatch Agent(subagent_type="trader-expert", model=sonnet) с brief:
-         - Sprint N context (из SPRINT_STATE + log tail)
-         - Полный questionnaire из шага 3a
-         - Constraints: ссылки на active ADR, схему, FSM состояние
-
-   3c. Trader-expert возвращает per-question verdict (CONFIRM/REVISE/DEFER/EXPAND)
-       + cross-cutting concerns + escalation list для user'а.
-
-   3c.1 Iterative justify loop (ОБЯЗАТЕЛЬНО для каждого REVISE где выбранная trader'ом
-        опция != maintainer's recommended option):
-
-         (i)  Maintainer dispatch'ит ROUND 2 questionnaire ТОМУ ЖЕ trader-expert'у:
-                - Verbatim text of disputed question.
-                - Round 1 maintainer recommendation + reasoning.
-                - Round 1 trader REVISE verdict (chosen option + rationale).
-                - Brief: "Re-evaluate. Why did you choose <X> over maintainer's <Y>?
-                  Perform deeper analysis: side-by-side compare <Y> vs <X>, fresh
-                  research (re-read related wiki/ADR/code), then return final
-                  verdict per Iterative justification protocol in your prompt."
-
-         (ii) Trader-expert ROUND 2 response (per Iterative justification protocol
-              in trader-expert.md) returns ONE of:
-                - **CONFIRM_REVISE** — same answer, deeper rationale, explicit list
-                  of risks in maintainer's option that justified rejecting it.
-                  → ACCEPT trader's option. Lock for ADR.
-                - **CHANGED** — new analysis showed maintainer's option was right
-                  OR a third option emerged. MUST include compare table
-                  (option Y vs option X vs option Z if any), fresh research findings.
-                  → ACCEPT trader's NEW final verdict. Lock for ADR.
-
-         (iii) Maintainer logs BOTH rounds in ADR section "Decision rationale":
-                 - Round 1 verdict (REVISE, option X)
-                 - Round 2 verdict (CONFIRM_REVISE / CHANGED, final option)
-                 - Why iteration happened (disagreement) and how it resolved.
-
-         (iv) NO third round. Round 2 verdict is binding. If maintainer still
-              disagrees → escalate to user under "Open issues" with both rounds
-              in evidence package.
-
-   3d. Maintainer применяет verdicts:
-         - CONFIRM → option лочится, идёт в ADR.
-         - REVISE (where option == maintainer's recommendation, no disagreement)
-           → option лочится, идёт в ADR with trader's rationale.
-         - REVISE (where option != maintainer's recommendation) → MUST go through
-           3c.1 iterative justify loop FIRST. Final option lockd after round 2.
-         - DEFER → вопрос → "Open questions → deferred to S{N+1}+" в ADR.
-         - EXPAND → re-brainstorm на reframed question → возможен второй round 3a-3c.
-
-   3e. Если trader-expert escalated items → пользователю (1 message с конкретными
-       вопросами). Без user-ответа PHASE 3 не начинается.
-
-   3f. ANTI-PATTERN — НИКОГДА не делать в PHASE 2:
-         - Задавать user-у scope/architecture вопрос НАПРЯМУЮ без trader-expert
-           round 1. (User questions = ТОЛЬКО escalation list из trader's output.)
-         - Принимать REVISE с disagreement без round 2 iterative justify loop.
-         - Третий round trader-expert (round 2 верdict binding).
-         - Skip'ать trader-expert dispatch потому что "очевидно" — все open
-           scope/architecture questions ОБЯЗАТЕЛЬНО проходят trader-expert.
-
-4. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed)
-   → каждое решение из шагов 3c-3d попадает в ADR с reference на verdict.
-5. User approves → status: accepted
+4. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed) — каждое решение из brainstorm-init verdicts trail.
+5. User approves → status: accepted.
 
 ORCHESTRATION & CONCURRENCY (S8+ scope, ОБЯЗАТЕЛЬНО включить в questionnaire если затронуты):
   - Driver loop ownership (manager.py vs coordinator.bootstrap): кто стартует, кто
@@ -455,71 +388,24 @@ Stage F (только S6+, venue API):
 
 ### PHASE 8 — Finishing branch
 
-```
-1. Skill("finishing-a-development-branch") [Superpowers L3]
+**Implementation:** Skill `sprint-finish` (`.claude/skills/sprint-finish/SKILL.md`) — auto-triggered when ship-ready signal ("финишируем", "ship", "merge to main", или после subagent-driven-development completes batch). Enforces all HARD-GATEs (sprint-NN.md mandatory, canonical counts sync, orphan-audit grep includes tests/, index.md ADR sync) перед `superpowers:finishing-a-development-branch`.
 
-2. Skill("git-workflow-and-versioning") [Agent Skills L4]
-   → atomic commits, conventional format
+**Что делает skill:**
+1. Pre-validation (pytest + mypy + canonical counts)
+2. **HARD-GATE step 5:** sprint-NN.md exists OR CREATE per sprint-07 skeleton
+3. **HARD-GATE step 5a:** canonical counts sync (если FSM/reason codes/components changed)
+4. **HARD-GATE step 5b:** orphan-audit grep MUST include tests/ (CC1 lesson — recursive)
+5. **HARD-GATE step 6 (wiki sync):** new ADRs в index.md, new components в index.md + components/README.md cluster, new sprint в index.md + current-state.md sprint table
+6. SPRINT_STATE → 8-ship
+7. `superpowers:finishing-a-development-branch` → push + PR + squash-merge + tag
+8. Hook acknowledgments (touch trader-expert.md mtime если ADR changed)
+9. Chapter mark "Sprint <N> ship complete"
 
-3. Skill("documentation-and-adrs") [Agent Skills L4]
-   → ADR format correct, consequences documented
+**Полная procedure** (steps + anti-patterns + hook interactions) — см. SKILL.md. Не дублировать inline здесь.
 
-4. ADR ↔ agent prompt sync:
-   Edit ~/.claude/agents/<name>.md (если ADR изменён)
-   (PreToolUse hook проверит на push)
-
-5. **HARD-GATE — Sprint page finalize (BLOCKS step 6 if missing):**
-   - Verify `wiki/project/sprints/sprint-NN-<slug>.md` exists.
-   - If missing → CREATE per `sprint-07-resilience.md` skeleton:
-     frontmatter (title, type=sprint, tags, created/updated, status=completed,
-     sources=[ADR + plan]) + sections (Overview / Plan-ADR links / Deliverables
-     [Schema/FSM/Component sub-sections] / Reason codes / Tests / Wiki updates /
-     Open issues для S{N+1}).
-   - If exists → finalize Stage F results, review follow-ups, plan drift.
-   - Source content: log.md sprint-end entry + commit log + plan trace map.
-
-5a. **HARD-GATE — Canonical counts sync (BLOCKS step 6 if FSM/reason codes/
-    components count changed this sprint):**
-   - If FSM transitions count changed → Update `wiki/project/components/execution-state-machine.md` TL;DR + footer "Last sync: Sprint N (count = X)".
-   - If reason codes count changed → Update `wiki/project/architecture/reason-codes-schema.md` (or `current-state.md` canonical-counts table) with new total + delta + ADR ref.
-   - If new component added → Update `wiki/project/architecture/current-state.md` module inventory.
-   - If trader-expert.md domain priors hardcode any of above → either update OR refactor to reference current-state.md (lazy load).
-   - **Anti-pattern:** stale TL;DR / hardcoded counts in trader prompt → trader gives stale verdicts → bad sprint decisions (D2/D3 in pre-S8c-backlog).
-
-5b. **HARD-GATE — Orphan-audit grep (BLOCKS any file deletion or "orphan" label
-    application):**
-   - Before claiming any `src/<module>` is orphan / candidate for deletion:
-     `grep -rn "from src.<module>\|import <module>" /path/to/repo/{src,tests}/`
-   - **MANDATORY:** include `tests/` in scope. Source-only grep = process gap.
-   - Verify zero hits в BOTH src/ AND tests/ before any DELETE proposal.
-   - History trigger: Pre-S8c brainstorm Q1 — maintainer's `bracket.py` "orphan"
-     claim missed `coordinator.py:19` import + 4 test importers; trader-expert
-     ROUND 1 caught it via tests grep. Same brainstorm ROUND 2 — trader's
-     secondary `oco.py` "orphan" claim missed `tests/unit/test_oco.py:3` import.
-     Recursive lesson: ANY orphan claim by ANYONE (controller OR subagent) MUST
-     be verified via this grep before action.
-   - Apply same to wiki: `grep -rn "filename" llm-wiki/wiki/` before claiming
-     wiki page is orphan / candidate for archival.
-
-6. **HARD-GATE — Wiki sync (BLOCKS step 7 if missing):**
-   - All new ADRs (этого спринта) added to `wiki/index.md` `## Project — Decisions` section.
-   - All new component pages added to `wiki/index.md` `## Project — Components` section.
-   - Sprint page added to `wiki/index.md` `## Project — Sprints` section.
-   - Verify: `grep "0NNN" llm-wiki/wiki/index.md` returns hit для каждого нового ADR.
-
-7. Merge + tag:
-   git merge feature/sprint-N-<slug>
-   git tag v0.1.0-alpha.N
-
-8. Push (PreToolUse hook fires):
-   git push origin main
-   git push origin v0.1.0-alpha.N
-
-ANTI-PATTERN (S8a + S8b violations — fixed pre-S8c per backlog):
-  ❌ Tag push без sprint-NN.md (sprint pages для S8a + S8b отсутствовали — created in pre-S8c batch).
-  ❌ Tag push без ADR в index.md (ADR 0022 orphan — fixed in pre-S8c batch).
-  ❌ Tag skip (tags v0.1.0-alpha.4 + alpha.5 missing — sprint pages говорят "pending PR merge" но never tagged → tag drift).
-  Все три = direct symptom отсутствия HARD-GATE — теперь зафиксированы как BLOCKERS.
+**Дополнительные skills, applicable в этой phase:**
+- Skill("git-workflow-and-versioning") [Agent Skills L4] — atomic commits, conventional format
+- Skill("documentation-and-adrs") [Agent Skills L4] — ADR format correct, consequences documented
 
 SPRINT_STATE update:
   sprint: N-complete
