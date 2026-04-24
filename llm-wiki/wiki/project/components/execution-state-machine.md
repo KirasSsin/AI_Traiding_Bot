@@ -134,6 +134,16 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 - `[[../../trading/concepts/reason-codes]]` — 42 codes (S7: `HALT_BOOTSTRAP_AMBIGUOUS`, `HALT_EXIT_RECONCILE_DIVERGENCE`, `EXIT_RECONCILE_DETECTED`).
 - `[[../architecture/state-machine]]` — pre-S5 high-level Harel-set (12 states тот же).
 
+## Concurrency / Lock policy (S8a)
+
+Все мутации FSM row проходят через `Coordinator._lock` (`threading.RLock`, ADR 0022 sub-decision 1). Это защищает от race между:
+- main thread (`start_bracket`, `flatten`, `bootstrap`)
+- pybit thread (`on_order_event`, `on_ws_reconnect`)
+
+Reconciler-side: `Reconciler._lock` (`threading.Lock`, non-reentrant) — wraps `on_wallet_event` + `reconcile`.
+
+См. [[runtime-manager]] — Lock policy reference table.
+
 ## Sources
 
 - `src/execution/{state_machine,state_repo,coordinator}.py`, `migrations/0003_execution_state.sql`.
