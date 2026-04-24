@@ -41,6 +41,10 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | `llm-wiki/wiki/project/components/` | Component docs (wiki-first reads before raw ADR) |
 | `llm-wiki/wiki/project/sprints/sprint-NN-<slug>.md` | **Canonical sprint summary** — "что было сделано в спринте N". HARD-GATE creation per dev-workflow.md PHASE 8 step 5. Read для понимания исторического контекста. |
 | `llm-wiki/wiki/project/pre-s{N}-backlog.md` | Pre-sprint backlog — gaps + bugs to discharge before brainstorm S{N}. Создаётся когда post-sprint audit находит actionable items. Закрывается → удаляется. |
+| `llm-wiki/wiki/project/mental-map.md` | "Where to look for X" decision tree — first-hit для open-ended queries. Заменяет blind grep. |
+| `llm-wiki/wiki/project/components/README.md` | 27 components grouped в 9 domain clusters. Reverse lookup ("I'm reading X — what's related?"). |
+| `.claude/skills/<name>/SKILL.md` | **Project-level workflow skills** (5 total: sprint-orient, sprint-finish, wiki-update, brainstorm-init, hook-test). Auto-trigger по description match — заменяют hardcoded inline workflow logic. См. `llm-wiki/wiki/index.md` "Workflow Skills" section. |
+| `~/.claude/agents/<name>.md` | **L5 reviewer agents** (5: trading-logic, quant-stats, data-integrity, python, trader-expert) — user-level, outside repo. ADR 0017 review-agent harness. |
 
 ## Project constraints (short form)
 
@@ -49,30 +53,25 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 - **Branch**: feature/<sprint-N-slug>. PR to main. Conventional commits.
 - **Current state**: Sprint 8b COMPLETE (tag `v0.1.0-alpha.8b`). Between sprints. Next = S8c brainstorm.
 
-## Brainstorming flow (PHASE 2) — BINDING protocol
+## Workflow skills (project-level, `.claude/skills/`)
 
-**Rule of thumb:** controller (главный Claude) НИКОГДА не задаёт user-у scope/architecture вопросы напрямую в PHASE 2. Все open questions ОБЯЗАТЕЛЬНО проходят через trader-expert subagent. User видит только escalation list из trader's output ИЛИ финальный design на approval.
+**5 skills заменяют hardcoded inline workflow logic:**
 
-**Pipeline (per `llm-wiki/wiki/project/architecture/development-workflow.md` PHASE 2 step 3a-3f):**
+| Skill | Trigger | Replaces |
+|-------|---------|----------|
+| `sprint-orient` | Session start, `/clear`, "где мы", "ориентируйся" | PHASE 1 inline orient sequence |
+| `sprint-finish` | "ship", "финишируем", subagent-driven completion | PHASE 8 HARD-GATE checklist |
+| `wiki-update` | After src/ change, "sync docs" | PHASE 8 step 5a inline canonical counts sync |
+| `brainstorm-init` | "брейнштурм", scope questions surface | PHASE 2 step 3a-3f binding protocol |
+| `hook-test` (explicit only) | `/hook-test` invocation | Manual env -i sandbox commands |
 
-1. Maintainer собирает structured questionnaire — per question: text + recommended option + alternatives + reasoning + risk.
-2. Dispatch trader-expert subagent (round 1) с questionnaire.
-3. Trader returns per-question CONFIRM / REVISE / DEFER / EXPAND.
-4. **Iterative justify loop (round 2)** — для каждого REVISE где chosen option != maintainer's recommended:
-   - Maintainer dispatch'ит trader-expert РЕ-РАЗ с brief: "Why <X> over <Y>? Re-evaluate, deeper analysis."
-   - Trader выполняет re-investigation, side-by-side compare table, fresh research.
-   - Trader returns FINAL: **CONFIRM_REVISE** (round-1 stands, deeper rationale) ИЛИ **CHANGED** (new evidence flipped verdict).
-   - Round 2 verdict BINDING. NO round 3.
-5. Maintainer logs BOTH rounds в ADR "Decision rationale" (round 1 verdict + round 2 verdict + почему iteration + how resolved).
-6. Если trader returned escalation list (product/regulatory/business questions) → user 1 message с конкретными вопросами.
+**ВАЖНО:** skills auto-trigger по description match. Inline workflow logic в этом CLAUDE.md и в `dev-workflow.md` теперь references к SKILL.md, НЕ дублируется. Полная procedure — в `.claude/skills/<name>/SKILL.md` per progressive disclosure.
 
-**Anti-patterns — НИКОГДА:**
-- Задать user-у вопрос в round 1 brainstorming без trader-expert (S8b violation).
-- Принять REVISE-disagreement без round 2 (S8b violation — была ad-hoc accept).
-- Третий round trader (round 2 binding).
-- Skip trader-expert dispatch потому что "очевидно" — все scope/architecture questions ОБЯЗАТЕЛЬНО проходят trader.
+**PHASE 2 binding protocol полностью реализован в `brainstorm-init` skill** (structured questionnaire → trader-expert ROUND 1 → iterative justify ROUND 2 на REVISE-disagreement → CONFIRM_REVISE/CHANGED BINDING → backlog persistence + user escalation).
 
-**Acknowledgment trigger:** при старте PHASE 2 в любом sprint — сделать TodoWrite с явным item "Trader-expert round 1 dispatch" + "Trader-expert round 2 dispatch (if any REVISE-disagreement)" чтобы не забыть iterative loop.
+**PHASE 8 HARD-GATE checklist полностью в `sprint-finish` skill** (sprint-NN.md mandatory, canonical counts sync, orphan-audit grep includes tests/, index.md ADR sync).
+
+**Anti-pattern:** дублировать workflow steps inline в этом файле OR в dev-workflow.md — skills are single source of truth.
 
 ## Python venv discipline (MANDATORY for all Bash invocations)
 

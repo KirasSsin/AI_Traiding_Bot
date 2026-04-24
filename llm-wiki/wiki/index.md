@@ -77,6 +77,16 @@ _(пусто — v0.2+)_
 > Operator post-mortem procedures + recovery workflows. Currently empty стаб (Bucket F1 `halt-recovery.md` deferred к S9+). Will populate as runbooks land.
 
 _(пусто — F1 stub TBD)_
+
+## Project — Workflow Skills (`.claude/skills/`)
+
+Project-level skills заменяют hardcoded inline workflow logic (per Anthropic progressive disclosure pattern). Auto-trigger по description match, не нужен manual invoke.
+
+- **`.claude/skills/sprint-orient/SKILL.md`** — PHASE 1 orient sequence (SPRINT_STATE + git verify + log tail + canonical counts + chapter mark). Auto-trigger: session start, `/clear`, "где мы", "ориентируйся".
+- **`.claude/skills/sprint-finish/SKILL.md`** — PHASE 8 finishing HARD-GATE checklist (sprint-NN.md mandatory + canonical counts sync + orphan-audit grep tests/ + index.md ADR sync). Auto-trigger: "ship", "финишируем", subagent-driven completion.
+- **`.claude/skills/wiki-update/SKILL.md`** — code → docs sync after src/ change (dependency graph walk + Block 1↔Block 2 + canonical counts verify). Auto-trigger: после src/ edit.
+- **`.claude/skills/brainstorm-init/SKILL.md`** — PHASE 2 binding protocol (structured questionnaire → trader-expert ROUND 1 → iterative justify ROUND 2 на REVISE-disagreement → CONFIRM_REVISE/CHANGED BINDING). Auto-trigger: scope/architecture questions, "брейнштурм".
+- **`.claude/skills/hook-test/SKILL.md`** (`disable-model-invocation: true`) — sandboxed PreToolUse hook test через env -i isolation. Explicit `/hook-test` invocation only.
 - [[project/architecture/stack-v0.1]] — Python 3.12 + asyncio/uvloop + TA-Lib + pydantic v2 + structlog; Docker-compose sketch.
 - [[project/architecture/bounded-contexts]] — 5 DDD контекстов: Market Data / Signal Gen / Risk / Execution / Analytics.
 - [[project/architecture/domain-events]] — 20 domain events + event sourcing SQL + happy/error/reconnect paths.

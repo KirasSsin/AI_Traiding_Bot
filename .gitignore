@@ -51,3 +51,9 @@ logs/
 
 # Obsidian app config (user-local editor settings, not project artifact)
 llm-wiki/.obsidian/
+
+# Claude Code local-only artifacts (per Anthropic best practices)
+.claude/settings.local.json
+.claude/worktrees/
+.claude/.DS_Store
+# Track .claude/skills/ (project-level workflow templates, version-controlled per Anthropic guidance)

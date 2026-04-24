@@ -132,7 +132,19 @@ sources:
 | ADR ↔ Index sync hook | `components/adr-index-sync-hook.md` + `~/.claude/hooks/adr-index-sync-check.sh` |
 | Orphan-audit grep (включая `tests/`) | `architecture/development-workflow.md` PHASE 8 step 5b |
 | Canonical counts sync HARD-GATE | `architecture/development-workflow.md` PHASE 8 step 5a |
-| PHASE 2 brainstorming binding protocol (trader-expert ROUND 1+2) | `architecture/development-workflow.md` PHASE 2 step 3a-3f + `~/.claude/agents/trader-expert.md` |
+| PHASE 2 brainstorming binding protocol (trader-expert ROUND 1+2) | `architecture/development-workflow.md` PHASE 2 step 3 → `.claude/skills/brainstorm-init/SKILL.md` |
+
+### Project-level skills (workflow templates)
+
+| Query | Skill |
+|-------|-------|
+| "где мы остановились?" / sprint resumption / after `/clear` | `.claude/skills/sprint-orient/SKILL.md` (auto-trigger) |
+| "ship sprint" / "финишируем" / PHASE 8 HARD-GATEs | `.claude/skills/sprint-finish/SKILL.md` (auto-trigger) |
+| After src/ change → docs sync | `.claude/skills/wiki-update/SKILL.md` (auto-trigger) |
+| "брейнштурм" / scope questions / PHASE 2 binding | `.claude/skills/brainstorm-init/SKILL.md` (auto-trigger) |
+| Test PreToolUse hook script | `.claude/skills/hook-test/SKILL.md` (explicit `/hook-test` only) |
+
+Skills replace hardcoded inline workflow logic per progressive disclosure. Не дублировать procedure в other docs.
 
 ## Disambiguation FAQ
 
