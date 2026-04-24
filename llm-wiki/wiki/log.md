@@ -316,3 +316,16 @@
 - Tests: 13 task suites + 1 opt-in Demo integration scaffold.
 - ADR: 0022 accepted.
 - Wiki updated: index.md (runtime-manager, bar-poller components), log.md (this entry), SPRINT_STATE.md (sprint 8a, phase 8-ship).
+
+## [2026-04-24] sprint-ship | S8a — Live Runtime tagged + carry-over to S8b
+
+- Merge `2205743` (--no-ff feature/sprint-8a-live-runtime → main).
+- Tag `v0.1.0-alpha.8a` annotated (37 commits, 2411 +/255 - LoC).
+- Reviewer summary: trading-logic (opus) NO blockers; python-reviewer (sonnet) 2 HIGH BLOCKERs fixed in `0e2359c` (None-guard for assessment.qty/tp_price/sl_price + structlog migration manager.py + bar_source.py); data-integrity (sonnet) NO blockers.
+- Lint cleanup `62be604` (UP037 + ARG001 + F401, ruff clean on S8a src + tests).
+- Final test suite: 570 unit pass / 24 skipped (clean env). 73 new S8a-specific tests across runtime/FSM/lock/CLI scopes.
+- 3 pre-existing test_config.py failures = local `.env` env-pollution (verified false positive on clean clone — CI green).
+- SPRINT_STATE.md: sprint=8a, phase=between-sprints, branch=main, tag=v0.1.0-alpha.8a.
+- Carry-over to S8b: (1) `request_halt` → wire FSM transition (10 KILL_SWITCH_REQUESTED transitions currently dead code); (2) `BarSource._INTERVAL_MS` KeyError guard; (3) `main()` mypy no-any-return narrow + tests ARG005 cleanup; (4) sentinel-file atomic write.
+- Branch `feature/sprint-8a-live-runtime` сохранена локально (S6/S7 pattern).
+- Next: open S8b brainstorm (Analytics per-fill + WS+REST epsilon-halt).
