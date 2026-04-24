@@ -596,3 +596,18 @@ class Coordinator:
         if extra:
             ctx.update(extra)
         self._repo._set_halt(symbol=self._symbol, reason=reason, context=ctx)
+
+    def request_halt(self, reason: str) -> None:
+        """Public halt entry-point for RuntimeManager (KILL_SWITCH, RUNTIME_CRASH, STALL).
+
+        Acquires self._lock (RLock — re-entrant if caller already holds).
+        Delegates to existing _set_halt — primary-wins per S7 γ rule (halt_log always appends).
+
+        ADR 0022 sub-decisions 5 / 6 / 11.
+        """
+        with self._lock:
+            self._set_halt(
+                reason=reason,
+                last_event=ExecutionEvent.RISK_HALT,
+                extra={"source": "request_halt"},
+            )
