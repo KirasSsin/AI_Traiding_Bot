@@ -337,3 +337,11 @@
 - Dispatch policy: future Agent calls subagent_type="trading-logic-reviewer" БЕЗ `model: "opus"` override. Cost reduction ~5×.
 - `quant-stats-reviewer` остаётся `opus` — формулы/MC/DSR требуют heavier reasoning (не меняем).
 - Files: `wiki/project/decisions/0017-review-agent-harness.md` (line 41 + Amendments), `llm-wiki/CLAUDE.md` (line 472).
+
+## [2026-04-24] tooling | quant-stats-reviewer model opus → sonnet (4.6) — unified policy
+
+- ADR 0017 amended (follow-up): quant-stats-reviewer model `opus` → `sonnet` (4.6 alias). Единая политика — все 5 curated агентов теперь sonnet.
+- Файл `~/.claude/agents/quant-stats-reviewer.md` frontmatter `model: opus` → `sonnet` (real drift fix — file сам был opus, не как trading-logic).
+- Reasoning: формулы/Wilson/Kelly/MC/DSR покрываются sonnet 4.5+ extended thinking. Symmetry + cost reduction ~5×.
+- Escalation: re-evaluate post-S9 (DSR/MC heavy суите) — если sonnet пропускает real blockers, обратно к opus.
+- Files: `~/.claude/agents/quant-stats-reviewer.md`, `wiki/project/decisions/0017-review-agent-harness.md` (line 42 + Amendments), `llm-wiki/CLAUDE.md` (line 471).

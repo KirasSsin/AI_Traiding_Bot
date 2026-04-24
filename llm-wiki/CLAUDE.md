@@ -468,7 +468,7 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 **Active (5):**
 - `python-reviewer.md` (sonnet) — generic Python review (per ADR 0017)
 - `data-integrity-reviewer.md` (sonnet) — SQLite/Parquet/migrations (per ADR 0017)
-- `quant-stats-reviewer.md` (opus) — formulas/Wilson/Kelly/MC/CB thresholds (per ADR 0017)
+- `quant-stats-reviewer.md` (sonnet 4.6) — formulas/Wilson/Kelly/MC/CB thresholds (per ADR 0017 amendment 2026-04-24; sonnet 4.5+ built-in extended thinking sufficient; re-evaluate post-S9 DSR/MC)
 - `trading-logic-reviewer.md` (sonnet 4.6) — look-ahead/timing/FSM/reason codes/venue (per ADR 0017 amendment 2026-04-24; sonnet 4.5+ built-in extended thinking sufficient)
 - `trader-expert.md` (sonnet) — PHASE 2 brainstorming decision-maker; принимает structured questionnaire (questions + maintainer recommendation + alternatives + reasoning) → возвращает per-item CONFIRM/REVISE/DEFER/EXPAND verdict; ОБЯЗАТЕЛЬНО dispatch'ить если есть unresolved scope/architecture questions перед PHASE 3.
 
