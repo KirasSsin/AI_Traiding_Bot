@@ -51,4 +51,4 @@ def test_kill_terminal():
 
 def test_transitions_count_exact():
     """Lock the exact transition count. Adding/removing requires ADR update."""
-    assert len(TRANSITIONS) == 73  # +11 KILL_SWITCH_REQUESTED (ADR 0022) +3 RISK_HALT for ENTRY_PENDING/EXIT_PENDING/RECONCILING (S8b T1 fix-up; future ADR 0023)
+    assert len(TRANSITIONS) == 74  # +11 KILL_SWITCH_REQUESTED (ADR 0022) +3 RISK_HALT for ENTRY_PENDING/EXIT_PENDING/RECONCILING (S8b T1 fix-up) +1 RISK_HALT for FLAT (S8b T7 fix-up; future ADR 0023 amend)
