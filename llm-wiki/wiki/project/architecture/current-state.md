@@ -47,7 +47,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | `backtest/` | replay_engine, vector_backtest, reporter, indicators, data_collector, replay | ~700 | (open gap — S8c) | S2 |
 | `core/` | models | <50 | (legacy stub) | pre-S1 (mostly removed) |
 | `data/` | __init__ stub | <50 | — | pre-S1 (replaced by marketdata/) |
-| `execution/` | coordinator (628), state_machine (170), state_repo (148), reconciler (278), oco, bracket (legacy 100), models, bybit/{adapter, ws_private, rest} | ~1500 | [[../components/coordinator]], [[../components/execution-state-machine]], [[../components/reconciler]], [[../components/oco]], [[../components/bybit-adapter]], [[../components/ws-private-consumer]] | S5/S6/S7/S8a/S8b |
+| `execution/` | coordinator (628), state_machine (170), state_repo (148), reconciler (278), bracket (oco-builder, ADR 0020 sub-decision 2, 101 LoC), models, bybit/{adapter, ws_private, rest} | ~1500 | [[../components/coordinator]], [[../components/execution-state-machine]], [[../components/reconciler]], [[../components/oco]], [[../components/bybit-adapter]], [[../components/ws-private-consumer]] | S5/S6/S7/S8a/S8b |
 | `marketdata/` | bar_builder, clock, filters, gaps, models, pipeline, storage | ~600 | [[../components/bar-builder]], [[../components/storage]] | S2 |
 | `platform/` | config, db, logging | ~350 | [[../components/config]], [[../components/logging]] | S1 |
 | `risk/` | manager (315), kelly (128), reason_codes, override (147), trade_history (118), circuit_breakers, equity_tracker, sizing, resume_cb, models | ~1100 | [[../components/risk-manager]], [[../components/kelly]], [[../components/sizing]], [[../components/circuit-breakers]] (open gaps: override.md, trade-history.md — S8c) | S4/S7 |
