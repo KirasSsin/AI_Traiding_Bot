@@ -2,11 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: 8c
-phase: 4-execution
-branch: feature/sprint-8c-wiki-backfill
-tag: v0.1.0-alpha.8b
-plan: wiki/project/plans/2026-04-25-sprint-8c-wiki-backfill.md
+sprint: 8c-shipped
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.8c
 ---
 
 # SPRINT STATE
@@ -16,46 +15,49 @@ plan: wiki/project/plans/2026-04-25-sprint-8c-wiki-backfill.md
 
 ## Текущий статус
 
-**Между спринтами. S8b shipped (tag `v0.1.0-alpha.8b`, PR #9 → `5a4d074`). Pre-S8c wiki-backfill batch shipped (PR #10 → `a8ad404`): 19 items (Bucket A+ + DRIFT) + 3 methodology kit updates (PHASE 8 HARD-GATE step 5/5a/6 + canonical counts pattern + binding PHASE 2 brainstorming protocol).**
+**Между спринтами. S8c shipped (tag `v0.1.0-alpha.8c`, PR #11 squash-merged → `92c8d30`).**
 
-Готовы к S8c brainstorm. Carry-over к S8c: Bucket B (user bugs TBD) + Bucket E (ADR 0022 narrative count + Context section amends) + S8a/S8b code carry-overs (`_set_halt(reason: str→ReasonCode)`, pre-existing test_config 3 failures, mypy 44 errors).
+10 спринтов завершено: S1-S7 + S8a + S8b + S8c. Готовы к S9 brainstorm.
 
-## Последний спринт (S8b)
+## Последний спринт (S8c — Wiki backfill + tooling debt)
 
-- [x] T1 Coordinator.request_halt — FSM transit fix
-- [x] T2 BarSource — fail-fast 13-interval validator
-- [x] T3 main() mypy no-any-return — typed `Callable[[Namespace], int]` dispatch
-- [x] T4 _cmd_kill atomic — os.open + os.replace + finally cleanup
-- [x] T5 ADR 0023 — halt-code → FSM event mapping invariant
-- [x] T6 trading-logic-reviewer.md CRITICAL section "Halt-code mapping"
-- [x] T7 property test + (FLAT, RISK_HALT) row symmetry — caught real production bug
-- [x] T8 Wiki Stage E sync — runtime-manager + bar-poller + index + log + ADR 0023
-- [x] T9 Ship — PR #9 → squash-merge → tag v0.1.0-alpha.8b
+12 tasks (T1-T12), 12 commits squashed. **PHASE 2 binding protocol caught catastrophic regression** на Q1 — maintainer DELETE recommendation для bracket.py отменена ROUND 2 trader-expert verdict (production code, 4 test importers + coordinator.py:9 production import).
+
+- [x] T1 DELETE oco.py + 2 tests (Q4 ADR 0019/1 supersession)
+- [x] T2 current-state.md bracket label fix (Q1 ROUND 2 + CC2)
+- [x] T3 NEW backtest-harness.md (Q2 — 6 backtest files consolidated)
+- [x] T4 NEW kill-switch-cli.md (Q3 — CLI + 3 subcommands + atomic write)
+- [x] T5 NEW risk-override.md (147 LoC HMAC-signed override)
+- [x] T6 NEW trade-history.md (118 LoC audit log)
+- [x] T7 `_set_halt(reason: ReasonCode)` type narrow
+- [x] T8 test_config env-pollution fix (3 tests pass now)
+- [x] T9 ADR 0022 amend (count 73→74 + Context S8b scope, Bucket E1+E2)
+- [x] T10 trace map mandatory + retro-add S5/S7/S8b (Bucket C5)
+- [x] T11 adr-index-sync-check.sh hook (Bucket C6)
+- [x] T12 PHASE 8 finalize (sprint-08c.md + index + canonical counts)
 
 ## Следующее действие
 
 ```
-PHASE 1 (orient) для S8c:
-1. mem-search "sprint 8a" "sprint 8b" → surface unresolved concerns
+PHASE 1 (orient) для S9:
+1. mem-search "sprint 8c" → surface unresolved concerns
 2. Read llm-wiki/wiki/log.md (last 10 entries)
-3. PHASE 2 brainstorm S8c scope (см. carry-over ниже + новые цели)
+3. PHASE 2 brainstorm S9 scope (см. carry-over ниже + новые цели)
 ```
 
-## Carry-over в S8c
+## Carry-over к S9+
 
-- `_set_halt(reason: str)` internal wrapper signature всё ещё `str` — `request_halt(reason: ReasonCode)` уже типизирован; cleanup в S8c.
-- `coordinator.md` wiki page отсутствует — request_halt FSM-transit semantics только в commit log + ADR 0023; создать.
-- ADR 0022 narrative transition count = 73; live = 74 после T7 fix-up. Amend at next ADR touch.
-- Pre-existing test_config.py 3 env-pollution failures + test_risk_flow OverrideStore signature drift.
-- Pre-existing mypy 44 errors в coordinator.py (LocalState undef, dict[Any,Any]), storage.py|gaps.py (untyped pyarrow), reconciler.py (None union-attr).
+- **Bucket F1** — `wiki/runbooks/halt-recovery.md` MISSING (referenced from 8+ places). Brainstorm scope (operator runbook multi-section). Recommend dedicated "operator readiness" sprint.
+- **mypy 44 pre-existing errors** (coordinator.py LocalState undef, dict[Any,Any]; storage.py/gaps.py untyped pyarrow; reconciler.py None union-attr) — defer typed batch sprint.
+- **C7 candidate** — broken-link audit hook (verify all `[[../...]]` wiki refs resolve).
 
-## Ключевые решения S8b (для истории)
+## Ключевые решения S8c (для истории)
 
-- **Allow-list contract** для `_REQUEST_HALT_CODES` (3 codes) — explicit, NOT prefix-based. Drift mitigated by trading-logic-reviewer CRITICAL section + ADR 0023 + property test.
-- **(FLAT, RISK_HALT) → HALTED** — surfaced by property test, prevents `RuntimeManager.run()` exception → split-brain.
-- **Atomic kill-switch** mirror `src/risk/override.py:82-95` minus fsync (paper-trade scope, trader-expert verdict).
-- **HALTED-guard** в `request_halt` — `current.state != HALTED` перед `_transition` — preserves S7 γ idempotency.
-- **`os` module-level import** в `src/__main__.py` — needed для `monkeypatch.setattr("src.__main__.os.replace", ...)` resolution в T4 atomicity test.
+- **Iterative justify protocol caught DELETE bracket.py regression** — Q1 ROUND 2 saved production от ModuleNotFoundError.
+- **CC1 recursive lesson** — orphan-audit grep MUST include `tests/` (caught 3rd file `test_execution_oco_testnet.py` permanent skip в Q4). Now PHASE 8 step 5b HARD-GATE.
+- **Trace map mandatory** в PHASE 3 (HARD-GATE step 1a) — prevents spec coverage drift.
+- **adr-index-sync hook** — blocks push if new ADR не в index.md (mirror adr-agent-sync pattern).
+- **EXIT_RECONCILE_DETECTED categorization clarified** — comment-only edit, ADR 0021 block placement preserved для traceability.
 
 ## Как обновлять этот файл
 
