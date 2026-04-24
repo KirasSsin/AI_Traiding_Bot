@@ -8,7 +8,9 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+import pytest
 from src.marketdata.models import Bar, DataQuality
+from src.runtime.bar_source import BarSource
 
 
 def _bar(open_ms: int, close_ms: int) -> Bar:
@@ -139,3 +141,25 @@ def test_bar_source_recovery_resets_counter():
     src.poll()  # recovery
     assert src.consecutive_failures == 0
     assert src.should_halt(threshold=24) is False
+
+
+@pytest.mark.parametrize(
+    "interval",
+    ["1", "3", "5", "15", "30", "60", "120", "240", "360", "720", "D", "W", "M"],
+)
+def test_bar_source_init_accepts_all_bybit_intervals(interval):
+    """All 13 Bybit V5 kline interval strings accepted at init."""
+    src = BarSource(adapter=object(), symbol="BTCUSDT", interval=interval)
+    assert src._interval == interval
+
+
+def test_bar_source_init_rejects_unknown_interval():
+    """Unknown interval fails fast at init, not at first poll."""
+    with pytest.raises(ValueError, match="unsupported interval"):
+        BarSource(adapter=object(), symbol="BTCUSDT", interval="99")
+
+
+def test_bar_source_init_rejects_empty_interval():
+    """Empty string interval also fails."""
+    with pytest.raises(ValueError, match="unsupported interval"):
+        BarSource(adapter=object(), symbol="BTCUSDT", interval="")

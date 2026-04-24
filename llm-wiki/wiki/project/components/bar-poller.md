@@ -61,6 +61,17 @@ Default 24 (= 120s = 3.3% от 3600s bar period). Trader-expert verdict: stall �
 
 Stall длиной > 30 минут перед close может вызвать **mid-bar fill** вместо open fill (RuntimeManager пропустит close moment, signal эмитится позже на следующем tick'е после recovery). Это **slippage**, не correctness violation. Monitored через structlog `runtime.bar_poll_stall` event с полем `consecutive_failures`. Подробнее: [[../architecture/risk-register]] → POLL_STALL_MID_BAR_FILL scenario.
 
+### Supported intervals
+
+`BarSource.__init__` validates the `interval` parameter against the 13 Bybit
+V5 kline strings: `{"1", "3", "5", "15", "30", "60", "120", "240", "360",
+"720", "D", "W", "M"}`. Unknown values raise `ValueError` at construction
+(fail-fast vs. previous KeyError on first poll). v0.1 only uses `"60"` (1H);
+the dict is the source of truth for any future call-site (S8b T2 fix).
+
+No `Settings.bar_interval` field — interval is passed at construction by the
+caller. YAGNI per trader-expert verdict 2026-04-24.
+
 ## Related
 
 - [[runtime-manager]] — owner of poll cadence + halt emission

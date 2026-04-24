@@ -131,6 +131,14 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.OCO_ARMING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    # === ADR 0022 sub-decision 6 fix-up (S8b T1 + T7 follow-up): RISK_HALT from pending/reconciling/idle states ===
+    # Symmetric with KILL_SWITCH_REQUESTED rows for same source states (lines 150-160).
+    # FLAT added in T7 — RuntimeManager.run() can call request_halt(HALT_RUNTIME_CRASH)
+    # while FSM is idle; without this row the halt path itself crashes (split-brain).
+    (ExecutionState.FLAT, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.ENTRY_PENDING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.EXIT_PENDING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
+    (ExecutionState.RECONCILING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
     (ExecutionState.OCO_ARMING, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,

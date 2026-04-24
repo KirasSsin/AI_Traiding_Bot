@@ -105,6 +105,14 @@ _tick()
 - Multi-symbol / multi-bracket — lock granularity re-evaluation.
 - async/await migration — S9+.
 
+### `python -m src kill`
+
+Writes the sentinel file (`Settings.runtime_kill_switch_path`, default
+`.kill_switch`) atomically via `os.open` + `os.replace` (mirrors
+`src/risk/override.py:82-95`, no `fsync`). RuntimeManager polls
+`sentinel.exists()` each tick — atomic write guarantees no half-created
+file is observed (S8b T4 fix).
+
 ## Sources
 
 - [[../decisions/0022-sprint-8a-live-runtime]] — все 14 sub-decisions
