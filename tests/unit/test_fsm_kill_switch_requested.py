@@ -23,6 +23,7 @@ from src.execution.state_machine import (
         ExecutionState.EXIT_SIBLING_CANCELLING,
         ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
         ExecutionState.EXIT_SL_RESIDUAL,
+        ExecutionState.PARTIAL_FILL,
         ExecutionState.RECONCILING,
     ],
 )
@@ -34,6 +35,16 @@ def test_kill_switch_requested_illegal_from_killed():
     """Already-killed state cannot be halted again."""
     with pytest.raises(IllegalTransitionError):
         apply(ExecutionState.KILLED, ExecutionEvent.KILL_SWITCH_REQUESTED)
+
+
+def test_kill_switch_requested_illegal_from_halted():
+    """No self-loop on HALTED — explicit design decision (avoids masking primary halt_reason).
+
+    Idempotency must be enforced at the caller (Coordinator.request_halt should check
+    state == HALTED before invoking _set_halt). FSM rejects redundant halt as illegal.
+    """
+    with pytest.raises(IllegalTransitionError):
+        apply(ExecutionState.HALTED, ExecutionEvent.KILL_SWITCH_REQUESTED)
 
 
 def test_legacy_kill_switch_still_terminal():

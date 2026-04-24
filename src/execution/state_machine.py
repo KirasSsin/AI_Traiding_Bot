@@ -149,6 +149,7 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (ExecutionState.PARTIAL_FILL, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.RECONCILING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
 }
 
