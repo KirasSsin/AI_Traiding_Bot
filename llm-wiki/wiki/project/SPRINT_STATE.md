@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-24
+updated: 2026-04-24-pre-s8-audit
 sprint: 7-resilience
 phase: 9-merged
 branch: main
@@ -37,6 +37,8 @@ Phase G re-scoped к Demo Mainnet (v0.1 ops target). Mainnet promotion (v0.2+) g
 ## В процессе
 
 Между спринтами. S8 brainstorm pending (driver loop для WS consumer + manager.py orchestration + Analytics).
+Pre-S8 audit DONE (2026-04-24): 5 agents synced (trading-logic v3 / data-integrity +ADR 0021 / quant-stats +Analytics / python-reviewer +Decimal/asyncio/structlog / trader-expert +HEAL+bootstrap), SOP PHASE 0a step 5 (staleness check) + PHASE 2 orchestration note added, ADR 0017 amended.
+Open question for S8 brainstorm: создавать ли `orchestration-reviewer` (asyncio supervision / backpressure / queue invariants) или покрытие 4-х reviewers + trader-expert достаточно. Defer pending S8 PHASE 2.
 
 ## Следующее действие
 

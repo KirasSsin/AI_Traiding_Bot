@@ -81,6 +81,12 @@ Sprint 3 завершён. Стек ревью к этому моменту:
 - `~/.claude/agents/trading-logic-reviewer.md`
 - `~/.claude/agents/quant-stats-reviewer.md`
 - `~/.claude/agents/data-integrity-reviewer.md`
-- `~/.claude/agents/Python Reviewer.md`
+- `~/.claude/agents/python-reviewer.md` (renamed from "Python Reviewer.md" 2026-04-23 — filename normalization, см. [[../../CLAUDE]] Cleanup history)
+- `~/.claude/agents/trader-expert.md` (S7+ addition — PHASE 2 brainstorming decision-maker, sonnet; не reviewer но входит в curated agent set; полная роль см. [[development-workflow]] PHASE 2 step 3)
 - [[../architecture/development-workflow]] — Superpowers pipeline (review гейт интегрирован сюда).
 - [[../decisions/0001-record-architecture-decisions]]
+
+## Amendments
+
+- **2026-04-24 (post-S7):** Добавлен `trader-expert` (sonnet) в curated agent set как decision-maker последней инстанции в PHASE 2 brainstorming. Не reviewer (не вызывается в PHASE 5), но обязателен в PHASE 2 если есть unresolved scope/architecture questions перед PHASE 3. Filename: `~/.claude/agents/trader-expert.md`.
+- **2026-04-24:** Подтверждён model assignment per file frontmatter после агент audit: `trading-logic-reviewer = opus`, `quant-stats-reviewer = opus`, `data-integrity-reviewer = sonnet`, `python-reviewer = sonnet`, `trader-expert = sonnet`. Drift между ADR и frontmatter устранён (был sonnet в trading-logic-reviewer.md — исправлено на opus).

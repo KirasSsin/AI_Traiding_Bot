@@ -102,7 +102,19 @@ Domain reviewers → trading-domain correctness (ADR 0017)
 
 4. mcp__ccd_session__mark_chapter "Sprint N — resume phase X"
 
+5. Agent staleness check (ОБЯЗАТЕЛЬНО при phase = "between-sprints" ИЛИ перед началом нового sprint):
+   a. grep -E "42 enum|59 canonical|4-valued|halt_log|HEAL_ENTRY_FILLED|HALT_BOOTSTRAP_AMBIGUOUS|ws-private-consumer|migration 0005" \
+        ~/.claude/agents/trading-logic-reviewer.md \
+        ~/.claude/agents/data-integrity-reviewer.md \
+        ~/.claude/agents/quant-stats-reviewer.md \
+        ~/.claude/agents/trader-expert.md
+      → если совпадений < N expected (см. SPRINT_STATE для current N) → агенты устарели
+   b. Если устарели: dispatch trader-expert с questionnaire "что изменилось с last sprint" ИЛИ
+      maintainer патчит вручную перед PHASE 2.
+   c. Sync-check ADR 0017 model assignments vs frontmatter `model:` в каждом agent файле.
+
 SKIP: шаг 2-3 только если SPRINT_STATE.phase = "between-sprints"
+SKIP: шаг 5 только если phase = "4-execution" continue (уже проверяли в начале sprint)
 ```
 
 ### PHASE 0b — Session start (АВТОМАТИЧЕСКИ, хуки)
@@ -191,6 +203,17 @@ SKIP: executing approved ADR → Phase 3
 4. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed)
    → каждое решение из шагов 3c-3d попадает в ADR с reference на verdict.
 5. User approves → status: accepted
+
+ORCHESTRATION & CONCURRENCY (S8+ scope, ОБЯЗАТЕЛЬНО включить в questionnaire если затронуты):
+  - Driver loop ownership (manager.py vs coordinator.bootstrap): кто стартует, кто
+    останавливает, кто owns asyncio.Task references.
+  - Backpressure: WS event burst → queue bound? drop policy? halt threshold?
+  - Concurrency invariants: один coordinator per symbol; FSM transitions serialized
+    (single-writer); WS consumer non-blocking (offload sqlite to to_thread).
+  - Shutdown sequencing: stop accepting events → flush in-flight → cancel tasks →
+    close WS → close DB. Forcible kill = HALT + manual reset on next bootstrap.
+  - Supervision: task crash → supervisor restart vs halt? Bounded retry?
+  - Если any of above unresolved → trader-expert questionnaire ОБЯЗАТЕЛЬНО.
 
 SPRINT_STATE update:
   phase: 2-brainstorming
