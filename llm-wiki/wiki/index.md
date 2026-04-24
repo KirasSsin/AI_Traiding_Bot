@@ -1,3 +1,12 @@
+---
+title: Wiki Index — каталог всех страниц
+type: summary
+tags: [index, navigation, catalog]
+created: 2026-04-19
+updated: 2026-04-25
+status: stable
+---
+
 # Index
 
 Каталог всех страниц wiki. Обновляется на каждом ingest.
@@ -48,6 +57,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-07-resilience]] — S7 (2026-04-24): bootstrap reconcile + WS-reconnect wiring + 4-valued verdicts + γ halt persistence + ws_private consumer; FSM 16/29/59 (dedup); reason codes 39→42; tag v0.1.0-alpha.7.
 - [[project/sprints/sprint-08a-live-runtime]] — S8a (2026-04-24): RuntimeManager (bootstrap → tick loop → shutdown) + REST bar poller + KILL_SWITCH sentinel-file CLI + threading lock policy; FSM +11 KILL_SWITCH_REQUESTED transitions (59→70); reason codes 42→45; tag v0.1.0-alpha.8a.
 - [[project/sprints/sprint-08b-carryover]] — S8b (2026-04-24): S8a carry-over fixes (request_halt FSM dispatch + BarSource validator + atomic kill write + main() typed dispatch) + ADR 0023 halt-code mapping invariant + property test; FSM 70→74 (T1 +3 RISK_HALT, T7 +1 FLAT,RISK_HALT); tag v0.1.0-alpha.8b.
+- [[project/sprints/sprint-08c-wiki-backfill]] — S8c (2026-04-25): wiki backfill + tooling debt + S8a/S8b carry-overs. 12 tasks, 4 new component pages (backtest-harness, kill-switch-cli, risk-override, trade-history) + 3 file deletions (oco.py + 2 tests per ADR 0019/1 supersession) + trace map mandatory + adr-index-sync hook. PHASE 2 binding protocol caught DELETE bracket.py catastrophic regression. Tag v0.1.0-alpha.8c.
 
 ## Project — Plans
 
@@ -56,6 +66,17 @@ _(пусто — v0.2+)_
 - [[project/plans/2026-04-22-sprint-3-strategy-port]] — implementation plan Sprint 3 (TA-Lib indicators + EmaCrossoverAdxRsiStrategy + look-ahead property test).
 - [[project/plans/2026-04-23-sprint-4-risk]] — implementation plan Sprint 4 (Risk module — split into tasks-1-8 / 9-13 / 14-17).
 - [[project/plans/2026-04-23-sprint-5-execution]] — implementation plan Sprint 5 (OCO + 12-state FSM + Reconciler + testnet integration).
+- [[project/plans/2026-04-23-sprint-6-spot-oco-emulation]] — implementation plan Sprint 6 (3-order Spot OCO emulation + bracket builder + reconcile-as-truth refactor).
+- [[project/plans/2026-04-24-sprint-7-resilience]] — implementation plan Sprint 7 (bootstrap reconcile + 4-valued verdicts + γ halt persistence + ws_private close-hook).
+- [[project/plans/2026-04-24-sprint-8a-live-runtime]] — implementation plan Sprint 8a (RuntimeManager + REST bar poller + KILL_SWITCH + threading lock policy + entry-point).
+- [[project/plans/2026-04-24-sprint-8b-carryover]] — implementation plan Sprint 8b (S8a carry-over fixes + ADR 0023 halt-code mapping invariant).
+- [[project/plans/2026-04-25-sprint-8c-wiki-backfill]] — implementation plan Sprint 8c (wiki backfill + tooling debt + S8a/S8b carry-overs).
+
+## Project — Runbooks
+
+> Operator post-mortem procedures + recovery workflows. Currently empty стаб (Bucket F1 `halt-recovery.md` deferred к S9+). Will populate as runbooks land.
+
+_(пусто — F1 stub TBD)_
 - [[project/architecture/stack-v0.1]] — Python 3.12 + asyncio/uvloop + TA-Lib + pydantic v2 + structlog; Docker-compose sketch.
 - [[project/architecture/bounded-contexts]] — 5 DDD контекстов: Market Data / Signal Gen / Risk / Execution / Analytics.
 - [[project/architecture/domain-events]] — 20 domain events + event sourcing SQL + happy/error/reconnect paths.

@@ -1,11 +1,11 @@
 ---
 title: Sprint 5 — Execution layer (OCO + FSM + Reconciler)
-type: summary
+type: sprint
 tags: [sprint, sprint-5, execution, oco, fsm, reconciler]
 created: 2026-04-23
 updated: 2026-04-23
 sources: [project/plans/2026-04-23-sprint-5-execution.md]
-status: done
+status: completed
 ---
 
 # Sprint 5 — Execution layer (OCO + FSM + Reconciler)

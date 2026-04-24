@@ -115,6 +115,15 @@ Alias `load_data()` → `load_market_data()` для обратной совме�
 - **Parquet write pipeline** — `data_collector` только читает; механизм загрузки и сохранения исторических klines в Parquet не существует в репозитории.
 - **Аннуализация VectorBacktester** — `Sharpe × √(365·24·60)` предполагает 1m данные; при 1h данных формулу нужно исправить на `× √(365·24)`.
 
+## Referenced by
+
+- [[../../index]] — Project — Components catalog
+- [[../architecture/current-state]] — `src/backtest/` row
+- [[../decisions/0014-walk-forward-train2000-test500]] — WFA methodology (this harness implements)
+- [[../decisions/0015-sign-flip-mc-permutations-n2000]] — MC permutations (deferred S9+ integration)
+- [[../../trading/concepts/walk-forward-validation]] — concept page
+- [[../../trading/concepts/monte-carlo-permutations]] — concept page
+
 ## Related
 
 - [[indicators]] — live `src/signalgen/indicators.py` (TA-Lib Wilder ADX/RSI/ATR + classical EMA crossover)

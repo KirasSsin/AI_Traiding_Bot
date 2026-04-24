@@ -267,7 +267,11 @@ Read tool — hard-limit **~25,000 токенов** (~90KB markdown / ~80KB ко
    - `Docs/reference/Mimo_bot/00-All.md` (~350k tokens, дубликат)
    - `Docs/MVP/FINAL-CONSOLIDATED.md` (~30k tokens)
    - `Docs/reference/Mimo_bot/FINAL-CONSOLIDATED-DOCUMENT.md.md` (~30k tokens)
-   - `wiki/project/plans/2026-04-21-sprint-2-bybit-venue-migration.md` (~28k tokens) — split TODO
+   - `wiki/project/plans/2026-04-21-sprint-2-bybit-venue-migration.md` (~28k tokens, 91KB) — split TODO
+   - `wiki/project/plans/2026-04-23-sprint-6-spot-oco-emulation.md` (~34k tokens, 114KB) — split TODO
+   - `wiki/project/plans/2026-04-24-sprint-7-resilience.md` (~26k tokens, 86KB) — split TODO
+   - `wiki/project/plans/2026-04-24-sprint-8a-live-runtime.md` (~35k tokens, 117KB) — split TODO
+   - `wiki/log.md` (~15.5k tokens, 51KB; append-only journal) — use `tail -100` или offset Read
 
 **Свои wiki-страницы** (`wiki/**`) держим **< 50KB ≈ 15k токенов**. Если близко — разбивай на под-страницы:
 - `<topic>.md` — оглавление + кросс-ссылки на под-части.

@@ -1,11 +1,11 @@
 ---
 title: Sprint 4 — Risk module (4-phase Kelly + L1/L2/L3/flash circuit breakers)
-type: summary
+type: sprint
 tags: [sprint, sprint-4, risk, kelly, circuit-breakers, override]
 created: 2026-04-23
 updated: 2026-04-23
 sources: [project/plans/2026-04-23-sprint-4-risk.md]
-status: done
+status: completed
 ---
 
 # Sprint 4 — Risk module

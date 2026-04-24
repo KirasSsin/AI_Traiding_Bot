@@ -1,3 +1,12 @@
+---
+title: Sprint 8c — Wiki backfill + tooling debt + S8a/S8b carry-overs
+type: plan
+tags: [sprint-8c, plan, wiki, tooling, carry-over, hooks, methodology]
+created: 2026-04-25
+updated: 2026-04-25
+status: completed
+---
+
 # Sprint 8c — Wiki backfill + tooling debt + S8a/S8b carry-overs
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

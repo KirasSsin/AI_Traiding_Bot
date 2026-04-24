@@ -1,3 +1,12 @@
+---
+title: Sprint 2 — Bybit Venue Migration + MarketData Ingest Implementation Plan
+type: plan
+tags: [sprint-2, plan, bybit, venue-migration, marketdata, pybit, adapter]
+created: 2026-04-21
+updated: 2026-04-21
+status: completed
+---
+
 # Sprint 2 — Bybit Venue Migration + MarketData Ingest Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

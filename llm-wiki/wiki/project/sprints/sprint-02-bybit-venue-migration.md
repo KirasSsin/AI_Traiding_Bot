@@ -1,11 +1,11 @@
 ---
 title: Sprint 2 — Bybit venue migration + MarketData ingest
-type: summary
+type: sprint
 tags: [sprint, sprint-2, bybit, marketdata, ingest, venue-migration]
 created: 2026-04-22
 updated: 2026-04-22
 sources: [project/plans/2026-04-21-sprint-2-bybit-venue-migration.md]
-status: done
+status: completed
 ---
 
 # Sprint 2 — Bybit venue migration + MarketData ingest

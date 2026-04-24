@@ -1,11 +1,11 @@
 ---
 title: Sprint 1 — Foundation
-type: summary
+type: sprint
 tags: [sprint, sprint-1, foundation, scaffolding, storage, models]
 created: 2026-04-22
 updated: 2026-04-22
 sources: [project/plans/2026-04-20-sprint-1-foundation.md]
-status: done
+status: completed
 ---
 
 # Sprint 1 — Foundation

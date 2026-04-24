@@ -141,6 +141,13 @@ ADR 0022 sub-decision 5 evaluated both options:
 - **Systemd/launchd service unit** — ops concern, separate artifact post-tag.
 - **`run` + `reconcile-only` full DI wiring** — TODO carry-over; T20 integration test reference will establish wiring pattern.
 
+## Referenced by
+
+- [[coordinator]] — `request_halt(KILL_SWITCH_REQUESTED)` triggered by sentinel detection
+- [[runtime-manager]] — `_maybe_kill_switch` tick step polls sentinel; calls `request_halt` + sets `_stopping = True`
+- [[../decisions/0022-sprint-8a-live-runtime]] — ADR sub-decisions 5+6 (sentinel-file + entry-point)
+- [[../decisions/0023-halt-code-fsm-event-mapping]] — KILL_SWITCH_REQUESTED dispatch invariant
+
 ## Related
 
 - [[runtime-manager]] — owns tick pipeline + `_maybe_kill_switch` step + lifecycle

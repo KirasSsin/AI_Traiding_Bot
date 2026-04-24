@@ -1,3 +1,12 @@
+---
+title: Sprint 1 — Foundation Implementation Plan
+type: plan
+tags: [sprint-1, plan, foundation, ddd, storage, models, platform]
+created: 2026-04-20
+updated: 2026-04-20
+status: completed
+---
+
 # Sprint 1 — Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -1,11 +1,11 @@
 ---
 title: Sprint 3 — Strategy port (EMA + ADX + RSI + ATR via TA-Lib)
-type: summary
+type: sprint
 tags: [sprint, sprint-3, strategy, signalgen, ta-lib, indicators]
 created: 2026-04-22
 updated: 2026-04-22
 sources: [project/plans/2026-04-22-sprint-3-strategy-port.md]
-status: done
+status: completed
 ---
 
 # Sprint 3 — Strategy port
