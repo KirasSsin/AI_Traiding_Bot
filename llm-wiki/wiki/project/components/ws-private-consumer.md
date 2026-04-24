@@ -91,6 +91,14 @@ Endpoint URL содержит маркер площадки:
 - **Driver loop отсутствует в v0.1.** B1 narrow scope (passive consumer); orchestration `check_alive` worker отнесён в S8 вместе с runtime entry-point.
 - **Reconnect — внешняя ответственность.** `on_ws_reconnect` лишь триггерит coordinator → reconciler. Сам пере-подключиться pybit'ом не управляем (он сам ретраит).
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | Order events with `orderStatus ∈ {Filled, PartiallyFilled}` MUST have `cumExecFee + feeCurrency` — missing → ERROR log + drop (never forward None fees to `compute_oco_qty`) | `src/execution/bybit/ws_private.py` mandatory-field guard + ADR 0021 sub-decision 8 | `tests/unit/test_ws_private_consumer.py` |
+| 2 | Dual reconnect paths (close-hook + heartbeat watchdog) — one path failing doesn't kill reconnect | `src/execution/bybit/ws_private.py` close-hook + `check_alive` watchdog + ADR 0021 sub-decision 6 | `tests/property/test_bootstrap_ws_reconnect_idempotent.py` |
+| 3 | Passive consumer — routes events to Coordinator/Reconciler, no FSM mutation own | `src/execution/bybit/ws_private.py` (no `_transition` calls) | (architecture rule) |
+
 ## Related
 
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decision 6 (WS-reconnect wiring).

@@ -127,6 +127,16 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 - **C2 closed (S7):** `(ENTRY_PENDING|EXIT_PENDING, WS_RECONNECT) → RECONCILING` промотирует через 4-valued reconciler verdict (`AGREE` / `DIVERGENCE` / `HEAL_ENTRY_FILLED` / `EXITED`).
 - **OCO main lookup (S6):** `oco_main_order_id` пишется в `start_bracket()` из `entry_ack.order_id` (не угадывается по open-orders).
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | TRANSITIONS table-driven — no implicit if/else dispatch | `src/execution/state_machine.py` `TRANSITIONS` dict | `tests/unit/test_execution_fsm.py::test_transition_count_74` |
+| 2 | `(state, event) not in TRANSITIONS` → `IllegalTransitionError` | `src/execution/state_machine.py` `apply()` raises | `tests/unit/test_execution_fsm.py::test_illegal_transition` |
+| 3 | `WS_RECONNECT` valid for exactly 9 `_RECONCILABLE_STATES` | `src/execution/coordinator.py` `_RECONCILABLE_STATES` frozenset | `tests/unit/test_coordinator_on_ws_reconnect.py` |
+| 4 | `halt_log` write-ahead — written BEFORE `execution_state.halt_reason` update | migrations `0005_halt_persistence.sql` schema; `_repo._set_halt` order | `tests/unit/test_halt_persistence.py` |
+| 5 | `PARTIAL_FILL` state unreachable in v2 (preserved for SQLite warm-start back-compat only) | `src/execution/state_machine.py` PARTIAL_FILL — no inbound transitions in v2 | `tests/unit/test_execution_fsm_v2.py` |
+
 ## Related
 
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).

@@ -36,6 +36,15 @@ status: stable
 - **Stateful per instance** — хранит `last_confirmed_open_ms`. Один instance = один symbol+interval.
 - **No forward-fill в GAP** (per edge-cases #1) — GAP bar имеет OHLCV=0, downstream skip signal.
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | `confirm=true` gate — non-confirmed bars always return `None` | `src/marketdata/bar_builder.py` confirm check | `tests/unit/test_bar_builder.py` |
+| 2 | Dedup: duplicate `open_ms` after confirm → `OutOfOrderError` | `src/marketdata/bar_builder.py` dedup | `tests/unit/test_bar_builder.py` |
+| 3 | Out-of-order: `open_ms < last_confirmed` → `OutOfOrderError` | `src/marketdata/bar_builder.py` ordering check | `tests/unit/test_bar_builder.py` |
+| 4 | Stateful per instance — one instance per symbol+interval | `src/marketdata/bar_builder.py` constructor | (architecture rule) |
+
 ## Related
 
 - [[../architecture/edge-cases]] — источник invariant-списка.

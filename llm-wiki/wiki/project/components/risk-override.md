@@ -129,7 +129,7 @@ Duration format: `NNh` | `NNm` | `NNd` (default `1h`). CLI computes `settings.co
 
 Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, ADR 0018 sub-decision 9h, L3 audit finding).
 
-## Security invariants (ADR 0018 sub-decision 9, post-merge security audit)
+## Invariants (CRITICAL — verified by tests + code review)
 
 | CWE | Invariant | Enforcement | Test |
 |-----|-----------|-------------|------|
@@ -141,6 +141,14 @@ Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, AD
 | CWE-798 | `risk_override_hmac_key` has no committed default; `min_length=32` enforced | `Settings` field definition | `test_missing_hmac_key_raises`, `test_short_hmac_key_raises` |
 
 **No env-flag bypass:** `RiskManager.assess()` always calls `override_store.read_active()` when halt level is L2+. There is no debug/test env variable that skips this path.
+
+## Referenced by
+
+- [[risk-manager]] — consumer: calls `read_active()` on every `assess()` call at L2+; calls `consume()` before sizing on match
+- [[circuit-breakers]] — defines L2/L3/FLASH levels that this override unblocks
+- [[../decisions/0018-sprint-4-risk-decisions]] — defining ADR (override mechanism)
+- [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — CB hierarchy this override gates against
+- [[kill-switch-cli]] — atomic write pattern shared (kill-switch S8b T4 mirror without fsync)
 
 ## Related
 

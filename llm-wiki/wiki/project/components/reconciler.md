@@ -18,7 +18,10 @@ status: stable
 
 ## Interface
 
+> **⚠️ SUPERSEDED by S7 (ADR 0021 sub-decision 3) — see "S7 — 4-valued verdicts" section below.** S6 2-valued API shown here for back-compat traceability only. Live API = 4-valued `ReconcileResult` (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED).
+
 ```python
+# S6 ORIGINAL (superseded):
 reconciler = Reconciler(client: ExchangeQueryClient)
 state: ExchangeState = reconciler.fetch_exchange_state(symbol)
 result: ReconcileResult = reconciler.reconcile(symbol, local: ExecutionStateRow | None)
@@ -111,6 +114,15 @@ Reconciler(
 ### `OrderSnapshot` field naming (S7)
 
 Адаптер возвращает `OrderSnapshot` с snake_case полями (`order_status`, `avg_price`, `cum_exec_fee`, `fee_currency`). Pre-S7 reconciler использовал camelCase (`status`, `avgPrice`) — путь HEAL_ENTRY_FILLED был сломан runtime'но; зафиксировано финальным domain-review S7.
+
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | 4-valued verdict only — 2-valued OK/DIVERGENCE = regression | `src/execution/reconciler.py` `Verdict` literal | `tests/unit/test_reconciler_verdicts.py` |
+| 2 | HEAL_ENTRY_FILLED requires fill age < `heal_max_age_seconds=3600` — older → DIVERGENCE | `src/execution/reconciler.py` heal-classifier + ADR 0021 sub-decision 4 | `tests/unit/test_reconciler_verdicts.py` |
+| 3 | `walletBalance(coin=BTC)` = exchange-truth for Spot (no `get_position`) | `src/execution/reconciler.py` calls `_http.get_wallet_balance` per ADR 0020 sub-decision 4 | `tests/unit/test_reconciler_wallet_protocol.py` |
+| 4 | OrderSnapshot snake_case (`order_status`, `avg_price`, `cum_exec_fee`, `fee_currency`) — camelCase path is dead | `src/execution/reconciler.py` consumer + ADR 0021 sub-decision 8 | (consumer convention) |
 
 ## Related
 

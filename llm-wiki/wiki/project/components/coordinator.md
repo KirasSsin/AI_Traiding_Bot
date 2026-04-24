@@ -190,6 +190,16 @@ Schema `execution_state` (PK = `symbol`):
 
 Decimal stored as TEXT. Coordinator упсёртит row на каждом transition end. Exchange wins per ADR 0019 sub-decision 3 (reconcile-as-truth).
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | `_bootstrap_done=True` before any `start_bracket`/`on_order_event` | `src/execution/coordinator.py:143` (bootstrap end), assertions in start_bracket/on_order_event | (none — see Bootstrap sequencing section) |
+| 2 | All 8 public methods under `RLock` (RE-entrant required because `bootstrap` calls `on_ws_reconnect` while holding lock) | `src/execution/coordinator.py:77` (`_lock = threading.RLock()`) + ADR 0022 sub-decision 1 | (lock policy doc) |
+| 3 | All FSM mutation via `_transition` only — no direct state write | `src/execution/coordinator.py:542` (`_transition`) — only writer | `tests/unit/test_execution_fsm.py` |
+| 4 | Halt allow-list: every `ReasonCode` in `request_halt` has explicit dispatch branch + TRANSITIONS row(s) | `src/execution/coordinator.py:600-628` + ADR 0023 invariant | `tests/property/test_request_halt_mapping.py` |
+| 5 | γ halt persistence — first non-null `halt_reason` sticks, subsequent halts append to `halt_log` but MUST NOT overwrite primary | `src/execution/coordinator.py:569-598` (`_set_halt`) + ADR 0021 sub-decisions 5+9 | (γ persistence doc) |
+
 ## Related
 
 - [[execution-state-machine]] — FSM (16 states / 30 events / 74 transitions live)
