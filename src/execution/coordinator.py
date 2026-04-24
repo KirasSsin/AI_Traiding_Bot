@@ -9,13 +9,12 @@ S5 handle_ws_reconnect removed — ws-reconnect handling moves to Task 22 bootst
 """
 from __future__ import annotations
 
+import logging
 import threading
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
 from typing import Any
-
-import logging
 
 from src.execution.bracket import BracketParams, build_bracket, make_order_link_id
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
@@ -75,7 +74,7 @@ class Coordinator:
         self._symbol = symbol
         self._base_coin = base_coin
         self._bootstrap_done: bool = False
-        self._lock = threading.RLock()  # ADR 0022 sub-decision 1 — reentrant
+        self._lock: threading.RLock = threading.RLock()  # ADR 0022 sub-decision 1 — reentrant
 
     def on_ws_reconnect(self) -> None:
         """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
@@ -113,7 +112,7 @@ class Coordinator:
             )
             self._transition(ExecutionEvent.RECONCILE_DIVERGENCE)  # → HALTED
 
-    def _build_local_state(self, row: "ExecutionStateRow") -> "LocalState":
+    def _build_local_state(self, row: ExecutionStateRow) -> LocalState:
         """Build reconciler LocalState from current repo row."""
         from src.execution.reconciler import LocalState
         return LocalState(
@@ -160,7 +159,7 @@ class Coordinator:
             self._upsert_fields(bootstrap_at=_now_iso())
             self._bootstrap_done = True
 
-    def _recover_attempt_num(self, row: "ExecutionStateRow") -> None:
+    def _recover_attempt_num(self, row: ExecutionStateRow) -> None:
         """Extracted from pre-S7 bootstrap body (ADR 0020 sub-decision 9)."""
         if row.bracket_id is None:
             return
@@ -484,23 +483,24 @@ class Coordinator:
             now: clock injection for tests; defaults to datetime.now(tz=UTC).
             ttl_seconds: TTL in seconds; defaults to 60 (match settings.oco_arming_ttl_seconds).
         """
-        row = self._repo.get(self._symbol)
-        if (
-            row is None
-            or row.state != ExecutionState.OCO_ARMING
-            or row.arming_started_at is None
-        ):
-            return
-        started = datetime.fromisoformat(row.arming_started_at)
-        current = now if now is not None else datetime.now(tz=UTC)
-        age = (current - started).total_seconds()
-        if age > ttl_seconds:
-            self._set_halt(
-                reason="HALT_OCO_ARM_TIMEOUT",
-                last_event=ExecutionEvent.BRACKET_TIMEOUT,
-                extra={"ttl_seconds": ttl_seconds, "age_seconds": str(age)},
-            )
-            self._transition(ExecutionEvent.BRACKET_TIMEOUT)
+        with self._lock:
+            row = self._repo.get(self._symbol)
+            if (
+                row is None
+                or row.state != ExecutionState.OCO_ARMING
+                or row.arming_started_at is None
+            ):
+                return
+            started = datetime.fromisoformat(row.arming_started_at)
+            current = now if now is not None else datetime.now(tz=UTC)
+            age = (current - started).total_seconds()
+            if age > ttl_seconds:
+                self._set_halt(
+                    reason="HALT_OCO_ARM_TIMEOUT",
+                    last_event=ExecutionEvent.BRACKET_TIMEOUT,
+                    extra={"ttl_seconds": ttl_seconds, "age_seconds": str(age)},
+                )
+                self._transition(ExecutionEvent.BRACKET_TIMEOUT)
 
     def _upsert_fields(self, **changes: object) -> None:
         """Read current row, replace named fields, upsert. Bumps updated_at."""
@@ -526,9 +526,7 @@ class Coordinator:
             self._transition(ExecutionEvent.SIBLING_CANCELLED)
             return
         res = self._adapter.cancel_order(symbol=self._symbol, order_id=sibling_oid)
-        if res.cancelled:
-            self._transition(ExecutionEvent.SIBLING_CANCELLED)
-        elif res.reason_code is AdapterReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
+        if res.cancelled or res.reason_code is AdapterReasonCode.REJECT_ORDER_ALREADY_TERMINAL:
             self._transition(ExecutionEvent.SIBLING_CANCELLED)
         else:
             self._transition(ExecutionEvent.SIBLING_CANCEL_FAILED)

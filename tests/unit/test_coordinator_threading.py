@@ -14,8 +14,6 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 from src.execution.state_machine import ExecutionState
 from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
 from src.platform.db import init_db
@@ -200,7 +198,7 @@ def test_coordinator_lock_is_reentrant(tmp_path):
     completed = threading.Event()
 
     def _nested():
-        with coord._lock:        # outer acquire
+        with coord._lock:  # noqa: SIM117 — intentional double acquire to verify RLock reentrancy
             with coord._lock:    # inner acquire — must succeed (RLock is reentrant)
                 completed.set()
 
