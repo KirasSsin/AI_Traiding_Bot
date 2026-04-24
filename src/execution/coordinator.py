@@ -597,13 +597,14 @@ class Coordinator:
             ctx.update(extra)
         self._repo._set_halt(symbol=self._symbol, reason=reason, context=ctx)
 
-    def request_halt(self, reason: str) -> None:
+    def request_halt(self, reason: ReasonCode) -> None:
         """Public halt entry-point for RuntimeManager (KILL_SWITCH, RUNTIME_CRASH, STALL).
 
         Acquires self._lock (RLock — re-entrant if caller already holds).
-        Delegates to existing _set_halt — primary-wins per S7 γ rule (halt_log always appends).
+        Writes halt_reason via _set_halt (primary-wins per S7 γ rule, halt_log appends),
+        then transitions FSM state to HALTED via _transition.
 
-        ADR 0022 sub-decisions 5 / 6 / 11.
+        ADR 0022 sub-decisions 5/6/11; ADR 0023 (halt-code → FSM event mapping).
         """
         with self._lock:
             self._set_halt(
@@ -611,3 +612,17 @@ class Coordinator:
                 last_event=ExecutionEvent.RISK_HALT,
                 extra={"source": "request_halt"},
             )
+            # FIX (S8b T1): _set_halt writes halt_reason but does not move FSM state.
+            # Dispatch the matching event so reconciler / observers branching on
+            # state == HALTED stay in sync with halt_reason.
+            # Guard: skip transition if already HALTED (S7 γ idempotency — halt_reason
+            # primary-wins is already handled by _set_halt; re-dispatching from HALTED
+            # would raise IllegalTransitionError since HALTED has no outbound arcs).
+            current = self._repo.get(self._symbol)
+            if current is not None and current.state != ExecutionState.HALTED:
+                if reason == ReasonCode.KILL_SWITCH_REQUESTED:
+                    self._transition(ExecutionEvent.KILL_SWITCH_REQUESTED)
+                else:
+                    # HALT_RUNTIME_CRASH, HALT_BAR_POLL_STALL → HALTED via RISK_HALT.
+                    # Future halt codes MUST add an explicit dispatch branch — see ADR 0023.
+                    self._transition(ExecutionEvent.RISK_HALT)
