@@ -87,6 +87,6 @@ class ReasonCode(StrEnum):
     EXIT_RECONCILE_DETECTED = "EXIT_RECONCILE_DETECTED"
 
     # --- ADR 0022 — Sprint 8a Live runtime ---
-    HALT_RUNTIME_CRASH = "HALT_RUNTIME_CRASH"           # 43: unhandled exception в RuntimeManager.run()
+    HALT_RUNTIME_CRASH = "HALT_RUNTIME_CRASH"           # 43: unhandled exception in RuntimeManager.run()
     HALT_BAR_POLL_STALL = "HALT_BAR_POLL_STALL"         # 44: N consecutive REST kline failures (default N=24)
     KILL_SWITCH_REQUESTED = "KILL_SWITCH_REQUESTED"     # 45: sentinel-file `.kill_switch` detected (operator-initiated)
