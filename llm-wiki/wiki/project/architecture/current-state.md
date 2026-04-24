@@ -42,7 +42,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 
 | Module | Files | LoC | Wiki page | Sprint origin |
 |--------|-------|-----|-----------|---------------|
-| `__main__.py` | entry | 117 | (open gap — S8c) | S8a (ADR 0022 G6) |
+| `__main__.py` | entry | 117 | [[../components/kill-switch-cli]] | S8a (ADR 0022 G6) |
 | `analytics/` | __init__ stub | <50 | — | (S8c+ scope) |
 | `backtest/` | replay_engine, vector_backtest, reporter, indicators, data_collector, replay | ~700 | [[../components/backtest-harness]] | S2 |
 | `core/` | models | <50 | (legacy stub) | pre-S1 (mostly removed) |

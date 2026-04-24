@@ -114,6 +114,8 @@ Writes the sentinel file (`Settings.runtime_kill_switch_path`, default
 `sentinel.exists()` each tick — atomic write guarantees no half-created
 file is observed (S8b T4 fix).
 
+**См. также:** [[kill-switch-cli]] — full operator-facing CLI semantics + atomic write details + recovery workflow.
+
 ## Sources
 
 - [[../decisions/0022-sprint-8a-live-runtime]] — все 14 sub-decisions

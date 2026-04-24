@@ -81,6 +81,7 @@ _(пусто — v0.2+)_
 - [[project/components/indicators]] — TA-Lib wrappers: EMA classical/wilder + ADX/±DI/RSI/ATR Wilder.
 - [[project/components/strategy]] — EmaCrossoverAdxRsiStrategy: on_bar(Bar) → Signal | None, FLAT/LONG FSM.
 - [[project/components/kelly]] — 4-phase Kelly + Wilson 95% CI; pure functions, KellyCaps from Settings.
+- [[project/components/kill-switch-cli]] — operator-facing CLI: kill (sentinel-file atomic write) + run + backfill + reconcile-only. ADR 0022 sub-decisions 5+9 + ADR 0023 dispatch invariant.
 - [[project/components/circuit-breakers]] — L1/L2/L3/Flash detector (stateless); CircuitBreakerConfig from Settings.
 - [[project/components/sizing]] — `compute_qty(equity, fraction, atr, price, k)` ATR-based pure function.
 - [[project/components/risk-manager]] — orchestrator: assess(signal, mark_price) → RiskAssessment с look-ahead invariant.
