@@ -33,6 +33,33 @@ def test_consumer_on_disconnect_triggers_reconnect_event():
     coord.on_ws_reconnect.assert_called_once()
 
 
+def test_check_alive_triggers_disconnect_when_silent_too_long():
+    """Heartbeat watchdog backstop for pybit close-callback gap."""
+    coord = MagicMock()
+    reco = MagicMock()
+    c = BybitPrivateWSConsumer(
+        api_key="k", api_secret="s",
+        endpoint="wss://stream-demo.bybit.com/v5/private",
+        coordinator=coord, reconciler=reco,
+    )
+    fake_ws = MagicMock()
+    fake_ws.last_ping_time = 0.0  # ancient ping → past silence window
+    c._ws = fake_ws
+    alive = c.check_alive(max_silence_seconds=1.0)
+    assert alive is False
+    coord.on_ws_reconnect.assert_called_once()
+
+
+def test_check_alive_returns_true_when_no_ws():
+    """No WS handle → returns False (callable doesn't crash)."""
+    c = BybitPrivateWSConsumer(
+        api_key="k", api_secret="s",
+        endpoint="wss://stream-demo.bybit.com/v5/private",
+        coordinator=MagicMock(), reconciler=MagicMock(),
+    )
+    assert c.check_alive() is False
+
+
 def test_parser_forwards_filled_event_with_fees():
     coord = MagicMock()
     reco = MagicMock()

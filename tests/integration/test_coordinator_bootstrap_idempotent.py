@@ -26,6 +26,14 @@ class _FakeAdapter:
         return list(self.history_resp)
 
 
+class _FakeReconciler:
+    """ADR 0021: bootstrap delegates to on_ws_reconnect → needs reconcile().
+    AGREE keeps row in OCO_ARMED so attempt-recovery test assertions hold."""
+    def reconcile(self, local, *, expected_state=None):
+        from src.execution.reconciler import ReconcileResult
+        return ReconcileResult(verdict="AGREE", position_qty=local.position_qty)
+
+
 def _seed_repo(repo, *, bracket_id, last_attempt_num=1):
     repo.upsert(ExecutionStateRow(
         symbol="BTCUSDT",
@@ -62,7 +70,7 @@ def coordinator_with_history(tmp_path):
             {"orderLinkId": "not-an-oco-link", "orderStatus": "Filled"},   # noise
         ],
     )
-    coord = Coordinator(adapter=adapter, repo=repo, reconciler=None,
+    coord = Coordinator(adapter=adapter, repo=repo, reconciler=_FakeReconciler(),
                         symbol="BTCUSDT", base_coin="BTC")
     return type("H", (), {"adapter": adapter, "repo": repo, "coordinator": coord,
                            "bracket_id": bracket_id})()
@@ -78,7 +86,7 @@ def coordinator_clean(tmp_path):
     bracket_id = "cleanid1"
     _seed_repo(repo, bracket_id=bracket_id, last_attempt_num=1)
     adapter = _FakeAdapter()  # no open orders, no history
-    coord = Coordinator(adapter=adapter, repo=repo, reconciler=None,
+    coord = Coordinator(adapter=adapter, repo=repo, reconciler=_FakeReconciler(),
                         symbol="BTCUSDT", base_coin="BTC")
     return type("H", (), {"adapter": adapter, "repo": repo, "coordinator": coord,
                            "bracket_id": bracket_id})()
@@ -105,7 +113,7 @@ def test_bootstrap_no_bracket_id_is_noop(tmp_path):
         conn.executescript(p.read_text())
     repo = ExecutionStateRepo(conn)
     # No row at all
-    coord = Coordinator(adapter=_FakeAdapter(), repo=repo, reconciler=None,
+    coord = Coordinator(adapter=_FakeAdapter(), repo=repo, reconciler=_FakeReconciler(),
                         symbol="BTCUSDT", base_coin="BTC")
     coord.bootstrap()  # should not raise
     assert repo.get("BTCUSDT") is None

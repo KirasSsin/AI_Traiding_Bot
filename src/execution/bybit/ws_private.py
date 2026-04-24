@@ -42,7 +42,14 @@ class BybitPrivateWSConsumer:
         self._ws = None  # pybit WebSocket handle (lazy)
 
     def start(self) -> None:
-        """Connect + subscribe (pybit handles async threading internally)."""
+        """Connect + subscribe (pybit handles async threading internally).
+
+        ADR 0021 sub-decision 6 — wire on_disconnect via underlying
+        websocket-client `WebSocketApp.on_close`. pybit does NOT expose a
+        user-level disconnect callback, so we install ours after pybit has
+        instantiated the inner WebSocketApp. If the install path fails (pybit
+        layout change), the heartbeat watchdog (`check_alive`) is the backstop.
+        """
         from pybit.unified_trading import WebSocket  # deferred import
         self._ws = WebSocket(
             testnet="testnet" in self._endpoint,
@@ -53,6 +60,49 @@ class BybitPrivateWSConsumer:
         )
         self._ws.order_stream(callback=self._on_order_raw)
         self._ws.wallet_stream(callback=self._on_wallet_raw)
+        self._install_close_hook()
+
+    def _install_close_hook(self) -> None:
+        """Wrap underlying websocket-client `on_close` to fire on_disconnect.
+
+        pybit WebSocket holds an inner `ws` (`WebSocketApp`) per channel.
+        Walking the attribute is brittle — wrapped in try/except so a pybit
+        upgrade can't crash startup; missing hook is logged + falls back to
+        the periodic `check_alive` watchdog.
+        """
+        try:
+            inner = getattr(self._ws, "ws", None)
+            if inner is None:
+                logger.warning("ws_private: pybit inner ws missing; relying on check_alive watchdog")
+                return
+            prev = getattr(inner, "on_close", None)
+            def wrapped(ws_app, status_code, msg):  # noqa: ANN001
+                try:
+                    self.on_disconnect()
+                finally:
+                    if callable(prev):
+                        prev(ws_app, status_code, msg)
+            inner.on_close = wrapped
+        except Exception:
+            logger.exception("ws_private: failed to install close hook; check_alive only")
+
+    def check_alive(self, *, max_silence_seconds: float = 30.0) -> bool:
+        """Heartbeat watchdog — call periodically from a worker loop.
+
+        Backstop for the close-hook path. Returns True if the WS is still
+        receiving pings within `max_silence_seconds`; False (and triggers
+        on_disconnect) otherwise. Caller decides cadence.
+        """
+        if self._ws is None:
+            return False
+        last = getattr(self._ws, "last_ping_time", None)
+        if last is None:
+            return True  # not yet established a baseline; assume alive
+        import time
+        if time.time() - float(last) > max_silence_seconds:
+            self.on_disconnect()
+            return False
+        return True
 
     def stop(self) -> None:
         if self._ws is not None:
@@ -60,7 +110,7 @@ class BybitPrivateWSConsumer:
             self._ws = None
 
     def on_disconnect(self) -> None:
-        """Callback triggered by pybit on disconnect — routes reconcile."""
+        """Callback triggered by close-hook OR check_alive — routes reconcile."""
         try:
             self._coordinator.on_ws_reconnect()
         except Exception:

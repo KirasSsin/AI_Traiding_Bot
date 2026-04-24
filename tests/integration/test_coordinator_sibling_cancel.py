@@ -66,6 +66,7 @@ def coordinator_armed_harness(tmp_path):
     ))
     coord = Coordinator(adapter=adapter, repo=repo, reconciler=None,
                         symbol="BTCUSDT", base_coin="BTC")
+    coord._bootstrap_done = True  # pre-S7 fixture predates ADR 0021 bootstrap guard
     return type("H", (), {
         "adapter": adapter, "repo": repo, "coordinator": coord,
         "bracket_id": bracket_id, "tp_oid": tp_oid, "sl_oid": sl_oid,

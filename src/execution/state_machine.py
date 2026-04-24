@@ -70,9 +70,10 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.ENTRY_PENDING, ExecutionEvent.ENTRY_FILLED): ExecutionState.LONG_OPEN,
     (ExecutionState.ENTRY_PENDING, ExecutionEvent.ENTRY_REJECTED): ExecutionState.FLAT,
     (ExecutionState.LONG_OPEN, ExecutionEvent.OCO_PLACED): ExecutionState.OCO_ARMED,
-    (ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL): ExecutionState.PARTIAL_FILL,
+    # NOTE: (OCO_ARMED, PARTIAL_FILL) and (OCO_ARMED, TP_HIT) handled by S6
+    # OVERRIDE block below (route through bracket-aware paths). Removed here
+    # to eliminate duplicate dict-key shadows (silent overrides → ruff F601).
     (ExecutionState.OCO_ARMED, ExecutionEvent.SL_HIT): ExecutionState.EXIT_PENDING,
-    (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT): ExecutionState.EXIT_PENDING,
     (ExecutionState.OCO_ARMED, ExecutionEvent.OCO_PARTIAL_TIMEOUT): ExecutionState.EXIT_PENDING,
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.SL_HIT): ExecutionState.EXIT_PENDING,
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.TP_HIT): ExecutionState.EXIT_PENDING,

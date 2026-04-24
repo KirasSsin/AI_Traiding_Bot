@@ -26,7 +26,7 @@ class _FakeAdapter:
     def get_open_orders(self, *, symbol: str) -> list:
         return self._open_orders
 
-    def get_order(self, *, order_id: str) -> dict | None:
+    def get_order(self, *, symbol: str, order_id: str) -> dict | None:
         return self._entry_order
 
 
@@ -99,9 +99,12 @@ from datetime import UTC, datetime, timedelta  # noqa: E402
 
 
 class _EntryOrder:
+    """Stub matching real OrderSnapshot field names (order_status, avg_price, cum_exec_fee)."""
     def __init__(self, status: str, avgPrice: Decimal):
-        self.status = status
-        self.avgPrice = avgPrice
+        self.order_status = status
+        self.avg_price = avgPrice
+        self.cum_exec_fee = Decimal("0")
+        self.fee_currency = "USDT"
 
 
 def test_entry_pending_heal_when_filled_position_matches_no_orphans(tmp_path):
@@ -122,7 +125,7 @@ def test_entry_pending_heal_when_filled_position_matches_no_orphans(tmp_path):
     r = reco.reconcile(local, expected_state=ExecutionState.ENTRY_PENDING)
     assert r.verdict == "HEAL_ENTRY_FILLED"
     assert r.entry_price == Decimal("62000")
-    assert r.heal_context and r.heal_context["avgPrice"] == "62000"
+    assert r.heal_context and r.heal_context["avg_price"] == "62000"
 
 
 def test_entry_pending_halt_when_position_short_of_expected(tmp_path):

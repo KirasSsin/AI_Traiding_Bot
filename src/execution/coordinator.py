@@ -37,11 +37,18 @@ _TERMINAL_STATES: frozenset[ExecutionState] = frozenset({
 })
 
 _RECONCILABLE_STATES: frozenset[ExecutionState] = frozenset({
+    # Entry/exit/arm transitions — primary HEAL targets (ADR 0021 sub-dec 3)
     ExecutionState.ENTRY_PENDING,
     ExecutionState.EXIT_PENDING,
     ExecutionState.OCO_ARMING,
     ExecutionState.EXIT_SIBLING_CANCELLING,
     ExecutionState.EXIT_SL_RESIDUAL,
+    # Live armed/open states — covered by S5 (state, WS_RECONNECT)→RECONCILING
+    # transitions; reconcile yields AGREE on quiet path, DIVERGENCE on drift.
+    ExecutionState.LONG_OPEN,
+    ExecutionState.OCO_ARMED,
+    ExecutionState.PARTIAL_FILL,  # legacy S5 — back-compat
+    ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
 })
 
 
@@ -203,7 +210,7 @@ class Coordinator:
             attempt=1,
         )
         legs = build_bracket(params)
-        self._adapter.place_order(
+        entry_ack = self._adapter.place_order(
             symbol=self._symbol,
             side=legs.entry.side,
             qty=legs.entry.qty,
@@ -220,11 +227,16 @@ class Coordinator:
                 state=new_state,
                 position_qty=Decimal("0"),
                 entry_price=None,
-                oco_main_order_id=None,
+                # ADR 0021 sub-decision 3: persist entry order_id so post-reconnect
+                # reconcile can fetch its terminal status via get_order and reach
+                # the HEAL_ENTRY_FILLED verdict (bootstrap → reconciler classifier).
+                # Field name is legacy ('oco_main' from S5 single-OCO scheme); the
+                # reconciler reads it as LocalState.entry_order_id.
+                oco_main_order_id=entry_ack.order_id,
                 bracket_id=bracket_id,
                 oco_tp_order_id=None,
                 oco_sl_order_id=None,
-                expected_oco_qty=None,
+                expected_oco_qty=entry_qty,  # expected_entry_qty for reconciler qty-check
                 arming_started_at=None,
                 last_attempt_num=1,
                 updated_at=_now_iso(),

@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Literal, Protocol, runtime_checkable
 
-from src.execution.bybit.adapter import WalletSnapshot
+from src.execution.bybit.adapter import OrderSnapshot, WalletSnapshot
 
 Verdict = Literal["AGREE", "DIVERGENCE", "HEAL_ENTRY_FILLED", "EXITED"]
 _VALID_VERDICTS = ("AGREE", "DIVERGENCE", "HEAL_ENTRY_FILLED", "EXITED")
@@ -163,15 +163,16 @@ class Reconciler:
 
     def _classify_entry_pending(
         self, local: LocalState, exch_qty: Decimal,
-        open_orders: list[dict], entry_order: object | None,
+        open_orders: list[dict], entry_order: OrderSnapshot | None,
     ) -> ReconcileResult:
         """ADR 0021 sub-decision 3: classify ENTRY_PENDING state."""
         # Precondition: entry order must be Filled
-        if entry_order is None or entry_order.status != "Filled":
+        if entry_order is None or entry_order.order_status != "Filled":
             return ReconcileResult(
                 verdict="DIVERGENCE",
                 exch_qty=exch_qty,
                 entry_price=None,
+                recommended_state="HALTED",
                 halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
                 heal_context=None,
             )
@@ -183,6 +184,7 @@ class Reconciler:
                 verdict="DIVERGENCE",
                 exch_qty=exch_qty,
                 entry_price=None,
+                recommended_state="HALTED",
                 halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
                 heal_context=None,
             )
@@ -194,6 +196,7 @@ class Reconciler:
                 verdict="DIVERGENCE",
                 exch_qty=exch_qty,
                 entry_price=None,
+                recommended_state="HALTED",
                 halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
                 heal_context=None,
             )
@@ -206,6 +209,7 @@ class Reconciler:
                     verdict="DIVERGENCE",
                     exch_qty=exch_qty,
                     entry_price=None,
+                    recommended_state="HALTED",
                     halt_reason="HALT_BOOTSTRAP_AMBIGUOUS",
                     heal_context={"sub_reason": "stale_age", "age_seconds": age_seconds},
                 )
@@ -214,11 +218,12 @@ class Reconciler:
         return ReconcileResult(
             verdict="HEAL_ENTRY_FILLED",
             exch_qty=exch_qty,
-            entry_price=entry_order.avgPrice,
+            entry_price=entry_order.avg_price,
             halt_reason=None,
             heal_context={
-                "avgPrice": str(entry_order.avgPrice),
-                "cumExecFee": getattr(entry_order, "cumExecFee", None),
+                "avg_price": str(entry_order.avg_price) if entry_order.avg_price is not None else None,
+                "cum_exec_fee": str(entry_order.cum_exec_fee),
+                "fee_currency": entry_order.fee_currency,
             },
         )
 
@@ -238,6 +243,7 @@ class Reconciler:
             verdict="DIVERGENCE",
             exch_qty=exch_qty,
             entry_price=None,
+            recommended_state="HALTED",
             halt_reason="HALT_EXIT_RECONCILE_DIVERGENCE",
             heal_context=None,
         )
@@ -263,6 +269,6 @@ class Reconciler:
         exch_qty = self._fetch_exch_qty(sym)
         open_orders = self._query.get_open_orders(symbol=sym) if sym else []
         get_order = getattr(self._query, "get_order", None)
-        entry_order = (get_order(order_id=local.entry_order_id)
-                       if (local.entry_order_id and get_order is not None) else None)
+        entry_order = (get_order(symbol=sym, order_id=local.entry_order_id)
+                       if (local.entry_order_id and sym and get_order is not None) else None)
         return self._classify(local, expected_state, exch_qty, open_orders, entry_order)
