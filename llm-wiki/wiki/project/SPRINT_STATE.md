@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: pre-9-wiki-rag
-phase: 4-execution
-branch: feature/wiki-rag-optimization
+sprint: pre-9-wiki-rag-shipped
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.8c
 ---
 
