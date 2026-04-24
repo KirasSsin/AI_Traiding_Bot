@@ -22,7 +22,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `SCALE_IN_LONG` — reserved v0.2+ (pyramid).
 - `SCALE_IN_SHORT` — reserved v0.2+.
 
-### Scale / exits (10)
+### Scale / exits (11)
 - `SCALE_OUT_PARTIAL` — частичное закрытие.
 - `EXIT_SL_HIT` — OCO stop-loss leg triggered.
 - `EXIT_TP_HIT` — OCO take-profit leg triggered.
@@ -46,7 +46,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `REJECT_DUPLICATE_SIGNAL` — повторный signal на тот же bar.
 - `REJECT_ORDER_ALREADY_TERMINAL` — Bybit retCode 110001 при cancel_order (ордер уже Filled/Cancelled) — классифицируется как non-fatal sibling-cancel-Triggered race (ADR 0020 sub-decision 6).
 
-### Halts (16)
+### Halts (19)
 - `HALT_DRAWDOWN_L1` — 15% DD warning.
 - `HALT_DRAWDOWN_L2` — 22% DD halt 24h.
 - `HALT_DRAWDOWN_L3` — 30% DD full stop.
@@ -63,8 +63,11 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `HALT_PHANTOM_SL` — reconciler обнаружил активный SL-ордер на бирже без соответствующего локального `bracket_id` → расхождение phantom-order.
 - `HALT_BOOTSTRAP_AMBIGUOUS` — bootstrap reconcile не смог однозначно классифицировать local↔exchange расхождение (ADR 0021 sub-decision 1). Требуется ручной аудит перед resume.
 - `HALT_EXIT_RECONCILE_DIVERGENCE` — exit-фаза reconcile увидела mismatch между local EXIT_PENDING и exchange (ADR 0021 sub-decision 3). Отдельный код от bootstrap-divergence для разделения runbook-процедур.
+- `HALT_RUNTIME_CRASH` — unhandled exception в `RuntimeManager.run()` (ADR 0022 sub-decision 6). Persisted ДО re-raise — restart требует MANUAL_RESET.
+- `HALT_BAR_POLL_STALL` — N consecutive REST `kline` failures (default N=24 = 120s). Signal-pipeline halt class — НЕ position-safety. См. [[../../project/components/bar-poller]] mid-bar-fill degradation.
+- `KILL_SWITCH_REQUESTED` — Sentinel-file `.kill_switch` detected (operator action via `python -m src kill`). Distinct from S7 `KILL_SWITCH` (terminal → KILLED).
 
-**Итого:** 6 + 11 + 9 + 16 = **42**.
+**Итого:** 6 + 11 + 9 + 19 = **45**.
 
 **Note (Sprint 4):** до S4 wiki header заявлял 28 (счёт sections был неверен: exits=7→8, halts=6→7). Code в `src/risk/reason_codes.py` всегда был source of truth. Исправлено в Sprint 4 wiki sync (см. ADR 0018).
 
