@@ -27,7 +27,7 @@ S7 (ADR 0021) закрыл три resilience gap'а (bootstrap reconcile, WS-rec
 S8 разбит на **два независимых спринта**:
 
 - **S8a (этот ADR)** — **live runtime**: bring-up процесса, REST bar poller, KILL_SWITCH wiring, threading concurrency model, удаление legacy orphans (`src/controller.py`, `main.py`). Цель: `python -m src run` стартует и торгует на Demo Mainnet.
-- **S8b (отдельный ADR позднее)** — Analytics per-fill table + execution topic subscription + WS+REST epsilon-halt consistency check. Зависит от S8a merge.
+- **S8b (отдельный ADR позднее)** — Analytics per-fill table + execution topic subscription + WS+REST epsilon-halt consistency check. Зависит от S8a merge. **(Updated 2026-04-25 в S8c):** S8b actually delivered S8a carry-over fixes (ADR 0023 halt-code mapping) — original analytics/epsilon-halt scope deferred to S9+.
 
 Split rationale: S8a — orchestration без новых analytical/observability surfaces; S8b — analytical reads на готовом runtime. Один спринт per подсистема (B1 принцип из ADR 0021).
 
@@ -375,6 +375,10 @@ runtime.shutdown             {reason, in_flight_orders}
 - Async/await migration — S9+ если throughput требует.
 - systemd/launchd service unit — ops artifact, post-tag.
 
+## Amendments
+
+- **2026-04-25 (S8c):** Transition count narrative updated — S8a delivered 59→70 transitions (+11 KILL_SWITCH_REQUESTED); S8b T7 fix-up added (FLAT, RISK_HALT) row (70→74, +4 transitions — см. ADR 0023). Context section S8b scope description annotated — actual S8b delivered S8a carry-over fixes (ADR 0023 halt-code mapping), not original analytics/epsilon-halt scope (deferred to S9+).
+
 ## Verification checklist (pre-merge)
 
 - [ ] Task 0 lock wrappers acquired в Coordinator (6 methods) + Reconciler (2 methods) — verified by `grep "with self._lock"`.
@@ -395,4 +399,4 @@ runtime.shutdown             {reason, in_flight_orders}
 
 **Approved:** 2026-04-24 by maintainer (user) after trader-expert verdict (rounds 1+2).
 **Implementation plan:** [[../plans/2026-04-24-sprint-8a-live-runtime]].
-**Sprint page:** [[../sprints/sprint-08a-live-runtime]] — delivery record (37 commits, +11 KILL_SWITCH_REQUESTED transitions 59→70, reason codes 42→45, tag `v0.1.0-alpha.8a`).
+**Sprint page:** [[../sprints/sprint-08a-live-runtime]] — delivery record (37 commits, +11 KILL_SWITCH_REQUESTED transitions 59→70, +4 S8b T7 fix-up transitions (FLAT, RISK_HALT) 70→74, reason codes 42→45, tag `v0.1.0-alpha.8a`).
