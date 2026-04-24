@@ -178,5 +178,40 @@ class RuntimeManager:
         )
 
     def _shutdown(self, *, reason: str) -> None:
-        # Body added in Task 17
-        pass
+        """Graceful drain — idempotent ws.stop + structured log.
+
+        ADR 0022 sub-decisions 13 (structlog runtime.shutdown event) + 17 (graceful drain).
+        Best-effort: ws.stop exceptions are logged but never re-raised.
+        Records in-flight order count snapshot for ops audit.
+        """
+        if getattr(self, "_shutdown_done", False):
+            return
+        self._shutdown_done = True
+        self._stopping = True
+        try:
+            self._ws_consumer.stop()
+        except Exception as e:  # noqa: BLE001 — best-effort drain
+            logger.error("runtime.shutdown_ws_stop_failed", extra={"err": str(e)})
+
+        # In-flight order count snapshot — best-effort, never raise
+        in_flight = 0
+        try:
+            from src.execution.state_machine import ExecutionState
+
+            symbol = getattr(self._coordinator, "_symbol", None)
+            if symbol is not None:
+                row = self._coordinator._repo.get(symbol)
+                if row is not None and row.state in {
+                    ExecutionState.ENTRY_PENDING,
+                    ExecutionState.EXIT_PENDING,
+                    ExecutionState.OCO_ARMING,
+                }:
+                    in_flight = 1
+        except Exception:  # noqa: BLE001 — snapshot is best-effort
+            pass
+
+        logger.info("runtime.shutdown", extra={"reason": reason, "in_flight_orders": in_flight})
+
+    def shutdown(self, *, reason: str) -> None:
+        """Public alias — operator-callable graceful shutdown."""
+        self._shutdown(reason=reason)

@@ -237,6 +237,75 @@ def test_tick_kill_switch_detected_sets_stopping(tmp_path):
     assert rm._stopping is True
 
 
+def test_shutdown_stops_ws_consumer(tmp_path):
+    """ADR 0022 sub-decision 17 — _shutdown stops ws_consumer + sets _stopping=True."""
+    from src.runtime.manager import RuntimeManager
+
+    ws = MagicMock()
+    rm = RuntimeManager(
+        coordinator=MagicMock(), reconciler=MagicMock(),
+        ws_consumer=ws, bar_source=MagicMock(),
+        strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm._shutdown(reason="TEST")
+    ws.stop.assert_called_once()
+    assert rm._stopping is True
+
+
+def test_shutdown_idempotent(tmp_path):
+    """Second _shutdown call is a no-op (no double ws.stop)."""
+    from src.runtime.manager import RuntimeManager
+
+    ws = MagicMock()
+    rm = RuntimeManager(
+        coordinator=MagicMock(), reconciler=MagicMock(),
+        ws_consumer=ws, bar_source=MagicMock(),
+        strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm._shutdown(reason="ONCE")
+    rm._shutdown(reason="TWICE")
+    ws.stop.assert_called_once()  # second call is no-op
+
+
+def test_shutdown_ws_stop_failure_logged_not_raised(tmp_path):
+    """ws.stop exception must be swallowed — shutdown is best-effort drain."""
+    from src.runtime.manager import RuntimeManager
+
+    ws = MagicMock()
+    ws.stop.side_effect = RuntimeError("ws-stop-boom")
+
+    rm = RuntimeManager(
+        coordinator=MagicMock(), reconciler=MagicMock(),
+        ws_consumer=ws, bar_source=MagicMock(),
+        strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    # Should NOT raise — best-effort drain per ADR 0022 sub-decision 17
+    rm._shutdown(reason="TEST")
+    assert rm._stopping is True
+
+
+def test_public_shutdown_delegates(tmp_path):
+    """Public shutdown(reason=) is operator-callable alias for _shutdown."""
+    from src.runtime.manager import RuntimeManager
+
+    ws = MagicMock()
+    rm = RuntimeManager(
+        coordinator=MagicMock(), reconciler=MagicMock(),
+        ws_consumer=ws, bar_source=MagicMock(),
+        strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm.shutdown(reason="OPERATOR_REQUEST")
+    ws.stop.assert_called_once()
+
+
 def test_tick_stall_threshold_triggers_halt(tmp_path):
     from src.runtime.manager import RuntimeManager
 
