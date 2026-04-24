@@ -157,6 +157,20 @@ SELECT * FROM trade_history ORDER BY exit_ts DESC LIMIT 100;
 
 Migrations runner (`src/platform/storage/`) применяет их в порядке filename prefix. `IF NOT EXISTS` в M003 безопасен при повторном прогоне (идемпотентен).
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | `INSERT OR IGNORE` + `UNIQUE INDEX uq_trade_history_entry_signal` on `entry_signal_id` — crash-idempotent Kelly trade count | `migrations/003_trade_history_unique.sql` + `src/risk/trade_history.py:insert_closed_trade` | `tests/unit/test_risk_trade_history.py` |
+| 2 | `AwareDatetime` (UTC) for all timestamps — naive datetime → ValueError | `src/risk/trade_history.py` model validators + ADR 0007 | `tests/unit/test_risk_trade_history.py` |
+| 3 | Migrations forward-only (`002_risk.sql` + `003_trade_history_unique.sql`) | migrations/ + ADR 0003 | (review rule) |
+
+## Referenced by
+
+- [[risk-manager]] — primary writer: `insert_closed_trade()` на каждое position closure
+- [[kelly]] — phase selection reads trade count from `TradeHistoryRepository.count()`
+- [[../decisions/0012-4-phase-kelly-sizing]] — Kelly phases ADR defines count thresholds (n<30, n<100, n<200, n≥200) consumed from this table
+
 ## Related
 
 - [[risk-manager]] — primary writer: вызывает `insert_closed_trade()` на каждое закрытие позиции; читает `count()` для Kelly phase

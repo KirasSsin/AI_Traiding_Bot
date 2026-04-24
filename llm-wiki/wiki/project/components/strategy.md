@@ -62,11 +62,15 @@ Reason code: `EXIT_FLAT_SIGNAL_FLIP`.
 
 *SL/TP и time-stop — в S5 (execution), не здесь.*
 
-## Invariants
+## Invariants (CRITICAL — verified by tests + code review)
 
-- **Look-ahead-free:** `signal.generated_at >= signal.bar_close_time` — enforced через pydantic validator (Signal model) + property test `tests/property/test_lookahead.py`.
-- **Closed bars only:** `is_closed=False` — skip.
-- **Monotonicity:** out-of-order / duplicate bars → skip.
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | Look-ahead-free: signal computed on close(T) only, `signal.generated_at >= bar_close_time` | `src/signalgen/strategy.py` on_bar | `tests/property/test_lookahead.py` |
+| 2 | `is_closed=False` bars discarded BEFORE any computation | `src/signalgen/strategy.py` confirm gate | `tests/unit/test_strategy.py` |
+| 3 | Out-of-order / duplicate bars skipped (monotonicity guard) | `src/signalgen/strategy.py` ordering check | `tests/unit/test_strategy.py` |
+
+Additional invariants (not CRITICAL):
 - **FSM:** `current_side` ∈ {FLAT, LONG}; транзиции FLAT→LONG (entry), LONG→FLAT (flip). SHORT вне scope v0.1.
 - **Buffer size:** `max(ema_slow, 2·adx_period, atr_period, rsi_period) + 5`.
 - **Thread-safety:** НЕ thread-safe. Один producer thread.

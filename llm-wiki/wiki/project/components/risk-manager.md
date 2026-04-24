@@ -124,5 +124,5 @@ CB level + prev_close survive restart через `RiskManager.load_state()`.
 - [[../decisions/0012-4-phase-kelly-sizing]] — Kelly source of truth
 - [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — CB source of truth
 - [[../decisions/0018-sprint-4-risk-decisions]] — Sprint 4 sub-decisions (R:R, reason codes mapping, Wilson lower bound contract, L0 naming, **sub-dec 9: post-merge security audit hardening — C1+H1+H2+H3+M1+M2+I1+L3**)
-- [[kelly]] [[circuit-breakers]] [[sizing]] [[override]] — sub-components
+- [[kelly]] [[circuit-breakers]] [[sizing]] [[risk-override]] — sub-components
 - [[../../trading/concepts/look-ahead-bias]] — invariant context

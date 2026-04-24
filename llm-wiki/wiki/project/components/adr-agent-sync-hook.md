@@ -140,6 +140,13 @@ Manual tests (прошли 2026-04-22):
 - `echo '{"tool_input":{"command":"git push"}}' | hook` в worktree без committed ADR → exit 0 (нет ADR в range).
 - Fail-closed ветка проверяется при первом реальном ADR-коммите.
 
+## Referenced by
+
+- [[../architecture/development-workflow]] — PHASE 8 step 4 (ADR ↔ agent prompt sync invariant)
+- [[../../CLAUDE]] (llm-wiki/CLAUDE.md) — "ADR ↔ agent prompts" sync section
+- [[../decisions/0017-review-agent-harness]] — defining ADR (review-agent harness operationalized by this hook)
+- [[adr-index-sync-hook]] — sister hook (parallel pattern, mirror of this)
+
 ## Related
 
 - ADR: [[../decisions/0017-review-agent-harness]] — политика, агенты.

@@ -64,7 +64,7 @@ value: {"level": "L2", "triggered_at": "2026-04-23T...", "peak_equity": "10000",
 
 ## Override (manual resume)
 
-CB level downgrade требует `CbOverride` запись (см. [[override]]). Файловый JSON, валидируется по `expected_config_hash` (anti-replay). Применяется только если `override.level == current_halt`.
+CB level downgrade требует `CbOverride` запись (см. [[risk-override]]). Файловый JSON, валидируется по `expected_config_hash` (anti-replay). Применяется только если `override.level == current_halt`.
 
 CLI: `python -m src.risk.resume_cb --level L2 --reason "..." --duration-hours 24`.
 
@@ -83,9 +83,18 @@ risk_override_path   = "data/risk_override.json"
 
 `tests/unit/test_risk_circuit_breakers.py` — boundary tests на каждый порог + flash при разных ATR + defensive cases (`peak=0`, `current>peak`).
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | `check_drawdown` returns highest triggered level (L3>L2>L1>L0 — never partial/unclear) | `src/risk/circuit_breakers.py` priority logic + ADR 0013 | `tests/unit/test_risk_circuit_breakers.py` |
+| 2 | `peak<=0` → L0 defensive (no halt on uninitialized state) | `src/risk/circuit_breakers.py` guard | `tests/unit/test_risk_circuit_breakers.py` |
+| 3 | Flash: `prev_close<=0` → False defensive | `src/risk/circuit_breakers.py` flash guard | `tests/unit/test_risk_circuit_breakers.py` |
+| 4 | Stateless detector — no I/O, caller owns persistence | `src/risk/circuit_breakers.py` no module-level state | (architecture rule) |
+
 ## Related
 
 - [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — source of truth
 - [[../../trading/concepts/circuit-breakers]] — концепции и тестовые сценарии
 - [[risk-manager]] — orchestration + escalation logic
-- [[override]] — manual resume mechanism
+- [[risk-override]] — manual resume mechanism

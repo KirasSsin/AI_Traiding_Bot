@@ -1,3 +1,12 @@
+---
+title: Wiki Log — chronological append-only journal
+type: log
+tags: [log, journal, chronological, append-only]
+created: 2026-04-19
+updated: 2026-04-25
+status: stable
+---
+
 # Log
 
 Хронологический append-only журнал wiki. Формат записи:

@@ -42,6 +42,15 @@ status: stable
 - **Idempotent migrations** — повторный `init_db` не ломается и не дублирует applied migrations.
 - **Parquet snappy** — быстрый compression, хорошо читается pandas/pyarrow/DuckDB.
 
+## Invariants (CRITICAL — verified by tests + code review)
+
+| # | Invariant | Enforcement | Test |
+|---|-----------|-------------|------|
+| 1 | Forward-only migrations — no `DROP COLUMN`, no destructive backfill | `migrations/*.sql` audit + `src/platform/db.py` migrations runner + ADR 0003 | (review rule) |
+| 2 | `schema_migrations` table guards idempotent apply | `src/platform/db.py` migrations runner | `tests/unit/test_db.py` |
+| 3 | `journal_mode=WAL` + `synchronous=NORMAL` + `foreign_keys=ON` on every connection | `src/platform/db.py` connection factory | `tests/unit/test_db.py` |
+| 4 | Parquet schema fixed — `open_time/close_time` timestamp[ns, UTC], OHLCV float64 | `src/marketdata/storage.py` Parquet writer + ADR 0007 | `tests/unit/test_parquet_storage.py` |
+
 ## Related
 
 - [[../architecture/storage]] — полные SQL-схемы и обоснование выбора.

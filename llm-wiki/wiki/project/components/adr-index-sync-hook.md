@@ -147,6 +147,13 @@ Python-симуляция выдала `VERDICT: BLOCK (exit 2)` для 0099 —
 
 Реальный push тестировался через Claude Code Bash hook: adr-agent-sync-check срабатывал первым (он обрабатывает thr range ADR изменений, не только добавленных), новый hook встаёт вторым в очереди и проверит своё условие.
 
+## Referenced by
+
+- [[../architecture/development-workflow]] — PHASE 8 step 5b HARD-GATE (added в S8c)
+- [[adr-agent-sync-hook]] — sister hook (mirror pattern, both block git push на ADR-related drift)
+- [[../decisions/0017-review-agent-harness]] — agent harness ADR (S8c amendment added this hook к review process)
+- [[../../index]] — file этой hook guards
+
 ## Related
 
 - Mirror of: [[project/components/adr-agent-sync-hook]] — предшествующий hook (ADR ↔ agent prompts sync).
