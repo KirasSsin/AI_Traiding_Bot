@@ -186,6 +186,14 @@ Discovered by trader-expert during pre-S8c batch re-verification. Non-blocking, 
 
 Both folded into single S8c amendment commit when ADR 0022 next requires touch.
 
+## Bucket F — Wiki drift discovered during S8c execution (2026-04-25)
+
+| # | Gap | Action | Priority |
+|---|-----|--------|----------|
+| F1 | `wiki/runbooks/halt-recovery.md` (also referenced as `wiki/project/runbooks/halt-recovery.md`) doesn't exist. Referenced from: `runtime-manager.md` Related section, `index.md`, plans S6/S7/S8c, T4 just added new ref в `kill-switch-cli.md`. S6 + S7 plans had tasks to create it — apparently never completed OR file was deleted. | Two paths: (a) Create halt-recovery.md per S6/S7 plan stubs (operator post-mortem procedures для всех HALT_* codes). Brainstorm scope first (SIGNIFICANT page, multi-section operator runbook). (b) Remove all dead refs across wiki (smaller but loses operator workflow doc). **Recommend (a)** — operator runbook = critical для production readiness. Defer to S9 (separate "operator readiness" sprint) ИЛИ extend S8c if scope allows. | HIGH |
+
+Discovery story: T4 implementer (Q3 kill-switch-cli) попытался добавить cross-link к `runbooks/halt-recovery.md` — found dir missing. Root cause = previous sprints planned creation but execution dropped/skipped. Pattern лесон: PHASE 8 step 5 HARD-GATE should also verify all wiki cross-refs точки на existing files (broken-link audit). Будущий C7 candidate for next process improvement.
+
 ## Closed (archive section)
 
 **Bucket A (5) + A+ (9) + DRIFT (5) = 19 items** — all DONE на ветке `feature/pre-s8c-wiki-backfill`, commit `72bfc97` (+ off-by-one fix follow-up). Trader-expert re-verification 2026-04-25: 11/11 + 5/5 bonus DRIFT items PASS. python-reviewer (A12 1-line src change): APPROVED.
