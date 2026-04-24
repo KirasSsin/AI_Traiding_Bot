@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: pre-9-skills-prune
-phase: 4-execution
-branch: feature/skills-claude-prune-best-practices
+sprint: pre-9-skills-shipped
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.8c
 ---
 
