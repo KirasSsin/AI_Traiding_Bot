@@ -345,3 +345,12 @@
 - Reasoning: формулы/Wilson/Kelly/MC/DSR покрываются sonnet 4.5+ extended thinking. Symmetry + cost reduction ~5×.
 - Escalation: re-evaluate post-S9 (DSR/MC heavy суите) — если sonnet пропускает real blockers, обратно к opus.
 - Files: `~/.claude/agents/quant-stats-reviewer.md`, `wiki/project/decisions/0017-review-agent-harness.md` (line 42 + Amendments), `llm-wiki/CLAUDE.md` (line 471).
+
+## [2026-04-24] tooling | subagent path discipline policy (5 агентов)
+
+- Triggered by post-S8a S8b brainstorm round: trader-expert output содержал typo `/AI_Traiding_Tool/src/__main__.py` (вместо `_Bot`) и неправильный путь `override_store.py` (реально `override.py`).
+- Root cause: я давал relative paths в Agent dispatch brief; subagent додумывал absolute paths сам и делал typo + неправильную инференцию имени файла из class name (OverrideStore → override_store.py vs реальный override.py).
+- Fix: добавил "## Path discipline (file references)" section в 5 файлов агентов (`~/.claude/agents/trader-expert.md`, `python-reviewer.md`, `data-integrity-reviewer.md`, `quant-stats-reviewer.md`, `trading-logic-reviewer.md`). 4 правила: absolute paths, verify ls перед cite, never silent substitution, format `path:LINE`.
+- Documented в `llm-wiki/CLAUDE.md` (Curated agent set → Subagent path discipline section + Cleanup history entry).
+- Maintainer rule: future Agent briefs тоже использовать absolute paths.
+- Out-of-band fix (отдельно от S8b PR — agents lives outside repo, wiki update единственный repo-side artefact).

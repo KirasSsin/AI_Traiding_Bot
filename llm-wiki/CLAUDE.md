@@ -478,11 +478,25 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 **Skip from VoltAgent (overlap):** `code-reviewer`, `python-pro`, `risk-manager`, `fintech-engineer`, `quant-analyst`, `database-administrator`, `git-workflow-manager` — все покрыты нашими 4 + Layer 3/4.
 
+### Subagent path discipline (binding policy 2026-04-24)
+
+Все 5 curated агентов (`trader-expert`, `python-reviewer`, `data-integrity-reviewer`, `quant-stats-reviewer`, `trading-logic-reviewer`) содержат секцию **"## Path discipline (file references)"** с 4 правилами:
+
+1. Output files = absolute paths (`/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/<rel>`).
+2. Verify exists via `Bash ls <path>` BEFORE citing.
+3. Never silently substitute guessed path — search via `Glob`/`Bash ls` или surface как Concern/open question.
+4. Line numbers формат `path:LINE` или `path:START-END`.
+
+**Maintainer responsibility:** brief в Agent dispatch ALSO uses absolute paths (do not give relative paths и надеяться что subagent правильно додумает project root).
+
+**Триггер записи:** post-S8a brainstorm — trader-expert вывел typo `/AI_Traiding_Tool/...` (вместо `_Bot`) + неправильный путь к override.py из-за relative path в моём briefe. Зафиксировано как binding policy.
+
 ### Cleanup history (для трассировки)
 
 - 2026-04-23: 14 duplicate Superpowers skill-stubs из `~/.claude/skills/` перенесены в `~/.claude/skills/_backup_superpowers_dups/` — каждый был 4KB stub, конфликтовал с plugin-cache версией.
 - 2026-04-23: `~/.claude/agents/Python Reviewer.md` → `python-reviewer.md` (filename normalization).
 - 2026-04-23: caveman@caveman v84cc3c14fa1e установлен (local scope) → Layer 4b active. 5 sub-skills (`caveman`, `caveman-commit`, `caveman-review`, `caveman-help`, `compress`) + 3 commands (`/caveman`, `/caveman-commit`, `/caveman-review`) + 3 hooks (activate/mode-tracker/statusline).
+- 2026-04-24: Добавлена "Path discipline" section в 5 агентов (см. выше) — single binding policy, фиксирует typo-prone subagent output.
 
 ### Trigger cascade — единый источник истины
 
