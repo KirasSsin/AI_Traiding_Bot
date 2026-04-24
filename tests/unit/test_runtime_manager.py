@@ -28,6 +28,7 @@ def test_runtime_manager_ctor_stores_deps(tmp_path):
     ws = MagicMock()
     bs = MagicMock()
     strat = MagicMock()
+    risk = MagicMock()
     s = _settings(tmp_path)
 
     rm = RuntimeManager(
@@ -36,6 +37,7 @@ def test_runtime_manager_ctor_stores_deps(tmp_path):
         ws_consumer=ws,
         bar_source=bs,
         strategy=strat,
+        risk_manager=risk,
         settings=s,
     )
 
@@ -44,6 +46,7 @@ def test_runtime_manager_ctor_stores_deps(tmp_path):
     assert rm._ws_consumer is ws
     assert rm._bar_source is bs
     assert rm._strategy is strat
+    assert rm._risk_manager is risk
     assert rm._settings is s
     assert rm._stopping is False
     assert rm._kill_switch_path == Path(s.runtime_kill_switch_path)
@@ -64,6 +67,7 @@ def test_run_bootstraps_then_starts_ws_then_loops(tmp_path, monkeypatch):
         ws_consumer=ws,
         bar_source=MagicMock(),
         strategy=MagicMock(),
+        risk_manager=MagicMock(),
         settings=_settings(tmp_path),
     )
 
@@ -91,6 +95,7 @@ def test_run_cleans_stale_kill_switch_before_bootstrap(tmp_path):
         ws_consumer=MagicMock(),
         bar_source=MagicMock(),
         strategy=MagicMock(),
+        risk_manager=MagicMock(),
         settings=_settings(tmp_path),
     )
     rm._main_loop = lambda: None
@@ -113,6 +118,7 @@ def test_bootstrap_failure_blocks_ws_start(tmp_path):
         ws_consumer=ws,
         bar_source=MagicMock(),
         strategy=MagicMock(),
+        risk_manager=MagicMock(),
         settings=_settings(tmp_path),
     )
     rm._main_loop = lambda: None
@@ -121,3 +127,174 @@ def test_bootstrap_failure_blocks_ws_start(tmp_path):
     with pytest.raises(RuntimeError, match="boot failed"):
         rm.run()
     ws.start.assert_not_called()
+
+
+from datetime import UTC, datetime
+from decimal import Decimal
+
+
+def _bar():
+    from src.marketdata.models import Bar, DataQuality
+    return Bar(
+        symbol="BTCUSDT", interval="1h",
+        open_time=datetime(2026, 1, 1, tzinfo=UTC),
+        close_time=datetime(2026, 1, 1, 1, tzinfo=UTC),
+        open=Decimal("60000"), high=Decimal("60100"),
+        low=Decimal("59900"), close=Decimal("60050"),
+        volume=Decimal("10"), trade_count=0,
+        is_closed=True, data_quality=DataQuality.OK,
+    )
+
+
+def test_tick_sequence_kill_then_alive_then_poll_then_strategy(tmp_path):
+    """Per ADR 0022 sub-decisions 1+2+4+5: kill_switch → check_alive → poll → strategy → risk → bracket."""
+    from src.runtime.manager import RuntimeManager
+    from src.signalgen.models import SignalSide
+
+    calls: list[str] = []
+    coord = MagicMock()
+    coord.start_bracket.side_effect = lambda **kw: (calls.append("start_bracket"), "bracket-id-stub")[1]
+    ws = MagicMock()
+    ws.check_alive.side_effect = lambda **kw: (calls.append("check_alive"), True)[1]
+    bar = _bar()
+    bs = MagicMock()
+    bs.poll.side_effect = lambda: (calls.append("poll"), bar)[1]
+    bs.consecutive_failures = 0
+    bs.should_halt.return_value = False
+    strat = MagicMock()
+    sig = MagicMock(side=SignalSide.LONG)
+    strat.on_bar.side_effect = lambda b: (calls.append("on_bar"), sig)[1]
+    risk = MagicMock()
+    assessment = MagicMock(
+        approved=True,
+        qty=Decimal("0.001"),
+        sl_price=Decimal("58000"),
+        tp_price=Decimal("65000"),
+    )
+    risk.assess.side_effect = lambda signal, **kw: (calls.append("risk.assess"), assessment)[1]
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=ws, bar_source=bs, strategy=strat,
+        risk_manager=risk, settings=_settings(tmp_path),
+    )
+    rm._tick()
+
+    # Order: kill_switch (no call recorded — file absent), check_alive, poll, on_bar, risk.assess, start_bracket
+    assert calls == ["check_alive", "poll", "on_bar", "risk.assess", "start_bracket"]
+    # And start_bracket received the assessment-derived params (real Coordinator signature)
+    coord.start_bracket.assert_called_once_with(
+        entry_qty=Decimal("0.001"),
+        entry_side="Buy",
+        tp_price=Decimal("65000"),
+        sl_trigger_price=Decimal("58000"),
+    )
+
+
+def test_tick_no_new_bar_skips_strategy(tmp_path):
+    from src.runtime.manager import RuntimeManager
+
+    bs = MagicMock()
+    bs.poll.return_value = None
+    bs.consecutive_failures = 0
+    bs.should_halt.return_value = False
+    strat = MagicMock()
+    risk = MagicMock()
+
+    rm = RuntimeManager(
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=bs, strategy=strat,
+        risk_manager=risk, settings=_settings(tmp_path),
+    )
+    rm._tick()
+    strat.on_bar.assert_not_called()
+    risk.assess.assert_not_called()
+
+
+def test_tick_kill_switch_detected_sets_stopping(tmp_path):
+    from src.runtime.manager import RuntimeManager
+
+    sentinel = tmp_path / ".kill_switch"
+    sentinel.write_text("")
+    coord = MagicMock()
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=MagicMock(poll=lambda: None, consecutive_failures=0, should_halt=lambda **kw: False),
+        strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm._tick()
+    coord.request_halt.assert_called_with("KILL_SWITCH_REQUESTED")
+    assert rm._stopping is True
+
+
+def test_tick_stall_threshold_triggers_halt(tmp_path):
+    from src.runtime.manager import RuntimeManager
+
+    bs = MagicMock()
+    bs.poll.return_value = None
+    bs.consecutive_failures = 24
+    bs.should_halt.return_value = True
+    coord = MagicMock()
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=bs, strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm._tick()
+    coord.request_halt.assert_called_with("HALT_BAR_POLL_STALL")
+    assert rm._stopping is True
+
+
+def test_tick_risk_rejects_skips_bracket(tmp_path):
+    """Risk-rejected signal must not place an order."""
+    from src.runtime.manager import RuntimeManager
+    from src.signalgen.models import SignalSide
+
+    coord = MagicMock()
+    bar = _bar()
+    bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
+    sig = MagicMock(side=SignalSide.LONG)
+    strat = MagicMock(on_bar=lambda b: sig)
+    risk = MagicMock()
+    risk.assess.return_value = MagicMock(approved=False, qty=None, sl_price=None, tp_price=None)
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=bs, strategy=strat,
+        risk_manager=risk, settings=_settings(tmp_path),
+    )
+    rm._tick()
+    coord.start_bracket.assert_not_called()
+
+
+def test_tick_flat_signal_skips_bracket(tmp_path):
+    """SignalSide.FLAT must NOT call risk.assess (LONG-only contract per RiskManager:159)."""
+    from src.runtime.manager import RuntimeManager
+    from src.signalgen.models import SignalSide
+
+    coord = MagicMock()
+    bar = _bar()
+    bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
+    sig = MagicMock(side=SignalSide.FLAT)
+    strat = MagicMock(on_bar=lambda b: sig)
+    risk = MagicMock()
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=bs, strategy=strat,
+        risk_manager=risk, settings=_settings(tmp_path),
+    )
+    rm._tick()
+    risk.assess.assert_not_called()
+    coord.start_bracket.assert_not_called()
