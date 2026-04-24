@@ -13,6 +13,7 @@ bypassing this CLI). Update these bodies once the T20 wiring pattern is validate
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -55,13 +56,29 @@ def _cmd_reconcile_only(args: argparse.Namespace) -> int:
 
 
 def _cmd_kill(_args: argparse.Namespace) -> int:
-    """Write sentinel-file at configured path. ADR 0022 sub-decision 5."""
+    """Write sentinel-file at configured path, atomic. ADR 0022 sub-decision 5.
+
+    Atomic via os.open (O_WRONLY|O_CREAT|O_TRUNC, 0o600) + os.fdopen + os.replace.
+    Mirrors src/risk/override.py:82-95 minus os.fsync — sentinel is operator-typed
+    signal, paper-trade scope; fsync overhead not justified.
+    """
     from src.platform.config import Settings
 
     settings = Settings()
     sentinel = Path(settings.runtime_kill_switch_path)
     sentinel.parent.mkdir(parents=True, exist_ok=True)
-    sentinel.write_text("")
+
+    tmp = sentinel.with_suffix(sentinel.suffix + ".tmp")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    fd = os.open(tmp, flags, 0o600)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(b"")
+        os.replace(tmp, sentinel)
+    finally:
+        if tmp.exists():
+            tmp.unlink(missing_ok=True)
+
     print(f"kill switch written: {sentinel}")
     return 0
 
