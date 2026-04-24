@@ -49,6 +49,7 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 
 ## Minimum behavior (overrides по запросу)
 
+- **Все ответы пользователю → русский язык.** Технические термины, file paths, code blocks, error strings, commit messages — оставлять как есть (без перевода).
 - Code/identifiers/files → **English**.
 - Comments/discussion → **Russian**.
 - Read before edit. TDD strict (RED→GREEN→COMMIT).
