@@ -22,10 +22,12 @@ _BASE = dict(
 )
 
 
-def test_missing_api_key_raises() -> None:
+def test_missing_api_key_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """Bybit API key is REQUIRED — no committed default (audit C1, CWE-798)."""
+    monkeypatch.delenv("BYBIT_API_KEY", raising=False)
     with pytest.raises(ValidationError, match="bybit_api_key"):
         Settings(
+            _env_file=None,
             data_dir="/tmp/data",
             log_dir="/tmp/logs",
             db_path="/tmp/data/bot.db",
@@ -35,10 +37,12 @@ def test_missing_api_key_raises() -> None:
         )
 
 
-def test_missing_api_secret_raises() -> None:
+def test_missing_api_secret_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """Bybit API secret is REQUIRED — no committed default (audit C1, CWE-798)."""
+    monkeypatch.delenv("BYBIT_API_SECRET", raising=False)
     with pytest.raises(ValidationError, match="bybit_api_secret"):
         Settings(
+            _env_file=None,
             data_dir="/tmp/data",
             log_dir="/tmp/logs",
             db_path="/tmp/data/bot.db",
@@ -48,10 +52,12 @@ def test_missing_api_secret_raises() -> None:
         )
 
 
-def test_missing_hmac_key_raises() -> None:
+def test_missing_hmac_key_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """risk_override_hmac_key is REQUIRED — separate from API secret (audit H2)."""
+    monkeypatch.delenv("RISK_OVERRIDE_HMAC_KEY", raising=False)
     with pytest.raises(ValidationError, match="risk_override_hmac_key"):
         Settings(
+            _env_file=None,
             data_dir="/tmp/data",
             log_dir="/tmp/logs",
             db_path="/tmp/data/bot.db",
