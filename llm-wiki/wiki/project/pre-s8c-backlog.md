@@ -105,6 +105,76 @@ Cohesive theme = "Wiki backfill + tooling debt". Brainstorm в PHASE 2 S8c.
 - C6 ADR↔index sync hook
 - Sprint 4 parent index — add child-table
 
+## S8c PHASE 2 brainstorming — trader-expert verdicts (2026-04-25)
+
+ROUND 1 dispatch (3 design questions Q1/Q2/Q3) + ROUND 2 dispatch on Q1 disagreement (per binding PHASE 2 protocol).
+
+### Q1 — `src/execution/bracket.py` disposition
+
+- **ROUND 1 maintainer:** DELETE (orphan)
+- **ROUND 1 trader:** REVISE — KEEP+RELABEL. Evidence: 4 test files import (test_bracket_builder, test_bracket_fee_aware_qty, test_bracket_lifecycle_invariants, test_demo_bracket_happy_path).
+- **Maintainer verification:** confirms 4 tests + ALSO `src/execution/coordinator.py:19` production import (`BracketParams, build_bracket, make_order_link_id`) — DELETE = startup ModuleNotFoundError = production outage.
+- **ROUND 2 trader (BINDING):** CONFIRM_REVISE. KEEP `bracket.py` as-is (active ADR 0020 implementation). Plot twist: `src/execution/oco.py` is the actual S5-era ADR 0019 sub-decision 1 orphan candidate.
+- **ROUND 2 maintainer follow-up verification (CC1 lesson):** trader's "oco.py zero test imports" CLAIM IS WRONG — `tests/unit/test_oco.py:3` imports `build_oco_order, OcoParams, OcoOrder`. Trader's research incomplete (Read oco.py content but didn't grep test imports).
+- **Final accepted decisions:**
+  - **bracket.py:** KEEP (binding ROUND 2 verdict, solid evidence). No new wiki page (oco.md lines 13-83 already document bracket.py correctly).
+  - **current-state.md label fix:** `bracket (legacy 100)` → `bracket (oco-builder, ADR 0020 sub-decision 2, 101 LoC)`.
+  - **oco.py:** Q4 dispatched + LOCKED below.
+
+### Q4 — `src/execution/oco.py` disposition (ROUND 1, CONFIRM verdict)
+
+- **ROUND 1 maintainer:** DELETE both `oco.py` + `tests/unit/test_oco.py` (2 files)
+- **ROUND 1 trader (BINDING):** CONFIRM with scope expansion — DELETE **3 files** (third caught via CC1 grep — maintainer missed):
+  1. `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/src/execution/oco.py` (55 LoC)
+  2. `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/tests/unit/test_oco.py`
+  3. `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/tests/integration/test_execution_oco_testnet.py` — already `pytest.mark.skip` permanently at line 27 ("ADR 0020 sub-decision 1: native tpsl path removed; superseded by Coordinator bracket")
+- **Maintainer verification:** `ls + head` confirmed file exists + skip mark verified at line 27. Trader's claim solid.
+- **No hidden coupling found:** `bracket.py` имеет полностью independent API (BracketParams/BracketLegs/build_bracket/compute_oco_qty), zero re-exports / shared symbols / shared helpers с oco.py.
+- **Wiki follow-up:** ADR 0019 wiki page Consequences section — add one-line note "sub-decision 1 implementation (`oco.py`) removed in S8c; git history preserved."
+- **Final accepted decision:** DELETE 3 files в S8c plan (single mechanical task, no further brainstorm).
+
+### CC1 recursive lesson (process gap closure)
+
+PHASE 8 step **5b NEW HARD-GATE** added в `dev-workflow.md` (commit pending in S8c plan):
+- Orphan-audit grep MUST include `tests/` directory
+- ANY orphan claim by ANYONE (controller OR subagent) MUST verify via grep before action
+- Recursive — caught Q1 (bracket.py NOT orphan) AND Q4 expansion (3rd file `test_execution_oco_testnet.py` discovered)
+
+### Q2 — Backtest harness wiki documentation scope
+
+- **ROUND 1 maintainer:** SINGLE consolidated `backtest-harness.md`
+- **ROUND 1 trader (BINDING):** CONFIRM. Single page covering 6 files. Add "S2-era reference, no active dev" marker. Document `replay.py` (8 LoC stub) under "Deferred / stubs" subsection. Add Open questions section noting deferred DSR + MC + WFA → S9+.
+- **Final accepted decision:** Create `wiki/project/components/backtest-harness.md` per recommendation. Update `current-state.md` backtest row + index.md.
+
+### Q3 — Kill-switch CLI documentation scope
+
+- **ROUND 1 maintainer:** Dedicated `kill-switch-cli.md`
+- **ROUND 1 trader (BINDING):** CONFIRM. Standalone operator-reference page. `runtime-manager.md` carries one-line "see also". `runbooks/halt-recovery.md` links from operator section. ADD: fold `__main__.py` "python -m src run/backfill/reconcile-only" entry-point wiring into kill-switch-cli.md "Commands" section (avoids 4th tiny page).
+- **Final accepted decision:** Create `wiki/project/components/kill-switch-cli.md` covering kill-switch + all 4 CLI subcommands. Cross-link runtime-manager.md + halt-recovery.md.
+
+### Cross-cutting concerns (ROUND 1 trader, both items applied)
+
+- **CC1 — orphan-audit grep gap:** `grep -rn "from src.X" src/` MUST include `tests/` directory. Original Q1 audit miss = process-level gap. Fix: PHASE 8 hard-gate checklist update (см. development-workflow.md). **Already showed up in ROUND 2 too** — trader claimed oco.py orphan but missed `test_oco.py:3` import. CC1 applies recursively: every orphan claim MUST be verified by maintainer with `grep src/ tests/` before action.
+- **CC2 — current-state.md label drift:** "bracket (legacy 100)" propagates as false prior into every future trader-expert dispatch. Fix in S8c plan.
+
+### Items NOT requiring brainstorm (mechanical → straight в Bucket D plan)
+
+- `risk-override.md` (147 LoC, security-critical wiki backfill)
+- `trade-history.md` (118 LoC audit log wiki backfill)
+- `_set_halt(reason: str → ReasonCode)` cleanup (S8a/S8b carry-over)
+- ADR 0022 narrative count amend (73 → 74) + Context section S8b scope rewrite (Bucket E1+E2 batch)
+- C5 — trace map mandatory + retro-add S5/S7/S8b plans
+- C6 — `adr-index-sync-check.sh` hook (mirror `adr-agent-sync-check.sh`)
+- pre-existing test_config.py env-pollution fix (3 failures)
+- PHASE 8 checklist update — orphan-audit grep includes `tests/` (CC1)
+- current-state.md `bracket` row label correction (CC2)
+
+### Decision rationale (logged for ADR draft)
+
+- Q1 binding: trader prevented DELETE catastrophe (production import + 4 tests). Round 2 surfaced even bigger evidence (coordinator.py:19) than ROUND 1.
+- Iterative justify protocol working as designed: caught factual error в maintainer's recommendation that would have shipped без brainstorm.
+- ROUND 2 trader's secondary claim (oco.py orphan) NOT auto-accepted because maintainer verified `test_oco.py:3` exists — supported evidence only, NOT silent verdict extension.
+
 ## Bucket E — Trader bonus findings (post-batch re-verify 2026-04-25)
 
 Discovered by trader-expert during pre-S8c batch re-verification. Non-blocking, defer to S8c at next ADR 0022 amendment session.

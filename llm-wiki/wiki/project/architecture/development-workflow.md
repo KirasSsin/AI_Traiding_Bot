@@ -474,6 +474,21 @@ Stage F (только S6+, venue API):
    - If trader-expert.md domain priors hardcode any of above → either update OR refactor to reference current-state.md (lazy load).
    - **Anti-pattern:** stale TL;DR / hardcoded counts in trader prompt → trader gives stale verdicts → bad sprint decisions (D2/D3 in pre-S8c-backlog).
 
+5b. **HARD-GATE — Orphan-audit grep (BLOCKS any file deletion or "orphan" label
+    application):**
+   - Before claiming any `src/<module>` is orphan / candidate for deletion:
+     `grep -rn "from src.<module>\|import <module>" /path/to/repo/{src,tests}/`
+   - **MANDATORY:** include `tests/` in scope. Source-only grep = process gap.
+   - Verify zero hits в BOTH src/ AND tests/ before any DELETE proposal.
+   - History trigger: Pre-S8c brainstorm Q1 — maintainer's `bracket.py` "orphan"
+     claim missed `coordinator.py:19` import + 4 test importers; trader-expert
+     ROUND 1 caught it via tests grep. Same brainstorm ROUND 2 — trader's
+     secondary `oco.py` "orphan" claim missed `tests/unit/test_oco.py:3` import.
+     Recursive lesson: ANY orphan claim by ANYONE (controller OR subagent) MUST
+     be verified via this grep before action.
+   - Apply same to wiki: `grep -rn "filename" llm-wiki/wiki/` before claiming
+     wiki page is orphan / candidate for archival.
+
 6. **HARD-GATE — Wiki sync (BLOCKS step 7 if missing):**
    - All new ADRs (этого спринта) added to `wiki/index.md` `## Project — Decisions` section.
    - All new component pages added to `wiki/index.md` `## Project — Components` section.

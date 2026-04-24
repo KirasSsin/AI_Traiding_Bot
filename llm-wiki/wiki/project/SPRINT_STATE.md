@@ -2,8 +2,8 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: pre-8c-shipped
-phase: between-sprints
+sprint: 8c
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.8b
 ---
