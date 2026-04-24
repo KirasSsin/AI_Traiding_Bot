@@ -9,6 +9,7 @@ S5 handle_ws_reconnect removed — ws-reconnect handling moves to Task 22 bootst
 """
 from __future__ import annotations
 
+import threading
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
@@ -74,6 +75,7 @@ class Coordinator:
         self._symbol = symbol
         self._base_coin = base_coin
         self._bootstrap_done: bool = False
+        self._lock = threading.RLock()  # ADR 0022 sub-decision 1 — reentrant
 
     def on_ws_reconnect(self) -> None:
         """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
@@ -81,34 +83,35 @@ class Coordinator:
         Called by WS consumer on disconnect AND by bootstrap.
         Routes through RECONCILING state; dispatches on verdict.
         """
-        row = self._repo.get(self._symbol)
-        if row is None:
-            return
-        state = row.state
-        if state not in _RECONCILABLE_STATES:
-            _log.debug("on_ws_reconnect: state=%s not reconcilable; noop", state.name)
-            return
-        self._transition(ExecutionEvent.WS_RECONNECT)  # → RECONCILING
-        local = self._build_local_state(row)
-        result = self._reconciler.reconcile(local, expected_state=state)
-        if result.verdict == "HEAL_ENTRY_FILLED":
-            self._apply_heal_entry_filled(result)
-            self._transition(ExecutionEvent.RECONCILE_ENTRY_FILLED)  # → LONG_OPEN
-            return
-        if result.verdict == "EXITED":
-            self._apply_exited()
-            self._transition(ExecutionEvent.RECONCILE_EXITED)  # → FLAT
-            return
-        if result.verdict == "AGREE":
-            self._transition(ExecutionEvent.RECONCILE_OK)  # → OCO_ARMED (existing S6 path)
-            return
-        # DIVERGENCE
-        self._set_halt(
-            reason=result.halt_reason or "HALT_RECONCILE_DIVERGENCE",
-            last_event=ExecutionEvent.WS_RECONNECT,
-            extra=result.heal_context or {},
-        )
-        self._transition(ExecutionEvent.RECONCILE_DIVERGENCE)  # → HALTED
+        with self._lock:
+            row = self._repo.get(self._symbol)
+            if row is None:
+                return
+            state = row.state
+            if state not in _RECONCILABLE_STATES:
+                _log.debug("on_ws_reconnect: state=%s not reconcilable; noop", state.name)
+                return
+            self._transition(ExecutionEvent.WS_RECONNECT)  # → RECONCILING
+            local = self._build_local_state(row)
+            result = self._reconciler.reconcile(local, expected_state=state)
+            if result.verdict == "HEAL_ENTRY_FILLED":
+                self._apply_heal_entry_filled(result)
+                self._transition(ExecutionEvent.RECONCILE_ENTRY_FILLED)  # → LONG_OPEN
+                return
+            if result.verdict == "EXITED":
+                self._apply_exited()
+                self._transition(ExecutionEvent.RECONCILE_EXITED)  # → FLAT
+                return
+            if result.verdict == "AGREE":
+                self._transition(ExecutionEvent.RECONCILE_OK)  # → OCO_ARMED (existing S6 path)
+                return
+            # DIVERGENCE
+            self._set_halt(
+                reason=result.halt_reason or "HALT_RECONCILE_DIVERGENCE",
+                last_event=ExecutionEvent.WS_RECONNECT,
+                extra=result.heal_context or {},
+            )
+            self._transition(ExecutionEvent.RECONCILE_DIVERGENCE)  # → HALTED
 
     def _build_local_state(self, row: "ExecutionStateRow") -> "LocalState":
         """Build reconciler LocalState from current repo row."""
@@ -147,14 +150,15 @@ class Coordinator:
           3. Delegate to on_ws_reconnect — reuses live reconcile path.
           4. Stamp bootstrap_at, mark _bootstrap_done = True.
         """
-        row = self._repo.get(self._symbol)
-        if row is None:
+        with self._lock:
+            row = self._repo.get(self._symbol)
+            if row is None:
+                self._bootstrap_done = True
+                return
+            self._recover_attempt_num(row)
+            self.on_ws_reconnect()
+            self._upsert_fields(bootstrap_at=_now_iso())
             self._bootstrap_done = True
-            return
-        self._recover_attempt_num(row)
-        self.on_ws_reconnect()
-        self._upsert_fields(bootstrap_at=_now_iso())
-        self._bootstrap_done = True
 
     def _recover_attempt_num(self, row: "ExecutionStateRow") -> None:
         """Extracted from pre-S7 bootstrap body (ADR 0020 sub-decision 9)."""
@@ -198,51 +202,52 @@ class Coordinator:
         TP/SL legs are armed later in on_entry_filled (Task 19 arm_oco).
         Returns the generated 8-char bracket_id (UUIDv4 prefix fits Bybit 36-char orderLinkId).
         """
-        assert self._bootstrap_done, "bootstrap must complete before start_bracket"
-        bracket_id = str(uuid.uuid4())[:8]
-        params = BracketParams(
-            symbol=self._symbol,
-            entry_qty=entry_qty,
-            entry_side=entry_side,  # type: ignore[arg-type]
-            tp_price=tp_price,
-            sl_trigger_price=sl_trigger_price,
-            bracket_id=bracket_id,
-            attempt=1,
-        )
-        legs = build_bracket(params)
-        entry_ack = self._adapter.place_order(
-            symbol=self._symbol,
-            side=legs.entry.side,
-            qty=legs.entry.qty,
-            order_link_id=legs.entry.order_link_id,
-        )
-        current = self._repo.get(self._symbol)
-        cur_state = current.state if current is not None else ExecutionState.INIT
-        if cur_state == ExecutionState.INIT:
-            cur_state = apply(cur_state, ExecutionEvent.STATE_LOADED)
-        new_state = apply(cur_state, ExecutionEvent.ENTRY_PLACED)
-        self._repo.upsert(
-            ExecutionStateRow(
+        with self._lock:
+            assert self._bootstrap_done, "bootstrap must complete before start_bracket"
+            bracket_id = str(uuid.uuid4())[:8]
+            params = BracketParams(
                 symbol=self._symbol,
-                state=new_state,
-                position_qty=Decimal("0"),
-                entry_price=None,
-                # ADR 0021 sub-decision 3: persist entry order_id so post-reconnect
-                # reconcile can fetch its terminal status via get_order and reach
-                # the HEAL_ENTRY_FILLED verdict (bootstrap → reconciler classifier).
-                # Field name is legacy ('oco_main' from S5 single-OCO scheme); the
-                # reconciler reads it as LocalState.entry_order_id.
-                oco_main_order_id=entry_ack.order_id,
+                entry_qty=entry_qty,
+                entry_side=entry_side,  # type: ignore[arg-type]
+                tp_price=tp_price,
+                sl_trigger_price=sl_trigger_price,
                 bracket_id=bracket_id,
-                oco_tp_order_id=None,
-                oco_sl_order_id=None,
-                expected_oco_qty=entry_qty,  # expected_entry_qty for reconciler qty-check
-                arming_started_at=None,
-                last_attempt_num=1,
-                updated_at=_now_iso(),
+                attempt=1,
             )
-        )
-        return bracket_id
+            legs = build_bracket(params)
+            entry_ack = self._adapter.place_order(
+                symbol=self._symbol,
+                side=legs.entry.side,
+                qty=legs.entry.qty,
+                order_link_id=legs.entry.order_link_id,
+            )
+            current = self._repo.get(self._symbol)
+            cur_state = current.state if current is not None else ExecutionState.INIT
+            if cur_state == ExecutionState.INIT:
+                cur_state = apply(cur_state, ExecutionEvent.STATE_LOADED)
+            new_state = apply(cur_state, ExecutionEvent.ENTRY_PLACED)
+            self._repo.upsert(
+                ExecutionStateRow(
+                    symbol=self._symbol,
+                    state=new_state,
+                    position_qty=Decimal("0"),
+                    entry_price=None,
+                    # ADR 0021 sub-decision 3: persist entry order_id so post-reconnect
+                    # reconcile can fetch its terminal status via get_order and reach
+                    # the HEAL_ENTRY_FILLED verdict (bootstrap → reconciler classifier).
+                    # Field name is legacy ('oco_main' from S5 single-OCO scheme); the
+                    # reconciler reads it as LocalState.entry_order_id.
+                    oco_main_order_id=entry_ack.order_id,
+                    bracket_id=bracket_id,
+                    oco_tp_order_id=None,
+                    oco_sl_order_id=None,
+                    expected_oco_qty=entry_qty,  # expected_entry_qty for reconciler qty-check
+                    arming_started_at=None,
+                    last_attempt_num=1,
+                    updated_at=_now_iso(),
+                )
+            )
+            return bracket_id
 
     def on_order_event(self, evt: dict) -> None:
         """ADR 0020 sub-decisions 6+7: WS event router.
@@ -259,40 +264,41 @@ class Coordinator:
         warning; an IllegalTransitionError from the FSM is logged but never
         propagated, so a stale echo cannot kill the executor worker.
         """
-        assert self._bootstrap_done, "bootstrap must complete before on_order_event"
-        link_id = evt.get("orderLinkId", "")
-        status = evt.get("orderStatus", "")
-        role = self._role_from_link_id(link_id)
-        row = self._repo.get(self._symbol)
-        if row is None or row.state in _TERMINAL_STATES:
-            if row is not None and row.state in _TERMINAL_STATES:
-                _log.warning(
-                    "on_order_event.dropped_in_terminal_state state=%s status=%s role=%s link_id=%s",
-                    row.state, status, role, link_id,
-                )
-            return
-        try:
-            if role == "entry":
-                if status == "Filled":
-                    self._transition(ExecutionEvent.ENTRY_FILLED)
-                # PartiallyFilled / other entry statuses: no-op (Spot Market BUY
-                # fills atomically; defensive against future SDK changes).
+        with self._lock:
+            assert self._bootstrap_done, "bootstrap must complete before on_order_event"
+            link_id = evt.get("orderLinkId", "")
+            status = evt.get("orderStatus", "")
+            role = self._role_from_link_id(link_id)
+            row = self._repo.get(self._symbol)
+            if row is None or row.state in _TERMINAL_STATES:
+                if row is not None and row.state in _TERMINAL_STATES:
+                    _log.warning(
+                        "on_order_event.dropped_in_terminal_state state=%s status=%s role=%s link_id=%s",
+                        row.state, status, role, link_id,
+                    )
                 return
-            if status == "Triggered" and role == "sl":
-                self._transition(ExecutionEvent.SL_TRIGGERED)
-                self._cancel_sibling(role_to_cancel="tp")
-            elif status == "Filled" and role == "tp":
-                self._transition(ExecutionEvent.TP_HIT)
-                self._cancel_sibling(role_to_cancel="sl")
-            elif status == "PartiallyFilled" and role == "sl":
-                self._handle_sl_partial(evt)
-        except IllegalTransitionError as e:
-            # Late / duplicate WS echo for an event the FSM has already routed
-            # past. Log + drop — never crash the executor on a stale echo.
-            _log.warning(
-                "on_order_event.illegal_transition_dropped error=%s status=%s role=%s link_id=%s",
-                e, status, role, link_id,
-            )
+            try:
+                if role == "entry":
+                    if status == "Filled":
+                        self._transition(ExecutionEvent.ENTRY_FILLED)
+                    # PartiallyFilled / other entry statuses: no-op (Spot Market BUY
+                    # fills atomically; defensive against future SDK changes).
+                    return
+                if status == "Triggered" and role == "sl":
+                    self._transition(ExecutionEvent.SL_TRIGGERED)
+                    self._cancel_sibling(role_to_cancel="tp")
+                elif status == "Filled" and role == "tp":
+                    self._transition(ExecutionEvent.TP_HIT)
+                    self._cancel_sibling(role_to_cancel="sl")
+                elif status == "PartiallyFilled" and role == "sl":
+                    self._handle_sl_partial(evt)
+            except IllegalTransitionError as e:
+                # Late / duplicate WS echo for an event the FSM has already routed
+                # past. Log + drop — never crash the executor on a stale echo.
+                _log.warning(
+                    "on_order_event.illegal_transition_dropped error=%s status=%s role=%s link_id=%s",
+                    e, status, role, link_id,
+                )
 
     def _handle_sl_partial(self, evt: dict) -> None:
         """ADR 0020 sub-decision 7: SL IOC partial → flatten residual via Market Sell.
@@ -345,56 +351,57 @@ class Coordinator:
         On leg-place failure, persists bumped attempt + leaves state for caller
         to handle (FSM stays in OCO_ARMING so retry can resume).
         """
-        row = self._repo.get(self._symbol)
-        if row is None or row.bracket_id is None:
-            raise RuntimeError("arm_oco called without active bracket_id")
-        # Sub-decision 9 race-fix: cancel stale TP/SL from a prior attempt
-        # BEFORE placing the new attempt. Without this, a retry from
-        # OCO_ARMING (after WS-reconnect, partial-arm crash, or arming-TTL
-        # halt-and-resume) leaves the old `oco-{bid}-tp-{N}` live alongside
-        # the new `oco-{bid}-tp-{N+1}` → double exit on Spot.
-        # Cancellation is best-effort: 110001 (already terminal) and
-        # transient adapter errors do NOT block re-placement, since the
-        # safety-critical path is getting fresh legs onto the book; any
-        # leftover stale leg is reaped by reconcile / bootstrap.
-        if row.oco_tp_order_id is not None:
-            self._best_effort_cancel(row.oco_tp_order_id)
-        if row.oco_sl_order_id is not None:
-            self._best_effort_cancel(row.oco_sl_order_id)
-        attempt = row.last_attempt_num + 1
-        tp_lid = make_order_link_id(bracket_id=row.bracket_id, role="tp", attempt=attempt)
-        sl_lid = make_order_link_id(bracket_id=row.bracket_id, role="sl", attempt=attempt)
-        # Persist attempt + arming_started_at upfront so a crash mid-arm doesn't reuse the number;
-        # also clear stale TP/SL ids so a crash between cancel and new place doesn't
-        # leave us pointing at the cancelled order.
-        self._upsert_fields(
-            last_attempt_num=attempt,
-            arming_started_at=_now_iso(),
-            expected_oco_qty=oco_qty,
-            oco_tp_order_id=None,
-            oco_sl_order_id=None,
-        )
-        try:
-            tp_ack = self._adapter.place_limit_order(
-                symbol=self._symbol, side="Sell", qty=oco_qty,
-                price=tp_price, order_link_id=tp_lid,
+        with self._lock:
+            row = self._repo.get(self._symbol)
+            if row is None or row.bracket_id is None:
+                raise RuntimeError("arm_oco called without active bracket_id")
+            # Sub-decision 9 race-fix: cancel stale TP/SL from a prior attempt
+            # BEFORE placing the new attempt. Without this, a retry from
+            # OCO_ARMING (after WS-reconnect, partial-arm crash, or arming-TTL
+            # halt-and-resume) leaves the old `oco-{bid}-tp-{N}` live alongside
+            # the new `oco-{bid}-tp-{N+1}` → double exit on Spot.
+            # Cancellation is best-effort: 110001 (already terminal) and
+            # transient adapter errors do NOT block re-placement, since the
+            # safety-critical path is getting fresh legs onto the book; any
+            # leftover stale leg is reaped by reconcile / bootstrap.
+            if row.oco_tp_order_id is not None:
+                self._best_effort_cancel(row.oco_tp_order_id)
+            if row.oco_sl_order_id is not None:
+                self._best_effort_cancel(row.oco_sl_order_id)
+            attempt = row.last_attempt_num + 1
+            tp_lid = make_order_link_id(bracket_id=row.bracket_id, role="tp", attempt=attempt)
+            sl_lid = make_order_link_id(bracket_id=row.bracket_id, role="sl", attempt=attempt)
+            # Persist attempt + arming_started_at upfront so a crash mid-arm doesn't reuse the number;
+            # also clear stale TP/SL ids so a crash between cancel and new place doesn't
+            # leave us pointing at the cancelled order.
+            self._upsert_fields(
+                last_attempt_num=attempt,
+                arming_started_at=_now_iso(),
+                expected_oco_qty=oco_qty,
+                oco_tp_order_id=None,
+                oco_sl_order_id=None,
             )
-            self._upsert_fields(oco_tp_order_id=tp_ack.order_id)
-            # Transition LONG_OPEN→OCO_ARMING only on first attempt (already there on retry)
-            current = self._repo.get(self._symbol)
-            if current is not None and current.state == ExecutionState.LONG_OPEN:
-                self._transition(ExecutionEvent.TP_PLACED)
-        except Exception:
-            return
-        try:
-            sl_ack = self._adapter.place_stop_market_order(
-                symbol=self._symbol, side="Sell", qty=oco_qty,
-                trigger_price=sl_trigger_price, order_link_id=sl_lid,
-            )
-            self._upsert_fields(oco_sl_order_id=sl_ack.order_id)
-            self._transition(ExecutionEvent.SL_PLACED)
-        except Exception:
-            return
+            try:
+                tp_ack = self._adapter.place_limit_order(
+                    symbol=self._symbol, side="Sell", qty=oco_qty,
+                    price=tp_price, order_link_id=tp_lid,
+                )
+                self._upsert_fields(oco_tp_order_id=tp_ack.order_id)
+                # Transition LONG_OPEN→OCO_ARMING only on first attempt (already there on retry)
+                current = self._repo.get(self._symbol)
+                if current is not None and current.state == ExecutionState.LONG_OPEN:
+                    self._transition(ExecutionEvent.TP_PLACED)
+            except Exception:
+                return
+            try:
+                sl_ack = self._adapter.place_stop_market_order(
+                    symbol=self._symbol, side="Sell", qty=oco_qty,
+                    trigger_price=sl_trigger_price, order_link_id=sl_lid,
+                )
+                self._upsert_fields(oco_sl_order_id=sl_ack.order_id)
+                self._transition(ExecutionEvent.SL_PLACED)
+            except Exception:
+                return
 
     def flatten(self, *, reason: ReasonCode) -> None:
         """ADR 0020 sub-decision 10: emergency flatten cascade.
@@ -408,27 +415,28 @@ class Coordinator:
         ExecutionStateRow has no halt_reason/last_exit_reason field.
         It is conveyed to operators via the FSM event + structured logger.
         """
-        self._adapter.cancel_all_orders(symbol=self._symbol)
-        wallet = self._adapter.get_wallet_balance(coin=self._base_coin)
-        free_qty = wallet.wallet_balance - wallet.locked
-        qty_step = self._qty_step()
-        qty = self._step_floor(free_qty, qty_step)
-        if qty <= Decimal("0"):
-            return  # already flat — no-op
-        if self._try_place_market_sell(qty):
-            return
-        retry_qty = self._step_floor(qty - qty_step, qty_step)
-        if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
-            return
-        self._set_halt(
-            reason="HALT_FLATTEN_FAILED",
-            last_event=ExecutionEvent.FLATTEN_FAILED,
-            extra={
-                "flatten_path": "emergency",
-                "trigger_reason": reason.value if hasattr(reason, "value") else str(reason),
-            },
-        )
-        self._transition(ExecutionEvent.FLATTEN_FAILED)
+        with self._lock:
+            self._adapter.cancel_all_orders(symbol=self._symbol)
+            wallet = self._adapter.get_wallet_balance(coin=self._base_coin)
+            free_qty = wallet.wallet_balance - wallet.locked
+            qty_step = self._qty_step()
+            qty = self._step_floor(free_qty, qty_step)
+            if qty <= Decimal("0"):
+                return  # already flat — no-op
+            if self._try_place_market_sell(qty):
+                return
+            retry_qty = self._step_floor(qty - qty_step, qty_step)
+            if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
+                return
+            self._set_halt(
+                reason="HALT_FLATTEN_FAILED",
+                last_event=ExecutionEvent.FLATTEN_FAILED,
+                extra={
+                    "flatten_path": "emergency",
+                    "trigger_reason": reason.value if hasattr(reason, "value") else str(reason),
+                },
+            )
+            self._transition(ExecutionEvent.FLATTEN_FAILED)
 
     def _best_effort_cancel(self, order_id: str) -> None:
         """Best-effort cancel for stale arm_oco legs.
