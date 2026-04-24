@@ -405,6 +405,7 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 | `superpowers:executing-plans` Step "Worktree setup" | Mandatory `using-git-worktrees` | S1-S5 норма = `feature/<sprint-N-slug>` ветка в текущем repo (см. PR #1-#7). Worktree only on user request. |
 | `superpowers:writing-plans` Step "Spec coverage check" | Spec→plan trace map | Same — не overridden. Trace map обязателен. |
 | `superpowers:brainstorming` HARD-GATE "Get design approval" | Always ask before code | Skip when work is **execution of approved ADR** (ADR = approved design). Brainstorm только для new ADRs. |
+| `superpowers:brainstorming` "Ask clarifying questions one at a time → user" | Direct user dialog для каждого вопроса | **OVERRIDDEN**: scope/architecture questions НЕ идут user-у напрямую. Pipeline (BINDING per dev-workflow.md PHASE 2 step 3a-3f): controller собирает structured questionnaire (question + recommended option + alternatives + reasoning + risk) → dispatch trader-expert ROUND 1 → on REVISE-disagreement (trader picks option != maintainer's) MUST dispatch ROUND 2 iterative justify (deeper analysis + side-by-side compare table + fresh research → CONFIRM_REVISE OR CHANGED, BINDING, no round 3) → user видит ТОЛЬКО trader's escalation list (product/regulatory/business choices). |
 | AS `using-agent-skills` "Surface Assumptions before non-trivial work" | Print assumptions list | Skip when assumptions already documented in active ADR/plan/sprint page. |
 | AS `using-agent-skills` "Manage Confusion: STOP, ask" | Stop on inconsistency | First: check wiki+ADR+log for resolution. Stop+ask only after wiki/ADR cannot resolve. |
 
@@ -504,7 +505,7 @@ Layer 1: Memory continuity (claude-mem / anthropic-skills:consolidate-memory)
 
 | Event / context | Layer cascade | Skip if |
 |---|---|---|
-| Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → **L5 trader-expert (questionnaire dispatch если остались open questions)** → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
+| Новый sprint / архитектурное решение | L1 (mem-search "did we decide X?") → L3 brainstorming → L4b process-interviewer (если ответы поверхностны) → **L5 trader-expert ROUND 1 (questionnaire dispatch — ОБЯЗАТЕЛЬНО для всех scope/architecture questions)** → **iterative justify ROUND 2 для каждого REVISE-disagreement (per dev-workflow.md PHASE 2 step 3c.1)** → user escalation только из trader's escalation list → L3 writing-plans → L1 commit chapter mark | Trivial change ≤ 50 LoC |
 | Subagent dispatch (implementer) | AS `context-engineering` (brief construction) → L4b prompt-master (если > 200 слов) → L3 subagent-driven-development → TDD strict | Single Bash command |
 | Subagent brief > 200 слов / output > 30KB / critical correctness | AS `context-engineering` СНАЧАЛА → L4b prompt-master refine ОБЯЗАТЕЛЬНО | Always apply |
 | Code change в `src/risk/`, `src/signalgen/`, `src/execution/` | L5 trading-logic-reviewer ОБЯЗАТЕЛЬНО after DONE | Pure docs change |

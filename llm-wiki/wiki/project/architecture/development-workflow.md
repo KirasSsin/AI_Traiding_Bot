@@ -191,14 +191,56 @@ SKIP: executing approved ADR → Phase 3
    3c. Trader-expert возвращает per-question verdict (CONFIRM/REVISE/DEFER/EXPAND)
        + cross-cutting concerns + escalation list для user'а.
 
+   3c.1 Iterative justify loop (ОБЯЗАТЕЛЬНО для каждого REVISE где выбранная trader'ом
+        опция != maintainer's recommended option):
+
+         (i)  Maintainer dispatch'ит ROUND 2 questionnaire ТОМУ ЖЕ trader-expert'у:
+                - Verbatim text of disputed question.
+                - Round 1 maintainer recommendation + reasoning.
+                - Round 1 trader REVISE verdict (chosen option + rationale).
+                - Brief: "Re-evaluate. Why did you choose <X> over maintainer's <Y>?
+                  Perform deeper analysis: side-by-side compare <Y> vs <X>, fresh
+                  research (re-read related wiki/ADR/code), then return final
+                  verdict per Iterative justification protocol in your prompt."
+
+         (ii) Trader-expert ROUND 2 response (per Iterative justification protocol
+              in trader-expert.md) returns ONE of:
+                - **CONFIRM_REVISE** — same answer, deeper rationale, explicit list
+                  of risks in maintainer's option that justified rejecting it.
+                  → ACCEPT trader's option. Lock for ADR.
+                - **CHANGED** — new analysis showed maintainer's option was right
+                  OR a third option emerged. MUST include compare table
+                  (option Y vs option X vs option Z if any), fresh research findings.
+                  → ACCEPT trader's NEW final verdict. Lock for ADR.
+
+         (iii) Maintainer logs BOTH rounds in ADR section "Decision rationale":
+                 - Round 1 verdict (REVISE, option X)
+                 - Round 2 verdict (CONFIRM_REVISE / CHANGED, final option)
+                 - Why iteration happened (disagreement) and how it resolved.
+
+         (iv) NO third round. Round 2 verdict is binding. If maintainer still
+              disagrees → escalate to user under "Open issues" with both rounds
+              in evidence package.
+
    3d. Maintainer применяет verdicts:
          - CONFIRM → option лочится, идёт в ADR.
-         - REVISE → новая опция лочится, идёт в ADR с rationale из verdict.
+         - REVISE (where option == maintainer's recommendation, no disagreement)
+           → option лочится, идёт в ADR with trader's rationale.
+         - REVISE (where option != maintainer's recommendation) → MUST go through
+           3c.1 iterative justify loop FIRST. Final option lockd after round 2.
          - DEFER → вопрос → "Open questions → deferred to S{N+1}+" в ADR.
          - EXPAND → re-brainstorm на reframed question → возможен второй round 3a-3c.
 
    3e. Если trader-expert escalated items → пользователю (1 message с конкретными
        вопросами). Без user-ответа PHASE 3 не начинается.
+
+   3f. ANTI-PATTERN — НИКОГДА не делать в PHASE 2:
+         - Задавать user-у scope/architecture вопрос НАПРЯМУЮ без trader-expert
+           round 1. (User questions = ТОЛЬКО escalation list из trader's output.)
+         - Принимать REVISE с disagreement без round 2 iterative justify loop.
+         - Третий round trader-expert (round 2 верdict binding).
+         - Skip'ать trader-expert dispatch потому что "очевидно" — все open
+           scope/architecture questions ОБЯЗАТЕЛЬНО проходят trader-expert.
 
 4. ADR draft → wiki/project/decisions/NNNN-<slug>.md (status: proposed)
    → каждое решение из шагов 3c-3d попадает в ADR с reference на verdict.
