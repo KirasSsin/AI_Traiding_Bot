@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
@@ -53,9 +54,15 @@ def _cmd_reconcile_only(args: argparse.Namespace) -> int:
 
 
 def _cmd_kill(args: argparse.Namespace) -> int:
-    """Write sentinel-file. ADR 0022 sub-decision 5."""
-    # Body in Task 19
-    raise NotImplementedError("Task 19")
+    """Write sentinel-file at configured path. ADR 0022 sub-decision 5."""
+    from src.platform.config import Settings
+
+    settings = Settings()
+    sentinel = Path(settings.runtime_kill_switch_path)
+    sentinel.parent.mkdir(parents=True, exist_ok=True)
+    sentinel.write_text("")
+    print(f"kill switch written: {sentinel}")
+    return 0
 
 
 def _build_parser() -> argparse.ArgumentParser:
