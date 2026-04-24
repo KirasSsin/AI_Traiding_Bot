@@ -51,4 +51,4 @@ def test_kill_terminal():
 
 def test_transitions_count_exact():
     """Lock the exact transition count. Adding/removing requires ADR update."""
-    assert len(TRANSITIONS) == 59
+    assert len(TRANSITIONS) == 69  # +10 for KILL_SWITCH_REQUESTED (ADR 0022 sub-decision 5)
