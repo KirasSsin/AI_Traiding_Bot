@@ -389,3 +389,48 @@ status: stable
 
 ### Tag (planned)
 - v0.1.0-alpha.8b
+
+## [2026-04-25] session-end | Post-S8c batch — Wiki RAG + Skills + CLAUDE.md prune
+
+### What shipped (3 PRs squash-merged to main)
+
+- **PR #11** — Sprint 8c carry-over (already shipped earlier session) → tag `v0.1.0-alpha.8c`
+- **PR #12** — Wiki RAG optimization (TIER 1+2+3): mental-map.md NEW + components/README.md cluster index NEW + 6 orphan "Referenced by" sections + 13 components canonical Invariants tables + reconciler.md SUPERSEDED note + frontmatter hygiene (5 pages type field, sprint pages normalize, [[override]]→[[risk-override]] fix) + Runbooks index section
+- **PR #13** — PR-C: 5 NEW workflow skills (.claude/skills/sprint-orient + sprint-finish + wiki-update + brainstorm-init + hook-test) + kit refactor (replace hardcoded inline workflow с skill references) + llm-wiki/CLAUDE.md prune 610→407 lines (33% reduction, ~50% session-start token saving) + Anthropic best practices alignment section
+
+### Wiki updates
+
+- 2 NEW navigation pages (mental-map.md + components/README.md)
+- 2 NEW methodology pages (methodology-decision-algorithms.md + methodology-rejected.md — extracted from CLAUDE.md prune)
+- 13 component pages с canonical Invariants tables (CRITICAL classification по trader-expert)
+- 6 orphan component pages с "Referenced by" sections
+- All sprint pages frontmatter normalized (type: sprint, status: completed)
+- ADR 0017 amended (architecture-reviewer addition deferred к PR-D+E)
+
+### Open wiki gaps (deferred)
+
+- **PR-A pending** — verification pass для 13 Invariants tables (line:N → function::name anchors, verify test names против actual files)
+- **PR-B pending** — wiki coverage audit (broader gap finding) + Block 1/2 paradigm selectively
+- **PR-D+E pending** — architecture-reviewer NEW agent + TIER A apply (memory + Sprint priming + effort) к 5 reviewers
+- **Bucket F1** — `wiki/runbooks/halt-recovery.md` MISSING (referenced 8+ places, brainstorm scope для S9 dedicated operator-readiness sprint)
+
+### Key methodology shifts
+
+- **Skills paradigm** заменил hardcoded inline workflow logic. Single source of truth = `.claude/skills/<name>/SKILL.md`. Other docs (dev-workflow.md, repo CLAUDE.md, mental-map.md, index.md) — references only, не duplicate. Per Anthropic progressive disclosure.
+- **Anthropic best practices selectively adopted** (12 adopted including hooks/subagents/skills/verify work; 7 NOT adopted including Plan Mode/Agent Teams/parallel sessions — paradigm conflicts с naшим sequential sprint discipline)
+- **CLAUDE.md prune** per Anthropic guidance ("bloated CLAUDE.md = LLM ignores rules") — 33% reduction без losing canonical content (frontmatter schema, banned-list, hierarchy summary preserved)
+
+### Session metrics
+
+- 3 PRs shipped (squash-merged)
+- ~32 wiki files touched
+- 0 src/ changes (pure docs/skills/methodology batch)
+- pytest 602 passed / 24 skipped / 0 failed (S8c baseline unchanged)
+
+### Restart required
+
+Skills not active в текущей session — нужен restart claude code чтобы Claude Code scanned `.claude/skills/` directory at session start и registered 5 new skills для auto-trigger через description match.
+
+### Next action
+
+После restart: continue с PR-A (verification pass) ИЛИ PR-D+E (architecture-reviewer + TIER A). PR-B deferred к больше time budget.
