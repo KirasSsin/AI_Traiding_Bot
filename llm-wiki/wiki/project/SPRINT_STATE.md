@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: pre-8c
-phase: 4-execution
-branch: feature/pre-s8c-wiki-backfill
+sprint: pre-8c-shipped
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.8b
 ---
 
@@ -15,9 +15,9 @@ tag: v0.1.0-alpha.8b
 
 ## Текущий статус
 
-**Между спринтами. S8b shipped: tag `v0.1.0-alpha.8b`, PR #9 squash-merged into main (`5a4d074`).**
+**Между спринтами. S8b shipped (tag `v0.1.0-alpha.8b`, PR #9 → `5a4d074`). Pre-S8c wiki-backfill batch shipped (PR #10 → `a8ad404`): 19 items (Bucket A+ + DRIFT) + 3 methodology kit updates (PHASE 8 HARD-GATE step 5/5a/6 + canonical counts pattern + binding PHASE 2 brainstorming protocol).**
 
-S8b complete — 9 tasks, TDD throughout, per-task domain reviews APPROVED. pytest 604 passed / 24 skipped / 3 pre-existing test_config env-pollution failures (carry-over к S8c). mypy --strict src/ = 44 errors (vs main baseline 45; T3 fix net -1).
+Готовы к S8c brainstorm. Carry-over к S8c: Bucket B (user bugs TBD) + Bucket E (ADR 0022 narrative count + Context section amends) + S8a/S8b code carry-overs (`_set_halt(reason: str→ReasonCode)`, pre-existing test_config 3 failures, mypy 44 errors).
 
 ## Последний спринт (S8b)
 
