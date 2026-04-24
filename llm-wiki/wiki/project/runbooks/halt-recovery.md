@@ -1,12 +1,13 @@
 ---
 title: Halt Recovery Runbook
 type: runbook
-tags: [operations, halt, recovery, sprint-6]
+tags: [operations, halt, recovery, sprint-6, sprint-7]
 created: 2026-04-23
-updated: 2026-04-23
+updated: 2026-04-24
 status: stable
 sources:
   - project/decisions/0020-sprint-6-execution-spot-oco-emulation
+  - project/decisions/0021-sprint-7-resilience
   - project/components/oco
   - project/components/reconciler
 ---
@@ -201,7 +202,85 @@ Phantom SL — индикатор того, что процесс упал ме�
 
 ---
 
-## 4. HALT_RECONCILE_DIVERGENCE (Sprint 5)
+## 4. HALT_BOOTSTRAP_AMBIGUOUS (Sprint 7)
+
+### Триггер
+
+`Coordinator.bootstrap()` на старте процесса вызвал `reconciler.reconcile()`, и вердикт был `DIVERGENCE` — local SQLite и exchange расходятся, и это не классический heal/exit-случай. Бот **не выходит** из bootstrap пока оператор не разрешил расхождение.
+
+Переход FSM: `INIT → RECONCILING + RECONCILE_DIVERGENCE → HALTED`
+`halt_reason = "HALT_BOOTSTRAP_AMBIGUOUS"` (записан в `execution_state.halt_reason` + `halt_log`)
+
+Источник: ADR 0021 sub-decision 1.
+
+### Диагностика
+
+1. Прочитать halt-trail:
+   ```sql
+   SELECT ts, reason, context_json FROM halt_log
+   WHERE symbol='BTCUSDT' ORDER BY ts DESC LIMIT 5;
+   ```
+   `context_json` содержит local-state snapshot + reconcile verdict.
+
+2. Прочитать current state:
+   ```sql
+   SELECT state, halt_reason, position_qty, entry_price,
+          oco_main_order_id, oco_tp_order_id, oco_sl_order_id,
+          bootstrap_at, last_reconcile_at
+   FROM execution_state WHERE symbol='BTCUSDT';
+   ```
+
+3. Bybit Web UI → Open Orders + walletBalance(BTC). Сравнить с local snapshot.
+
+### Восстановление
+
+1. **Решить, кто прав** — обычно exchange (per ADR 0019 reconcile-as-truth). Если local имеет несоответствующий `oco_main_order_id`, который exchange не знает — local stale.
+
+2. **Привести exchange в чистое состояние:** отменить все открытые ордера через Web UI, при необходимости закрыть позицию Market Sell.
+
+3. **Сбросить execution_state** (см. шаблон ниже, **включая `halt_reason=NULL`**).
+
+4. **Перезапустить бот.** `bootstrap()` теперь увидит чистый exchange + чистый local → AGREE → FLAT.
+
+### Post-mortem
+
+Зафиксировать в `wiki/log.md`: какой именно diff вызвал ambiguous-вердикт. Если повторяется — обновить classifier в `src/execution/reconciler.py::_classify_*` и добавить regression тест.
+
+---
+
+## 5. HALT_EXIT_RECONCILE_DIVERGENCE (Sprint 7)
+
+### Триггер
+
+Бот был в `EXIT_PENDING`, WS отвалился, после reconnect reconciler увидел state mismatch (например, exit-ордер уже не в open_orders, но walletBalance не сошёлся с ожидаемым FLAT). Отдельный halt-код от bootstrap-divergence — runbook путь иной.
+
+Переход FSM: `EXIT_PENDING + WS_RECONNECT → RECONCILING + RECONCILE_DIVERGENCE → HALTED`
+`halt_reason = "HALT_EXIT_RECONCILE_DIVERGENCE"`
+
+Источник: ADR 0021 sub-decision 3.
+
+### Диагностика
+
+1. Прочитать halt_log + execution_state (как выше).
+2. Bybit Web UI → Order History для exit-ордера: filled / cancelled / partially?
+3. walletBalance(BTC): остаток или ноль?
+
+### Восстановление
+
+1. Если exit-ордер был filled, и BTC=0 → state в SQLite stale. SQL-сброс к FLAT (см. шаблон) **включая `halt_reason=NULL`** + `last_exit_reason='EXIT_RECONCILE_DETECTED'` для аудита.
+2. Если exit-ордер partial → закрыть остаток вручную через Market Sell, затем SQL-сброс.
+3. Перезапустить бот.
+
+### Post-mortem
+
+EXIT divergence обычно индикатор того, что `EXIT_PENDING` order заполнился во время WS-разрыва, но автоматический heal-путь не сработал. Проверить:
+
+- Возраст filled события > `heal_max_age_seconds=3600` (1H)? Тогда DIVERGENCE — корректное поведение.
+- Иначе — баг в classifier'е, требуется тест + фикс.
+
+---
+
+## 6. HALT_RECONCILE_DIVERGENCE (Sprint 5)
 
 > Полная документация этого кода находится на странице компонента reconciler.
 > См. [[../components/reconciler#divergence-handling]] для подробностей.
@@ -236,43 +315,57 @@ Reconciler обнаружил расхождение между локальны
 
 ## Общие SQL-шаблоны
 
-### Сброс execution_state в FLAT (схема Sprint 6)
+### Сброс execution_state в FLAT (схема Sprint 7)
 
-> Схема Sprint 6 не содержит колонки `halt_reason` — только поля, перечисленные ниже.
-> Миграция: `migrations/0003_execution_state.sql` + `migrations/0004_execution_state_v2.sql`.
+> Sprint 7 миграция `0005_halt_persistence.sql` добавила колонки `halt_reason`, `last_exit_reason`, `last_reconcile_at`, `bootstrap_at` + audit-таблицу `halt_log`.
+> Миграции: `migrations/0003_execution_state.sql` + `0004_execution_state_v2.sql` + `0005_halt_persistence.sql`.
 
 ```sql
--- Сброс execution_state к FLAT (Sprint 6 schema — нет колонки halt_reason):
+-- Сброс execution_state к FLAT (Sprint 7 schema):
 UPDATE execution_state
 SET state='FLAT',
     bracket_id=NULL,
     last_attempt_num=0,
     arming_started_at=NULL,
+    oco_main_order_id=NULL,
     oco_tp_order_id=NULL,
     oco_sl_order_id=NULL,
+    halt_reason=NULL,                    -- S7: primary-wins; reset на manual recovery
+    last_exit_reason=NULL,               -- опционально: оставить для audit-trail
+    last_reconcile_at=NULL,
     updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
 WHERE symbol='BTCUSDT';
 ```
 
+> **Не удалять `halt_log` записи.** Append-only audit. Чтение для post-mortem — обязательно.
+
 ### Диагностический SELECT (полный снимок состояния)
 
 ```sql
-SELECT symbol, state, position_qty, entry_price,
+SELECT symbol, state, halt_reason, last_exit_reason,
+       position_qty, entry_price,
        bracket_id, last_attempt_num,
-       oco_tp_order_id, oco_sl_order_id,
-       arming_started_at, updated_at
+       oco_main_order_id, oco_tp_order_id, oco_sl_order_id,
+       arming_started_at, last_reconcile_at, bootstrap_at, updated_at
 FROM execution_state
 WHERE symbol='BTCUSDT';
 ```
 
-> **Колонки, которых НЕТ в схеме Sprint 6:** `halt_reason`, `halt_at`. Не включайте их в SQL.
+### Halt audit trail
+
+```sql
+SELECT ts, reason, context_json FROM halt_log
+WHERE symbol='BTCUSDT' ORDER BY ts DESC LIMIT 20;
+```
 
 ---
 
 ## Связанные материалы
 
 - [[../decisions/0020-sprint-6-execution-spot-oco-emulation]]
+- [[../decisions/0021-sprint-7-resilience]]
 - [[../components/oco]]
 - [[../components/reconciler]]
 - [[../components/execution-state-machine]]
+- [[../components/ws-private-consumer]]
 - [[../../trading/concepts/reason-codes]]

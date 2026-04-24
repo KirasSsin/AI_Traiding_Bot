@@ -1,16 +1,16 @@
 ---
-title: Execution — 16-state Harel FSM (v2, ADR 0020)
+title: Execution — 16-state Harel FSM (v3, ADR 0021)
 type: component
-tags: [execution, fsm, state-machine, sprint-5, sprint-6, adr-0020]
+tags: [execution, fsm, state-machine, sprint-5, sprint-6, sprint-7, adr-0020, adr-0021]
 created: 2026-04-23
-updated: 2026-04-23
-sources: [src/execution/state_machine.py, src/execution/state_repo.py, src/execution/coordinator.py, migrations/0003_execution_state.sql, project/decisions/0019-sprint-5-execution-decisions.md, project/decisions/0020-sprint-6-execution-spot-oco-emulation.md]
+updated: 2026-04-24
+sources: [src/execution/state_machine.py, src/execution/state_repo.py, src/execution/coordinator.py, migrations/0003_execution_state.sql, migrations/0004_execution_state_v2.sql, migrations/0005_halt_persistence.sql, project/decisions/0019-sprint-5-execution-decisions.md, project/decisions/0020-sprint-6-execution-spot-oco-emulation.md, project/decisions/0021-sprint-7-resilience.md]
 status: stable
 ---
 
 # Execution — State Machine
 
-**TL;DR:** 16 enum-членов (12 базовых из S5 + 4 новых из S6, ADR 0020) + table-driven `TRANSITIONS` (55 пар). Иллегальные переходы → `IllegalTransitionError`. SQLite persist через `ExecutionStateRepo` (warm-start) + reconcile-as-truth на startup/reconnect.
+**TL;DR:** 16 enum-членов + 29 событий + table-driven `TRANSITIONS` (59 пар, S7 после dedup S6 silent overrides). Иллегальные переходы → `IllegalTransitionError`. SQLite persist через `ExecutionStateRepo` (warm-start) + reconcile-as-truth на startup/reconnect + γ halt persistence (ADR 0021 sub-decisions 5+9).
 
 ## States (16)
 
@@ -35,29 +35,62 @@ status: stable
 
 ## Persistence
 
-Schema `execution_state` (PK = `symbol`), `migrations/0003_execution_state.sql`. Decimal stored as TEXT. Coordinator пишет на каждом transition end (exchange wins per ADR 0019).
+Schema `execution_state` (PK = `symbol`), `migrations/0003_execution_state.sql` + S6 v2 (`0004`) + **S7 halt persistence (`0005`)**. Decimal stored as TEXT. Coordinator пишет на каждом transition end (exchange wins per ADR 0019).
 
-## Events (S6 additions)
+### S7 columns (ADR 0021 sub-decision 5)
 
-Добавлено 8 новых событий в Sprint 6 (ADR 0020 sub-decision 8):
+| Column | Тип | Назначение |
+|---|---|---|
+| `halt_reason` | TEXT NULL | Primary wins — first non-null sticks. Не перезаписывается до `MANUAL_RESET` |
+| `last_exit_reason` | TEXT NULL | Reason code последнего exit (audit trail) |
+| `last_reconcile_at` | TEXT (ISO-8601 UTC) | Время последнего успешного reconcile |
+| `bootstrap_at` | TEXT (ISO-8601 UTC) | Время `Coordinator.bootstrap()` (idempotency anchor) |
 
-| Event | Описание |
-|---|---|
-| `TP_PLACED` | TP-нога Limit-ордера успешно выставлена |
-| `SL_PLACED` | SL-нога StopMarket-ордера успешно выставлена |
-| `SL_TRIGGERED` | Stop-ордер перешёл в Triggered (≠ Filled) |
-| `SIBLING_CANCELLED` | Сестринский ордер отменён успешно |
-| `SIBLING_CANCEL_FAILED` | Отмена сестринского ордера отклонена (non-110001) |
-| `BRACKET_TIMEOUT` | TTL=60 с для arming истёк без SL_PLACED |
-| `RESIDUAL_FLATTENED` | IOC-остаток после SL-частичного заполнения выровнен |
-| `FLATTEN_FAILED` | Flatten-каскад не удался → HALTED |
+### S7 audit table (ADR 0021 sub-decision 9)
+
+`halt_log` — append-only:
+
+```sql
+CREATE TABLE halt_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    ts TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    context_json TEXT NOT NULL
+);
+CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
+```
+
+Write-ahead pattern: запись в `halt_log` **до** обновления `execution_state.halt_reason`. Гарантирует chronological trail даже при crash между write+state-update.
+
+## Events (29 total)
+
+S6 добавил 8 (ADR 0020 sub-decision 8); S7 добавил 3 (ADR 0021 sub-decisions 1, 3):
+
+| Event | Sprint | Описание |
+|---|---|---|
+| `TP_PLACED` | S6 | TP-нога Limit-ордера успешно выставлена |
+| `SL_PLACED` | S6 | SL-нога StopMarket-ордера успешно выставлена |
+| `SL_TRIGGERED` | S6 | Stop-ордер перешёл в Triggered (≠ Filled) |
+| `SIBLING_CANCELLED` | S6 | Сестринский ордер отменён успешно |
+| `SIBLING_CANCEL_FAILED` | S6 | Отмена сестринского ордера отклонена (non-110001) |
+| `BRACKET_TIMEOUT` | S6 | TTL=60 с для arming истёк без SL_PLACED |
+| `RESIDUAL_FLATTENED` | S6 | IOC-остаток после SL-частичного заполнения выровнен |
+| `FLATTEN_FAILED` | S6 | Flatten-каскад не удался → HALTED |
+| `OCO_PARTIAL_TIMEOUT` | S6 | EXIT_OCO_PARTIAL_TIMEOUT branch trigger |
+| `RECONCILE_ENTRY_FILLED` | **S7** | Reconciler verdict `HEAL_ENTRY_FILLED` (entry filled offline; heal local) |
+| `RECONCILE_EXITED` | **S7** | Reconciler verdict `EXITED` (exit заполнен offline; perevest в FLAT с `EXIT_RECONCILE_DETECTED`) |
 
 ## Key properties
 
 - Table-driven (см. `TRANSITIONS: dict[(State, Event), State]`) — нет implicit if/else.
-- **55 канонических переходов** (S5: 29, S6 net-adds: +26; locked в `test_transitions_count_exact` и `test_transitions_count_exact_v2`).
+- **59 канонических переходов** (S5: 29, S6 net-adds: +26 с дублирующими S5-ключами OVERRIDE'ом; **S7: -2 silent dup-keys удалены, +6 reconcile/timeout transitions** = 59 final). Locked в `test_transitions_count_exact*`.
 - `(state, event) not in TRANSITIONS` → `IllegalTransitionError`.
-- `WS_RECONNECT` валиден для LONG_OPEN / OCO_ARMED / PARTIAL_FILL / OCO_ARMING / EXIT_SIBLING_CANCELLING / EXIT_SL_RESIDUAL.
+- `WS_RECONNECT` валиден для **9 active states** (`_RECONCILABLE_STATES` в coordinator): ENTRY_PENDING, EXIT_PENDING, OCO_ARMING, EXIT_SIBLING_CANCELLING, EXIT_SL_RESIDUAL, LONG_OPEN, OCO_ARMED, PARTIAL_FILL, EXIT_SIBLING_CANCEL_FAILED.
+
+### S7 dedup note (ADR 0021 follow-up)
+
+S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(OCO_ARMED, PARTIAL_FILL)` + `(OCO_ARMED, TP_HIT)`) через silent dict-shadow. Ruff `F601` flag'нул дубликаты в final review S7. Удалены ранние записи; bracket-aware paths остались единственным источником истины.
 
 ## Halt-substates (Sprint 6)
 
@@ -71,23 +104,34 @@ Schema `execution_state` (PK = `symbol`), `migrations/0003_execution_state.sql`.
 | `HALT_PARTIAL_FILL_BELOW_MIN` | IOC-остаток ниже минимального qty |
 | `HALT_FLATTEN_FAILED` | Flatten-каскад не удался |
 
-**Важно:** `halt_reason` в Sprint 6 **не хранится** в колонке `ExecutionStateRow` — логируется через structlog при эмиссии FSM-события. Оператор читает event log для получения контекста.
+**Sprint 7 update:** `halt_reason` теперь **persisted** в `execution_state.halt_reason` (ADR 0021 sub-decision 5) + audit-trail в `halt_log` (sub-decision 9). Primary-wins semantics: первая non-null причина залипает до `MANUAL_RESET`. S6-only обработчики (без write через `state_repo.set_halt_reason()`) считаются legacy и подлежат миграции.
 
-## Known limitations (v0.1, defer to S6, was pre-S6)
+### S7 halts (ADR 0021)
 
-Зафиксировано post-merge ревью S5 (commits 67622b5..b5d79cc, ADR 0019 follow-up):
+Добавлены 2 новых halt-substate'а (через `halt_reason`, не state-enum):
 
-- **Нет startup reconcile.** `Coordinator.handle_ws_reconnect` на `INIT` (local=None) короткозамыкается без вызова reconciler. Если на старте на бирже уже есть позиция от прошлой crashed-сессии — она не подхватится. **S6:** добавить `Coordinator.bootstrap()` который вызывает `reconciler.reconcile(symbol, None)` всегда и при divergence уходит в HALTED.
-- **`ENTRY_PENDING` / `EXIT_PENDING` без `WS_RECONNECT`.** Если WS падает между place_order и fill, после reconnect FSM остаётся в pending state — silent drift, если ордер тем временем заполнился. **S6:** добавить `(ENTRY_PENDING|EXIT_PENDING, WS_RECONNECT) → RECONCILING` + reconciler verdicts промотируют в LONG_OPEN/FLAT/HALTED по exchange truth.
-- **`_persist` берёт первый open order как OCO main leg.** v0.1 single-symbol BTC/USDT обычно безопасно (один OCO активен), но fragile. **S6:** matching по `orderLinkId` префиксу (`s5-open-`/`s5-oco-`).
+| halt_reason | Триггер |
+|---|---|
+| `HALT_BOOTSTRAP_AMBIGUOUS` | Bootstrap reconcile не смог классифицировать local↔exchange расхождение |
+| `HALT_EXIT_RECONCILE_DIVERGENCE` | Exit-фаза reconcile увидела mismatch между local EXIT_PENDING и exchange |
+
+## Closed in S7 (ADR 0021)
+
+Все три pre-S6 limitations (startup reconcile / pending+WS_RECONNECT / fragile OCO main lookup) закрыты:
+
+- **C1 closed (S6 + S7):** `Coordinator.bootstrap()` всегда вызывает `reconciler.reconcile()` для классификации; `_bootstrap_done` assert на всех external entry points.
+- **C2 closed (S7):** `(ENTRY_PENDING|EXIT_PENDING, WS_RECONNECT) → RECONCILING` промотирует через 4-valued reconciler verdict (`AGREE` / `DIVERGENCE` / `HEAL_ENTRY_FILLED` / `EXITED`).
+- **OCO main lookup (S6):** `oco_main_order_id` пишется в `start_bracket()` из `entry_ack.order_id` (не угадывается по open-orders).
 
 ## Related
 
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 8 (v2 expansion: +4 states, +8 events).
-- `[[reconciler]]` — потребитель `RECONCILING` → `RECONCILE_OK`/`RECONCILE_DIVERGENCE`.
+- `[[../decisions/0021-sprint-7-resilience]]` — sub-decisions 1, 3, 5, 9 (bootstrap reconcile + 4-valued verdicts + halt persistence).
+- `[[reconciler]]` — 4-valued verdict consumer (`AGREE`/`DIVERGENCE`/`HEAL_ENTRY_FILLED`/`EXITED`).
 - `[[oco]]` — builder SL/TP уровней, приводит к OCO_ARMING → OCO_ARMED.
-- `[[../../trading/concepts/reason-codes]]` — `HALT_RECONCILE_DIVERGENCE`, `EXIT_OCO_PARTIAL_TIMEOUT`.
+- `[[ws-private-consumer]]` — pybit close-hook + check_alive watchdog → triggers `WS_RECONNECT`.
+- `[[../../trading/concepts/reason-codes]]` — 42 codes (S7: `HALT_BOOTSTRAP_AMBIGUOUS`, `HALT_EXIT_RECONCILE_DIVERGENCE`, `EXIT_RECONCILE_DETECTED`).
 - `[[../architecture/state-machine]]` — pre-S5 high-level Harel-set (12 states тот же).
 
 ## Sources
