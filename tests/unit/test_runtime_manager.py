@@ -338,3 +338,52 @@ def test_tick_non_flat_state_skips_start_bracket(tmp_path):
     # FSM non-FLAT short-circuits BEFORE risk.assess and before start_bracket
     risk.assess.assert_not_called()
     coord.start_bracket.assert_not_called()
+
+
+def test_main_loop_exception_persists_halt_then_reraises(tmp_path):
+    """Unhandled exception in _main_loop → request_halt(HALT_RUNTIME_CRASH) → re-raise (ADR 0022 sub-decision 6)."""
+    from src.runtime.manager import RuntimeManager
+
+    coord = MagicMock()
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(start=lambda: None, stop=lambda: None),
+        bar_source=MagicMock(), strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    coord.bootstrap.return_value = None
+    rm._main_loop = MagicMock(side_effect=RuntimeError("boom"))
+    shutdown_calls: list[str] = []
+    rm._shutdown = lambda *, reason: shutdown_calls.append(reason)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        rm.run()
+
+    # Halt persisted BEFORE re-raise — exact ReasonCode enum member
+    from src.risk.reason_codes import ReasonCode
+    coord.request_halt.assert_called_with(ReasonCode.HALT_RUNTIME_CRASH)
+    assert "HALT_RUNTIME_CRASH" in shutdown_calls
+
+
+def test_keyboard_interrupt_clean_shutdown(tmp_path):
+    """KeyboardInterrupt is NOT a crash — caught silently, _shutdown(KEYBOARD_INTERRUPT), no request_halt."""
+    from src.runtime.manager import RuntimeManager
+
+    coord = MagicMock()
+    shutdown_calls: list[str] = []
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(start=lambda: None, stop=lambda: None),
+        bar_source=MagicMock(), strategy=MagicMock(),
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    coord.bootstrap.return_value = None
+    rm._main_loop = MagicMock(side_effect=KeyboardInterrupt())
+    rm._shutdown = lambda *, reason: shutdown_calls.append(reason)
+
+    rm.run()  # KeyboardInterrupt is caught, NOT re-raised
+    assert "KEYBOARD_INTERRUPT" in shutdown_calls
+    coord.request_halt.assert_not_called()  # KeyboardInterrupt is not a CRASH

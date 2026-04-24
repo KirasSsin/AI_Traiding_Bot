@@ -51,10 +51,14 @@ class RuntimeManager:
         self._kill_switch_path: Path = Path(settings.runtime_kill_switch_path)
 
     def run(self) -> None:
-        """Blocking entry-point: bootstrap → ws.start → main loop → shutdown.
+        """Blocking entry-point with HALT_RUNTIME_CRASH guard.
 
-        ADR 0022 sub-decisions 6 + 7. Wraps _main_loop with HALT_RUNTIME_CRASH guard
-        (added in Task 16).
+        ADR 0022 sub-decisions 5, 6, 7. Sequence:
+          1. clean stale .kill_switch sentinel
+          2. coordinator.bootstrap (raises propagate — ws.start blocked on bootstrap failure)
+          3. ws_consumer.start
+          4. _main_loop wrapped with: KeyboardInterrupt → clean shutdown,
+             other Exception → request_halt(HALT_RUNTIME_CRASH) → re-raise.
         """
         # Sub-decision 5: clean stale .kill_switch from previous session
         if self._kill_switch_path.exists():
@@ -65,7 +69,18 @@ class RuntimeManager:
         self._ws_consumer.start()
         try:
             self._main_loop()
-        finally:
+        except KeyboardInterrupt:
+            logger.info("runtime.keyboard_interrupt")
+            self._shutdown(reason="KEYBOARD_INTERRUPT")
+        except Exception as e:  # noqa: BLE001 — top-level guard per ADR 0022 sub-decision 6
+            logger.exception(
+                "runtime.crash",
+                extra={"exc_type": type(e).__name__, "exc_msg": str(e)},
+            )
+            self._coordinator.request_halt(ReasonCode.HALT_RUNTIME_CRASH)
+            self._shutdown(reason="HALT_RUNTIME_CRASH")
+            raise
+        else:
             self._shutdown(reason="NORMAL_EXIT")
 
     def _main_loop(self) -> None:
