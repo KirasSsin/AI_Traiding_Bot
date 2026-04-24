@@ -1,11 +1,11 @@
 ---
 title: "Components: OCO (Spot emulation)"
 type: component
-tags: [execution, oco, bracket, spot, sprint-6]
+tags: [execution, oco, bracket, spot, sprint-6, sprint-7]
 created: 2026-04-23
-updated: 2026-04-23
+updated: 2026-04-24
 status: stable
-sources: [project/decisions/0020-sprint-6-execution-spot-oco-emulation]
+sources: [project/decisions/0020-sprint-6-execution-spot-oco-emulation, project/decisions/0021-sprint-7-resilience]
 ---
 
 # Components: OCO (Spot emulation)
@@ -194,15 +194,23 @@ OCO_ARMING + BRACKET_TIMEOUT → HALTED
 
 ## FSM — сводка
 
-FSM v2 (`src/execution/state_machine.py`): **16 состояний, 27 событий, 55 уникальных переходов** (2 записи в TRANSITIONS-таблице являются OVERRIDE-переопределением legacy S5-переходов `OCO_ARMED+TP_HIT` и `OCO_ARMED+PARTIAL_FILL`; физически в файле 57 строк-переходов).
+FSM v3 (`src/execution/state_machine.py`): **16 состояний, 29 событий, 59 уникальных переходов**. S7 удалил 2 silent dup-keys (legacy S5 `OCO_ARMED+TP_HIT` / `OCO_ARMED+PARTIAL_FILL`, ранее перекрывались S6 OVERRIDE-блоком; ruff F601 в final review) и добавил 6 transitions для bootstrap reconcile + 4-valued verdicts (ADR 0021 sub-decisions 1, 3).
+
+## S7 — entry_order_id capture (ADR 0021 sub-decision 1)
+
+`Coordinator.start_bracket()` пишет `entry_ack.order_id` в `oco_main_order_id` **до** ожидания filled-эха через WS. Без этого reconciler не мог адресовать ENTRY_PENDING-ордер для `get_order(order_id=...)`, и HEAL_ENTRY_FILLED-путь был мёртв.
+
+Также передаётся `expected_oco_qty=entry_qty` для qty-cross-check в reconciler classifier'е.
 
 ## Related
 
-- [[reconciler]] — walletBalance-as-truth партнёр
-- [[execution-state-machine]] — FSM v2 (16 состояний, 27 событий, 55 переходов)
+- [[reconciler]] — walletBalance-as-truth партнёр + 4-valued verdicts (S7)
+- [[execution-state-machine]] — FSM v3 (16 состояний, 29 событий, 59 переходов)
 - [[bybit-adapter]] — 6 новых методов + banned-field guard
+- [[ws-private-consumer]] — pybit close-hook + check_alive watchdog (S7)
 - [[../decisions/0020-sprint-6-execution-spot-oco-emulation]]
-- [[../../trading/concepts/reason-codes]] — таксономия 39 reason-кодов
+- [[../decisions/0021-sprint-7-resilience]]
+- [[../../trading/concepts/reason-codes]] — 42 reason-кода (S7: +3)
 - [[../runbooks/halt-recovery]] — операторские процедуры
 
 ## Sources

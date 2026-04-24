@@ -216,3 +216,22 @@ def test_config_hash_excludes_paths_and_observability() -> None:
         **{**_BASE, "log_level": "DEBUG", "sentry_dsn": "https://example/1"}
     )
     assert s1.config_hash() == s2.config_hash()
+
+
+# ---------------------------------------------------------------------------
+# Sprint 7 — heal_max_age_seconds + require_mainnet_gate_passed (ADR 0021 sub-dec 4+8)
+# ---------------------------------------------------------------------------
+
+
+def test_settings_defaults_heal_and_mainnet_gate() -> None:
+    """ADR 0021 sub-decisions 4+8 — defaults for HEAL staleness + mainnet gate."""
+    s = Settings(**_BASE)
+    assert s.heal_max_age_seconds == 3600  # 1 bar period (v0.1 strategy = 1H)
+    assert s.require_mainnet_gate_passed is True
+
+
+def test_settings_heal_overridable_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """heal_max_age_seconds is env-overridable."""
+    monkeypatch.setenv("HEAL_MAX_AGE_SECONDS", "1800")
+    s = Settings(**_BASE)
+    assert s.heal_max_age_seconds == 1800

@@ -67,6 +67,7 @@ def _make_coordinator(tmp_path: Path) -> tuple[Coordinator, ExecutionStateRepo, 
     adapter = _StubAdapter()
     coord = Coordinator(adapter=adapter, repo=repo, reconciler=None,
                         symbol="BTCUSDT", base_coin="BTC")
+    coord._bootstrap_done = True  # tests pre-date Task 22 guard; bypass for routing tests
     return coord, repo, adapter
 
 

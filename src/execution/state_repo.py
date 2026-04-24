@@ -1,8 +1,10 @@
 """SQLite persistence for execution FSM state. ADR 0019 sub-decision 3 + ADR 0020 sub-decision 2."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from src.execution.state_machine import ExecutionState
@@ -22,12 +24,17 @@ class ExecutionStateRow:
     arming_started_at: str | None  # ISO-8601 UTC; only set in OCO_ARMING
     last_attempt_num: int
     updated_at: str  # ISO-8601 UTC
+    halt_reason: str | None = None
+    last_exit_reason: str | None = None
+    last_reconcile_at: str | None = None  # ISO-8601 UTC; updated each reconcile call
+    bootstrap_at: str | None = None       # ISO-8601 UTC; set once per process startup
 
 
 _COLUMNS = (
     "symbol, state, position_qty, entry_price, oco_main_order_id, "
     "bracket_id, oco_tp_order_id, oco_sl_order_id, expected_oco_qty, "
-    "arming_started_at, last_attempt_num, updated_at"
+    "arming_started_at, last_attempt_num, updated_at, "
+    "halt_reason, last_exit_reason, last_reconcile_at, bootstrap_at"
 )
 
 
@@ -40,7 +47,7 @@ class ExecutionStateRepo:
             self._conn.execute(
                 f"""
                 INSERT INTO execution_state ({_COLUMNS})
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(symbol) DO UPDATE SET
                     state=excluded.state,
                     position_qty=excluded.position_qty,
@@ -52,7 +59,11 @@ class ExecutionStateRepo:
                     expected_oco_qty=excluded.expected_oco_qty,
                     arming_started_at=excluded.arming_started_at,
                     last_attempt_num=excluded.last_attempt_num,
-                    updated_at=excluded.updated_at
+                    updated_at=excluded.updated_at,
+                    halt_reason=excluded.halt_reason,
+                    last_exit_reason=excluded.last_exit_reason,
+                    last_reconcile_at=excluded.last_reconcile_at,
+                    bootstrap_at=excluded.bootstrap_at
                 """,
                 (
                     row.symbol,
@@ -67,6 +78,10 @@ class ExecutionStateRepo:
                     row.arming_started_at,
                     row.last_attempt_num,
                     row.updated_at,
+                    row.halt_reason,
+                    row.last_exit_reason,
+                    row.last_reconcile_at,
+                    row.bootstrap_at,
                 ),
             )
 
@@ -79,6 +94,37 @@ class ExecutionStateRepo:
         if r is None:
             return None
         return _row_to_dataclass(r)
+
+    def _set_halt(self, *, symbol: str, reason: str, context: dict) -> None:
+        """Persist HALT (ADR 0021 sub-decision 5 — γ pattern).
+
+        Idempotency rule: ``halt_reason`` column accepts the FIRST non-null
+        write only (primary wins); subsequent halts leave the column unchanged.
+        ``halt_log`` always appends — chronological audit trail of every halt
+        event the coordinator emitted.
+
+        Safe to call when no execution_state row exists yet (bootstrap path):
+        only the audit log is written.
+        """
+        ts = datetime.now(tz=UTC).isoformat()
+        ctx_json = json.dumps(context, default=str, sort_keys=True)
+        with self._conn:
+            cur = self._conn.execute(
+                "SELECT halt_reason FROM execution_state WHERE symbol = ?",
+                (symbol,),
+            )
+            existing = cur.fetchone()
+            if existing is not None and existing[0] is None:
+                self._conn.execute(
+                    "UPDATE execution_state SET halt_reason = ?, updated_at = ? "
+                    "WHERE symbol = ? AND halt_reason IS NULL",
+                    (reason, ts, symbol),
+                )
+            self._conn.execute(
+                "INSERT INTO halt_log (symbol, ts, reason, context_json) "
+                "VALUES (?, ?, ?, ?)",
+                (symbol, ts, reason, ctx_json),
+            )
 
 
 def _row_to_dataclass(r: tuple) -> ExecutionStateRow:
@@ -95,4 +141,8 @@ def _row_to_dataclass(r: tuple) -> ExecutionStateRow:
         arming_started_at=r[9],
         last_attempt_num=int(r[10]),
         updated_at=r[11],
+        halt_reason=r[12],
+        last_exit_reason=r[13],
+        last_reconcile_at=r[14],
+        bootstrap_at=r[15],
     )

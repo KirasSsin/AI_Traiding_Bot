@@ -1,11 +1,11 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-23
-sprint: 6-complete
-phase: between-sprints
+updated: 2026-04-24
+sprint: 7-resilience
+phase: 9-merged
 branch: main
-tag: v0.1.0-alpha.6
+tag: v0.1.0-alpha.7
 ---
 
 # SPRINT STATE
@@ -15,58 +15,54 @@ tag: v0.1.0-alpha.6
 
 ## Текущий статус
 
-**Sprint 6 — Spot OCO emulation (ADR 0020) — COMPLETE ✅**
-Merge commit: `9eff03f` на `main`. Tag: `v0.1.0-alpha.6`.
-Sprint 7 — не начат. Ожидаем brainstorming.
+**Sprint 7 — Resilience (ADR 0021) — COMPLETE & MERGED. Tag `v0.1.0-alpha.7` создан.**
+Phase G re-scoped к Demo Mainnet (v0.1 ops target). Mainnet promotion (v0.2+) gated через `require_mainnet_gate_passed`.
 
-## Завершённые задачи (S6)
+## Завершённые задачи (S7, 25 tasks)
 
-- [x] Schema migration 0004_execution_state_v2.sql (+6 columns)
-- [x] FSM v2: 16 states, 56 transitions, 8 new events
-- [x] BybitMarketAdapter: 7 new methods, 6 banned Spot fields
-- [x] Coordinator: start_bracket, arm_oco, on_order_event, bootstrap
-- [x] Reconciler R4: walletBalance position truth, dust_threshold
-- [x] Property tests: bracket lifecycle invariants (Hypothesis)
-- [x] Stage F probes: B2 ✅ + v3-D ✅ on Demo Mainnet
-- [x] Blocker fixes: #1 ENTRY_FILLED, #2 WS echo guard, #3 stale-leg cancel, #4 TP-before-flatten
-- [x] trading-logic-reviewer re-review: ✅ no blockers
-- [x] Wiki: oco.md, reconciler.md, execution-state-machine.md, reason-codes.md updated
-- [x] Reason codes 31→39 (8 new S6 codes)
-- [x] Runbook: halt-recovery.md (NEW)
+- [x] Migration 0005_halt_persistence.sql (halt_reason + last_exit_reason + bootstrap_at + halt_log audit)
+- [x] FSM v3: 16 states / 29 events / 59 transitions (-2 silent dups, +6 reconcile/timeout)
+- [x] Reconciler 4-valued verdict (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED) + heal_max_age_seconds=3600
+- [x] Coordinator.bootstrap() always reconciles + _bootstrap_done assert + _RECONCILABLE_STATES (9 states)
+- [x] start_bracket entry_ack.order_id capture для HEAL path
+- [x] BybitPrivateWSConsumer: pybit close-hook + check_alive watchdog (ADR 0021 sub-decision 6)
+- [x] Reason codes 39→42 (+HALT_BOOTSTRAP_AMBIGUOUS, +HALT_EXIT_RECONCILE_DIVERGENCE, +EXIT_RECONCILE_DETECTED)
+- [x] γ halt persistence (write-ahead halt_log → execution_state.halt_reason; primary-wins)
+- [x] Property test: bootstrap+ws-reconnect idempotent under N reconnects
+- [x] Integration test (opt-in Demo): bootstrap HEAL path
+- [x] Final domain reviewers (parallel trading-logic + python): 7 BLOCKERS closed (commit 97b29cb)
+- [x] Test suite: 481 unit/integration/property pass; 28 skipped (pre-existing gaps unrelated)
+- [x] Wiki Stage E: 5 components + runbook + NEW ws-private-consumer.md + reason-codes + index + log
 
 ## В процессе
 
-Ничего. Между спринтами.
+Между спринтами. S8 brainstorm pending (driver loop для WS consumer + manager.py orchestration + Analytics).
 
 ## Следующее действие
 
-Начать Sprint 7. Сначала: brainstorming scope S7.
+S8 brainstorm: scope = WS consumer driver loop, manager.py orchestration, Analytics per-fill table. Triggers: `superpowers:brainstorming` skill.
 
-Кандидаты из review follow-ups S6:
-- C1: coordinator startup reconcile при ENTRY_PENDING/EXIT_PENDING
-- C2: WS-reconnect wiring для ENTRY_PENDING/EXIT_PENDING
-- halt_reason / last_exit_reason колонки в schema v3
+Опционально перед S8: `git push origin main && git push --tags` — оператор-driven (если ещё не сделано).
 
-## Ключевые решения последней сессии
+## Ключевые решения последней сессии (S7)
 
-- stdlib logging (не structlog — нет в venv)
-- _best_effort_cancel: 110001 = OK, exceptions = warn+swallow
-- trading-logic-reviewer sonnet model (per agent file, не opus)
-- caveman full активен, agent prompts синхронизированы с ADR 0019+0020
+- B1 narrow scope: только passive WS consumer; driver loop отнесён в S8.
+- pybit on_disconnect: wired via inner WebSocketApp.on_close + heartbeat watchdog backstop (pybit upgrade resilient).
+- 4-valued verdicts с recommended_state hint — coordinator делегирует FSM-выбор reconciler'у.
+- halt_reason primary-wins semantics (first non-null sticks до MANUAL_RESET) + halt_log append-only audit.
+- heal_max_age_seconds = 3600 (1H bar period) — heal только если fill свежее.
 
-## Блокеры / concerns (отложены в S7)
+## Блокеры / concerns
 
-- C1 (coordinator startup reconcile) — defer S7
-- C2 (WS-reconnect wiring) — defer S7
-- paranoia outer try/except в WS worker — ⚠️ concern (не blocker)
-- halt_reason not persisted in execution_state — тикет S7
+- Pre-existing test_risk_flow OverrideStore signature drift (unrelated to S7).
+- pyarrow/talib/asyncio test gaps (28 skipped) — defer до S8+.
 
 ## Активные файлы (где работаем)
 
-- `src/execution/coordinator.py` — последние правки (4 blocker fixes)
-- `src/execution/state_machine.py` — FSM v2 (16 states)
-- `src/risk/reason_codes.py` — 39 enum codes
-- `migrations/0004_execution_state_v2.sql` — schema v2
+- `src/execution/coordinator.py` — bootstrap + 4-valued verdicts + entry_ack capture
+- `src/execution/reconciler.py` — 4-valued + heal_max_age + OrderSnapshot snake_case
+- `src/execution/bybit/ws_private.py` — close-hook + check_alive watchdog
+- `migrations/0005_halt_persistence.sql` — halt_reason + halt_log
 
 ## Как обновлять этот файл
 

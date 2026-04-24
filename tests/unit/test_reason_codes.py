@@ -15,11 +15,22 @@ def test_exit_oco_partial_timeout_in_enum():
 
 
 def test_total_reason_codes_count():
-    assert len(ReasonCode) == 39  # was 31 → +8 in S6
+    assert len(ReasonCode) == 42  # 31 (S5) +8 (S6 ADR 0020) +3 (S7 ADR 0021)
 
 
-def test_v2_count_is_39() -> None:
-    assert len(list(ReasonCode)) == 39
+def test_v2_count_is_42() -> None:
+    assert len(list(ReasonCode)) == 42
+
+
+def test_s7_codes_present() -> None:
+    """ADR 0021: bootstrap reconcile + exit-reconcile codes."""
+    for name in (
+        "HALT_BOOTSTRAP_AMBIGUOUS",
+        "HALT_EXIT_RECONCILE_DIVERGENCE",
+        "EXIT_RECONCILE_DETECTED",
+    ):
+        assert hasattr(ReasonCode, name), f"missing {name}"
+        assert ReasonCode[name].value == name
 
 
 def test_new_halt_codes_present() -> None:

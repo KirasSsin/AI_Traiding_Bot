@@ -246,3 +246,32 @@
 - Decision: caveman-compress deferred — risk of losing "unless/except" edge-case logic in agent prompts outweighs ~47% token savings for now. Backup files (.original.md) pattern documented but not executed.
 - Legacy orphans untouched: `main.py`, `src/controller.py`, `FULL_PROJECT_DOCUMENTATION.md`, modified `IMPLEMENTATION_NOTES.md`/`README_RU.md`/`requirements.txt`/`src/core/models.py`/`web/dashboard.html` — pre-existing state, not session work.
 - Next session: restart program → Sprint 7 brainstorming (candidates: C1 coordinator startup reconcile, C2 WS-reconnect wiring for ENTRY_PENDING/EXIT_PENDING, halt_reason/last_exit_reason persistence schema v3).
+
+## [2026-04-24] sprint | S7 — Resilience (ADR 0021 implementation)
+- Added: migrations/0005_halt_persistence.sql (halt_reason/last_exit_reason/last_reconcile_at/bootstrap_at + halt_log audit table), src/execution/bybit/ws_private.py (BybitPrivateWSConsumer with close-hook + check_alive watchdog, ADR 0021 sub-decision 6), tests/unit/test_ws_private_consumer.py, tests/unit/test_reconciler_verdicts.py, tests/integration/test_coordinator_bootstrap_idempotent.py, tests/property/test_bootstrap_ws_reconnect_idempotent.py, tests/integration/test_bootstrap_demo_heal.py (opt-in), llm-wiki/wiki/project/components/ws-private-consumer.md (NEW)
+- Updated: src/execution/reconciler.py (4-valued verdict: AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED + heal_max_age_seconds=3600 + recommended_state hint + heal_context dict + OrderSnapshot snake_case fields), src/execution/coordinator.py (bootstrap() always reconciles + _bootstrap_done assert on external entries + _RECONCILABLE_STATES expanded to 9 active states + start_bracket captures entry_ack.order_id into oco_main_order_id), src/execution/state_machine.py (FSM v3: removed 2 silent S6 dup-keys per ruff F601 + added 6 transitions for bootstrap+4-valued verdicts → 16 states / 29 events / 59 transitions), src/risk/reason_codes.py (+3 codes: HALT_BOOTSTRAP_AMBIGUOUS, HALT_EXIT_RECONCILE_DIVERGENCE, EXIT_RECONCILE_DETECTED → 42 total), llm-wiki/wiki/project/components/{execution-state-machine,reconciler,oco,bybit-adapter}.md, llm-wiki/wiki/project/runbooks/halt-recovery.md (+sections 4 HALT_BOOTSTRAP_AMBIGUOUS, +5 HALT_EXIT_RECONCILE_DIVERGENCE, SQL templates updated to S7 schema), llm-wiki/wiki/trading/concepts/reason-codes.md (39→42), llm-wiki/wiki/index.md
+- Notes: B1 narrow scope confirmed (passive WS consumer only; driver loop deferred to S8). 7 BLOCKERS from final domain review (trading-logic + python parallel) closed in commit 97b29cb. 481 unit/integration/property pass; 28 skipped (pre-existing pyarrow/talib gaps). pybit lacks user-level on_disconnect → wired via WebSocketApp.on_close + heartbeat watchdog backstop.
+- Phase G testnet probes (PRE-MERGE blocking, operator-driven on api-testnet): pending — see scripts/spot_oco_probe_testnet.py (re-run B2 + v3-D + v2 S2 with separate testnet keys).
+- Tag: v0.1.0-alpha.7 (pending Phase G + merge)
+
+## [2026-04-24] session-end | S7 wiki Stage E + tag prep
+- Wiki Stage E updates committed: 5 component pages + 1 runbook + 1 NEW component (ws-private-consumer.md) + reason-codes + index + log.
+- Phase G testnet probes blocking pre-merge: operator-driven (separate testnet keys); not executable in autonomous session.
+- SPRINT_STATE.md → "Sprint 7 wiki Stage E complete; Phase G testnet probes pending operator".
+- Branch: feature/sprint-7-resilience (33+ commits, ahead of main).
+
+## [2026-04-24] phase-G | S7 acceptance gate executed (re-scoped to Demo Mainnet)
+- Operator ran `scripts/spot_oco_probe_testnet.py --probe B2 / v3-D / v2-S2` with provisioned keys.
+- Script monkeypatch: B2 + v3-D auto-target `api-demo.bybit.com` (Demo Mainnet). v2-S2 calls `run_testnet()` against `api-testnet.bybit.com`.
+- Results: B2 ✅ retCode=170130 (`InvalidRequestError` on `tpslMode=Full`); v3-D ✅ TIF sequence `[IOC, IOC, IOC]` (silent GTC→IOC override confirmed; status `[Untriggered, Triggered, Filled]`); v2-S2 ❌ 401/10003 (provisioned keys are demo, not testnet — separate credential pair required).
+- Decision (operator + maintainer 2026-04-24): **re-scope Phase G к Demo Mainnet only**. Rationale: v0.1 ops target = Demo Mainnet (real Bybit production matching engine, fake money), не testnet (отдельный движок с разными API quirks). v2-S2 exchange-side property уже validated в S6 Demo evidence; adapter unconditionally pins `marketUnit=baseCoin` → bot path не достигает quoteCoin drift.
+- ADR 0021 sub-decision 8 updated: Phase G evidence table + revised target Demo Mainnet + tag valid for Demo only + mainnet promotion (v0.2+) requires fresh gate.
+- Created: `wiki/project/sprints/sprint-07-resilience.md` with full Phase G evidence table.
+- Evidence files retained: `scripts/spot_oco_probe_output.json` (B2), `scripts/spot_oco_probe_v3_output.json` (v3-D), `scripts/spot_oco_probe_v2_output.json` (S6, v2-S2 Demo).
+
+## [2026-04-24] sprint-end | S7 merged + tagged
+- Tag `v0.1.0-alpha.7` created on `feature/sprint-7-resilience` HEAD.
+- Merge `feature/sprint-7-resilience` → `main` (no-ff, preserved sprint history).
+- SPRINT_STATE.md → phase=9-merged, branch=main, tag=v0.1.0-alpha.7.
+- Push tags + main → operator-driven (not in autonomous session).
+- Next sprint: S8 brainstorm (driver loop для WS consumer + manager.py orchestration + Analytics per-fill).

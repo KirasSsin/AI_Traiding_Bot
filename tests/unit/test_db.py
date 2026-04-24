@@ -52,4 +52,5 @@ def test_init_db_idempotent(tmp_path: Path) -> None:
         applied = conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0]
     finally:
         conn.close()
-    assert applied == 5
+    # S7 ADR 0021: migration 0005 halt persistence (halt_reason col + halt_log table)
+    assert applied == 6

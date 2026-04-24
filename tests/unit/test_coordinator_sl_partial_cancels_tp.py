@@ -84,6 +84,7 @@ def _make(tmp_path: Path, **adapter_kwargs):
     adapter = _StubAdapter(**adapter_kwargs)
     coord = Coordinator(adapter=adapter, repo=repo, reconciler=None,
                         symbol="BTCUSDT", base_coin="BTC")
+    coord._bootstrap_done = True  # tests pre-date Task 22 guard; bypass for routing tests
     return coord, repo, adapter
 
 

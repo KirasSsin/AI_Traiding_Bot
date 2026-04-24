@@ -21,8 +21,9 @@ RISK_REJECT_ZERO_QTY if those become distinct audit categories.
 
 --- Wiki arithmetic note (post-ADR 0020) ---
 Pre-S5 wiki header said "6+7+8+7=28"; S5 added EXIT_OCO_PARTIAL_TIMEOUT +
-HALT_RECONCILE_DIVERGENCE → 31. ADR 0020 (Sprint 6) adds 8 more →
-True count: 6 entry + 10 scale/exits + 9 rejects + 14 halts = 39.
+HALT_RECONCILE_DIVERGENCE → 31. ADR 0020 (Sprint 6) adds 8 more → 39.
+ADR 0021 (Sprint 7) adds 3 more → True count:
+6 entry + 11 scale/exits + 9 rejects + 16 halts = 42.
 """
 
 from enum import StrEnum
@@ -77,3 +78,8 @@ class ReasonCode(StrEnum):
     HALT_PARTIAL_FILL_BELOW_MIN = "HALT_PARTIAL_FILL_BELOW_MIN"
     HALT_FLATTEN_FAILED = "HALT_FLATTEN_FAILED"
     HALT_PHANTOM_SL = "HALT_PHANTOM_SL"
+
+    # --- ADR 0021 — Sprint 7 Resilience (bootstrap + reconcile) ---
+    HALT_BOOTSTRAP_AMBIGUOUS = "HALT_BOOTSTRAP_AMBIGUOUS"
+    HALT_EXIT_RECONCILE_DIVERGENCE = "HALT_EXIT_RECONCILE_DIVERGENCE"
+    EXIT_RECONCILE_DETECTED = "EXIT_RECONCILE_DETECTED"

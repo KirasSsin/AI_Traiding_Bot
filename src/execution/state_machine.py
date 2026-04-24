@@ -55,6 +55,9 @@ class ExecutionEvent(StrEnum):
     KILL_SWITCH = "KILL_SWITCH"
     MANUAL_RESET = "MANUAL_RESET"
     OCO_PARTIAL_TIMEOUT = "OCO_PARTIAL_TIMEOUT"
+    # ADR 0021 sub-decision 2: HEAL-narrow + clean-exited reconcile outcomes
+    RECONCILE_ENTRY_FILLED = "RECONCILE_ENTRY_FILLED"
+    RECONCILE_EXITED = "RECONCILE_EXITED"
 
 
 class IllegalTransitionError(RuntimeError):
@@ -67,9 +70,10 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.ENTRY_PENDING, ExecutionEvent.ENTRY_FILLED): ExecutionState.LONG_OPEN,
     (ExecutionState.ENTRY_PENDING, ExecutionEvent.ENTRY_REJECTED): ExecutionState.FLAT,
     (ExecutionState.LONG_OPEN, ExecutionEvent.OCO_PLACED): ExecutionState.OCO_ARMED,
-    (ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL): ExecutionState.PARTIAL_FILL,
+    # NOTE: (OCO_ARMED, PARTIAL_FILL) and (OCO_ARMED, TP_HIT) handled by S6
+    # OVERRIDE block below (route through bracket-aware paths). Removed here
+    # to eliminate duplicate dict-key shadows (silent overrides → ruff F601).
     (ExecutionState.OCO_ARMED, ExecutionEvent.SL_HIT): ExecutionState.EXIT_PENDING,
-    (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT): ExecutionState.EXIT_PENDING,
     (ExecutionState.OCO_ARMED, ExecutionEvent.OCO_PARTIAL_TIMEOUT): ExecutionState.EXIT_PENDING,
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.SL_HIT): ExecutionState.EXIT_PENDING,
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.TP_HIT): ExecutionState.EXIT_PENDING,
@@ -129,6 +133,11 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.OCO_ARMING, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
+    # === ADR 0021 sub-decision 2: S7 resilience — WS-reconnect wiring + HEAL paths ===
+    (ExecutionState.ENTRY_PENDING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (ExecutionState.EXIT_PENDING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (ExecutionState.RECONCILING, ExecutionEvent.RECONCILE_ENTRY_FILLED): ExecutionState.LONG_OPEN,
+    (ExecutionState.RECONCILING, ExecutionEvent.RECONCILE_EXITED): ExecutionState.FLAT,
 }
 
 

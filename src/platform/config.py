@@ -93,6 +93,18 @@ class Settings(BaseSettings):
     oco_arming_ttl_seconds: int = 60
     oco_dust_threshold_btc: Decimal = Decimal("0.00001")
 
+    # Sprint 7 — Resilience (ADR 0021 sub-decisions 4 + 8)
+    heal_max_age_seconds: int = Field(
+        default=3600,
+        description="Max age (seconds) of execution_state row for HEAL-narrow on bootstrap. "
+        "Beyond this → HALT_BOOTSTRAP_AMBIGUOUS with sub_reason=stale_age. "
+        "Default = 1 bar period of v0.1 strategy (1H).",
+    )
+    require_mainnet_gate_passed: bool = Field(
+        default=True,
+        description="If True, mainnet config change is blocked until Phase G testnet probes pass. ADR 0021 sub-decision 8.",
+    )
+
     risk_override_path: Path = Path("./state/cb_override.json")
     # HMAC-SHA256 key for override file integrity (REQUIRED, separate from
     # API secret so credential rotation does not invalidate operator

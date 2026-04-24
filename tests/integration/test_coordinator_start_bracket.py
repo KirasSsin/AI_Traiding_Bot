@@ -32,8 +32,8 @@ def coordinator_harness(tmp_path):
     db_path = tmp_path / "exec.db"
     conn = sqlite3.connect(db_path)
     migrations_dir = Path("migrations")
-    for name in ("001_initial.sql", "0003_execution_state.sql", "0004_execution_state_v2.sql"):
-        conn.executescript((migrations_dir / name).read_text())
+    for p in sorted(migrations_dir.glob("*.sql")):
+        conn.executescript(p.read_text())
     repo = ExecutionStateRepo(conn)
     adapter = _FakeAdapter()
     reconciler = None
@@ -49,6 +49,7 @@ def test_start_bracket_emits_entry_and_persists_bracket_id(coordinator_harness):
         adapter=h.adapter, repo=h.repo, reconciler=h.reconciler,
         symbol="BTCUSDT", base_coin="BTC",
     )
+    coord._bootstrap_done = True  # pre-S7 fixture predates ADR 0021 bootstrap guard
     bracket_id = coord.start_bracket(
         entry_qty=Decimal("0.001"), entry_side="Buy",
         tp_price=Decimal("70000.00"), sl_trigger_price=Decimal("60000.00"),
@@ -69,6 +70,7 @@ def test_start_bracket_returns_unique_bracket_ids(coordinator_harness):
         adapter=h.adapter, repo=h.repo, reconciler=h.reconciler,
         symbol="BTCUSDT", base_coin="BTC",
     )
+    coord._bootstrap_done = True  # pre-S7 fixture predates ADR 0021 bootstrap guard
     id1 = coord.start_bracket(
         entry_qty=Decimal("0.001"), entry_side="Buy",
         tp_price=Decimal("70000"), sl_trigger_price=Decimal("60000"),
