@@ -49,7 +49,8 @@ def test_transitions_count_exact_v2() -> None:
     # (Task 22) adds (OCO_ARMED, FLATTEN_FAILED) → HALTED → 55.
     # ADR 0021 sub-decision 2 (S7) adds 4 new transitions → 59.
     # ADR 0022 sub-decision 5 (S8a) adds 11 new KILL_SWITCH_REQUESTED transitions (+PARTIAL_FILL) → 70.
-    assert len(TRANSITIONS) == 70
+    # S8b T1 fix-up adds 3 RISK_HALT rows for ENTRY_PENDING/EXIT_PENDING/RECONCILING → 73 (future ADR 0023).
+    assert len(TRANSITIONS) == 73
 
 
 def test_exit_sibling_cancel_failed_has_ws_reconnect_and_kill() -> None:
