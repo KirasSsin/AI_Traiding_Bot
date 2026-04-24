@@ -329,3 +329,19 @@
 - Carry-over to S8b: (1) `request_halt` → wire FSM transition (10 KILL_SWITCH_REQUESTED transitions currently dead code); (2) `BarSource._INTERVAL_MS` KeyError guard; (3) `main()` mypy no-any-return narrow + tests ARG005 cleanup; (4) sentinel-file atomic write.
 - Branch `feature/sprint-8a-live-runtime` сохранена локально (S6/S7 pattern).
 - Next: open S8b brainstorm (Analytics per-fill + WS+REST epsilon-halt).
+
+## [2026-04-24] tooling | trading-logic-reviewer model opus → sonnet (4.6)
+
+- ADR 0017 amended: trading-logic-reviewer model `opus` → `sonnet` (4.6 alias). Sonnet 4.5+ built-in extended thinking даёт ту же review depth (S7+S8a empirically: opus override не дал blockers > sonnet baseline).
+- Файл `~/.claude/agents/trading-logic-reviewer.md` уже был `model: sonnet` (drift был только в ADR 0017 + `llm-wiki/CLAUDE.md` аннотациях). Drift fixed.
+- Dispatch policy: future Agent calls subagent_type="trading-logic-reviewer" БЕЗ `model: "opus"` override. Cost reduction ~5×.
+- `quant-stats-reviewer` остаётся `opus` — формулы/MC/DSR требуют heavier reasoning (не меняем).
+- Files: `wiki/project/decisions/0017-review-agent-harness.md` (line 41 + Amendments), `llm-wiki/CLAUDE.md` (line 472).
+
+## [2026-04-24] tooling | quant-stats-reviewer model opus → sonnet (4.6) — unified policy
+
+- ADR 0017 amended (follow-up): quant-stats-reviewer model `opus` → `sonnet` (4.6 alias). Единая политика — все 5 curated агентов теперь sonnet.
+- Файл `~/.claude/agents/quant-stats-reviewer.md` frontmatter `model: opus` → `sonnet` (real drift fix — file сам был opus, не как trading-logic).
+- Reasoning: формулы/Wilson/Kelly/MC/DSR покрываются sonnet 4.5+ extended thinking. Symmetry + cost reduction ~5×.
+- Escalation: re-evaluate post-S9 (DSR/MC heavy суите) — если sonnet пропускает real blockers, обратно к opus.
+- Files: `~/.claude/agents/quant-stats-reviewer.md`, `wiki/project/decisions/0017-review-agent-harness.md` (line 42 + Amendments), `llm-wiki/CLAUDE.md` (line 471).

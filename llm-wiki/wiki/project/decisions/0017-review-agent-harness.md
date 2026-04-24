@@ -38,8 +38,8 @@ Sprint 3 завершён. Стек ревью к этому моменту:
 
 | Агент | Файл | Модель | Поглощает (из набора 14) | Триггер (description) |
 |---|---|---|---|---|
-| `trading-logic-reviewer` | `~/.claude/agents/trading-logic-reviewer.md` | opus | Джон + Илья + Бен | Изменения в `src/signalgen/`, `src/execution/`, `src/backtest/`, `src/risk/`. |
-| `quant-stats-reviewer` | `~/.claude/agents/quant-stats-reviewer.md` | opus | Сол + Дон + Лола | Изменения в `src/signalgen/indicators.py`, `src/risk/`, `src/backtest/`, `src/analytics/`. |
+| `trading-logic-reviewer` | `~/.claude/agents/trading-logic-reviewer.md` | sonnet (4.6) | Джон + Илья + Бен | Изменения в `src/signalgen/`, `src/execution/`, `src/backtest/`, `src/risk/`. |
+| `quant-stats-reviewer` | `~/.claude/agents/quant-stats-reviewer.md` | sonnet (4.6) | Сол + Дон + Лола | Изменения в `src/signalgen/indicators.py`, `src/risk/`, `src/backtest/`, `src/analytics/`. |
 | `data-integrity-reviewer` | `~/.claude/agents/data-integrity-reviewer.md` | sonnet | Марина | Изменения в `src/marketdata/`, `src/platform/storage/`, `migrations/`, путях персистенции order/fill. |
 | `python-reviewer` (уже есть) | `~/.claude/agents/Python Reviewer.md` | sonnet | (generic) | Любые изменения `*.py`. |
 
@@ -89,3 +89,5 @@ Sprint 3 завершён. Стек ревью к этому моменту:
 ## Amendments
 
 - **2026-04-24 (post-S7):** Добавлен `trader-expert` (sonnet) в curated agent set как decision-maker последней инстанции в PHASE 2 brainstorming. Не reviewer (не вызывается в PHASE 5), но обязателен в PHASE 2 если есть unresolved scope/architecture questions перед PHASE 3. Filename: `~/.claude/agents/trader-expert.md`.
+- **2026-04-24 (post-S8a):** `trading-logic-reviewer` model `opus` → `sonnet` (4.6 alias). Sonnet 4.5+ имеет встроенный extended thinking, достаточный для review depth (S7+S8a empirically: opus override не дал blockers > sonnet baseline на 3 раундах). Cost reduction ~5×. Dispatch override policy: future Agent calls используют `subagent_type: "trading-logic-reviewer"` БЕЗ `model: "opus"` override — alias auto-routes к latest sonnet. Файл `~/.claude/agents/trading-logic-reviewer.md` frontmatter `model: sonnet` (без изменений; drift был только в ADR + CLAUDE.md аннотации).
+- **2026-04-24 (post-S8a, follow-up):** `quant-stats-reviewer` model `opus` → `sonnet` (4.6 alias) — единая политика для всех 5 агентов. Формулы (Wilder/EMA), Wilson CI, Kelly fraction, Monte Carlo permutations, DSR покрываются sonnet 4.5+ extended thinking. Cost reduction ~5×. Файл `~/.claude/agents/quant-stats-reviewer.md` frontmatter `model: opus` → `sonnet`. Escalate обратно к `opus` только если S9+ DSR/MC модули дадут empirical evidence что sonnet пропускает blockers (re-evaluate post-S9 quant suite). Все 5 curated агентов теперь sonnet (`python-reviewer`, `data-integrity-reviewer`, `trading-logic-reviewer`, `quant-stats-reviewer`, `trader-expert`).
