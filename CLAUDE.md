@@ -37,8 +37,10 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | `llm-wiki/wiki/project/architecture/development-workflow.md` | MASTER SOP — 9-phase sprint lifecycle |
 | `llm-wiki/wiki/index.md` | Wiki catalog (all pages) |
 | `llm-wiki/wiki/log.md` | Chronological sprint journal |
-| `llm-wiki/wiki/project/decisions/` | ADRs (0001-0020) |
+| `llm-wiki/wiki/project/decisions/` | ADRs (0001-0023) |
 | `llm-wiki/wiki/project/components/` | Component docs (wiki-first reads before raw ADR) |
+| `llm-wiki/wiki/project/sprints/sprint-NN-<slug>.md` | **Canonical sprint summary** — "что было сделано в спринте N". HARD-GATE creation per dev-workflow.md PHASE 8 step 5. Read для понимания исторического контекста. |
+| `llm-wiki/wiki/project/pre-s{N}-backlog.md` | Pre-sprint backlog — gaps + bugs to discharge before brainstorm S{N}. Создаётся когда post-sprint audit находит actionable items. Закрывается → удаляется. |
 
 ## Project constraints (short form)
 

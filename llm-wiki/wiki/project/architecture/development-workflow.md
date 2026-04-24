@@ -456,17 +456,35 @@ Stage F (только S6+, venue API):
    Edit ~/.claude/agents/<name>.md (если ADR изменён)
    (PreToolUse hook проверит на push)
 
-5. Sprint page finalize:
-   Edit wiki/project/sprints/sprint-NN-*.md
-   → Stage F results, review follow-ups, plan drift
+5. **HARD-GATE — Sprint page finalize (BLOCKS step 6 if missing):**
+   - Verify `wiki/project/sprints/sprint-NN-<slug>.md` exists.
+   - If missing → CREATE per `sprint-07-resilience.md` skeleton:
+     frontmatter (title, type=sprint, tags, created/updated, status=completed,
+     sources=[ADR + plan]) + sections (Overview / Plan-ADR links / Deliverables
+     [Schema/FSM/Component sub-sections] / Reason codes / Tests / Wiki updates /
+     Open issues для S{N+1}).
+   - If exists → finalize Stage F results, review follow-ups, plan drift.
+   - Source content: log.md sprint-end entry + commit log + plan trace map.
 
-6. Merge + tag:
+6. **HARD-GATE — Wiki sync (BLOCKS step 7 if missing):**
+   - All new ADRs (этого спринта) added to `wiki/index.md` `## Project — Decisions` section.
+   - All new component pages added to `wiki/index.md` `## Project — Components` section.
+   - Sprint page added to `wiki/index.md` `## Project — Sprints` section.
+   - Verify: `grep "0NNN" llm-wiki/wiki/index.md` returns hit для каждого нового ADR.
+
+7. Merge + tag:
    git merge feature/sprint-N-<slug>
    git tag v0.1.0-alpha.N
 
-7. Push (PreToolUse hook fires):
+8. Push (PreToolUse hook fires):
    git push origin main
    git push origin v0.1.0-alpha.N
+
+ANTI-PATTERN (S8a + S8b violations — fixed pre-S8c per backlog):
+  ❌ Tag push без sprint-NN.md (sprint pages для S8a + S8b отсутствовали — created in pre-S8c batch).
+  ❌ Tag push без ADR в index.md (ADR 0022 orphan — fixed in pre-S8c batch).
+  ❌ Tag skip (tags v0.1.0-alpha.4 + alpha.5 missing — sprint pages говорят "pending PR merge" но never tagged → tag drift).
+  Все три = direct symptom отсутствия HARD-GATE — теперь зафиксированы как BLOCKERS.
 
 SPRINT_STATE update:
   sprint: N-complete
