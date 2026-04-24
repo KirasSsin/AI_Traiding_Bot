@@ -96,3 +96,46 @@ def test_bar_source_failure_increments_counter():
     assert src.consecutive_failures == 1
     assert src.poll() is None
     assert src.consecutive_failures == 2
+
+
+def test_bar_source_should_halt_at_threshold():
+    from src.runtime.bar_source import BarSource
+
+    class BadAdapter:
+        def get_klines(self, **_):
+            raise RuntimeError("X")
+
+    src = BarSource(adapter=BadAdapter(), symbol="BTCUSDT", interval="60")
+    # 23 failures — below threshold
+    for _ in range(23):
+        src.poll()
+    assert src.should_halt(threshold=24) is False
+    # 24th — at threshold
+    src.poll()
+    assert src.should_halt(threshold=24) is True
+
+
+def test_bar_source_recovery_resets_counter():
+    from src.runtime.bar_source import BarSource
+
+    bar = _bar(1_700_000_000_000, 1_700_003_600_000)
+    states = [RuntimeError("X"), RuntimeError("X"), [bar]]
+
+    class FlapAdapter:
+        def __init__(self):
+            self._i = 0
+
+        def get_klines(self, **_):
+            v = states[self._i]
+            self._i += 1
+            if isinstance(v, BaseException):
+                raise v
+            return v
+
+    src = BarSource(adapter=FlapAdapter(), symbol="BTCUSDT", interval="60")
+    src.poll()
+    src.poll()
+    assert src.consecutive_failures == 2
+    src.poll()  # recovery
+    assert src.consecutive_failures == 0
+    assert src.should_halt(threshold=24) is False

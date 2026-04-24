@@ -48,6 +48,10 @@ class BarSource:
         self._last_close_ts = close_ms
         return latest
 
+    def should_halt(self, *, threshold: int) -> bool:
+        """True if consecutive_failures hit threshold — caller emits HALT_BAR_POLL_STALL."""
+        return self.consecutive_failures >= threshold
+
     def _fetch(self) -> list[Bar]:
         step_ms = self._INTERVAL_MS[self._interval]
         end_ms = int(time.time() * 1000)
