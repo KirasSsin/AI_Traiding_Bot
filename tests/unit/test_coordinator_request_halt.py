@@ -123,10 +123,46 @@ def test_request_halt_bar_poll_stall_transitions_to_halted(tmp_path):
 
 def test_request_halt_idempotent_when_already_halted(tmp_path):
     """Second request_halt keeps primary halt_reason (S7 γ) and stays HALTED."""
-    coord, repo, _ = _build(tmp_path, initial_state=ExecutionState.FLAT)
+    coord, repo, db_path = _build(tmp_path, initial_state=ExecutionState.FLAT)
     coord.request_halt(ReasonCode.KILL_SWITCH_REQUESTED)
     coord.request_halt(ReasonCode.HALT_RUNTIME_CRASH)
     row = repo.get("BTCUSDT")
     assert row.state == ExecutionState.HALTED
     # primary-wins per S7 γ — first non-null halt_reason sticks
     assert row.halt_reason == ReasonCode.KILL_SWITCH_REQUESTED.value
+    # γ rule: halt_log appends on every _set_halt call (including from HALTED)
+    audit_conn = sqlite3.connect(str(db_path))
+    halt_log_rows = audit_conn.execute(
+        "SELECT reason FROM halt_log WHERE symbol='BTCUSDT' ORDER BY id"
+    ).fetchall()
+    audit_conn.close()
+    assert len(halt_log_rows) == 2
+    assert halt_log_rows[0][0] == ReasonCode.KILL_SWITCH_REQUESTED.value
+    assert halt_log_rows[1][0] == ReasonCode.HALT_RUNTIME_CRASH.value
+
+
+import pytest
+
+
+@pytest.mark.parametrize(
+    "initial_state",
+    [
+        ExecutionState.ENTRY_PENDING,
+        ExecutionState.EXIT_PENDING,
+        ExecutionState.RECONCILING,
+    ],
+)
+def test_request_halt_runtime_crash_from_pending_states_transitions_to_halted(
+    tmp_path, initial_state
+):
+    """HALT_RUNTIME_CRASH from ENTRY_PENDING/EXIT_PENDING/RECONCILING must reach HALTED.
+
+    Regression: S8b T1 review found these (state, RISK_HALT) rows missing from
+    TRANSITIONS table — RuntimeManager.run() except-handler call raised
+    IllegalTransitionError, propagating out of except, leaving split-brain.
+    """
+    coord, repo, _ = _build(tmp_path, initial_state=initial_state)
+    coord.request_halt(ReasonCode.HALT_RUNTIME_CRASH)
+    row = repo.get("BTCUSDT")
+    assert row.state == ExecutionState.HALTED
+    assert row.halt_reason == ReasonCode.HALT_RUNTIME_CRASH.value
