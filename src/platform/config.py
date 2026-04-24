@@ -111,6 +111,41 @@ class Settings(BaseSettings):
     # overrides — ADR 0018 sub-decision 9, audit H2/CWE-345).
     risk_override_hmac_key: str = Field(..., min_length=32)
 
+    # Sprint 8a — Live runtime (ADR 0022 sub-decisions 11 + 3)
+    runtime_bar_poll_cadence_seconds: float = Field(
+        default=5.0,
+        description="REST kline poll cadence (main loop tick). ADR 0022 sub-decision 2.",
+    )
+    runtime_bar_poll_stall_threshold: int = Field(
+        default=24,
+        description=(
+            "Consecutive REST poll failures before HALT_BAR_POLL_STALL. "
+            "Default 24 × 5s = 120s. Validator: 6 ≤ N ≤ 720 "
+            "(30s false-halt floor; 1 bar period ceiling). ADR 0022 sub-decision 3."
+        ),
+    )
+    runtime_kill_switch_path: str = Field(
+        default=".kill_switch",
+        description="Sentinel-file path for KILL_SWITCH. ADR 0022 sub-decision 5.",
+    )
+    runtime_ws_check_alive_max_silence: float = Field(
+        default=30.0,
+        description="Max WS silence before triggering on_disconnect (inline check). ADR 0022 sub-decision 4.",
+    )
+    runtime_warmup_bars: int = Field(
+        default=50,
+        description="Catch-up bars fed to strategy.warmup() (no signal emit). ADR 0022 sub-decision 2.",
+    )
+
+    @model_validator(mode="after")
+    def _runtime_validators(self) -> "Settings":
+        if not (6 <= self.runtime_bar_poll_stall_threshold <= 720):
+            raise ValueError(
+                f"runtime_bar_poll_stall_threshold={self.runtime_bar_poll_stall_threshold} "
+                f"out of range: 6 ≤ N ≤ 720 (ADR 0022 sub-decision 3)."
+            )
+        return self
+
     @model_validator(mode="after")
     def _live_trading_guards(self) -> "Settings":
         if self.live_trading and not self.trading_enabled:
