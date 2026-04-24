@@ -106,7 +106,7 @@ class Coordinator:
                 return
             # DIVERGENCE
             self._set_halt(
-                reason=result.halt_reason or "HALT_RECONCILE_DIVERGENCE",
+                reason=ReasonCode(result.halt_reason or "HALT_RECONCILE_DIVERGENCE"),
                 last_event=ExecutionEvent.WS_RECONNECT,
                 extra=result.heal_context or {},
             )
@@ -327,7 +327,7 @@ class Coordinator:
             )
         except Exception:
             self._set_halt(
-                reason="HALT_FLATTEN_FAILED",
+                reason=ReasonCode.HALT_FLATTEN_FAILED,
                 last_event=ExecutionEvent.FLATTEN_FAILED,
                 extra={"flatten_path": "ioc_residual", "leaves_qty": str(leaves_qty)},
             )
@@ -428,7 +428,7 @@ class Coordinator:
             if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
                 return
             self._set_halt(
-                reason="HALT_FLATTEN_FAILED",
+                reason=ReasonCode.HALT_FLATTEN_FAILED,
                 last_event=ExecutionEvent.FLATTEN_FAILED,
                 extra={
                     "flatten_path": "emergency",
@@ -496,7 +496,7 @@ class Coordinator:
             age = (current - started).total_seconds()
             if age > ttl_seconds:
                 self._set_halt(
-                    reason="HALT_OCO_ARM_TIMEOUT",
+                    reason=ReasonCode.HALT_OCO_ARM_TIMEOUT,
                     last_event=ExecutionEvent.BRACKET_TIMEOUT,
                     extra={"ttl_seconds": ttl_seconds, "age_seconds": str(age)},
                 )
@@ -569,7 +569,7 @@ class Coordinator:
     def _set_halt(
         self,
         *,
-        reason: str,
+        reason: ReasonCode,
         last_event: ExecutionEvent,
         extra: dict | None = None,
     ) -> None:
