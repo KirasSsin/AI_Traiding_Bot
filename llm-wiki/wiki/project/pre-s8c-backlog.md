@@ -105,6 +105,17 @@ Cohesive theme = "Wiki backfill + tooling debt". Brainstorm в PHASE 2 S8c.
 - C6 ADR↔index sync hook
 - Sprint 4 parent index — add child-table
 
+## Bucket E — Trader bonus findings (post-batch re-verify 2026-04-25)
+
+Discovered by trader-expert during pre-S8c batch re-verification. Non-blocking, defer to S8c at next ADR 0022 amendment session.
+
+| # | Gap | Action | Priority |
+|---|-----|--------|----------|
+| E1 | ADR 0022 Context section still describes original S8b scope (Analytics per-fill + execution topic + WS+REST epsilon-halt) — actual S8b was pivoted to carry-over fixes + ADR 0023 | Amend ADR 0022 Context при next touch (same session как E2 + ADR 0022 narrative count 73 → 74) | LOW |
+| E2 | ADR 0022 narrative transition count = 73 (live = 74 after S8b T7 fix-up) | Amend at next ADR 0022 touch | LOW |
+
+Both folded into single S8c amendment commit when ADR 0022 next requires touch.
+
 ## Closed (archive section)
 
-(empty — first iteration)
+**Bucket A (5) + A+ (9) + DRIFT (5) = 19 items** — all DONE на ветке `feature/pre-s8c-wiki-backfill`, commit `72bfc97` (+ off-by-one fix follow-up). Trader-expert re-verification 2026-04-25: 11/11 + 5/5 bonus DRIFT items PASS. python-reviewer (A12 1-line src change): APPROVED.

@@ -12,8 +12,8 @@ status: done
 
 **Dates:** 2026-04-23
 **Plan:** [[../plans/2026-04-23-sprint-5-execution]]
-**Tag:** `v0.1.0-alpha.5` (pending PR merge)
-**Merge PR:** #TBD
+**Tag:** skipped — S5 merged into `v0.1.0-alpha.6` (consolidates S4+S5+S6 ship). Drift note: original plan tagged `v0.1.0-alpha.5 (pending PR merge)` 2026-04-23, но tag `alpha.5` never created. Reconciled 2026-04-25.
+**Merge PR:** consolidated в S6 PR
 **Commit range:** `7fa328f..HEAD`
 
 ## Goal

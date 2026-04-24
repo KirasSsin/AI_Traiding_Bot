@@ -4,7 +4,7 @@ type: decision
 tags: [adr, agents, review, process, superpowers]
 created: 2026-04-22
 updated: 2026-04-22
-sources: []
+sources: [project/sprints/sprint-03-strategy-port.md, project/sprints/sprint-04-risk.md, project/sprints/sprint-05-execution.md, project/sprints/sprint-06-spot-oco-emulation.md, project/sprints/sprint-07-resilience.md]
 status: accepted
 ---
 

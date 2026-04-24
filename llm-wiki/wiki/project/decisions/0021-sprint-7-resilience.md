@@ -384,3 +384,4 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 
 **Approved:** pending user review.
 **Implementation plan:** [[../plans/2026-04-24-sprint-7-resilience]].
+**Sprint page:** [[../sprints/sprint-07-resilience]] — delivery record (33+ commits, 16/29/59 FSM, reason codes 39→42).

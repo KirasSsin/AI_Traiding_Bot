@@ -48,3 +48,6 @@ logs/
 .mypy_cache/
 .ruff_cache/
 *.egg-info/
+
+# Obsidian app config (user-local editor settings, not project artifact)
+llm-wiki/.obsidian/

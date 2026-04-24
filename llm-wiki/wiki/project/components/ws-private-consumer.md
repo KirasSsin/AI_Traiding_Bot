@@ -94,6 +94,7 @@ Endpoint URL содержит маркер площадки:
 ## Related
 
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decision 6 (WS-reconnect wiring).
+- `[[coordinator]]` — sink: routes order events → `coordinator.on_order_event()`; WS-reconnect → `coordinator.on_ws_reconnect()` (S7 sub-decision 6).
 - `[[reconciler]]` — потребитель wallet events + post-reconnect диффер.
 - `[[execution-state-machine]]` — `WS_RECONNECT` event consumer.
 - `[[bybit-adapter]]` — REST partner (выставляет ордера, consumer слушает их события).

@@ -204,6 +204,7 @@ FSM v3 (`src/execution/state_machine.py`): **16 состояний, 29 собы�
 
 ## Related
 
+- [[coordinator]] — owns OCO arming lifecycle (`start_bracket` + `arm_oco` + `flatten`); 8 RLock-protected methods (S8a)
 - [[reconciler]] — walletBalance-as-truth партнёр + 4-valued verdicts (S7)
 - [[execution-state-machine]] — FSM v3 (16 состояний, 29 событий, 59 переходов)
 - [[bybit-adapter]] — 6 новых методов + banned-field guard

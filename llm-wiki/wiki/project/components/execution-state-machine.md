@@ -1,16 +1,20 @@
 ---
-title: Execution — 16-state Harel FSM (v3, ADR 0021)
+title: Execution — 16-state Harel FSM (v4, ADR 0023)
 type: component
-tags: [execution, fsm, state-machine, sprint-5, sprint-6, sprint-7, adr-0020, adr-0021]
+tags: [execution, fsm, state-machine, sprint-5, sprint-6, sprint-7, sprint-8a, sprint-8b, adr-0020, adr-0021, adr-0022, adr-0023]
 created: 2026-04-23
-updated: 2026-04-24
-sources: [src/execution/state_machine.py, src/execution/state_repo.py, src/execution/coordinator.py, migrations/0003_execution_state.sql, migrations/0004_execution_state_v2.sql, migrations/0005_halt_persistence.sql, project/decisions/0019-sprint-5-execution-decisions.md, project/decisions/0020-sprint-6-execution-spot-oco-emulation.md, project/decisions/0021-sprint-7-resilience.md]
+updated: 2026-04-25
+sources: [src/execution/state_machine.py, src/execution/state_repo.py, src/execution/coordinator.py, migrations/0003_execution_state.sql, migrations/0004_execution_state_v2.sql, migrations/0005_halt_persistence.sql, project/decisions/0019-sprint-5-execution-decisions.md, project/decisions/0020-sprint-6-execution-spot-oco-emulation.md, project/decisions/0021-sprint-7-resilience.md, project/decisions/0022-sprint-8a-live-runtime.md, project/decisions/0023-halt-code-fsm-event-mapping.md]
 status: stable
 ---
 
 # Execution — State Machine
 
-**TL;DR:** 16 enum-членов + 29 событий + table-driven `TRANSITIONS` (59 пар, S7 после dedup S6 silent overrides). Иллегальные переходы → `IllegalTransitionError`. SQLite persist через `ExecutionStateRepo` (warm-start) + reconcile-as-truth на startup/reconnect + γ halt persistence (ADR 0021 sub-decisions 5+9).
+**TL;DR:** **16 states / 30 events / 74 transitions** (live; verify via `.venv/bin/python -c "from src.execution.state_machine import TRANSITIONS, ExecutionEvent; print(len(TRANSITIONS), len(list(ExecutionEvent)))"`). Table-driven `TRANSITIONS` table. Иллегальные переходы → `IllegalTransitionError`. SQLite persist через `ExecutionStateRepo` (warm-start) + reconcile-as-truth на startup/reconnect + γ halt persistence (ADR 0021 sub-decisions 5+9) + KILL_SWITCH_REQUESTED dispatch invariant (ADR 0023).
+
+**Growth history:** S5 v1 = 12 states / 28 events / 29 transitions. S6 v2 (ADR 0020) = 16/29/55. S7 v3 (ADR 0021) = 16/29/59 (dedup S6 silent overrides). S8a (ADR 0022) = +1 event (KILL_SWITCH_REQUESTED) + 11 transitions → 16/30/70. S8b T1 (ADR 0023) = +3 RISK_HALT rows для ENTRY_PENDING/EXIT_PENDING/RECONCILING → 16/30/73. S8b T7 fix-up = +1 (FLAT, RISK_HALT) → **16/30/74 current**.
+
+**Last sync:** Sprint 8b (2026-04-24, tag `v0.1.0-alpha.8b`). PHASE 8 step 5a HARD-GATE blocks future drift.
 
 ## States (16)
 
@@ -128,6 +132,7 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 8 (v2 expansion: +4 states, +8 events).
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decisions 1, 3, 5, 9 (bootstrap reconcile + 4-valued verdicts + halt persistence).
+- `[[coordinator]]` — owns FSM dispatch (`_transition`) и halt mechanics (`request_halt` + ADR 0023 invariant); 8 RLock-protected methods (S8a).
 - `[[reconciler]]` — 4-valued verdict consumer (`AGREE`/`DIVERGENCE`/`HEAL_ENTRY_FILLED`/`EXITED`).
 - `[[oco]]` — builder SL/TP уровней, приводит к OCO_ARMING → OCO_ARMED.
 - `[[ws-private-consumer]]` — pybit close-hook + check_alive watchdog → triggers `WS_RECONNECT`.

@@ -42,10 +42,12 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-01-foundation]] — S1 (2026-04-20): DDD skeleton + platform + models + storage; tag `v0.1.0-alpha.1`.
 - [[project/sprints/sprint-02-bybit-venue-migration]] — S2 (2026-04-21 → 22): Bybit venue migration + MarketData ingest + BybitMarketAdapter; tag `v0.1.0-alpha.2`, PR #1.
 - [[project/sprints/sprint-03-strategy-port]] — S3 (2026-04-22): EMA crossover + ADX/RSI/ATR через TA-Lib, on_bar контракт, FLAT/LONG FSM; tag `v0.1.0-alpha.3`.
-- [[project/sprints/sprint-04-risk]] — S4 (2026-04-23): RiskManager (4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash CB + override + 50-bar integration); tag `v0.1.0-alpha.4`.
-- [[project/sprints/sprint-05-execution]] — S5 (2026-04-23): OCO native tpslMode + 12-state FSM + Reconciler (reconcile-as-truth) + 2 reason codes (29→31); tag `v0.1.0-alpha.5` (pending PR).
-- [[project/sprints/sprint-06-spot-oco-emulation]] — S6 (2026-04-23): 3-order Spot OCO emulation; FSM 12→16 states / 55 transitions; reason codes 31→39; tag v0.1.0-alpha.6.
+- [[project/sprints/sprint-04-risk]] — S4 (2026-04-23): RiskManager (4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash CB + override + 50-bar integration); tag skipped — merged into v0.1.0-alpha.6.
+- [[project/sprints/sprint-05-execution]] — S5 (2026-04-23): OCO native tpslMode + 12-state FSM + Reconciler (reconcile-as-truth) + 2 reason codes (29→31); tag skipped — merged into v0.1.0-alpha.6.
+- [[project/sprints/sprint-06-spot-oco-emulation]] — S6 (2026-04-23): 3-order Spot OCO emulation; FSM 12→16 states / 55 transitions; reason codes 31→39; tag v0.1.0-alpha.6 (consolidates S4+S5+S6).
 - [[project/sprints/sprint-07-resilience]] — S7 (2026-04-24): bootstrap reconcile + WS-reconnect wiring + 4-valued verdicts + γ halt persistence + ws_private consumer; FSM 16/29/59 (dedup); reason codes 39→42; tag v0.1.0-alpha.7.
+- [[project/sprints/sprint-08a-live-runtime]] — S8a (2026-04-24): RuntimeManager (bootstrap → tick loop → shutdown) + REST bar poller + KILL_SWITCH sentinel-file CLI + threading lock policy; FSM +11 KILL_SWITCH_REQUESTED transitions (59→70); reason codes 42→45; tag v0.1.0-alpha.8a.
+- [[project/sprints/sprint-08b-carryover]] — S8b (2026-04-24): S8a carry-over fixes (request_halt FSM dispatch + BarSource validator + atomic kill write + main() typed dispatch) + ADR 0023 halt-code mapping invariant + property test; FSM 70→74 (T1 +3 RISK_HALT, T7 +1 FLAT,RISK_HALT); tag v0.1.0-alpha.8b.
 
 ## Project — Plans
 
@@ -117,6 +119,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0019-sprint-5-execution-decisions]] — Sprint 5: native Bybit `tpslMode` for OCO (sub-decision 1 SUPERSEDED by 0020), 12-state FSM, reconcile-as-truth, +2 reason codes (29→31), testnet happy-path scope.
 - [[project/decisions/0020-sprint-6-execution-spot-oco-emulation]] — Sprint 6: 3-order Spot OCO emulation (reverses 0019/1), bracket_id schema v2, FSM 12→21, reason codes 31→39, fee-aware sizing (G5), client-side sibling cancel-on-Triggered, IOC override + EXIT_SL_RESIDUAL — backed by 14/14 empirical probes on Bybit Demo.
 - [[project/decisions/0021-sprint-7-resilience]] — Sprint 7: 9 sub-decisions (bootstrap reconcile + 4-valued reconciler + WS-reconnect wiring + heal_max_age=3600s + γ halt persistence + halt_log audit + ws_private close-hook); FSM 16/29/59; reason codes 39→42; B1 narrow scope (passive consumer).
+- [[project/decisions/0022-sprint-8a-live-runtime]] — Sprint 8a: 14 sub-decisions (RuntimeManager lifecycle + REST bar poller + KILL_SWITCH sentinel-file CLI + threading lock policy на Coordinator/Reconciler + entry-point `python -m src` + orphan removal); FSM +11 KILL_SWITCH_REQUESTED transitions; reason codes 42→45.
 - [[project/decisions/0023-halt-code-fsm-event-mapping]] — Sprint 8b ADR. Halt-class ReasonCode dispatch invariant in Coordinator.request_halt + 3-layer enforcement (ADR + reviewer prompt + property test).
 
 ## Queries (saved answers)
