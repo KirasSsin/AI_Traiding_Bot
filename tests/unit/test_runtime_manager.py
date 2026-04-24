@@ -148,12 +148,16 @@ def _bar():
 
 def test_tick_sequence_kill_then_alive_then_poll_then_strategy(tmp_path):
     """Per ADR 0022 sub-decisions 1+2+4+5: kill_switch → check_alive → poll → strategy → risk → bracket."""
+    from src.execution.state_machine import ExecutionState
     from src.runtime.manager import RuntimeManager
     from src.signalgen.models import SignalSide
 
     calls: list[str] = []
     coord = MagicMock()
     coord.start_bracket.side_effect = lambda **kw: (calls.append("start_bracket"), "bracket-id-stub")[1]
+    coord._symbol = "BTCUSDT"
+    coord._repo = MagicMock()
+    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
     ws = MagicMock()
     ws.check_alive.side_effect = lambda **kw: (calls.append("check_alive"), True)[1]
     bar = _bar()
@@ -256,10 +260,14 @@ def test_tick_stall_threshold_triggers_halt(tmp_path):
 
 def test_tick_risk_rejects_skips_bracket(tmp_path):
     """Risk-rejected signal must not place an order."""
+    from src.execution.state_machine import ExecutionState
     from src.runtime.manager import RuntimeManager
     from src.signalgen.models import SignalSide
 
     coord = MagicMock()
+    coord._symbol = "BTCUSDT"
+    coord._repo = MagicMock()
+    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
     bar = _bar()
     bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
     sig = MagicMock(side=SignalSide.LONG)
@@ -296,5 +304,37 @@ def test_tick_flat_signal_skips_bracket(tmp_path):
         risk_manager=risk, settings=_settings(tmp_path),
     )
     rm._tick()
+    risk.assess.assert_not_called()
+    coord.start_bracket.assert_not_called()
+
+
+def test_tick_non_flat_state_skips_start_bracket(tmp_path):
+    """When FSM != FLAT, _tick must NOT call start_bracket (one-open-order invariant)."""
+    from src.execution.state_machine import ExecutionState
+    from src.runtime.manager import RuntimeManager
+    from src.signalgen.models import SignalSide
+
+    coord = MagicMock()
+    coord._symbol = "BTCUSDT"
+    # Simulate FSM in ENTRY_PENDING — second LONG signal must NOT place new bracket.
+    row = MagicMock(state=ExecutionState.ENTRY_PENDING)
+    coord._repo = MagicMock()
+    coord._repo.get.return_value = row
+
+    bar = _bar()
+    bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
+    sig = MagicMock(side=SignalSide.LONG)
+    strat = MagicMock(on_bar=lambda b: sig)
+    risk = MagicMock()
+
+    rm = RuntimeManager(
+        coordinator=coord, reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=bs, strategy=strat,
+        risk_manager=risk, settings=_settings(tmp_path),
+    )
+    rm._tick()
+
+    # FSM non-FLAT short-circuits BEFORE risk.assess and before start_bracket
     risk.assess.assert_not_called()
     coord.start_bracket.assert_not_called()

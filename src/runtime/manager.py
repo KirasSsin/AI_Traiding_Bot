@@ -7,8 +7,12 @@ via Coordinator/Reconciler RLock/Lock).
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from src.risk.reason_codes import ReasonCode
+from src.signalgen.models import SignalSide
 
 if TYPE_CHECKING:
     from src.execution.bybit.ws_private import BybitPrivateWSConsumer
@@ -69,10 +73,9 @@ class RuntimeManager:
 
         ADR 0022 sub-decision 7. Exception propagation handled by run() in T16.
         """
-        import time as _time
         while not self._stopping:
             self._tick()
-            _time.sleep(self._settings.runtime_bar_poll_cadence_seconds)
+            time.sleep(self._settings.runtime_bar_poll_cadence_seconds)
 
     def _tick(self) -> None:
         """One tick: kill_switch → check_alive → poll → strategy → risk → bracket.
@@ -92,7 +95,7 @@ class RuntimeManager:
                 "runtime.kill_switch_detected",
                 extra={"sentinel_path": str(self._kill_switch_path)},
             )
-            self._coordinator.request_halt("KILL_SWITCH_REQUESTED")
+            self._coordinator.request_halt(ReasonCode.KILL_SWITCH_REQUESTED)
             self._stopping = True
             return True
         return False
@@ -110,7 +113,7 @@ class RuntimeManager:
         (ADR 0022 sub-decision 3). LONG-only — FLAT signals skip risk per
         RiskManager LONG-only contract (src/risk/manager.py:159).
         """
-        from src.signalgen.models import SignalSide
+        from src.execution.state_machine import ExecutionState
 
         bar = self._bar_source.poll()
         if self._bar_source.should_halt(threshold=self._settings.runtime_bar_poll_stall_threshold):
@@ -121,7 +124,7 @@ class RuntimeManager:
                     "threshold": self._settings.runtime_bar_poll_stall_threshold,
                 },
             )
-            self._coordinator.request_halt("HALT_BAR_POLL_STALL")
+            self._coordinator.request_halt(ReasonCode.HALT_BAR_POLL_STALL)
             self._stopping = True
             return
         if bar is None:
@@ -130,11 +133,24 @@ class RuntimeManager:
         signal = self._strategy.on_bar(bar)
         if signal is None or signal.side == SignalSide.FLAT:
             return
+        # FSM pre-check — only call start_bracket from FLAT (one-open-order invariant).
+        # Reading via _repo (matches T17 plan pattern; no public current_state() on Coordinator).
+        symbol = getattr(self._coordinator, "_symbol", None)
+        if symbol is None:
+            logger.warning("runtime.coordinator_missing_symbol_attr")
+            return
+        row = self._coordinator._repo.get(symbol)
+        if row is None or row.state != ExecutionState.FLAT:
+            logger.debug(
+                "runtime.signal_skipped_non_flat_state",
+                extra={"side": str(signal.side), "current_state": row.state.value if row else "MISSING"},
+            )
+            return
         assessment = self._risk_manager.assess(signal, mark_price=bar.close)
         if not assessment.approved:
             logger.info(
                 "runtime.signal_rejected",
-                extra={"side": str(signal.side), "reason": getattr(assessment, "reason_code", None)},
+                extra={"side": str(signal.side), "reason_code": assessment.reason_code.value},
             )
             return
         # SignalSide is LONG only at this point — translate to Bybit "Buy" string
