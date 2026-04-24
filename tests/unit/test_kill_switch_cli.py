@@ -4,11 +4,6 @@ ADR 0022 sub-decision 5.
 """
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
-
 
 def test_cmd_kill_writes_sentinel(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

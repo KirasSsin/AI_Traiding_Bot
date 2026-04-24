@@ -53,7 +53,7 @@ def _cmd_reconcile_only(args: argparse.Namespace) -> int:
     return 1
 
 
-def _cmd_kill(args: argparse.Namespace) -> int:
+def _cmd_kill(_args: argparse.Namespace) -> int:
     """Write sentinel-file at configured path. ADR 0022 sub-decision 5."""
     from src.platform.config import Settings
 
