@@ -88,6 +88,7 @@ _(пусто — v0.2+)_
 - [[project/components/risk-override]] — manual CB resume gate (HMAC-SHA256 signed JSON file + config_hash anti-replay + atomic write 0o600). ADR 0018.
 - [[project/components/trade-history]] — per-trade audit log (TradeRecord + TradeHistoryRepository + UNIQUE INDEX uq_trade_history_entry_signal + AwareDatetime). Kelly trade-count source (ADR 0012). ADR 0018.
 - [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
+- [[project/components/adr-index-sync-hook]] — PreToolUse git push hook: блокирует пуш если новый ADR не упомянут в `wiki/index.md`. Mirror of adr-agent-sync-check (Bucket C6).
 - [[project/components/oco]] — 3-order Spot OCO emulation: bracket builder + orderLinkId scheme + G5 fee-aware qty + S7 entry_order_id capture для HEAL.
 - [[project/components/reconciler]] — 4-valued verdict (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED) + heal_max_age_seconds=3600.
 - [[project/components/execution-state-machine]] — 16-state FSM + 29 events + 59 transitions + γ halt persistence (S7).
