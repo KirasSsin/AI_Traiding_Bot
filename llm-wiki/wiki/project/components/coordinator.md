@@ -213,6 +213,7 @@ Decimal stored as TEXT. Coordinator упсёртит row на каждом trans
 - [[../decisions/0021-sprint-7-resilience]] — bootstrap, on_ws_reconnect 4-valued, _set_halt γ
 - [[../decisions/0022-sprint-8a-live-runtime]] — RLock policy (Task 0), request_halt API
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — halt-code → FSM event invariant
+- [[../runbooks/halt-recovery]] — operator runbook для 19 halt codes (Coordinator owns `request_halt` API + `_set_halt` internal)
 
 ## Open questions / S8c carry-over
 

@@ -98,3 +98,4 @@ risk_override_path   = "data/risk_override.json"
 - [[../../trading/concepts/circuit-breakers]] — концепции и тестовые сценарии
 - [[risk-manager]] — orchestration + escalation logic
 - [[risk-override]] — manual resume mechanism
+- [[../runbooks/halt-recovery]] — operator runbook covering HALT_DRAWDOWN_L2/L3 + HALT_FLASH_CRASH (Drawdown class group)

@@ -77,6 +77,7 @@ caller. YAGNI per trader-expert verdict 2026-04-24.
 - [[runtime-manager]] — owner of poll cadence + halt emission
 - [[bybit-adapter]] — REST kline endpoint wrapper
 - [[../decisions/0022-sprint-8a-live-runtime]] — sub-decisions 2 + 3
+- [[../runbooks/halt-recovery]] — operator runbook covering HALT_BAR_POLL_STALL (Operational class group)
 
 ## Sources
 

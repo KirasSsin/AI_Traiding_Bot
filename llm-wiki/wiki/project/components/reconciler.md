@@ -134,6 +134,7 @@ Reconciler(
 - `[[oco]]` — builder SL/TP уровней, связан с reconcile bootstrap + entry_order_id capture.
 - `[[ws-private-consumer]]` — close-hook + check_alive watchdog → trigger reconcile.
 - `[[../../trading/concepts/reason-codes]]` — `HALT_RECONCILE_DIVERGENCE`, `HALT_BOOTSTRAP_AMBIGUOUS`, `HALT_EXIT_RECONCILE_DIVERGENCE`, `EXIT_RECONCILE_DETECTED`.
+- `[[../runbooks/halt-recovery]]` — operator runbook covering HALT_RECONCILE_DIVERGENCE + HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE (Bootstrap-reconcile class group, all CRITICAL).
 - `[[bybit-rest]]` — источник данных (через `_http`).
 
 ## Concurrency / Lock policy (S8a)

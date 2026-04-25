@@ -44,7 +44,7 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | `llm-wiki/wiki/project/mental-map.md` | "Where to look for X" decision tree — first-hit для open-ended queries. Заменяет blind grep. |
 | `llm-wiki/wiki/project/components/README.md` | 27 components grouped в 9 domain clusters. Reverse lookup ("I'm reading X — what's related?"). |
 | `.claude/skills/<name>/SKILL.md` | **Project-level workflow skills** (5 total: sprint-orient, sprint-finish, wiki-update, brainstorm-init, hook-test). Auto-trigger по description match — заменяют hardcoded inline workflow logic. См. `llm-wiki/wiki/index.md` "Workflow Skills" section. |
-| `~/.claude/agents/<name>.md` | **L5 reviewer agents** (5: trading-logic, quant-stats, data-integrity, python, trader-expert) — user-level, outside repo. ADR 0017 review-agent harness. |
+| `~/.claude/agents/<name>.md` | **L5 reviewer agents** (6: trading-logic, quant-stats, data-integrity, python, trader-expert, architecture-reviewer) — user-level, outside repo. ADR 0017 review-agent harness. |
 
 ## Project constraints (short form)
 
@@ -97,7 +97,7 @@ System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' fro
 ## Skills hierarchy (5 layers — detail в `llm-wiki/CLAUDE.md`)
 
 ```
-L5: Domain reviewers     (trading-logic / quant-stats / data-integrity / python-reviewer)
+L5: Domain reviewers     (trading-logic / quant-stats / data-integrity / python-reviewer / trader-expert / architecture-reviewer)
 L4: Agent Skills + Caveman (depth checklists, compression)
 L3: Superpowers          (brainstorm → plan → subagent-driven → TDD → finishing)
 L2: llm-wiki             (source of truth — read THIS BEFORE raw files)

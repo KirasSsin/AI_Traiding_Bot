@@ -156,6 +156,7 @@ ADR 0022 sub-decision 5 evaluated both options:
 - [[risk-override]] — same atomic-write pattern (template for kill-switch S8b T4)
 - [[../decisions/0022-sprint-8a-live-runtime]] — sub-decisions 5 (sentinel-file), 9 (entry-point)
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — halt-code → FSM event exhaustive mapping
+- [[../runbooks/halt-recovery]] — operator runbook covering KILL_SWITCH_REQUESTED + 18 другие halt codes (Operational class group)
 
 ## Sources
 
