@@ -2,8 +2,8 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: between-sprints
-phase: ready-for-s10
+sprint: 10
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.9
 ---
