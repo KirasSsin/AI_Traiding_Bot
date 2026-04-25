@@ -133,12 +133,12 @@ Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, AD
 
 | CWE | Invariant | Enforcement | Test |
 |-----|-----------|-------------|------|
-| CWE-345/306 | HMAC-SHA256 envelope; verify via `hmac.compare_digest` | `OverrideStore.read_active` | `test_read_with_tampered_signature_returns_none`, `test_read_with_wrong_hmac_key_returns_none`, `test_read_with_tampered_payload_returns_none` |
-| CWE-672 | Single-use: `consume()` called before sizing in `RiskManager.assess()` | `src/risk/manager.py::assess` | `test_override_is_consumed_after_bypass` |
-| CWE-276 | File mode 0o600; parent dir 0o700 | `os.open(tmp, flags, 0o600)` + `mkdir(mode=0o700)` | `test_write_file_mode_is_0o600`, `test_write_parent_dir_mode_is_0o700` |
-| CWE-367 | Atomic write via `os.replace` (no partial file readable) | `os.replace(tmp, path)` + `finally` cleanup | `test_write_does_not_leave_tmp_file`, `test_write_overwrite_is_atomic` |
-| CWE-532 | `config_hash()` excludes creds, paths, observability config | `_HASH_ALLOWLIST` frozenset in `src/platform/config.py` | `test_config_hash_excludes_bybit_secret`, `test_config_hash_excludes_hmac_key` |
-| CWE-798 | `risk_override_hmac_key` has no committed default; `min_length=32` enforced | `Settings` field definition | `test_missing_hmac_key_raises`, `test_short_hmac_key_raises` |
+| CWE-345/306 | HMAC-SHA256 envelope; verify via `hmac.compare_digest` | `src/risk/override.py::OverrideStore.read_active` | `tests/unit/test_risk_override.py::test_read_active_hash_mismatch` (covers signature mismatch via wrong expected_config_hash; tampered-payload + wrong-hmac-key cases — no test yet — TODO) |
+| CWE-672 | Single-use: `consume()` called before sizing in `RiskManager.assess()` | `src/risk/manager.py::RiskManager.assess` | `tests/unit/test_risk_manager.py::test_override_is_consumed_after_bypass` |
+| CWE-276 | File mode 0o600; parent dir 0o700 | `src/risk/override.py::OverrideStore.write` (`os.open(tmp, flags, 0o600)` + `mkdir(mode=0o700)`) | (no test yet — TODO; mode bits not asserted in `test_write_creates_parent_dirs`) |
+| CWE-367 | Atomic write via `os.replace` (no partial file readable) | `src/risk/override.py::OverrideStore.write` (`os.replace(tmp, path)` + `finally` cleanup) | (no test yet — TODO; tmp-file cleanup + overwrite-atomicity not directly asserted) |
+| CWE-532 | `config_hash()` excludes creds, paths, observability config | `src/platform/config.py::_HASH_ALLOWLIST` frozenset | `tests/unit/test_config.py::test_config_hash_excludes_bybit_secret`, `tests/unit/test_config.py::test_config_hash_excludes_hmac_key` |
+| CWE-798 | `risk_override_hmac_key` has no committed default; `min_length=32` enforced | `src/platform/config.py::Settings` field definition | `tests/unit/test_config.py::test_missing_hmac_key_raises`, `tests/unit/test_config.py::test_short_hmac_key_raises` |
 
 **No env-flag bypass:** `RiskManager.assess()` always calls `override_store.read_active()` when halt level is L2+. There is no debug/test env variable that skips this path.
 

@@ -206,10 +206,10 @@ FSM v3 (`src/execution/state_machine.py`): **16 состояний, 29 собы�
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | `compute_oco_qty` subtracts `cum_exec_fee` only when `fee_currency == base_coin` — ROUND_DOWN to `qty_step` | `src/execution/bracket.py:compute_oco_qty` + ADR 0020 sub-decision 6 | `tests/unit/test_bracket_fee_aware_qty.py` |
-| 2 | Returns `Decimal("0")` if net<=0 (extreme-fee guard, bracket must abort, NOT fill dust) | `src/execution/bracket.py:compute_oco_qty` zero-guard | `tests/unit/test_bracket_fee_aware_qty.py` |
-| 3 | SL payload omits `timeInForce` (Bybit silent GTC→IOC) | `src/execution/bybit/adapter.py` SL payload + ADR 0020 sub-decision 6 | (probe-validated) |
-| 4 | `make_order_link_id` deterministic format `oco-{bracket_id}-{role}-{attempt}` (idempotent retry) | `src/execution/bracket.py:make_order_link_id` + ADR 0020 sub-decision 9 | `tests/unit/test_bracket_builder.py` |
+| 1 | `compute_oco_qty` subtracts `cum_exec_fee` only when `fee_currency == base_coin` — ROUND_DOWN to `qty_step` | `src/execution/bracket.py::compute_oco_qty` + ADR 0020 sub-decision 6 | `tests/unit/test_bracket_fee_aware_qty.py::test_qty_subtracts_fee_when_fee_currency_matches_base` |
+| 2 | Returns `Decimal("0")` if net<=0 (extreme-fee guard, bracket must abort, NOT fill dust) | `src/execution/bracket.py::compute_oco_qty` zero-guard | `tests/unit/test_bracket_fee_aware_qty.py::test_qty_zero_when_fee_exceeds_qty` |
+| 3 | SL payload omits `timeInForce` (Bybit silent GTC→IOC) | `src/execution/bybit/adapter.py::BybitMarketAdapter.place_stop_market_order` + ADR 0020 sub-decision 6 | (probe-validated) |
+| 4 | `make_order_link_id` deterministic format `oco-{bracket_id}-{role}-{attempt}` (idempotent retry) | `src/execution/bracket.py::make_order_link_id` + ADR 0020 sub-decision 9 | `tests/unit/test_bracket_builder.py::test_make_order_link_id_pattern_and_length` |
 
 ## Related
 

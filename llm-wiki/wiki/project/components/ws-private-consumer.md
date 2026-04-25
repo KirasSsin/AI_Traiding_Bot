@@ -95,9 +95,9 @@ Endpoint URL содержит маркер площадки:
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | Order events with `orderStatus ∈ {Filled, PartiallyFilled}` MUST have `cumExecFee + feeCurrency` — missing → ERROR log + drop (never forward None fees to `compute_oco_qty`) | `src/execution/bybit/ws_private.py` mandatory-field guard + ADR 0021 sub-decision 8 | `tests/unit/test_ws_private_consumer.py` |
-| 2 | Dual reconnect paths (close-hook + heartbeat watchdog) — one path failing doesn't kill reconnect | `src/execution/bybit/ws_private.py` close-hook + `check_alive` watchdog + ADR 0021 sub-decision 6 | `tests/property/test_bootstrap_ws_reconnect_idempotent.py` |
-| 3 | Passive consumer — routes events to Coordinator/Reconciler, no FSM mutation own | `src/execution/bybit/ws_private.py` (no `_transition` calls) | (architecture rule) |
+| 1 | Order events with `orderStatus ∈ {Filled, PartiallyFilled}` MUST have `cumExecFee + feeCurrency` — missing → ERROR log + drop (never forward None fees to `compute_oco_qty`) | `src/execution/bybit/ws_private.py::BybitPrivateWSConsumer._parse_order` + ADR 0021 sub-decision 8 | `tests/unit/test_ws_private_consumer.py::test_parser_drops_filled_event_missing_cumExecFee` |
+| 2 | Dual reconnect paths (close-hook + heartbeat watchdog) — one path failing doesn't kill reconnect | `src/execution/bybit/ws_private.py::BybitPrivateWSConsumer._install_close_hook` + `BybitPrivateWSConsumer.check_alive` + ADR 0021 sub-decision 6 | `tests/property/test_bootstrap_ws_reconnect_idempotent.py::test_repeated_ws_reconnect_never_crashes_fsm` |
+| 3 | Passive consumer — routes events to Coordinator/Reconciler, no FSM mutation own | `src/execution/bybit/ws_private.py::BybitPrivateWSConsumer` (no `_transition` calls) | (architecture rule) |
 
 ## Related
 

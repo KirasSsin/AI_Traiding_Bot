@@ -66,9 +66,9 @@ Reason code: `EXIT_FLAT_SIGNAL_FLIP`.
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | Look-ahead-free: signal computed on close(T) only, `signal.generated_at >= bar_close_time` | `src/signalgen/strategy.py` on_bar | `tests/property/test_lookahead.py` |
-| 2 | `is_closed=False` bars discarded BEFORE any computation | `src/signalgen/strategy.py` confirm gate | `tests/unit/test_strategy.py` |
-| 3 | Out-of-order / duplicate bars skipped (monotonicity guard) | `src/signalgen/strategy.py` ordering check | `tests/unit/test_strategy.py` |
+| 1 | Look-ahead-free: signal computed on close(T) only, `signal.generated_at >= bar_close_time` | `src/signalgen/strategy.py::EmaCrossoverAdxRsiStrategy.on_bar` | `tests/property/test_lookahead.py::test_signal_generated_at_ge_bar_close_time` |
+| 2 | `is_closed=False` bars discarded BEFORE any computation | `src/signalgen/strategy.py::EmaCrossoverAdxRsiStrategy._append_bar` | `tests/unit/test_strategy.py::test_strategy_skips_non_closed_bars` |
+| 3 | Out-of-order / duplicate bars skipped (monotonicity guard) | `src/signalgen/strategy.py::EmaCrossoverAdxRsiStrategy._append_bar` | `tests/unit/test_strategy.py::test_strategy_rejects_out_of_order_bar` |
 
 Additional invariants (not CRITICAL):
 - **FSM:** `current_side` ∈ {FLAT, LONG}; транзиции FLAT→LONG (entry), LONG→FLAT (flip). SHORT вне scope v0.1.

@@ -119,10 +119,10 @@ Reconciler(
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | 4-valued verdict only — 2-valued OK/DIVERGENCE = regression | `src/execution/reconciler.py` `Verdict` literal | `tests/unit/test_reconciler_verdicts.py` |
-| 2 | HEAL_ENTRY_FILLED requires fill age < `heal_max_age_seconds=3600` — older → DIVERGENCE | `src/execution/reconciler.py` heal-classifier + ADR 0021 sub-decision 4 | `tests/unit/test_reconciler_verdicts.py` |
-| 3 | `walletBalance(coin=BTC)` = exchange-truth for Spot (no `get_position`) | `src/execution/reconciler.py` calls `_http.get_wallet_balance` per ADR 0020 sub-decision 4 | `tests/unit/test_reconciler_wallet_protocol.py` |
-| 4 | OrderSnapshot snake_case (`order_status`, `avg_price`, `cum_exec_fee`, `fee_currency`) — camelCase path is dead | `src/execution/reconciler.py` consumer + ADR 0021 sub-decision 8 | (consumer convention) |
+| 1 | 4-valued verdict only — 2-valued OK/DIVERGENCE = regression | `src/execution/reconciler.py::Verdict` literal | `tests/unit/test_reconciler_verdicts.py::test_reconcile_result_verdict_is_4_valued` |
+| 2 | HEAL_ENTRY_FILLED requires fill age < `heal_max_age_seconds=3600` — older → DIVERGENCE | `src/execution/reconciler.py::Reconciler._classify_entry_pending` + ADR 0021 sub-decision 4 | `tests/unit/test_reconciler_verdicts.py::test_entry_pending_heal_blocked_by_staleness` |
+| 3 | `walletBalance(coin=BTC)` = exchange-truth for Spot (no `get_position`) | `src/execution/reconciler.py::ExchangeQueryClient.get_wallet_balance` per ADR 0020 sub-decision 4 | `tests/unit/test_reconciler_wallet_protocol.py::test_query_protocol_satisfied_by_wallet_only` |
+| 4 | OrderSnapshot snake_case (`order_status`, `avg_price`, `cum_exec_fee`, `fee_currency`) — camelCase path is dead | `src/execution/reconciler.py::Reconciler._classify_entry_pending` consumer + ADR 0021 sub-decision 8 | (consumer convention) |
 
 ## Related
 

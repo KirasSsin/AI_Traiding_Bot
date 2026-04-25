@@ -87,10 +87,10 @@ risk_override_path   = "data/risk_override.json"
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | `check_drawdown` returns highest triggered level (L3>L2>L1>L0 — never partial/unclear) | `src/risk/circuit_breakers.py` priority logic + ADR 0013 | `tests/unit/test_risk_circuit_breakers.py` |
-| 2 | `peak<=0` → L0 defensive (no halt on uninitialized state) | `src/risk/circuit_breakers.py` guard | `tests/unit/test_risk_circuit_breakers.py` |
-| 3 | Flash: `prev_close<=0` → False defensive | `src/risk/circuit_breakers.py` flash guard | `tests/unit/test_risk_circuit_breakers.py` |
-| 4 | Stateless detector — no I/O, caller owns persistence | `src/risk/circuit_breakers.py` no module-level state | (architecture rule) |
+| 1 | `check_drawdown` returns highest triggered level (L3>L2>L1>L0 — never partial/unclear) | `src/risk/circuit_breakers.py::CircuitBreakerDetector.check_drawdown` + ADR 0013 | `tests/unit/test_risk_circuit_breakers.py::test_highest_level_returned` |
+| 2 | `peak<=0` → L0 defensive (no halt on uninitialized state) | `src/risk/circuit_breakers.py::CircuitBreakerDetector.check_drawdown` | `tests/unit/test_risk_circuit_breakers.py::test_peak_zero` |
+| 3 | Flash: `prev_close<=0` → False defensive | `src/risk/circuit_breakers.py::CircuitBreakerDetector.check_flash` | `tests/unit/test_risk_circuit_breakers.py::test_prev_close_zero` |
+| 4 | Stateless detector — no I/O, caller owns persistence | `src/risk/circuit_breakers.py::CircuitBreakerDetector` (no module-level state) | `tests/unit/test_risk_circuit_breakers.py::test_pure_no_state_mutation` |
 
 ## Related
 

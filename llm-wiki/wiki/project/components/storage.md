@@ -46,10 +46,10 @@ status: stable
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | Forward-only migrations — no `DROP COLUMN`, no destructive backfill | `migrations/*.sql` audit + `src/platform/db.py` migrations runner + ADR 0003 | (review rule) |
-| 2 | `schema_migrations` table guards idempotent apply | `src/platform/db.py` migrations runner | `tests/unit/test_db.py` |
-| 3 | `journal_mode=WAL` + `synchronous=NORMAL` + `foreign_keys=ON` on every connection | `src/platform/db.py` connection factory | `tests/unit/test_db.py` |
-| 4 | Parquet schema fixed — `open_time/close_time` timestamp[ns, UTC], OHLCV float64 | `src/marketdata/storage.py` Parquet writer + ADR 0007 | `tests/unit/test_parquet_storage.py` |
+| 1 | Forward-only migrations — no `DROP COLUMN`, no destructive backfill | `migrations/*.sql` audit + `src/platform/db.py::init_db` + ADR 0003 | (review rule) |
+| 2 | `schema_migrations` table guards idempotent apply | `src/platform/db.py::init_db` | `tests/unit/test_db.py::test_init_db_idempotent` |
+| 3 | `journal_mode=WAL` + `synchronous=NORMAL` + `foreign_keys=ON` on every connection | `src/platform/db.py::connect` | `tests/unit/test_db.py::test_wal_mode_enabled` |
+| 4 | Parquet schema fixed — `open_time/close_time` timestamp[ns, UTC], OHLCV float64 | `src/marketdata/storage.py::ParquetBarWriter.append` + ADR 0007 | `tests/unit/test_parquet_storage.py::test_writer_creates_file_and_persists_bars` |
 
 ## Related
 
