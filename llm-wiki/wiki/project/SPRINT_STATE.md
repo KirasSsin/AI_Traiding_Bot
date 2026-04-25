@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: 10
-phase: 8-ship
-branch: feature/sprint-10-wfa-dsr-mc
+sprint: between-sprints
+phase: ready-for-s11
+branch: main
 tag: v0.1.0-alpha.10
 ---
 
@@ -15,45 +15,44 @@ tag: v0.1.0-alpha.10
 
 ## Текущий статус
 
-**Между спринтами. S9 shipped (PR #17 → `92c5268`, tag `v0.1.0-alpha.9`).** 14 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + 5 docs/tooling batches (PR #12-#17).
+**Между спринтами. S10 shipped (PR #18 → `dcb3576`, tag `v0.1.0-alpha.10`).** 15 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + 5 docs/tooling batches (PR #12-#18).
 
-## Последний спринт (S9 — Data quality + mypy strict + per-fill + DSR)
+## Последний спринт (S10 — WFA + DSR aggregate + MC permutations)
 
-12 TDD tasks, 20 commits squash-merged. Closed 3 deferred carry-overs:
-- **Q1 (C):** REST-vs-REST quality detector → HALT_DATA_QUALITY (no new FSM, uses RISK_HALT)
-- **Q2 (G):** mypy --strict full enable (override removal + 18 cross-module fixes)
-- **Q3 B1:** trade_fills migration + FillRecord/Repository + WS execution topic
-- **Q3 B2:** DSR module (Bailey & López de Prado, Pearson kurtosis fix from quant-stats-reviewer T9 BLOCKER)
+11 TDD tasks, 14 commits squash-merged. Closed S9 deferred carry-overs:
+- DSR `n_trials > 1 NotImplementedError` → sigma_sr param (Bailey eq. 12)
+- DSR annualization → fixed sqrt(8760)
+- WFA acceptance gate consuming DSR → DSR informational, NOT in gate (per Q2 trader REVISE — N=40-80 trades/fold = high variance)
+- Pre-existing bug fixed: vector_backtest.py annualization sqrt(365*24*60) → sqrt(8760)
 
-Tests: 589→621 unit (+32). FSM/counts unchanged (16/30/74/45). 0 src/ behavioral changes.
+Tests: 630→656 unit (+26) + 1 integration. FSM/counts unchanged (16/30/74/45). 0 src/ behavioral changes outside backtest scope.
 
 ## Следующее действие
 
 ```
-Begin S10 brainstorm:
-1. mem-search "S10 candidate scope" + "WFA DSR MC"
-2. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
-3. Roadmap (per S9 brainstorm carry-over): S10 = D (WFA + DSR + MC permutations) — large
-   statistical layer, builds on S9 B2 DSR foundation
-4. Alternative: S11 F (Live demo Mainnet 24-72h validation) если operator priority
+Begin S11 brainstorm:
+1. mem-search "S11 candidate scope" + "live demo Mainnet validation"
+2. Per S9 carry-over roadmap: S11 = F (Live demo Mainnet 24-72h validation + trace fail modes)
+3. OR alternative: S12 A (Operator-readiness — runbooks + monitoring + alerts dashboard)
+4. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
 ```
 
-## Carry-over к S10+
+## Carry-over к S11+
 
-- **DSR annualization factor** — deferred S9 (decision pending: 252 vs 365 vs irregular weighting per trade frequency)
-- **DSR n_trials > 1** — NotImplementedError v0.1, requires sigma_SR per Bailey eq. 12
-- **Production wiring of FillRecorder** — `__main__.py::_cmd_run` STUB since S8a; defer к operator-readiness sprint
-- **Walk-Forward acceptance gate consuming DSR** — S10 D scope (per ADR 0014)
-- **Per-fill consumed by DSR** — currently per-trade only; future granularity если needed
+- **DSR threshold gate calibration** — TBD post-empirical fold data (deferred S10 Q2)
+- **Per-fold DSR в reporter** — NaN placeholder; DataFrame→TradeRecord conversion deferred (informational anyway)
+- **WFA wired в `__main__.py` CLI** — defer к operator-readiness sprint
+- **Production wiring of FillRecorder** — `__main__.py::_cmd_run` STUB since S8a; defer
+- **Pre-existing test_risk_flow.py failure** — `OverrideStore.__init__()` missing hmac_key kwarg (S4 era, Task 15 commit `5b872a6`). NOT S10 regression.
 
-## Ключевые решения S9
+## Ключевые решения S10
 
-- **REST-vs-REST quality detector** (NOT WS+REST kline) — no async dep, no WS partial-bar false-positives. Trader REVISE accepted.
-- **mypy strict empirical lesson** — per-module check INSUFFICIENT (18 cross-module errors surfaced after override removal). Always full-tree verify.
-- **Pearson kurtosis** в DSR formula (NOT Fisher excess) per Bailey & López de Prado eq. 13 — quant-stats-reviewer T9 BLOCKER caught wrong convention before merge.
-- **HALT_DATA_QUALITY uses existing RISK_HALT** — _REQUEST_HALT_CODES allow-list expansion (3→4 codes), no new FSM state/event/transition.
-- **Split B1 + B2** — independent concerns, parallel ship. DSR doesn't depend on per-fill.
-- **C7 hook bash bug** — triple-backtick parsing collision inside `$(...) <<'PYEOF'` heredoc. Fix: extracted python к external script `~/.claude/hooks/lib/wiki_broken_link_scan.py`.
+- **DSR informational, NOT gate** (Q2 trader REVISE accepted) — N=40-80 trades/fold = DSR variance too high. Calibrate threshold post-empirical.
+- **Fixed sqrt(8760) annualization** (Q6 trader REVISE) — derived from trade frequency = circular + breaks IS/OOS comparability.
+- **3-Sharpe series trap** (cross-cutting concern #1) — bar-returns / per-trade / display must not conflate. Test-enforced в reporter.
+- **sigma_sr external param** (Q7) — closes S9 NotImplementedError. quant-stats T4 added defensive sigma_sr < 0 guard.
+- **T6 spec correction** — implementer caught block bootstrap on constant returns yields p=1.0 (correct math).
+- **Revive S2 backtest** — existing replay_engine battle-tested, WFA = orchestration layer на top.
 
 ## Как обновлять этот файл
 

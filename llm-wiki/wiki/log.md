@@ -627,3 +627,64 @@ Begin S9 brainstorm — `brainstorm-init` skill auto-fires on "брейншту�
 ### Roadmap
 
 S10 = D (WFA + DSR + MC permutations) — large statistical layer, builds on S9 B2 DSR foundation. Alternative: S11 F (Live demo Mainnet 24-72h) если operator priority.
+
+---
+
+## [2026-04-25] sprint-end | S10 — WFA + DSR aggregate + MC permutations
+
+### Shipped (PR #18 → dcb3576, tag v0.1.0-alpha.10)
+
+11 TDD tasks, 14 commits squash-merged. Production-grade walk-forward validation pipeline.
+
+- **T1 vector_backtest annualization fix** (`07c6042`): sqrt(365*24*60) → sqrt(8760), pandas 3.x deprecation fix incidentally
+- **T2-T3 WFA orchestrator** (`57ff9d3` + `06cf625`): WindowSplitter (frozen dataclass, ADR 0014) + WalkForwardRunner (dual-Sharpe routing)
+- **T4 DSR sigma_sr** (`0dc0b8a` + `c33dd28`): closes S9 NotImplementedError, Bailey eq. 12. quant-stats-reviewer T4 caught defensive sigma_sr < 0 guard.
+- **T5-T6 MC permutations** (`3cda6f6` + `0e93847`): sign-flip primary + block bootstrap secondary. T6 spec correction caught by implementer.
+- **T7 acceptance gate** (`b98fff2`): Sharpe AND MC, DSR informational
+- **T8 WFA reporter** (`855a66a`): 3-Sharpe series routing + DSR aggregate с sigma_sr
+- **T9 integration test** (`86d3db3`): end-to-end pipeline verified
+- **T10-T11 ADR + wiki sync** (`fd2762b` + `8a9a2ca`): ADR 0025 + 3 NEW components + sprint page + counts updates
+
+### Validation
+
+- pytest unit: 656 passed / 24 skipped / 0 failed (baseline 630, +26 tests)
+- pytest integration: test_wfa_pipeline.py ✅
+- mypy --strict src/: clean (66 source files)
+- Canonical counts unchanged: 16/30/74/45
+- 0 src/ behavioral changes outside backtest scope
+
+### Wiki updates
+
+- 3 NEW component pages (walk-forward + mc-permutations + wfa-reporter)
+- 1 NEW ADR (0025)
+- 1 NEW sprint page (this)
+- index.md / components/README.md (Cluster 8 expanded) / mental-map.md / current-state.md updated
+- pre-s10-backlog.md (PHASE 2 brainstorming verdicts trail)
+
+### Reviewers
+
+- T1 (vector_backtest): inline review (math + pandas semantics) ✅
+- T2-T3 (WFA orchestrator): inline review ✅
+- T4 (DSR sigma_sr): quant-stats-reviewer MANDATORY → CORRECT verdict с 1 concern (sigma_sr < 0 guard added inline)
+- T5-T6 (MC): inline review (T6 implementer correctly caught spec error)
+- T7-T8 (gate + reporter): inline review ✅
+- T9 (integration): self-validation through pytest run ✅
+
+### Key discoveries / decisions
+
+- **DSR informational, NOT gate** (Q2 trader REVISE) — N=40-80 trades/fold = high variance, would reject valid strategies
+- **Fixed sqrt(8760) annualization** (Q6 trader REVISE) — derived = circular, breaks IS/OOS
+- **3-Sharpe trap (cross-cutting #1)** — must not conflate bar-returns / per-trade / display
+- **T4 quant-stats fix** — sigma_sr < 0 ValueError defensive (std non-negative по definition)
+- **T6 implementer fix** — block bootstrap on constant returns yields p=1.0 (correct math, spec test was wrong)
+
+### Carry-over к S11+
+
+- DSR threshold gate calibration (deferred — TBD post-empirical fold data)
+- Per-fold DSR в reporter (NaN placeholder, DataFrame→TradeRecord conversion deferred)
+- WFA wired в `__main__.py` CLI (defer к operator-readiness sprint)
+- **Pre-existing test failure:** test_risk_flow.py::test_50_bar_synthetic_risk_flow (OverrideStore.__init__() missing hmac_key — S4 era Task 15, NOT S10 regression)
+
+### Roadmap
+
+S11 = F (Live demo Mainnet 24-72h validation) per S9 carry-over plan. Alternative: S12 A (Operator-readiness — runbooks + monitoring + alerts) если Mainnet validation deferred.
