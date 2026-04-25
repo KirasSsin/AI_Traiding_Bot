@@ -513,3 +513,55 @@ Begin S9 brainstorm — `brainstorm-init` skill auto-fires on "брейншту�
 ### Discovery during cleanup
 
 `sprint-08c-wiki-backfill.md` MISSING revealed что PHASE 8 step 5 sprint-NN.md HARD-GATE прошёл без enforcement в S8c ship. C7 hook теперь catches this drift class for future sprints.
+
+---
+
+## [2026-04-25] refactor | mypy 44→0 type cleanup
+
+### Shipped (1 commit on main)
+
+- **mypy clean** (`ba4dcfe`): 44 pre-existing errors across 8 src/ files → 0. Pure type annotations cleanup. Zero behavioral changes.
+
+### Categories fixed
+
+| Category | Count | Fix pattern |
+|----------|-------|-------------|
+| `[type-arg]` | 22 | bare `dict` / `tuple` → `dict[str, Any]` / `tuple[X, ...]` |
+| `[arg-type]` | 9 | bracket.py ROLE_* annotated as `Role` Literal; reconciler signatures tightened; defensive guards |
+| `[union-attr]` | 5 | Reconciler._query refactored к non-Optional via `_q = ... ; if _q is None: raise; self._query: ExchangeQueryClient = _q` |
+| `[no-untyped-call]` | 2 | pyarrow `# type: ignore[no-untyped-call]` (untyped third-party) |
+| `[no-any-return]` | 2 | explicit Decimal cast in `_qty_step`; reconciler resolved via signature tightening |
+| `[attr-defined]` | 2 | ws_private `_ws: Any \| None` annotation (pybit untyped) |
+| `[no-untyped-def]` | 1 | ws_private wrapped close-hook callback typed |
+| `[name-defined]` | 1 | coordinator LocalState moved к `TYPE_CHECKING` import (was lazy-imported inside method) |
+
+### Files (8 src + 0 tests)
+
+- `src/execution/bracket.py` — 6 ROLE_* литералы as Role
+- `src/execution/bybit/adapter.py` — 2 list[dict] → list[dict[str, Any]]
+- `src/execution/bybit/ws_private.py` — 5 dict typed + Any|None _ws + close-hook
+- `src/execution/coordinator.py` — 4 dict typed + LocalState TYPE_CHECKING + Decimal cast
+- `src/execution/reconciler.py` — 7 dict/tuple typed + _query non-Optional refactor + fetch_exchange_state guard
+- `src/execution/state_repo.py` — 1 dict + 1 tuple typed
+- `src/marketdata/gaps.py` + `storage.py` — pyarrow untyped-call ignores
+
+### Validation
+
+- `mypy src/` → "Success: no issues found in 60 source files"
+- pytest tests/unit -x -q → 589 passed / 24 skipped / 0 failed
+- Canonical counts unchanged: 16/30/74/45
+- 0 logic changes (annotations + 2 defensive raises only)
+
+### Carry-over к S9 (further reduced)
+
+- Existing pages Block 1/2 refactor (anti-bloat)
+- Trading concept stubs (research)
+- `mypy --strict src/` опционально (defer — current `mypy src/` clean)
+
+### Pre-S9 cleanup status
+
+✅ C7 hook deployed
+✅ mypy 44 → 0
+✅ 5 docs/tooling batches shipped (PR #12-#16 + audit + C7 + mypy)
+
+Готов к S9 brainstorm.

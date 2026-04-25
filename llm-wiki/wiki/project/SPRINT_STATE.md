@@ -24,6 +24,7 @@ tag: v0.1.0-alpha.8c
 - **PR #16 (PR-γ)** F1 halt-recovery 9→19 codes (5 class groups + 2 severity tiers) + B2/B3 Block 1↔2 sync HARD-GATE 5c → `98d0c40`
 - **Audit follow-up** trader-expert cross-link audit → 7 files updated (CLAUDE.md 5→6 reviewers, 5 halt-emitter components linked к halt-recovery runbook) → `7c28a6d`
 - **C7 broken-link hook** — NEW PreToolUse `git push` hook scans changed wiki files для broken `[[link]]` refs (Bucket C7); 5 real bugs caught + fixed (incl. MISSING sprint-08c page HARD-GATE violation) → `f07e979`
+- **mypy 44→0** — pure type annotations cleanup across 8 src/ files. 22 type-arg + 9 arg-type + 5 union-attr + 8 misc. Zero behavioral changes (pytest 589/24/0 maintained, counts unchanged) → `ba4dcfe`
 
 ## Следующее действие
 
@@ -36,10 +37,10 @@ Begin S9 brainstorm:
 
 ## Carry-over к S9+
 
-- **mypy 44 pre-existing errors** — defer typed batch sprint (deserves dedicated S9 OR S10)
 - **Existing component pages Block 1/2 refactor** — paradigm уже implicit, defer per-page (HARD-GATE 5c только для new pages)
 - **PR-D+E** — was planned but TIER A apply already shipped в PR-β; only "deeper memory tooling" still open
 - **Trading concept stubs** — `minimum-backtest-length.md`, `position-sizing.md` referenced from trading/atr.md + walk-forward — out-of-scope для project core, defer к research session
+- **mypy --strict mode** — pyproject заявляет strict=true, но `mypy src/` clean. Verify `mypy --strict src/` опционально (могут быть additional strict-only rules) → defer
 
 ## Ключевые решения session 2026-04-25
 
