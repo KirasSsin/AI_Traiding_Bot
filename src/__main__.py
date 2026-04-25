@@ -66,7 +66,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         Conforms structurally к src.execution.bybit.ws_private._FillRecorderProto.
         """
 
-        def on_fill_event(self, evt: dict[str, _Any]) -> None:
+        def on_fill_event(self, evt: dict[str, _Any]) -> None:  # noqa: ARG002
             return None
 
     settings = Settings()
