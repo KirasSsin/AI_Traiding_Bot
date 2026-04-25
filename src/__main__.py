@@ -56,7 +56,18 @@ def _cmd_run(args: argparse.Namespace) -> int:
         1 — runtime crash (unexpected Exception).
     """
     from sqlite3 import Connection
-    from unittest.mock import MagicMock
+    from typing import Any as _Any
+
+    class _NoopFillRecorder:
+        """No-op FillRecorder stub satisfying _FillRecorderProto.
+
+        S11 placeholder — production wiring deferred к S12 (per architecture-reviewer
+        T2 concern C2: replace MagicMock anti-pattern с simple class).
+        Conforms structurally к src.execution.bybit.ws_private._FillRecorderProto.
+        """
+
+        def on_fill_event(self, evt: dict[str, _Any]) -> None:
+            return None
 
     settings = Settings()
     symbol: str = args.symbol
@@ -111,8 +122,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     # Bar source + WS consumer (FillRecorder stub — production wiring S12+)
     bar_source = BarSource(adapter=rest, symbol=symbol, interval="60")
-    fill_recorder_stub = MagicMock()
-    fill_recorder_stub.on_fill_event = lambda _evt: None
+    fill_recorder_stub = _NoopFillRecorder()
 
     endpoint = "demo.bybit.com" if settings.testnet else "stream.bybit.com"
     ws_consumer = BybitPrivateWSConsumer(
