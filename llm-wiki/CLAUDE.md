@@ -195,6 +195,7 @@ Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB
 - `wiki/project/plans/2026-04-24-sprint-8a-live-runtime.md` (~35k tokens)
 - `wiki/project/plans/2026-04-25-sprint-9-quality-types-analytics.md` (~24k tokens, 80KB)
 - `wiki/project/plans/2026-04-25-sprint-10-wfa-dsr-mc.md` (~28k tokens, 94KB)
+- `wiki/project/plans/2026-04-25-sprint-11-operator-readiness.md` (~20k tokens, 67KB)
 - `wiki/log.md` (~15.5k tokens; использовать `tail -100` или offset Read)
 
 **Wiki-страницы** держим < 50KB. Если близко — разбивай: `<topic>.md` index + `<topic>-part-N.md`.
