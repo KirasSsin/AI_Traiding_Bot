@@ -243,7 +243,7 @@ class BybitMarketAdapter:
             avg_price=Decimal(raw["avgPrice"]) if raw.get("avgPrice") else None,
         )
 
-    def get_open_orders(self, *, symbol: str) -> list[dict]:
+    def get_open_orders(self, *, symbol: str) -> list[dict[str, Any]]:
         """ADR 0020 sub-decision 9: list active orders for prior-attempt detection.
         V5 GET /v5/order/realtime — returns currently open (Untriggered/New/PartiallyFilled).
         """
@@ -253,7 +253,7 @@ class BybitMarketAdapter:
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
         return resp["result"].get("list") or []
 
-    def get_order_history(self, *, symbol: str, limit: int = 50) -> list[dict]:
+    def get_order_history(self, *, symbol: str, limit: int = 50) -> list[dict[str, Any]]:
         """ADR 0020 sub-decision 9: recent terminal orders for prior-attempt detection.
         V5 GET /v5/order/history — Filled/Cancelled/Rejected within ~7 days.
         """

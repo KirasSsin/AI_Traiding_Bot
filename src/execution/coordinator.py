@@ -14,7 +14,10 @@ import threading
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.execution.reconciler import LocalState
 
 from src.execution.bracket import BracketParams, build_bracket, make_order_link_id
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
@@ -173,7 +176,7 @@ class Coordinator:
             self._upsert_fields(last_attempt_num=max_attempt)
 
     @staticmethod
-    def _extract_max_attempt(*, bracket_id: str, candidates: list[dict]) -> int:
+    def _extract_max_attempt(*, bracket_id: str, candidates: list[dict[str, Any]]) -> int:
         """Parse 'oco-{bracket_id}-{role}-{N}' orderLinkIds, return highest N seen (0 if none)."""
         prefix = f"oco-{bracket_id}-"
         max_n = 0
@@ -248,7 +251,7 @@ class Coordinator:
             )
             return bracket_id
 
-    def on_order_event(self, evt: dict) -> None:
+    def on_order_event(self, evt: dict[str, Any]) -> None:
         """ADR 0020 sub-decisions 6+7: WS event router.
 
         Routes Triggered/Filled/PartiallyFilled events to sibling-cancel and
@@ -299,7 +302,7 @@ class Coordinator:
                     e, status, role, link_id,
                 )
 
-    def _handle_sl_partial(self, evt: dict) -> None:
+    def _handle_sl_partial(self, evt: dict[str, Any]) -> None:
         """ADR 0020 sub-decision 7: SL IOC partial → flatten residual via Market Sell.
 
         OCO_ARMED → PARTIAL_FILL event → EXIT_SL_RESIDUAL.
@@ -466,7 +469,8 @@ class Coordinator:
             return False
 
     def _qty_step(self) -> Decimal:
-        return self._adapter._filters.step_size
+        step: Decimal = self._adapter._filters.step_size
+        return step
 
     @staticmethod
     def _step_floor(value: Decimal, step: Decimal) -> Decimal:
@@ -571,7 +575,7 @@ class Coordinator:
         *,
         reason: ReasonCode,
         last_event: ExecutionEvent,
-        extra: dict | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         """ADR 0021 sub-decision 5 γ persistence — capture row state BEFORE transition.
 

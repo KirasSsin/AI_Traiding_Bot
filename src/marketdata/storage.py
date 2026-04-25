@@ -62,5 +62,5 @@ class ParquetBarWriter:
             f"-{bars_list[-1].close_time.strftime('%Y%m%d%H%M%S')}.parquet"
         )
         path = self._dir / fname
-        pq.write_table(table, path, compression="snappy")
+        pq.write_table(table, path, compression="snappy")  # type: ignore[no-untyped-call]
         return path

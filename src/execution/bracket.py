@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from decimal import Decimal, ROUND_DOWN
 from typing import Literal
 
-ROLE_ENTRY = "entry"
-ROLE_TP = "tp"
-ROLE_SL = "sl"
 Role = Literal["entry", "tp", "sl"]
+ROLE_ENTRY: Role = "entry"
+ROLE_TP: Role = "tp"
+ROLE_SL: Role = "sl"
 
 
 @dataclass(frozen=True, slots=True)

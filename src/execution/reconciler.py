@@ -5,7 +5,7 @@ import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from src.execution.bybit.adapter import OrderSnapshot, WalletSnapshot
 
@@ -23,14 +23,14 @@ class ExchangeQueryClient(Protocol):
     """
 
     def get_wallet_balance(self, *, coin: str) -> WalletSnapshot: ...
-    def get_open_orders(self, *, symbol: str) -> list[dict]: ...
+    def get_open_orders(self, *, symbol: str) -> list[dict[str, Any]]: ...
 
 
 @dataclass(frozen=True, slots=True)
 class ExchangeState:
     """Normalized exchange-side snapshot. ADR 0020 sub-decision 4."""
     wallet: WalletSnapshot
-    open_orders: tuple[dict, ...]
+    open_orders: tuple[dict[str, Any], ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,10 +51,10 @@ class ReconcileResult:
     verdict: str                              # "AGREE" | "DIVERGENCE" | "HEAL_ENTRY_FILLED" | "EXITED"
     position_qty: Decimal = Decimal("0")      # exchange truth (primary field)
     entry_price: Decimal | None = None        # preserved from local on AGREE, None on DIVERGENCE
-    open_order_link_ids: tuple = ()
+    open_order_link_ids: tuple[str, ...] = ()
     recommended_state: str | None = None      # set on DIVERGENCE → "HALTED"
     halt_reason: str | None = None            # set on DIVERGENCE → "HALT_RECONCILE_DIVERGENCE"
-    heal_context: dict | None = None          # populated only for HEAL_ENTRY_FILLED (ADR 0021)
+    heal_context: dict[str, Any] | None = None  # populated only for HEAL_ENTRY_FILLED (ADR 0021)
     exch_qty: Decimal | None = None           # alias field; synced with position_qty in __post_init__
 
     def __post_init__(self) -> None:
@@ -77,9 +77,10 @@ class Reconciler:
                  base_coin: str | None = None, symbol: str | None = None,
                  dust_threshold: Decimal = Decimal("0.00001"),
                  heal_max_age_seconds: int = 3600) -> None:
-        self._query = query or adapter
-        if self._query is None:
+        _q = query or adapter
+        if _q is None:
             raise ValueError("Reconciler requires query= or adapter=")
+        self._query: ExchangeQueryClient = _q
         self._base_coin = base_coin
         self._symbol = symbol
         self._dust_threshold = dust_threshold
@@ -87,7 +88,7 @@ class Reconciler:
         self._wallet_cache: dict[str, Decimal] = {}
         self._lock: threading.Lock = threading.Lock()  # ADR 0022 sub-decision 1 — non-reentrant
 
-    def on_wallet_event(self, evt: dict) -> None:
+    def on_wallet_event(self, evt: dict[str, Any]) -> None:
         """WS wallet topic event: update cache. ADR 0021 sub-decision 6."""
         with self._lock:
             coin = evt["coin"]
@@ -106,6 +107,10 @@ class Reconciler:
         return Decimal("0")
 
     def fetch_exchange_state(self) -> ExchangeState:
+        if self._base_coin is None or self._symbol is None:
+            raise ValueError(
+                "fetch_exchange_state requires base_coin + symbol set in __init__"
+            )
         wallet = self._query.get_wallet_balance(coin=self._base_coin)
         orders = tuple(self._query.get_open_orders(symbol=self._symbol))
         return ExchangeState(wallet=wallet, open_orders=orders)
@@ -145,16 +150,17 @@ class Reconciler:
             return symbol[:-4]
         return symbol  # unknown format — pass through
 
-    def _belongs_to_current_bracket(self, o: dict, local: LocalState) -> bool:
+    def _belongs_to_current_bracket(self, o: dict[str, Any], local: LocalState) -> bool:
         """Return True if open order belongs to (or could belong to) current bracket."""
         if local.bracket_id is None:
             # Pre-bootstrap: can't identify bracket membership; any open order is suspect.
             return True
-        return o.get("orderLinkId", "").startswith(f"oco-{local.bracket_id}-")
+        link_id: str = o.get("orderLinkId", "")
+        return link_id.startswith(f"oco-{local.bracket_id}-")
 
     def _classify(self, local: LocalState, expected_state: object,
-                  exch_qty: Decimal, open_orders: list[dict],
-                  entry_order: object | None) -> ReconcileResult:
+                  exch_qty: Decimal, open_orders: list[dict[str, Any]],
+                  entry_order: OrderSnapshot | None) -> ReconcileResult:
         """ADR 0021 4-valued path classifier. Tasks 13-15 implement logic."""
         from src.execution.state_machine import ExecutionState  # avoid circular at module level
         if expected_state == ExecutionState.ENTRY_PENDING:
@@ -166,7 +172,7 @@ class Reconciler:
 
     def _classify_entry_pending(
         self, local: LocalState, exch_qty: Decimal,
-        open_orders: list[dict], entry_order: OrderSnapshot | None,
+        open_orders: list[dict[str, Any]], entry_order: OrderSnapshot | None,
     ) -> ReconcileResult:
         """ADR 0021 sub-decision 3: classify ENTRY_PENDING state."""
         # Precondition: entry order must be Filled
@@ -231,7 +237,7 @@ class Reconciler:
         )
 
     def _classify_exit_pending(
-        self, local: LocalState, exch_qty: Decimal, open_orders: list[dict],
+        self, local: LocalState, exch_qty: Decimal, open_orders: list[dict[str, Any]],
     ) -> ReconcileResult:
         """ADR 0021 sub-decision 3: classify EXIT_PENDING state."""
         if exch_qty < self._dust_threshold and len(open_orders) == 0:

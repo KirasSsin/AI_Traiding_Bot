@@ -6,6 +6,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 
 from src.execution.state_machine import ExecutionState
 
@@ -95,7 +96,7 @@ class ExecutionStateRepo:
             return None
         return _row_to_dataclass(r)
 
-    def _set_halt(self, *, symbol: str, reason: str, context: dict) -> None:
+    def _set_halt(self, *, symbol: str, reason: str, context: dict[str, Any]) -> None:
         """Persist HALT (ADR 0021 sub-decision 5 — γ pattern).
 
         Idempotency rule: ``halt_reason`` column accepts the FIRST non-null
@@ -127,7 +128,7 @@ class ExecutionStateRepo:
             )
 
 
-def _row_to_dataclass(r: tuple) -> ExecutionStateRow:
+def _row_to_dataclass(r: tuple[Any, ...]) -> ExecutionStateRow:
     return ExecutionStateRow(
         symbol=r[0],
         state=ExecutionState(r[1]),

@@ -5,18 +5,18 @@ ADR 0021 sub-decision 6. Execution topic deferred to S8.
 from __future__ import annotations
 
 import logging
-from typing import Protocol
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
 
 class _CoordinatorProto(Protocol):
-    def on_order_event(self, evt: dict) -> None: ...
+    def on_order_event(self, evt: dict[str, Any]) -> None: ...
     def on_ws_reconnect(self) -> None: ...
 
 
 class _ReconcilerProto(Protocol):
-    def on_wallet_event(self, evt: dict) -> None: ...
+    def on_wallet_event(self, evt: dict[str, Any]) -> None: ...
 
 
 class BybitPrivateWSConsumer:
@@ -39,7 +39,7 @@ class BybitPrivateWSConsumer:
         self._endpoint = endpoint
         self._coordinator = coordinator
         self._reconciler = reconciler
-        self._ws = None  # pybit WebSocket handle (lazy)
+        self._ws: Any | None = None  # pybit WebSocket handle (lazy, untyped)
 
     def start(self) -> None:
         """Connect + subscribe (pybit handles async threading internally).
@@ -76,7 +76,7 @@ class BybitPrivateWSConsumer:
                 logger.warning("ws_private: pybit inner ws missing; relying on check_alive watchdog")
                 return
             prev = getattr(inner, "on_close", None)
-            def wrapped(ws_app, status_code, msg):  # noqa: ANN001
+            def wrapped(ws_app: Any, status_code: int, msg: str) -> None:
                 try:
                     self.on_disconnect()
                 finally:
@@ -116,7 +116,7 @@ class BybitPrivateWSConsumer:
         except Exception:
             logger.exception("on_ws_reconnect hook failed")
 
-    def _on_order_raw(self, msg: dict) -> None:
+    def _on_order_raw(self, msg: dict[str, Any]) -> None:
         try:
             for item in msg.get("data", []):
                 evt = self._parse_order(item)
@@ -126,7 +126,7 @@ class BybitPrivateWSConsumer:
         except Exception:
             logger.exception("order event dispatch failed; dropping msg=%r", msg)
 
-    def _on_wallet_raw(self, msg: dict) -> None:
+    def _on_wallet_raw(self, msg: dict[str, Any]) -> None:
         try:
             for item in msg.get("data", []):
                 for coin_row in item.get("coin", []):
@@ -135,7 +135,7 @@ class BybitPrivateWSConsumer:
         except Exception:
             logger.exception("wallet event dispatch failed; dropping msg=%r", msg)
 
-    def _parse_order(self, item: dict) -> dict | None:
+    def _parse_order(self, item: dict[str, Any]) -> dict[str, Any] | None:
         status = item.get("orderStatus", "")
         if status in self._FILLED_STATUSES:
             missing = [f for f in self._REQUIRED_FEE_FIELDS if f not in item]

@@ -18,7 +18,7 @@ def find_gaps(parquet_dir: Path, interval_ms: int) -> list[tuple[datetime, datet
     close_times: list[datetime] = []
     open_times: list[datetime] = []
     for f in files:
-        table = pq.read_table(f, columns=["open_time", "close_time"])
+        table = pq.read_table(f, columns=["open_time", "close_time"])  # type: ignore[no-untyped-call]
         for ot in table["open_time"].to_pylist():
             open_times.append(ot.replace(tzinfo=UTC) if ot.tzinfo is None else ot)
         for ct in table["close_time"].to_pylist():
