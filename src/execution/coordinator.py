@@ -627,6 +627,8 @@ class Coordinator:
                 if reason == ReasonCode.KILL_SWITCH_REQUESTED:
                     self._transition(ExecutionEvent.KILL_SWITCH_REQUESTED)
                 else:
-                    # HALT_RUNTIME_CRASH, HALT_BAR_POLL_STALL → HALTED via RISK_HALT.
-                    # Future halt codes MUST add an explicit dispatch branch — see ADR 0023.
+                    # HALT_RUNTIME_CRASH, HALT_BAR_POLL_STALL, HALT_DATA_QUALITY (S9)
+                    # → HALTED via RISK_HALT.
+                    # Future halt codes MUST add к _REQUEST_HALT_CODES allow-list
+                    # в tests/property/test_request_halt_mapping.py — see ADR 0023.
                     self._transition(ExecutionEvent.RISK_HALT)

@@ -166,3 +166,16 @@ def test_request_halt_runtime_crash_from_pending_states_transitions_to_halted(
     row = repo.get("BTCUSDT")
     assert row.state == ExecutionState.HALTED
     assert row.halt_reason == ReasonCode.HALT_RUNTIME_CRASH.value
+
+
+def test_request_halt_data_quality_routes_to_risk_halt(tmp_path) -> None:
+    """S9 Q1: HALT_DATA_QUALITY uses RISK_HALT event (no new FSM event).
+
+    Per ADR 0023 invariant — non-KILL_SWITCH halt codes share RISK_HALT path.
+    """
+    coord, repo, _ = _build(tmp_path)  # FLAT initial state
+    coord.request_halt(reason=ReasonCode.HALT_DATA_QUALITY)
+    state_row = repo.get("BTCUSDT")
+    assert state_row is not None
+    assert state_row.state == ExecutionState.HALTED
+    assert state_row.halt_reason == ReasonCode.HALT_DATA_QUALITY.value
