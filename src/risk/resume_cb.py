@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expires-in", default="1h", type=parse_duration)
     args = parser.parse_args(argv)
 
-    settings = Settings()  # type: ignore[call-arg]
+    settings = Settings()
     now = datetime.now(UTC)
     override = CbOverride(
         level=args.level,

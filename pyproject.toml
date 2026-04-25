@@ -63,7 +63,7 @@ packages = ["src"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["pybit.*", "pyarrow.*", "talib"]
+module = ["pybit.*", "pyarrow.*", "talib", "pandas", "pandas.*", "plotly", "plotly.*"]
 ignore_missing_imports = true
 
 # S9 Q2 (G): legacy ignore_errors override removed (was: src.core.*, src.backtest.*,

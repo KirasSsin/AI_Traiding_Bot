@@ -19,7 +19,7 @@ class VectorBacktester:
         self.initial_capital = initial_capital
         self.maker_fee = maker_fee
 
-    def run(self) -> dict:
+    def run(self) -> dict[str, float]:
         """
         Runs the vectorized backtest and returns KPIs.
         Expects self.df to have a 'signal' column.

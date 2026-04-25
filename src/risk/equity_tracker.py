@@ -37,6 +37,8 @@ class EquityTracker:
             (ts.isoformat(), str(realized), str(unrealized), str(total), source),
         )
         self._conn.commit()
+        if cursor.lastrowid is None:
+            raise RuntimeError("INSERT did not return lastrowid")
         return int(cursor.lastrowid)
 
     def record_no_commit(
@@ -61,6 +63,8 @@ class EquityTracker:
                VALUES (?, ?, ?, ?, ?)""",
             (ts.isoformat(), str(realized), str(unrealized), str(total), source),
         )
+        if cursor.lastrowid is None:
+            raise RuntimeError("INSERT did not return lastrowid")
         return int(cursor.lastrowid)
 
     def peak_equity_24h(self, *, now: datetime | None = None) -> Decimal | None:
