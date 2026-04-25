@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 13
-phase: between-sprints
+sprint: 14
+phase: between-sprints-post-mvp-honest-close
 branch: main
-tag: v0.1.0-alpha.13
+tag: v0.1.0-alpha.14
 ---
 
 # SPRINT STATE
@@ -15,62 +15,69 @@ tag: v0.1.0-alpha.13
 
 ## Текущий статус
 
-**Между спринтами. S13 shipped (tag `v0.1.0-alpha.13`).** 15 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13.
+**v0.1 honest close. S14 shipped (PR #22 → squash-merged, tag `v0.1.0-alpha.14`).** 16 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14.
 
-## Последний спринт (S13 — Backfill 5y + WFA T1-T6 measurement)
+**Final v0.1 status:**
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
+- Strategy validation: ❌ NEGATIVE (EMA crossover на 1H BTC = no edge, verified 2 measurements 2.2y + 4.81y)
+- MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
+- Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-8 TDD tasks, 12 commits. Verdict: **FAIL** (4/6 criteria failed).
-- T1-T3: Bybit data probe + backfill wire + 42098 bars (4.81y)
-- T4: NaN pre-flight assertion
-- T5: trade_extractor (DataFrame→TradeRecord bridge)
-- T6: strategy_metrics (T1-T6 extraction) + BLOCKER fix (MaxDD initial_capital)
-- T7: _cmd_wfa measurement wired — verdict=FAIL (T1=-44.46, T2=-101.38, T3=1.27% PASS, T4 RR=0.797 FAIL, T5 n=20 FAIL, T6=1.136 PASS)
-- T8: PHASE 8 wiki sync
+## Последний спринт (S14 — Honest close)
 
-Tests: 689→712 unit (+23). FSM/counts unchanged (16/30/74/45). Q7-S12 zero-migration preserved.
+Documentation only. NO code changes. NO measurement re-run.
+- T1 ADR 0029 accepted
+- T2 sprint-14-honest-close.md
+- T3 wiki sync (ADR 28→29, sprint pages 15→16)
+- T4 log.md sprint-end
+- T5 SPRINT_STATE → between-sprints-post-mvp-honest-close
+- T6 PHASE 8 ship via sprint-finish
 
-**Critical finding:** Sample size NOT data-span-bounded. ~1 trade per 10 days regardless of data span. T5 n>=100 unreachable without strategy revision.
+Trader Q1 EXPAND verified: T5 ≥100 trades structurally unreachable (5x signal frequency gap, EMA crossover на 1H fires ~1 trade per 5-10 days). User chose Option B (skip Option A theatrical re-measurement).
 
 ## Следующее действие
 
 ```
-S15 brainstorm (operator decides direction):
-- Per ADR 0028 Q7 ESC-1=c: case-by-case at S15
-- Possible paths: (a) strategy revision, (b) honest "no edge" close,
-  (c) multi-symbol expansion, (d) signal frequency tuning (look-ahead risk)
-- S14 = intermediate sprint if needed before S15 brainstorm
+v0.1 closed honest. NO S15 committed.
+
+Operator-driven future direction options (deferred):
+(A) Strategy revision (mean-reversion / regime / ML) — 3-5 sprints
+(B) Multi-symbol (ETH + SOL) — 2-3 sprints, ~3x signal frequency
+(C) Different timeframe (15M / 4H) — 1-2 sprints, ADR 0005 amendment
+(D) Project pause — 0 sprints, current freeze
+
+Operator decides if/when. No commitment.
 ```
 
-## Carry-over к S13+
+## Carry-over preserved (v0.2+ if any future direction chosen)
 
-- **F live demo Mainnet validation actual run** — operator-driven post-merge, follows live-demo-validation.md
-- **FillRecorderAdapter Layer 2 schema link** — add `entry_signal_id` к `execution_state` migration + wire `Coordinator.start_bracket` к persist signal_id alongside bracket_id (Q7 hard constraint pushed это к S13)
-- **3-way endpoint enum (DEMO/TESTNET/MAINNET)** — Q6 future fix (current routing CORRECT for S12 demo)
-- **T2 review C3 init_db dual-conn comment** (S11 carry-over) — code comment for two-connection sequence
-- **DSR per-fold DataFrame→TradeRecord conversion** (informational, deferred от S10)
-- **DSR threshold calibration** (S15+ per Q5 verdict, need 30+ empirical trades)
-- **halt_log INSERT order swap в `_set_halt`** (PRE-EXISTING, data-integrity reviewer T1 follow-up — write-ahead invariant per ADR 0021)
-- **find_by_order_id ORDER BY explicit** (T1 reviewer follow-up, future-safe для multi-symbol scenarios)
-- **fill-history.md component page update** (T1 trading-logic reviewer follow-up — reference FillRecorderAdapter as production impl)
-- **execFee vs cumExecFee distinction** в bybit-adapter.md OR ws-private-consumer.md (T1 trading-logic reviewer follow-up)
+All S12 + S13 carry-overs unaddressed (10+ items):
 
-## Ключевые решения S12
+- F live demo Mainnet validation actual run (33min only since S12)
+- FillRecorderAdapter Layer 2 schema link (entry_signal_id к execution_state migration)
+- 3-way endpoint enum (DEMO/TESTNET/MAINNET) — Q6 future fix
+- T2 review C3 init_db dual-conn comment (S11 carry-over)
+- DSR per-fold DataFrame→TradeRecord conversion (S10 informational)
+- DSR threshold calibration (S15+ per S11 Q5)
+- DSR cross-trial sigma_SR implementation (S14 Q2 REVISE — needed для any future revision)
+- halt_log INSERT order swap в `_set_halt` (PRE-EXISTING)
+- find_by_order_id ORDER BY explicit (T1 reviewer follow-up)
+- fill-history.md / bybit-adapter.md / ws-private-consumer.md component page updates
+- T2/T5/T6 quant-stats deferred concerns (Sortino formula docs, sqrt(8760) frequency-agnostic, boundary tests)
 
-- **Q1 CONFIRM Bybit demo trading endpoint** (zero PnL exposure для first live cycle)
-- **Q2 CONFIRM 48h validation duration** (1H bars × 48 = adequate structural sample)
-- **Q3 CONFIRM multi-criteria gate + MANDATORY zero-trade clause** (likely 0 trades on EMA crossover during 48h → structural criteria only)
-- **Q4 REVISE-additive Parquet shim** (data_collector takes config-dict, not args — verified via grep CC1)
-- **Q5 REVISE-additive FillRecorderAdapter** (FillHistoryRepository не drop-in для _FillRecorderProto interface mismatch)
-- **Q6 REVISE-DISAGREE-FACTUAL: NO endpoint string change** (S11 carry-over note WAS WRONG — current `"demo.bybit.com"` correctly routes к demo per pybit substring matching; "fix" к testnet substring would BREAK demo connectivity)
-- **Q7 CONFIRM P0-wake + alpha.11 rollback + zero-migration constraint** (preserves binary rollback compat)
-- **2-layer adapter pattern** (always-on structlog audit + best-effort DB insert via execution_state→trade_history lookup chain)
-- **Schema gap acknowledged S13 carry-over:** execution_state has NO entry_signal_id → Layer 2 always-skips during S12 (honest per Q7)
+## Ключевые решения S14
+
+- **Q1 EXPAND** (trader): T5 unreachable verified via grep — 5x signal frequency gap
+- **Q2 REVISE** (trader): DSR cross-trial sigma_SR gap — verified via dsr.py:73
+- **Option B** (user): honest close immediately, save 1 sprint vs theatrical Option A
+- **Tag semantics:** `v0.1.0-alpha.14` = honest close marker, NOT MVP DONE
+- **No spec amendment:** acceptance-criteria.md T1-T6 thresholds preserved
+- **No code changes:** S14 = documentation only
 
 ## Как обновлять этот файл
 
 После каждого значимого шага (task complete / phase change / blocker found / session end):
 1. Обнови "Текущий статус" (sprint / phase)
-2. Перенеси task из "В процессе" → "Завершённые задачи" (checkbox)
-3. Обнови "Следующее действие" — конкретное, с командой если применимо
-4. Добавь в "Ключевые решения" только нетривиальное
-5. Обнови `updated:` в frontmatter
+2. Обнови "Следующее действие" — конкретное, с командой если применимо
+3. Добавь в "Ключевые решения" только нетривиальное
+4. Обнови `updated:` в frontmatter

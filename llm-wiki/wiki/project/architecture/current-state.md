@@ -1,19 +1,19 @@
 ---
-title: Current State — post-S13 inventory + canonical counts
+title: Current State — post-S14 inventory + canonical counts (honest close)
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-13]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-14, honest-close, v0.1-milestone]
 created: 2026-04-19
 updated: 2026-04-26
 status: stable
 sources:
   - src/
-  - project/sprints/sprint-13-backfill-wfa.md
-  - project/decisions/0028-sprint-13-strategy-validation.md
+  - project/sprints/sprint-14-honest-close.md
+  - project/decisions/0029-sprint-14-honest-close.md
 ---
 
-# Current State (post-S13, 2026-04-26)
+# Current State (post-S14, 2026-04-26) — v0.1 honest close
 
-**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.13`. 15 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13). S13 added: 4.81y BTCUSDT 1H Bybit Spot backfill (42098 bars, `data/BTCUSDT_1h.parquet`) + trade_extractor (DataFrame→TradeRecord bridge) + strategy_metrics (T1-T6 extraction) + _cmd_wfa full measurement pipeline wired. WFA T1-T6 measurement result: **FAIL** (4/6 criteria failed: t1, t2, t4, t5 — 20 OOS trades insufficient; strategy fires ~1 trade per 10 days regardless of data span). Per ADR 0028 Q7 ESC-1=c: operator decides S15 direction (strategy revision / honest close / multi-symbol / signal tuning). Zero new migrations (Q7-S12 constraint preserved).
+**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.14` (**honest close marker**, NOT MVP DONE). 16 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14). **Final v0.1 status: infrastructure COMPLETE, strategy validation NEGATIVE.** EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14) на 1H BTCUSDT = no measurable edge across 2 WFA measurements (2.2y prior + 4.81y S13 ship). Trader Q1 EXPAND (S14 PHASE 2): T5 ≥100 trades structurally unreachable (5x signal frequency gap, tuning realistic 2-3x). Per Option B chosen by user: skip theatrical Option A re-measurement, ship honest close. **Future direction (operator-driven, no commitment):** strategy revision / multi-symbol / different timeframe / project pause. All S12+S13 carry-overs preserved (10+ items).
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -25,9 +25,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) + S12 (fill-recorder-adapter) + S10 (walk-forward + mc-permutations + wfa-reporter) + S9 (data-quality + fill-history + dsr) + C7 (wiki-broken-link-hook) + S8c additions |
-| ADRs | **28** | `wiki/project/decisions/*.md` (0001-0028) | S13 (ADR 0028 — 5y backfill + WFA T1-T6 measurement) |
-| Sprint pages | **15** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-13 + sprint-08a + sprint-08b + sprint-08c) | S13 (sprint-13-backfill-wfa) |
+| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) + S12 (fill-recorder-adapter) + S10 + S9 + C7 + S8c — **S14 added zero components** (docs-only) |
+| ADRs | **29** | `wiki/project/decisions/*.md` (0001-0029) | S14 (ADR 0029 — honest close) |
+| Sprint pages | **16** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-14 + sprint-08a + sprint-08b + sprint-08c) | S14 (sprint-14-honest-close) |
 
 **Verify counts live (CI-safe):**
 
@@ -97,6 +97,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | S11 | 0026 | v0.1.0-alpha.11 | 2026-04-25 | Operator-readiness + pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI + halt priority matrix + log-grep-templates + pre-flight checklist) |
 | S12 | 0027 | v0.1.0-alpha.12 | 2026-04-25 | Live demo validation 24-72h + production wiring (FillRecorderAdapter closes `_NoopFillRecorder` stub + `_load_ohlcv` Parquet shim + live-demo-validation + halt-response-protocol runbooks) |
 | S13 | 0028 | v0.1.0-alpha.13 | 2026-04-26 | Backfill 5y BTCUSDT 1H Bybit Spot (42098 bars, 4.81y) + WFA T1-T6 measurement + DSR(N=1) + MC. Verdict: FAIL (4/6 criteria — 20 OOS trades, sample too small). trade_extractor + strategy_metrics components. FSM/counts unchanged. |
+| **S14** | **0029** | **v0.1.0-alpha.14** | **2026-04-26** | **Honest close.** Trader Q1 EXPAND: T5 unreachable (5x signal frequency gap). v0.1 = infrastructure complete, strategy validation negative. Future direction (operator-driven, no commitment): revision / multi-symbol / timeframe / pause. Documentation only. |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
