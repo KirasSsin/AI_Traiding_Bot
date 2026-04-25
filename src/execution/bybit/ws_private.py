@@ -24,7 +24,12 @@ class _FillRecorderProto(Protocol):
 
 
 class BybitPrivateWSConsumer:
-    """Subscribes to `order` + `wallet` topics on Bybit V5 private stream."""
+    """Subscribes to `order` + `wallet` + `execution` topics on Bybit V5 private stream.
+
+    Execution topic added в S9 Q3 B1 — pure analytics ingestion (per-fill granularity).
+    Production wiring of concrete FillRecorder still pending (`__main__.py::_cmd_run`
+    is STUB since S8a — defer к operator-readiness sprint).
+    """
 
     _FILLED_STATUSES = ("Filled", "PartiallyFilled")
     _REQUIRED_FEE_FIELDS = ("cumExecFee", "feeCurrency")
