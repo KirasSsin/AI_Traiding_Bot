@@ -58,6 +58,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-08a-live-runtime]] — S8a (2026-04-24): RuntimeManager (bootstrap → tick loop → shutdown) + REST bar poller + KILL_SWITCH sentinel-file CLI + threading lock policy; FSM +11 KILL_SWITCH_REQUESTED transitions (59→70); reason codes 42→45; tag v0.1.0-alpha.8a.
 - [[project/sprints/sprint-08b-carryover]] — S8b (2026-04-24): S8a carry-over fixes (request_halt FSM dispatch + BarSource validator + atomic kill write + main() typed dispatch) + ADR 0023 halt-code mapping invariant + property test; FSM 70→74 (T1 +3 RISK_HALT, T7 +1 FLAT,RISK_HALT); tag v0.1.0-alpha.8b.
 - [[project/sprints/sprint-08c-wiki-backfill]] — S8c (2026-04-25): wiki backfill + tooling debt + S8a/S8b carry-overs. 12 tasks, 4 new component pages (backtest-harness, kill-switch-cli, risk-override, trade-history) + 3 file deletions (oco.py + 2 tests per ADR 0019/1 supersession) + trace map mandatory + adr-index-sync hook. PHASE 2 binding protocol caught DELETE bracket.py catastrophic regression. Tag v0.1.0-alpha.8c.
+- [[project/sprints/sprint-09-data-quality-types-analytics]] — S9 (2026-04-25): data quality detector (REST-vs-REST → HALT_DATA_QUALITY) + mypy --strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis). 12 TDD tasks, +32 tests (589→621 unit). FSM/counts unchanged. Tag v0.1.0-alpha.9.
 
 ## Project — Plans
 
@@ -119,6 +120,9 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
 - [[project/components/adr-index-sync-hook]] — PreToolUse git push hook: блокирует пуш если новый ADR не упомянут в `wiki/index.md`. Mirror of adr-agent-sync-check (Bucket C6).
 - [[project/components/wiki-broken-link-hook]] — PreToolUse git push hook: блокирует пуш если changed wiki files содержат broken `[[link]]` refs (Bucket C7, pre-S9).
+- [[project/components/data-quality]] — REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1). 0.5% threshold, per-bar cadence, no WS kline subscription needed.
+- [[project/components/fill-history]] — per-fill audit log (FillRecord + FillHistoryRepository + FK trade_history + WS execution topic source) (S9 Q3 B1).
+- [[project/components/dsr]] — Bailey & López de Prado Deflated Sharpe Ratio module (Pearson kurtosis, n_trials=1 only v0.1) (S9 Q3 B2).
 - [[project/components/oco]] — 3-order Spot OCO emulation: bracket builder + orderLinkId scheme + G5 fee-aware qty + S7 entry_order_id capture для HEAL.
 - [[project/components/reconciler]] — 4-valued verdict (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED) + heal_max_age_seconds=3600.
 - [[project/components/execution-state-machine]] — 16-state FSM + 29 events + 59 transitions + γ halt persistence (S7).
