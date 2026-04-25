@@ -22,9 +22,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.analytics.dsr import compute_dsr
 from src.backtest.data_collector import load_market_data
 from src.backtest.mc_permutation import sign_flip_p_value
 from src.backtest.replay_engine import run_replay
+from src.backtest.strategy_metrics import compute_t1_t6_metrics
+from src.backtest.trade_extractor import extract_trade_records
 from src.backtest.walk_forward import (
     WalkForwardRunner,
     WindowSplitter,
@@ -166,8 +169,72 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_backfill(args: argparse.Namespace) -> int:
-    """Delegate to existing backfill script."""
-    print(f"backfill --from {args.from_date} --to {args.to_date} (delegate to scripts/backfill.py)")
+    """Backfill OHLCV via BybitRESTClient.get_klines + write Parquet.
+
+    S13 T2 per ADR 0028 Q3 (Bybit Spot only, no Binance fallback per ADR 0016).
+    Closes S8a T20 STUB delegate placeholder.
+
+    Args:
+        args.symbol: trading pair (e.g. "BTCUSDT")
+        args.from_date: ISO date "YYYY-MM-DD"
+        args.to_date: ISO date "YYYY-MM-DD"
+        args.output_path: Parquet output (default: data/<symbol>_1h.parquet)
+
+    Returns:
+        0 — Parquet written with >0 bars;
+        1 — empty kline response (data not available for requested range).
+    """
+    from datetime import UTC, datetime
+
+    settings = Settings()
+    symbol: str = args.symbol or "BTCUSDT"
+    output_path = Path(args.output_path) if args.output_path else Path(f"data/{symbol}_1h.parquet")
+
+    start_dt = datetime.fromisoformat(args.from_date).replace(tzinfo=UTC)
+    end_dt = datetime.fromisoformat(args.to_date).replace(tzinfo=UTC)
+    start_ms = int(start_dt.timestamp() * 1000)
+    end_ms = int(end_dt.timestamp() * 1000)
+
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
+    )
+
+    print(f"backfill: fetching {symbol} 1H {args.from_date} → {args.to_date} ...", flush=True)
+    bars = rest.get_klines(symbol, "60", start_ms, end_ms, limit_per_call=1000)
+
+    if not bars:
+        print(
+            f"backfill: WARNING — empty kline response for {symbol} "
+            f"{args.from_date} → {args.to_date}",
+            flush=True,
+        )
+        return 1
+
+    # Convert list[Bar] → DataFrame (schema compatible with data_collector.load_market_data)
+    rows = [
+        {
+            "time": b.close_time.isoformat(),
+            "open": float(b.open),
+            "high": float(b.high),
+            "low": float(b.low),
+            "close": float(b.close),
+            "volume": float(b.volume),
+        }
+        for b in bars
+    ]
+    df = pd.DataFrame(rows)
+
+    # S13 T2 data-integrity fix: explicit snappy + atomic tmp-rename
+    # (a) ADR 0003 mandates snappy — explicit args defend against pyarrow→fastparquet engine switch
+    # (b) Atomic write: tmp + Path.rename() — prevents partial file on crash during ~5min backfill
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+    df.to_parquet(tmp_path, index=False, compression="snappy", engine="pyarrow")
+    tmp_path.rename(output_path)
+
+    print(f"backfill: wrote {len(df)} bars to {output_path}", flush=True)
     return 0
 
 
@@ -261,6 +328,9 @@ def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
 
     S12 T2: closes S11 stub. Reuses existing data_collector pipeline.
     Operator must run `python -m src backfill --symbol <X>` to populate Parquet first.
+
+    S13 T4 (CC4): pre-flight NaN assertion — `df.dropna()` post-warmup must yield
+    >=90% bars else WFA aborts with explicit error.
     """
     parquet_path = f"data/{symbol}_1h.parquet"
     config = {
@@ -272,13 +342,24 @@ def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
         }
     }
     try:
-        return load_market_data(config)
+        df = load_market_data(config)
     except FileNotFoundError as e:
         raise FileNotFoundError(
             f"OHLCV Parquet missing at {parquet_path}. "
             f"Run 'python -m src backfill --symbol {symbol} --from {start} --to {end}' first. "
             f"Original error: {e}"
         ) from e
+
+    # CC4: pre-flight NaN assertion (>=90% bars retained after dropna)
+    if not df.empty:
+        retained_pct = len(df.dropna()) / len(df)
+        if retained_pct < 0.90:
+            raise ValueError(
+                f"NaN pre-flight failed for {symbol}: only {retained_pct:.1%} bars retained "
+                f"after dropna (threshold >=90%). Likely data quality issue; investigate Parquet."
+            )
+
+    return df
 
 
 def _cmd_wfa(args: argparse.Namespace) -> int:
@@ -328,28 +409,123 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         returns_arr = np.asarray(raw, dtype=float) / 10000.0
         mc_p = sign_flip_p_value(returns_arr, n_iterations=2000, seed=42)
 
-    fold_ratios = [f["oos_is_sharpe_ratio"] for f in runner_result["folds"]]
+    # S13 T5: Per-fold trade extraction (closes S10/S12 carry-over)
+    # replay_engine emits timestamp_open/timestamp_close — normalize to extractor contract.
+    from src.risk.trade_history import TradeRecord as _TradeRecord
+    all_trades: list[_TradeRecord] = []
+    fold_oos_is_sharpe_ratios: list[float] = []
+    for fold_data in runner_result["folds"]:
+        fold_oos_is_sharpe_ratios.append(fold_data["oos_is_sharpe_ratio"])
+        fold_trades_df = fold_data.get("oos_trades_df")
+        if fold_trades_df is not None and not fold_trades_df.empty:
+            # Normalize replay_engine column names → extract_trade_records contract
+            df_normalized = fold_trades_df.copy()
+            if "timestamp_open" in df_normalized.columns and "entry_ts" not in df_normalized.columns:
+                df_normalized = df_normalized.rename(columns={
+                    "timestamp_open": "entry_ts",
+                    "timestamp_close": "exit_ts",
+                })
+            # replay_engine timestamps are tz-naive; TradeRecord requires tz-aware (UTC)
+            from datetime import UTC as _UTC
+            for _col in ("entry_ts", "exit_ts"):
+                if _col in df_normalized.columns:
+                    col_series = pd.to_datetime(df_normalized[_col])
+                    if col_series.dt.tz is None:
+                        col_series = col_series.dt.tz_localize(_UTC)
+                    df_normalized[_col] = col_series
+            if "fees_paid" not in df_normalized.columns:
+                entry_fee = df_normalized.get("entry_fee", 0)
+                exit_fee = df_normalized.get("exit_fee", 0)
+                df_normalized["fees_paid"] = entry_fee + exit_fee
+            all_trades.extend(extract_trade_records(df_normalized, symbol=symbol))
+
+    # S13 Q5 + CC1: DSR active S13 (N_trials=1, formula-invariant)
+    dsr_value = compute_dsr(trades=all_trades, n_trials=1)
+
+    # S13 T6: T1-T6 metrics
+    metrics = compute_t1_t6_metrics(
+        trades=all_trades,
+        fold_oos_is_sharpe=fold_oos_is_sharpe_ratios,
+    )
+
     gate = evaluate_acceptance_gate(
-        fold_oos_is_sharpe_ratios=fold_ratios,
+        fold_oos_is_sharpe_ratios=fold_oos_is_sharpe_ratios,
         mc_p_value=mc_p,
     )
 
-    report = format_wfa_report(
+    format_wfa_report(
         runner_result=runner_result,
-        trades_for_dsr=[],  # Per-fold DataFrame->TradeRecord conversion deferred S12+
+        trades_for_dsr=all_trades,
         mc_p_value=mc_p,
         gate_result=gate,
     )
 
     import json
+    import math
+
+    def _nan_or_value(v: object) -> object:
+        return None if (isinstance(v, float) and math.isnan(v)) else v
+
+    # S13 T7: Verdict report (per Q7 ESC-1=c defer pattern — PASS/FAIL only, no pre-commit)
+    failed_criteria: list[str] = []
+    if _nan_or_value(metrics["t1_sharpe_oos"]) is None or metrics["t1_sharpe_oos"] < 1.0:
+        failed_criteria.append("t1")
+    if _nan_or_value(metrics["t2_sortino_oos"]) is None or metrics["t2_sortino_oos"] < 1.5:
+        failed_criteria.append("t2")
+    if _nan_or_value(metrics["t3_max_drawdown"]) is None or metrics["t3_max_drawdown"] >= 0.25:
+        failed_criteria.append("t3")
+    win_rate = metrics["t4_win_rate"]
+    avg_rr = metrics["t4_avg_rr"]
+    t4_fail = (
+        _nan_or_value(win_rate) is None
+        or _nan_or_value(avg_rr) is None
+        or (avg_rr >= 2.0 and win_rate < 0.35)
+        or (1.5 <= avg_rr < 2.0 and win_rate < 0.45)
+        or avg_rr < 1.5
+    )
+    if t4_fail:
+        failed_criteria.append("t4")
+    if (
+        _nan_or_value(metrics["t5_mean_pnl_pct"]) is None
+        or metrics["t5_mean_pnl_pct"] <= 0
+        or _nan_or_value(metrics["t5_t_stat"]) is None
+        or metrics["t5_t_stat"] < 2.0
+        or metrics["t5_n_trades"] < 100
+    ):
+        failed_criteria.append("t5")
+    if _nan_or_value(metrics["t6_oos_is_sharpe_ratio_mean"]) is None or metrics["t6_oos_is_sharpe_ratio_mean"] < 0.7:
+        failed_criteria.append("t6")
+
+    dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
+
+    # Q7 ESC-1=c defer pattern: report only, operator decides at S15
+    verdict = "PASS" if len(failed_criteria) == 0 and dsr_pass else "FAIL"
+
     print(json.dumps({
         "symbol": symbol,
-        "k_folds": report.get("k_folds", 0),
-        "mc_p_value": report.get("mc_p_value"),
-        "acceptance_gate": report.get("acceptance_gate"),
+        "verdict": verdict,
+        "failed_criteria": failed_criteria,
+        "dsr": _nan_or_value(dsr_value),
+        "dsr_pass": dsr_pass,
+        "n_trials": 1,
+        "metrics": {
+            "t1_sharpe_oos": _nan_or_value(metrics["t1_sharpe_oos"]),
+            "t2_sortino_oos": _nan_or_value(metrics["t2_sortino_oos"]),
+            "t3_max_drawdown": _nan_or_value(metrics["t3_max_drawdown"]),
+            "t4_win_rate": _nan_or_value(metrics["t4_win_rate"]),
+            "t4_avg_rr": _nan_or_value(metrics["t4_avg_rr"]),
+            "t5_mean_pnl_pct": _nan_or_value(metrics["t5_mean_pnl_pct"]),
+            "t5_t_stat": _nan_or_value(metrics["t5_t_stat"]),
+            "t5_n_trades": metrics["t5_n_trades"],
+            "t6_oos_is_sharpe_ratio_mean": _nan_or_value(metrics["t6_oos_is_sharpe_ratio_mean"]),
+        },
+        "k_folds": len(fold_oos_is_sharpe_ratios),
+        "mc_p_value": mc_p,
+        "acceptance_gate": gate,
     }, default=str, indent=2))
 
-    return 0 if gate.get("passed") else 2
+    # Exit codes per ADR 0028 Q7 defer pattern: 0 = PASS, 2 = FAIL
+    return 0 if verdict == "PASS" else 2
 
 
 def _cmd_monitor(args: argparse.Namespace) -> int:
@@ -431,8 +607,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.set_defaults(func=_cmd_run)
 
     p_bf = sub.add_parser("backfill", help="OHLCV backfill.")
-    p_bf.add_argument("--from", dest="from_date", required=True)
-    p_bf.add_argument("--to", dest="to_date", required=True)
+    p_bf.add_argument("--symbol", default="BTCUSDT", help="Trading pair (default: BTCUSDT)")
+    p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
+    p_bf.add_argument("--to", dest="to_date", required=True, help="End date YYYY-MM-DD")
+    p_bf.add_argument(
+        "--output", dest="output_path", default=None,
+        help="Output Parquet path (default: data/<symbol>_1h.parquet)"
+    )
     p_bf.set_defaults(func=_cmd_backfill)
 
     p_rec = sub.add_parser("reconcile-only", help="Bootstrap + reconcile, no trading loop.")

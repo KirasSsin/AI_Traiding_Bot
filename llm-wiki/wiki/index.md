@@ -62,6 +62,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-10-wfa-dsr-mc]] — S10 (2026-04-25): WFA orchestrator (WindowSplitter + WalkForwardRunner + acceptance gate per ADR 0014) + DSR sigma_sr extension (closes S9 NYI) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe routing + vector_backtest annualization fix. 11 TDD tasks, +26 tests (630→656 unit + 1 integration). FSM/counts unchanged. Tag v0.1.0-alpha.10.
 - [[project/sprints/sprint-11-operator-readiness]] — S11 (2026-04-25): Pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI subcommands closing S8a T20 STUB) + operator-readiness (halt-recovery priority matrix integration + log-grep-templates runbook + pre-flight checklist). 10 TDD tasks, +10 tests (656→666 unit). FSM/counts unchanged. Tag v0.1.0-alpha.11.
 - [[project/sprints/sprint-12-live-demo-validation]] — S12 (2026-04-25): Live demo validation 24-72h + production wiring (FillRecorderAdapter closes `_NoopFillRecorder` stub + `_load_ohlcv` Parquet shim + 2 operator runbooks live-demo-validation + halt-response-protocol). 6 TDD tasks, +9 tests (680→689). FSM/counts unchanged (16/30/74/45). Tag v0.1.0-alpha.12.
+- [[project/sprints/sprint-13-backfill-wfa]] — S13 (2026-04-26): Backfill 5y BTCUSDT 1H Bybit Spot (42098 bars, 4.81y) + WFA T1-T6 measurement (DSR active N_trials=1). Verdict: **FAIL** (4/6 criteria failed, 20 OOS trades — sample too small). 8 TDD tasks. FSM/counts unchanged. Tag v0.1.0-alpha.13.
 
 ## Project — Plans
 
@@ -140,6 +141,8 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/ws-private-consumer]] — Bybit V5 private WS (order + wallet) с pybit close-hook + check_alive watchdog (S7 ADR 0021 sub-decision 6).
 - [[project/components/runtime-manager]] — RuntimeManager: process lifecycle owner (bootstrap → loop → shutdown). S8a.
 - [[project/components/bar-poller]] — BarSource: REST kline poller с dedup + stall counter. S8a.
+- [[project/components/strategy-metrics]] — T1-T6 acceptance criteria extraction from OOS TradeRecord list (S13 T6).
+- [[project/components/trade-extractor]] — DataFrame → TradeRecord bridge для DSR computation (S13 T5).
 - [[project/runbooks/halt-recovery]] — see Runbooks section above (19 halt codes, 5 class groups, 2 severity tiers — CRITICAL/RECOVERABLE).
 
 ## Project — Experiments
@@ -175,6 +178,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0025-sprint-10-wfa-dsr-mc]] — Sprint 10 aggregate ADR: WFA orchestrator (rolling K=5 per ADR 0014) + DSR sigma_sr extension (closes S9 NYI, Bailey eq. 12) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe series routing + vector_backtest annualization fix.
 - [[project/decisions/0026-sprint-11-operator-readiness]] — Sprint 11 aggregate ADR: Pre-flight gap closure (test_risk_flow.py + _cmd_run + _cmd_reconcile_only + _cmd_wfa CLI, closes S8a T20 STUB) + operator-readiness (halt priority matrix integration + log-grep-templates + _cmd_monitor read-only + pre-flight checklist).
 - [[project/decisions/0027-sprint-12-live-demo-validation]] — Sprint 12 aggregate ADR: live demo validation 24-72h on Bybit demo + FillRecorderAdapter (closes `_NoopFillRecorder` stub) + `_load_ohlcv` Parquet shim + 2 operator runbooks (live-demo-validation + halt-response-protocol). Q6 verified: NO endpoint string change required (current correct).
+- [[project/decisions/0028-sprint-13-strategy-validation]] — Sprint 13 ADR: 5y backfill + WFA T1-T6 measurement, DSR active S13 N_trials=1, PBO defer S15+, ESC-1 defer pattern preserved (case-by-case at S15), ESC-2 tiered 5y target (Bybit data 4.81y).
 
 ## Queries (saved answers)
 

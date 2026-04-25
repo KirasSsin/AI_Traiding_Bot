@@ -1,11 +1,11 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-25
-sprint: 12
+updated: 2026-04-26
+sprint: 13
 phase: between-sprints
 branch: main
-tag: v0.1.0-alpha.12
+tag: v0.1.0-alpha.13
 ---
 
 # SPRINT STATE
@@ -15,30 +15,31 @@ tag: v0.1.0-alpha.12
 
 ## Текущий статус
 
-**Между спринтами. S12 shipped (PR #20 → squash-merged, tag `v0.1.0-alpha.12`).** 14 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12.
+**Между спринтами. S13 shipped (tag `v0.1.0-alpha.13`).** 15 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13.
 
-## Последний спринт (S12 — Live demo validation 24-72h + production wiring)
+## Последний спринт (S13 — Backfill 5y + WFA T1-T6 measurement)
 
-6 TDD tasks, 8 commits squash-merged. Closed S11 carry-overs:
-- T1 (044dad8) FillRecorderAdapter (closes _NoopFillRecorder stub) — 2-layer pattern (audit + best-effort DB)
-- T2 (5d94c1a) `_load_ohlcv` Parquet shim (data_collector config-dict translation)
-- T3 (8f4dd1e) pre-flight Gate 5 backfill prerequisite + halt-recovery P1+OCO_ARMED conditional escalation
-- T4 (51dc3c4) live-demo-validation.md operator playbook (48h Bybit demo + multi-criteria + zero-trade clause)
-- T5 (bd172e1) halt-response-protocol.md (P0 wake + alpha.11 rollback + RC tag iteration)
-- T6 (e99c36a) wiki sync (ADR 0027 accepted + sprint-12 page + counts ADR 26→27, sprint pages 13→14, components 35→36 + fill-recorder-adapter component page)
+8 TDD tasks, 12 commits. Verdict: **FAIL** (4/6 criteria failed).
+- T1-T3: Bybit data probe + backfill wire + 42098 bars (4.81y)
+- T4: NaN pre-flight assertion
+- T5: trade_extractor (DataFrame→TradeRecord bridge)
+- T6: strategy_metrics (T1-T6 extraction) + BLOCKER fix (MaxDD initial_capital)
+- T7: _cmd_wfa measurement wired — verdict=FAIL (T1=-44.46, T2=-101.38, T3=1.27% PASS, T4 RR=0.797 FAIL, T5 n=20 FAIL, T6=1.136 PASS)
+- T8: PHASE 8 wiki sync
 
-Tests: 680→689 unit (+9). FSM/counts unchanged (16/30/74/45). Q7 zero-migration preserved alpha.11 binary rollback compat.
+Tests: 689→712 unit (+23). FSM/counts unchanged (16/30/74/45). Q7-S12 zero-migration preserved.
+
+**Critical finding:** Sample size NOT data-span-bounded. ~1 trade per 10 days regardless of data span. T5 n>=100 unreachable without strategy revision.
 
 ## Следующее действие
 
 ```
-S13 brainstorm:
-1. mem-search "S13 schema link" + "FillRecorder Layer 2 production"
-2. S13 = TBD (post operator-driven 48h validation results)
-3. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
+S15 brainstorm (operator decides direction):
+- Per ADR 0028 Q7 ESC-1=c: case-by-case at S15
+- Possible paths: (a) strategy revision, (b) honest "no edge" close,
+  (c) multi-symbol expansion, (d) signal frequency tuning (look-ahead risk)
+- S14 = intermediate sprint if needed before S15 brainstorm
 ```
-
-**Pre-S13 operator-driven activity:** 48h Bybit demo validation run per `wiki/runbooks/live-demo-validation.md`. Result feeds S13 scope (FillRecorder Layer 2 design, schema link, slippage validation gaps).
 
 ## Carry-over к S13+
 

@@ -49,13 +49,21 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 ## Gating flow
 
 ```
-1. Walk-Forward + K=5 CV на 5 лет BTC 1H
+1. Walk-Forward + K=5 CV на 5 лет BTC 1H¹
 2. Compute OOS Sharpe, Sortino, MaxDD, win rate, t-stat, OOS/IS ratio
 3. Compute DSR учитывая N конфигураций (N ≤ 45 по MinBTL)
-4. Gate: все T1-T6 green AND DSR > 0 AND PBO < 0.5
+4. Gate: все T1-T6 green AND DSR > 0² AND PBO < 0.5³
 5. Если pass: promote to live (с Kelly Phase 1 — 1% fixed)
 6. Live trading накапливает реальные trades → Kelly phase progression
 ```
+
+**Footnotes (S13 PHASE 2 reconciliation):**
+
+¹ **Data span — 5 лет = aspirational, floor 3.5y.** `migration-plan.md` S7 AC says "2y BTC 1H-данных" (retrospective minimum); this gating flow says "5 лет" (target). Reconciliation per S13 ADR 0028: target 5y, fallback к **max available Bybit Spot data, floor 3.5y** for K=5 fold statistical adequacy (ADR 0014: 12,600 bars min; 3.5y × 8760 = 30,660 bars). Если Bybit Spot earliest 1H BTCUSDT timestamp > 2022 → escalate к user. Per ADR 0016: NO Binance fallback (venue consistency).
+
+² **DSR gate active S13+** per S13 PHASE 2 Q5 CONFIRM. N_trials tracking: each measurement attempt increments N_trials (CC1 binding infrastructure). N_trials > 1 requires sigma_sr (cross-fold Sharpe std) per Bailey eq. 12 (S10 implementation).
+
+³ **PBO gate deferred S15+** — PBO requires MCS (Monte Carlo Strategy Selection) framework not implemented в v0.1 (~3 sprints scope expansion). S13 measurement uses **T1-T6 + DSR > 0 only** (PBO gate documented as deferred, not silently dropped).
 
 ## Revalidation cadence
 

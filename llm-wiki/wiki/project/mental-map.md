@@ -137,6 +137,8 @@ sources:
 | WFA (train=2000 / test=500 / K=5 / embargo=20) | `decisions/0014` + `trading/concepts/walk-forward-validation.md` |
 | MC permutations (sign-flip N=2000) | `decisions/0015` + `trading/concepts/monte-carlo-permutations.md` |
 | DSR (Deflated Sharpe Ratio) | `trading/concepts/deflated-sharpe-ratio.md` (concept; integration deferred к S9+) |
+| trade_extractor (DataFrame → TradeRecord bridge) | `components/trade-extractor.md` + `src/backtest/trade_extractor.py` (S13 T5) |
+| strategy_metrics (T1-T6 acceptance criteria extraction) | `components/strategy-metrics.md` + `src/backtest/strategy_metrics.py` (S13 T6) |
 
 ### Tooling / hooks / methodology
 
