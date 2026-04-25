@@ -464,3 +464,52 @@ Skills not active в текущей session — нужен restart claude code �
 ### Next action
 
 Begin S9 brainstorm — `brainstorm-init` skill auto-fires on "брейнштурм S9" / "ориентируйся" / scope decision triggers. Trader-expert ROUND 1 questionnaire с carry-over scope (mypy batch / broken-link audit / further architecture-reviewer integration).
+
+---
+
+## [2026-04-25] feat | C7 broken-link hook deployed
+
+### Shipped (1 commit on main)
+
+- **C7 hook** (`f07e979`): NEW PreToolUse `git push` hook scans changed `wiki/**.md` files в pushed commits для broken `[[link]]` refs. Block push if any unresolvable. Bucket C7 — pre-S9 process improvement.
+
+### Hook design (changed-files-only scope, не whole-wiki)
+
+- **Scan corpus** = `git diff base..HEAD -- llm-wiki/wiki/` filtered к *.md (changed only)
+- **Resolution corpus** = ALL wiki/**.md (basename_index for unqualified refs)
+- 3 path resolution: source-relative, wiki-root-relative, cross-repo (для `[[../../../CLAUDE]]`)
+- Skip patterns: empty / anchor-only / NNNN placeholder / TOML / fenced code / inline code spans
+- Self-test guard mirrors adr-*-sync-check.sh
+- Fail-open на missing python3 / no upstream / non-git command
+
+### 5 real bugs caught + fixed during deployment scan
+
+1. `log.md` `[[override]]` → backticks (historical mention)
+2. `adr-index-sync-hook.md` `[[wiki/index.md]]` → `[[../../index]]`
+3. `adr-agent-sync-hook.md` + `0017-review-agent-harness.md` `[[../../CLAUDE]]` → `[[../../../CLAUDE|llm-wiki/CLAUDE]]` (depth fix)
+4. `bybit-rest.md` `[[filters]]` × 2 → plain text
+5. **MAJOR HARD-GATE violation:** `sprint-08c-wiki-backfill.md` MISSING (S8c shipped без sprint page). CREATED stub from log.md + plan content.
+
+### Files
+
+- `~/.claude/hooks/wiki-broken-link-check.sh` — bash + inline python (~150 lines)
+- `~/.claude/settings.json` PreToolUse Bash hooks: 3rd entry registered
+- `wiki/project/components/wiki-broken-link-hook.md` — hook spec (NEW)
+- `wiki/index.md` + `components/README.md` + `mental-map.md` — cross-link refs added
+
+### Validation
+
+- pytest 589 passed / 24 skipped / 0 failed
+- Canonical counts unchanged: 16/30/74/45
+- 0 src/ changes
+- env -i sandbox tests verified (4/4 scenarios pass)
+
+### Carry-over к S9 (post-C7)
+
+- mypy 44 errors (typed batch sprint — defer)
+- Trading concepts stubs `minimum-backtest-length.md` / `position-sizing.md` (low priority research)
+- Existing pages Block 1/2 refactor (anti-bloat — paradigm implicit)
+
+### Discovery during cleanup
+
+`sprint-08c-wiki-backfill.md` MISSING revealed что PHASE 8 step 5 sprint-NN.md HARD-GATE прошёл без enforcement в S8c ship. C7 hook теперь catches this drift class for future sprints.
