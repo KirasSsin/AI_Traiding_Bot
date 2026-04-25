@@ -461,7 +461,7 @@ def test_keyboard_interrupt_clean_shutdown(tmp_path):
     coord.request_halt.assert_not_called()  # KeyboardInterrupt is not a CRASH
 
 
-def _bar_close(close_value: str, *, hour: int = 0):
+def _bar_close(close_value: str, *, hour: int = 0) -> "Bar":  # type: ignore[name-defined]  # noqa: F821
     """Build Bar with a custom close + close_time hour offset для quality tests."""
     from src.marketdata.models import Bar, DataQuality
 
@@ -480,7 +480,7 @@ def _bar_close(close_value: str, *, hour: int = 0):
     )
 
 
-def test_quality_detector_halts_on_consecutive_bar_deviation(tmp_path):
+def test_quality_detector_halts_on_consecutive_bar_deviation(tmp_path: Path) -> None:
     """S9 Q1: After two bar polls with >0.5% deviation, RuntimeManager
     calls coordinator.request_halt(HALT_DATA_QUALITY).
     """
@@ -516,9 +516,14 @@ def test_quality_detector_halts_on_consecutive_bar_deviation(tmp_path):
     rm._poll_bar_and_strategy()  # bar2 → triggers halt
 
     coord.request_halt.assert_called_with(reason=ReasonCode.HALT_DATA_QUALITY)
+    # bar1 consumed by strategy, bar2 short-circuited by quality halt
+    # (verifies `return` after request_halt actually skips strategy path)
+    assert strat.on_bar.call_count == 1
+    # Halt is terminal — main loop must exit
+    assert rm._stopping is True
 
 
-def test_quality_detector_within_threshold_continues_strategy(tmp_path):
+def test_quality_detector_within_threshold_continues_strategy(tmp_path: Path) -> None:
     """S9 Q1: 0.4% deviation <0.5% threshold → no halt, strategy invoked."""
     from src.execution.state_machine import ExecutionState
     from src.runtime.manager import RuntimeManager

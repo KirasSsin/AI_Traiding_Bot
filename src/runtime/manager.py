@@ -147,9 +147,12 @@ class RuntimeManager:
             return
         if bar is None:
             return
-        # S9 Q1 — quality check BEFORE strategy consumes bar
+        # S9 Q1 — quality check BEFORE strategy consumes bar.
+        # _stopping=True matches stall + kill-switch patterns (lines 116, 146):
+        # halt is terminal, main loop must exit (else log storm at poll cadence).
         if self._quality_detector.check(current_close=bar.close):
             self._coordinator.request_halt(reason=ReasonCode.HALT_DATA_QUALITY)
+            self._stopping = True
             return
         logger.info("runtime.bar_tick", bar_close_ts=bar.close_time.isoformat())
         signal = self._strategy.on_bar(bar)
