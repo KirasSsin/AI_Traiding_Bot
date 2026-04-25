@@ -166,6 +166,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0023-halt-code-fsm-event-mapping]] — Sprint 8b ADR. Halt-class ReasonCode dispatch invariant in Coordinator.request_halt + 3-layer enforcement (ADR + reviewer prompt + property test).
 - [[project/decisions/0024-sprint-9-data-quality-types-analytics]] — Sprint 9 aggregate ADR: Data quality detector (REST-vs-REST + HALT_DATA_QUALITY) + mypy strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills table + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis).
 - [[project/decisions/0025-sprint-10-wfa-dsr-mc]] — Sprint 10 aggregate ADR: WFA orchestrator (rolling K=5 per ADR 0014) + DSR sigma_sr extension (closes S9 NYI, Bailey eq. 12) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe series routing + vector_backtest annualization fix.
+- [[project/decisions/0026-sprint-11-operator-readiness]] — Sprint 11 aggregate ADR: Pre-flight gap closure (test_risk_flow.py + _cmd_run + _cmd_reconcile_only + _cmd_wfa CLI, closes S8a T20 STUB) + operator-readiness (halt priority matrix integration + log-grep-templates + _cmd_monitor read-only + pre-flight checklist).
 
 ## Queries (saved answers)
 
