@@ -395,7 +395,7 @@ status: stable
 ### What shipped (3 PRs squash-merged to main)
 
 - **PR #11** — Sprint 8c carry-over (already shipped earlier session) → tag `v0.1.0-alpha.8c`
-- **PR #12** — Wiki RAG optimization (TIER 1+2+3): mental-map.md NEW + components/README.md cluster index NEW + 6 orphan "Referenced by" sections + 13 components canonical Invariants tables + reconciler.md SUPERSEDED note + frontmatter hygiene (5 pages type field, sprint pages normalize, [[override]]→[[risk-override]] fix) + Runbooks index section
+- **PR #12** — Wiki RAG optimization (TIER 1+2+3): mental-map.md NEW + components/README.md cluster index NEW + 6 orphan "Referenced by" sections + 13 components canonical Invariants tables + reconciler.md SUPERSEDED note + frontmatter hygiene (5 pages type field, sprint pages normalize, `[[override]]`→`[[risk-override]]` fix) + Runbooks index section
 - **PR #13** — PR-C: 5 NEW workflow skills (.claude/skills/sprint-orient + sprint-finish + wiki-update + brainstorm-init + hook-test) + kit refactor (replace hardcoded inline workflow с skill references) + llm-wiki/CLAUDE.md prune 610→407 lines (33% reduction, ~50% session-start token saving) + Anthropic best practices alignment section
 
 ### Wiki updates

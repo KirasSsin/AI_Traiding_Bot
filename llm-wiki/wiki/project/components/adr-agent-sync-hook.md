@@ -143,7 +143,7 @@ Manual tests (прошли 2026-04-22):
 ## Referenced by
 
 - [[../architecture/development-workflow]] — PHASE 8 step 4 (ADR ↔ agent prompt sync invariant)
-- [[../../CLAUDE]] (llm-wiki/CLAUDE.md) — "ADR ↔ agent prompts" sync section
+- [[../../../CLAUDE|llm-wiki/CLAUDE]] — "ADR ↔ agent prompts" sync section
 - [[../decisions/0017-review-agent-harness]] — defining ADR (review-agent harness operationalized by this hook)
 - [[adr-index-sync-hook]] — sister hook (parallel pattern, mirror of this)
 

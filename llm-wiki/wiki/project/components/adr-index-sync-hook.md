@@ -158,6 +158,6 @@ Python-симуляция выдала `VERDICT: BLOCK (exit 2)` для 0099 —
 
 - Mirror of: [[project/components/adr-agent-sync-hook]] — предшествующий hook (ADR ↔ agent prompts sync).
 - Config: `~/.claude/settings.json` (PreToolUse hook registration, второй entry в Bash-matcher).
-- Index: [[wiki/index.md]] — файл-цель, который проверяется.
+- Index: [[../../index]] — файл-цель, который проверяется.
 - Bucket C6 — wiki/project/decisions/ audit (S8c backfill sprint).
 - Workflow: [[project/architecture/development-workflow]] — sprint lifecycle, finishing phase.

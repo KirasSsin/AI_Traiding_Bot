@@ -82,7 +82,7 @@ Sprint 3 завершён. Стек ревью к этому моменту:
 - `~/.claude/agents/trading-logic-reviewer.md`
 - `~/.claude/agents/quant-stats-reviewer.md`
 - `~/.claude/agents/data-integrity-reviewer.md`
-- `~/.claude/agents/python-reviewer.md` (renamed from "Python Reviewer.md" 2026-04-23 — filename normalization, см. [[../../CLAUDE]] Cleanup history)
+- `~/.claude/agents/python-reviewer.md` (renamed from "Python Reviewer.md" 2026-04-23 — filename normalization, см. [[../../../CLAUDE|llm-wiki/CLAUDE]] Cleanup history)
 - `~/.claude/agents/trader-expert.md` (S7+ addition — PHASE 2 brainstorming decision-maker, sonnet; не reviewer но входит в curated agent set; полная роль см. [[development-workflow]] PHASE 2 step 3)
 - [[../architecture/development-workflow]] — Superpowers pipeline (review гейт интегрирован сюда).
 - [[../decisions/0001-record-architecture-decisions]]

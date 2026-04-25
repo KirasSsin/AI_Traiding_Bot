@@ -138,6 +138,7 @@ sources:
 | Trace map mandatory PHASE 3 | `architecture/development-workflow.md` PHASE 3 step 1a |
 | ADR ↔ Agent prompt sync hook | `components/adr-agent-sync-hook.md` + `~/.claude/hooks/adr-agent-sync-check.sh` |
 | ADR ↔ Index sync hook | `components/adr-index-sync-hook.md` + `~/.claude/hooks/adr-index-sync-check.sh` |
+| Wiki broken-link sync hook | `components/wiki-broken-link-hook.md` + `~/.claude/hooks/wiki-broken-link-check.sh` (Bucket C7) |
 | Orphan-audit grep (включая `tests/`) | `architecture/development-workflow.md` PHASE 8 step 5b |
 | Canonical counts sync HARD-GATE | `architecture/development-workflow.md` PHASE 8 step 5a |
 | PHASE 2 brainstorming binding protocol (trader-expert ROUND 1+2) | `architecture/development-workflow.md` PHASE 2 step 3 → `.claude/skills/brainstorm-init/SKILL.md` |

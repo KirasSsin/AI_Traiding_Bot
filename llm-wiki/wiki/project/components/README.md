@@ -114,12 +114,13 @@ sources:
 
 ## Cluster 9 — Tooling / hooks
 
-**Theme:** PreToolUse `git push` hooks enforcing wiki invariants. Sprint origin: S7 (adr-agent-sync) + S8c T11 (adr-index-sync).
+**Theme:** PreToolUse `git push` hooks enforcing wiki invariants. Sprint origin: S7 (adr-agent-sync) + S8c T11 (adr-index-sync) + Bucket C7 pre-S9 (wiki-broken-link).
 
 | Component | Role |
 |-----------|------|
 | [[adr-agent-sync-hook]] | Block push если ADR changed но `~/.claude/agents/*.md` mtime not advanced (per ADR 0017) |
 | [[adr-index-sync-hook]] | Block push если new ADR не referenced в `wiki/index.md` |
+| [[wiki-broken-link-hook]] | Block push если changed wiki files содержат broken `[[link]]` refs (Bucket C7) |
 
 ## Bridge components (multi-cluster owners)
 

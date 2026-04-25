@@ -19,7 +19,7 @@ status: stable
 ### Методы
 
 - `get_server_time() -> datetime` — `GET /v5/market/time` → UTC datetime (s precision). Для clock-drift check.
-- `get_filters(symbol: str) -> BybitFilters` — `GET /v5/market/instruments-info?category=spot&symbol=X` → [[filters|BybitFilters]].
+- `get_filters(symbol: str) -> BybitFilters` — `GET /v5/market/instruments-info?category=spot&symbol=X` → `BybitFilters` (defined в `src/marketdata/filters.py`, dedicated page TBD S3+).
 - `get_klines(symbol, interval, start_ms, end_ms) -> list[Bar]` — `GET /v5/market/kline?category=spot` с пагинацией (max 1000 per call). Возвращает ascending по `close_time`, `data_quality=OK`.
 
 ### Обработка ошибок
@@ -39,7 +39,7 @@ status: stable
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — ADR выбора venue.
 - [[bybit-ws]] — WS consumer (отдельный канал).
 - [[models]] — Bar domain model.
-- [[filters]] (TBD если создадим — сейчас в `src/marketdata/filters.py`; документируется в этом же page или отдельной странице S3+).
+- `BybitFilters` — defined в `src/marketdata/filters.py` (dedicated component page TBD S3+).
 
 ## Sources
 
