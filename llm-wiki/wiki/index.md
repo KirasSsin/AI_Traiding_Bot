@@ -61,6 +61,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-09-data-quality-types-analytics]] — S9 (2026-04-25): data quality detector (REST-vs-REST → HALT_DATA_QUALITY) + mypy --strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis). 12 TDD tasks, +32 tests (589→621 unit). FSM/counts unchanged. Tag v0.1.0-alpha.9.
 - [[project/sprints/sprint-10-wfa-dsr-mc]] — S10 (2026-04-25): WFA orchestrator (WindowSplitter + WalkForwardRunner + acceptance gate per ADR 0014) + DSR sigma_sr extension (closes S9 NYI) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe routing + vector_backtest annualization fix. 11 TDD tasks, +26 tests (630→656 unit + 1 integration). FSM/counts unchanged. Tag v0.1.0-alpha.10.
 - [[project/sprints/sprint-11-operator-readiness]] — S11 (2026-04-25): Pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI subcommands closing S8a T20 STUB) + operator-readiness (halt-recovery priority matrix integration + log-grep-templates runbook + pre-flight checklist). 10 TDD tasks, +10 tests (656→666 unit). FSM/counts unchanged. Tag v0.1.0-alpha.11.
+- [[project/sprints/sprint-12-live-demo-validation]] — S12 (2026-04-25): Live demo validation 24-72h + production wiring (FillRecorderAdapter closes `_NoopFillRecorder` stub + `_load_ohlcv` Parquet shim + 2 operator runbooks live-demo-validation + halt-response-protocol). 6 TDD tasks, +9 tests (680→689). FSM/counts unchanged (16/30/74/45). Tag v0.1.0-alpha.12.
 
 ## Project — Plans
 
@@ -80,6 +81,8 @@ _(пусто — v0.2+)_
 - [[project/runbooks/halt-recovery]] — operator manual для 19 halt codes (5 class groups, 2 severity tiers — CRITICAL full diagnosis vs RECOVERABLE abbreviated) + S11 priority matrix (P0/P1/P2 escalation chain integrated INTO single source of truth per Q3 REVISE). Per Bucket F1 (S8c PR-γ) trader-expert ROUND 1+2 binding verdicts. Covers: Drawdown (4), Operational (4), OCO/bracket (6), Bootstrap/reconcile (3), Runtime (2).
 - [[project/runbooks/log-grep-templates]] — operator log filtering recipes (structlog jq filters + halt_log SQL queries). S11 A scope T6.
 - [[project/runbooks/pre-flight]] — operator pre-flight checklist (5 critical gates + 4 recommendations + post-start monitoring + halt response). Mandatory before `python -m src run` on Mainnet/demo. S11 A scope T8.
+- [[project/runbooks/live-demo-validation]] — operator playbook for first 48h Bybit demo validation cycle (pre-conditions HARD-GATE + multi-criteria success gate с MANDATORY zero-trade clause per Q3). S12 T4.
+- [[project/runbooks/halt-response-protocol]] — P0 wake decision tree + alpha.11 rollback procedure (Q7 zero-migration enables clean binary rollback) + RC tag iteration. S12 T5.
 
 ## Project — Workflow Skills (`.claude/skills/`)
 
@@ -126,6 +129,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/wiki-broken-link-hook]] — PreToolUse git push hook: блокирует пуш если changed wiki files содержат broken `[[link]]` refs (Bucket C7, pre-S9).
 - [[project/components/data-quality]] — REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1). 0.5% threshold, per-bar cadence, no WS kline subscription needed.
 - [[project/components/fill-history]] — per-fill audit log (FillRecord + FillHistoryRepository + FK trade_history + WS execution topic source) (S9 Q3 B1).
+- [[project/components/fill-recorder-adapter]] — Bridges Bybit V5 WS execution events → FillHistoryRepository. 2-layer pattern (audit + best-effort DB). Closes `_NoopFillRecorder` stub (S12 Q5).
 - [[project/components/dsr]] — Bailey & López de Prado Deflated Sharpe Ratio module (Pearson kurtosis). S9 Q3 B2 + S10 sigma_sr extension (Bailey eq. 12, n_trials > 1 supported).
 - [[project/components/walk-forward]] — WFA orchestrator (WindowSplitter + WalkForwardRunner + acceptance gate). Rolling K=5 per ADR 0014 (S10).
 - [[project/components/mc-permutations]] — sign-flip primary + block bootstrap secondary. N=2000 per ADR 0015 (S10).
@@ -170,6 +174,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0024-sprint-9-data-quality-types-analytics]] — Sprint 9 aggregate ADR: Data quality detector (REST-vs-REST + HALT_DATA_QUALITY) + mypy strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills table + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis).
 - [[project/decisions/0025-sprint-10-wfa-dsr-mc]] — Sprint 10 aggregate ADR: WFA orchestrator (rolling K=5 per ADR 0014) + DSR sigma_sr extension (closes S9 NYI, Bailey eq. 12) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe series routing + vector_backtest annualization fix.
 - [[project/decisions/0026-sprint-11-operator-readiness]] — Sprint 11 aggregate ADR: Pre-flight gap closure (test_risk_flow.py + _cmd_run + _cmd_reconcile_only + _cmd_wfa CLI, closes S8a T20 STUB) + operator-readiness (halt priority matrix integration + log-grep-templates + _cmd_monitor read-only + pre-flight checklist).
+- [[project/decisions/0027-sprint-12-live-demo-validation]] — Sprint 12 aggregate ADR: live demo validation 24-72h on Bybit demo + FillRecorderAdapter (closes `_NoopFillRecorder` stub) + `_load_ohlcv` Parquet shim + 2 operator runbooks (live-demo-validation + halt-response-protocol). Q6 verified: NO endpoint string change required (current correct).
 
 ## Queries (saved answers)
 

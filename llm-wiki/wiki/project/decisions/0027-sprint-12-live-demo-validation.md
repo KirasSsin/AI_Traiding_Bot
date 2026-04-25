@@ -12,12 +12,12 @@ sources:
   - project/decisions/0026-sprint-11-operator-readiness.md
   - project/runbooks/halt-recovery.md
   - project/runbooks/pre-flight.md
-status: proposed
+status: accepted
 ---
 
 # 0027. Sprint 12 — Live demo validation 24-72h + production wiring
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-04-25
 
 ## Context
