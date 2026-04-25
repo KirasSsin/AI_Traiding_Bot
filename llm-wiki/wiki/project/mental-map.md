@@ -141,7 +141,10 @@ sources:
 | Wiki broken-link sync hook | `components/wiki-broken-link-hook.md` + `~/.claude/hooks/wiki-broken-link-check.sh` (Bucket C7) |
 | Bar price quality detector (HALT_DATA_QUALITY) | `components/data-quality.md` + `src/marketdata/quality.py` (S9 Q1, REST-vs-REST) |
 | Per-fill audit + WS execution topic | `components/fill-history.md` + `src/risk/fill_history.py` (S9 Q3 B1) |
-| DSR (Deflated Sharpe Ratio, Bailey & López de Prado) | `components/dsr.md` + `src/analytics/dsr.py` (S9 Q3 B2, Pearson kurtosis) |
+| DSR (Deflated Sharpe Ratio, Bailey & López de Prado) | `components/dsr.md` + `src/analytics/dsr.py` (S9 Q3 B2 + S10 sigma_sr extension) |
+| Walk-forward analysis (rolling K-folds, OOS/IS Sharpe gate) | `components/walk-forward.md` + `src/backtest/walk_forward.py` (S10 Q1+Q4, ADR 0014+0025) |
+| Monte Carlo permutations (sign-flip + block bootstrap) | `components/mc-permutations.md` + `src/backtest/mc_permutation.py` (S10 Q3, ADR 0015) |
+| WFA reporter + 3-Sharpe routing | `components/wfa-reporter.md` + `src/backtest/wfa_reporter.py` (S10 Q4+Q6) |
 | Orphan-audit grep (включая `tests/`) | `architecture/development-workflow.md` PHASE 8 step 5b |
 | Canonical counts sync HARD-GATE | `architecture/development-workflow.md` PHASE 8 step 5a |
 | PHASE 2 brainstorming binding protocol (trader-expert ROUND 1+2) | `architecture/development-workflow.md` PHASE 2 step 3 → `.claude/skills/brainstorm-init/SKILL.md` |

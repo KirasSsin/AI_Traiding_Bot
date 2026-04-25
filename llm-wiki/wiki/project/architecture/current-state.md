@@ -11,9 +11,9 @@ sources:
   - project/decisions/0023-halt-code-fsm-event-mapping.md
 ---
 
-# Current State (post-S9, 2026-04-25)
+# Current State (post-S10, 2026-04-25)
 
-**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.9`. 11 sprints completed (S1-S7 + S8a + S8b + S8c + S9). S9 added: data quality detector (REST-vs-REST → HALT_DATA_QUALITY) + mypy --strict full enable + per-fill schema (trade_fills + WS execution topic) + DSR module (Bailey & López de Prado). Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation. 16-state Harel FSM. Live runtime: `python -m src run` (S8a STUB, production wiring pending). Demo Mainnet ready. Pre-production hardening continues.
+**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.10`. 12 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10). S10 added: WFA orchestrator (rolling K=5 per ADR 0014) + DSR sigma_sr extension (closes S9 NYI) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe routing + vector_backtest annualization fix. Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation. 16-state Harel FSM. Live runtime: `python -m src run` (S8a STUB, production wiring pending). Demo Mainnet ready. Pre-production hardening continues.
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -25,9 +25,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **32** | `wiki/project/components/*.md` (incl. README.md cluster index) | S9 (data-quality + fill-history + dsr) + C7 batch (wiki-broken-link-hook) + S8c (kill-switch-cli + risk-override + trade-history + backtest-harness + adr-index-sync-hook) + post-S8c (components/README.md) |
-| ADRs | **24** | `wiki/project/decisions/*.md` (0001-0024) | S9 (ADR 0024 — aggregate Q1+Q2+Q3) |
-| Sprint pages | **11** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-07 + sprint-08a + sprint-08b + sprint-08c + sprint-09) | S9 (sprint-09-data-quality-types-analytics) + C7 batch (sprint-08c-wiki-backfill) |
+| Component pages | **35** | `wiki/project/components/*.md` (incl. README.md cluster index) | S10 (walk-forward + mc-permutations + wfa-reporter) + S9 (data-quality + fill-history + dsr) + C7 (wiki-broken-link-hook) + S8c additions |
+| ADRs | **25** | `wiki/project/decisions/*.md` (0001-0025) | S10 (ADR 0025 — WFA + DSR sigma_sr + MC) |
+| Sprint pages | **12** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-10 + sprint-08a + sprint-08b + sprint-08c) | S10 (sprint-10-wfa-dsr-mc) |
 
 **Verify counts live (CI-safe):**
 

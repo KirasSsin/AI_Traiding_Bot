@@ -106,13 +106,16 @@ sources:
 
 **Bridge to:** ALL clusters (everyone uses Settings + structlog + storage)
 
-## Cluster 8 — Backtest + analytics (S2-era reference)
+## Cluster 8 — Backtest + WFA (S2-era + S10 production WFA)
 
-**Theme:** Backtest pipeline — replay engine + vector backtest + reporter. **Status: not actively developed S3-S8b. DSR/MC/WFA deferred к S9+.**
+**Theme:** Backtest pipeline — replay engine + vector backtest + reporter + WFA orchestrator + MC permutations. **S10 revived S2 backtest engine + extended с production WFA layer per ADR 0025.**
 
 | Component | Role |
 |-----------|------|
 | **[[backtest-harness]]** | Single page covering 6 src/backtest files (replay_engine + vector_backtest + reporter + indicators + data_collector + replay-stub) |
+| [[walk-forward]] | WindowSplitter + WalkForwardRunner + acceptance gate (S10 Q1+Q4, ADR 0014+0025) |
+| [[mc-permutations]] | sign-flip primary + block bootstrap secondary (S10 Q3, ADR 0015) |
+| [[wfa-reporter]] | 3-Sharpe series routing + DSR aggregate informational (S10 Q4+Q6+Q7) |
 
 ## Cluster 9 — Tooling / hooks
 
@@ -130,9 +133,9 @@ sources:
 
 | Component | Role |
 |-----------|------|
-| **[[dsr]]** | Bailey & López de Prado Deflated Sharpe Ratio — pure-function on TradeRecord array. Pearson kurtosis + n_trials NYI v0.1. |
+| **[[dsr]]** | Bailey & López de Prado Deflated Sharpe Ratio — pure-function on TradeRecord array. Pearson kurtosis. **S10: sigma_sr extension closes S9 NYI (n_trials > 1, Bailey eq. 12).** |
 
-**Bridge to:** Risk (consumes trade_history TradeRecord), future S10 walk-forward acceptance gate per ADR 0014
+**Bridge to:** Risk (consumes trade_history TradeRecord), [[walk-forward]] + [[wfa-reporter]] (S10 aggregate DSR consumer)
 
 ## Bridge components (multi-cluster owners)
 
