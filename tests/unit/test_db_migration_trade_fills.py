@@ -7,6 +7,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from src.platform.db import init_db
 
 MIG_DIR = Path(__file__).resolve().parents[2] / "migrations"
@@ -42,3 +44,30 @@ def test_migration_0006_idempotent(tmp_path: Path) -> None:
     db_path = tmp_path / "test.db"
     init_db(db_path, MIG_DIR)
     init_db(db_path, MIG_DIR)  # Should not raise
+
+
+def test_migration_0006_fk_enforced_at_insert(tmp_path: Path) -> None:
+    """FK к trade_history enforced — INSERT с invalid parent_trade_id raises.
+
+    Verifies declarative FK actually prevents orphan fills (vs schema-only check).
+    Requires PRAGMA foreign_keys = ON (default OFF в bare sqlite3.connect).
+    """
+    db_path = tmp_path / "test.db"
+    init_db(db_path, MIG_DIR)
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA foreign_keys = ON")
+    with pytest.raises(sqlite3.IntegrityError, match="FOREIGN KEY"):
+        conn.execute(
+            """INSERT INTO trade_fills (
+                parent_trade_id, exec_id, fill_qty, fill_price, fill_fee,
+                fee_currency, is_partial, fill_ts, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                999999,  # non-existent parent
+                "exec_orphan", "0.5", "100000", "0.05",
+                "USDT", 0,
+                "2026-04-25T12:00:00+00:00",
+                "2026-04-25T12:00:01+00:00",
+            ),
+        )
+        conn.commit()
