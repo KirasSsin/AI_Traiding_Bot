@@ -767,3 +767,84 @@ Wiki + ADR (2):
 ### Roadmap
 
 S12 = F (Live demo Mainnet 24-72h validation) per Q1 confirmed scope. Bybit demo + 48h + $1000 virtual capital + halt criteria per Q4 trader CONFIRM. Operator infrastructure now ready (S11 deliverables).
+
+## [2026-04-25] sprint-end | Sprint 12 — Live demo validation 24-72h + production wiring
+
+### Phase 2 brainstorming verdicts (binding)
+
+7 questions через trader-expert ROUND 1:
+- Q1 CONFIRM: Bybit demo trading endpoint (zero PnL exposure for first live cycle)
+- Q2 CONFIRM: 48h validation duration (1H bars × 48 = 48 samples adequate structural)
+- Q3 CONFIRM: multi-criteria success gate + MANDATORY zero-trade clause
+- Q4 REVISE-additive: Parquet shim required (data_collector.load_market_data takes config dict, not args — verified via grep CC1)
+- Q5 REVISE-additive: FillRecorderAdapter required (FillHistoryRepository не drop-in для _FillRecorderProto)
+- Q6 REVISE-DISAGREE-FACTUAL: NO endpoint string change for S12 — current `"demo.bybit.com"` CORRECT; future 3-way enum к S13+. SPRINT_STATE S11 carry-over note "fix к testnet substring" was WRONG (verified truth table via source grep)
+- Q7 CONFIRM: P0-wake + alpha.11 rollback + RC tag iteration + zero-migration constraint
+
+NO ROUND 2 invoked (REVISEs additive scope refinements OR factual correction, no engineering disagreement). NO user escalation.
+
+### Tasks (6, 8 commits squash-merged)
+
+Production wiring (2):
+- T1 (044dad8): FillRecorderAdapter — 2-layer pattern (always-on structlog audit + best-effort DB insert via WS orderId → execution_state → trade_history lookup chain). Race-condition safe (skip+warn). Schema gap acknowledged: execution_state lacks entry_signal_id → Layer 2 always-skips during S12 (S13 carry-over per Q7 zero-migration). 7 unit tests. trading-logic + data-integrity reviewers MANDATORY (per ADR 0027) — both APPROVED with non-blocking concerns
+- T2 (5d94c1a): _load_ohlcv Parquet shim — config-dict translation + helpful FileNotFoundError pointing к backfill cmd
+
+Operator runbooks (3):
+- T3 (8f4dd1e): pre-flight Gate 5 backfill prerequisite + halt-recovery P1+OCO_ARMED conditional escalation
+- T4 (51dc3c4): live-demo-validation.md operator playbook — 48h Bybit demo BTCUSDT 1H protocol + multi-criteria success gate + MANDATORY zero-trade clause
+- T5 (bd172e1): halt-response-protocol.md — P0 wake decision tree + alpha.11 rollback procedure + RC tag iteration + Q7 zero-migration verification
+
+Wiki sync (1):
+- T6 (e99c36a): ADR 0027 status accepted + sprint-12 page + counts (ADR 26→27, sprint pages 13→14, components 35→36) + fill-recorder-adapter component page (T1 reviewer follow-up) + 2 runbooks к index + mental-map +3 rows
+
+### Tests / quality
+
+- pytest unit: 689 passed (baseline 680 + 7 T1 + 2 T2) / 24 skipped / 0 failed
+- pytest integration: existing tests OK
+- mypy --strict src/: clean (67 source files)
+- ruff: 3 pre-existing errors в tests/integration/test_risk_flow.py (S4-era I001/F401/UP017 — NOT S12 regression)
+- Counts unchanged: 16/30/74/45 (S12 = orchestration + adapter + docs)
+- Q7 verification: `git diff main..HEAD -- migrations/` empty ✅
+
+### Wiki updates
+
+- 2 NEW runbook pages (live-demo-validation + halt-response-protocol)
+- 1 NEW component page (fill-recorder-adapter)
+- 1 NEW ADR (0027)
+- 1 NEW sprint page (this)
+- Modified: pre-flight.md (Gate 5), halt-recovery.md (P1+OCO_ARMED escalation)
+- current-state.md (TL;DR post-S12, ADR 26→27, sprint pages 13→14, components 35→36, +S12 row)
+- index.md (sprint-12 + 2 runbooks + ADR 0027 + fill-recorder-adapter component)
+- mental-map.md (+2 operator runbook rows + FillRecorderAdapter component row)
+
+### Reviewers
+
+- T1 (FillRecorderAdapter): trading-logic-reviewer + data-integrity-reviewer parallel dispatch (MANDATORY per ADR 0027). Both CONCERNS, NO BLOCKERS:
+  - trading-logic VERIFIED: look-ahead invariant, FSM dispatch impact (none), idempotency, partial fill detection, _NoopFillRecorder deletion, find_by_order_id SQL safety, reason codes (none new). Concerns: feeCurrency-absent test missing (low priority).
+  - data-integrity VERIFIED: Q7 zero-migration ✅, UNIQUE INDEX idempotency, Decimal precision, fill_ts timezone, WAL concurrent access, INSERT OR IGNORE atomicity, structlog audit completeness. Concerns mostly pre-existing (halt_log write-ahead order S13 carry-over).
+- T2-T6: inline reviews (small isolated scope OR wiki-only)
+
+### Key discoveries / decisions
+
+- **Schema reality forces 2-layer adapter pattern** — execution_state has NO entry_signal_id → lookup chain breaks at bracket_id↔trade_id gap. Honest per Q7 zero-migration: Layer 1 audit ALWAYS fires, Layer 2 DB insert always-skips during S12 (S13 will add schema link)
+- **Q6 critical correction propagated** — SPRINT_STATE S11 carry-over note "fix endpoint к testnet substring" verified WRONG via source grep. Trader caught it. Currently `"demo.bybit.com"` correctly routes к demo (pybit `testnet="testnet" in endpoint = False, demo="demo" in endpoint = True`). "Fix" would set testnet=True/demo=False = actual Bybit testnet env, would BREAK demo connectivity.
+- **Trader source-claim verification (CC1 lesson)** — all 7 trader source claims verified via grep BEFORE acceptance: __main__.py:138 endpoint, ws_private.py:65-67 substring matching, data_collector.py:63 config-dict signature, fill_history.py:39-42 + FillRecord.parent_trade_id constraint
+- **Q7 zero-migration constraint enforced** — verified at T1 + T2 + T6 (`git diff main..HEAD -- migrations/` empty). Enables clean alpha.11 binary rollback per halt-response-protocol.md
+- **Zero-trade clause MANDATORY** — Q3 trader concern caught: 1H BTC EMA crossover likely 0 trades during 48h → structural criteria only, FillRecorder live-path validation conditional carry-forward к S13
+
+### Carry-over к S13+
+
+- **F live demo Mainnet validation actual run** — operator-driven post-merge per live-demo-validation.md
+- **FillRecorderAdapter Layer 2 schema link** — add entry_signal_id к execution_state migration + wire Coordinator.start_bracket к persist signal_id (Q7 hard constraint pushed это к S13)
+- **3-way endpoint enum (DEMO/TESTNET/MAINNET)** — Q6 future fix
+- **T2 review C3 init_db dual-conn comment** (S11 carry-over) — code comment for two-connection sequence
+- **DSR per-fold DataFrame→TradeRecord conversion** (informational, deferred от S10)
+- **DSR threshold calibration** (S15+ per Q5 verdict)
+- **halt_log INSERT order swap в `_set_halt`** (PRE-EXISTING, data-integrity T1 follow-up)
+- **find_by_order_id ORDER BY explicit** (T1 follow-up, future-safe для multi-symbol)
+- **fill-history.md component page update** (T1 trading-logic follow-up — reference FillRecorderAdapter as production impl)
+- **execFee vs cumExecFee distinction в bybit-adapter.md** (T1 trading-logic follow-up)
+
+### Roadmap
+
+S13 = TBD post 48h operator-driven validation results. Likely scope: FillRecorder Layer 2 schema link (S12 acknowledged gap) + slippage validation gaps + S12 carry-overs.

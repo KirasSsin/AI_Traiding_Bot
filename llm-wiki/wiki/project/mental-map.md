@@ -54,6 +54,8 @@ sources:
 | Halt priority matrix (P0/P1/P2 escalation chain) | `project/runbooks/halt-recovery.md` "Priority matrix" section + Quick Reference Table "On-call escalation" column | S11 T5 (Q3 REVISE — single source of truth, NOT separate dashboard) |
 | Pre-flight operator checklist (before `python -m src run`) | `project/runbooks/pre-flight.md` (5 critical gates + 4 recommendations + post-start monitoring + halt response) | S11 T8 — mandatory before Mainnet/demo start |
 | Log filtering recipes (structlog jq + halt_log SQL) | `project/runbooks/log-grep-templates.md` | S11 T6 — operator filter templates (errors-only / per-bracket / halt history / fill audit) |
+| Live demo validation 48h playbook | `project/runbooks/live-demo-validation.md` | S12 T4 — entry gates + monitoring + multi-criteria success gate с MANDATORY zero-trade clause |
+| P0 halt response + rollback procedure | `project/runbooks/halt-response-protocol.md` | S12 T5 — P0 wake decision tree + alpha.11 rollback (Q7 zero-migration safe) + RC tag iteration |
 | Read-only state snapshot CLI (`python -m src monitor`) | `components/kill-switch-cli.md` "_cmd_monitor" + `src/__main__.py::_cmd_monitor` | S11 T7, C2 invariant: SQLite `?mode=ro` URI, no DB mtime change. Test enforces. |
 | WFA CLI subcommand (`python -m src wfa`) | `components/walk-forward.md` + `src/__main__.py::_cmd_wfa` | S11 T4 — WFA orchestrator + MC + acceptance gate exposure. NOTE `_load_ohlcv` stub (S12 integrates real data) |
 
@@ -146,6 +148,7 @@ sources:
 | Wiki broken-link sync hook | `components/wiki-broken-link-hook.md` + `~/.claude/hooks/wiki-broken-link-check.sh` (Bucket C7) |
 | Bar price quality detector (HALT_DATA_QUALITY) | `components/data-quality.md` + `src/marketdata/quality.py` (S9 Q1, REST-vs-REST) |
 | Per-fill audit + WS execution topic | `components/fill-history.md` + `src/risk/fill_history.py` (S9 Q3 B1) |
+| FillRecorderAdapter (Bybit V5 WS exec → DB best-effort) | `components/fill-recorder-adapter.md` + `src/risk/fill_recorder_adapter.py` (S12 Q5) — 2-layer pattern (structlog audit + best-effort DB insert via execution_state→trade_history lookup chain). Race-condition safe (skip+warn). S13 carry-over: add `entry_signal_id` к `execution_state` schema. |
 | DSR (Deflated Sharpe Ratio, Bailey & López de Prado) | `components/dsr.md` + `src/analytics/dsr.py` (S9 Q3 B2 + S10 sigma_sr extension) |
 | Walk-forward analysis (rolling K-folds, OOS/IS Sharpe gate) | `components/walk-forward.md` + `src/backtest/walk_forward.py` (S10 Q1+Q4, ADR 0014+0025) |
 | Monte Carlo permutations (sign-flip + block bootstrap) | `components/mc-permutations.md` + `src/backtest/mc_permutation.py` (S10 Q3, ADR 0015) |

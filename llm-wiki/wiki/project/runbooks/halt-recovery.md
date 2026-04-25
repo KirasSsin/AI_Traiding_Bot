@@ -46,6 +46,13 @@ Per S11 PHASE 2 Q3 (trader REVISE): integrate priority + escalation INTO this ru
 | **P1 — next morning** | RECOVERABLE severity (halt с automated diagnostic + clear recovery path) | Email/Slack notification. Resume during business hours. |
 | **P2 — log only** | Operational halt с auto-resume mechanism (e.g. KILL_SWITCH_REQUESTED user-initiated) | Log to operator audit. No paging. |
 
+### Conditional P1→P0 escalation
+
+**HALT_EXCHANGE_OUTAGE + state == OCO_ARMED + outage > 1h:**
+The bot may have an open OCO bracket whose TP/SL did not arm before exchange went down.
+Risk: position exposed without protection. Operator MUST verify exchange-side state
+(open orders + positions) BEFORE restarting bot. Treat as P0 wake (CRITICAL).
+
 ## Quick reference table
 
 | Halt code | Class | Severity | On-call escalation | Anchor |

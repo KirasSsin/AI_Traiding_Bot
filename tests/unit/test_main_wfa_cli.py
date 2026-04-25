@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 
 def test_cmd_wfa_invokes_walk_forward_runner_returns_zero_on_pass() -> None:
     """_cmd_wfa wires WindowSplitter + WalkForwardRunner + reporter. Exit 0 on pass."""
@@ -104,3 +106,44 @@ def test_cmd_wfa_returns_one_on_empty_data() -> None:
 
         exit_code = cli._cmd_wfa(args)
         assert exit_code == 1
+
+
+def test_load_ohlcv_calls_data_collector_with_config_dict(tmp_path):
+    """T2 — _load_ohlcv translates CLI args → data_collector config dict."""
+    import pandas as pd
+    from src import __main__ as cli
+
+    fake_df = pd.DataFrame({
+        "timestamp": pd.date_range("2024-01-01", periods=3, freq="1h"),
+        "open": [100, 101, 102], "high": [105, 106, 107],
+        "low": [99, 100, 101], "close": [103, 104, 105],
+        "volume": [1.0, 2.0, 3.0],
+    })
+
+    parquet_file = tmp_path / "BTCUSDT_1h.parquet"
+    fake_df.to_parquet(parquet_file)
+
+    # Patch data_collector module load_market_data
+    with patch("src.__main__.load_market_data") as mock_loader:  # noqa: SIM117
+        mock_loader.return_value = fake_df
+        result = cli._load_ohlcv(
+            symbol="BTCUSDT", start="2024-01-01", end="2024-01-02"
+        )
+
+    assert not result.empty
+    mock_loader.assert_called_once()
+    config_arg = mock_loader.call_args[0][0]
+    assert config_arg["data"]["source"] == "parquet"
+    assert config_arg["data"]["start_date"] == "2024-01-01"
+    assert config_arg["data"]["end_date"] == "2024-01-02"
+
+
+def test_load_ohlcv_raises_helpful_error_when_parquet_missing():
+    """T2 — Parquet missing → FileNotFoundError с operator-friendly message."""
+    from src import __main__ as cli
+
+    with patch("src.__main__.load_market_data", side_effect=FileNotFoundError("no such file")), \
+         pytest.raises(FileNotFoundError, match="python -m src backfill"):
+        cli._load_ohlcv(
+            symbol="BTCUSDT", start="2024-01-01", end="2024-01-02"
+        )

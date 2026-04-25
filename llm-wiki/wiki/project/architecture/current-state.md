@@ -11,9 +11,9 @@ sources:
   - project/decisions/0023-halt-code-fsm-event-mapping.md
 ---
 
-# Current State (post-S11, 2026-04-25)
+# Current State (post-S12, 2026-04-25)
 
-**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.11`. 13 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11). S11 added: pre-flight gap closure (test_risk_flow.py OverrideStore drift fix + `_cmd_run` + `_cmd_reconcile_only` DI wiring closes 8-month-old S8a T20 STUB + `_cmd_wfa` CLI subcommand + `_cmd_monitor` read-only state snapshot) + operator-readiness (halt-recovery priority matrix integration + log-grep-templates runbook + pre-flight operator checklist). Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation. 16-state Harel FSM. Live runtime: `python -m src run` runnable end-to-end (S11 T2). Demo Mainnet ready. Pre-production hardening continues.
+**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.12`. 14 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12). S12 added: production wiring (`FillRecorderAdapter` closes 8-month-old `_NoopFillRecorder` stub in `_cmd_run` + `_load_ohlcv` Parquet shim wires `data_collector` into `_cmd_wfa`) + 2 operator runbooks (`live-demo-validation.md` — 48h playbook with multi-criteria success gate and MANDATORY zero-trade clause + `halt-response-protocol.md` — P0 wake decision tree + `alpha.11` rollback procedure). Zero new migrations (Q7 constraint). Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation. 16-state Harel FSM. Live runtime: `python -m src run` runnable end-to-end. Demo Mainnet validation infrastructure ready.
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -25,9 +25,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **35** | `wiki/project/components/*.md` (incl. README.md cluster index) | S10 (walk-forward + mc-permutations + wfa-reporter) + S9 (data-quality + fill-history + dsr) + C7 (wiki-broken-link-hook) + S8c additions |
-| ADRs | **26** | `wiki/project/decisions/*.md` (0001-0026) | S11 (ADR 0026 — operator-readiness + pre-flight gap closure) |
-| Sprint pages | **13** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-11 + sprint-08a + sprint-08b + sprint-08c) | S11 (sprint-11-operator-readiness) |
+| Component pages | **36** | `wiki/project/components/*.md` (incl. README.md cluster index) | S12 (fill-recorder-adapter) + S10 (walk-forward + mc-permutations + wfa-reporter) + S9 (data-quality + fill-history + dsr) + C7 (wiki-broken-link-hook) + S8c additions |
+| ADRs | **27** | `wiki/project/decisions/*.md` (0001-0027) | S12 (ADR 0027 — live demo validation + production wiring) |
+| Sprint pages | **14** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-12 + sprint-08a + sprint-08b + sprint-08c) | S12 (sprint-12-live-demo-validation) |
 
 **Verify counts live (CI-safe):**
 
@@ -95,6 +95,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | S9 | 0024 | v0.1.0-alpha.9 | 2026-04-25 | Data quality detector + mypy --strict full enable + per-fill schema + DSR module (Bailey & López de Prado) |
 | S10 | 0025 | v0.1.0-alpha.10 | 2026-04-25 | WFA orchestrator (rolling K=5) + DSR sigma_sr extension + MC sign-flip + block bootstrap + 3-Sharpe routing + vector_backtest annualization fix |
 | S11 | 0026 | v0.1.0-alpha.11 | 2026-04-25 | Operator-readiness + pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI + halt priority matrix + log-grep-templates + pre-flight checklist) |
+| S12 | 0027 | v0.1.0-alpha.12 | 2026-04-25 | Live demo validation 24-72h + production wiring (FillRecorderAdapter closes `_NoopFillRecorder` stub + `_load_ohlcv` Parquet shim + live-demo-validation + halt-response-protocol runbooks) |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 

@@ -96,6 +96,23 @@ class ExecutionStateRepo:
             return None
         return _row_to_dataclass(r)
 
+    def find_by_order_id(self, order_id: str) -> ExecutionStateRow | None:
+        """Find execution_state row where any of oco_main/tp/sl_order_id matches.
+
+        S12 Q5 — used by FillRecorderAdapter for WS orderId → bracket_id resolution.
+        Returns None if no match (race-condition safe).
+        """
+        cur = self._conn.execute(
+            f"""SELECT {_COLUMNS} FROM execution_state
+                WHERE oco_main_order_id = ? OR oco_tp_order_id = ? OR oco_sl_order_id = ?
+                LIMIT 1""",
+            (order_id, order_id, order_id),
+        )
+        r = cur.fetchone()
+        if r is None:
+            return None
+        return _row_to_dataclass(r)
+
     def _set_halt(self, *, symbol: str, reason: str, context: dict[str, Any]) -> None:
         """Persist HALT (ADR 0021 sub-decision 5 — γ pattern).
 
