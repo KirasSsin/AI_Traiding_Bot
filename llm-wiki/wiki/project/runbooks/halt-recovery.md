@@ -36,29 +36,39 @@ Per trader-expert ROUND 2 BINDING verdict (S8c PR-γ F1 brainstorm). New halt co
 
 ---
 
+## Priority matrix (S11 operator readiness)
+
+Per S11 PHASE 2 Q3 (trader REVISE): integrate priority + escalation INTO this runbook (single source of truth, не separate dashboard).
+
+| Priority | Trigger characteristics | Operator action |
+|----------|-------------------------|-----------------|
+| **P0 — wake now** | CRITICAL severity (any halt where incorrect manual recovery can create OR conceal an open position) | Page on-call immediately. SQL + REST cross-check before resume. |
+| **P1 — next morning** | RECOVERABLE severity (halt с automated diagnostic + clear recovery path) | Email/Slack notification. Resume during business hours. |
+| **P2 — log only** | Operational halt с auto-resume mechanism (e.g. KILL_SWITCH_REQUESTED user-initiated) | Log to operator audit. No paging. |
+
 ## Quick reference table
 
-| Halt code | Class | Severity | Anchor |
-|-----------|-------|----------|--------|
-| HALT_DRAWDOWN_L1 | Drawdown | RECOVERABLE | [#halt_drawdown_l1](#halt_drawdown_l1) |
-| HALT_DRAWDOWN_L2 | Drawdown | CRITICAL | [#halt_drawdown_l2](#halt_drawdown_l2) |
-| HALT_DRAWDOWN_L3 | Drawdown | CRITICAL | [#halt_drawdown_l3](#halt_drawdown_l3) |
-| HALT_FLASH_CRASH | Drawdown | CRITICAL | [#halt_flash_crash](#halt_flash_crash) |
-| HALT_DATA_QUALITY | Operational | RECOVERABLE | [#halt_data_quality](#halt_data_quality) |
-| HALT_EXCHANGE_OUTAGE | Operational | RECOVERABLE | [#halt_exchange_outage](#halt_exchange_outage) |
-| HALT_KILL_SWITCH | Operational | CRITICAL | [#halt_kill_switch](#halt_kill_switch) |
-| KILL_SWITCH_REQUESTED | Operational | CRITICAL | [#kill_switch_requested](#kill_switch_requested) |
-| HALT_BRACKET_INCOMPLETE | OCO/bracket | CRITICAL | [#halt_bracket_incomplete](#halt_bracket_incomplete) |
-| HALT_OCO_ARM_TIMEOUT | OCO/bracket | RECOVERABLE | [#halt_oco_arm_timeout](#halt_oco_arm_timeout) |
-| HALT_OCO_SIBLING_STUCK | OCO/bracket | RECOVERABLE | [#halt_oco_sibling_stuck](#halt_oco_sibling_stuck) |
-| HALT_PARTIAL_FILL_BELOW_MIN | OCO/bracket | RECOVERABLE | [#halt_partial_fill_below_min](#halt_partial_fill_below_min) |
-| HALT_FLATTEN_FAILED | OCO/bracket | CRITICAL | [#halt_flatten_failed](#halt_flatten_failed) |
-| HALT_PHANTOM_SL | OCO/bracket | CRITICAL | [#halt_phantom_sl](#halt_phantom_sl) |
-| HALT_BOOTSTRAP_AMBIGUOUS | Bootstrap/reconcile | CRITICAL | [#halt_bootstrap_ambiguous](#halt_bootstrap_ambiguous) |
-| HALT_RECONCILE_DIVERGENCE | Bootstrap/reconcile | CRITICAL | [#halt_reconcile_divergence](#halt_reconcile_divergence) |
-| HALT_EXIT_RECONCILE_DIVERGENCE | Bootstrap/reconcile | CRITICAL | [#halt_exit_reconcile_divergence](#halt_exit_reconcile_divergence) |
-| HALT_RUNTIME_CRASH | Runtime | CRITICAL | [#halt_runtime_crash](#halt_runtime_crash) |
-| HALT_BAR_POLL_STALL | Runtime | RECOVERABLE | [#halt_bar_poll_stall](#halt_bar_poll_stall) |
+| Halt code | Class | Severity | On-call escalation | Anchor |
+|-----------|-------|----------|--------------------|--------|
+| HALT_DRAWDOWN_L1 | Drawdown | RECOVERABLE | P1 | [#halt_drawdown_l1](#halt_drawdown_l1) |
+| HALT_DRAWDOWN_L2 | Drawdown | CRITICAL | P0 | [#halt_drawdown_l2](#halt_drawdown_l2) |
+| HALT_DRAWDOWN_L3 | Drawdown | CRITICAL | P0 | [#halt_drawdown_l3](#halt_drawdown_l3) |
+| HALT_FLASH_CRASH | Drawdown | CRITICAL | P0 | [#halt_flash_crash](#halt_flash_crash) |
+| HALT_DATA_QUALITY | Operational | RECOVERABLE | P1 | [#halt_data_quality](#halt_data_quality) |
+| HALT_EXCHANGE_OUTAGE | Operational | RECOVERABLE | P1 | [#halt_exchange_outage](#halt_exchange_outage) |
+| HALT_KILL_SWITCH | Operational | CRITICAL | P2 | [#halt_kill_switch](#halt_kill_switch) |
+| KILL_SWITCH_REQUESTED | Operational | CRITICAL | P2 | [#kill_switch_requested](#kill_switch_requested) |
+| HALT_BRACKET_INCOMPLETE | OCO/bracket | CRITICAL | P0 | [#halt_bracket_incomplete](#halt_bracket_incomplete) |
+| HALT_OCO_ARM_TIMEOUT | OCO/bracket | RECOVERABLE | P1 | [#halt_oco_arm_timeout](#halt_oco_arm_timeout) |
+| HALT_OCO_SIBLING_STUCK | OCO/bracket | RECOVERABLE | P1 | [#halt_oco_sibling_stuck](#halt_oco_sibling_stuck) |
+| HALT_PARTIAL_FILL_BELOW_MIN | OCO/bracket | RECOVERABLE | P1 | [#halt_partial_fill_below_min](#halt_partial_fill_below_min) |
+| HALT_FLATTEN_FAILED | OCO/bracket | CRITICAL | P0 | [#halt_flatten_failed](#halt_flatten_failed) |
+| HALT_PHANTOM_SL | OCO/bracket | CRITICAL | P0 | [#halt_phantom_sl](#halt_phantom_sl) |
+| HALT_BOOTSTRAP_AMBIGUOUS | Bootstrap/reconcile | CRITICAL | P0 | [#halt_bootstrap_ambiguous](#halt_bootstrap_ambiguous) |
+| HALT_RECONCILE_DIVERGENCE | Bootstrap/reconcile | CRITICAL | P0 | [#halt_reconcile_divergence](#halt_reconcile_divergence) |
+| HALT_EXIT_RECONCILE_DIVERGENCE | Bootstrap/reconcile | CRITICAL | P0 | [#halt_exit_reconcile_divergence](#halt_exit_reconcile_divergence) |
+| HALT_RUNTIME_CRASH | Runtime | CRITICAL | P0 | [#halt_runtime_crash](#halt_runtime_crash) |
+| HALT_BAR_POLL_STALL | Runtime | RECOVERABLE | P1 | [#halt_bar_poll_stall](#halt_bar_poll_stall) |
 
 ---
 
