@@ -39,7 +39,10 @@ from src.marketdata.bybit.rest import BybitRESTClient
 from src.marketdata.filters import BybitFilters
 from src.platform.config import Settings
 from src.platform.db import connect, init_db
+from src.risk.fill_history import FillHistoryRepository
+from src.risk.fill_recorder_adapter import FillRecorderAdapter
 from src.risk.manager import RiskManager
+from src.risk.trade_history import TradeHistoryRepository
 from src.runtime.bar_source import BarSource
 from src.runtime.manager import RuntimeManager
 from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
@@ -59,7 +62,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     BybitFilters constructed here с placeholder values; production wiring will
     load filters via `BybitRESTClient.get_filters(symbol)` (deferred S12+).
-    FillRecorder = MagicMock-equivalent stub (production wiring deferred S12+).
+    FillRecorder = FillRecorderAdapter (S12 T1 — closes _NoopFillRecorder stub
+    per ADR 0027 Q5; best-effort 2-layer pattern, см. fill_recorder_adapter docstring).
 
     Returns:
         0 — clean exit;
@@ -67,18 +71,6 @@ def _cmd_run(args: argparse.Namespace) -> int:
         1 — runtime crash (unexpected Exception).
     """
     from sqlite3 import Connection
-    from typing import Any as _Any
-
-    class _NoopFillRecorder:
-        """No-op FillRecorder stub satisfying _FillRecorderProto.
-
-        S11 placeholder — production wiring deferred к S12 (per architecture-reviewer
-        T2 concern C2: replace MagicMock anti-pattern с simple class).
-        Conforms structurally к src.execution.bybit.ws_private._FillRecorderProto.
-        """
-
-        def on_fill_event(self, evt: dict[str, _Any]) -> None:  # noqa: ARG002
-            return None
 
     settings = Settings()
     symbol: str = args.symbol
@@ -131,9 +123,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
     )
     risk_manager = RiskManager(conn=conn, settings=settings)
 
-    # Bar source + WS consumer (FillRecorder stub — production wiring S12+)
+    # Bar source + WS consumer (FillRecorder = production adapter, S12 T1)
     bar_source = BarSource(adapter=rest, symbol=symbol, interval="60")
-    fill_recorder_stub = _NoopFillRecorder()
+    fill_history_repo = FillHistoryRepository(conn)
+    trade_history_repo = TradeHistoryRepository(conn)
+    fill_recorder = FillRecorderAdapter(
+        repo=fill_history_repo,
+        state_repo=repo,
+        trade_history_repo=trade_history_repo,
+    )
 
     endpoint = "demo.bybit.com" if settings.testnet else "stream.bybit.com"
     ws_consumer = BybitPrivateWSConsumer(
@@ -142,7 +140,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         endpoint=endpoint,
         coordinator=coordinator,
         reconciler=reconciler,
-        fill_recorder=fill_recorder_stub,
+        fill_recorder=fill_recorder,
     )
 
     # RuntimeManager + run

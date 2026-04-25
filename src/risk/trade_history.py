@@ -98,6 +98,19 @@ class TradeHistoryRepository:
             self._conn.execute("SELECT COUNT(*) FROM trade_history").fetchone()[0]
         )
 
+    def find_trade_id_by_signal(self, entry_signal_id: UUID) -> int | None:
+        """Find trade_id by entry_signal_id (returns None если trade not yet closed).
+
+        S12 Q5 — used by FillRecorderAdapter для parent_trade_id resolution.
+        Wired but unreachable с current schema (execution_state has no signal_id link;
+        deferred к S13+).
+        """
+        row = self._conn.execute(
+            "SELECT trade_id FROM trade_history WHERE entry_signal_id = ?",
+            (str(entry_signal_id),),
+        ).fetchone()
+        return int(row[0]) if row else None
+
     @staticmethod
     def _row_to_record(row: tuple[Any, ...]) -> TradeRecord:
         return TradeRecord(
