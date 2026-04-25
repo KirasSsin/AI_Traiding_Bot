@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-25
+updated: 2026-04-26
 sprint: 13
 phase: 4-execution
 branch: feature/sprint-13-backfill-wfa
@@ -36,14 +36,21 @@ S13 PHASE 4 in flight (per ADR 0028):
 - T1 probe ✅ — earliest Bybit 1H BTCUSDT = 2021-07-02 16:00 UTC, target span = ~4.8y
 - T2 backfill wire ✅ (commit 4a1b56b с snappy + atomic rename per data-integrity)
 - T3 backfill run ✅ — 42098 bars, 2021-07-03→2026-04-25, span 4.81y (ADR 0028 floor 3.5y MET)
-  * 2018-H1: 0 bars, 2020-H1: 0 bars, 2021-H1: 0 bars
-  * 2021-Jul-02 16:00 UTC = confirmed earliest bar (binary search)
-  * Span: 2021-07-03 → 2026-04-24 = ~4.8y (ADR 0028 ESC-2: below 5y target, above 3.5y floor — document deviation)
-- T2 backfill wire (next): _cmd_backfill → BybitRESTClient.get_klines + Parquet
-- T3 run backfill для 2021-07-03 → 2026-04-24
-- T4 NaN preflight, T5 trade_extractor, T6 strategy_metrics
-- T7 wire measurement + verdict report
-- T8 PHASE 8 ship
+  * Span: 2021-07-03 → 2026-04-24 = ~4.8y (ADR 0028 ESC-2: below 5y target, above 3.5y floor)
+- T4 NaN preflight ✅ (commit e4439e1)
+- T5 trade_extractor ✅, T6 strategy_metrics ✅ (prior commits)
+- T7 measurement ✅ verdict=FAIL:
+  * T1 Sharpe OOS: -44.46 (< 1.0 threshold) → FAIL
+  * T2 Sortino OOS: -101.38 (< 1.5 threshold) → FAIL
+  * T3 MaxDD: 1.27% (< 25% threshold) → PASS
+  * T4 win_rate=0.30, avg_rr=0.797 (avg_rr < 1.5) → FAIL
+  * T5 n_trades=20 (< 100 required) → FAIL
+  * T6 OOS/IS Sharpe ratio mean: 1.136 (>= 0.7) → PASS
+  * DSR: 0.0445 (N_trials=1, dsr_pass=True — DSR > 0)
+  * MC p-value: 0.048 (< 0.05, gate passed)
+  * failed_criteria: [t1, t2, t4, t5]
+  * Note: only 20 OOS trades across 5 folds (4 trades/fold avg) — strategy generates insufficient signal frequency
+- T8 PHASE 8 ship pending (next)
 ```
 
 ## Carry-over к S13+

@@ -17,11 +17,14 @@ def test_cmd_wfa_invokes_walk_forward_runner_returns_zero_on_pass() -> None:
 
     with patch("src.__main__.WalkForwardRunner") as mock_runner_class, \
          patch("src.__main__.WindowSplitter"), \
-         patch("src.__main__.format_wfa_report") as mock_reporter, \
+         patch("src.__main__.format_wfa_report"), \
          patch("src.__main__.evaluate_acceptance_gate") as mock_gate, \
          patch("src.__main__.run_replay"), \
          patch("src.__main__.sign_flip_p_value", return_value=0.03), \
          patch("src.__main__._load_ohlcv") as mock_loader, \
+         patch("src.__main__.extract_trade_records", return_value=[]), \
+         patch("src.__main__.compute_dsr", return_value=0.75) as mock_dsr, \
+         patch("src.__main__.compute_t1_t6_metrics") as mock_metrics, \
          patch("src.__main__.Settings") as mock_settings_class:
 
         mock_settings = MagicMock()
@@ -38,21 +41,33 @@ def test_cmd_wfa_invokes_walk_forward_runner_returns_zero_on_pass() -> None:
         oos_df.empty = False
         oos_df.__getitem__ = MagicMock(return_value=MagicMock(astype=MagicMock(return_value=MagicMock(to_numpy=MagicMock(return_value=[0.01, 0.02])))))
         mock_runner.run.return_value = {
-            "folds": [{"oos_is_sharpe_ratio": 0.8}],
+            "folds": [{"oos_is_sharpe_ratio": 0.8, "oos_trades_df": None}],
             "aggregate": {"oos_trades_df": oos_df, "k_folds": 5, "fold_oos_sharpes": [1.0]},
         }
         mock_runner_class.return_value = mock_runner
 
         mock_gate.return_value = {"passed": True}
-        mock_reporter.return_value = {"acceptance_gate": {"passed": True}, "k_folds": 5, "mc_p_value": 0.03}
+        # All T1-T6 criteria pass → verdict = PASS
+        mock_metrics.return_value = {
+            "t1_sharpe_oos": 1.2,
+            "t2_sortino_oos": 1.8,
+            "t3_max_drawdown": 0.15,
+            "t4_win_rate": 0.50,
+            "t4_avg_rr": 1.8,
+            "t5_mean_pnl_pct": 0.01,
+            "t5_t_stat": 2.5,
+            "t5_n_trades": 150,
+            "t6_oos_is_sharpe_ratio_mean": 0.8,
+        }
 
         exit_code = cli._cmd_wfa(args)
         assert exit_code == 0
         mock_runner.run.assert_called_once()
+        mock_dsr.assert_called_once()
 
 
 def test_cmd_wfa_returns_nonzero_on_gate_failure() -> None:
-    """Gate fail → exit 2 (для CI integration)."""
+    """Metrics fail → exit 2 (per Q7 ESC-1=c defer pattern)."""
     from src import __main__ as cli
 
     args = argparse.Namespace(
@@ -61,11 +76,14 @@ def test_cmd_wfa_returns_nonzero_on_gate_failure() -> None:
 
     with patch("src.__main__.WalkForwardRunner") as mock_runner_class, \
          patch("src.__main__.WindowSplitter"), \
-         patch("src.__main__.format_wfa_report") as mock_reporter, \
+         patch("src.__main__.format_wfa_report"), \
          patch("src.__main__.evaluate_acceptance_gate") as mock_gate, \
          patch("src.__main__.run_replay"), \
          patch("src.__main__.sign_flip_p_value", return_value=0.5), \
          patch("src.__main__._load_ohlcv") as mock_loader, \
+         patch("src.__main__.extract_trade_records", return_value=[]), \
+         patch("src.__main__.compute_dsr", return_value=float("nan")), \
+         patch("src.__main__.compute_t1_t6_metrics") as mock_metrics, \
          patch("src.__main__.Settings"):
 
         mock_df = MagicMock()
@@ -77,13 +95,24 @@ def test_cmd_wfa_returns_nonzero_on_gate_failure() -> None:
         oos_df.empty = False
         oos_df.__getitem__ = MagicMock(return_value=MagicMock(astype=MagicMock(return_value=MagicMock(to_numpy=MagicMock(return_value=[0.01])))))
         mock_runner.run.return_value = {
-            "folds": [{"oos_is_sharpe_ratio": 0.5}],
+            "folds": [{"oos_is_sharpe_ratio": 0.5, "oos_trades_df": None}],
             "aggregate": {"oos_trades_df": oos_df, "k_folds": 5, "fold_oos_sharpes": [0.5]},
         }
         mock_runner_class.return_value = mock_runner
 
         mock_gate.return_value = {"passed": False}
-        mock_reporter.return_value = {"acceptance_gate": {"passed": False}, "k_folds": 5, "mc_p_value": 0.5}
+        # T1 fails (< 1.0) → verdict = FAIL
+        mock_metrics.return_value = {
+            "t1_sharpe_oos": 0.5,
+            "t2_sortino_oos": float("nan"),
+            "t3_max_drawdown": 0.30,
+            "t4_win_rate": 0.40,
+            "t4_avg_rr": float("nan"),
+            "t5_mean_pnl_pct": float("nan"),
+            "t5_t_stat": float("nan"),
+            "t5_n_trades": 50,
+            "t6_oos_is_sharpe_ratio_mean": 0.5,
+        }
 
         exit_code = cli._cmd_wfa(args)
         assert exit_code == 2
