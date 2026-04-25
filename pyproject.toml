@@ -66,10 +66,10 @@ plugins = ["pydantic.mypy"]
 module = ["pybit.*", "pyarrow.*", "talib"]
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-# Legacy modules — MVP v0.1 scope только platform/marketdata/signalgen/execution.
-module = ["src.core.*", "src.backtest.*", "src.risk.*"]
-ignore_errors = true
+# S9 Q2 (G): legacy ignore_errors override removed (was: src.core.*, src.backtest.*,
+# src.risk.*). Empirical pre-removal check: all 3 modules pass `mypy --strict` clean.
+# Override masked zero actual errors. Removal converts implicit pass → explicit
+# type checking, prevents future drift.
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit", "tests/property"]
