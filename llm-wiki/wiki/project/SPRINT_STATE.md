@@ -2,8 +2,8 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: between-sprints
-phase: ready-for-s9
+sprint: 9
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.8c
 ---
@@ -29,11 +29,25 @@ tag: v0.1.0-alpha.8c
 ## Следующее действие
 
 ```
-Begin S9 brainstorm:
-1. mem-search "S9 candidate scope" + "carry-over deferred"
-2. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
-3. PR-D+E carry-over (architecture-reviewer extension if S9 cross-module work)
+S9 PHASE 3 — plan write:
+1. superpowers:writing-plans skill → bite-sized tasks per Q1+Q2+Q3 verdicts
+2. Trace map mandatory (PHASE 3 step 1a HARD-GATE)
+3. Tasks roadmap:
+   - Q1 C: REST-vs-REST quality detector (3-4 tasks, src/marketdata/quality.py + halt routing)
+   - Q2 G: mypy strict (3 tasks: core → risk → backtest optional)
+   - Q3 B1: per-fill table + WS execution topic + repository (3-4 tasks, migration + ws subscription + records)
+   - Q3 B2: DSR module (2-3 tasks, formula + tests + quant-stats-reviewer)
+4. ADR 0024 draft (G + B aggregate decisions)
+5. Wiki updates: NEW component pages quality.md + fill-history.md + dsr.md
 ```
+
+## S9 brainstorm verdicts (PHASE 2 complete)
+
+Trail: `wiki/project/pre-s9-backlog.md`. Summary:
+- **Q1 (C):** REVISE — REST-vs-REST consecutive bar (no WS kline subscription, derisk async)
+- **Q2 (G):** REVISE — order src.core → src.risk → src.backtest (wedge pattern)
+- **Q3 (B):** CONFIRM — split B1 (per-fill table + WS execution) + B2 (DSR module)
+- 0 user escalation items, ROUND 2 not triggered (both REVISE accepted)
 
 ## Carry-over к S9+
 
