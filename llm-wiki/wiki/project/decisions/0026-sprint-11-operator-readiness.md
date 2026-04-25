@@ -6,7 +6,7 @@ sprint: 11
 tags: [adr, sprint-11, operator-readiness, cli, monitoring, di-wiring, halt-priority]
 sources:
   - project/pre-s11-backlog.md
-  - project/decisions/0016-binance-spot-testnet-mvp.md
+  - project/decisions/0016-bybit-spot-supersedes-binance.md
   - project/decisions/0022-sprint-8a-live-runtime.md
   - project/decisions/0025-sprint-10-wfa-dsr-mc.md
 status: accepted
@@ -86,7 +86,7 @@ Per Q3 trader REVISE accepted: integrate priority matrix INTO `halt-recovery.md`
 ## Related
 
 - [[../pre-s11-backlog]] — PHASE 2 verdicts trail
-- [[0016-binance-spot-testnet-mvp]] — testnet MVP gating + Phase G mention
+- [[0016-bybit-spot-supersedes-binance]] — Bybit Spot venue (V5 Unified) supersedes Binance; demo trading endpoint family
 - [[0022-sprint-8a-live-runtime]] — RuntimeManager origin + T20 STUB deferral closed by T2
 - [[0025-sprint-10-wfa-dsr-mc]] — WFA components consumed by T4 _cmd_wfa
 - [[../runbooks/halt-recovery]] — extended с priority matrix (T5)

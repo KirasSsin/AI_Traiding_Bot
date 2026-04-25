@@ -152,7 +152,7 @@ PHASE 2 complete. SPRINT_STATE → phase=3-planning. Next: PHASE 3 plan write (`
 
 ## Related
 
-- [[decisions/0016-binance-spot-testnet-mvp]] — testnet MVP gating + Phase G mention
+- [[decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot venue (V5 Unified) supersedes Binance; demo trading endpoint family
 - [[decisions/0022-sprint-8a-live-runtime]] — RuntimeManager origin + T20 STUB deferral
 - [[decisions/0025-sprint-10-wfa-dsr-mc]] — WFA + DSR (S10 ship)
 - [[runbooks/halt-recovery]] — 19 halt codes, will be extended с Priority matrix
