@@ -91,23 +91,28 @@ def compute_dsr(
     std = math.sqrt(var)
     sharpe = mean / std
 
-    # Skewness + kurtosis of returns (Fisher = excess kurtosis, bias-corrected)
+    # Skewness + kurtosis of returns. PEARSON kurtosis (fisher=False) per
+    # Bailey & López de Prado 2014 eq. 13 (gamma_4 = total kurtosis, NOT excess).
+    # For Normal distribution Pearson=3 → (3-1)/4 = 0.5 recovers Lo (2002)
+    # Sharpe variance (1 + SR²/2)/(T-1). Using fisher=True (excess) would give
+    # (0-1)/4 = -0.25 — systematically wrong.
     skew = float(stats.skew(finite_returns, bias=False))
-    kurt = float(stats.kurtosis(finite_returns, bias=False, fisher=True))
+    kurt = float(stats.kurtosis(finite_returns, bias=False, fisher=False))
 
-    # Expected max Sharpe across n_trials (Bailey & López de Prado 2014, eq. 12)
-    # E[max SR_n] ≈ benchmark + ((1 - γ) * Φ⁻¹(1 - 1/n) + γ * Φ⁻¹(1 - 1/(n × e)))
-    # γ = Euler-Mascheroni constant ≈ 0.5772
-    if n_trials <= 1:
-        sharpe_star = benchmark_sharpe
-    else:
-        gamma = 0.5772156649
-        z1 = float(stats.norm.ppf(1.0 - 1.0 / n_trials))
-        z2 = float(stats.norm.ppf(1.0 - 1.0 / (n_trials * math.e)))
-        sharpe_star = benchmark_sharpe + (1.0 - gamma) * z1 + gamma * z2
+    # Expected max Sharpe across n_trials (Bailey & López de Prado 2014, eq. 12).
+    # NOTE v0.1: full eq. 12 requires sigma_SR (cross-trial Sharpe std) which
+    # is NYI. n_trials > 1 raises NotImplementedError defensively. Default
+    # n_trials=1 uses benchmark_sharpe directly (no multi-testing penalty).
+    if n_trials > 1:
+        raise NotImplementedError(
+            "compute_dsr: n_trials > 1 NYI v0.1 — requires sigma_SR multiplier "
+            "per Bailey & López de Prado 2014 eq. 12. Defer к S10+."
+        )
+    sharpe_star = benchmark_sharpe
 
     # DSR formula (Bailey & López de Prado 2014, eq. 13):
     # DSR = Φ((SR - SR*) × √(n - 1) / √(1 - skew × SR + (kurt - 1)/4 × SR²))
+    # where kurt = Pearson (total) kurtosis, NOT excess.
     denom_inner = 1.0 - skew * sharpe + (kurt - 1.0) / 4.0 * sharpe**2
     if denom_inner <= 0:
         return math.nan
