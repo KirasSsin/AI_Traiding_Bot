@@ -137,6 +137,38 @@ def test_cmd_wfa_returns_one_on_empty_data() -> None:
         assert exit_code == 1
 
 
+def test_resolve_symbols_uses_symbols_when_set() -> None:
+    """S15 ADR 0030: --symbols overrides --symbol."""
+    import argparse
+    from src.__main__ import _resolve_symbols
+    args = argparse.Namespace(symbol="BTCUSDT", symbols="BTCUSDT,ETHUSDT,SOLUSDT")
+    assert _resolve_symbols(args) == ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
+
+
+def test_resolve_symbols_falls_back_to_symbol_when_no_symbols() -> None:
+    """Backward-compat: --symbols not set → use single --symbol."""
+    import argparse
+    from src.__main__ import _resolve_symbols
+    args = argparse.Namespace(symbol="ETHUSDT", symbols=None)
+    assert _resolve_symbols(args) == ["ETHUSDT"]
+
+
+def test_resolve_symbols_default_btcusdt_when_neither_set() -> None:
+    """No --symbols, no --symbol → default BTCUSDT."""
+    import argparse
+    from src.__main__ import _resolve_symbols
+    args = argparse.Namespace()
+    assert _resolve_symbols(args) == ["BTCUSDT"]
+
+
+def test_resolve_symbols_strips_whitespace_and_uppercases() -> None:
+    """Whitespace tolerated, case normalized."""
+    import argparse
+    from src.__main__ import _resolve_symbols
+    args = argparse.Namespace(symbol=None, symbols=" btcusdt , ethusdt , solusdt ")
+    assert _resolve_symbols(args) == ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
+
+
 def test_load_ohlcv_calls_data_collector_with_config_dict(tmp_path):
     """T2 — _load_ohlcv translates CLI args → data_collector config dict."""
     import pandas as pd

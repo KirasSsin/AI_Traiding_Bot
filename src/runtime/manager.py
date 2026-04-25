@@ -22,7 +22,12 @@ if TYPE_CHECKING:
     from src.platform.config import Settings
     from src.risk.manager import RiskManager
     from src.runtime.bar_source import BarSource
-    from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy as Strategy
+    from src.signalgen.mean_reversion_strategy import MeanReversionRsiBBStrategy
+    from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
+
+    # Strategy union — both implement the same on_bar(Bar) -> Signal | None contract.
+    # S15 ADR 0030 added MeanReversionRsiBBStrategy as drop-in replacement.
+    Strategy = EmaCrossoverAdxRsiStrategy | MeanReversionRsiBBStrategy
 
 logger = get_logger(__name__)
 
