@@ -137,6 +137,16 @@ These components span clusters — keep aware of cross-cluster impacts:
 | **kill-switch-cli** | Runtime + Tooling | Operator entry-point (sentinel-file pattern identical к hooks); RuntimeManager polls sentinel each tick |
 | **models** | Signal + Execution | pydantic Bar/Signal/Order/Fill — defined в C2, consumed by C4 (Order/Fill in execution path) |
 
+## Operator runbooks
+
+Runbooks are not components — they are operator-facing incident response procedures. Listed here for discoverability.
+
+| Runbook | What it covers |
+|---------|---------------|
+| [[../runbooks/halt-recovery]] | 19 halt codes (5 class groups, 2 severity tiers). CRITICAL = full diagnosis (SQL + REST cross-check + recovery). RECOVERABLE = abbreviated (symptoms + actions + escalation). First-hit для production incident response. |
+
+**Halt recovery cluster:** `halt-recovery.md` spans Cluster 3 (Risk/circuit-breakers), Cluster 4 (Execution/OCO/coordinator), Cluster 5 (Resilience/reconciler), Cluster 6 (Runtime/RuntimeManager). No single cluster owns it — use the runbook directly.
+
 ## Cluster cohesion warnings (anti-patterns)
 
 - **Don't ask Coordinator about Strategy logic.** Coordinator orchestrates FSM/bracket; Strategy lives в Cluster 2 (signal computation).

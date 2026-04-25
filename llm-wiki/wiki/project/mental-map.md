@@ -44,6 +44,14 @@ sources:
 | (FLAT, RISK_HALT) → HALTED edge case | `sprints/sprint-08b-carryover.md` T7 + `decisions/0023` | property test caught regression |
 | Harel statechart design | `architecture/state-machine.md` (high-level) | pre-S5 design doc, FSM grew since |
 
+### Operator procedures / incident response
+
+| Query | Path | Notes |
+|-------|------|-------|
+| Halt recovery (how to resume from any halt code) | `project/runbooks/halt-recovery.md` (19 halt codes, 5 class groups, 2 severity tiers) | First-hit для production incident response |
+| CRITICAL vs RECOVERABLE halt classification | `project/runbooks/halt-recovery.md` "CRITICAL definition" callout | CRITICAL = "incorrect manual recovery can create or conceal an open position" |
+| SQL reset template (execution_state to FLAT) | `project/runbooks/halt-recovery.md` "Common SQL templates" | S7 schema с halt_reason + halt_log |
+
 ### Halt mechanics / circuit breakers
 
 | Query | Path |
