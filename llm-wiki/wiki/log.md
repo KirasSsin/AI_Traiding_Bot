@@ -906,3 +906,62 @@ S13 = TBD post 48h operator-driven validation results. Likely scope: FillRecorde
 ### Roadmap
 
 S15 brainstorm input: S13 verdict=FAIL on 4.81y data. Strategy fires too rarely for T5. Operator (user) decides direction at S15 brainstorm — possible paths: (a) strategy revision, (b) honest "no edge" close, (c) multi-symbol expansion, (d) signal frequency tuning (look-ahead risk).
+
+## [2026-04-26] sprint-end | Sprint 14 — Honest close (no-edge verdict)
+
+### Phase 2 brainstorming
+
+5 questions, trader-expert ROUND 1:
+- Q1 **EXPAND** — T5 ≥100 trades structurally unreachable (5x signal frequency gap, EMA crossover на 1H BTC fires ~1 trade per 5-10 days). Plus my RSI 35/65 semantic was inverted (tightens, not widens).
+- Q2 **REVISE** — DSR cross-trial sigma_SR not implemented (cross-FOLD only per dsr.py:73). N_trials=2 needs Bailey eq. 13 cross-trial std.
+- Q3 CONFIRM strict formula PASS
+- Q4 CONFIRM Settings config wiring (moot per Option B)
+- Q5 CONFIRM pre-commit FAIL fallthrough к Option B (honored)
+
+### USER DECISION
+
+Per user verbatim: "Продолжаем тогда (B) Honest close immediately."
+
+S14 = honest close ship. NO measurement re-run. NO code changes. Documentation only.
+
+### Tasks (T1-T6, 4 docs commits)
+
+- T1 ADR 0029 status: accepted
+- T2 sprint-14-honest-close.md page (this sprint's canonical record)
+- T3 wiki sync (current-state.md + index.md + mental-map.md + counts ADR 28→29 + sprint pages 15→16)
+- T4 log.md sprint-end entry (this entry)
+- T5 SPRINT_STATE → between-sprints с post-MVP-honest-close status
+- T6 PHASE 8 ship via sprint-finish skill (tag v0.1.0-alpha.14)
+
+### Final v0.1 status
+
+- Infrastructure: COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages + 4.81y data + WFA + DSR + MC)
+- Strategy validation: NEGATIVE (EMA crossover на 1H BTC = no edge, 2 measurements: 2.2y + 4.81y)
+- MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable for chosen strategy + timeframe)
+- Mainnet exposure: 0 (33min Bybit demo only)
+- Tag: `v0.1.0-alpha.14` = honest close marker (NOT MVP DONE — alpha suffix preserved)
+
+### Tests / quality
+
+NO code changes. Existing test suite preserved at S13 baseline:
+- pytest unit: 712 passed (no new tests, no regressions)
+- mypy --strict src/: clean (69 source files)
+- ruff: clean
+- Q7-S12 zero-migration: trivially preserved
+
+### Carry-overs preserved (10+ items unaddressed)
+
+All S12 + S13 carry-overs остаются open. See pre-s14-backlog.md "USER FINAL DECISION" + sprint-14-honest-close.md "Open issues для v0.2+" for full list.
+
+### Future direction (operator-driven, NO commitment)
+
+(A) Strategy revision (mean-reversion / regime-switch / ML) — 3-5 sprints
+(B) Multi-symbol (ETH + SOL) — 2-3 sprints, ~3x signal frequency
+(C) Different timeframe (15M / 4H) — 1-2 sprints, ADR 0005 amendment
+(D) Project pause — 0 sprints, current state freeze
+
+Operator decides if/when. No S15 commitment.
+
+### Roadmap
+
+**v0.1 closed at S14 honest.** Project state: between-sprints с post-MVP-honest-close marker.

@@ -63,6 +63,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-11-operator-readiness]] — S11 (2026-04-25): Pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI subcommands closing S8a T20 STUB) + operator-readiness (halt-recovery priority matrix integration + log-grep-templates runbook + pre-flight checklist). 10 TDD tasks, +10 tests (656→666 unit). FSM/counts unchanged. Tag v0.1.0-alpha.11.
 - [[project/sprints/sprint-12-live-demo-validation]] — S12 (2026-04-25): Live demo validation 24-72h + production wiring (FillRecorderAdapter closes `_NoopFillRecorder` stub + `_load_ohlcv` Parquet shim + 2 operator runbooks live-demo-validation + halt-response-protocol). 6 TDD tasks, +9 tests (680→689). FSM/counts unchanged (16/30/74/45). Tag v0.1.0-alpha.12.
 - [[project/sprints/sprint-13-backfill-wfa]] — S13 (2026-04-26): Backfill 5y BTCUSDT 1H Bybit Spot (42098 bars, 4.81y) + WFA T1-T6 measurement (DSR active N_trials=1). Verdict: **FAIL** (4/6 criteria failed, 20 OOS trades — sample too small). 8 TDD tasks. FSM/counts unchanged. Tag v0.1.0-alpha.13.
+- [[project/sprints/sprint-14-honest-close]] — S14 (2026-04-26): **Honest close** — no-edge verdict accepted. Trader Q1 EXPAND verified: T5 ≥100 trades structurally unreachable для EMA crossover на 1H BTC (5x signal frequency gap, tuning realistic 2-3x). Documentation only, NO code changes. Tag v0.1.0-alpha.14 = honest close marker (NOT MVP DONE). Future direction (operator-driven, no commitment): strategy revision / multi-symbol / different timeframe / project pause.
 
 ## Project — Plans
 
@@ -179,6 +180,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0026-sprint-11-operator-readiness]] — Sprint 11 aggregate ADR: Pre-flight gap closure (test_risk_flow.py + _cmd_run + _cmd_reconcile_only + _cmd_wfa CLI, closes S8a T20 STUB) + operator-readiness (halt priority matrix integration + log-grep-templates + _cmd_monitor read-only + pre-flight checklist).
 - [[project/decisions/0027-sprint-12-live-demo-validation]] — Sprint 12 aggregate ADR: live demo validation 24-72h on Bybit demo + FillRecorderAdapter (closes `_NoopFillRecorder` stub) + `_load_ohlcv` Parquet shim + 2 operator runbooks (live-demo-validation + halt-response-protocol). Q6 verified: NO endpoint string change required (current correct).
 - [[project/decisions/0028-sprint-13-strategy-validation]] — Sprint 13 ADR: 5y backfill + WFA T1-T6 measurement, DSR active S13 N_trials=1, PBO defer S15+, ESC-1 defer pattern preserved (case-by-case at S15), ESC-2 tiered 5y target (Bybit data 4.81y).
+- [[project/decisions/0029-sprint-14-honest-close]] — Sprint 14 ADR: honest close — T5 structurally unreachable (trader Q1 EXPAND verified, 5x signal frequency gap), DSR cross-trial sigma_SR gap acknowledged. v0.1 = infrastructure complete + strategy validation negative. NOT MVP DONE per acceptance-criteria.md. Future direction options deferred к operator (revision / multi-symbol / timeframe / pause).
 
 ## Queries (saved answers)
 
