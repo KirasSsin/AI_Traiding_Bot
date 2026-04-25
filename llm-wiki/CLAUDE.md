@@ -207,7 +207,7 @@ Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB
 
 ### Path verification before Read (section 9b)
 - Project root spelling: **`AI_Traiding_Bot`** (NOT `_Tool`/`_Trader`/`_Trading`). Common typo class.
-- `~/.claude/agent-memory/<agent>/MEMORY.md` may NOT exist on first dispatch — auto-created on first WRITE. Read failure = expected, не error.
+- `.claude/agent-memory/<agent>/MEMORY.md` (project-local, relative к repo root — NOT `~/.claude/agent-memory/`) may NOT exist on first dispatch — auto-created on first WRITE. Read failure = expected, не error.
 - Don't-retry rule: Read miss → `ls <parent>` OR surface "path missing". Max 1 retry per file ref.
 - Hook bash quirk: ALWAYS `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails.
 

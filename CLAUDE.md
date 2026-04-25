@@ -114,7 +114,7 @@ Hard-limit ~25k токенов = ~90KB. Если файл > 50KB — `Read` с `
 |---------|------|--------------|
 | **Edit-after-Read** | Read × N batch THEN Edit × N batch (never skip STEP 1) | 3× per unread file |
 | **Path verification** | `AI_Traiding_Bot` exact spelling. Verify via `pwd` если doubt. Don't-retry on Read miss (max 1 retry). | hallucination compounds |
-| **MEMORY.md tolerance** | `~/.claude/agent-memory/<agent>/MEMORY.md` may NOT exist (created on first WRITE). | wasted Read |
+| **MEMORY.md tolerance** | `.claude/agent-memory/<agent>/MEMORY.md` (**project-local**, NOT `~/.claude/agent-memory/`) may NOT exist (created on first WRITE). | wasted Read |
 | **Hook bash quirk** | `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails. | push fails → debug cycle |
 
 Полные правила: `~/.claude/CLAUDE.md` sections 9b + 9c, `llm-wiki/CLAUDE.md` "Anti-waste tool patterns".
