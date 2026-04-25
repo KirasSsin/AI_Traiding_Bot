@@ -51,7 +51,7 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 - **Python**: 3.12 (pyproject.toml). Venv: `.venv/` at repo root.
 - **Test cmd**: `pytest -x -q` (unit), `pytest -m integration` (opt-in), `pytest -m property`.
 - **Branch**: feature/<sprint-N-slug>. PR to main. Conventional commits.
-- **Current state**: Sprint 8b COMPLETE (tag `v0.1.0-alpha.8b`). Between sprints. Next = S8c brainstorm.
+- **Current state**: Sprint 8c COMPLETE (tag `v0.1.0-alpha.8c`). Between sprints. Next = S9 brainstorm.
 
 ## Workflow skills (project-level, `.claude/skills/`)
 

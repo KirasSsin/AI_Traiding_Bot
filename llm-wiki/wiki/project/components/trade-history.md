@@ -161,8 +161,8 @@ Migrations runner (`src/platform/storage/`) применяет их в поря�
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | `INSERT OR IGNORE` + `UNIQUE INDEX uq_trade_history_entry_signal` on `entry_signal_id` — crash-idempotent Kelly trade count | `migrations/003_trade_history_unique.sql` + `src/risk/trade_history.py:insert_closed_trade` | `tests/unit/test_risk_trade_history.py` |
-| 2 | `AwareDatetime` (UTC) for all timestamps — naive datetime → ValueError | `src/risk/trade_history.py` model validators + ADR 0007 | `tests/unit/test_risk_trade_history.py` |
+| 1 | `INSERT OR IGNORE` + `UNIQUE INDEX uq_trade_history_entry_signal` on `entry_signal_id` — crash-idempotent Kelly trade count | `migrations/003_trade_history_unique.sql` + `src/risk/trade_history.py::TradeHistoryRepository.insert_closed_trade` | `tests/unit/test_risk_trade_history.py::test_duplicate_entry_signal_id_returns_existing_id` |
+| 2 | `AwareDatetime` (UTC) for all timestamps — naive datetime → ValueError | `src/risk/trade_history.py::TradeRecord` model validators + ADR 0007 | `tests/unit/test_risk_trade_history.py::test_naive_datetime_rejected` |
 | 3 | Migrations forward-only (`002_risk.sql` + `003_trade_history_unique.sql`) | migrations/ + ADR 0003 | (review rule) |
 
 ## Referenced by

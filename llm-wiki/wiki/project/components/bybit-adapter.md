@@ -119,10 +119,10 @@ Bybit Spot Stop молча переписывает `timeInForce=GTC` → `IOC` 
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | Banned-field guard: `tpslMode/takeProfit/stopLoss` → retCode 170130 — fields stripped pre-send | `src/execution/bybit/adapter.py` payload sanitizer + ADR 0020 sub-decision 1 | `tests/unit/test_bybit_adapter_spot_guard.py` |
-| 2 | `marketUnit=baseCoin` always — `quoteCoin` causes 16th-decimal drift | `src/execution/bybit/adapter.py` payload + ADR 0020 sub-decision 3 | `tests/unit/test_bybit_adapter.py` |
-| 3 | SL `timeInForce` omitted — Bybit Spot Stop silently rewrites GTC→IOC | `src/execution/bybit/adapter.py` SL payload + ADR 0020 sub-decision 6 | (probe-validated) |
-| 4 | retCode=110001 on cancel = non-fatal (race with Filled) | `src/execution/bybit/adapter.py` cancel error mapping | `tests/unit/test_bybit_adapter_cancel.py` |
+| 1 | Banned-field guard: `tpslMode/takeProfit/stopLoss` → retCode 170130 — fields stripped pre-send | `src/execution/bybit/adapter.py::BybitMarketAdapter.place_order` + ADR 0020 sub-decision 1 | `tests/unit/test_bybit_adapter_spot_guard.py::test_place_market_rejects_banned_spot_fields` |
+| 2 | `marketUnit=baseCoin` always — `quoteCoin` causes 16th-decimal drift | `src/execution/bybit/adapter.py::BybitMarketAdapter.place_order` + ADR 0020 sub-decision 3 | `tests/unit/test_bybit_adapter_spot_guard.py::test_place_market_passes_marketunit_basecoin` |
+| 3 | SL `timeInForce` omitted — Bybit Spot Stop silently rewrites GTC→IOC | `src/execution/bybit/adapter.py::BybitMarketAdapter.place_stop_market_order` + ADR 0020 sub-decision 6 | (probe-validated) |
+| 4 | retCode=110001 on cancel = non-fatal (race with Filled) | `src/execution/bybit/adapter.py::BybitMarketAdapter.cancel_order` + `src/execution/bybit/errors.py` | `tests/unit/test_bybit_adapter_cancel.py::test_cancel_order_already_terminal_returns_reason_code` |
 
 ## Related
 

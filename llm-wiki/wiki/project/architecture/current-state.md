@@ -1,19 +1,19 @@
 ---
-title: Current State — post-S8b inventory + canonical counts
+title: Current State — post-S8c inventory + canonical counts
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-8b]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-8c]
 created: 2026-04-19
 updated: 2026-04-25
 status: stable
 sources:
   - src/
-  - project/sprints/sprint-08b-carryover.md
+  - project/sprints/sprint-08c-wiki-backfill.md
   - project/decisions/0023-halt-code-fsm-event-mapping.md
 ---
 
-# Current State (post-S8b, 2026-04-25)
+# Current State (post-S8c, 2026-04-25)
 
-**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.8b`. 9 sprints completed (S1, S2, S3, S4, S5, S6, S7, S8a, S8b). Codebase = ~5454 LoC src + ~11354 LoC tests (2:1 ratio). Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation (Entry Market + TP Limit + SL StopMarket IOC). 16-state Harel FSM. Live runtime: `python -m src run` (S8a). Demo Mainnet ready. Pre-production hardening continues.
+**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.8c`. 10 sprints completed (S1-S7 + S8a + S8b + S8c). Codebase = ~5454 LoC src + ~11354 LoC tests (2:1 ratio). Single-symbol Bybit Spot BTCUSDT 1H. EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14). LONG+FLAT only. signal on close(T) → fill at open(T+1) (look-ahead-free). 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash circuit breakers + manual override. 3-order Spot OCO emulation (Entry Market + TP Limit + SL StopMarket IOC). 16-state Harel FSM. Live runtime: `python -m src run` (S8a). Demo Mainnet ready. Pre-production hardening continues.
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -25,7 +25,7 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **23** | `wiki/project/components/*.md` | S8c T5 (risk-override.md added 2026-04-25) |
+| Component pages | **28** | `wiki/project/components/*.md` | S8c (kill-switch-cli + risk-override + trade-history + backtest-harness + adr-index-sync-hook) + post-S8c (components/README.md cluster index) |
 | ADRs | **23** | `wiki/project/decisions/*.md` (0001-0023) | S8b (ADR 0023) |
 | Sprint pages | **9** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-07 + sprint-08a + sprint-08b) | pre-S8c batch (sprint-08a/8b created 2026-04-25) |
 

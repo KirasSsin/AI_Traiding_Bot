@@ -40,10 +40,10 @@ status: stable
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | `confirm=true` gate — non-confirmed bars always return `None` | `src/marketdata/bar_builder.py` confirm check | `tests/unit/test_bar_builder.py` |
-| 2 | Dedup: duplicate `open_ms` after confirm → `OutOfOrderError` | `src/marketdata/bar_builder.py` dedup | `tests/unit/test_bar_builder.py` |
-| 3 | Out-of-order: `open_ms < last_confirmed` → `OutOfOrderError` | `src/marketdata/bar_builder.py` ordering check | `tests/unit/test_bar_builder.py` |
-| 4 | Stateful per instance — one instance per symbol+interval | `src/marketdata/bar_builder.py` constructor | (architecture rule) |
+| 1 | `confirm=true` gate — non-confirmed bars always return `None` | `src/marketdata/bar_builder.py::BarBuilder.process` | `tests/unit/test_bar_builder.py::test_returns_none_on_non_confirm` |
+| 2 | Dedup: duplicate `open_ms` after confirm → `OutOfOrderError` | `src/marketdata/bar_builder.py::BarBuilder._check_order` | `tests/unit/test_bar_builder.py::test_duplicate_after_confirmed_is_rejected` |
+| 3 | Out-of-order: `open_ms < last_confirmed` → `OutOfOrderError` | `src/marketdata/bar_builder.py::BarBuilder._check_order` | `tests/unit/test_bar_builder.py::test_out_of_order_is_rejected` |
+| 4 | Stateful per instance — one instance per symbol+interval | `src/marketdata/bar_builder.py::BarBuilder.__init__` | (architecture rule) |
 
 ## Related
 

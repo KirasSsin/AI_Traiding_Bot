@@ -131,11 +131,11 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | TRANSITIONS table-driven — no implicit if/else dispatch | `src/execution/state_machine.py` `TRANSITIONS` dict | `tests/unit/test_execution_fsm.py::test_transition_count_74` |
-| 2 | `(state, event) not in TRANSITIONS` → `IllegalTransitionError` | `src/execution/state_machine.py` `apply()` raises | `tests/unit/test_execution_fsm.py::test_illegal_transition` |
-| 3 | `WS_RECONNECT` valid for exactly 9 `_RECONCILABLE_STATES` | `src/execution/coordinator.py` `_RECONCILABLE_STATES` frozenset | `tests/unit/test_coordinator_on_ws_reconnect.py` |
-| 4 | `halt_log` write-ahead — written BEFORE `execution_state.halt_reason` update | migrations `0005_halt_persistence.sql` schema; `_repo._set_halt` order | `tests/unit/test_halt_persistence.py` |
-| 5 | `PARTIAL_FILL` state unreachable in v2 (preserved for SQLite warm-start back-compat only) | `src/execution/state_machine.py` PARTIAL_FILL — no inbound transitions in v2 | `tests/unit/test_execution_fsm_v2.py` |
+| 1 | TRANSITIONS table-driven — no implicit if/else dispatch | `src/execution/state_machine.py::TRANSITIONS` dict | `tests/unit/test_execution_fsm.py::test_transitions_count_exact` |
+| 2 | `(state, event) not in TRANSITIONS` → `IllegalTransitionError` | `src/execution/state_machine.py::apply` raises | `tests/unit/test_execution_fsm.py::test_illegal_transition_raises` |
+| 3 | `WS_RECONNECT` valid for exactly 9 `_RECONCILABLE_STATES` | `src/execution/coordinator.py::_RECONCILABLE_STATES` frozenset | `tests/unit/test_coordinator_on_ws_reconnect.py::test_on_ws_reconnect_flat_state_is_noop` |
+| 4 | `halt_log` write-ahead — written BEFORE `execution_state.halt_reason` update | `migrations/0005_halt_persistence.sql` schema; `src/execution/state_repo.py::_set_halt` order | `tests/unit/test_halt_persistence.py::test_set_halt_first_call_writes_column_and_log` |
+| 5 | `PARTIAL_FILL` state unreachable in v2 (preserved for SQLite warm-start back-compat only) | `src/execution/state_machine.py::ExecutionState.PARTIAL_FILL` — no inbound transitions in v2 | `tests/unit/test_execution_fsm_v2.py::test_transitions_count_exact_v2` |
 
 ## Related
 

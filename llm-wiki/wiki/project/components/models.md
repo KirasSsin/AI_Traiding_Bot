@@ -62,10 +62,10 @@ status: stable
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
-| 1 | `Signal.generated_at >= bar_close_time` — look-ahead pydantic validator | `src/core/models.py` Signal model_validator | `tests/property/test_lookahead.py` |
-| 2 | `Bar` OHLC UTC ns timestamps (no naive datetime) | `src/core/models.py` Bar model + ADR 0007 | `tests/unit/test_marketdata_models.py` |
-| 3 | `Order.executed_qty <= orig_qty` (no overfill) | `src/core/models.py` Order model_validator | `tests/unit/test_execution_models.py` |
-| 4 | `Fill` frozen (append-only, no mutation) | `src/core/models.py` Fill `model_config = {"frozen": True}` | `tests/unit/test_execution_models.py` |
+| 1 | `Signal.generated_at >= bar_close_time` — look-ahead pydantic validator | `src/signalgen/models.py::Signal` model_validator | `tests/property/test_lookahead.py::test_signal_generated_at_ge_bar_close_time` |
+| 2 | `Bar` OHLC UTC ns timestamps (no naive datetime) | `src/marketdata/models.py::Bar` model + ADR 0007 | `tests/unit/test_marketdata_models.py::test_bar_valid` |
+| 3 | `Order.executed_qty <= orig_qty` (no overfill) | `src/execution/models.py::Order` model_validator | `tests/unit/test_execution_models.py::test_order_executed_not_exceed_orig` |
+| 4 | `Fill` frozen (append-only, no mutation) | `src/execution/models.py::Fill` `model_config = {"frozen": True}` | `tests/unit/test_execution_models.py::test_fill_valid` |
 
 ## Usage
 
