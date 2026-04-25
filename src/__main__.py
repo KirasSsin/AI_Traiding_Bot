@@ -164,15 +164,58 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
 def _cmd_reconcile_only(args: argparse.Namespace) -> int:
     """Run bootstrap + reconcile, no trading loop.
 
-    TODO (T20 follow-up): full DI wiring (same blocker as `_cmd_run`).
+    Subset of _cmd_run DI graph — only Coordinator + Reconciler needed.
+    Closes S8a T20 STUB per ADR 0026 (S11 P0).
+
+    Returns:
+        0 — bootstrap clean exit;
+        1 — bootstrap failure (reconcile divergence или connectivity error).
     """
-    print(
-        "ERROR: `python -m src reconcile-only` is not yet wired. "
-        "Full bootstrap DI deferred to T20 integration test reference. "
-        f"args={vars(args)}",
-        file=sys.stderr,
+    from sqlite3 import Connection
+
+    settings = Settings()
+    symbol: str = args.symbol
+    base_coin = symbol[:-4] if symbol.endswith(("USDT", "USDC")) else symbol
+
+    # Database
+    mig_dir = Path(__file__).resolve().parent.parent / "migrations"
+    init_db(settings.db_path, mig_dir)
+    conn: Connection = connect(settings.db_path)
+
+    # REST + market adapter (placeholders — S12 will load filters via REST)
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
     )
-    return 1
+    filters = BybitFilters(
+        symbol=symbol,
+        step_size=Decimal("0.000001"),
+        tick_size=Decimal("0.01"),
+        min_order_qty=Decimal("0.00001"),
+        max_order_qty=Decimal("100"),
+        min_order_amt=Decimal("1"),
+    )
+    adapter = BybitMarketAdapter(rest=rest, filters=filters)
+
+    # State + reconciler + coordinator (no RuntimeManager, no Strategy, no RiskManager)
+    repo = ExecutionStateRepo(conn)
+    reconciler = Reconciler(query=adapter, base_coin=base_coin, symbol=symbol)
+    coordinator = Coordinator(
+        adapter=adapter,
+        repo=repo,
+        reconciler=reconciler,
+        symbol=symbol,
+        base_coin=base_coin,
+    )
+
+    try:
+        coordinator.bootstrap()
+        print(f"reconcile-only: bootstrap complete для {symbol}")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        print(f"ERROR: reconcile-only bootstrap failed: {e}", file=sys.stderr)
+        return 1
 
 
 def _cmd_kill(_args: argparse.Namespace) -> int:
