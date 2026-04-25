@@ -201,6 +201,31 @@ Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB
 
 ---
 
+## Anti-waste tool patterns (BINDING — see ~/.claude/CLAUDE.md sections 9b/9c)
+
+### Path verification before Read (section 9b)
+- Project root spelling: **`AI_Traiding_Bot`** (NOT `_Tool`/`_Trader`/`_Trading`). Common typo class.
+- `~/.claude/agent-memory/<agent>/MEMORY.md` may NOT exist on first dispatch — auto-created on first WRITE. Read failure = expected, не error.
+- Don't-retry rule: Read miss → `ls <parent>` OR surface "path missing". Max 1 retry per file ref.
+- Hook bash quirk: ALWAYS `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails.
+
+### Edit-after-Read invariant (section 9c — CRITICAL)
+
+**THE FORMULA:**
+```
+Edit к N files (N ≥ 1):
+   STEP 1 (mandatory): Read × N (parallel batch)
+   STEP 2: Edit × N (parallel batch)
+
+NEVER skip STEP 1. Each unread Edit = 3× cost (failed Edit + forced Read + retry Edit).
+```
+
+Real cost (S9 incident, 2026-04-25): batched Edit × 6 agents без batch Read → 5 fail → 17 tool calls instead of 12 = 30% waste.
+
+**Self-check before pressing send on multi-Edit message:** "Did я batch-Read all targets first?" If no → cancel batch → Read first.
+
+---
+
 ## Связь с Superpowers (code-workflow)
 
 **Сессия-старт (обязательно):**

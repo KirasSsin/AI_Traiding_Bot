@@ -108,6 +108,17 @@ L1: claude-mem + ccd_session (session bookends + chapter marks)
 
 Hard-limit ~25k токенов = ~90KB. Если файл > 50KB — `Read` с `offset`+`limit` или `Grep`-first. Полный список banned-from-full-read файлов → `~/.claude/CLAUDE.md` секция 9.
 
+## Anti-waste tool patterns (BINDING — CRITICAL)
+
+| Pattern | Rule | Cost on miss |
+|---------|------|--------------|
+| **Edit-after-Read** | Read × N batch THEN Edit × N batch (never skip STEP 1) | 3× per unread file |
+| **Path verification** | `AI_Traiding_Bot` exact spelling. Verify via `pwd` если doubt. Don't-retry on Read miss (max 1 retry). | hallucination compounds |
+| **MEMORY.md tolerance** | `~/.claude/agent-memory/<agent>/MEMORY.md` may NOT exist (created on first WRITE). | wasted Read |
+| **Hook bash quirk** | `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails. | push fails → debug cycle |
+
+Полные правила: `~/.claude/CLAUDE.md` sections 9b + 9c, `llm-wiki/CLAUDE.md` "Anti-waste tool patterns".
+
 ---
 
 **Полная методология** → `llm-wiki/CLAUDE.md` + `llm-wiki/wiki/project/architecture/development-workflow.md`.
