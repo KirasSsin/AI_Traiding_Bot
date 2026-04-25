@@ -73,6 +73,24 @@ def test_n_trials_1_unchanged_behavior() -> None:
     assert result_no_sigma == result_with_sigma
 
 
+def test_negative_sigma_sr_rejected() -> None:
+    """sigma_sr < 0 raises ValueError (std non-negative by definition).
+
+    Per quant-stats-reviewer T4 concern: negative sigma_sr would inflate DSR
+    rather than penalize. Need varied returns (var > 0) к reach sigma_sr guard
+    (constant returns trigger NaN guard первый).
+    """
+    trades = [
+        _make_trade(
+            pnl_pct=Decimal("0.01") if i % 2 == 0 else Decimal("-0.005"),
+            exit_offset_hours=i,
+        )
+        for i in range(1, 11)
+    ]
+    with pytest.raises(ValueError, match="sigma_sr must be >= 0"):
+        compute_dsr(trades, n_trials=5, sigma_sr=-0.1)
+
+
 def test_higher_n_trials_lowers_dsr() -> None:
     """Higher n_trials = stronger multi-testing penalty = lower DSR."""
     trades = [

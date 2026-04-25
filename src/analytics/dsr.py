@@ -115,6 +115,13 @@ def compute_dsr(
                 "compute_dsr: sigma_sr REQUIRED when n_trials > 1. "
                 "Caller must supply std of Sharpes across trials. See ADR 0025."
             )
+        if sigma_sr < 0:
+            # std deviation is non-negative by definition. Negative value would
+            # produce sharpe_star < benchmark (DSR inflated rather than penalized).
+            # Per quant-stats-reviewer T4 concern.
+            raise ValueError(
+                f"compute_dsr: sigma_sr must be >= 0, got {sigma_sr}"
+            )
         gamma = 0.5772156649  # Euler-Mascheroni
         z1 = float(stats.norm.ppf(1.0 - 1.0 / n_trials))
         z2 = float(stats.norm.ppf(1.0 - 1.0 / (n_trials * math.e)))
