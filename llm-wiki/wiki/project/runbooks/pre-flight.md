@@ -65,13 +65,21 @@ python -c "from src.platform.config import Settings; s = Settings(); from src.ri
 
 ### Gate 5: WFA baseline (optional но recommended)
 
+**Prerequisite:** Parquet OHLCV file для symbol+range must exist. If missing, run backfill first:
+
+```bash
+python -m src backfill --symbol BTCUSDT --from 2024-01-01 --to 2024-04-01
+```
+
+THEN run WFA:
+
 ```bash
 python -m src wfa --symbol BTCUSDT --start 2024-01-01 --end 2024-04-01
 ```
 
 **Expected:** JSON output с `acceptance_gate.passed`. If `passed: false`, strategy не fit для current data window — investigate before live.
 
-NOTE S11: `_load_ohlcv` is stub (S12 integrates real data path). Empty df returns exit 1 + WARNING.
+**FAIL if:** `FileNotFoundError: OHLCV Parquet missing` — run backfill (above) and retry.
 
 ## Recommended (warn if skipped)
 
