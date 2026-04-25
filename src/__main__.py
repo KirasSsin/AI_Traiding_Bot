@@ -325,6 +325,9 @@ def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
 
     S12 T2: closes S11 stub. Reuses existing data_collector pipeline.
     Operator must run `python -m src backfill --symbol <X>` to populate Parquet first.
+
+    S13 T4 (CC4): pre-flight NaN assertion — `df.dropna()` post-warmup must yield
+    >=90% bars else WFA aborts with explicit error.
     """
     parquet_path = f"data/{symbol}_1h.parquet"
     config = {
@@ -336,13 +339,24 @@ def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
         }
     }
     try:
-        return load_market_data(config)
+        df = load_market_data(config)
     except FileNotFoundError as e:
         raise FileNotFoundError(
             f"OHLCV Parquet missing at {parquet_path}. "
             f"Run 'python -m src backfill --symbol {symbol} --from {start} --to {end}' first. "
             f"Original error: {e}"
         ) from e
+
+    # CC4: pre-flight NaN assertion (>=90% bars retained after dropna)
+    if not df.empty:
+        retained_pct = len(df.dropna()) / len(df)
+        if retained_pct < 0.90:
+            raise ValueError(
+                f"NaN pre-flight failed for {symbol}: only {retained_pct:.1%} bars retained "
+                f"after dropna (threshold >=90%). Likely data quality issue; investigate Parquet."
+            )
+
+    return df
 
 
 def _cmd_wfa(args: argparse.Namespace) -> int:
