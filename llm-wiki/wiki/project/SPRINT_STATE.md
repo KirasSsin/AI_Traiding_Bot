@@ -3,9 +3,9 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
 sprint: 10
-phase: 3-planning
-branch: main
-tag: v0.1.0-alpha.9
+phase: 8-ship
+branch: feature/sprint-10-wfa-dsr-mc
+tag: v0.1.0-alpha.10
 ---
 
 # SPRINT STATE
