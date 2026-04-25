@@ -14,7 +14,7 @@ sources:
 
 > **For LLM agents:** этот файл = topic-grouped reverse lookup ("I'm reading X — what's related?"). Complementary к flat `index.md` alphabetic list. Use если читаешь one component и need related context.
 
-**TL;DR:** 27 component pages grouped по 9 domain clusters (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling). Each cluster has anchor (primary component) + supporting components. Cross-cluster relationships в "Bridge components" section.
+**TL;DR:** 31 component pages grouped по 10 domain clusters (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics). Each cluster has anchor (primary component) + supporting components. Cross-cluster relationships в "Bridge components" section.
 
 ## Cluster 1 — Market Data ingest
 
@@ -26,6 +26,7 @@ sources:
 | [[bybit-ws]] | pybit WebSocket callback → asyncio iteration мост (S2 legacy, replaced by ws-private-consumer for execution) |
 | [[bar-builder]] | venue-agnostic aggregator — confirm-gate + dedup + out-of-order + gap synthesis |
 | [[bar-poller]] | REST kline 5s cadence + stall detection (S8a) |
+| [[data-quality]] | REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1) |
 
 **Bridge to:** Storage (writes Parquet) → Strategy (consumer)
 
@@ -53,6 +54,7 @@ sources:
 | [[sizing]] | `compute_qty(equity, fraction, atr, price, k)` ATR-based pure function |
 | [[risk-override]] | Manual CB resume gate — HMAC-SHA256 signed JSON + config_hash anti-replay + atomic write 0o600 |
 | [[trade-history]] | Per-trade audit log — TradeRecord + TradeHistoryRepository + UNIQUE INDEX entry_signal_id (Kelly trade-count source) |
+| [[fill-history]] | Per-fill audit log — FillRecord + FillHistoryRepository (FK trade_history) + WS execution topic source (S9 Q3 B1) |
 
 **Bridge to:** Execution (approved Signal → Coordinator.start_bracket)
 
@@ -121,6 +123,16 @@ sources:
 | [[adr-agent-sync-hook]] | Block push если ADR changed но `~/.claude/agents/*.md` mtime not advanced (per ADR 0017) |
 | [[adr-index-sync-hook]] | Block push если new ADR не referenced в `wiki/index.md` |
 | [[wiki-broken-link-hook]] | Block push если changed wiki files содержат broken `[[link]]` refs (Bucket C7) |
+
+## Cluster 10 — Analytics (S9+ foundation)
+
+**Theme:** Statistical post-process modules. Sprint origin: S9 Q3 B2 (foundation).
+
+| Component | Role |
+|-----------|------|
+| **[[dsr]]** | Bailey & López de Prado Deflated Sharpe Ratio — pure-function on TradeRecord array. Pearson kurtosis + n_trials NYI v0.1. |
+
+**Bridge to:** Risk (consumes trade_history TradeRecord), future S10 walk-forward acceptance gate per ADR 0014
 
 ## Bridge components (multi-cluster owners)
 

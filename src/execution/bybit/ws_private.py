@@ -1,6 +1,6 @@
-"""Bybit V5 private WebSocket consumer — order + wallet topics.
+"""Bybit V5 private WebSocket consumer — order + wallet + execution topics.
 
-ADR 0021 sub-decision 6. Execution topic deferred to S8.
+ADR 0021 sub-decision 6. Execution topic added in S9 Q3 B1.
 """
 from __future__ import annotations
 
@@ -19,8 +19,17 @@ class _ReconcilerProto(Protocol):
     def on_wallet_event(self, evt: dict[str, Any]) -> None: ...
 
 
+class _FillRecorderProto(Protocol):
+    def on_fill_event(self, evt: dict[str, Any]) -> None: ...
+
+
 class BybitPrivateWSConsumer:
-    """Subscribes to `order` + `wallet` topics on Bybit V5 private stream."""
+    """Subscribes to `order` + `wallet` + `execution` topics on Bybit V5 private stream.
+
+    Execution topic added в S9 Q3 B1 — pure analytics ingestion (per-fill granularity).
+    Production wiring of concrete FillRecorder still pending (`__main__.py::_cmd_run`
+    is STUB since S8a — defer к operator-readiness sprint).
+    """
 
     _FILLED_STATUSES = ("Filled", "PartiallyFilled")
     _REQUIRED_FEE_FIELDS = ("cumExecFee", "feeCurrency")
@@ -33,12 +42,14 @@ class BybitPrivateWSConsumer:
         endpoint: str,
         coordinator: _CoordinatorProto,
         reconciler: _ReconcilerProto,
+        fill_recorder: _FillRecorderProto,  # NEW S9 Q3 B1
     ) -> None:
         self._api_key = api_key
         self._api_secret = api_secret
         self._endpoint = endpoint
         self._coordinator = coordinator
         self._reconciler = reconciler
+        self._fill_recorder = fill_recorder  # NEW
         self._ws: Any | None = None  # pybit WebSocket handle (lazy, untyped)
 
     def start(self) -> None:
@@ -60,6 +71,7 @@ class BybitPrivateWSConsumer:
         )
         self._ws.order_stream(callback=self._on_order_raw)
         self._ws.wallet_stream(callback=self._on_wallet_raw)
+        self._ws.execution_stream(callback=self._on_execution_raw)
         self._install_close_hook()
 
     def _install_close_hook(self) -> None:
@@ -134,6 +146,18 @@ class BybitPrivateWSConsumer:
                     self._reconciler.on_wallet_event(evt)
         except Exception:
             logger.exception("wallet event dispatch failed; dropping msg=%r", msg)
+
+    def _on_execution_raw(self, msg: dict[str, Any]) -> None:
+        """S9 Q3 B1 — dispatch each fill from Bybit V5 execution topic.
+
+        Mirror of _on_order_raw / _on_wallet_raw exception-swallowing pattern.
+        Raw fill dict passed verbatim to recorder; recorder owns parsing to FillRecord.
+        """
+        try:
+            for item in msg.get("data", []):
+                self._fill_recorder.on_fill_event(item)
+        except Exception:
+            logger.exception("execution event dispatch failed; dropping msg=%r", msg)
 
     def _parse_order(self, item: dict[str, Any]) -> dict[str, Any] | None:
         status = item.get("orderStatus", "")

@@ -24,7 +24,8 @@ class StateRepository:
         ).fetchone()
         if row is None:
             return None
-        return json.loads(row[0])
+        result: dict[str, Any] = json.loads(row[0])
+        return result
 
     def set(self, key: str, value: dict[str, Any]) -> None:
         with self._conn:

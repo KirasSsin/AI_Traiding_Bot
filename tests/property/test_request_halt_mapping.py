@@ -32,6 +32,7 @@ _REQUEST_HALT_CODES = frozenset({
     ReasonCode.KILL_SWITCH_REQUESTED,
     ReasonCode.HALT_RUNTIME_CRASH,
     ReasonCode.HALT_BAR_POLL_STALL,
+    ReasonCode.HALT_DATA_QUALITY,  # S9 Q1 — REST-vs-REST quality detector
 })
 
 

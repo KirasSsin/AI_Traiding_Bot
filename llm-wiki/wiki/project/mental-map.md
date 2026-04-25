@@ -139,6 +139,9 @@ sources:
 | ADR ↔ Agent prompt sync hook | `components/adr-agent-sync-hook.md` + `~/.claude/hooks/adr-agent-sync-check.sh` |
 | ADR ↔ Index sync hook | `components/adr-index-sync-hook.md` + `~/.claude/hooks/adr-index-sync-check.sh` |
 | Wiki broken-link sync hook | `components/wiki-broken-link-hook.md` + `~/.claude/hooks/wiki-broken-link-check.sh` (Bucket C7) |
+| Bar price quality detector (HALT_DATA_QUALITY) | `components/data-quality.md` + `src/marketdata/quality.py` (S9 Q1, REST-vs-REST) |
+| Per-fill audit + WS execution topic | `components/fill-history.md` + `src/risk/fill_history.py` (S9 Q3 B1) |
+| DSR (Deflated Sharpe Ratio, Bailey & López de Prado) | `components/dsr.md` + `src/analytics/dsr.py` (S9 Q3 B2, Pearson kurtosis) |
 | Orphan-audit grep (включая `tests/`) | `architecture/development-workflow.md` PHASE 8 step 5b |
 | Canonical counts sync HARD-GATE | `architecture/development-workflow.md` PHASE 8 step 5a |
 | PHASE 2 brainstorming binding protocol (trader-expert ROUND 1+2) | `architecture/development-workflow.md` PHASE 2 step 3 → `.claude/skills/brainstorm-init/SKILL.md` |

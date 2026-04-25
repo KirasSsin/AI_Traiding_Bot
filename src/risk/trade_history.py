@@ -6,7 +6,7 @@ Sprint 4 Task 7.
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from sqlite3 import Connection
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
@@ -99,7 +99,7 @@ class TradeHistoryRepository:
         )
 
     @staticmethod
-    def _row_to_record(row: tuple) -> TradeRecord:
+    def _row_to_record(row: tuple[Any, ...]) -> TradeRecord:
         return TradeRecord(
             trade_id=row[0],
             symbol=row[1],

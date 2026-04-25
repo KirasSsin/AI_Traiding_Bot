@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from src.marketdata.quality import BarPriceQualityDetector
 from src.platform.logging import get_logger
 from src.risk.reason_codes import ReasonCode
 from src.signalgen.models import SignalSide
@@ -49,6 +50,9 @@ class RuntimeManager:
         self._settings = settings
         self._stopping: bool = False
         self._kill_switch_path: Path = Path(settings.runtime_kill_switch_path)
+        self._quality_detector = BarPriceQualityDetector(
+            threshold_pct=settings.runtime_quality_threshold_pct
+        )
 
     def run(self) -> None:
         """Blocking entry-point with HALT_RUNTIME_CRASH guard.
@@ -142,6 +146,13 @@ class RuntimeManager:
             self._stopping = True
             return
         if bar is None:
+            return
+        # S9 Q1 — quality check BEFORE strategy consumes bar.
+        # _stopping=True matches stall + kill-switch patterns (lines 116, 146):
+        # halt is terminal, main loop must exit (else log storm at poll cadence).
+        if self._quality_detector.check(current_close=bar.close):
+            self._coordinator.request_halt(reason=ReasonCode.HALT_DATA_QUALITY)
+            self._stopping = True
             return
         logger.info("runtime.bar_tick", bar_close_ts=bar.close_time.isoformat())
         signal = self._strategy.on_bar(bar)

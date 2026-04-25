@@ -268,8 +268,8 @@ class RiskManager:
             return (0.5, 1.0)
         # Adjustment 2 — Wilson 95% CI lower bound as conservative p estimate
         p_lower, _ = wilson_95_ci(len(wins), len(recent))
-        avg_win = sum(t.pnl_quote for t in wins) / len(wins)
-        avg_loss = abs(sum(t.pnl_quote for t in losses) / len(losses))
+        avg_win = sum((t.pnl_quote for t in wins), start=Decimal(0)) / len(wins)
+        avg_loss = abs(sum((t.pnl_quote for t in losses), start=Decimal(0)) / len(losses))
         b = float(avg_win / avg_loss) if avg_loss > 0 else 1.0
         return (p_lower, b)
 
@@ -307,7 +307,7 @@ class RiskManager:
             qty=None,
             sl_price=None,
             tp_price=None,
-            kelly_phase=kelly_phase,  # type: ignore[arg-type]
+            kelly_phase=kelly_phase,
             kelly_fraction=kelly_fraction or Decimal("0"),
             halt_state=self._current_halt,
             reason_code=reason,
