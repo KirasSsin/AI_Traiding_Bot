@@ -76,21 +76,41 @@ class TradeHistoryRepository:
         return int(row[0])
 
     def load_recent(
-        self, *, window_days: int = 90, now: datetime | None = None
+        self,
+        *,
+        window_days: int = 90,
+        now: datetime | None = None,
+        symbol: str | None = None,
     ) -> list[TradeRecord]:
-        """Load trades with exit_ts >= (now - window_days)."""
+        """Load trades with exit_ts >= (now - window_days).
+
+        S15 T1: optional `symbol` filter prevents Kelly contamination across symbols.
+        Each per-symbol RiskManager passes its own `symbol` so wins/losses на ETH
+        не inflate BTC Kelly fraction. Backward-compat: symbol=None returns all.
+        """
         if window_days < 0:
             raise ValueError("window_days must be non-negative")
         cutoff = (now or datetime.now(UTC)) - timedelta(days=window_days)
-        rows = self._conn.execute(
-            """SELECT trade_id, symbol, entry_signal_id, entry_ts, exit_ts, qty,
-                      entry_price, exit_price, pnl_quote, pnl_pct, fees_paid,
-                      reason_code, kelly_phase, recorded_at
-               FROM trade_history
-               WHERE exit_ts >= ?
-               ORDER BY exit_ts ASC""",
-            (cutoff.isoformat(),),
-        ).fetchall()
+        if symbol is not None:
+            rows = self._conn.execute(
+                """SELECT trade_id, symbol, entry_signal_id, entry_ts, exit_ts, qty,
+                          entry_price, exit_price, pnl_quote, pnl_pct, fees_paid,
+                          reason_code, kelly_phase, recorded_at
+                   FROM trade_history
+                   WHERE exit_ts >= ? AND symbol = ?
+                   ORDER BY exit_ts ASC""",
+                (cutoff.isoformat(), symbol),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                """SELECT trade_id, symbol, entry_signal_id, entry_ts, exit_ts, qty,
+                          entry_price, exit_price, pnl_quote, pnl_pct, fees_paid,
+                          reason_code, kelly_phase, recorded_at
+                   FROM trade_history
+                   WHERE exit_ts >= ?
+                   ORDER BY exit_ts ASC""",
+                (cutoff.isoformat(),),
+            ).fetchall()
         return [self._row_to_record(r) for r in rows]
 
     def count(self) -> int:
