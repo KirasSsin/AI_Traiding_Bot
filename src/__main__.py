@@ -16,23 +16,133 @@ import argparse
 import os
 import sys
 from collections.abc import Callable
+from decimal import Decimal
 from pathlib import Path
+
+from src.execution.bybit.adapter import BybitMarketAdapter
+from src.execution.bybit.ws_private import BybitPrivateWSConsumer
+from src.execution.coordinator import Coordinator
+from src.execution.reconciler import Reconciler
+from src.execution.state_repo import ExecutionStateRepo
+from src.marketdata.bybit.rest import BybitRESTClient
+from src.marketdata.filters import BybitFilters
+from src.platform.config import Settings
+from src.platform.db import connect, init_db
+from src.risk.manager import RiskManager
+from src.runtime.bar_source import BarSource
+from src.runtime.manager import RuntimeManager
+from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
     """Wire all dependencies and start RuntimeManager.
 
-    TODO (T20 follow-up): full DI wiring. Current Coordinator/RuntimeManager
-    ctor signatures differ from plan-author assumptions (see plan lines 2166-2215).
-    Reference wiring: see tests/integration/test_runtime_smoke.py once T20 lands.
+    DI graph (per ADR 0026 + pre-s11-backlog C1, closes S8a T20 STUB):
+    Settings → REST client → BybitFilters (placeholders) → market adapter →
+    DB connection → state repo → reconciler → coordinator → bar source →
+    strategy → risk manager → WS consumer → RuntimeManager.run().
+
+    Symbol is taken from `--symbol` CLI arg (default BTCUSDT). base_coin is
+    derived from symbol suffix (BTCUSDT → BTC), mirroring the convention в
+    `Reconciler._derive_base_coin`.
+
+    BybitFilters constructed here с placeholder values; production wiring will
+    load filters via `BybitRESTClient.get_filters(symbol)` (deferred S12+).
+    FillRecorder = MagicMock-equivalent stub (production wiring deferred S12+).
+
+    Returns:
+        0 — clean exit;
+        130 — KeyboardInterrupt (SIGINT convention);
+        1 — runtime crash (unexpected Exception).
     """
-    print(
-        "ERROR: `python -m src run` is not yet wired. "
-        "Full RuntimeManager DI deferred to T20 integration test reference. "
-        f"args={vars(args)}",
-        file=sys.stderr,
+    from sqlite3 import Connection
+    from unittest.mock import MagicMock
+
+    settings = Settings()
+    symbol: str = args.symbol
+    # Derive base_coin from symbol suffix (BTCUSDT → BTC, BTCUSDC → BTC)
+    base_coin = symbol[:-4] if symbol.endswith(("USDT", "USDC")) else symbol
+
+    # Database
+    mig_dir = Path(__file__).resolve().parent.parent / "migrations"
+    init_db(settings.db_path, mig_dir)
+    conn: Connection = connect(settings.db_path)
+
+    # REST client + filters (placeholders — production loads via get_filters S12+)
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
     )
-    return 1
+    filters = BybitFilters(
+        symbol=symbol,
+        step_size=Decimal("0.000001"),
+        tick_size=Decimal("0.01"),
+        min_order_qty=Decimal("0.00001"),
+        max_order_qty=Decimal("100"),
+        min_order_amt=Decimal("1"),
+    )
+    adapter = BybitMarketAdapter(rest=rest, filters=filters)
+
+    # State + reconciler + coordinator
+    repo = ExecutionStateRepo(conn)
+    reconciler = Reconciler(query=adapter, base_coin=base_coin, symbol=symbol)
+    coordinator = Coordinator(
+        adapter=adapter,
+        repo=repo,
+        reconciler=reconciler,
+        symbol=symbol,
+        base_coin=base_coin,
+    )
+
+    # Strategy + risk manager
+    strategy = EmaCrossoverAdxRsiStrategy(
+        symbol=symbol,
+        ema_fast=settings.strategy_ema_fast,
+        ema_slow=settings.strategy_ema_slow,
+        adx_period=settings.strategy_adx_period,
+        adx_threshold=settings.strategy_adx_threshold,
+        rsi_period=settings.strategy_rsi_period,
+        rsi_oversold=settings.strategy_rsi_oversold,
+        rsi_overbought=settings.strategy_rsi_overbought,
+        atr_period=settings.strategy_atr_period,
+    )
+    risk_manager = RiskManager(conn=conn, settings=settings)
+
+    # Bar source + WS consumer (FillRecorder stub — production wiring S12+)
+    bar_source = BarSource(adapter=rest, symbol=symbol, interval="60")
+    fill_recorder_stub = MagicMock()
+    fill_recorder_stub.on_fill_event = lambda _evt: None
+
+    endpoint = "demo.bybit.com" if settings.testnet else "stream.bybit.com"
+    ws_consumer = BybitPrivateWSConsumer(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        endpoint=endpoint,
+        coordinator=coordinator,
+        reconciler=reconciler,
+        fill_recorder=fill_recorder_stub,
+    )
+
+    # RuntimeManager + run
+    rm = RuntimeManager(
+        coordinator=coordinator,
+        reconciler=reconciler,
+        ws_consumer=ws_consumer,
+        bar_source=bar_source,
+        strategy=strategy,
+        risk_manager=risk_manager,
+        settings=settings,
+    )
+
+    try:
+        rm.run()
+        return 0
+    except KeyboardInterrupt:
+        return 130
+    except Exception as e:  # noqa: BLE001
+        print(f"ERROR: runtime crash: {e}", file=sys.stderr)
+        return 1
 
 
 def _cmd_backfill(args: argparse.Namespace) -> int:
