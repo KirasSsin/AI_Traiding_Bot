@@ -223,8 +223,13 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
     ]
     df = pd.DataFrame(rows)
 
+    # S13 T2 data-integrity fix: explicit snappy + atomic tmp-rename
+    # (a) ADR 0003 mandates snappy — explicit args defend against pyarrow→fastparquet engine switch
+    # (b) Atomic write: tmp + Path.rename() — prevents partial file on crash during ~5min backfill
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(output_path, index=False)
+    tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+    df.to_parquet(tmp_path, index=False, compression="snappy", engine="pyarrow")
+    tmp_path.rename(output_path)
 
     print(f"backfill: wrote {len(df)} bars to {output_path}", flush=True)
     return 0
