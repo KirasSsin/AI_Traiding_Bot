@@ -28,7 +28,8 @@ class VectorBacktester:
             raise ValueError("DataFrame must contain a 'signal' column.")
 
         # Forward fill the signal to maintain the position (assuming 1 is long, -1 is short)
-        self.df["position"] = self.df["signal"].replace(0, method="ffill").fillna(0)
+        # NOTE (S10): pandas 3.x removed `replace(.., method="ffill")` — use replace→ffill chain.
+        self.df["position"] = self.df["signal"].replace(0, np.nan).ffill().fillna(0)
 
         # Calculate logarithmic returns of the asset
         self.df["asset_returns"] = np.log(self.df["close"] / self.df["close"].shift(1))
@@ -54,13 +55,13 @@ class VectorBacktester:
         total_return = (self.df["equity_curve"].iloc[-1] / self.initial_capital) - 1
         max_drawdown = self.df["drawdown"].max()
 
-        # Approximate Sharpe Ratio (assuming risk-free rate = 0, using daily freq as proxy if needed,
-        # but here we just do raw period Sharpe)
-        # N = periods per year (e.g. 365*24*60 for 1m data)
+        # N = periods per year for 1H bars: 365 * 24 = 8760
+        # NOTE (S10 fix): was sqrt(365*24*60) which assumed 1m bars — wrong для 1H BTCUSDT.
+        # Off by sqrt(60) ≈ 7.7×. Aligned с replay_engine._compute_metrics:51 convention.
         returns_mean = self.df["strategy_returns"].mean()
         returns_std = self.df["strategy_returns"].std()
         sharpe_ratio = (
-            (returns_mean / returns_std) * np.sqrt(365 * 24 * 60) if returns_std != 0 else 0
+            (returns_mean / returns_std) * np.sqrt(365 * 24) if returns_std != 0 else 0
         )
 
         kpis = {
