@@ -11,12 +11,15 @@ import pytest
 
 
 def _settings(tmp_path: Path):
+    from decimal import Decimal
+
     s = MagicMock()
     s.runtime_kill_switch_path = str(tmp_path / ".kill_switch")
     s.runtime_bar_poll_cadence_seconds = 5.0
     s.runtime_bar_poll_stall_threshold = 24
     s.runtime_ws_check_alive_max_silence = 30.0
     s.runtime_warmup_bars = 50
+    s.runtime_quality_threshold_pct = Decimal("0.005")  # NEW S9 Q1
     return s
 
 
@@ -456,3 +459,100 @@ def test_keyboard_interrupt_clean_shutdown(tmp_path):
     rm.run()  # KeyboardInterrupt is caught, NOT re-raised
     assert "KEYBOARD_INTERRUPT" in shutdown_calls
     coord.request_halt.assert_not_called()  # KeyboardInterrupt is not a CRASH
+
+
+def _bar_close(close_value: str, *, hour: int = 0):
+    """Build Bar with a custom close + close_time hour offset для quality tests."""
+    from src.marketdata.models import Bar, DataQuality
+
+    base_open = datetime(2026, 4, 25, 12 + hour, tzinfo=UTC)
+    base_close = datetime(2026, 4, 25, 13 + hour, tzinfo=UTC)
+    close = Decimal(close_value)
+    # OHLC invariants: high >= max(open, close), low <= min(open, close).
+    # Use close as both open and close для simplicity (flat bar).
+    return Bar(
+        symbol="BTCUSDT", interval="1h",
+        open_time=base_open, close_time=base_close,
+        open=close, high=close + Decimal("100"),
+        low=close - Decimal("100"), close=close,
+        volume=Decimal("1.0"), trade_count=0,
+        is_closed=True, data_quality=DataQuality.OK,
+    )
+
+
+def test_quality_detector_halts_on_consecutive_bar_deviation(tmp_path):
+    """S9 Q1: After two bar polls with >0.5% deviation, RuntimeManager
+    calls coordinator.request_halt(HALT_DATA_QUALITY).
+    """
+    from src.execution.state_machine import ExecutionState
+    from src.risk.reason_codes import ReasonCode
+    from src.runtime.manager import RuntimeManager
+
+    coord = MagicMock()
+    coord._symbol = "BTCUSDT"
+    # State row stays FLAT — strategy / risk path not relevant for this test
+    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+
+    bar1 = _bar_close("100000", hour=0)
+    bar2 = _bar_close("100600", hour=1)  # +0.6% from bar1.close
+    bs = MagicMock()
+    bs.poll.side_effect = [bar1, bar2]
+    bs.consecutive_failures = 0
+    bs.should_halt.return_value = False
+
+    strat = MagicMock()
+    strat.on_bar.return_value = None  # FLAT signal
+
+    rm = RuntimeManager(
+        coordinator=coord,
+        reconciler=MagicMock(),
+        ws_consumer=MagicMock(),
+        bar_source=bs,
+        strategy=strat,
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm._poll_bar_and_strategy()  # bar1 → establishes baseline
+    rm._poll_bar_and_strategy()  # bar2 → triggers halt
+
+    coord.request_halt.assert_called_with(reason=ReasonCode.HALT_DATA_QUALITY)
+
+
+def test_quality_detector_within_threshold_continues_strategy(tmp_path):
+    """S9 Q1: 0.4% deviation <0.5% threshold → no halt, strategy invoked."""
+    from src.execution.state_machine import ExecutionState
+    from src.runtime.manager import RuntimeManager
+
+    coord = MagicMock()
+    coord._symbol = "BTCUSDT"
+    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+
+    bar1 = _bar_close("100000", hour=0)
+    bar2 = _bar_close("100400", hour=1)  # +0.4%
+    bs = MagicMock()
+    bs.poll.side_effect = [bar1, bar2]
+    bs.consecutive_failures = 0
+    bs.should_halt.return_value = False
+
+    strat = MagicMock()
+    strat.on_bar.return_value = None
+
+    rm = RuntimeManager(
+        coordinator=coord,
+        reconciler=MagicMock(),
+        ws_consumer=MagicMock(),
+        bar_source=bs,
+        strategy=strat,
+        risk_manager=MagicMock(),
+        settings=_settings(tmp_path),
+    )
+    rm._poll_bar_and_strategy()
+    rm._poll_bar_and_strategy()
+
+    # No HALT_DATA_QUALITY call
+    from src.risk.reason_codes import ReasonCode
+    halt_calls = [c for c in coord.request_halt.call_args_list
+                  if c.kwargs.get("reason") == ReasonCode.HALT_DATA_QUALITY]
+    assert len(halt_calls) == 0
+    # Strategy invoked twice (no skip)
+    assert strat.on_bar.call_count == 2

@@ -136,6 +136,14 @@ class Settings(BaseSettings):
         default=50,
         description="Catch-up bars fed to strategy.warmup() (no signal emit). ADR 0022 sub-decision 2.",
     )
+    runtime_quality_threshold_pct: Decimal = Field(
+        default=Decimal("0.005"),
+        description=(
+            "Bar price quality threshold (relative deviation, default 0.5%). "
+            "S9 Q1 — REST-vs-REST consecutive bar quality detector. "
+            "Triggers HALT_DATA_QUALITY via Coordinator.request_halt."
+        ),
+    )
 
     @model_validator(mode="after")
     def _runtime_validators(self) -> "Settings":
