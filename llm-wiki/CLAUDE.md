@@ -325,7 +325,7 @@ L1: Memory continuity (claude-mem / consolidate-memory) — session bookends + c
 ### Curated agent set (~/.claude/agents/)
 
 **Active (6) — per ADR 0017:**
-- `python-reviewer` (sonnet) — generic Python review
+- `python-reviewer` (**haiku** — downgraded post-S13 для cost efficiency, mechanical PEP 8/types/imports + ruff/mypy pre-gate) — generic Python review
 - `data-integrity-reviewer` (sonnet) — SQLite/Parquet/migrations
 - `quant-stats-reviewer` (sonnet 4.6, **effort:max**) — формулы/Wilson/Kelly/MC/CB
 - `trading-logic-reviewer` (sonnet 4.6) — look-ahead/FSM/venue/reason codes
@@ -383,7 +383,7 @@ L1: Memory continuity (claude-mem / consolidate-memory) — session bookends + c
 | `trading-logic-reviewer` | `src/signalgen/`, `src/execution/`, `src/backtest/`, `src/risk/` | sonnet 4.6 |
 | `quant-stats-reviewer` | `src/signalgen/indicators.py`, `src/risk/`, `src/backtest/`, `src/analytics/` | sonnet 4.6 (effort:max) |
 | `data-integrity-reviewer` | `src/marketdata/`, `src/platform/storage/`, `migrations/` | sonnet |
-| `python-reviewer` | любые `*.py` (generic safety net, после domain) | sonnet |
+| `python-reviewer` | любые `*.py` (generic safety net, после domain) | **haiku** (downgraded post-S13 — mechanical checks + ruff/mypy pre-gate) |
 | `architecture-reviewer` | cross-module refactor, concurrency model change (async migration, lock policy), DI patterns, component decomposition, API stability, performance patterns | sonnet 4.6 |
 
 Scope каждого агента — в самом agent prompt. Матрица "спринт → агенты": [[wiki/project/decisions/0017-review-agent-harness]].
