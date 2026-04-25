@@ -3,9 +3,9 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 13
-phase: 4-execution
-branch: feature/sprint-13-backfill-wfa
-tag: v0.1.0-alpha.12
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.13
 ---
 
 # SPRINT STATE
@@ -15,42 +15,30 @@ tag: v0.1.0-alpha.12
 
 ## Текущий статус
 
-**Между спринтами. S12 shipped (PR #20 → squash-merged, tag `v0.1.0-alpha.12`).** 14 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12.
+**Между спринтами. S13 shipped (tag `v0.1.0-alpha.13`).** 15 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13.
 
-## Последний спринт (S12 — Live demo validation 24-72h + production wiring)
+## Последний спринт (S13 — Backfill 5y + WFA T1-T6 measurement)
 
-6 TDD tasks, 8 commits squash-merged. Closed S11 carry-overs:
-- T1 (044dad8) FillRecorderAdapter (closes _NoopFillRecorder stub) — 2-layer pattern (audit + best-effort DB)
-- T2 (5d94c1a) `_load_ohlcv` Parquet shim (data_collector config-dict translation)
-- T3 (8f4dd1e) pre-flight Gate 5 backfill prerequisite + halt-recovery P1+OCO_ARMED conditional escalation
-- T4 (51dc3c4) live-demo-validation.md operator playbook (48h Bybit demo + multi-criteria + zero-trade clause)
-- T5 (bd172e1) halt-response-protocol.md (P0 wake + alpha.11 rollback + RC tag iteration)
-- T6 (e99c36a) wiki sync (ADR 0027 accepted + sprint-12 page + counts ADR 26→27, sprint pages 13→14, components 35→36 + fill-recorder-adapter component page)
+8 TDD tasks, 12 commits. Verdict: **FAIL** (4/6 criteria failed).
+- T1-T3: Bybit data probe + backfill wire + 42098 bars (4.81y)
+- T4: NaN pre-flight assertion
+- T5: trade_extractor (DataFrame→TradeRecord bridge)
+- T6: strategy_metrics (T1-T6 extraction) + BLOCKER fix (MaxDD initial_capital)
+- T7: _cmd_wfa measurement wired — verdict=FAIL (T1=-44.46, T2=-101.38, T3=1.27% PASS, T4 RR=0.797 FAIL, T5 n=20 FAIL, T6=1.136 PASS)
+- T8: PHASE 8 wiki sync
 
-Tests: 680→689 unit (+9). FSM/counts unchanged (16/30/74/45). Q7 zero-migration preserved alpha.11 binary rollback compat.
+Tests: 689→712 unit (+23). FSM/counts unchanged (16/30/74/45). Q7-S12 zero-migration preserved.
+
+**Critical finding:** Sample size NOT data-span-bounded. ~1 trade per 10 days regardless of data span. T5 n>=100 unreachable without strategy revision.
 
 ## Следующее действие
 
 ```
-S13 PHASE 4 in flight (per ADR 0028):
-- T1 probe ✅ — earliest Bybit 1H BTCUSDT = 2021-07-02 16:00 UTC, target span = ~4.8y
-- T2 backfill wire ✅ (commit 4a1b56b с snappy + atomic rename per data-integrity)
-- T3 backfill run ✅ — 42098 bars, 2021-07-03→2026-04-25, span 4.81y (ADR 0028 floor 3.5y MET)
-  * Span: 2021-07-03 → 2026-04-24 = ~4.8y (ADR 0028 ESC-2: below 5y target, above 3.5y floor)
-- T4 NaN preflight ✅ (commit e4439e1)
-- T5 trade_extractor ✅, T6 strategy_metrics ✅ (prior commits)
-- T7 measurement ✅ verdict=FAIL:
-  * T1 Sharpe OOS: -44.46 (< 1.0 threshold) → FAIL
-  * T2 Sortino OOS: -101.38 (< 1.5 threshold) → FAIL
-  * T3 MaxDD: 1.27% (< 25% threshold) → PASS
-  * T4 win_rate=0.30, avg_rr=0.797 (avg_rr < 1.5) → FAIL
-  * T5 n_trades=20 (< 100 required) → FAIL
-  * T6 OOS/IS Sharpe ratio mean: 1.136 (>= 0.7) → PASS
-  * DSR: 0.0445 (N_trials=1, dsr_pass=True — DSR > 0)
-  * MC p-value: 0.048 (< 0.05, gate passed)
-  * failed_criteria: [t1, t2, t4, t5]
-  * Note: only 20 OOS trades across 5 folds (4 trades/fold avg) — strategy generates insufficient signal frequency
-- T8 PHASE 8 ship pending (next)
+S15 brainstorm (operator decides direction):
+- Per ADR 0028 Q7 ESC-1=c: case-by-case at S15
+- Possible paths: (a) strategy revision, (b) honest "no edge" close,
+  (c) multi-symbol expansion, (d) signal frequency tuning (look-ahead risk)
+- S14 = intermediate sprint if needed before S15 brainstorm
 ```
 
 ## Carry-over к S13+

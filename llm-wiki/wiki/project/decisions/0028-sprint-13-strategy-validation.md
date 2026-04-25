@@ -13,7 +13,7 @@ sources:
   - project/decisions/0027-sprint-12-live-demo-validation.md
   - project/architecture/acceptance-criteria.md
   - project/architecture/migration-plan.md
-status: proposed
+status: accepted
 ---
 
 # 0028. Sprint 13 — Strategy validation (5y backfill + WFA T1-T6 measurement)

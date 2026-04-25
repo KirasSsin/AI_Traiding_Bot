@@ -848,3 +848,61 @@ Wiki sync (1):
 ### Roadmap
 
 S13 = TBD post 48h operator-driven validation results. Likely scope: FillRecorder Layer 2 schema link (S12 acknowledged gap) + slippage validation gaps + S12 carry-overs.
+
+## [2026-04-26] sprint-end | Sprint 13 — Backfill 5y + WFA T1-T6 measurement
+
+### Phase 2 brainstorming verdicts (binding)
+
+8 questions, trader-expert ROUND 1 (NO ROUND 2 needed):
+- Q1 CONFIRM, Q2 EXPAND, Q3 CONFIRM, Q4 REVISE-FACTUAL (spec inconsistency caught), Q5 CONFIRM, Q6 CONFIRM, Q7 REVISE -> user REJECTED, Q8 CONFIRM
+- ESC-1=c (defer pattern preserved), ESC-2 (tiered 5y, floor 3.5y MET)
+- Spec reconciliation (CC4): acceptance-criteria.md amended с footnotes 1+2+3
+
+### Tasks (8, 12 commits squash-merged)
+
+- T1 Bybit data probe (d8e6930): earliest 1H BTCUSDT = 2021-07-02
+- T2 _cmd_backfill wire (59ef6fc + 4a1b56b snappy/atomic)
+- (21604af) get_klines pagination bug fix — Bybit V5 end-anchored
+- T3 backfill run (33ad6c5): 42098 bars, 4.81y
+- T4 NaN pre-flight (e4439e1)
+- T5 trade_extractor (a2f1e07)
+- T6 strategy_metrics + BLOCKER fix (5908682 + 1f7124a)
+- T7 wire measurement + verdict (eb83650)
+- T8 PHASE 8 wiki sync (this commit)
+
+### Verdict result
+
+**FAIL** — T1=-44.46, T2=-101.38, T3=1.27%, T4 win=0.30 RR=0.797, T5 n_trades=20 (FAIL <100), T6=1.136 (PASS), DSR=0.0445 (PASS), MC p=0.048 (PASS). Failed: [t1, t2, t4, t5].
+
+**Critical insight:** Sample size NOT data-span-bounded. Strategy fires ~1 trade per 10 days regardless of 2.2y vs 4.8y data span. T5 n_trades floor (>=100) unreachable without strategy revision.
+
+### Tests / quality
+
+- pytest: 712 passed (689 baseline + 23 new across T2/T4/T5/T6 + 1 pagination test)
+- mypy --strict src/: clean
+- ruff: clean on touched files
+- Q7-S12 zero-migration preserved
+
+### Wiki updates
+
+- 2 NEW component pages (trade-extractor, strategy-metrics)
+- 1 NEW ADR (0028 — accepted)
+- 1 NEW sprint page (this)
+- Modified: __main__.py (3 wiring changes) + bybit/rest.py (pagination fix) + acceptance-criteria.md (footnotes)
+
+### Reviewers
+
+- T2 python + data-integrity (parallel MANDATORY) — APPROVED с 6 non-blocking concerns
+- T5 quant-stats — APPROVED с 3 non-blocking
+- T6 quant-stats — BLOCKER (T3 MaxDD initial_capital) -> fixed inline (1f7124a)
+
+### Carry-over к S14+
+
+- ESC-1 decision moment: PASS path (S14 = Mainnet pilot) OR pivot path (revision/abandon) — defer per Q7
+- All S12 carry-overs still unaddressed (10 items)
+- T2/T5/T6 quant-stats deferred concerns
+- DSR threshold calibration (still S15+ per S11 Q5)
+
+### Roadmap
+
+S15 brainstorm input: S13 verdict=FAIL on 4.81y data. Strategy fires too rarely for T5. Operator (user) decides direction at S15 brainstorm — possible paths: (a) strategy revision, (b) honest "no edge" close, (c) multi-symbol expansion, (d) signal frequency tuning (look-ahead risk).
