@@ -434,3 +434,33 @@ Skills not active в текущей session — нужен restart claude code �
 ### Next action
 
 После restart: continue с PR-A (verification pass) ИЛИ PR-D+E (architecture-reviewer + TIER A). PR-B deferred к больше time budget.
+
+---
+
+## [2026-04-25] session-end | Pre-S9 debugging batch (PR-α/β/γ + audit)
+
+### Shipped (4 commits, 3 PRs + 1 direct main)
+
+- **PR #14 PR-α** (`5cb84c3`): Kit conflict audit (verdict: 0 conflicts, only 3 stale facts) + Verification pass — 13 component pages, 52 anchors `:LINE` → `function::name`, 4 honest `(no test yet — TODO)` markers. Drift prevention.
+- **PR #15 PR-β** (`876be51`): NEW 6th agent `architecture-reviewer` (sonnet 4.6) — closes cross-module/concurrency review gap. TIER A apply к ALL 6 reviewers: `memory: project` (institutional knowledge accumulation in `.claude/agent-memory/<agent>/MEMORY.md`) + Sprint context priming section (mandatory canonical loads at dispatch start). `effort: max` для trader-expert + quant-stats only (critical reasoning paths).
+- **PR #16 PR-γ** (`98d0c40`): F1 halt-recovery.md extended 9 → 19 halt codes (5 class groups: Drawdown / Operational / OCO-bracket / Bootstrap-reconcile / Runtime; 2-tier severity: CRITICAL = full diagnosis SQL+REST+recovery, RECOVERABLE = abbreviated symptoms+actions+escalation). B2+B3: Block 1↔Block 2 sync HARD-GATE step 5c added к dev-workflow.md PHASE 8 + sprint-finish skill Step 4.
+- **Audit follow-up** (`7c28a6d`, direct main): trader-expert cross-link audit verified 2 real gaps (CC1 caught trader hallucinated TBD claim — actual counts 74/45 correct). Fixed: repo CLAUDE.md 5→6 reviewers, 5 halt-emitter components linked к halt-recovery runbook.
+
+### Key decisions logged
+
+- **PR-γ F1 trader iterative justify ROUND 2:** maintainer over-classified — HALT_DRAWDOWN_L1 НЕ halt (just elevated risk), HALT_BOOTSTRAP_AMBIGUOUS = CRITICAL (not RECOVERABLE). Trader CONFIRM_REVISE BINDING.
+- **B1 anti-pattern caught:** Explore subagent recommended creating page для `src/core/models.py`. Maintainer CC1 verification (grep src/ tests/) confirmed orphan → defer cleanup к S9. **0 new pages needed.**
+- **Trader audit hallucination:** Subagent fabricated tool_use/tool_response blocks (claimed current-state.md had `TBD` values). Maintainer direct grep showed actual = 74 transitions / 45 reason codes (correct). CC1 verification protocol prevents applying false claims. Lesson: ALWAYS verify subagent claims via independent grep BEFORE applying.
+
+### Session metrics
+
+- 4 commits shipped (3 PRs squash-merged + 1 direct main)
+- ~36 wiki/skill files touched
+- 0 src/ changes (pure docs/skills/methodology batch)
+- pytest 589 passed / 24 skipped / 0 failed (S8c baseline maintained)
+- Canonical counts unchanged: states=16, events=30, transitions=74, reason_codes=45
+- 7/28 component pages now link halt-recovery runbook (was 4/28) — improved 1-hop discovery для operator workflows
+
+### Next action
+
+Begin S9 brainstorm — `brainstorm-init` skill auto-fires on "брейнштурм S9" / "ориентируйся" / scope decision triggers. Trader-expert ROUND 1 questionnaire с carry-over scope (mypy batch / broken-link audit / further architecture-reviewer integration).
