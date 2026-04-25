@@ -27,7 +27,11 @@ logger = get_logger(__name__)
 
 
 class BarPriceQualityDetector:
-    """Stateless detector — caller owns persistence of last_close baseline.
+    """Single-instance in-memory baseline detector. Baseline lost on restart.
+
+    Class holds `_last_close` instance state — it is NOT stateless.
+    "Single-instance" means per-process: each restart starts fresh без baseline.
+    No persistence layer (acceptable для v0.1 single-process runtime).
 
     Usage:
         det = BarPriceQualityDetector(threshold_pct=Decimal("0.005"))
@@ -60,11 +64,15 @@ class BarPriceQualityDetector:
             return False  # Defensive: avoid division by zero or negative anchor
         deviation_pct = abs(current_close - prior) / prior
         if deviation_pct > self._threshold_pct:
+            # Quantize к 6 d.p. для log hygiene (Decimal division can produce
+            # 50+ digit results). Comparison uses raw precision; only log output
+            # rounded.
+            deviation_q = deviation_pct.quantize(Decimal("0.000001"))
             logger.warning(
                 "data_quality.deviation_exceeds_threshold",
                 prior_close=str(prior),
                 current_close=str(current_close),
-                deviation_pct=str(deviation_pct),
+                deviation_pct=str(deviation_q),
                 threshold_pct=str(self._threshold_pct),
             )
             return True

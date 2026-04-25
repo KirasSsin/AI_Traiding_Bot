@@ -7,7 +7,6 @@ from __future__ import annotations
 from decimal import Decimal
 
 import pytest
-
 from src.marketdata.quality import BarPriceQualityDetector
 
 
