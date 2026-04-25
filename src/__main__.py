@@ -22,6 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.backtest.data_collector import load_market_data
 from src.backtest.mc_permutation import sign_flip_p_value
 from src.backtest.replay_engine import run_replay
 from src.backtest.walk_forward import (
@@ -255,12 +256,29 @@ def _cmd_kill(_args: argparse.Namespace) -> int:
     return 0
 
 
-def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:  # noqa: ARG001
-    """Stub OHLCV loader. Production: read из Parquet OR REST kline.
+def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
+    """Load OHLCV from Parquet via data_collector.
 
-    For S11 — placeholder. S12 F integrates real backfill data path.
+    S12 T2: closes S11 stub. Reuses existing data_collector pipeline.
+    Operator must run `python -m src backfill --symbol <X>` to populate Parquet first.
     """
-    return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
+    parquet_path = f"data/{symbol}_1h.parquet"
+    config = {
+        "data": {
+            "source": "parquet",
+            "parquet_path": parquet_path,
+            "start_date": start,
+            "end_date": end,
+        }
+    }
+    try:
+        return load_market_data(config)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f"OHLCV Parquet missing at {parquet_path}. "
+            f"Run 'python -m src backfill --symbol {symbol} --from {start} --to {end}' first. "
+            f"Original error: {e}"
+        ) from e
 
 
 def _cmd_wfa(args: argparse.Namespace) -> int:
