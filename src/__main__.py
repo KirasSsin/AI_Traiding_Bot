@@ -14,25 +14,156 @@ from __future__ import annotations
 
 import argparse
 import os
+import sqlite3
 import sys
 from collections.abc import Callable
+from decimal import Decimal
 from pathlib import Path
+
+import pandas as pd
+
+from src.backtest.mc_permutation import sign_flip_p_value
+from src.backtest.replay_engine import run_replay
+from src.backtest.walk_forward import (
+    WalkForwardRunner,
+    WindowSplitter,
+    evaluate_acceptance_gate,
+)
+from src.backtest.wfa_reporter import format_wfa_report
+from src.execution.bybit.adapter import BybitMarketAdapter
+from src.execution.bybit.ws_private import BybitPrivateWSConsumer
+from src.execution.coordinator import Coordinator
+from src.execution.reconciler import Reconciler
+from src.execution.state_repo import ExecutionStateRepo
+from src.marketdata.bybit.rest import BybitRESTClient
+from src.marketdata.filters import BybitFilters
+from src.platform.config import Settings
+from src.platform.db import connect, init_db
+from src.risk.manager import RiskManager
+from src.runtime.bar_source import BarSource
+from src.runtime.manager import RuntimeManager
+from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
     """Wire all dependencies and start RuntimeManager.
 
-    TODO (T20 follow-up): full DI wiring. Current Coordinator/RuntimeManager
-    ctor signatures differ from plan-author assumptions (see plan lines 2166-2215).
-    Reference wiring: see tests/integration/test_runtime_smoke.py once T20 lands.
+    DI graph (per ADR 0026 + pre-s11-backlog C1, closes S8a T20 STUB):
+    Settings → REST client → BybitFilters (placeholders) → market adapter →
+    DB connection → state repo → reconciler → coordinator → bar source →
+    strategy → risk manager → WS consumer → RuntimeManager.run().
+
+    Symbol is taken from `--symbol` CLI arg (default BTCUSDT). base_coin is
+    derived from symbol suffix (BTCUSDT → BTC), mirroring the convention в
+    `Reconciler._derive_base_coin`.
+
+    BybitFilters constructed here с placeholder values; production wiring will
+    load filters via `BybitRESTClient.get_filters(symbol)` (deferred S12+).
+    FillRecorder = MagicMock-equivalent stub (production wiring deferred S12+).
+
+    Returns:
+        0 — clean exit;
+        130 — KeyboardInterrupt (SIGINT convention);
+        1 — runtime crash (unexpected Exception).
     """
-    print(
-        "ERROR: `python -m src run` is not yet wired. "
-        "Full RuntimeManager DI deferred to T20 integration test reference. "
-        f"args={vars(args)}",
-        file=sys.stderr,
+    from sqlite3 import Connection
+    from typing import Any as _Any
+
+    class _NoopFillRecorder:
+        """No-op FillRecorder stub satisfying _FillRecorderProto.
+
+        S11 placeholder — production wiring deferred к S12 (per architecture-reviewer
+        T2 concern C2: replace MagicMock anti-pattern с simple class).
+        Conforms structurally к src.execution.bybit.ws_private._FillRecorderProto.
+        """
+
+        def on_fill_event(self, evt: dict[str, _Any]) -> None:  # noqa: ARG002
+            return None
+
+    settings = Settings()
+    symbol: str = args.symbol
+    # Derive base_coin from symbol suffix (BTCUSDT → BTC, BTCUSDC → BTC)
+    base_coin = symbol[:-4] if symbol.endswith(("USDT", "USDC")) else symbol
+
+    # Database
+    mig_dir = Path(__file__).resolve().parent.parent / "migrations"
+    init_db(settings.db_path, mig_dir)
+    conn: Connection = connect(settings.db_path)
+
+    # REST client + filters (placeholders — production loads via get_filters S12+)
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
     )
-    return 1
+    filters = BybitFilters(
+        symbol=symbol,
+        step_size=Decimal("0.000001"),
+        tick_size=Decimal("0.01"),
+        min_order_qty=Decimal("0.00001"),
+        max_order_qty=Decimal("100"),
+        min_order_amt=Decimal("1"),
+    )
+    adapter = BybitMarketAdapter(rest=rest, filters=filters)
+
+    # State + reconciler + coordinator
+    repo = ExecutionStateRepo(conn)
+    reconciler = Reconciler(query=adapter, base_coin=base_coin, symbol=symbol)
+    coordinator = Coordinator(
+        adapter=adapter,
+        repo=repo,
+        reconciler=reconciler,
+        symbol=symbol,
+        base_coin=base_coin,
+    )
+
+    # Strategy + risk manager
+    strategy = EmaCrossoverAdxRsiStrategy(
+        symbol=symbol,
+        ema_fast=settings.strategy_ema_fast,
+        ema_slow=settings.strategy_ema_slow,
+        adx_period=settings.strategy_adx_period,
+        adx_threshold=settings.strategy_adx_threshold,
+        rsi_period=settings.strategy_rsi_period,
+        rsi_oversold=settings.strategy_rsi_oversold,
+        rsi_overbought=settings.strategy_rsi_overbought,
+        atr_period=settings.strategy_atr_period,
+    )
+    risk_manager = RiskManager(conn=conn, settings=settings)
+
+    # Bar source + WS consumer (FillRecorder stub — production wiring S12+)
+    bar_source = BarSource(adapter=rest, symbol=symbol, interval="60")
+    fill_recorder_stub = _NoopFillRecorder()
+
+    endpoint = "demo.bybit.com" if settings.testnet else "stream.bybit.com"
+    ws_consumer = BybitPrivateWSConsumer(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        endpoint=endpoint,
+        coordinator=coordinator,
+        reconciler=reconciler,
+        fill_recorder=fill_recorder_stub,
+    )
+
+    # RuntimeManager + run
+    rm = RuntimeManager(
+        coordinator=coordinator,
+        reconciler=reconciler,
+        ws_consumer=ws_consumer,
+        bar_source=bar_source,
+        strategy=strategy,
+        risk_manager=risk_manager,
+        settings=settings,
+    )
+
+    try:
+        rm.run()
+        return 0
+    except KeyboardInterrupt:
+        return 130
+    except Exception as e:  # noqa: BLE001
+        print(f"ERROR: runtime crash: {e}", file=sys.stderr)
+        return 1
 
 
 def _cmd_backfill(args: argparse.Namespace) -> int:
@@ -44,15 +175,58 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
 def _cmd_reconcile_only(args: argparse.Namespace) -> int:
     """Run bootstrap + reconcile, no trading loop.
 
-    TODO (T20 follow-up): full DI wiring (same blocker as `_cmd_run`).
+    Subset of _cmd_run DI graph — only Coordinator + Reconciler needed.
+    Closes S8a T20 STUB per ADR 0026 (S11 P0).
+
+    Returns:
+        0 — bootstrap clean exit;
+        1 — bootstrap failure (reconcile divergence или connectivity error).
     """
-    print(
-        "ERROR: `python -m src reconcile-only` is not yet wired. "
-        "Full bootstrap DI deferred to T20 integration test reference. "
-        f"args={vars(args)}",
-        file=sys.stderr,
+    from sqlite3 import Connection
+
+    settings = Settings()
+    symbol: str = args.symbol
+    base_coin = symbol[:-4] if symbol.endswith(("USDT", "USDC")) else symbol
+
+    # Database
+    mig_dir = Path(__file__).resolve().parent.parent / "migrations"
+    init_db(settings.db_path, mig_dir)
+    conn: Connection = connect(settings.db_path)
+
+    # REST + market adapter (placeholders — S12 will load filters via REST)
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
     )
-    return 1
+    filters = BybitFilters(
+        symbol=symbol,
+        step_size=Decimal("0.000001"),
+        tick_size=Decimal("0.01"),
+        min_order_qty=Decimal("0.00001"),
+        max_order_qty=Decimal("100"),
+        min_order_amt=Decimal("1"),
+    )
+    adapter = BybitMarketAdapter(rest=rest, filters=filters)
+
+    # State + reconciler + coordinator (no RuntimeManager, no Strategy, no RiskManager)
+    repo = ExecutionStateRepo(conn)
+    reconciler = Reconciler(query=adapter, base_coin=base_coin, symbol=symbol)
+    coordinator = Coordinator(
+        adapter=adapter,
+        repo=repo,
+        reconciler=reconciler,
+        symbol=symbol,
+        base_coin=base_coin,
+    )
+
+    try:
+        coordinator.bootstrap()
+        print(f"reconcile-only: bootstrap complete для {symbol}")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        print(f"ERROR: reconcile-only bootstrap failed: {e}", file=sys.stderr)
+        return 1
 
 
 def _cmd_kill(_args: argparse.Namespace) -> int:
@@ -83,6 +257,152 @@ def _cmd_kill(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:  # noqa: ARG001
+    """Stub OHLCV loader. Production: read из Parquet OR REST kline.
+
+    For S11 — placeholder. S12 F integrates real backfill data path.
+    """
+    return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
+
+
+def _cmd_wfa(args: argparse.Namespace) -> int:
+    """Run Walk-Forward Analysis + report.
+
+    Subcommand: python -m src wfa --symbol BTCUSDT --start 2024-01-01 --end 2024-04-01
+
+    Wires S10 WFA orchestrator (WindowSplitter + WalkForwardRunner + sign_flip_p_value
+    + evaluate_acceptance_gate + format_wfa_report) с stub OHLCV loader (S12 integrates
+    real data path).
+
+    Returns:
+        0 — gate passed (Sharpe AND MC <= thresholds);
+        2 — gate failed;
+        1 — error (empty data, etc.).
+    """
+    settings = Settings()  # noqa: F841 — reserved для future settings-driven WFA params
+    symbol: str = args.symbol or "BTCUSDT"
+
+    df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end)
+    if df.empty:
+        print("WARNING: OHLCV loader returned empty (S12 integrates real data path)", flush=True)
+        return 1
+
+    splitter = WindowSplitter()  # ADR 0014 defaults
+    runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
+    config = {
+        "trading": {
+            "initial_balance": 10000.0,
+            "commission_taker": 0.001,
+            "slippage": 0.0005,
+            "position_size_pct": 10.0,
+            "max_drawdown_pct": 50.0,
+            "long_only": True,
+        },
+        "strategy": {"indicators": {"atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0}}},
+    }
+    runner_result = runner.run(df=df, config=config)
+
+    # MC sign-flip on aggregated OOS returns
+    oos_trades = runner_result["aggregate"]["oos_trades_df"]
+    if oos_trades.empty:
+        mc_p = 1.0
+    else:
+        import numpy as np
+        raw = oos_trades["net_pnl"].astype(float).to_numpy()
+        returns_arr = np.asarray(raw, dtype=float) / 10000.0
+        mc_p = sign_flip_p_value(returns_arr, n_iterations=2000, seed=42)
+
+    fold_ratios = [f["oos_is_sharpe_ratio"] for f in runner_result["folds"]]
+    gate = evaluate_acceptance_gate(
+        fold_oos_is_sharpe_ratios=fold_ratios,
+        mc_p_value=mc_p,
+    )
+
+    report = format_wfa_report(
+        runner_result=runner_result,
+        trades_for_dsr=[],  # Per-fold DataFrame->TradeRecord conversion deferred S12+
+        mc_p_value=mc_p,
+        gate_result=gate,
+    )
+
+    import json
+    print(json.dumps({
+        "symbol": symbol,
+        "k_folds": report.get("k_folds", 0),
+        "mc_p_value": report.get("mc_p_value"),
+        "acceptance_gate": report.get("acceptance_gate"),
+    }, default=str, indent=2))
+
+    return 0 if gate.get("passed") else 2
+
+
+def _cmd_monitor(args: argparse.Namespace) -> int:
+    """Read-only state snapshot: FSM state + halt + recent trades.
+
+    Per S11 cross-cutting concern C2: STRICTLY read-only (no SQL writes —
+    SQLite WAL contention с live bot).
+
+    Subcommand: python -m src monitor --symbol BTCUSDT
+    """
+    from typing import Any as _Any
+
+    settings = Settings()
+    symbol: str = args.symbol or "BTCUSDT"
+
+    # Read-only sqlite connection (no writes possible at SQLite level)
+    db_uri = f"file:{settings.db_path}?mode=ro"
+    conn = sqlite3.connect(db_uri, uri=True)
+    try:
+        # Current state
+        state_row = conn.execute(
+            "SELECT symbol, state, halt_reason, last_event, updated_at "
+            "FROM execution_state WHERE symbol = ?",
+            (symbol,),
+        ).fetchone()
+
+        # Recent trades (last 10)
+        trade_rows = conn.execute(
+            "SELECT trade_id, exit_ts, pnl_pct, reason_code "
+            "FROM trade_history WHERE symbol = ? ORDER BY exit_ts DESC LIMIT 10",
+            (symbol,),
+        ).fetchall()
+
+        # Recent halts (last 5) — table may not exist в old DBs
+        import contextlib
+
+        halt_rows: list[tuple[_Any, ...]] = []
+        with contextlib.suppress(sqlite3.OperationalError):
+            halt_rows = conn.execute(
+                "SELECT halt_ts, halt_reason, context FROM halt_log "
+                "ORDER BY halt_ts DESC LIMIT 5"
+            ).fetchall()
+
+        import json
+
+        snapshot = {
+            "symbol": symbol,
+            "state": {
+                "current_state": state_row[1] if state_row else "MISSING",
+                "halt_reason": state_row[2] if state_row else None,
+                "last_event": state_row[3] if state_row else None,
+                "updated_at": state_row[4] if state_row else None,
+            },
+            "recent_trades": [
+                {"trade_id": r[0], "exit_ts": r[1], "pnl_pct": r[2], "reason_code": r[3]}
+                for r in trade_rows
+            ],
+            "recent_halts": [
+                {"halt_ts": r[0], "halt_reason": r[1], "context": r[2]}
+                for r in halt_rows
+            ],
+        }
+
+        print(json.dumps(snapshot, default=str, indent=2))
+        return 0
+    finally:
+        conn.close()
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m src", description="AI Trading Bot v0.1 — live runtime CLI (ADR 0022).")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -102,6 +422,16 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_kill = sub.add_parser("kill", help="Write .kill_switch sentinel and exit.")
     p_kill.set_defaults(func=_cmd_kill)
+
+    p_wfa = sub.add_parser("wfa", help="Run Walk-Forward Analysis + report.")
+    p_wfa.add_argument("--symbol", default="BTCUSDT")
+    p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_wfa.set_defaults(func=_cmd_wfa)
+
+    p_mon = sub.add_parser("monitor", help="Read-only state snapshot (FSM + trades + halts).")
+    p_mon.add_argument("--symbol", default="BTCUSDT")
+    p_mon.set_defaults(func=_cmd_monitor)
 
     return p
 

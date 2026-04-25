@@ -43,6 +43,7 @@ def _settings(tmp_path: Path) -> Settings:
         db_path=tmp_path / "test.db",
         parquet_dir=tmp_path / "parquet",
         risk_override_path=tmp_path / "state" / "cb_override.json",
+        risk_override_hmac_key="test_key_min_32_chars_for_audit_h2_compliance",
     )
 
 
@@ -188,7 +189,7 @@ def test_50_bar_synthetic_risk_flow(tmp_path: Path) -> None:
 
     override_path = settings.risk_override_path
     override_path.parent.mkdir(parents=True, exist_ok=True)
-    store = OverrideStore(override_path)
+    store = OverrideStore(override_path, hmac_key=settings.risk_override_hmac_key)
     store.write(
         override=CbOverride(
             level="L2",

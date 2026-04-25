@@ -688,3 +688,82 @@ S10 = D (WFA + DSR + MC permutations) — large statistical layer, builds on S9 
 ### Roadmap
 
 S11 = F (Live demo Mainnet 24-72h validation) per S9 carry-over plan. Alternative: S12 A (Operator-readiness — runbooks + monitoring + alerts) если Mainnet validation deferred.
+
+## [2026-04-25] sprint-end | Sprint 11 — Operator-readiness + pre-flight gap closure
+
+### Phase 2 brainstorming verdicts (binding)
+
+7 questions через trader-expert ROUND 1:
+- Q1 CONFIRM: A-first scope (operator-readiness BEFORE live Mainnet F)
+- Q2 CONFIRM: bundle pre-flight gaps в S11 P0 (test_risk_flow.py + DI wiring + WFA CLI)
+- Q3 REVISE: integrate halt priority matrix INTO halt-recovery.md (single source of truth, NOT separate dashboard)
+- Q4 CONFIRM: S12 F params validated (Bybit demo + 48h + $1000 virtual)
+- Q5 CONFIRM: defer DSR threshold calibration к S15+ (need 30+ trades empirical)
+- Q6 CONFIRM: 1-test fix + audit для other S4-era drift
+- Q7 CONFIRM + addition: architecture-reviewer MANDATORY для _cmd_run
+
+### Tasks (10, 13 commits squash-merged)
+
+P0 pre-flight (4):
+- T1 (afb5760): test_risk_flow.py OverrideStore hmac_key signature restored
+- T2 (ead6dca + d7b196f): _cmd_run DI wiring (architecture-reviewer SOUND verdict + 1 inline fix MagicMock→_NoopFillRecorder)
+- T3 (bb8cba9 + e4df4cd): _cmd_reconcile_only DI wiring (Coordinator+Reconciler subset)
+- T4 (6e1fff2): _cmd_wfa CLI (Sharpe + MC gate)
+
+A scope operator-readiness (4):
+- T5 (0b57062): halt-recovery.md priority matrix + escalation column (Q3 REVISE applied)
+- T6 (26f7b68): NEW log-grep-templates.md (structlog jq + halt_log SQL)
+- T7 (281896e): _cmd_monitor read-only CLI (C2 invariant — `?mode=ro` URI, no DB mtime change)
+- T8 (92c37b9): NEW pre-flight.md operator checklist (5 gates + 4 recommendations)
+
+Wiki + ADR (2):
+- T9 (6ba4a41): ADR 0026 + index.md entry
+- T10 (da7a68f): sprint-11 page + counts (ADR 25→26, sprint pages 12→13) + 2 runbooks к index + mental-map +4 query rows
+
+### Tests / quality
+
+- pytest unit: 680 passed (baseline 666 + 14 internal fixtures uncovered) / 24 skipped / 0 failed
+- pytest integration: test_risk_flow.py ✅ (was failing pre-S11)
+- mypy --strict src/: clean (66 source files)
+- ruff: 3 pre-existing errors в tests/integration/test_risk_flow.py (S4-era I001/F401/UP017 — NOT S11 regression)
+- Counts unchanged: 16/30/74/45 (CLI = orchestration, no FSM/reason code growth)
+
+### Wiki updates
+
+- 2 NEW runbook pages (log-grep-templates + pre-flight)
+- 1 NEW ADR (0026)
+- 1 NEW sprint page (this)
+- Modified: halt-recovery.md (priority matrix + escalation column)
+- current-state.md (TL;DR post-S11, ADR 25→26, sprint pages 12→13, +S8c/S9/S10/S11 rows в "Карта спринтов")
+- index.md (sprint-11 + 2 runbooks + ADR 0026)
+- mental-map.md (+4 operator query rows + WFA CLI row)
+
+### Reviewers
+
+- T1 (test fix): inline review (signature drift only)
+- T2 (_cmd_run DI wiring): architecture-reviewer MANDATORY → SOUND verdict с 3 concerns (C1+C3 deferred S12, C2 fixed inline _NoopFillRecorder)
+- T3-T8: inline reviews (small isolated scope)
+- T9-T10: wiki-only (inline)
+
+### Key discoveries / decisions
+
+- **architecture-reviewer T2 SOUND verdict** — DI graph correct: Settings → REST → BybitFilters → market adapter → DB → state repo → reconciler → coordinator → bar source → strategy → risk → WS → RuntimeManager.run()
+- **MagicMock→_NoopFillRecorder** (T2 review C2) — replace test library import в production с simple stub class
+- **C2 strict read-only enforcement** — _cmd_monitor uses `sqlite3.connect(f"file:{path}?mode=ro", uri=True)`. T7 test enforces no DB mtime change.
+- **_cmd_run runnable end-to-end** — closes 8-month-old S8a T20 STUB. FillRecorder = `_NoopFillRecorder` stub (production wiring deferred S12+).
+- **Halt priority matrix INTO halt-recovery.md** (Q3 REVISE) — single source of truth, prevents drift vs separate dashboard.
+- **DI feasibility read-pass** (C1) — pre-plan verification confirmed constructors aligned, no mini-ADR needed.
+
+### Carry-over к S12+
+
+- **F (Live demo Mainnet 24-72h validation)** — main S12 scope per Q1 confirmed
+- **FillRecorder production wiring** (currently `_NoopFillRecorder` stub в _cmd_run)
+- **`_load_ohlcv` production data integration** в _cmd_wfa (currently empty DataFrame stub)
+- **C1 (T2 review):** `endpoint = "demo.bybit.com" if testnet else "stream.bybit.com"` — semantically wrong для testnet. pybit derives `testnet`/`demo` flags from substring match. Current sets `demo=True, testnet=False` (correct для S11 demo trading intent но wrong для actual testnet validation). Fix to use string containing "testnet" substring (e.g., `"stream-testnet.bybit.com"`).
+- **C3 (T2 review):** `init_db` opens own internal connection separate from `connect()` returned conn. WAL mode safe но worth explicit code comment.
+- **Per-fold DSR DataFrame→TradeRecord conversion** (informational, deferred от S10)
+- **DSR threshold calibration** (S15+ per Q5 verdict, need 30+ empirical trades)
+
+### Roadmap
+
+S12 = F (Live demo Mainnet 24-72h validation) per Q1 confirmed scope. Bybit demo + 48h + $1000 virtual capital + halt criteria per Q4 trader CONFIRM. Operator infrastructure now ready (S11 deliverables).

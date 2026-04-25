@@ -51,6 +51,11 @@ sources:
 | Halt recovery (how to resume from any halt code) | `project/runbooks/halt-recovery.md` (19 halt codes, 5 class groups, 2 severity tiers) | First-hit для production incident response |
 | CRITICAL vs RECOVERABLE halt classification | `project/runbooks/halt-recovery.md` "CRITICAL definition" callout | CRITICAL = "incorrect manual recovery can create or conceal an open position" |
 | SQL reset template (execution_state to FLAT) | `project/runbooks/halt-recovery.md` "Common SQL templates" | S7 schema с halt_reason + halt_log |
+| Halt priority matrix (P0/P1/P2 escalation chain) | `project/runbooks/halt-recovery.md` "Priority matrix" section + Quick Reference Table "On-call escalation" column | S11 T5 (Q3 REVISE — single source of truth, NOT separate dashboard) |
+| Pre-flight operator checklist (before `python -m src run`) | `project/runbooks/pre-flight.md` (5 critical gates + 4 recommendations + post-start monitoring + halt response) | S11 T8 — mandatory before Mainnet/demo start |
+| Log filtering recipes (structlog jq + halt_log SQL) | `project/runbooks/log-grep-templates.md` | S11 T6 — operator filter templates (errors-only / per-bracket / halt history / fill audit) |
+| Read-only state snapshot CLI (`python -m src monitor`) | `components/kill-switch-cli.md` "_cmd_monitor" + `src/__main__.py::_cmd_monitor` | S11 T7, C2 invariant: SQLite `?mode=ro` URI, no DB mtime change. Test enforces. |
+| WFA CLI subcommand (`python -m src wfa`) | `components/walk-forward.md` + `src/__main__.py::_cmd_wfa` | S11 T4 — WFA orchestrator + MC + acceptance gate exposure. NOTE `_load_ohlcv` stub (S12 integrates real data) |
 
 ### Halt mechanics / circuit breakers
 

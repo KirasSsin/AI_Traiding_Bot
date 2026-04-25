@@ -60,6 +60,7 @@ _(пусто — v0.2+)_
 - [[project/sprints/sprint-08c-wiki-backfill]] — S8c (2026-04-25): wiki backfill + tooling debt + S8a/S8b carry-overs. 12 tasks, 4 new component pages (backtest-harness, kill-switch-cli, risk-override, trade-history) + 3 file deletions (oco.py + 2 tests per ADR 0019/1 supersession) + trace map mandatory + adr-index-sync hook. PHASE 2 binding protocol caught DELETE bracket.py catastrophic regression. Tag v0.1.0-alpha.8c.
 - [[project/sprints/sprint-09-data-quality-types-analytics]] — S9 (2026-04-25): data quality detector (REST-vs-REST → HALT_DATA_QUALITY) + mypy --strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis). 12 TDD tasks, +32 tests (589→621 unit). FSM/counts unchanged. Tag v0.1.0-alpha.9.
 - [[project/sprints/sprint-10-wfa-dsr-mc]] — S10 (2026-04-25): WFA orchestrator (WindowSplitter + WalkForwardRunner + acceptance gate per ADR 0014) + DSR sigma_sr extension (closes S9 NYI) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe routing + vector_backtest annualization fix. 11 TDD tasks, +26 tests (630→656 unit + 1 integration). FSM/counts unchanged. Tag v0.1.0-alpha.10.
+- [[project/sprints/sprint-11-operator-readiness]] — S11 (2026-04-25): Pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI subcommands closing S8a T20 STUB) + operator-readiness (halt-recovery priority matrix integration + log-grep-templates runbook + pre-flight checklist). 10 TDD tasks, +10 tests (656→666 unit). FSM/counts unchanged. Tag v0.1.0-alpha.11.
 
 ## Project — Plans
 
@@ -76,7 +77,9 @@ _(пусто — v0.2+)_
 
 ## Project — Runbooks
 
-- [[project/runbooks/halt-recovery]] — operator manual для 19 halt codes (5 class groups, 2 severity tiers — CRITICAL full diagnosis vs RECOVERABLE abbreviated). Per Bucket F1 (S8c PR-γ) trader-expert ROUND 1+2 binding verdicts. Covers: Drawdown (4), Operational (4), OCO/bracket (6), Bootstrap/reconcile (3), Runtime (2).
+- [[project/runbooks/halt-recovery]] — operator manual для 19 halt codes (5 class groups, 2 severity tiers — CRITICAL full diagnosis vs RECOVERABLE abbreviated) + S11 priority matrix (P0/P1/P2 escalation chain integrated INTO single source of truth per Q3 REVISE). Per Bucket F1 (S8c PR-γ) trader-expert ROUND 1+2 binding verdicts. Covers: Drawdown (4), Operational (4), OCO/bracket (6), Bootstrap/reconcile (3), Runtime (2).
+- [[project/runbooks/log-grep-templates]] — operator log filtering recipes (structlog jq filters + halt_log SQL queries). S11 A scope T6.
+- [[project/runbooks/pre-flight]] — operator pre-flight checklist (5 critical gates + 4 recommendations + post-start monitoring + halt response). Mandatory before `python -m src run` on Mainnet/demo. S11 A scope T8.
 
 ## Project — Workflow Skills (`.claude/skills/`)
 
@@ -166,6 +169,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0023-halt-code-fsm-event-mapping]] — Sprint 8b ADR. Halt-class ReasonCode dispatch invariant in Coordinator.request_halt + 3-layer enforcement (ADR + reviewer prompt + property test).
 - [[project/decisions/0024-sprint-9-data-quality-types-analytics]] — Sprint 9 aggregate ADR: Data quality detector (REST-vs-REST + HALT_DATA_QUALITY) + mypy strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills table + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis).
 - [[project/decisions/0025-sprint-10-wfa-dsr-mc]] — Sprint 10 aggregate ADR: WFA orchestrator (rolling K=5 per ADR 0014) + DSR sigma_sr extension (closes S9 NYI, Bailey eq. 12) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe series routing + vector_backtest annualization fix.
+- [[project/decisions/0026-sprint-11-operator-readiness]] — Sprint 11 aggregate ADR: Pre-flight gap closure (test_risk_flow.py + _cmd_run + _cmd_reconcile_only + _cmd_wfa CLI, closes S8a T20 STUB) + operator-readiness (halt priority matrix integration + log-grep-templates + _cmd_monitor read-only + pre-flight checklist).
 
 ## Queries (saved answers)
 
