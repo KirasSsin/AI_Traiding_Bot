@@ -166,8 +166,67 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_backfill(args: argparse.Namespace) -> int:
-    """Delegate to existing backfill script."""
-    print(f"backfill --from {args.from_date} --to {args.to_date} (delegate to scripts/backfill.py)")
+    """Backfill OHLCV via BybitRESTClient.get_klines + write Parquet.
+
+    S13 T2 per ADR 0028 Q3 (Bybit Spot only, no Binance fallback per ADR 0016).
+    Closes S8a T20 STUB delegate placeholder.
+
+    Args:
+        args.symbol: trading pair (e.g. "BTCUSDT")
+        args.from_date: ISO date "YYYY-MM-DD"
+        args.to_date: ISO date "YYYY-MM-DD"
+        args.output_path: Parquet output (default: data/<symbol>_1h.parquet)
+
+    Returns:
+        0 — Parquet written with >0 bars;
+        1 — empty kline response (data not available for requested range).
+    """
+    from datetime import UTC, datetime
+
+    settings = Settings()
+    symbol: str = args.symbol or "BTCUSDT"
+    output_path = Path(args.output_path) if args.output_path else Path(f"data/{symbol}_1h.parquet")
+
+    start_dt = datetime.fromisoformat(args.from_date).replace(tzinfo=UTC)
+    end_dt = datetime.fromisoformat(args.to_date).replace(tzinfo=UTC)
+    start_ms = int(start_dt.timestamp() * 1000)
+    end_ms = int(end_dt.timestamp() * 1000)
+
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
+    )
+
+    print(f"backfill: fetching {symbol} 1H {args.from_date} → {args.to_date} ...", flush=True)
+    bars = rest.get_klines(symbol, "60", start_ms, end_ms, limit_per_call=1000)
+
+    if not bars:
+        print(
+            f"backfill: WARNING — empty kline response for {symbol} "
+            f"{args.from_date} → {args.to_date}",
+            flush=True,
+        )
+        return 1
+
+    # Convert list[Bar] → DataFrame (schema compatible with data_collector.load_market_data)
+    rows = [
+        {
+            "time": b.close_time.isoformat(),
+            "open": float(b.open),
+            "high": float(b.high),
+            "low": float(b.low),
+            "close": float(b.close),
+            "volume": float(b.volume),
+        }
+        for b in bars
+    ]
+    df = pd.DataFrame(rows)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+
+    print(f"backfill: wrote {len(df)} bars to {output_path}", flush=True)
     return 0
 
 
@@ -431,8 +490,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.set_defaults(func=_cmd_run)
 
     p_bf = sub.add_parser("backfill", help="OHLCV backfill.")
-    p_bf.add_argument("--from", dest="from_date", required=True)
-    p_bf.add_argument("--to", dest="to_date", required=True)
+    p_bf.add_argument("--symbol", default="BTCUSDT", help="Trading pair (default: BTCUSDT)")
+    p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
+    p_bf.add_argument("--to", dest="to_date", required=True, help="End date YYYY-MM-DD")
+    p_bf.add_argument(
+        "--output", dest="output_path", default=None,
+        help="Output Parquet path (default: data/<symbol>_1h.parquet)"
+    )
     p_bf.set_defaults(func=_cmd_backfill)
 
     p_rec = sub.add_parser("reconcile-only", help="Bootstrap + reconcile, no trading loop.")
