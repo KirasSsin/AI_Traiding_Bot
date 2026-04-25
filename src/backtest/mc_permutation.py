@@ -51,3 +51,43 @@ def sign_flip_p_value(
             count_extreme += 1
 
     return float(count_extreme / n_iterations)
+
+
+def block_bootstrap_p_value(
+    returns: npt.NDArray[np.float64],
+    *,
+    n_iterations: int = 2000,
+    block_size: int = 30,
+    seed: int | None = None,
+) -> float:
+    """Block bootstrap permutation test (preserves autocorrelation).
+
+    Per ADR 0015 secondary method. Resamples blocks of `block_size` bars,
+    тех concatenates к length(returns) sequence. Tests if observed mean
+    significantly differs from bootstrap distribution.
+
+    Args:
+        returns: per-trade returns array.
+        n_iterations: bootstrap iterations (ADR 0015 default 2000).
+        block_size: block length в bars (ADR 0015 range 20-50, default 30).
+        seed: RNG seed.
+
+    Returns:
+        p-value в [0, 1], NaN if returns empty или block_size > len(returns).
+    """
+    if len(returns) == 0 or block_size > len(returns):
+        return math.nan
+
+    n = len(returns)
+    n_blocks = (n + block_size - 1) // block_size  # ceil
+    observed = float(np.abs(np.mean(returns)))
+    rng = np.random.default_rng(seed)
+
+    count_extreme = 0
+    for _ in range(n_iterations):
+        starts = rng.integers(0, n - block_size + 1, size=n_blocks)
+        sampled = np.concatenate([returns[s : s + block_size] for s in starts])[:n]
+        if abs(float(np.mean(sampled))) >= observed:
+            count_extreme += 1
+
+    return float(count_extreme / n_iterations)
