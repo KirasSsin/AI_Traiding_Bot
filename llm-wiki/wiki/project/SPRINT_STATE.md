@@ -34,6 +34,8 @@ Tests: 680→689 unit (+9). FSM/counts unchanged (16/30/74/45). Q7 zero-migratio
 ```
 S13 PHASE 4 in flight (per ADR 0028):
 - T1 probe ✅ — earliest Bybit 1H BTCUSDT = 2021-07-02 16:00 UTC, target span = ~4.8y
+- T2 backfill wire ✅ (commit 4a1b56b с snappy + atomic rename per data-integrity)
+- T3 backfill run ✅ — 42098 bars, 2021-07-03→2026-04-25, span 4.81y (ADR 0028 floor 3.5y MET)
   * 2018-H1: 0 bars, 2020-H1: 0 bars, 2021-H1: 0 bars
   * 2021-Jul-02 16:00 UTC = confirmed earliest bar (binary search)
   * Span: 2021-07-03 → 2026-04-24 = ~4.8y (ADR 0028 ESC-2: below 5y target, above 3.5y floor — document deviation)
