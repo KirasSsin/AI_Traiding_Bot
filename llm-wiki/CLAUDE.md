@@ -193,6 +193,7 @@ Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB
 - `wiki/project/plans/2026-04-23-sprint-6-spot-oco-emulation.md` (~34k tokens)
 - `wiki/project/plans/2026-04-24-sprint-7-resilience.md` (~26k tokens)
 - `wiki/project/plans/2026-04-24-sprint-8a-live-runtime.md` (~35k tokens)
+- `wiki/project/plans/2026-04-25-sprint-9-quality-types-analytics.md` (~24k tokens, 80KB)
 - `wiki/log.md` (~15.5k tokens; использовать `tail -100` или offset Read)
 
 **Wiki-страницы** держим < 50KB. Если близко — разбивай: `<topic>.md` index + `<topic>-part-N.md`.
