@@ -80,13 +80,14 @@ def compute_t1_t6_metrics(
         t2_sortino_oos = float("nan")
 
     # T3: Max Drawdown (peak-to-trough on equity curve)
-    equity = np.cumsum(pnl_quotes)
-    equity_with_capital = initial_capital + equity
-    running_max = np.maximum.accumulate(equity_with_capital)
+    # Quant-stats T6 fix: prepend initial_capital so first-trade loss is measured
+    # against starting balance, not post-loss equity.
+    equity_full = np.concatenate([[initial_capital], initial_capital + np.cumsum(pnl_quotes)])
+    running_max = np.maximum.accumulate(equity_full)
     # Guard: total blowout (running_max=0) -> -100%, NOT NaN
     drawdowns = np.where(
         running_max > 0,
-        (equity_with_capital - running_max) / running_max,
+        (equity_full - running_max) / running_max,
         -1.0,
     )
     t3_max_drawdown = float(abs(drawdowns.min())) if len(drawdowns) > 0 else 0.0

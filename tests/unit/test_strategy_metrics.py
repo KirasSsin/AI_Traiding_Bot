@@ -116,3 +116,29 @@ def test_compute_metrics_t3_total_blowout_returns_one() -> None:
     )
     metrics = compute_t1_t6_metrics(trades=[blowout], fold_oos_is_sharpe=[1.0])
     assert metrics["t3_max_drawdown"] == pytest.approx(1.0, abs=0.001)
+
+
+def test_compute_metrics_t3_first_loss_drawdown_from_initial_capital() -> None:
+    """T3 MaxDD: first trade is loss → drawdown measured from initial_capital,
+    NOT post-loss equity (quant-stats reviewer T6 BLOCKER fix)."""
+    trades = [_make_trade(pnl_quote=Decimal("-500"), hours_offset=0,
+                          qty_decimal=Decimal("0.1"), entry_price_decimal=Decimal("50000"))]
+    metrics = compute_t1_t6_metrics(trades=trades, fold_oos_is_sharpe=[1.0],
+                                     initial_capital=10000.0)
+    # Initial $10000 → after -$500 loss = $9500 → drawdown = $500/$10000 = 5%
+    assert metrics["t3_max_drawdown"] == pytest.approx(0.05, abs=0.001)
+
+
+def test_compute_metrics_t3_first_loss_then_recovery() -> None:
+    """T3 MaxDD: drawdown from initial peak preserved через recovery."""
+    trades = [
+        _make_trade(pnl_quote=Decimal("-500"), hours_offset=0,
+                    qty_decimal=Decimal("0.1"), entry_price_decimal=Decimal("50000")),
+        _make_trade(pnl_quote=Decimal("1000"), hours_offset=1,
+                    qty_decimal=Decimal("0.1"), entry_price_decimal=Decimal("50000")),
+    ]
+    # Equity: $10000 → $9500 → $10500. Peak=$10000 (initial), trough=$9500.
+    # MaxDD = ($10000 - $9500) / $10000 = 5%
+    metrics = compute_t1_t6_metrics(trades=trades, fold_oos_is_sharpe=[1.0],
+                                     initial_capital=10000.0)
+    assert metrics["t3_max_drawdown"] == pytest.approx(0.05, abs=0.001)
