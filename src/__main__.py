@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sqlite3
 import sys
 from collections.abc import Callable
 from decimal import Decimal
@@ -335,6 +336,73 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     return 0 if gate.get("passed") else 2
 
 
+def _cmd_monitor(args: argparse.Namespace) -> int:
+    """Read-only state snapshot: FSM state + halt + recent trades.
+
+    Per S11 cross-cutting concern C2: STRICTLY read-only (no SQL writes —
+    SQLite WAL contention с live bot).
+
+    Subcommand: python -m src monitor --symbol BTCUSDT
+    """
+    from typing import Any as _Any
+
+    settings = Settings()
+    symbol: str = args.symbol or "BTCUSDT"
+
+    # Read-only sqlite connection (no writes possible at SQLite level)
+    db_uri = f"file:{settings.db_path}?mode=ro"
+    conn = sqlite3.connect(db_uri, uri=True)
+    try:
+        # Current state
+        state_row = conn.execute(
+            "SELECT symbol, state, halt_reason, last_event, updated_at "
+            "FROM execution_state WHERE symbol = ?",
+            (symbol,),
+        ).fetchone()
+
+        # Recent trades (last 10)
+        trade_rows = conn.execute(
+            "SELECT trade_id, exit_ts, pnl_pct, reason_code "
+            "FROM trade_history WHERE symbol = ? ORDER BY exit_ts DESC LIMIT 10",
+            (symbol,),
+        ).fetchall()
+
+        # Recent halts (last 5) — table may not exist в old DBs
+        import contextlib
+
+        halt_rows: list[tuple[_Any, ...]] = []
+        with contextlib.suppress(sqlite3.OperationalError):
+            halt_rows = conn.execute(
+                "SELECT halt_ts, halt_reason, context FROM halt_log "
+                "ORDER BY halt_ts DESC LIMIT 5"
+            ).fetchall()
+
+        import json
+
+        snapshot = {
+            "symbol": symbol,
+            "state": {
+                "current_state": state_row[1] if state_row else "MISSING",
+                "halt_reason": state_row[2] if state_row else None,
+                "last_event": state_row[3] if state_row else None,
+                "updated_at": state_row[4] if state_row else None,
+            },
+            "recent_trades": [
+                {"trade_id": r[0], "exit_ts": r[1], "pnl_pct": r[2], "reason_code": r[3]}
+                for r in trade_rows
+            ],
+            "recent_halts": [
+                {"halt_ts": r[0], "halt_reason": r[1], "context": r[2]}
+                for r in halt_rows
+            ],
+        }
+
+        print(json.dumps(snapshot, default=str, indent=2))
+        return 0
+    finally:
+        conn.close()
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m src", description="AI Trading Bot v0.1 — live runtime CLI (ADR 0022).")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -360,6 +428,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     p_wfa.set_defaults(func=_cmd_wfa)
+
+    p_mon = sub.add_parser("monitor", help="Read-only state snapshot (FSM + trades + halts).")
+    p_mon.add_argument("--symbol", default="BTCUSDT")
+    p_mon.set_defaults(func=_cmd_monitor)
 
     return p
 
