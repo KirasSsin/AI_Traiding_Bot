@@ -117,18 +117,66 @@ def test_get_klines_single_page(mock_http_cls: MagicMock) -> None:
 
 
 def test_get_klines_paginates_over_1000_limit(mock_http_cls: MagicMock) -> None:
-    """Bybit max 1000 rows per call; 2400 bars → 3 calls."""
+    """Bybit max 1000 rows per call; 2400 bars → 3 calls (backward pagination).
+
+    Bybit V5 is end-anchored: each call returns 1000 newest bars before cur_end.
+    Mock simulates this: returns 1000 bars ending at cur_end (exclusive).
+    """
     start_ms = 1745193600000
-    interval_ms = 3_600_000
+    step_ms = 3_600_000
+    total_bars = 2400
+    end_ms = start_ms + total_bars * step_ms
     call_count = 0
 
     def fake_get_kline(**kwargs: object) -> dict[str, object]:
         nonlocal call_count
         call_count += 1
-        page_start = int(kwargs["start"])
+        cur_end = int(kwargs["end"])  # type: ignore[arg-type]
+        # End-anchored: return 1000 newest bars strictly before cur_end
+        end_idx = (cur_end - start_ms) // step_ms  # exclusive index
+        batch_size = min(1000, end_idx)
+        start_idx = end_idx - batch_size
+        rows = [_kline_row(start_ms + i * step_ms) for i in range(start_idx, end_idx)]
+        return {"retCode": 0, "result": {"list": list(reversed(rows))}}
+
+    mock_http_cls.return_value.get_kline.side_effect = fake_get_kline
+    with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
+        client = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
+        bars = client.get_klines(
+            symbol="BTCUSDT",
+            interval="60",
+            start_ms=start_ms,
+            end_ms=end_ms,
+        )
+    assert call_count == 3
+    assert len(bars) == 2400
+
+
+def test_get_klines_paginates_backward_for_large_range(mock_http_cls: MagicMock) -> None:
+    """T3 BUG FIX (S13): pagination must walk backward from end_ms.
+
+    Bybit V5 API end-anchored: each call returns 1000 newest bars before end_ms.
+    For range > 1000 bars, must decrement cur_end к oldest_in_batch per batch
+    until oldest covers start_ms.
+    """
+    base_open_ms = 1_700_000_000_000
+    step_ms = 3_600_000
+    total_bars = 2500
+    start_ms = base_open_ms
+    end_ms = base_open_ms + total_bars * step_ms
+
+    call_count = 0
+
+    def fake_get_kline(**kwargs: object) -> dict[str, object]:
+        nonlocal call_count
+        call_count += 1
+        cur_end = int(kwargs["end"])  # type: ignore[arg-type]
+        end_idx = (cur_end - base_open_ms) // step_ms
+        batch_size = min(1000, end_idx)
+        start_idx = max(0, end_idx - batch_size)
         rows = [
-            _kline_row(page_start + i * interval_ms)
-            for i in range(min(1000, 2400 - (call_count - 1) * 1000))
+            [str(base_open_ms + i * step_ms), "100.0", "101.0", "99.0", "100.5", "1.0", "100.5"]
+            for i in range(start_idx, end_idx)
         ]
         return {"retCode": 0, "result": {"list": list(reversed(rows))}}
 
@@ -139,10 +187,16 @@ def test_get_klines_paginates_over_1000_limit(mock_http_cls: MagicMock) -> None:
             symbol="BTCUSDT",
             interval="60",
             start_ms=start_ms,
-            end_ms=start_ms + 2400 * interval_ms,
+            end_ms=end_ms,
+            limit_per_call=1000,
         )
-    assert call_count == 3
-    assert len(bars) == 2400
+
+    # Should fetch all 2500 bars across 3 batches
+    assert len(bars) == 2500, f"Expected 2500 bars, got {len(bars)}"
+    assert call_count == 3, f"Expected 3 API calls, got {call_count}"
+    # Verify oldest-first ordering
+    for i in range(1, len(bars)):
+        assert bars[i].open_time > bars[i - 1].open_time
 
 
 def test_get_klines_excludes_end_ms_boundary(mock_http_cls: MagicMock) -> None:

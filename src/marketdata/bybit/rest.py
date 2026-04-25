@@ -51,7 +51,16 @@ class BybitRESTClient:
         end_ms: int,
         limit_per_call: int = 1000,
     ) -> list[Bar]:
-        """Fetch OHLCV bars in [start_ms, end_ms). Paginates if > 1000 rows."""
+        """Fetch OHLCV bars in [start_ms, end_ms). Paginates backward (Bybit V5 end-anchored).
+
+        Per Bybit V5 spec: when start, end and limit are all specified, API returns the
+        newest `limit` bars BEFORE `end`. Walking forward от start_ms causes each batch
+        to return near end_ms → loop exits after 1 call for large ranges.
+
+        Fix: walk backward — start с cur_end=end_ms, decrement cur_end к oldest_in_batch
+        after each call, until oldest covers start_ms. Batches prepended so result is
+        oldest-first within [start_ms, end_ms).
+        """
         from src.marketdata.models import Bar, DataQuality
 
         interval_map = {"60": "1h"}  # extend when adding more TFs
@@ -60,28 +69,29 @@ class BybitRESTClient:
         domain_interval = interval_map[interval]
 
         bars: list[Bar] = []
-        cur_start = start_ms
-        while cur_start < end_ms:
+        cur_end = end_ms
+        while cur_end > start_ms:
             resp = self._http.get_kline(
                 category="spot",
                 symbol=symbol,
                 interval=interval,
-                start=cur_start,
-                end=end_ms,
+                start=start_ms,
+                end=cur_end,
                 limit=limit_per_call,
             )
             if resp["retCode"] != 0:
                 raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""))
-            rows = list(reversed(resp["result"]["list"]))  # oldest-first
+            rows = list(reversed(resp["result"]["list"]))  # oldest-first within batch
             if not rows:
                 break
+            batch_bars: list[Bar] = []
             for row in rows:
                 open_ms = int(row[0])
-                if open_ms >= end_ms:  # enforce [start_ms, end_ms) — Bybit end is inclusive
+                if open_ms < start_ms or open_ms >= end_ms:
                     continue
                 open_time = datetime.fromtimestamp(open_ms / 1000, tz=UTC)
                 close_time = open_time + timedelta(milliseconds=step_ms)
-                bars.append(
+                batch_bars.append(
                     Bar(
                         symbol=symbol,
                         interval=domain_interval,
@@ -97,6 +107,13 @@ class BybitRESTClient:
                         data_quality=DataQuality.OK,
                     )
                 )
-            last_open_ms = int(rows[-1][0])
-            cur_start = last_open_ms + step_ms
+            if not batch_bars:
+                break
+            # Prepend batch (batches walk backward; prepending keeps oldest-first order)
+            bars = batch_bars + bars
+            # Walk back: next batch ends at oldest bar of current batch
+            oldest_open_ms = int(rows[0][0])
+            if oldest_open_ms <= start_ms:
+                break  # covered start_ms
+            cur_end = oldest_open_ms
         return bars
