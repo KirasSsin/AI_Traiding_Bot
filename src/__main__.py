@@ -370,8 +370,11 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
     conn = sqlite3.connect(db_uri, uri=True)
     try:
         # Current state
+        # NOTE: `last_event` is NOT a column in execution_state schema — it's a concept
+        # passed via Coordinator to halt_log.context_json. Read it from latest halt_log entry
+        # if needed. Bug fix post-S12 ship: original query referenced nonexistent column.
         state_row = conn.execute(
-            "SELECT symbol, state, halt_reason, last_event, updated_at "
+            "SELECT symbol, state, halt_reason, last_reconcile_at, updated_at "
             "FROM execution_state WHERE symbol = ?",
             (symbol,),
         ).fetchone()
@@ -400,7 +403,7 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
             "state": {
                 "current_state": state_row[1] if state_row else "MISSING",
                 "halt_reason": state_row[2] if state_row else None,
-                "last_event": state_row[3] if state_row else None,
+                "last_reconcile_at": state_row[3] if state_row else None,
                 "updated_at": state_row[4] if state_row else None,
             },
             "recent_trades": [

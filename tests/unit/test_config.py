@@ -73,9 +73,13 @@ def test_short_hmac_key_raises() -> None:
         Settings(**{**_BASE, "risk_override_hmac_key": "short"})
 
 
-def test_explicit_creds_loaded() -> None:
+def test_explicit_creds_loaded(monkeypatch: pytest.MonkeyPatch) -> None:
     """Explicit creds are accepted and stored verbatim."""
-    s = Settings(**_BASE)
+    # Isolate from .env pollution (operator demo validation may set TRADING_ENABLED=true).
+    # pydantic-settings reads .env via env_file= config; pass _env_file=None to disable that source.
+    monkeypatch.delenv("TRADING_ENABLED", raising=False)
+    monkeypatch.delenv("LIVE_TRADING", raising=False)
+    s = Settings(_env_file=None, **_BASE)
     assert s.bybit_api_key == _TEST_API_KEY
     assert s.bybit_api_secret == _TEST_API_SECRET
     assert s.risk_override_hmac_key == _TEST_HMAC_KEY

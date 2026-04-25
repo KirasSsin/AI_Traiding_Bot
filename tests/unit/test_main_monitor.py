@@ -19,10 +19,10 @@ def test_cmd_monitor_outputs_state_snapshot(tmp_path: Path, capsys) -> None:
             symbol TEXT PRIMARY KEY,
             state TEXT NOT NULL,
             halt_reason TEXT,
-            last_event TEXT,
+            last_reconcile_at TEXT,
             updated_at TEXT
         );
-        INSERT INTO execution_state VALUES ('BTCUSDT', 'FLAT', NULL, 'BOOTSTRAP_OK', '2026-04-25T12:00:00+00:00');
+        INSERT INTO execution_state VALUES ('BTCUSDT', 'FLAT', NULL, '2026-04-25T11:59:00+00:00', '2026-04-25T12:00:00+00:00');
         CREATE TABLE trade_history (
             trade_id INTEGER PRIMARY KEY AUTOINCREMENT,
             symbol TEXT, entry_signal_id TEXT, entry_ts TEXT, exit_ts TEXT,
@@ -56,9 +56,9 @@ def test_cmd_monitor_does_not_write_to_db(tmp_path: Path) -> None:
     db_path = tmp_path / "readonly.db"
     conn = sqlite3.connect(str(db_path))
     conn.executescript("""
-        CREATE TABLE execution_state (symbol TEXT PRIMARY KEY, state TEXT, halt_reason TEXT, last_event TEXT, updated_at TEXT);
+        CREATE TABLE execution_state (symbol TEXT PRIMARY KEY, state TEXT, halt_reason TEXT, last_reconcile_at TEXT, updated_at TEXT);
         CREATE TABLE trade_history (trade_id INTEGER PRIMARY KEY AUTOINCREMENT, symbol TEXT, entry_signal_id TEXT, entry_ts TEXT, exit_ts TEXT, qty TEXT, entry_price TEXT, exit_price TEXT, pnl_quote TEXT, pnl_pct TEXT, fees_paid TEXT, reason_code TEXT, kelly_phase INTEGER, recorded_at TEXT);
-        INSERT INTO execution_state VALUES ('BTCUSDT', 'FLAT', NULL, 'BOOTSTRAP', '2026-04-25T12:00:00+00:00');
+        INSERT INTO execution_state VALUES ('BTCUSDT', 'FLAT', NULL, '2026-04-25T11:59:00+00:00', '2026-04-25T12:00:00+00:00');
     """)
     conn.commit()
     conn.close()

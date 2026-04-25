@@ -3,7 +3,7 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
 sprint: 12
-phase: between-sprints
+phase: post-ship-validation
 branch: main
 tag: v0.1.0-alpha.12
 ---
@@ -32,13 +32,22 @@ Tests: 680→689 unit (+9). FSM/counts unchanged (16/30/74/45). Q7 zero-migratio
 ## Следующее действие
 
 ```
-S13 brainstorm:
-1. mem-search "S13 schema link" + "FillRecorder Layer 2 production"
-2. S13 = TBD (post operator-driven 48h validation results)
-3. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
+ACTIVE: 48h Bybit demo validation run per wiki/runbooks/live-demo-validation.md
+Operator-driven, supervised (5min monitoring cadence).
+
+Steps:
+1. Pre-conditions check (5 critical gates per pre-flight.md + 4 recommendations)
+2. Setup Bybit demo API keys в .env
+3. Setup .ai_trading_bot/ DB dir (currently не exists)
+4. python -m src reconcile-only --symbol BTCUSDT (smoke test)
+5. python -m src run --symbol BTCUSDT (start 48h window)
+6. Monitor (terminals 1-3 per runbook)
+7. End sequence + validation report generation
+
+After validation: S13 brainstorm с real-world feedback context.
 ```
 
-**Pre-S13 operator-driven activity:** 48h Bybit demo validation run per `wiki/runbooks/live-demo-validation.md`. Result feeds S13 scope (FillRecorder Layer 2 design, schema link, slippage validation gaps).
+**S13 brainstorm DEFERRED until validation complete.** Scope candidates depend на validation findings (format quirks, race conditions surfaced, halt code distribution).
 
 ## Carry-over к S13+
 
