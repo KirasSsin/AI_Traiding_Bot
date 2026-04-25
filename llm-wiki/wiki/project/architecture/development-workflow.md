@@ -395,11 +395,12 @@ Stage F (только S6+, venue API):
 2. **HARD-GATE step 5:** sprint-NN.md exists OR CREATE per sprint-07 skeleton
 3. **HARD-GATE step 5a:** canonical counts sync (если FSM/reason codes/components changed)
 4. **HARD-GATE step 5b:** orphan-audit grep MUST include tests/ (CC1 lesson — recursive)
-5. **HARD-GATE step 6 (wiki sync):** new ADRs в index.md, new components в index.md + components/README.md cluster, new sprint в index.md + current-state.md sprint table
-6. SPRINT_STATE → 8-ship
-7. `superpowers:finishing-a-development-branch` → push + PR + squash-merge + tag
-8. Hook acknowledgments (touch trader-expert.md mtime если ADR changed)
-9. Chapter mark "Sprint <N> ship complete"
+5. **HARD-GATE step 5c (Block 1↔Block 2 sync, PR-γ 2026-04-25):** для каждой touched component page — Block 1 (code refs: Sources frontmatter + Public API section + Invariants Enforcement column с `function::name` anchors) MUST sync с Block 2 (Description / Configuration narrative / settings keys / class names / invariant text) **в одном commit**. Drift между Block 1 (e.g., new method `request_halt` в code refs) и Block 2 (Description claims old API) = HARD-GATE block. **Применять к новым component pages с config**; existing pages — paradigm уже implicit через Public API + Description sections, defer per-page refactor (anti-bloat). Skill `wiki-update` (`.claude/skills/wiki-update/SKILL.md`) walks dependency graph и flags drift автоматически.
+6. **HARD-GATE step 6 (wiki sync):** new ADRs в index.md, new components в index.md + components/README.md cluster, new sprint в index.md + current-state.md sprint table
+7. SPRINT_STATE → 8-ship
+8. `superpowers:finishing-a-development-branch` → push + PR + squash-merge + tag
+9. Hook acknowledgments (touch trader-expert.md mtime если ADR changed)
+10. Chapter mark "Sprint <N> ship complete"
 
 **Полная procedure** (steps + anti-patterns + hook interactions) — см. SKILL.md. Не дублировать inline здесь.
 

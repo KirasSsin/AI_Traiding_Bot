@@ -57,7 +57,22 @@ Source content: log.md sprint-end entry + commit log via `git log --oneline main
 
 **Anti-pattern:** stale TL;DR / hardcoded counts в trader prompt → trader gives stale verdicts → bad sprint decisions.
 
-### Step 4: HARD-GATE — Wiki sync (per dev-workflow.md PHASE 8 step 5b)
+### Step 4: HARD-GATE — Block 1↔Block 2 sync (per dev-workflow.md PHASE 8 step 5c, PR-γ 2026-04-25)
+
+Для каждой touched component page (`git diff --name-only main..HEAD -- 'llm-wiki/wiki/project/components/*.md'`):
+
+| Block | Что покрывает | Drift sign |
+|-------|---------------|-----------|
+| **Block 1 (Code refs)** | `sources:` frontmatter + Public API section + Invariants Enforcement column с `function::name` anchors | Anchor указывает на removed/renamed function — HARD-GATE block |
+| **Block 2 (Description)** | Description / Configuration narrative / settings keys / class names / invariant text | Описывает старое API после code change — HARD-GATE block |
+
+**Rule:** оба блока MUST sync **в одном commit**. Edit Block 2 settings → MUST verify Block 1 anchor point на correct code. Edit Block 1 anchor (rename) → MUST update Block 2 narrative.
+
+**Применять к новым component pages с config**; existing pages — paradigm уже implicit через Public API + Description sections, defer per-page refactor (anti-bloat).
+
+Skill `wiki-update` (`.claude/skills/wiki-update/SKILL.md`) walks dependency graph и flags drift автоматически — invoke если touched src/ + components/.
+
+### Step 5: HARD-GATE — Wiki sync (per dev-workflow.md PHASE 8 step 5b + 6)
 
 ```bash
 # Orphan-audit grep MUST include tests/
@@ -83,7 +98,7 @@ For new sprint page:
 
 **adr-index-sync-check.sh hook will block push если new ADR не в index.md.**
 
-### Step 5: Update SPRINT_STATE → 8-ship
+### Step 6: Update SPRINT_STATE → 8-ship
 
 ```yaml
 sprint: <N>
@@ -92,7 +107,7 @@ branch: feature/sprint-<N>-<slug>
 tag: v0.1.0-alpha.<N>
 ```
 
-### Step 6: Commit + ship
+### Step 7: Commit + ship
 
 Use `superpowers:finishing-a-development-branch` skill → push branch + gh pr create + squash-merge + tag.
 
@@ -101,7 +116,7 @@ After merge:
 - `git tag -a v0.1.0-alpha.<N> -m "<title>" <merge-sha> && git push origin v0.1.0-alpha.<N>`
 - Update SPRINT_STATE → between-sprints
 
-### Step 7: Chapter mark
+### Step 8: Chapter mark
 
 ```
 mcp__ccd_session__mark_chapter "Sprint <N> ship complete"
@@ -122,6 +137,7 @@ Pre-emptively touch reviewer prompt + verify index sync ДО push чтобы н�
 - ❌ Skipping canonical counts sync (D1+D3 drift)
 - ❌ Orphan-audit grep только src/ (CC1 lesson — MUST include tests/)
 - ❌ Forgetting touch agent prompt before push (adr-agent-sync hook blocks)
+- ❌ Block 1 (code refs) edited без Block 2 (Description) sync OR vice versa в same commit (PR-γ HARD-GATE 5c)
 
 ## Related kit references
 
