@@ -25,10 +25,13 @@ Wiki — компилированное знание проекта. Broken `[[l
 
 ## Files
 
-- Script: `~/.claude/hooks/wiki-broken-link-check.sh` — bash + python3 inline, +x.
+- Script: `~/.claude/hooks/wiki-broken-link-check.sh` — bash glue (~135 lines), +x.
+- **Scan logic:** `~/.claude/hooks/lib/wiki_broken_link_scan.py` — external Python script (~132 lines), +r. Extracted from inline heredoc после S9 ship caught bash bug — triple-backtick (` ``` `) inside `$(... <<'PYEOF' ...)` heredoc fails despite single-quoted delimiter (bash interprets backticks pre-heredoc). External script invocation via `python3 "$SCAN_SCRIPT"` avoids parse collision entirely.
 - Registration: `~/.claude/settings.json`, `hooks.PreToolUse[matcher="Bash"].hooks[]` →
   `command="$HOME/.claude/hooks/wiki-broken-link-check.sh"` (третий entry, после adr-agent-sync-check + adr-index-sync-check).
 - Watched directory: `llm-wiki/wiki/` (relative to repo root) — opt-in trigger.
+
+**Bash quirk lesson (post-S9):** ALWAYS run `bash -n <script>` after editing hook scripts. Triple-backtick OR complex heredoc patterns can fail despite quoted delimiters. Pattern documented в `~/.claude/CLAUDE.md` section 9b.
 
 ## Hook contract
 
