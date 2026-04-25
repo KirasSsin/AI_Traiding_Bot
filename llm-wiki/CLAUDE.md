@@ -286,6 +286,7 @@ L1: Memory continuity (claude-mem / consolidate-memory) — session bookends + c
 | Code в `src/risk/**`, `src/backtest/**`, `src/analytics/**` (math) | L5 quant-stats-reviewer обязательно | Формулы не тронуты |
 | Code в `migrations/`, `src/marketdata/`, `src/platform/storage/` | L5 data-integrity-reviewer обязательно | Persistence не тронута |
 | Любой `*.py` (generic safety net) | L5 python-reviewer — после domain reviewer'ов | Domain cleared, < 100 LoC, только tests |
+| Cross-module refactor / concurrency change (async migration / lock policy) / DI pattern / component decomposition / cross-cutting (error/retry/logging) / API stability / cohesion-coupling | **L5 architecture-reviewer обязательно** (S8c+) | Single-module change, или domain-specific (defer к trading-logic / quant-stats / data-integrity) |
 | Money / API key / signing / override | L4 AS `security-and-hardening` + VoltAgent `security-auditor` (рекомендован) | Нет I/O boundary |
 | Wiki conflict: code↔ADR drift | L4b fact-checker → решает истину → update wiki OR amend ADR | Trivial wording |
 | Sprint complete → merge | L3 finishing → L1 consolidate-memory → ADR sync hook | — |
@@ -295,16 +296,19 @@ L1: Memory continuity (claude-mem / consolidate-memory) — session bookends + c
 
 ### Curated agent set (~/.claude/agents/)
 
-**Active (5) — per ADR 0017:**
+**Active (6) — per ADR 0017:**
 - `python-reviewer` (sonnet) — generic Python review
 - `data-integrity-reviewer` (sonnet) — SQLite/Parquet/migrations
-- `quant-stats-reviewer` (sonnet 4.6) — формулы/Wilson/Kelly/MC/CB
+- `quant-stats-reviewer` (sonnet 4.6, **effort:max**) — формулы/Wilson/Kelly/MC/CB
 - `trading-logic-reviewer` (sonnet 4.6) — look-ahead/FSM/venue/reason codes
-- `trader-expert` (sonnet) — PHASE 2 brainstorming decision-maker; принимает structured questionnaire → CONFIRM/REVISE/DEFER/EXPAND per item; dispatch обязателен при unresolved scope/arch questions перед PHASE 3
+- `trader-expert` (sonnet 4.6, **effort:max**) — PHASE 2 brainstorming decision-maker; structured questionnaire → CONFIRM/REVISE/DEFER/EXPAND per item; iterative justify ROUND 2 BINDING на REVISE-disagreement
+- `architecture-reviewer` (sonnet 4.6) — purely architectural decisions без trading semantics: cross-module refactor, concurrency design, DI patterns, component decomposition, API stability, cohesion/coupling. NOT для trading domain (trader-expert) / math (quant-stats) / storage (data-integrity) / Python idioms (python).
 
-**Subagent path discipline (binding, 2026-04-24):** все 5 агентов содержат секцию "Path discipline" — абсолютные пути, verify via `Bash ls` до цитирования. Brief в dispatch тоже использует абсолютные пути.
+**TIER A applied к ВСЕМ 6 агентам (PR-β 2026-04-25):** `memory: project` (institutional knowledge accumulation across sprints — `.claude/agent-memory/<agent>/MEMORY.md`) + Sprint context priming section (mandatory canonical file loads at start of every dispatch — SPRINT_STATE + log tail + current-state.md + mental-map.md + cluster index + active backlog).
 
-**Рекомендованы (не установлены):** `security-auditor` (opus) — для override.py/API keys; `architect-reviewer` (opus) — для S12+.
+**Subagent path discipline (binding, 2026-04-24):** все 6 агентов содержат секцию "Path discipline" — абсолютные пути, verify via `Bash ls` до цитирования. Brief в dispatch тоже использует абсолютные пути.
+
+**Рекомендованы (не установлены):** `security-auditor` (opus) — для override.py/API keys, S5+ stack hardening.
 
 ### Layer 4b meta-skills
 
@@ -349,9 +353,10 @@ L1: Memory continuity (claude-mem / consolidate-memory) — session bookends + c
 | Агент | Когда | Модель |
 |-------|-------|--------|
 | `trading-logic-reviewer` | `src/signalgen/`, `src/execution/`, `src/backtest/`, `src/risk/` | sonnet 4.6 |
-| `quant-stats-reviewer` | `src/signalgen/indicators.py`, `src/risk/`, `src/backtest/`, `src/analytics/` | sonnet 4.6 |
+| `quant-stats-reviewer` | `src/signalgen/indicators.py`, `src/risk/`, `src/backtest/`, `src/analytics/` | sonnet 4.6 (effort:max) |
 | `data-integrity-reviewer` | `src/marketdata/`, `src/platform/storage/`, `migrations/` | sonnet |
 | `python-reviewer` | любые `*.py` (generic safety net, после domain) | sonnet |
+| `architecture-reviewer` | cross-module refactor, concurrency model change (async migration, lock policy), DI patterns, component decomposition, API stability, performance patterns | sonnet 4.6 |
 
 Scope каждого агента — в самом agent prompt. Матрица "спринт → агенты": [[wiki/project/decisions/0017-review-agent-harness]].
 

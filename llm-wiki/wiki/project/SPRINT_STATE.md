@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: debugging-pr-alpha
+sprint: debugging-pr-beta
 phase: 4-execution
-branch: feature/pr-alpha-kit-audit-verification
+branch: feature/pr-beta-arch-reviewer-tier-a
 tag: v0.1.0-alpha.8c
 ---
 
