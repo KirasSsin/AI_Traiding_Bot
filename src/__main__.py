@@ -19,6 +19,16 @@ from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
 
+import pandas as pd
+
+from src.backtest.mc_permutation import sign_flip_p_value
+from src.backtest.replay_engine import run_replay
+from src.backtest.walk_forward import (
+    WalkForwardRunner,
+    WindowSplitter,
+    evaluate_acceptance_gate,
+)
+from src.backtest.wfa_reporter import format_wfa_report
 from src.execution.bybit.adapter import BybitMarketAdapter
 from src.execution.bybit.ws_private import BybitPrivateWSConsumer
 from src.execution.coordinator import Coordinator
@@ -246,6 +256,85 @@ def _cmd_kill(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:  # noqa: ARG001
+    """Stub OHLCV loader. Production: read из Parquet OR REST kline.
+
+    For S11 — placeholder. S12 F integrates real backfill data path.
+    """
+    return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
+
+
+def _cmd_wfa(args: argparse.Namespace) -> int:
+    """Run Walk-Forward Analysis + report.
+
+    Subcommand: python -m src wfa --symbol BTCUSDT --start 2024-01-01 --end 2024-04-01
+
+    Wires S10 WFA orchestrator (WindowSplitter + WalkForwardRunner + sign_flip_p_value
+    + evaluate_acceptance_gate + format_wfa_report) с stub OHLCV loader (S12 integrates
+    real data path).
+
+    Returns:
+        0 — gate passed (Sharpe AND MC <= thresholds);
+        2 — gate failed;
+        1 — error (empty data, etc.).
+    """
+    settings = Settings()  # noqa: F841 — reserved для future settings-driven WFA params
+    symbol: str = args.symbol or "BTCUSDT"
+
+    df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end)
+    if df.empty:
+        print("WARNING: OHLCV loader returned empty (S12 integrates real data path)", flush=True)
+        return 1
+
+    splitter = WindowSplitter()  # ADR 0014 defaults
+    runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
+    config = {
+        "trading": {
+            "initial_balance": 10000.0,
+            "commission_taker": 0.001,
+            "slippage": 0.0005,
+            "position_size_pct": 10.0,
+            "max_drawdown_pct": 50.0,
+            "long_only": True,
+        },
+        "strategy": {"indicators": {"atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0}}},
+    }
+    runner_result = runner.run(df=df, config=config)
+
+    # MC sign-flip on aggregated OOS returns
+    oos_trades = runner_result["aggregate"]["oos_trades_df"]
+    if oos_trades.empty:
+        mc_p = 1.0
+    else:
+        import numpy as np
+        raw = oos_trades["net_pnl"].astype(float).to_numpy()
+        returns_arr = np.asarray(raw, dtype=float) / 10000.0
+        mc_p = sign_flip_p_value(returns_arr, n_iterations=2000, seed=42)
+
+    fold_ratios = [f["oos_is_sharpe_ratio"] for f in runner_result["folds"]]
+    gate = evaluate_acceptance_gate(
+        fold_oos_is_sharpe_ratios=fold_ratios,
+        mc_p_value=mc_p,
+    )
+
+    report = format_wfa_report(
+        runner_result=runner_result,
+        trades_for_dsr=[],  # Per-fold DataFrame->TradeRecord conversion deferred S12+
+        mc_p_value=mc_p,
+        gate_result=gate,
+    )
+
+    import json
+    print(json.dumps({
+        "symbol": symbol,
+        "k_folds": report.get("k_folds", 0),
+        "mc_p_value": report.get("mc_p_value"),
+        "acceptance_gate": report.get("acceptance_gate"),
+    }, default=str, indent=2))
+
+    return 0 if gate.get("passed") else 2
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m src", description="AI Trading Bot v0.1 — live runtime CLI (ADR 0022).")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -265,6 +354,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_kill = sub.add_parser("kill", help="Write .kill_switch sentinel and exit.")
     p_kill.set_defaults(func=_cmd_kill)
+
+    p_wfa = sub.add_parser("wfa", help="Run Walk-Forward Analysis + report.")
+    p_wfa.add_argument("--symbol", default="BTCUSDT")
+    p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_wfa.set_defaults(func=_cmd_wfa)
 
     return p
 
