@@ -156,6 +156,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0021-sprint-7-resilience]] — Sprint 7: 9 sub-decisions (bootstrap reconcile + 4-valued reconciler + WS-reconnect wiring + heal_max_age=3600s + γ halt persistence + halt_log audit + ws_private close-hook); FSM 16/29/59; reason codes 39→42; B1 narrow scope (passive consumer).
 - [[project/decisions/0022-sprint-8a-live-runtime]] — Sprint 8a: 14 sub-decisions (RuntimeManager lifecycle + REST bar poller + KILL_SWITCH sentinel-file CLI + threading lock policy на Coordinator/Reconciler + entry-point `python -m src` + orphan removal); FSM +11 KILL_SWITCH_REQUESTED transitions; reason codes 42→45.
 - [[project/decisions/0023-halt-code-fsm-event-mapping]] — Sprint 8b ADR. Halt-class ReasonCode dispatch invariant in Coordinator.request_halt + 3-layer enforcement (ADR + reviewer prompt + property test).
+- [[project/decisions/0024-sprint-9-data-quality-types-analytics]] — Sprint 9 aggregate ADR: Data quality detector (REST-vs-REST + HALT_DATA_QUALITY) + mypy strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills table + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis).
 
 ## Queries (saved answers)
 
