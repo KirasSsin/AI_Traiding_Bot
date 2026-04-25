@@ -122,3 +122,45 @@ class WalkForwardRunner:
         }
 
         return {"folds": folds, "aggregate": aggregate}
+
+
+def evaluate_acceptance_gate(
+    *,
+    fold_oos_is_sharpe_ratios: list[float],
+    mc_p_value: float,
+    sharpe_threshold: float = 0.7,
+    p_threshold: float = 0.05,
+) -> dict[str, Any]:
+    """Evaluate WFA acceptance gate per ADR 0014 + 0015 AND-combined.
+
+    Per pre-s10-backlog.md Q2 verdict (trader REVISE accepted): DSR is
+    computed and reported (informational) but NOT в gate decision.
+
+    Gates:
+    - L1 (per ADR 0014): every fold's OOS/IS Sharpe ratio >= sharpe_threshold (0.7 default)
+    - L2 (per ADR 0015): MC permutation p-value <= p_threshold (0.05 default)
+    - PASS = L1 AND L2
+
+    Returns:
+        dict с 'passed' bool + per-gate details + failed_folds list.
+    """
+    failed_folds = [
+        idx
+        for idx, ratio in enumerate(fold_oos_is_sharpe_ratios)
+        if ratio < sharpe_threshold
+    ]
+    sharpe_gate_passed = len(failed_folds) == 0
+    mc_gate_passed = mc_p_value <= p_threshold
+
+    return {
+        "passed": sharpe_gate_passed and mc_gate_passed,
+        "sharpe_gate_passed": sharpe_gate_passed,
+        "mc_gate_passed": mc_gate_passed,
+        "failed_folds": failed_folds,
+        "fold_sharpe_ratios": list(fold_oos_is_sharpe_ratios),
+        "mc_p_value": mc_p_value,
+        "thresholds": {
+            "sharpe": sharpe_threshold,
+            "p_value": p_threshold,
+        },
+    }
