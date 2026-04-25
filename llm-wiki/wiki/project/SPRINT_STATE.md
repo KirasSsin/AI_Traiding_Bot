@@ -2,8 +2,8 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 14
-phase: between-sprints-post-mvp-honest-close
+sprint: 15
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.14
 ---
@@ -38,15 +38,21 @@ Trader Q1 EXPAND verified: T5 ≥100 trades structurally unreachable (5x signal 
 ## Следующее действие
 
 ```
-v0.1 closed honest. NO S15 committed.
+S15 PHASE 2 COMPLETE → PHASE 3 (plan write).
+ESC-1: Option B chosen (Q1+Q2: mean-reversion 1H × 3 symbols BTC/ETH/SOL)
+ESC-2: pre-registered RSI 30/70 + BB(20, 2σ) AND-gated
+ADR 0030 accepted.
 
-Operator-driven future direction options (deferred):
-(A) Strategy revision (mean-reversion / regime / ML) — 3-5 sprints
-(B) Multi-symbol (ETH + SOL) — 2-3 sprints, ~3x signal frequency
-(C) Different timeframe (15M / 4H) — 1-2 sprints, ADR 0005 amendment
-(D) Project pause — 0 sprints, current freeze
+T0: DSR cross-trial sigma_SR fix (BLOCKING prereq, addresses S14 Q2 carry-over)
+T1: TradeHistory.load_recent symbol filter (HIGH BLOCKER — Kelly contamination)
+T2: NEW MeanReversionRsiBBStrategy class
+T3: Multi-symbol DI fan-out (--symbols CLI arg)
+T4: Multi-symbol backfill + WFA wiring
+T5: Measurement run + verdict (T1-T6 + DSR cross-trial)
+T6: ADR 0030 + sprint-15 page + wiki sync
 
-Operator decides if/when. No commitment.
+Next: writing-plans skill → 2026-04-26-sprint-15-mean-reversion-multi-symbol.md
+Then: subagent-driven execute → sprint-finish ship as v0.1.0-alpha.15
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
