@@ -74,9 +74,7 @@ _(пусто — v0.2+)_
 
 ## Project — Runbooks
 
-> Operator post-mortem procedures + recovery workflows. Currently empty стаб (Bucket F1 `halt-recovery.md` deferred к S9+). Will populate as runbooks land.
-
-_(пусто — F1 stub TBD)_
+- [[project/runbooks/halt-recovery]] — operator manual для 19 halt codes (5 class groups, 2 severity tiers — CRITICAL full diagnosis vs RECOVERABLE abbreviated). Per Bucket F1 (S8c PR-γ) trader-expert ROUND 1+2 binding verdicts. Covers: Drawdown (4), Operational (4), OCO/bracket (6), Bootstrap/reconcile (3), Runtime (2).
 
 ## Project — Workflow Skills (`.claude/skills/`)
 
@@ -126,7 +124,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/ws-private-consumer]] — Bybit V5 private WS (order + wallet) с pybit close-hook + check_alive watchdog (S7 ADR 0021 sub-decision 6).
 - [[project/components/runtime-manager]] — RuntimeManager: process lifecycle owner (bootstrap → loop → shutdown). S8a.
 - [[project/components/bar-poller]] — BarSource: REST kline poller с dedup + stall counter. S8a.
-- [[project/runbooks/halt-recovery]] — manual operator procedures: HALT_FLATTEN_FAILED, HALT_OCO_SIBLING_STUCK, HALT_PHANTOM_SL, HALT_RECONCILE_DIVERGENCE, HALT_BOOTSTRAP_AMBIGUOUS (S7), HALT_EXIT_RECONCILE_DIVERGENCE (S7).
+- [[project/runbooks/halt-recovery]] — see Runbooks section above (19 halt codes, 5 class groups, 2 severity tiers — CRITICAL/RECOVERABLE).
 
 ## Project — Experiments
 
