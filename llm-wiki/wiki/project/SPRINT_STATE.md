@@ -2,9 +2,9 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
-sprint: 9
-phase: 8-ship
-branch: feature/sprint-9-quality-types-analytics
+sprint: between-sprints
+phase: ready-for-s10
+branch: main
 tag: v0.1.0-alpha.9
 ---
 
@@ -15,55 +15,45 @@ tag: v0.1.0-alpha.9
 
 ## Текущий статус
 
-**Между спринтами. Готов к S9 brainstorm.** 13 спринтов завершено: S1-S7 + S8a + S8b + S8c + 5 docs/tooling batches (PR #12-#16).
+**Между спринтами. S9 shipped (PR #17 → `92c5268`, tag `v0.1.0-alpha.9`).** 14 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + 5 docs/tooling batches (PR #12-#17).
 
-## Session 2026-04-25 deliverables (debugging batch до S9)
+## Последний спринт (S9 — Data quality + mypy strict + per-fill + DSR)
 
-- **PR #14 (PR-α)** Kit audit + Verification pass — 13 Invariants tables 52 anchors `:LINE`→`function::name` → `5cb84c3`
-- **PR #15 (PR-β)** architecture-reviewer NEW agent (sonnet 4.6) + TIER A apply к 6 reviewers (memory:project + Sprint priming + effort:max для trader-expert/quant-stats) → `876be51`
-- **PR #16 (PR-γ)** F1 halt-recovery 9→19 codes (5 class groups + 2 severity tiers) + B2/B3 Block 1↔2 sync HARD-GATE 5c → `98d0c40`
-- **Audit follow-up** trader-expert cross-link audit → 7 files updated (CLAUDE.md 5→6 reviewers, 5 halt-emitter components linked к halt-recovery runbook) → `7c28a6d`
-- **C7 broken-link hook** — NEW PreToolUse `git push` hook scans changed wiki files для broken `[[link]]` refs (Bucket C7); 5 real bugs caught + fixed (incl. MISSING sprint-08c page HARD-GATE violation) → `f07e979`
-- **mypy 44→0** — pure type annotations cleanup across 8 src/ files. 22 type-arg + 9 arg-type + 5 union-attr + 8 misc. Zero behavioral changes (pytest 589/24/0 maintained, counts unchanged) → `ba4dcfe`
+12 TDD tasks, 20 commits squash-merged. Closed 3 deferred carry-overs:
+- **Q1 (C):** REST-vs-REST quality detector → HALT_DATA_QUALITY (no new FSM, uses RISK_HALT)
+- **Q2 (G):** mypy --strict full enable (override removal + 18 cross-module fixes)
+- **Q3 B1:** trade_fills migration + FillRecord/Repository + WS execution topic
+- **Q3 B2:** DSR module (Bailey & López de Prado, Pearson kurtosis fix from quant-stats-reviewer T9 BLOCKER)
+
+Tests: 589→621 unit (+32). FSM/counts unchanged (16/30/74/45). 0 src/ behavioral changes.
 
 ## Следующее действие
 
 ```
-S9 PHASE 3 — plan write:
-1. superpowers:writing-plans skill → bite-sized tasks per Q1+Q2+Q3 verdicts
-2. Trace map mandatory (PHASE 3 step 1a HARD-GATE)
-3. Tasks roadmap:
-   - Q1 C: REST-vs-REST quality detector (3-4 tasks, src/marketdata/quality.py + halt routing)
-   - Q2 G: mypy strict (3 tasks: core → risk → backtest optional)
-   - Q3 B1: per-fill table + WS execution topic + repository (3-4 tasks, migration + ws subscription + records)
-   - Q3 B2: DSR module (2-3 tasks, formula + tests + quant-stats-reviewer)
-4. ADR 0024 draft (G + B aggregate decisions)
-5. Wiki updates: NEW component pages quality.md + fill-history.md + dsr.md
+Begin S10 brainstorm:
+1. mem-search "S10 candidate scope" + "WFA DSR MC"
+2. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
+3. Roadmap (per S9 brainstorm carry-over): S10 = D (WFA + DSR + MC permutations) — large
+   statistical layer, builds on S9 B2 DSR foundation
+4. Alternative: S11 F (Live demo Mainnet 24-72h validation) если operator priority
 ```
 
-## S9 brainstorm verdicts (PHASE 2 complete)
+## Carry-over к S10+
 
-Trail: `wiki/project/pre-s9-backlog.md`. Summary:
-- **Q1 (C):** REVISE — REST-vs-REST consecutive bar (no WS kline subscription, derisk async)
-- **Q2 (G):** REVISE — order src.core → src.risk → src.backtest (wedge pattern)
-- **Q3 (B):** CONFIRM — split B1 (per-fill table + WS execution) + B2 (DSR module)
-- 0 user escalation items, ROUND 2 not triggered (both REVISE accepted)
+- **DSR annualization factor** — deferred S9 (decision pending: 252 vs 365 vs irregular weighting per trade frequency)
+- **DSR n_trials > 1** — NotImplementedError v0.1, requires sigma_SR per Bailey eq. 12
+- **Production wiring of FillRecorder** — `__main__.py::_cmd_run` STUB since S8a; defer к operator-readiness sprint
+- **Walk-Forward acceptance gate consuming DSR** — S10 D scope (per ADR 0014)
+- **Per-fill consumed by DSR** — currently per-trade only; future granularity если needed
 
-## Carry-over к S9+
+## Ключевые решения S9
 
-- **Existing component pages Block 1/2 refactor** — paradigm уже implicit, defer per-page (HARD-GATE 5c только для new pages)
-- **PR-D+E** — was planned but TIER A apply already shipped в PR-β; only "deeper memory tooling" still open
-- **Trading concept stubs** — `minimum-backtest-length.md`, `position-sizing.md` referenced from trading/atr.md + walk-forward — out-of-scope для project core, defer к research session
-- **mypy --strict mode** — pyproject заявляет strict=true, но `mypy src/` clean. Verify `mypy --strict src/` опционально (могут быть additional strict-only rules) → defer
-
-## Ключевые решения session 2026-04-25
-
-- **PR-α:** Stable `function::name` anchors > brittle `:LINE` (drift prevention). `(no test yet — TODO)` honest marker > fabricated test name.
-- **PR-β:** 6th agent architecture-reviewer закрыл gap (cross-module refactor / concurrency). TIER A applied: memory:project + Sprint priming + effort:max (critical 2 only).
-- **PR-γ F1:** Trader iterative justify ROUND 2 caught maintainer over-classification (HALT_DRAWDOWN_L1 НЕ halt; HALT_BOOTSTRAP_AMBIGUOUS = CRITICAL not RECOVERABLE). 5 class groups + 2 severity tiers BINDING.
-- **PR-γ B1:** CC1 lesson re-applied (verify Explore claims via grep src/ tests/ — over-recommended creating page для confirmed orphan).
-- **PR-γ B2/B3:** Block 1↔2 sync HARD-GATE 5c для new pages с config; existing pages defer per-page refactor (anti-bloat).
-- **Trader audit:** Subagent hallucinated tool calls (current-state.md TBD claim wrong, actual=74/45). CC1 verification protocol caught all 3 trader claims; applied только verified gaps. Lesson: ALWAYS grep maintainer-side BEFORE applying subagent recommendations.
+- **REST-vs-REST quality detector** (NOT WS+REST kline) — no async dep, no WS partial-bar false-positives. Trader REVISE accepted.
+- **mypy strict empirical lesson** — per-module check INSUFFICIENT (18 cross-module errors surfaced after override removal). Always full-tree verify.
+- **Pearson kurtosis** в DSR formula (NOT Fisher excess) per Bailey & López de Prado eq. 13 — quant-stats-reviewer T9 BLOCKER caught wrong convention before merge.
+- **HALT_DATA_QUALITY uses existing RISK_HALT** — _REQUEST_HALT_CODES allow-list expansion (3→4 codes), no new FSM state/event/transition.
+- **Split B1 + B2** — independent concerns, parallel ship. DSR doesn't depend on per-fill.
+- **C7 hook bash bug** — triple-backtick parsing collision inside `$(...) <<'PYEOF'` heredoc. Fix: extracted python к external script `~/.claude/hooks/lib/wiki_broken_link_scan.py`.
 
 ## Как обновлять этот файл
 

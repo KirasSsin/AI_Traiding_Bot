@@ -565,3 +565,65 @@ Begin S9 brainstorm — `brainstorm-init` skill auto-fires on "брейншту�
 ✅ 5 docs/tooling batches shipped (PR #12-#16 + audit + C7 + mypy)
 
 Готов к S9 brainstorm.
+
+---
+
+## [2026-04-25] sprint-end | S9 — Data quality + mypy strict + per-fill + DSR
+
+### Shipped (PR #17 → 92c5268, tag v0.1.0-alpha.9)
+
+12 TDD tasks, 20 commits squash-merged. Closed 3 deferred carry-overs:
+
+- **Q1 C — Data quality:** NEW `BarPriceQualityDetector` (REST-vs-REST consecutive bar deviation, 0.5% threshold). Triggers HALT_DATA_QUALITY via existing RISK_HALT event (no new FSM state/event/transition). Wired в `RuntimeManager._poll_bar_and_strategy` BEFORE strategy.on_bar. `_stopping=True` set on halt (terminal — match stall + kill-switch patterns).
+- **Q2 G — mypy strict:** Removed `ignore_errors=true` override для src.core/risk/backtest. Empirical per-module check missed 18 cross-module errors — fixed in T4 follow-up. `mypy src/` clean (63 source files).
+- **Q3 B1 — Per-fill schema:** NEW migration `0006_trade_fills.sql` (FK trade_history, UNIQUE exec_id, composite index) + `FillRecord` + `FillHistoryRepository` + WS execution topic subscription (`_FillRecorderProto`).
+- **Q3 B2 — DSR module:** NEW `src/analytics/dsr.py` Bailey & López de Prado Deflated Sharpe Ratio. **quant-stats-reviewer T9 caught BLOCKER** — wrong kurtosis convention (Fisher excess vs Pearson total). Fixed inline (`fisher=False`) + n_trials > 1 NotImplementedError guard.
+
+### Validation
+
+- pytest: 630 passed / 24 skipped / 0 failed (baseline 589 → +32 tests: 8 quality + 7 fill_history + 8 dsr + 1 coordinator + 3 migration + 3 ws_private + 2 runtime)
+- mypy --strict src/: Success in 63 source files (added: dsr.py)
+- Canonical counts unchanged: 16/30/74/45 (S9 = pure additive, no FSM impact)
+- Property test: HALT_DATA_QUALITY added к `_REQUEST_HALT_CODES` (3→4 codes)
+
+### Wiki updates
+
+- 3 NEW component pages: data-quality, fill-history, dsr
+- 1 NEW ADR: 0024-sprint-9-data-quality-types-analytics
+- 1 NEW sprint page: sprint-09-data-quality-types-analytics
+- 1 NEW migration: 0006_trade_fills.sql
+- index.md, components/README.md (NEW Cluster 10 — Analytics), mental-map.md updated
+- pre-s9-backlog.md (PHASE 2 brainstorming verdicts trail)
+
+### Reviewers
+
+- T1 (quality): data-integrity + python — ✅ both APPROVED post-fix (docstring clarity + log hygiene + import sort)
+- T2 (coordinator): trading-logic + python — ✅ both APPROVED no concerns
+- T3 (runtime): trading-logic + python — ✅ caught _stopping=True missing on halt path (real bug, fixed)
+- T5 (migration): data-integrity — ✅ APPROVED post-fix (added FK enforcement INSERT violation test)
+- T6 (fill_history): data-integrity + python — ✅ both APPROVED, low-priority concerns
+- T7 (ws): trading-logic + python — ✅ both APPROVED (production wiring deferred per pre-existing S8a STUB)
+- T9 (DSR): quant-stats — ❌ BLOCKER B1 (Fisher→Pearson kurtosis) caught + fixed → ✅ post-fix APPROVED
+
+### Bug discovered + fixed (C7 hook)
+
+`wiki-broken-link-check.sh` had bash parsing collision на triple-backtick `"\`\`\`"` внутри `$(... <<'PYEOF'` heredoc — bash interpreted backticks despite single-quoted heredoc delimiter. Fix: extracted python к external script `~/.claude/hooks/lib/wiki_broken_link_scan.py`. Caught at first push attempt of S9 branch.
+
+### Key decisions
+
+- **REST-vs-REST quality detector** (NOT WS+REST kline) — closes async dependency + WS partial-bar false-positive risk per Q1 trader REVISE
+- **mypy strict empirical lesson** — per-module mypy doesn't see cross-module imports. Always full-tree verify before override removal.
+- **Pearson kurtosis (NOT Fisher excess)** в DSR per Bailey eq. 13 — caught by quant-stats-reviewer
+- **DSR annualization deferred** — per-trade Sharpe internally consistent (Φ output unit-free, annualization cancels)
+- **Production wiring deferred** — `__main__.py::_cmd_run` STUB since S8a, defer к operator-readiness sprint
+
+### Carry-over к S10+
+
+- DSR annualization factor (deferred — irregular trade frequency normalization decision)
+- DSR n_trials > 1 (NYI v0.1, requires sigma_SR per Bailey eq. 12)
+- Walk-Forward acceptance gate consuming DSR (S10 D scope per ADR 0014)
+- Production wiring of FillRecorder
+
+### Roadmap
+
+S10 = D (WFA + DSR + MC permutations) — large statistical layer, builds on S9 B2 DSR foundation. Alternative: S11 F (Live demo Mainnet 24-72h) если operator priority.
