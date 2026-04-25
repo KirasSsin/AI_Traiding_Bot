@@ -161,6 +161,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0022-sprint-8a-live-runtime]] — Sprint 8a: 14 sub-decisions (RuntimeManager lifecycle + REST bar poller + KILL_SWITCH sentinel-file CLI + threading lock policy на Coordinator/Reconciler + entry-point `python -m src` + orphan removal); FSM +11 KILL_SWITCH_REQUESTED transitions; reason codes 42→45.
 - [[project/decisions/0023-halt-code-fsm-event-mapping]] — Sprint 8b ADR. Halt-class ReasonCode dispatch invariant in Coordinator.request_halt + 3-layer enforcement (ADR + reviewer prompt + property test).
 - [[project/decisions/0024-sprint-9-data-quality-types-analytics]] — Sprint 9 aggregate ADR: Data quality detector (REST-vs-REST + HALT_DATA_QUALITY) + mypy strict full enable (override removal + 18 fixes) + per-fill schema (trade_fills table + WS execution topic) + DSR module (Bailey & López de Prado, Pearson kurtosis).
+- [[project/decisions/0025-sprint-10-wfa-dsr-mc]] — Sprint 10 aggregate ADR: WFA orchestrator (rolling K=5 per ADR 0014) + DSR sigma_sr extension (closes S9 NYI, Bailey eq. 12) + MC sign-flip + block bootstrap (ADR 0015) + 3-Sharpe series routing + vector_backtest annualization fix.
 
 ## Queries (saved answers)
 
