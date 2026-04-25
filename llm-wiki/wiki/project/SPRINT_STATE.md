@@ -3,8 +3,8 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-25
 sprint: 13
-phase: 3-planning
-branch: main
+phase: 4-execution
+branch: feature/sprint-13-backfill-wfa
 tag: v0.1.0-alpha.12
 ---
 
@@ -32,13 +32,17 @@ Tests: 680→689 unit (+9). FSM/counts unchanged (16/30/74/45). Q7 zero-migratio
 ## Следующее действие
 
 ```
-S13 brainstorm:
-1. mem-search "S13 schema link" + "FillRecorder Layer 2 production"
-2. S13 = TBD (post operator-driven 48h validation results)
-3. Run brainstorm-init skill → trader-expert ROUND 1 questionnaire
+S13 PHASE 4 in flight (per ADR 0028):
+- T1 probe ✅ — earliest Bybit 1H BTCUSDT = 2021-07-02 16:00 UTC, target span = ~4.8y
+  * 2018-H1: 0 bars, 2020-H1: 0 bars, 2021-H1: 0 bars
+  * 2021-Jul-02 16:00 UTC = confirmed earliest bar (binary search)
+  * Span: 2021-07-03 → 2026-04-24 = ~4.8y (ADR 0028 ESC-2: below 5y target, above 3.5y floor — document deviation)
+- T2 backfill wire (next): _cmd_backfill → BybitRESTClient.get_klines + Parquet
+- T3 run backfill для 2021-07-03 → 2026-04-24
+- T4 NaN preflight, T5 trade_extractor, T6 strategy_metrics
+- T7 wire measurement + verdict report
+- T8 PHASE 8 ship
 ```
-
-**Pre-S13 operator-driven activity:** 48h Bybit demo validation run per `wiki/runbooks/live-demo-validation.md`. Result feeds S13 scope (FillRecorder Layer 2 design, schema link, slippage validation gaps).
 
 ## Carry-over к S13+
 
