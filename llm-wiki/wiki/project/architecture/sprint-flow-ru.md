@@ -1,0 +1,397 @@
+---
+title: Sprint Flow — обязательный процесс kit'а (русская версия)
+type: architecture
+tags: [workflow, sprint-lifecycle, kit, hard-gates, enforcement, ru]
+created: 2026-04-26
+updated: 2026-04-26
+status: stable
+sources:
+  - project/architecture/development-workflow.md (английский оригинал, более детальный)
+  - project/decisions/0041-sprint-28-process-enforcement.md
+  - project/decisions/0017-review-agent-harness.md
+  - .claude/skills/sprint-orient/SKILL.md
+  - .claude/skills/brainstorm-init/SKILL.md
+  - .claude/skills/sprint-finish/SKILL.md
+  - .claude/skills/wiki-update/SKILL.md
+---
+
+# Sprint Flow — обязательный процесс (RU)
+
+> **Это binding процесс.** Любая работа над спринтом ОБЯЗАНА пройти ВСЕ 9 фаз.
+>
+> Hook `~/.claude/hooks/sprint-flow-check.sh` блокирует push на ветку
+> `feature/sprint-NN-*` без plan file в `wiki/project/plans/`.
+>
+> Catalog tooling: [[tooling-inventory-ru]]
+
+## Зачем мы это делаем
+
+Последние 12 спринтов (S16-S27) показали drift: kit постепенно ослаблялся под
+нагрузкой. Конкретно S27 нарушил:
+- Прямой `Agent` dispatch вместо `superpowers:brainstorming` или `brainstorm-init` skill
+- Нет plan file в `wiki/project/plans/` (последний — S15)
+- `superpowers:writing-plans` пропущен
+- `superpowers:subagent-driven-development` пропущен (controller-driven вместо)
+- SPRINT_STATE updated только в конце спринта, не после каждой задачи
+
+Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
+Решение: hook + Russian docs + per-task SPRINT_STATE protocol = mechanical gate.
+
+## Обзор фаз (9)
+
+| Фаза | Название | Триггер | HARD-GATE | Артефакт |
+|------|----------|---------|-----------|----------|
+| 1 | Orient | Старт сессии / `/clear` | SPRINT_STATE прочитан + git verified | `mcp__ccd_session__mark_chapter` |
+| 2 | Brainstorm | Open scope/design questions | Все Q processed через trader-expert ROUND 1 (+ROUND 2 на REVISE-disagreement) | `wiki/project/pre-s{N}-backlog.md` |
+| 3 | Plan | Brainstorm verdicts locked | Plan file в `wiki/project/plans/` создан (HARD-GATE — hook блокирует push без него) | `wiki/project/plans/<date>-sprint-N-<slug>.md` |
+| 4 | Execute | Plan committed | TDD per task + per-task commit + SPRINT_STATE update после КАЖДОЙ task | git commits |
+| 5 | Verify | All tasks done | pytest GREEN + mypy clean + canonical counts current | test output |
+| 6 | Review | Verify passed | Domain reviewer (L5) per touched area + (если требуется) parallel reviewers | review reports |
+| 7 | Sync | Review passed | wiki update — components + ADR + sprint page + index + log | wiki diffs |
+| 8 | Ship | Wiki synced | sprint-NN.md + counts + orphan-audit + index sync (per `sprint-finish` skill) | tag v0.1.0-alpha.N + PR merge |
+| 9 | Close | Tag pushed | SPRINT_STATE → between-sprints + log session-end | SPRINT_STATE |
+
+---
+
+## Phase 1: Orient (старт сессии)
+
+### Триггер
+- Старт сессии в проекте
+- После `/clear`
+- "Где мы остановились" / "ориентируйся заново"
+- Switch context между sprints
+
+### Procedure
+**Использовать skill:** `.claude/skills/sprint-orient/SKILL.md`
+
+```
+1. Read llm-wiki/wiki/project/SPRINT_STATE.md
+   → sprint N, phase X, branch, tag, "Следующее действие"
+2. git branch --show-current && git log --oneline -3
+3. Verify branch matches SPRINT_STATE — flag mismatch если разные
+4. Read llm-wiki/wiki/log.md (offset+limit, не full file)
+   → recent decisions
+5. Read canonical-counts table в current-state.md
+6. mcp__ccd_session__mark_chapter "Sprint N — session resume"
+```
+
+### HARD-GATE
+- ✅ SPRINT_STATE прочитан полностью
+- ✅ git branch verified против SPRINT_STATE
+- ✅ Chapter marked
+- ❌ Не начинай code пока orient не завершён
+
+### Output к user
+8 bullets max:
+- Sprint N, phase X, branch Y, tag Z
+- Last commit
+- Recent log events (top 3)
+- Canonical counts
+- Carry-overs если есть
+- Next action
+
+---
+
+## Phase 2: Brainstorm (scope/design questions)
+
+### Триггер
+- Новый sprint начало с open scope/architecture questions
+- Carry-over decisions от prior sprint требуют resolution
+- User says "брейнштурм S<N>", "scope sprint", "design questions"
+- Pre-S{N} backlog имеет Bucket B (user bugs) OR Bucket D (architectural decisions)
+
+### Skip when
+- Sprint = pure execution of approved ADR (no new decisions)
+- Operator уже specified deliverables (как в S28 — process enforcement clear)
+
+### Procedure
+**Использовать skill:** `.claude/skills/brainstorm-init/SKILL.md`
+
+```
+1. Collect open questions (carry-overs + user input + prior sprint open issues)
+2. Build structured questionnaire (5 fields per question):
+   - Question (verbatim)
+   - Maintainer recommended option
+   - Alternatives considered (a/b/c)
+   - Reasoning for recommended (wiki/ADR/code refs)
+   - Risk/concern
+3. Dispatch trader-expert ROUND 1 (через `Agent(subagent_type="trader-expert")`)
+4. Process verdicts:
+   - CONFIRM → option locked
+   - REVISE (option == maintainer's) → option locked + trader rationale
+   - REVISE (option != maintainer's) → MUST go to ROUND 2 iterative justify
+   - DEFER → к S{N+1}+
+   - EXPAND → re-brainstorm
+5. ROUND 2 (на REVISE-disagreement):
+   - Re-evaluate, side-by-side compare, fresh research
+   - Returns CONFIRM_REVISE OR CHANGED — BINDING, no round 3
+6. Document verdicts в `wiki/project/pre-s{N}-backlog.md`
+7. User escalation (только trader's escalation list — product/regulatory/business)
+```
+
+### HARD-GATE
+- ✅ Каждая question processed через trader-expert ROUND 1
+- ✅ REVISE-disagreement → ROUND 2 invoked (НЕ принимать REVISE без round 2 если maintainer disagree)
+- ✅ Verdicts persisted в pre-s{N}-backlog.md
+- ❌ НЕ asking user scope/architecture question напрямую без trader-expert ROUND 1
+
+### Anti-patterns
+- ❌ Прямой Agent dispatch без brainstorm-init skill structure
+- ❌ Skipping trader потому что "очевидно" (S8c Q1 caught DELETE bracket.py = catastrophe)
+- ❌ Третий round trader (ROUND 2 BINDING)
+
+---
+
+## Phase 3: Plan (writing-plans)
+
+### Триггер
+- PHASE 2 verdicts locked
+- Sprint scope зафиксирован
+- ADR proposed status
+
+### Procedure
+**Использовать skill:** `superpowers:writing-plans`
+
+```
+1. Inherit context from PHASE 2 (ADR + backlog verdicts)
+2. Map file structure (which files create/modify, responsibilities)
+3. Decompose в bite-sized tasks (2-5 minutes per step)
+4. Write plan в `wiki/project/plans/<YYYY-MM-DD>-sprint-N-<slug>.md`
+5. Format:
+   - Header (goal / architecture / tech stack)
+   - Context (link to ADR + spec)
+   - File Structure (decomposition decisions)
+   - Task Breakdown (per-task с file paths + steps + commands + commit messages)
+   - Self-Review Checklist
+   - Execution mode (subagent-driven OR controller-driven)
+6. Self-review: spec coverage / placeholder scan / type consistency
+```
+
+### HARD-GATE (mechanical — hook enforced)
+- ✅ Plan file существует в `wiki/project/plans/<YYYY-MM-DD>-sprint-N-<slug>.md`
+- ✅ Pattern: `^[0-9]{4}-[0-9]{2}-[0-9]{2}-sprint-N-.+\.md$`
+- ❌ Hook `sprint-flow-check.sh` БЛОКИРУЕТ push на feature/sprint-* branch без plan file
+
+### Anti-patterns
+- ❌ "TBD", "TODO", "implement later" placeholders в plan
+- ❌ "Add appropriate error handling" (vague — needs explicit list)
+- ❌ "Similar to Task N" (repeat code — engineer может читать out of order)
+- ❌ Steps без code blocks где нужен код
+
+---
+
+## Phase 4: Execute (TDD + per-task SPRINT_STATE)
+
+### Триггер
+- Plan committed к branch
+- SPRINT_STATE phase=4-execution
+
+### Procedure
+**Использовать skill:** `superpowers:subagent-driven-development` (recommended) OR `superpowers:executing-plans` (controller-driven)
+
+#### Subagent-driven (preferred для code-heavy sprints)
+```
+1. Extract all tasks с full text (don't make subagent read plan)
+2. Create TodoWrite с all tasks
+3. Per task:
+   a. Dispatch implementer subagent с full task text + scene-setting context
+   b. Implementer asks questions → answer перед work begins
+   c. Implementer implements TDD (RED → GREEN → COMMIT) → self-review
+   d. Spec compliance reviewer subagent → verifies code matches spec
+   e. Code quality reviewer subagent → approves
+   f. Re-review loops если issues found
+   g. TodoWrite mark complete
+   h. **Update SPRINT_STATE Phase 4 task table**
+4. After all tasks → final code-reviewer subagent
+5. → Phase 5 Verify
+```
+
+#### Controller-driven (preferred для docs/wiki sprints)
+```
+1. TodoWrite с all tasks
+2. Per task:
+   a. TDD (если applies) — write failing test first
+   b. Implement minimal change
+   c. Verify (pytest / bash -n / etc)
+   d. Commit
+   e. **Update SPRINT_STATE Phase 4 task table** ← ОБЯЗАТЕЛЬНО after EACH task
+   f. TodoWrite mark complete
+```
+
+### Per-task SPRINT_STATE update протокол (BINDING)
+
+После КАЖДОЙ task complete (НЕ только в конце спринта):
+
+```
+1. Edit llm-wiki/wiki/project/SPRINT_STATE.md:
+   - Update Phase 4 task table row (status / commit SHA)
+   - Update "Текущий статус" section если milestone
+   - Update "Следующее действие" — что дальше
+   - Update updated: frontmatter
+2. (Optional) git commit:
+   git add llm-wiki/wiki/project/SPRINT_STATE.md
+   git commit -m "docs(sprint): SPRINT_STATE update phase=4 task=Tx done"
+```
+
+### HARD-GATE
+- ✅ TDD strict если code (RED → GREEN → COMMIT)
+- ✅ SPRINT_STATE updated после КАЖДОЙ task
+- ✅ TodoWrite используется как phase tracker, не ad-hoc
+- ✅ Per-task git commit (не batch commit в конце)
+- ❌ Skip review loops если reviewer found issues
+
+### Anti-patterns
+- ❌ Batch commit "all of S28" в одном commit
+- ❌ SPRINT_STATE update только в конце спринта (drift risk)
+- ❌ TodoWrite пропущен потому что "memory достаточно"
+- ❌ Subagent dispatch с "read plan file для context" (controller предоставляет full text)
+
+---
+
+## Phase 5: Verify (pytest + mypy + counts)
+
+### Триггер
+- All Phase 4 tasks done
+- TodoWrite all completed
+
+### Procedure
+```bash
+source .venv/bin/activate
+pytest tests/ -q --ignore=tests/integration 2>&1 | tail -5
+mypy --strict src/ 2>&1 | tail -3
+python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, ExecutionEvent; from src.risk.reason_codes import ReasonCode; print(f'states={len(list(ExecutionState))}, events={len(list(ExecutionEvent))}, transitions={len(TRANSITIONS)}, reason_codes={len(list(ReasonCode))}')"
+```
+
+### HARD-GATE
+- ✅ pytest 0 new failures (baseline preserved)
+- ✅ mypy ≤ baseline (S8c baseline = 44 errors)
+- ✅ Canonical counts текущие
+- ❌ STOP если pytest fails — fix перед Phase 6
+
+---
+
+## Phase 6: Review (L5 domain reviewers)
+
+### Триггер
+- Phase 5 verify passed
+- Code changes touched specific layers
+
+### Procedure (per touched layer)
+
+| Touched | Reviewer | Mandatory? |
+|---------|----------|-----------|
+| `src/signalgen/`, `src/execution/`, `src/backtest/`, `src/risk/` | trading-logic-reviewer | YES |
+| `src/signalgen/indicators.py`, `src/risk/`, `src/backtest/`, `src/analytics/` (math) | quant-stats-reviewer | YES если формулы тронуты |
+| `src/marketdata/`, `src/platform/storage/`, `migrations/` | data-integrity-reviewer | YES |
+| Cross-module refactor / concurrency / DI / API stability | architecture-reviewer | YES |
+| Любой `*.py` (generic safety net) | python-reviewer | YES (после domain) |
+
+**Параллельный dispatch:** если несколько reviewers применимо, dispatch в одном message (multiple Agent calls).
+
+### HARD-GATE
+- ✅ Domain reviewer per touched area invoked
+- ✅ Blockers addressed
+- ✅ Concerns acknowledged (даже если не fix)
+- ❌ Skip review если "тривиально" — нет такого правила
+
+### Skip когда
+- Pure docs change (нет src/ touch)
+- < 50 LoC + tests pass — может только domain reviewer (no parallel)
+
+---
+
+## Phase 7: Sync (wiki update)
+
+### Триггер
+- Phase 6 review passed
+- Code changes требуют wiki update
+
+### Procedure
+**Использовать skill:** `.claude/skills/wiki-update/SKILL.md`
+
+```
+1. Walk dependency graph (touched src/* → component pages)
+2. Block 1↔Block 2 sync per touched component:
+   - Block 1 (Code refs): sources frontmatter + Public API + Invariants Enforcement column
+   - Block 2 (Description): narrative + settings keys + class names + invariant text
+   - HARD-GATE: оба блока MUST sync в одном commit
+3. Canonical counts sync если FSM/reason codes/components изменились
+4. ADR amendment если нужно
+```
+
+### HARD-GATE
+- ✅ Component pages updated если public API changed
+- ✅ Canonical counts current в `current-state.md` + `execution-state-machine.md`
+- ✅ Block 1 anchors point на existing functions (не renamed/removed)
+
+---
+
+## Phase 8: Ship (sprint-finish skill)
+
+### Триггер
+- Phase 7 sync done
+- All HARD-GATEs passed
+
+### Procedure
+**Использовать skill:** `.claude/skills/sprint-finish/SKILL.md` → `superpowers:finishing-a-development-branch`
+
+```
+1. Pre-validation (pytest + mypy)
+2. HARD-GATE — sprint-NN.md page существует
+3. HARD-GATE — canonical counts sync
+4. HARD-GATE — Block 1↔Block 2 sync per touched component
+5. HARD-GATE — orphan-audit grep includes tests/
+6. HARD-GATE — new ADRs в index.md
+7. SPRINT_STATE → 8-ship
+8. git push
+9. gh pr create
+10. gh pr merge --squash --delete-branch
+11. git tag v0.1.0-alpha.N + push
+12. SPRINT_STATE → between-sprints
+13. mark_chapter "Sprint N — ship complete"
+```
+
+### Hooks которые fire (ожидать)
+
+| Hook | Trigger | Действие если block |
+|------|---------|---------------------|
+| `adr-agent-sync-check.sh` | git push если ADR changed | touch agent prompt mtime |
+| `adr-index-sync-check.sh` | git push если new ADR | add ADR к index.md |
+| `sprint-flow-check.sh` (S28+) | git push на feature/sprint-* | create plan file |
+
+---
+
+## Phase 9: Close (between-sprints)
+
+### Procedure
+```
+1. SPRINT_STATE → phase=between-sprints, sprint=N+1 ready, tag updated
+2. Append wiki/log.md session-end entry
+3. mark_chapter "Sprint N — ship complete"
+4. git commit -m "docs(sprint): SPRINT_STATE → between-sprints alpha.N"
+```
+
+---
+
+## Anti-patterns (НЕ делать в любой фазе)
+
+- ❌ Skip фазу потому что "очевидно" / "тривиально"
+- ❌ Прямой Agent dispatch вместо brainstorm-init / writing-plans / subagent-driven skills
+- ❌ Code без plan file (PHASE 3 hook блокирует)
+- ❌ SPRINT_STATE update только в конце спринта (PHASE 4 protocol требует per-task)
+- ❌ Batch commit вместо per-task
+- ❌ Push с feature/sprint-* без plan file (hook block)
+- ❌ Push с new ADR без index.md entry (hook block)
+- ❌ Push с ADR change без agent prompt touch (hook block)
+- ❌ Tag без sprint-NN.md page
+
+## Связанные документы
+
+- [[development-workflow]] — английский оригинал (more detail)
+- [[tooling-inventory-ru]] — agents/skills/plugins/MCP catalog
+- [[../decisions/0017-review-agent-harness]] — review agents matrix
+- [[../decisions/0041-sprint-28-process-enforcement]] — этот процесс ADR
+- `.claude/skills/sprint-orient/SKILL.md` — Phase 1
+- `.claude/skills/brainstorm-init/SKILL.md` — Phase 2
+- `.claude/skills/wiki-update/SKILL.md` — Phase 7
+- `.claude/skills/sprint-finish/SKILL.md` — Phase 8
