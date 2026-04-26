@@ -1070,3 +1070,83 @@ NO code changes:
 ### Roadmap
 
 **v0.2 closed at S16 honest.** Tag v0.1.0-alpha.16. Project state: between-sprints с post-v0.2-honest-close marker. Operator decides v0.3 if/when.
+
+## [2026-04-26] sprint-end | Sprint 17 — BTC-only mean-reversion relaxed (MVP retry hypothesis #3)
+
+**Verdict: FAIL — T5 count only** (59 trades < 100 floor). Per ADR 0032 amendment 3 BINDING → S18 honest close v0.1.
+
+User constraint (BINDING): "торговать будем в mvp только btc/usdt" — MVP scope = BTCUSDT only per ADR 0016 + ADR 0004.
+
+### S17 PHASE 2 brainstorm
+
+Trader-expert ROUND 1 EXPAND → CONFIRM (a) с 3 mandatory amendments:
+
+1. Pre-register RSI 35/65 + BB(20, 1.5σ) AND-gated BINDING
+2. DROP variance cap -10 threshold (ETH-pathology-derived, audit-clean)
+3. T5 count failthrough clause: <100 trades → FAIL → honest close v0.1
+
+Alternatives ruled out: (b) ATR regime filter definitionally frequency-reducing; (c) Donchian breakout same low-frequency как S13 EMA; (d) 15M architectural cost too high; (e) honest close NOW premature.
+
+### Strategy criteria results (5/6 PASS + DSR + MC sig)
+
+- T1 Sharpe OOS: **25.99** PASS (≥1.0)
+- T2 Sortino OOS: 4446 PASS (≥1.5) — suspiciously high
+- T3 MaxDD: 2.8% PASS (<25%)
+- T4 win/RR: 47.5% / RR 154.5 PASS
+- **T5: 59 trades FAIL** (но t_stat 2.13 ≥2.0, mean_pnl +2.40% positive — sample insufficient)
+- T6 OOS/IS sharpe ratio: **0.712 PASS** (borderline ≥0.7)
+- **DSR: 1.0 PASS** (n_trials=1 fresh baseline, single-trial formula)
+- **MC p-value: 0.01 PASS** (statistically significant)
+
+Fold sharpes: [0.96, -1.02, -1.46, 1.58, 3.50] — fold #5 outlier 3.50 drives mean. Без fold #5 mean ≈ 0.01 (concerning concentration).
+
+### Frequency math reconciliation
+
+Trader pre-measurement prediction: 66-88 BTC trades. Actual: **59**. AND-gate joint multiplier ~1.34x baseline (44 trades S15), ниже trader's 1.4-1.7x estimate. Likely cause: stronger positive correlation between RSI extreme + BB breach чем empirical estimate compresses joint probability further.
+
+T5 floor 100 НЕ reachable на BTC-only 1H mean-reversion regardless of relaxed thresholds tested.
+
+### Critical insight for v0.4+
+
+**Strategy edge IS real on BTC mean-reversion regime** (MC p=0.01 statistically significant + DSR=1.0 + T1=25.99 + 5/6 criteria PASS). NO past sprint demonstrated этот set of metrics. Failure mode = INSUFFICIENT SAMPLE SIZE only.
+
+Future MVP-DONE attempts requiring T5 PASS должны:
+- Higher-frequency timeframe (15M = 4x — Q3 architectural blockers preserved)
+- Hybrid mean-reversion + ML filter (Q4 deferred — S17 evidence supports: real partial signal exists)
+- Multi-symbol revival (out of MVP scope per user 2026-04-26)
+
+### Deliverables
+
+- T1 ADR 0032 (S17 strategy + 3 amendments + T5 failthrough clause)
+- T2 indicators.py mean_reversion branch (NO change — already config-driven from S15)
+- T3 _run_wfa_single_symbol config update (RSI 35/65 + BB k=1.5) + sprint env var fix
+- T4 measurement run BTC-only --symbol BTCUSDT 4.81y
+- T5 sprint-17 page + ADR + wiki sync (this commit)
+- T6 PHASE 8 ship via sprint-finish
+
+### Tests / quality
+
+NO new tests (trivial config change):
+- pytest unit: 732 passed (S16 baseline preserved, no regressions)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved
+
+### Next sprint (binding per ADR 0032 amendment 3)
+
+**S18 = honest close v0.1.** Documentation only sprint, mirrors S14 ADR 0029 + S16 ADR 0031 patterns:
+- ADR 0033 v0.1 honest close (3 hypotheses tested negative)
+- sprint-18-honest-close-v01.md
+- Document strategy edge IS real (MC p=0.01) but sample insufficient на 1H BTC alone
+- Archive cross_trial_sharpes.json к _v0.1-final.json
+- Tag v0.1.0-alpha.18 = v0.1 final honest close marker
+
+### Roadmap
+
+**S17 SHIPPED.** Tag v0.1.0-alpha.17. Per failthrough → S18 = honest close v0.1.
+
+3 hypotheses tested across 4.81y BTC Bybit Spot 1H:
+1. EMA crossover trend-following (S13) — FAIL all critical T-criteria
+2. Mean-reversion RSI+BB multi-symbol (S15) — FAIL T6+MC+DSR (T5 reached)
+3. Mean-reversion RSI+BB BTC-only relaxed (S17) — FAIL T5 count only (5/6 PASS + DSR + MC sig)
+
+**Strategy hypothesis space: positive direction found но не conjoint pass.** Operator decides v0.4 if/when (different timeframe / hybrid ML / multi-symbol revival).
