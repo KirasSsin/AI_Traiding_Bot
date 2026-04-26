@@ -21,7 +21,7 @@ def sign_flip_p_value(
     returns: npt.NDArray[np.float64],
     *,
     n_iterations: int = 2000,
-    seed: int | None = None,
+    seed: int | None = 42,
 ) -> float:
     """Sign-flip permutation test.
 
@@ -32,7 +32,10 @@ def sign_flip_p_value(
     Args:
         returns: per-trade returns array (np.float64).
         n_iterations: permutation count (ADR 0015 default 2000).
-        seed: RNG seed для reproducibility.
+        seed: RNG seed для reproducibility. S27 T5: default 42 (was None pre-fix).
+            Non-deterministic default produced inconsistent audit p-values
+            across runs of formulas_audit_v1.json. Pass `seed=None` explicitly
+            если требуется non-deterministic randomness.
 
     Returns:
         p-value в [0, 1], NaN if returns empty.
@@ -58,7 +61,7 @@ def block_bootstrap_p_value(
     *,
     n_iterations: int = 2000,
     block_size: int = 30,
-    seed: int | None = None,
+    seed: int | None = 42,
 ) -> float:
     """Block bootstrap permutation test (preserves autocorrelation).
 

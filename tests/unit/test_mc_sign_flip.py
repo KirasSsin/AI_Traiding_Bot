@@ -46,3 +46,18 @@ def test_empty_returns_returns_nan() -> None:
     """Empty returns array → NaN p-value (defensive)."""
     p = sign_flip_p_value(np.array([]), n_iterations=2000, seed=42)
     assert math.isnan(p)
+
+
+def test_default_seed_reproducible() -> None:
+    """S27 T5: default seed (no kwarg) must be deterministic.
+
+    Pre-fix seed=None default → non-reproducible p-values across runs.
+    Audit reproducibility requires deterministic default.
+    """
+    returns = np.array([0.01, -0.005, 0.02, -0.01, 0.015])
+    p1 = sign_flip_p_value(returns, n_iterations=2000)  # uses default seed
+    p2 = sign_flip_p_value(returns, n_iterations=2000)  # uses default seed
+    assert p1 == p2, (
+        f"Default seed not deterministic. Got p1={p1}, p2={p2}. "
+        f"Pre-S27-T5 fix used seed=None default → non-reproducible."
+    )
