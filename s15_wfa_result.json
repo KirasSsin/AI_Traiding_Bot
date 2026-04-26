@@ -1,0 +1,97 @@
+{
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT"
+  ],
+  "per_symbol": {
+    "BTCUSDT": {
+      "status": "ok",
+      "trades": 44,
+      "k_folds": 5,
+      "mean_oos_is_sharpe": 1.7499059498415659,
+      "mc_p_value": 0.197
+    },
+    "ETHUSDT": {
+      "status": "ok",
+      "trades": 29,
+      "k_folds": 5,
+      "mean_oos_is_sharpe": -39.35389482900102,
+      "mc_p_value": 0.9975
+    },
+    "SOLUSDT": {
+      "status": "ok",
+      "trades": 35,
+      "k_folds": 5,
+      "mean_oos_is_sharpe": 0.4515341160633818,
+      "mc_p_value": 0.65
+    }
+  },
+  "verdict": "FAIL",
+  "failed_criteria": [
+    "t5",
+    "t6"
+  ],
+  "dsr": 0.0,
+  "dsr_pass": false,
+  "n_trials": 2,
+  "sigma_sr_cross_trial": 22.681049924650008,
+  "trial_log_state": {
+    "pre_existing_sharpes": [
+      -44.46
+    ],
+    "this_run_aggregate_sharpe": -12.384151587698693
+  },
+  "metrics": {
+    "t1_sharpe_oos": 9.323653931873917,
+    "t2_sortino_oos": 29.54850915924141,
+    "t3_max_drawdown": 0.0525889468310912,
+    "t4_win_rate": 0.37037037037037035,
+    "t4_avg_rr": 2.2657900257290544,
+    "t5_mean_pnl_pct": 0.0053125209889485344,
+    "t5_t_stat": 1.0352517421143832,
+    "t5_n_trades": 108,
+    "t6_oos_is_sharpe_ratio_mean": -12.384151587698693
+  },
+  "total_k_folds": 15,
+  "mc_p_value_aggregate": 0.9975,
+  "acceptance_gate": {
+    "passed": false,
+    "sharpe_gate_passed": false,
+    "mc_gate_passed": false,
+    "failed_folds": [
+      1,
+      2,
+      3,
+      5,
+      6,
+      7,
+      9,
+      10,
+      13,
+      14
+    ],
+    "fold_sharpe_ratios": [
+      2.5163837601174683,
+      0.3428955266882189,
+      -0.4141462191254868,
+      -1.899687817461272,
+      8.2040844989889,
+      -7.404767896958784,
+      -188.65918155704838,
+      -1.4849358053143484,
+      2.2746061960955326,
+      -1.4951950817791493,
+      -3.560439263954311,
+      4.5364775335936125,
+      0.7044919806920232,
+      0.36713823712249505,
+      0.21000209286308905
+    ],
+    "mc_p_value": 0.9975,
+    "thresholds": {
+      "sharpe": 0.7,
+      "p_value": 0.05
+    }
+  }
+}

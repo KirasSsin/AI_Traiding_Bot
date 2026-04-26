@@ -41,7 +41,7 @@ def test_cmd_run_wires_runtime_manager_returns_zero_on_clean_exit() -> None:
          patch("src.__main__.Coordinator"), \
          patch("src.__main__.ExecutionStateRepo"), \
          patch("src.__main__.BarSource"), \
-         patch("src.__main__.EmaCrossoverAdxRsiStrategy"), \
+         patch("src.__main__.MeanReversionRsiBBStrategy"), \
          patch("src.__main__.RiskManager"), \
          patch("src.__main__.BybitPrivateWSConsumer"):
 
@@ -71,7 +71,7 @@ def test_cmd_run_propagates_keyboard_interrupt_returns_130() -> None:
          patch("src.__main__.Coordinator"), \
          patch("src.__main__.ExecutionStateRepo"), \
          patch("src.__main__.BarSource"), \
-         patch("src.__main__.EmaCrossoverAdxRsiStrategy"), \
+         patch("src.__main__.MeanReversionRsiBBStrategy"), \
          patch("src.__main__.RiskManager"), \
          patch("src.__main__.BybitPrivateWSConsumer"):
 
@@ -100,7 +100,7 @@ def test_cmd_run_returns_one_on_runtime_crash() -> None:
          patch("src.__main__.Coordinator"), \
          patch("src.__main__.ExecutionStateRepo"), \
          patch("src.__main__.BarSource"), \
-         patch("src.__main__.EmaCrossoverAdxRsiStrategy"), \
+         patch("src.__main__.MeanReversionRsiBBStrategy"), \
          patch("src.__main__.RiskManager"), \
          patch("src.__main__.BybitPrivateWSConsumer"):
 

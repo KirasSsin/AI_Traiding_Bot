@@ -49,7 +49,8 @@ from src.risk.manager import RiskManager
 from src.risk.trade_history import TradeHistoryRepository
 from src.runtime.bar_source import BarSource
 from src.runtime.manager import RuntimeManager
-from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
+from src.signalgen.mean_reversion_strategy import MeanReversionRsiBBStrategy
+from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy  # noqa: F401 — kept for backward-compat tests
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
@@ -113,19 +114,17 @@ def _cmd_run(args: argparse.Namespace) -> int:
         base_coin=base_coin,
     )
 
-    # Strategy + risk manager
-    strategy = EmaCrossoverAdxRsiStrategy(
+    # Strategy + risk manager (S15 ADR 0030: mean-reversion replaces EmaCrossover)
+    strategy = MeanReversionRsiBBStrategy(
         symbol=symbol,
-        ema_fast=settings.strategy_ema_fast,
-        ema_slow=settings.strategy_ema_slow,
-        adx_period=settings.strategy_adx_period,
-        adx_threshold=settings.strategy_adx_threshold,
         rsi_period=settings.strategy_rsi_period,
         rsi_oversold=settings.strategy_rsi_oversold,
         rsi_overbought=settings.strategy_rsi_overbought,
         atr_period=settings.strategy_atr_period,
+        # bb_period=20, bb_k=2.0 — pre-registered defaults per ADR 0030 (no operator override)
     )
-    risk_manager = RiskManager(conn=conn, settings=settings)
+    # S15 T1: pass symbol so RiskManager._compute_p_b queries trade history per-symbol
+    risk_manager = RiskManager(conn=conn, settings=settings, symbol=symbol)
 
     # Bar source + WS consumer (FillRecorder = production adapter, S12 T1)
     bar_source = BarSource(adapter=rest, symbol=symbol, interval="60")
@@ -168,51 +167,36 @@ def _cmd_run(args: argparse.Namespace) -> int:
         return 1
 
 
-def _cmd_backfill(args: argparse.Namespace) -> int:
-    """Backfill OHLCV via BybitRESTClient.get_klines + write Parquet.
+def _resolve_symbols(args: argparse.Namespace) -> list[str]:
+    """Resolve symbol list from --symbols (multi) OR --symbol (single, fallback).
 
-    S13 T2 per ADR 0028 Q3 (Bybit Spot only, no Binance fallback per ADR 0016).
-    Closes S8a T20 STUB delegate placeholder.
-
-    Args:
-        args.symbol: trading pair (e.g. "BTCUSDT")
-        args.from_date: ISO date "YYYY-MM-DD"
-        args.to_date: ISO date "YYYY-MM-DD"
-        args.output_path: Parquet output (default: data/<symbol>_1h.parquet)
-
-    Returns:
-        0 — Parquet written with >0 bars;
-        1 — empty kline response (data not available for requested range).
+    S15 ADR 0030: --symbols overrides --symbol. Returns uppercase list.
     """
-    from datetime import UTC, datetime
+    if getattr(args, "symbols", None):
+        return [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+    sym = getattr(args, "symbol", None) or "BTCUSDT"
+    return [sym]
 
-    settings = Settings()
-    symbol: str = args.symbol or "BTCUSDT"
-    output_path = Path(args.output_path) if args.output_path else Path(f"data/{symbol}_1h.parquet")
 
-    start_dt = datetime.fromisoformat(args.from_date).replace(tzinfo=UTC)
-    end_dt = datetime.fromisoformat(args.to_date).replace(tzinfo=UTC)
-    start_ms = int(start_dt.timestamp() * 1000)
-    end_ms = int(end_dt.timestamp() * 1000)
-
-    rest = BybitRESTClient(
-        api_key=settings.bybit_api_key,
-        api_secret=settings.bybit_api_secret,
-        testnet=settings.testnet,
-    )
-
-    print(f"backfill: fetching {symbol} 1H {args.from_date} → {args.to_date} ...", flush=True)
+def _backfill_one_symbol(
+    *,
+    rest: BybitRESTClient,
+    symbol: str,
+    start_ms: int,
+    end_ms: int,
+    output_path: Path,
+    label: str,
+) -> int:
+    """Backfill one symbol → Parquet. Returns 0 on success, 1 on empty response."""
+    print(f"backfill: fetching {symbol} 1H {label} ...", flush=True)
     bars = rest.get_klines(symbol, "60", start_ms, end_ms, limit_per_call=1000)
-
     if not bars:
         print(
-            f"backfill: WARNING — empty kline response for {symbol} "
-            f"{args.from_date} → {args.to_date}",
+            f"backfill: WARNING — empty kline response for {symbol} {label}",
             flush=True,
         )
         return 1
 
-    # Convert list[Bar] → DataFrame (schema compatible with data_collector.load_market_data)
     rows = [
         {
             "time": b.close_time.isoformat(),
@@ -225,17 +209,60 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
         for b in bars
     ]
     df = pd.DataFrame(rows)
-
-    # S13 T2 data-integrity fix: explicit snappy + atomic tmp-rename
-    # (a) ADR 0003 mandates snappy — explicit args defend against pyarrow→fastparquet engine switch
-    # (b) Atomic write: tmp + Path.rename() — prevents partial file on crash during ~5min backfill
+    # ADR 0003 snappy + atomic tmp-rename (S13 T2 data-integrity)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
     df.to_parquet(tmp_path, index=False, compression="snappy", engine="pyarrow")
     tmp_path.rename(output_path)
-
     print(f"backfill: wrote {len(df)} bars to {output_path}", flush=True)
     return 0
+
+
+def _cmd_backfill(args: argparse.Namespace) -> int:
+    """Backfill OHLCV via BybitRESTClient.get_klines + write Parquet.
+
+    S15 ADR 0030: supports --symbols comma-separated for multi-symbol batch
+    (BTCUSDT,ETHUSDT,SOLUSDT). Each symbol → own Parquet file.
+
+    Returns:
+        0 — all symbols written successfully (>0 bars each);
+        1 — at least one symbol returned empty kline response.
+    """
+    from datetime import UTC, datetime
+
+    settings = Settings()
+    symbols = _resolve_symbols(args)
+    label = f"{args.from_date} → {args.to_date}"
+
+    start_dt = datetime.fromisoformat(args.from_date).replace(tzinfo=UTC)
+    end_dt = datetime.fromisoformat(args.to_date).replace(tzinfo=UTC)
+    start_ms = int(start_dt.timestamp() * 1000)
+    end_ms = int(end_dt.timestamp() * 1000)
+
+    rest = BybitRESTClient(
+        api_key=settings.bybit_api_key,
+        api_secret=settings.bybit_api_secret,
+        testnet=settings.testnet,
+    )
+
+    overall_rc = 0
+    for symbol in symbols:
+        # --output ignored when multi-symbol (per arg help)
+        if len(symbols) == 1 and args.output_path:
+            output_path = Path(args.output_path)
+        else:
+            output_path = Path(f"data/{symbol}_1h.parquet")
+        rc = _backfill_one_symbol(
+            rest=rest,
+            symbol=symbol,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            output_path=output_path,
+            label=label,
+        )
+        if rc != 0:
+            overall_rc = rc
+    return overall_rc
 
 
 def _cmd_reconcile_only(args: argparse.Namespace) -> int:
@@ -362,30 +389,20 @@ def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
     return df
 
 
-def _cmd_wfa(args: argparse.Namespace) -> int:
-    """Run Walk-Forward Analysis + report.
+def _run_wfa_single_symbol(
+    *, symbol: str, df: pd.DataFrame
+) -> "tuple[list[object], list[float], dict[str, object], float]":
+    """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
 
-    Subcommand: python -m src wfa --symbol BTCUSDT --start 2024-01-01 --end 2024-04-01
-
-    Wires S10 WFA orchestrator (WindowSplitter + WalkForwardRunner + sign_flip_p_value
-    + evaluate_acceptance_gate + format_wfa_report) с stub OHLCV loader (S12 integrates
-    real data path).
-
-    Returns:
-        0 — gate passed (Sharpe AND MC <= thresholds);
-        2 — gate failed;
-        1 — error (empty data, etc.).
+    S15 T5 — extracted from _cmd_wfa for multi-symbol aggregation.
+    Note: trades typed as list[object] (forward-compat) — actual TradeRecord
+    instances; cast at call site if needed.
     """
-    settings = Settings()  # noqa: F841 — reserved для future settings-driven WFA params
-    symbol: str = args.symbol or "BTCUSDT"
-
-    df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end)
-    if df.empty:
-        print("WARNING: OHLCV loader returned empty (S12 integrates real data path)", flush=True)
-        return 1
-
+    from typing import Any, cast
     splitter = WindowSplitter()  # ADR 0014 defaults
     runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
+    # S15 ADR 0030: strategy.type = "mean_reversion" → indicators.py emits
+    # RSI<30 AND close<lower_BB(20, 2σ) AND-gated long signal.
     config = {
         "trading": {
             "initial_balance": 10000.0,
@@ -395,37 +412,41 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
             "max_drawdown_pct": 50.0,
             "long_only": True,
         },
-        "strategy": {"indicators": {"atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0}}},
+        "strategy": {
+            "type": "mean_reversion",
+            "indicators": {
+                "atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0},
+                "rsi": {"period": 14, "oversold": 30, "overbought": 70},
+                "bb": {"period": 20, "k": 2.0},
+            },
+        },
     }
     runner_result = runner.run(df=df, config=config)
 
     # MC sign-flip on aggregated OOS returns
-    oos_trades = runner_result["aggregate"]["oos_trades_df"]
-    if oos_trades.empty:
+    oos_trades_df = runner_result["aggregate"]["oos_trades_df"]
+    if oos_trades_df.empty:
         mc_p = 1.0
     else:
         import numpy as np
-        raw = oos_trades["net_pnl"].astype(float).to_numpy()
+        raw = oos_trades_df["net_pnl"].astype(float).to_numpy()
         returns_arr = np.asarray(raw, dtype=float) / 10000.0
         mc_p = sign_flip_p_value(returns_arr, n_iterations=2000, seed=42)
 
-    # S13 T5: Per-fold trade extraction (closes S10/S12 carry-over)
-    # replay_engine emits timestamp_open/timestamp_close — normalize to extractor contract.
+    # Per-fold trade extraction (S13 T5)
     from src.risk.trade_history import TradeRecord as _TradeRecord
-    all_trades: list[_TradeRecord] = []
-    fold_oos_is_sharpe_ratios: list[float] = []
+    trades: list[_TradeRecord] = []
+    fold_sharpes: list[float] = []
     for fold_data in runner_result["folds"]:
-        fold_oos_is_sharpe_ratios.append(fold_data["oos_is_sharpe_ratio"])
+        fold_sharpes.append(fold_data["oos_is_sharpe_ratio"])
         fold_trades_df = fold_data.get("oos_trades_df")
         if fold_trades_df is not None and not fold_trades_df.empty:
-            # Normalize replay_engine column names → extract_trade_records contract
             df_normalized = fold_trades_df.copy()
             if "timestamp_open" in df_normalized.columns and "entry_ts" not in df_normalized.columns:
                 df_normalized = df_normalized.rename(columns={
                     "timestamp_open": "entry_ts",
                     "timestamp_close": "exit_ts",
                 })
-            # replay_engine timestamps are tz-naive; TradeRecord requires tz-aware (UTC)
             from datetime import UTC as _UTC
             for _col in ("entry_ts", "exit_ts"):
                 if _col in df_normalized.columns:
@@ -437,36 +458,119 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
                 entry_fee = df_normalized.get("entry_fee", 0)
                 exit_fee = df_normalized.get("exit_fee", 0)
                 df_normalized["fees_paid"] = entry_fee + exit_fee
-            all_trades.extend(extract_trade_records(df_normalized, symbol=symbol))
+            trades.extend(extract_trade_records(df_normalized, symbol=symbol))
+    return cast(list[object], trades), fold_sharpes, cast(dict[str, object], runner_result), mc_p
 
-    # S13 Q5 + CC1: DSR active S13 (N_trials=1, formula-invariant)
-    dsr_value = compute_dsr(trades=all_trades, n_trials=1)
 
-    # S13 T6: T1-T6 metrics
+def _cmd_wfa(args: argparse.Namespace) -> int:
+    """Run Walk-Forward Analysis + report (S15 ADR 0030: multi-symbol aggregation).
+
+    Subcommand:
+      python -m src wfa --symbols BTCUSDT,ETHUSDT,SOLUSDT --start 2021-07-02 --end 2026-04-26
+
+    S15 T0/T5: DSR computed с n_trials = (existing trial count + 1) using cross-trial
+    sigma_SR from CrossTrialLog (closes S14 Q2 REVISE carry-over).
+
+    Returns:
+        0 — verdict PASS (T1-T6 all green AND DSR > 0);
+        2 — verdict FAIL;
+        1 — error (empty data for ALL symbols).
+    """
+    import json
+    import math
+    import statistics
+
+    from src.analytics.cross_trial_log import CrossTrialLog
+    from src.risk.trade_history import TradeRecord as _TradeRecord
+
+    settings = Settings()  # noqa: F841 — reserved для future settings-driven WFA params
+    symbols = _resolve_symbols(args)
+
+    all_trades: list[_TradeRecord] = []
+    all_fold_sharpes: list[float] = []
+    per_symbol_summary: dict[str, dict[str, object]] = {}
+    mc_p_values: list[float] = []
+
+    for symbol in symbols:
+        try:
+            df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end)
+        except FileNotFoundError as e:
+            print(f"WARNING: skip {symbol} — {e}", flush=True)
+            per_symbol_summary[symbol] = {"status": "missing_parquet", "trades": 0}
+            continue
+        if df.empty:
+            print(f"WARNING: skip {symbol} — empty OHLCV", flush=True)
+            per_symbol_summary[symbol] = {"status": "empty_ohlcv", "trades": 0}
+            continue
+
+        sym_trades, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
+            symbol=symbol, df=df
+        )
+        from typing import cast as _cast
+        all_trades.extend(_cast(list[_TradeRecord], sym_trades))
+        all_fold_sharpes.extend(sym_fold_sharpes)
+        mc_p_values.append(sym_mc_p)
+        per_symbol_summary[symbol] = {
+            "status": "ok",
+            "trades": len(sym_trades),
+            "k_folds": len(sym_fold_sharpes),
+            "mean_oos_is_sharpe": (
+                float(sum(sym_fold_sharpes) / len(sym_fold_sharpes))
+                if sym_fold_sharpes else None
+            ),
+            "mc_p_value": sym_mc_p,
+        }
+
+    # Bail-out only if NO symbol succeeded WFA at all (all empty/missing).
+    # Empty trades с successful folds still compute metrics → FAIL verdict (T5 n_trades=0).
+    if not all_fold_sharpes:
+        print(json.dumps({
+            "verdict": "ERROR",
+            "reason": "no symbol completed WFA (all empty/missing parquet)",
+            "per_symbol": per_symbol_summary,
+        }, default=str, indent=2))
+        return 1
+
+    # Aggregate MC p-value: max (most conservative across symbols)
+    mc_p = max(mc_p_values) if mc_p_values else 1.0
+
+    # S15 T0: DSR cross-trial sigma_SR (closes S14 Q2 carry-over)
+    trial_log_path = Path("data/cross_trial_sharpes.json")
+    trial_log = CrossTrialLog(path=trial_log_path)
+    pre_existing_sharpes = trial_log.get_oos_sharpes()
+
+    # Aggregate OOS Sharpe для THIS sprint = mean of all fold sharpes across symbols
+    aggregate_oos_sharpe = (
+        float(sum(all_fold_sharpes) / len(all_fold_sharpes))
+        if all_fold_sharpes else float("nan")
+    )
+    cross_trial_sharpes = pre_existing_sharpes + [aggregate_oos_sharpe]
+    n_trials = len(cross_trial_sharpes)
+
+    if n_trials >= 2 and not math.isnan(aggregate_oos_sharpe):
+        sigma_sr_value = statistics.stdev(cross_trial_sharpes)
+        dsr_value = compute_dsr(
+            trades=all_trades, n_trials=n_trials, sigma_sr=sigma_sr_value
+        )
+    else:
+        sigma_sr_value = None
+        dsr_value = compute_dsr(trades=all_trades, n_trials=1)
+
+    # T1-T6 metrics aggregated across symbols
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
-        fold_oos_is_sharpe=fold_oos_is_sharpe_ratios,
+        fold_oos_is_sharpe=all_fold_sharpes,
     )
 
     gate = evaluate_acceptance_gate(
-        fold_oos_is_sharpe_ratios=fold_oos_is_sharpe_ratios,
+        fold_oos_is_sharpe_ratios=all_fold_sharpes,
         mc_p_value=mc_p,
     )
-
-    format_wfa_report(
-        runner_result=runner_result,
-        trades_for_dsr=all_trades,
-        mc_p_value=mc_p,
-        gate_result=gate,
-    )
-
-    import json
-    import math
 
     def _nan_or_value(v: object) -> object:
         return None if (isinstance(v, float) and math.isnan(v)) else v
 
-    # S13 T7: Verdict report (per Q7 ESC-1=c defer pattern — PASS/FAIL only, no pre-commit)
+    # Verdict per ADR 0028/0030: PASS/FAIL based on T1-T6 + DSR
     failed_criteria: list[str] = []
     if _nan_or_value(metrics["t1_sharpe_oos"]) is None or metrics["t1_sharpe_oos"] < 1.0:
         failed_criteria.append("t1")
@@ -497,17 +601,26 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         failed_criteria.append("t6")
 
     dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
-
-    # Q7 ESC-1=c defer pattern: report only, operator decides at S15
     verdict = "PASS" if len(failed_criteria) == 0 and dsr_pass else "FAIL"
 
+    # S15 T0/T5: persist this trial AFTER measurement (для future S16+ DSR).
+    # Guard: only persist when real trades exist (skip CLI smoke tests с mocked extractor returning [] trades).
+    if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
+        trial_log.append_trial(sprint=15, oos_sharpe=aggregate_oos_sharpe)
+
     print(json.dumps({
-        "symbol": symbol,
+        "symbols": symbols,
+        "per_symbol": per_symbol_summary,
         "verdict": verdict,
         "failed_criteria": failed_criteria,
         "dsr": _nan_or_value(dsr_value),
         "dsr_pass": dsr_pass,
-        "n_trials": 1,
+        "n_trials": n_trials,
+        "sigma_sr_cross_trial": sigma_sr_value,
+        "trial_log_state": {
+            "pre_existing_sharpes": pre_existing_sharpes,
+            "this_run_aggregate_sharpe": aggregate_oos_sharpe,
+        },
         "metrics": {
             "t1_sharpe_oos": _nan_or_value(metrics["t1_sharpe_oos"]),
             "t2_sortino_oos": _nan_or_value(metrics["t2_sortino_oos"]),
@@ -519,12 +632,11 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
             "t5_n_trades": metrics["t5_n_trades"],
             "t6_oos_is_sharpe_ratio_mean": _nan_or_value(metrics["t6_oos_is_sharpe_ratio_mean"]),
         },
-        "k_folds": len(fold_oos_is_sharpe_ratios),
-        "mc_p_value": mc_p,
+        "total_k_folds": len(all_fold_sharpes),
+        "mc_p_value_aggregate": mc_p,
         "acceptance_gate": gate,
     }, default=str, indent=2))
 
-    # Exit codes per ADR 0028 Q7 defer pattern: 0 = PASS, 2 = FAIL
     return 0 if verdict == "PASS" else 2
 
 
@@ -607,12 +719,17 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.set_defaults(func=_cmd_run)
 
     p_bf = sub.add_parser("backfill", help="OHLCV backfill.")
-    p_bf.add_argument("--symbol", default="BTCUSDT", help="Trading pair (default: BTCUSDT)")
+    p_bf.add_argument("--symbol", default="BTCUSDT", help="Trading pair (single, default: BTCUSDT)")
+    p_bf.add_argument(
+        "--symbols", default=None,
+        help="Comma-separated trading pairs for multi-symbol backfill (S15 ADR 0030). "
+             "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
+    )
     p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
     p_bf.add_argument("--to", dest="to_date", required=True, help="End date YYYY-MM-DD")
     p_bf.add_argument(
         "--output", dest="output_path", default=None,
-        help="Output Parquet path (default: data/<symbol>_1h.parquet)"
+        help="Output Parquet path (default: data/<symbol>_1h.parquet). Ignored when --symbols set."
     )
     p_bf.set_defaults(func=_cmd_backfill)
 
@@ -624,7 +741,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p_kill.set_defaults(func=_cmd_kill)
 
     p_wfa = sub.add_parser("wfa", help="Run Walk-Forward Analysis + report.")
-    p_wfa.add_argument("--symbol", default="BTCUSDT")
+    p_wfa.add_argument("--symbol", default="BTCUSDT", help="Single symbol (default: BTCUSDT)")
+    p_wfa.add_argument(
+        "--symbols", default=None,
+        help="Comma-separated symbols for multi-symbol aggregated WFA (S15 ADR 0030). "
+             "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
+    )
     p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     p_wfa.set_defaults(func=_cmd_wfa)

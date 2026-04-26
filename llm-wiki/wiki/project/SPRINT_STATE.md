@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 14
-phase: between-sprints-post-mvp-honest-close
-branch: main
-tag: v0.1.0-alpha.14
+sprint: 15
+phase: 8-ship
+branch: feature/sprint-15-mean-reversion-multi-symbol
+tag: v0.1.0-alpha.15
 ---
 
 # SPRINT STATE
@@ -15,7 +15,7 @@ tag: v0.1.0-alpha.14
 
 ## Текущий статус
 
-**v0.1 honest close. S14 shipped (PR #22 → squash-merged, tag `v0.1.0-alpha.14`).** 16 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14.
+**v0.2 retry attempt #1 — FAIL but T5 reached. S15 ready к ship (tag `v0.1.0-alpha.15`).** 17 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15.
 
 **Final v0.1 status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
@@ -23,30 +23,37 @@ tag: v0.1.0-alpha.14
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
 - Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-## Последний спринт (S14 — Honest close)
+## Последний спринт (S15 — Mean-reversion + multi-symbol, v0.2 retry attempt #1)
 
-Documentation only. NO code changes. NO measurement re-run.
-- T1 ADR 0029 accepted
-- T2 sprint-14-honest-close.md
-- T3 wiki sync (ADR 28→29, sprint pages 15→16)
-- T4 log.md sprint-end
-- T5 SPRINT_STATE → between-sprints-post-mvp-honest-close
-- T6 PHASE 8 ship via sprint-finish
+8 TDD tasks. Verdict: FAIL but T5 reached (108 trades aggregate first time).
+- T0 CrossTrialLog (closes S14 Q2 — Bailey eq. 13 cross-trial sigma_SR)
+- T1 load_recent symbol filter (HIGH BLOCKER — Kelly contamination fix)
+- T2 BB indicator NEW
+- T3 MeanReversionRsiBBStrategy NEW (RSI<30 AND close<lower_BB AND-gated)
+- T4 _cmd_run wires MeanRev + symbol→RiskManager
+- T5 Multi-symbol --symbols CLI for backfill+wfa, DSR cross-trial wiring
+- T6 tz-aware parquet filter fix + indicators.py mean_reversion branch + measurement run
+- T7 wiki sync (ADR 29→30, sprint pages 16→17)
+- T8 PHASE 8 ship — pending
 
-Trader Q1 EXPAND verified: T5 ≥100 trades structurally unreachable (5x signal frequency gap, EMA crossover на 1H fires ~1 trade per 5-10 days). User chose Option B (skip Option A theatrical re-measurement).
+S15 PHASE 2 brainstorm: ESC-1 Option B (trader+architecture converged). ESC-2 pre-registered RSI 30/70 + BB(20, 2σ) AND-gated. Q3 (15M) + Q4 (ML) deferred.
+
+Per-symbol: BTC 44 trades, ETH 29 (one outlier fold), SOL 35. Aggregate T1=9.32 PASS, T5 n=108 PASS but t_stat 1.04 FAIL, T6 mean -12.38 FAIL, MC 0.998 FAIL, DSR 0 FAIL.
 
 ## Следующее действие
 
 ```
-v0.1 closed honest. NO S15 committed.
+S15 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.15.
 
-Operator-driven future direction options (deferred):
-(A) Strategy revision (mean-reversion / regime / ML) — 3-5 sprints
-(B) Multi-symbol (ETH + SOL) — 2-3 sprints, ~3x signal frequency
-(C) Different timeframe (15M / 4H) — 1-2 sprints, ADR 0005 amendment
-(D) Project pause — 0 sprints, current freeze
+S15 verdict: FAIL but T5 reached (108 trades agg via 3-symbol mean-reversion).
+ADR 0030 multi-symbol aggregation hypothesis VALIDATED.
+Different failure mode vs S13 = honest negative.
 
-Operator decides if/when. No commitment.
+After ship: operator decides S16 direction:
+(B') broader RSI thresholds + variance reduction
+(C) Q3 15M timeframe (interval_map + heal_max_age fixes blockers known)
+(D) honest close v0.2 (accept 2 strategy attempts both failed)
+(E) Q4 ML XGBoost (deferred — S15 didn't show partial signal evidence)
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)

@@ -184,6 +184,59 @@ def test_negative_window_days_raises(db):
 
 
 # ---------------------------------------------------------------------------
+# S15 T1 — symbol filter (Kelly contamination prevention для multi-symbol)
+# ---------------------------------------------------------------------------
+
+
+def test_load_recent_filters_by_symbol(db):
+    """When symbol param set, only that symbol's trades returned."""
+    from src.risk.trade_history import TradeHistoryRepository
+
+    repo = TradeHistoryRepository(db)
+    now = datetime.now(UTC)
+    repo.insert_closed_trade(_make_record(symbol="BTCUSDT", entry_signal_id=uuid4()))
+    repo.insert_closed_trade(_make_record(symbol="ETHUSDT", entry_signal_id=uuid4()))
+    repo.insert_closed_trade(_make_record(symbol="SOLUSDT", entry_signal_id=uuid4()))
+
+    btc = repo.load_recent(window_days=1, now=now, symbol="BTCUSDT")
+    assert len(btc) == 1
+    assert btc[0].symbol == "BTCUSDT"
+
+    eth = repo.load_recent(window_days=1, now=now, symbol="ETHUSDT")
+    assert len(eth) == 1
+    assert eth[0].symbol == "ETHUSDT"
+
+    sol = repo.load_recent(window_days=1, now=now, symbol="SOLUSDT")
+    assert len(sol) == 1
+    assert sol[0].symbol == "SOLUSDT"
+
+
+def test_load_recent_no_symbol_returns_all(db):
+    """Backward-compat: symbol=None (default) returns all symbols."""
+    from src.risk.trade_history import TradeHistoryRepository
+
+    repo = TradeHistoryRepository(db)
+    now = datetime.now(UTC)
+    repo.insert_closed_trade(_make_record(symbol="BTCUSDT", entry_signal_id=uuid4()))
+    repo.insert_closed_trade(_make_record(symbol="ETHUSDT", entry_signal_id=uuid4()))
+
+    all_trades = repo.load_recent(window_days=1, now=now)
+    assert len(all_trades) == 2
+
+
+def test_load_recent_symbol_no_match_returns_empty(db):
+    """symbol filter with no matching trades returns empty list (not error)."""
+    from src.risk.trade_history import TradeHistoryRepository
+
+    repo = TradeHistoryRepository(db)
+    now = datetime.now(UTC)
+    repo.insert_closed_trade(_make_record(symbol="BTCUSDT", entry_signal_id=uuid4()))
+
+    result = repo.load_recent(window_days=1, now=now, symbol="DOGEUSDT")
+    assert result == []
+
+
+# ---------------------------------------------------------------------------
 # Pydantic validation: invalid kelly_phase
 # ---------------------------------------------------------------------------
 

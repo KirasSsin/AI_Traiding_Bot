@@ -34,10 +34,19 @@ class RiskManager:
         conn: Connection,
         settings: Settings,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        symbol: str | None = None,
     ) -> None:
+        """RiskManager.
+
+        S15 T1: `symbol` (optional, default None) — when set, _compute_p_b
+        filters trade history к this symbol only (Kelly per-symbol isolation
+        for multi-symbol replication pattern per ADR 0030). None preserves
+        v0.1 behavior (single-symbol global Kelly).
+        """
         self._conn = conn
         self._settings = settings
         self._clock = clock
+        self._symbol = symbol
         self._kelly_caps = KellyCaps(
             phase1=settings.risk_kelly_phase1_cap,
             phase2=settings.risk_kelly_phase2_cap,
@@ -259,7 +268,9 @@ class RiskManager:
         """Return (p, b) for Kelly. Uses Wilson lower bound for phases 3/4."""
         if phase < 3:
             return (0.5, 1.0)  # ignored by phase_adjusted_fraction
-        recent = self._trades.load_recent(window_days=90, now=self._clock())
+        recent = self._trades.load_recent(
+            window_days=90, now=self._clock(), symbol=self._symbol
+        )
         if len(recent) < 30:
             return (0.5, 1.0)
         wins = [t for t in recent if t.pnl_quote > 0]

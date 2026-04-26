@@ -40,10 +40,19 @@ def _postprocess_df(df: pd.DataFrame, data_cfg: Dict[str, Any]) -> pd.DataFrame:
 
     start_date = data_cfg.get("start_date")
     end_date = data_cfg.get("end_date")
+    # tz alignment: when df timestamps are tz-aware (parquet from backfill writes ISO+UTC),
+    # filter dates must be tz-aware too — else comparison raises TypeError.
+    ts_tz = df["timestamp"].dt.tz if pd.api.types.is_datetime64_any_dtype(df["timestamp"]) else None
     if start_date:
-        df = df[df["timestamp"] >= pd.to_datetime(start_date)]
+        sd = pd.to_datetime(start_date)
+        if ts_tz is not None and sd.tzinfo is None:
+            sd = sd.tz_localize(ts_tz)
+        df = df[df["timestamp"] >= sd]
     if end_date:
-        df = df[df["timestamp"] <= pd.to_datetime(end_date)]
+        ed = pd.to_datetime(end_date)
+        if ts_tz is not None and ed.tzinfo is None:
+            ed = ed.tz_localize(ts_tz)
+        df = df[df["timestamp"] <= ed]
 
     return df.reset_index(drop=True)
 
