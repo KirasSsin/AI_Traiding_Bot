@@ -3,8 +3,8 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 16
-phase: 8-ship
-branch: feature/sprint-16-honest-close-v02
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.16
 ---
 
@@ -39,17 +39,18 @@ Trader CONFIRM Option D verified: DSR cross-trial sigma_SR=22.68 с -44.46 ancho
 ## Следующее действие
 
 ```
-S16 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.16.
+S16 SHIPPED (PR #24 → squash-merged 68d2913, tag v0.1.0-alpha.16).
+18 sprints completed. v0.2 closed honest. 2 strategy families tested both FAIL.
+data/cross_trial_sharpes_v0.2.json archived locally, fresh [] для v0.3.
 
-v0.2 closed honest. 2 strategy families tested both FAIL.
-DSR cross-trial state archived к v0.2 file, fresh empty для v0.3 readiness.
-
-After ship: operator decides v0.3 direction (no commitment):
+Operator decides v0.3 direction (no commitment):
 (v0.3-A) BTC-only mean-reversion fresh start — strongest signal observed S15
 (v0.3-B) Regime-switch HMM — 3-5 sprints
 (v0.3-C) ML XGBoost — defer (no partial signal evidence)
 (v0.3-D) Different timeframe (15M/4H) — Q3 blockers documented
 (v0.3-E) Project pause — 0 sprints
+
+Per Bailey 2014 N_trials per hypothesis: v0.3 fresh strategy resets DSR baseline cleanly.
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
