@@ -1,12 +1,49 @@
+# Pre-commit hooks для AI Trading Bot v0.1
+# Per ADR 0046 (Sprint 32b Kit Phase 1) — upgraded from S1-era basic config.
+#
+# Setup (one-time per worktree):
+#   source .venv/bin/activate
+#   pip install -e ".[dev]"
+#   pre-commit install
+#
+# Manual run on all files:
+#   pre-commit run --all-files
+#
+# Bypass last resort (не рекомендуется):
+#   git commit --no-verify
+#
+# Mirror of GitHub Actions CI checks (.github/workflows/ci.yml).
+# Local-first principle: catch errors перед push, не после CI fail.
+
 repos:
+  # Ruff lint + format (auto-fix). Mirror CI.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.4.0
     hooks:
       - id: ruff
+        args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+
+  # Mypy --strict — local hook (uses .venv/bin/mypy, не isolated env)
+  # Note: 1 pre-existing error baseline (`__main__.py:636 bars_per_year_map redef`)
+  # carry-over к S33+ — pre-commit will FAIL on this file. Operator может --no-verify
+  # OR fix __main__.py:636 first.
+  - repo: local
     hooks:
-      - id: mypy
-        args: [--strict, src/]
-        additional_dependencies: [pydantic, pydantic-settings]
+      - id: mypy-strict
+        name: mypy --strict src/
+        entry: .venv/bin/mypy --strict src/
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # YAML syntax validation для CI workflow + pre-commit config itself
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args:
+          - --format=parsable
+          - -d
+          - "{rules: {line-length: disable, document-start: disable, truthy: disable, indentation: {spaces: 2}}}"
+        files: ^(\.github/workflows/.*\.ya?ml|\.pre-commit-config\.yaml)$
