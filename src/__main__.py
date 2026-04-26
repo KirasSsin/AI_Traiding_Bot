@@ -401,6 +401,8 @@ def _run_wfa_single_symbol(
     from typing import Any, cast
     splitter = WindowSplitter()  # ADR 0014 defaults
     runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
+    # S15 ADR 0030: strategy.type = "mean_reversion" → indicators.py emits
+    # RSI<30 AND close<lower_BB(20, 2σ) AND-gated long signal.
     config = {
         "trading": {
             "initial_balance": 10000.0,
@@ -410,7 +412,14 @@ def _run_wfa_single_symbol(
             "max_drawdown_pct": 50.0,
             "long_only": True,
         },
-        "strategy": {"indicators": {"atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0}}},
+        "strategy": {
+            "type": "mean_reversion",
+            "indicators": {
+                "atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0},
+                "rsi": {"period": 14, "oversold": 30, "overbought": 70},
+                "bb": {"period": 20, "k": 2.0},
+            },
+        },
     }
     runner_result = runner.run(df=df, config=config)
 
@@ -594,8 +603,9 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
     verdict = "PASS" if len(failed_criteria) == 0 and dsr_pass else "FAIL"
 
-    # S15 T0/T5: persist this trial AFTER measurement (для future S16+ DSR)
-    if not math.isnan(aggregate_oos_sharpe):
+    # S15 T0/T5: persist this trial AFTER measurement (для future S16+ DSR).
+    # Guard: only persist when real trades exist (skip CLI smoke tests с mocked extractor returning [] trades).
+    if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
         trial_log.append_trial(sprint=15, oos_sharpe=aggregate_oos_sharpe)
 
     print(json.dumps({
