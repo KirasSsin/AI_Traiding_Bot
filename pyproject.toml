@@ -26,6 +26,13 @@ dev = [
   "pre-commit>=3.6",
   "types-pyyaml",
 ]
+# S25 ADR 0039: dashboard optional deps. Install via `pip install -e ".[dashboard]"`.
+# Architectural isolation: WFA pipeline (_cmd_wfa) does NOT depend on these.
+dashboard = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "jinja2>=3.1",
+]
 
 [tool.ruff]
 line-length = 100

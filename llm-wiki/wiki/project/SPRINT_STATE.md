@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 23
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.23
+sprint: 25
+phase: 8-ship
+branch: feature/sprint-25-dashboard
+tag: v0.1.0-alpha.25
 ---
 
 # SPRINT STATE

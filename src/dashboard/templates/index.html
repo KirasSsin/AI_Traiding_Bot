@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Trading Bot — Dashboard (S25)</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+  <header>
+    <h1>AI Trading Bot — Backtest Dashboard</h1>
+    <p class="subtitle">S25 ADR 0039 · demo-only · localhost · BTCUSDT/ETHUSDT/SOLUSDT</p>
+  </header>
+
+  <section id="config">
+    <h2>1. Конфигурация бэктеста</h2>
+    <form id="backtest-form">
+      <div class="row">
+        <label>Стратегия:
+          <select name="strategy_id" id="strategy-select"></select>
+        </label>
+        <label>Символ:
+          <select name="symbol" id="symbol-select"></select>
+        </label>
+        <label>Таймфрейм:
+          <select name="interval" id="interval-select"></select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Start (YYYY-MM-DD): <input type="date" name="start" value="2023-01-01"></label>
+        <label>End (YYYY-MM-DD): <input type="date" name="end" value="2026-04-26"></label>
+        <label><input type="checkbox" name="force"> Force re-run (skip cache)</label>
+      </div>
+      <button type="submit" id="run-btn">▶ Запустить backtest</button>
+    </form>
+    <div id="data-info" class="info-block"></div>
+  </section>
+
+  <section id="results-section" style="display:none;">
+    <h2>2. Результаты</h2>
+    <div id="run-meta"></div>
+    <div id="warnings"></div>
+    <div id="verdict"></div>
+    <div id="metrics-tier1">
+      <h3>Acceptance criteria (T1-T6)</h3>
+      <table id="metrics-table"></table>
+    </div>
+    <div id="trade-stats">
+      <h3>Trade-level stats</h3>
+      <table id="trades-table"></table>
+    </div>
+    <div id="folds-section">
+      <h3>Per-fold Sharpe ratios (WFA K=5)</h3>
+      <table id="folds-table"></table>
+    </div>
+    <details>
+      <summary>Raw JSON</summary>
+      <pre id="raw-json"></pre>
+    </details>
+  </section>
+
+  <section id="history">
+    <h2>3. История запусков (cached)</h2>
+    <button id="refresh-history">↻ Обновить</button>
+    <table id="history-table"></table>
+  </section>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

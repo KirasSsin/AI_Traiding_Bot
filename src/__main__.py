@@ -187,9 +187,13 @@ def _derive_heal_max_age_seconds(settings: Settings, interval: str) -> int:
     if settings.heal_max_bars is None:
         return settings.heal_max_age_seconds
     interval_seconds_map: dict[str, int] = {
-        "60": 3600,
+        "5": 300,
         "15": 900,
+        "30": 1800,
+        "60": 3600,
+        "120": 7200,
         "240": 14400,
+        "D": 86400,
     }
     if interval not in interval_seconds_map:
         raise ValueError(
@@ -279,7 +283,7 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
     )
 
     interval = getattr(args, "interval", "60")
-    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m", "240": "4h"}
+    interval_label_map: dict[str, str] = {"5": "5m", "15": "15m", "30": "30m", "60": "1h", "120": "2h", "240": "4h", "D": "1d"}
     interval_label = interval_label_map[interval]
 
     overall_rc = 0
@@ -404,7 +408,7 @@ def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> p
 
     S19 ADR 0034: interval param extends parquet path: 60 → _1h, 15 → _15m.
     """
-    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m", "240": "4h"}
+    interval_label_map: dict[str, str] = {"5": "5m", "15": "15m", "30": "30m", "60": "1h", "120": "2h", "240": "4h", "D": "1d"}
     interval_label = interval_label_map.get(interval, "1h")
     parquet_path = f"data/{symbol}_{interval_label}.parquet"
     config = {
@@ -436,22 +440,14 @@ def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> p
     return df
 
 
-def _run_wfa_single_symbol(
-    *, symbol: str, df: pd.DataFrame
-) -> "tuple[list[object], list[float], dict[str, object], float]":
-    """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
+def _default_wfa_config() -> dict[str, object]:
+    """S17 ADR 0032 default config (mean-reversion RSI 35/65 + BB 1.5σ).
 
-    S15 T5 — extracted from _cmd_wfa for multi-symbol aggregation.
-    Note: trades typed as list[object] (forward-compat) — actual TradeRecord
-    instances; cast at call site if needed.
+    S25 ADR 0039: extracted к standalone function для dashboard к override.
+    Pre-registered binding parameters per ADR — CLI uses this as default,
+    но dashboard может pass alternative strategy config (EMA crossover, S15 strict).
     """
-    from typing import Any, cast
-    splitter = WindowSplitter()  # ADR 0014 defaults
-    runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
-    # S17 ADR 0032: BTC-only mean-reversion RELAXED thresholds (RSI 35/65 + BB 1.5σ).
-    # Pre-registered binding parameters per trader EXPAND amendment 1 — NO post-result tuning.
-    # Frequency math: expected 66-88 BTC trades (vs T5 floor 100, borderline).
-    config = {
+    return {
         "trading": {
             "initial_balance": 10000.0,
             "commission_taker": 0.001,
@@ -464,11 +460,28 @@ def _run_wfa_single_symbol(
             "type": "mean_reversion",
             "indicators": {
                 "atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0},
-                "rsi": {"period": 14, "oversold": 35, "overbought": 65},  # S17 relaxed (was 30/70 в S15)
-                "bb": {"period": 20, "k": 1.5},  # S17 relaxed (was 2.0 в S15)
+                "rsi": {"period": 14, "oversold": 35, "overbought": 65},
+                "bb": {"period": 20, "k": 1.5},
             },
         },
     }
+
+
+def _run_wfa_single_symbol(
+    *, symbol: str, df: pd.DataFrame, strategy_config: dict[str, object] | None = None,
+) -> "tuple[list[object], list[float], dict[str, object], float]":
+    """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
+
+    S15 T5 — extracted from _cmd_wfa for multi-symbol aggregation.
+    S25 ADR 0039: optional strategy_config override (для dashboard preset selection).
+    None → defaults к _default_wfa_config (S17 mean-reversion).
+    Note: trades typed as list[object] (forward-compat) — actual TradeRecord
+    instances; cast at call site if needed.
+    """
+    from typing import Any, cast
+    splitter = WindowSplitter()  # ADR 0014 defaults
+    runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
+    config = strategy_config if strategy_config is not None else _default_wfa_config()
     runner_result = runner.run(df=df, config=config)
 
     # MC sign-flip on aggregated OOS returns
@@ -608,7 +621,7 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     # T1-T6 metrics aggregated across symbols
     # S19 ADR 0034 Condition A3: pass bars_per_year derived from interval
     interval = getattr(args, "interval", "60")
-    bars_per_year_map: dict[str, int] = {"60": 8760, "15": 35040, "240": 2190}
+    bars_per_year_map: dict[str, int] = {"5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365}
     bars_per_year = bars_per_year_map[interval]
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
@@ -783,7 +796,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_bf.add_argument(
         "--interval", default="60",
-        choices=["60", "15", "240"],
+        choices=["5", "15", "30", "60", "120", "240", "D"],
         help="Bar interval (S19 ADR 0034): '60' = 1H (default), '15' = 15M.",
     )
     p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
@@ -810,7 +823,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_wfa.add_argument(
         "--interval", default="60",
-        choices=["60", "15", "240"],
+        choices=["5", "15", "30", "60", "120", "240", "D"],
         help="Bar interval (S19 ADR 0034): '60' = 1H (default, bars_per_year=8760), "
              "'15' = 15M (bars_per_year=35040). Annualization factor derived correctly "
              "к prevent 2× Sharpe understimate per Condition A3.",

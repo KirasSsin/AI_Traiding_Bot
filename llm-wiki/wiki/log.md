@@ -1586,3 +1586,53 @@ NO code changes:
 ### Roadmap
 
 **v0.5 closed at S23 honest.** Tag v0.1.0-alpha.23. Project state: between-sprints с post-v0.5-honest-close marker. **5-th honest close в проекте** (S14+S16+S18+S21+S23). MVP DONE на BTC-only 1H mean-reversion structurally hard — requires multi-symbol revival OR strategy class pivot OR spec amendment.
+
+## [2026-04-26] sprint-end | Sprint 25 — Dashboard UI
+
+**User-driven feature sprint.** Per directive 2026-04-26: web UI для backtest comparison.
+
+### Joint brainstorm
+- Trader CONFIRM metrics spec (TIER 1 + TIER 2 + 4 mandatory warnings + Sortino anomaly guard CC4 HARD)
+- Architecture APPROVE_WITH_CONDITIONS (FastAPI + vanilla JS + auto-open browser + localhost-only + isolated Presentation context)
+
+### Deliverables
+- T0 backfill 2023-01-01 → 2026-04-26 (BTC 5M/15M/60/240/1D + ETH 15M/60/240 + SOL 15M/60/240 = 11 parquet files)
+- T1 ADR 0039
+- T2 pyproject.toml `[dashboard]` optional dep group
+- T3 src/dashboard/app.py (FastAPI 7 endpoints + main() launcher)
+- T4 src/dashboard/backtest_runner.py (WFA wrapper + caching + warnings + Sortino guard)
+- T5-T7 templates/index.html + static/dashboard.js + dashboard.css
+- T8 scripts/dashboard.sh (launcher: uvicorn + auto-open browser)
+- T9 tests/unit/test_dashboard_app.py (8 smoke tests)
+- T10 sprint-25 page + wiki sync
+- T11 PHASE 8 ship — pending
+
+### Tests / quality
+- pytest unit: 740 passed (+8 dashboard tests)
+- mypy --strict src/: clean (75 source files, +3 dashboard modules)
+
+### Strategy presets (3 в S25 MVP)
+1. ema_crossover_s13 — EMA 12/26 + RSI 14 + ATR 14
+2. mean_reversion_s15 — RSI 30/70 + BB(20, 2.0σ)
+3. mean_reversion_s17_relaxed — RSI 35/65 + BB(20, 1.5σ)
+
+### Usage
+```bash
+.venv/bin/pip install -e ".[dashboard]"
+./scripts/dashboard.sh
+# → http://127.0.0.1:8000/
+```
+
+### Cross-cutting concerns binding (per ADR 0039, 11 CCs)
+CC1 process isolation / CC2 optional dep / CC3 localhost-only / CC4 read-only data / CC5 Sortino guard HARD / CC6 NO live trading в S25 / CC7 NO Mainnet / CC8 No spec amendment / CC9 1-at-a-time concurrency / CC10 disk caching / CC11 tag = UI capability not MVP.
+
+### Future S26+ candidates
+- Live bot start/stop control via UI
+- Real-time WebSocket updates (FSM, balance, fills)
+- Equity curve chart visualization
+- Multi-run side-by-side comparison view
+- Strategy parameter customization (currently presets-only)
+- 30M + 2H Bar.interval Literal extension
+
+### Roadmap
+**S25 SHIPPED.** Tag v0.1.0-alpha.25. Dashboard accessible via `./scripts/dashboard.sh`. S24 ESC-1 (pause vs multi-symbol) STILL OPEN — independent от S25.

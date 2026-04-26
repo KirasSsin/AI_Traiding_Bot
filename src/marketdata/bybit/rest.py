@@ -66,10 +66,15 @@ class BybitRESTClient:
         # S19 Condition A1 (ADR 0034): single-dict refactor — value = (domain_interval_label, step_ms).
         # Add new timeframes here only — single source of truth, prevents dict drift.
         # S22 ADR 0037: added "240" (4H) для v0.5-C test.
+        # S25: added 5M/30M/2H/1D для dashboard timeframe coverage.
         intervals: dict[str, tuple[str, int]] = {
-            "60": ("1h", 3_600_000),
+            "5": ("5m", 300_000),
             "15": ("15m", 900_000),
+            "30": ("30m", 1_800_000),
+            "60": ("1h", 3_600_000),
+            "120": ("2h", 7_200_000),
             "240": ("4h", 14_400_000),
+            "D": ("1d", 86_400_000),
         }
         if interval not in intervals:
             raise ValueError(

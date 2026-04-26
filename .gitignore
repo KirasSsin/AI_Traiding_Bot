@@ -26,6 +26,7 @@ web/data.json
 /skills/
 /scripts/*
 !/scripts/*.py
+!/scripts/dashboard.sh
 /package.json
 /gemini-extension.json
 /docs/README.codex.md
