@@ -12,8 +12,8 @@
 | 2 Brainstorm | `brainstorm-init` (project) → `trader-expert` | `superpowers:brainstorming` (non-trading scope) | `pre-s{N}-backlog.md` |
 | 3 Plan | `superpowers:writing-plans` | `agent-skills:planning-and-task-breakdown` (DEPTH ref) | **Hook `sprint-flow-check.sh` блокирует push без plan file** |
 | 4 Execute | `superpowers:subagent-driven-development` (code) OR `superpowers:executing-plans` (docs) + `superpowers:test-driven-development` | `superpowers:systematic-debugging` (bug sub-flow), `superpowers:dispatching-parallel-agents` (parallel reviewers), `agent-skills:context-engineering` (briefs > 200 слов) | Per-task TDD + per-task SPRINT_STATE update |
-| 5 Verify | `superpowers:verification-before-completion` | pytest + mypy + canonical counts | All GREEN per checklist |
-| 6 Review | Domain reviewer (L5) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening` (money/API/override) | Blockers addressed |
+| 5 Verify | `superpowers:verification-before-completion` | pytest + mypy + canonical counts | All GREEN per checklist + 🔒 **Hook `phase-advance.sh` (S30+) блокирует merge если Phase 5 status != "done"/"skipped"** |
+| 6 Review | Domain reviewer (L5: trading-logic / quant-stats / data-integrity / architecture / python) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | **`security-auditor` (money/API/override) + `test-engineer` (new modules / coverage gaps) + `doc-reviewer` (post wiki-update)** 🆕 (S30) + `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening` | Blockers addressed |
 | 7 Sync | `wiki-update` (project) | — | Block 1↔Block 2 sync |
 | 8 Ship | `sprint-finish` (project) → `superpowers:finishing-a-development-branch` | `agent-skills:git-workflow-and-versioning`, `agent-skills:shipping-and-launch` | tag v0.1.0-alpha.N |
 | 9 Close | SPRINT_STATE between-sprints + log session-end | — | — |
@@ -31,7 +31,25 @@
 4. Optional: commit `docs(sprint): SPRINT_STATE update phase=4 task=Tx done`
 
 **Полный процесс на русском:** [`llm-wiki/wiki/project/architecture/sprint-flow-ru.md`](llm-wiki/wiki/project/architecture/sprint-flow-ru.md)
-**Каталог tooling (26 skills × phases mapped):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
+**Каталог tooling (9 agents + 26 skills × phases mapped + cascade):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
+
+### LLMWiki ↔ Claude-mem cascade rule (BINDING per ADR 0043 — token economy)
+
+При любом lookup (decision / pattern / API / past learning) — следуй cascade order:
+
+```
+STEP 1: wiki/<page>.md    (curated, structured)   ← CHECK FIRST
+   ↓ not found
+STEP 2: mem-search        (past sessions semantic)
+   ↓ not found
+STEP 3: Grep raw          (current code state)
+   ↓ needed
+STEP 4: Read raw + offset (full content)
+```
+
+Полный rationale + examples: [`tooling-inventory-ru.md` Section 13](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md).
+
+**Anti-pattern:** ❌ Skip wiki check → mem-search OR Read raw напрямую (loses curation, increases tokens).
 
 ### Анти-patterns (НЕ делать)
 - ❌ Прямой `Agent` dispatch вместо `brainstorm-init` / `writing-plans` / `subagent-driven-development` skills
@@ -45,6 +63,10 @@
 - ❌ Reviewer brief ad-hoc без `superpowers:requesting-code-review` skill format
 - ❌ Reviewer feedback ad-hoc без `superpowers:receiving-code-review` categorization
 - ❌ Создать new project skill без `superpowers:writing-skills` methodology
+- ❌ 🆕 Money/API/override/Mainnet code change без `security-auditor` agent invocation
+- ❌ 🆕 New module ship без `test-engineer` coverage analysis
+- ❌ 🆕 Skip wiki check (cascade STEP 1) → jump straight к mem-search OR Read raw
+- ❌ 🆕 Merge sprint без Phase 5 status="done" в SPRINT_STATE (`phase-advance.sh` блокирует)
 
 ## ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального)
 

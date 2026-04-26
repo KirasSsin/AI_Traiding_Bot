@@ -338,7 +338,9 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 - ✅ mypy ≤ baseline (S8c baseline = 44 errors)
 - ✅ Canonical counts текущие
 - ✅ `verification-before-completion` checklist passed
+- ✅ SPRINT_STATE Phase 5 status updated → "done" (или "skipped (reason)")
 - ❌ STOP если pytest fails — fix перед Phase 6
+- 🔒 **Hook `phase-advance.sh` (S30+) блокирует `gh pr merge` если Phase 5 status != "done"/"skipped"** — mechanical enforcement
 
 ---
 
@@ -367,7 +369,10 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 | `src/marketdata/`, `src/platform/storage/`, `migrations/` | data-integrity-reviewer | YES |
 | Cross-module refactor / concurrency / DI / API stability | architecture-reviewer | YES |
 | Любой `*.py` (generic safety net) | python-reviewer | YES (после domain) |
-| Money / API keys / override / signing | + `agent-skills:security-and-hardening` checklist | YES если applies |
+| **Money / API keys / override.py / HMAC / signing / withdraw / Mainnet** 🆕 (S30) | **security-auditor** (opus) | YES для money paths |
+| **New module без tests / coverage gap / property test design** 🆕 (S30) | **test-engineer** (sonnet) | YES для new modules |
+| **Wiki consistency check** 🆕 (S30) | **doc-reviewer** (haiku) | YES после wiki-update skill |
+| Money / API keys / override / signing (additional checklist) | + `agent-skills:security-and-hardening` | YES (вместе с security-auditor) |
 
 ### Procedure (using superpowers review skills)
 
@@ -486,6 +491,24 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 ```
 
 ---
+
+## Token economy: LLMWiki ↔ Claude-mem cascade (BINDING per ADR 0043)
+
+При любом lookup (decision / pattern / API / past learning) — следуй cascade order:
+
+```
+STEP 1: wiki/<page>.md    (curated, structured, tagged)   ← CHECK FIRST
+   ↓ not found
+STEP 2: mem-search        (past sessions semantic search)
+   ↓ not found
+STEP 3: Grep raw          (current code state)
+   ↓ needed
+STEP 4: Read raw + offset (full content, controlled)
+```
+
+Полный rationale + examples + bridges deferred → [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]]
+
+**Anti-pattern:** ❌ Skip wiki check, jump straight к mem-search OR Read raw — loses curation, increases tokens.
 
 ## Cross-phase optional skills
 

@@ -2,11 +2,39 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 29
-phase: between-sprints
-branch: main
+sprint: 30
+phase: 4-execution
+branch: feature/sprint-30-tier-2-agents-mem-wiki-merge
 tag: v0.1.0-alpha.29
 ---
+
+## Phase tracking (S30)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation |
+| 2 Brainstorm | short (operator-specified scope + cascade design) | inline в plan |
+| 3 Plan | done | `plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md` |
+| 4 Execute | done | T1-T9 done (6 task commits) |
+| 5 Verify | done | 762 pytest passed (S29 baseline preserved) + bash -n hook + positive/negative test |
+| 6 Review | skipped (process/wiki, no code reviewer applicable) | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) в T9 commit |
+| 8 Ship | in_progress | tag alpha.30 |
+| 9 Close | pending | — |
+
+### Phase 4 — task progress
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 security-auditor agent | done | (out-of-repo, ~/.claude/agents/) | Opus, OWASP + trading-specific rules + MEMORY.md |
+| T2 test-engineer agent | done | (out-of-repo) | Sonnet, test pyramid + property tests + Hypothesis + Trading-specific rules |
+| T3 doc-reviewer agent | done | (out-of-repo) | Haiku, frontmatter+links+Block 1↔2+canonical counts |
+| T4 phase-advance.sh hook | done | (out-of-repo + settings.json) | bash -n + negative test verified (Phase 5 pending → block + helpful error). Registered к PreToolUse Bash matcher |
+| T5 wiki↔mem cascade design | done | (combined с T6) | Section 13 NEW в tooling-inventory-ru.md — 4-step cascade (wiki→mem→grep→raw) + examples + bridges 2-4 deferred |
+| T6 tooling-inventory-ru.md | done | (pending commit) | Section 1 expanded (6→9 agents с status legend) + Section 8 +phase-advance.sh + Section 13 NEW cascade + decision matrix +5 entries |
+| T7 sprint-flow-ru.md Phase 6 | done | (pending commit) | Reviewer matrix +3 (security/test/doc) + Phase 5 hook note + Token economy cascade section с link к Section 13 |
+| T8 CLAUDE.md | done | (pending commit) | Repo CLAUDE.md Phase 6 +3 reviewers + Phase 5 hook + cascade rule + 4 anti-patterns. llm-wiki CLAUDE.md +phase-advance hook + cascade rule references |
+| T9 ADR 0043 + sprint-30 page + sync | done | (pending commit) | ADR + sprint page + index + current-state + log + canonical counts (43 ADRs / 30 sprint pages / 9 agents / 6 hooks) |
+| Ship | in_progress | — | tag alpha.30 |
 
 ## S29 SHIPPED ✅
 

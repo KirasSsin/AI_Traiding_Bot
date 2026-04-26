@@ -1747,3 +1747,58 @@ S29 executed по proper kit flow per S28 binding rules:
 
 ### Roadmap
 **S29 ready к ship.** Tag v0.1.0-alpha.29. Next = S30 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1 operator decision from S27 carry-over).
+
+## [2026-04-26] sprint-end | S30 — Tier-2 Agents + phase-advance hook + LLMWiki↔Claude-mem cascade
+
+**Operator directives после S29 ship:**
+1. "Register security-auditor + test-engineer plugins в L5 stack. + doc-reviewer (haiku). Update tooling-inventory + sprint-flow Phase 6. Hook phase-advance.sh validating verification checklist runs перед merge."
+2. "Проанализируй как можно смержить функционал llmwiki и её потенциал с плагином claude mem (token economy / context delivery)."
+
+### 3 NEW reviewer agents (~/.claude/agents/)
+- `security-auditor.md` (opus, OWASP + trading-specific rules — HMAC override.py, withdraw whitelist, kill-switch auth, position bounds, Mainnet/Testnet detection)
+- `test-engineer.md` (sonnet, test pyramid + Hypothesis property tests для DSR/Kelly/MC math invariants, S27 regression lessons)
+- `doc-reviewer.md` (haiku, frontmatter + link integrity + Block 1↔2 sync per ADR 0017 + canonical counts)
+
+### NEW hook (~/.claude/hooks/)
+- `phase-advance.sh` — PreToolUse on `gh pr merge`. Blocks если SPRINT_STATE Phase 5 status != "done"/"skipped". Tested positive + negative.
+- Registered к ~/.claude/settings.json PreToolUse Bash matcher.
+
+### LLMWiki ↔ Claude-mem cascade (NEW Section 13 в tooling-inventory-ru.md)
+Documentation-first integration. 4-step cascade order:
+```
+STEP 1 wiki/<page>.md (curated)  ← CHECK FIRST
+   ↓ not found
+STEP 2 mem-search (past sessions)
+   ↓ not found
+STEP 3 Grep raw (current code)
+   ↓ needed
+STEP 4 Read raw + offset
+```
+Saves tokens via curated wiki priority. Cascade enforcement via documentation в 4 places (tooling-inventory Section 13 + sprint-flow Token economy section + repo CLAUDE.md cascade rule + llm-wiki CLAUDE.md cascade reference).
+
+Bridges 2-4 (wiki-mem-corpus-sync / chapter mark auto-link к log.md / frontmatter tags → corpus categorization) deferred к S31+ — requires claude-mem API investigation.
+
+### Deliverables (6 task commits + ship)
+- T1 plan + security-auditor agent
+- T2+T3+T4 test-engineer + doc-reviewer + phase-advance.sh hook
+- T5+T6 tooling-inventory-ru.md (Section 1 9 agents + Section 8 +hook + Section 13 NEW cascade + decision matrix +5)
+- T7+T8 sprint-flow-ru.md Phase 6 expansion + repo CLAUDE.md tier-2 + cascade rule + llm-wiki CLAUDE.md hook+cascade
+- T9 ADR 0043 + sprint-30 page + index/current-state sync
+- Ship — pending tag v0.1.0-alpha.30
+
+### Canonical counts updated
+- Components 38 (unchanged)
+- ADRs 42 → 43
+- Sprint pages 29 → 30
+- Reviewer agents 6 → 9
+- Active hooks 5 → 6
+
+### S30 itself = proof of process
+S30 executed по proper kit flow per S28 binding rules + S29 expanded skills:
+- PHASE 3 plan file `plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md`
+- PHASE 4 controller-driven (docs/agents/wiki sprint), per-task TDD pattern
+- Per-task SPRINT_STATE update после каждой task (S28 protocol)
+- 6 task commits + ship commit (planned)
+
+### Roadmap
+**S30 ready к ship.** Tag v0.1.0-alpha.30. Next = S31 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1/2/3 operator decision from S27 carry-over).
