@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 25
+sprint: 27
 phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.25
+branch: feature/sprint-27-formula-bug-fixes
+tag: v0.1.0-alpha.27
 ---
 
 # SPRINT STATE
@@ -15,46 +15,43 @@ tag: v0.1.0-alpha.25
 
 ## Текущий статус
 
-**v0.5 honest close. S23 ready к ship (tag `v0.1.0-alpha.23`).** 25 спринтов завершено. **5 strategy hypotheses tested across 4.81y BTC — all FAIL conjoint per acceptance-criteria.md**. CC1 T5 100 structurally unreachable BINDING (3 timeframes empirical). CC3 Strategy edge regime-INDEPENDENT (S17+S22 both 5/6+DSR+MC PASS — combined ~120 trades для v0.6-A ML training). cross_trial_sharpes archived к v0.5-final.json + reset для v0.6 readiness (4-th archival, mirrors S16/S18/S21). 5-th honest close в проекте (S14+S16+S18+S21+S23).
+**S27 SHIPPED. Formula bug fixes (5 bugs).** 27 спринтов завершено. Audit infrastructure (`scripts/audit_formulas.py` + `data/formulas_audit_v1.json` + dashboard auto-refresh). Trader+logic-reviewer parallel brainstorm verdict: 4 bugs found (1 HIGH, 2 MEDIUM, 1 INFO/CC5, 1 LOW), all fixed TDD (5 commits, 762 passed). Sweep re-run post-fix: verdict count unchanged (0 PASS / 30 FAIL — bugs не fundamentally изменили acceptance gate outcomes), но reason codes diverse (187 SL / 141 TP / 2 TIME_STOP), ema_crossover SOLUSDT 4H pnl +88→+131 (RSI warm-up fix), audit reproducible (MC seed=42 default).
 
-**Final v0.1 status:**
-- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
-- Strategy validation: ❌ NEGATIVE (EMA crossover на 1H BTC = no edge, verified 2 measurements 2.2y + 4.81y)
-- MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
-- Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
+**Status:**
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 30 ADRs + 17 sprint pages)
+- Formula correctness: ✅ FIXED (5 bugs eliminated, measurement instrument trustworthy)
+- Strategy validation: ❌ NEGATIVE (still 0 PASS / 30 FAIL — structural failures, не formula bugs)
+- MVP DONE per acceptance-criteria.md: NOT achieved (T5 still unreachable single-symbol 4H)
 
-## Последний спринт (S23 — v0.5 honest close)
+## Последний спринт (S27 — formula bug fixes)
 
-Documentation only + cross_trial_sharpes archival. NO code changes. Pre-committed per ADR 0037 BINDING.
-- T1 ADR 0038 accepted
-- T2 sprint-23-honest-close-v05.md
-- T3 cross_trial_sharpes.json → _v0.5-final.json archival + reset (4-th archival)
-- T4 wiki sync (current-state TL;DR + ADR 37→38, sprint pages 24→25, +S23 row)
-- T5 log.md sprint-end
-- T6 SPRINT_STATE → between-sprints, tag alpha.23
-- T7 PHASE 8 ship — pending
+Operator-driven audit sprint. 5 bugs (T1-T5) fixed TDD, audit re-run. ESC items для S28+ pending operator decision.
 
-5 strategy hypotheses tested all FAIL conjoint. T5 100 structurally unreachable insight (3 timeframes empirical). Strategy edge regime-INDEPENDENT (S17+S22 both 5/6+DSR+MC PASS).
-
-5-th honest close в проекте (S14+S16+S18+S21+S23). Pattern: documentation + archival, no measurement re-run.
+- T1 HIGH replay_engine bars_per_year parameterization (annualization)
+- T2 MEDIUM Sortino canonical downside_dev (Sortino & Price 1994)
+- T3 MEDIUM RSI/ATR warm-up gating (mask first period bars NaN)
+- T4 INFO/CC5 trade_extractor preserve actual reason_code (SL/TP/SIGNAL_FLIP/EOD/KILL_SWITCH)
+- T5 LOW MC seed=42 default (reproducibility)
+- T6 audit re-run + diff snapshot (data/formulas_audit_v1_post_s27.json)
+- T7 ADR 0040 + sprint-27 page + wiki sync
+- T8 PHASE 8 ship pending
 
 ## Следующее действие
 
 ```
-S23 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.23.
+S27 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.27.
 
-v0.5 closed honest. 5 strategy hypotheses tested. T5 100 structurally unreachable confirmed.
-data/cross_trial_sharpes_v0.5-final.json archived, fresh [] для v0.6.
+Operator decides ESC items для S28+ scope:
+- ESC-1 Multi-symbol authorization (S28 expanded scope beyond BTCUSDT MVP)
+- ESC-2 "In profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H pre-S28?)
+- ESC-3 Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
 
-Operator decides v0.6 direction (no commitment):
-(v0.6-A) Hybrid mean-reversion + ML XGBoost — combined S17+S22 ~120 trades viable
-(v0.6-B) HMM regime-switch — addresses fold concentration
-(v0.6-C) Multi-symbol revival post-MVP — ONLY path к T5 ≥100 conjoint pass
-(v0.6-D) Different strategy class (donchian, ATR-bands, regime-detection)
-(v0.6-E) Project pause — 5 hypotheses + structural insight = strong contribution
-(v0.6-F) MVP T5 floor amendment — operator decides spec amendment justified
-
-5-th honest close в проекте (S14+S16+S18+S21+S23). Per Bailey 2014: v0.6 fresh hypothesis resets DSR baseline cleanly.
+Trader-expert backlog (S28-S32):
+- S28 Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
+- S29 Regime filter + SMA50 trend gate (CC2 fold concentration)
+- S30 SL calibration {1.0/1.25/1.5}×ATR + t-stat power validation
+- S31 Donchian 4H breakout (independent hypothesis)
+- S32 DSR cross-trial sigma_SR + MC power audit (closes S14 Q2 carry-over)
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)

@@ -4,8 +4,12 @@ Sprint 13 Task 5 (per ADR 0028 Q5). Closes S10 + S12 carry-over: WFA produces
 per-fold trade DataFrames; DSR requires list[TradeRecord]. Bridge между layers.
 
 Backtest synthesizes entry_signal_id (UUID) — uniqueness sole DSR-relevant
-constraint. Default reason_code = EXIT_TP_HIT (placeholder, doesn't affect DSR
-which consumes pnl_pct only). kelly_phase = 1 (backtest assumption).
+constraint. kelly_phase = 1 (backtest assumption).
+
+S27 T4 (CC5): preserve actual exit reason_code from replay_engine. Pre-fix
+hardcoded EXIT_TP_HIT для всех trades — corrupted formulas_audit_v1.json
+diagnostic value (couldn't distinguish SL hits from TP hits). Free-form
+strings 'SL'/'TP'/'SIGNAL_FLIP'/'EOD'/'KILL_SWITCH' → canonical ReasonCode.
 
 CC1: extractor agnostic к N_trials (consumer responsibility).
 """
@@ -19,6 +23,27 @@ import pandas as pd
 
 from src.risk.reason_codes import ReasonCode
 from src.risk.trade_history import TradeRecord
+
+
+# S27 T4: replay_engine free-form exit_reason → canonical ReasonCode mapping
+_EXIT_REASON_MAP: dict[str, ReasonCode] = {
+    "SL": ReasonCode.EXIT_SL_HIT,
+    "TP": ReasonCode.EXIT_TP_HIT,
+    "SIGNAL_FLIP": ReasonCode.EXIT_SIGNAL_FLIP,
+    "EOD": ReasonCode.EXIT_TIME_STOP,
+    "KILL_SWITCH": ReasonCode.EXIT_CIRCUIT_BREAKER,
+}
+
+
+def _map_exit_reason(raw: object) -> ReasonCode:
+    """Map replay_engine free-form exit_reason к canonical ReasonCode.
+
+    Unknown / missing → EXIT_TP_HIT (backward-compat fallback).
+    """
+    if raw is None:
+        return ReasonCode.EXIT_TP_HIT
+    key = str(raw)
+    return _EXIT_REASON_MAP.get(key, ReasonCode.EXIT_TP_HIT)
 
 
 def extract_trade_records(df: pd.DataFrame, *, symbol: str) -> list[TradeRecord]:
@@ -55,6 +80,9 @@ def extract_trade_records(df: pd.DataFrame, *, symbol: str) -> list[TradeRecord]
         if hasattr(exit_ts, "to_pydatetime"):
             exit_ts = exit_ts.to_pydatetime()
 
+        # S27 T4: preserve actual exit reason_code from replay_engine output
+        reason_code = _map_exit_reason(row.get("reason_code"))
+
         records.append(
             TradeRecord(
                 symbol=symbol,
@@ -67,7 +95,7 @@ def extract_trade_records(df: pd.DataFrame, *, symbol: str) -> list[TradeRecord]
                 pnl_quote=pnl_quote,
                 pnl_pct=pnl_pct,
                 fees_paid=fees_paid,
-                reason_code=ReasonCode.EXIT_TP_HIT,
+                reason_code=reason_code,
                 kelly_phase=1,
                 recorded_at=now_utc,
             )

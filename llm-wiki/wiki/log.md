@@ -1636,3 +1636,45 @@ CC1 process isolation / CC2 optional dep / CC3 localhost-only / CC4 read-only da
 
 ### Roadmap
 **S25 SHIPPED.** Tag v0.1.0-alpha.25. Dashboard accessible via `./scripts/dashboard.sh`. S24 ESC-1 (pause vs multi-symbol) STILL OPEN — independent от S25.
+
+## [2026-04-26] sprint-end | S27 — Formula bug fixes (5 bugs)
+
+**Operator-driven audit per directive:** "Провести ревизию всех торговых метрик и формул и оптимизировать их чтобы торговля была в плюсе. Вызывай subagents трейдера и трейдера с логикой."
+
+### Audit infrastructure built
+- `scripts/audit_formulas.py` — sweep + rebuild + auto-refresh modes
+- `data/formulas_audit_v1.json` — 30 experiments × 17 formulas (347 KB)
+- Dashboard `run_backtest()` hook → audit doc auto-updates after каждый POST `/api/backtest`
+- Pre-fix per-run cache snapshots: `data/runs.backup_pre_s27_fixes/`
+
+### Joint trader+logic-reviewer parallel verdict
+- **Trader-expert** EXPAND — formulas correct, failures structural (T5 unreachable single-symbol). Sprint backlog S28-S32 proposed.
+- **Trading-logic-reviewer** PARTIAL FAIL — 4 bugs found (1 HIGH, 2 MEDIUM, 1 INFO/CC5, 1 LOW)
+
+### 5 bug fixes (TDD, +18 tests, 745→762 passed)
+- T1 HIGH `src/backtest/replay_engine.py:51` — `np.sqrt(24*365)` hardcoded → `bars_per_year` parameterized (fixes 27/30 corrupted experiments)
+- T2 MEDIUM Sortino canonical `sqrt(mean(min(r,0)²))` (was `std(losers, ddof=1)` — Sortino & Price 1994)
+- T3 MEDIUM RSI/ATR mask first `period` bars NaN (was `.fillna(50.0)` — talib convention)
+- T4 INFO/CC5 trade_extractor preserve actual reason_code (was hardcoded EXIT_TP_HIT — surfaced 187 SL / 141 TP / 2 TIME_STOP)
+- T5 LOW MC `seed=42` default (was `None` — non-reproducible audit)
+
+### Audit re-run результаты
+- Verdict count unchanged: 0 PASS / 30 FAIL (bugs не fundamentally изменили acceptance gate outcomes)
+- ema_crossover SOLUSDT 4H: pnl +88→+131 + sharpe 1.66→2.48 (RSI warm-up fix removed invalid early entries)
+- mean_reversion strategies unchanged (BB gates immune к RSI fix)
+- Reason codes diverse: 187 EXIT_SL_HIT + 141 EXIT_TP_HIT + 2 EXIT_TIME_STOP
+
+### ESC items для S28+ (operator decision)
+- ESC-1 Multi-symbol authorization (S28 expanded scope beyond BTCUSDT MVP)
+- ESC-2 "In profit" vs "pass acceptance criteria" — different goals (ETH 4H +$404 already profitable)
+- ESC-3 Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
+
+### Trader-expert backlog (S28-S32)
+- S28 Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
+- S29 Regime filter + SMA50 trend gate (CC2 fold concentration)
+- S30 SL calibration {1.0/1.25/1.5}×ATR + t-stat power
+- S31 Donchian 4H breakout (independent hypothesis)
+- S32 DSR cross-trial sigma_SR + MC power audit (closes S14 Q2 carry-over)
+
+### Roadmap
+**S27 SHIPPED.** Tag v0.1.0-alpha.27. Audit infrastructure live + 5 formula bugs eliminated. Measurement instrument now trustworthy. Strategy work (S28+) pending ESC-1/2/3 operator decision.

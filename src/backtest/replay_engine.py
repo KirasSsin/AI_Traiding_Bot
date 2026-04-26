@@ -28,7 +28,16 @@ def _compute_metrics(
     equity_df: pd.DataFrame,
     trades_df: pd.DataFrame,
     initial_balance: float,
+    bars_per_year: int = 8760,
 ) -> Dict[str, float]:
+    """S27 T1: bars_per_year parameterized — sqrt(bars_per_year) annualization.
+
+    Pre-S27 bug: hardcoded sqrt(24*365)=sqrt(8760) для всех timeframes.
+    For 4H bars (bars_per_year=2190): IS Sharpe overstated 2x → corrupts
+    fold OOS/IS ratios → artificial acceptance_gate FAIL.
+    For 15M/5M (bars_per_year=35040/105120): IS understated → inflated ratios.
+    Default 8760 = 1H для backward compat.
+    """
     if equity_df.empty:
         return {}
 
@@ -46,16 +55,21 @@ def _compute_metrics(
     drawdown_abs = (rolling_max - equity).fillna(0.0)
     drawdown_pct = drawdown_abs / rolling_max.replace(0, np.nan)
 
+    annualization_factor = float(np.sqrt(bars_per_year))
+
     sharpe = 0.0
     if not returns.empty and float(returns.std()) > 0:
-        sharpe = float((returns.mean() / returns.std()) * np.sqrt(24 * 365))
+        sharpe = float((returns.mean() / returns.std()) * annualization_factor)
 
+    # S27 T2: canonical Sortino downside deviation (Sortino & Price 1994).
+    # Pre-fix used downside.std() — std of negative returns subset, mean-centered.
+    # Canonical: sqrt(mean(min(r, 0)^2)) over ALL returns.
     sortino = 0.0
     if not returns.empty:
-        downside = returns[returns < 0]
-        downside_std = float(downside.std()) if not downside.empty else 0.0
-        if downside_std > 0:
-            sortino = float((returns.mean() / downside_std) * np.sqrt(24 * 365))
+        downside = returns.where(returns < 0, 0.0)
+        downside_dev = float(np.sqrt((downside ** 2).mean()))
+        if downside_dev > 0:
+            sortino = float((returns.mean() / downside_dev) * annualization_factor)
 
     total_trades = float(len(trades_df))
     win_rate = float(len(wins) / total_trades * 100.0) if total_trades > 0 else 0.0
@@ -116,6 +130,7 @@ def run_replay(df: pd.DataFrame, config: Dict[str, Any]) -> Dict[str, Any]:
     pos_pct = float(trading.get("position_size_pct", 10.0)) / 100.0
     max_drawdown = float(trading.get("max_drawdown_pct", 20.0)) / 100.0
     long_only = _to_bool(trading.get("long_only", False))
+    bars_per_year = int(config.get("bars_per_year", 8760))  # S27 T1: timeframe annualization
     sl_mult = float(atr_cfg.get("sl_atr_mult", 1.5))
     tp_mult = float(atr_cfg.get("tp_atr_mult", 3.0))
 
@@ -311,5 +326,5 @@ def run_replay(df: pd.DataFrame, config: Dict[str, Any]) -> Dict[str, Any]:
                 "holding_time_seconds",
             ]
         )
-    metrics = _compute_metrics(equity_df, trades_df, initial_balance)
+    metrics = _compute_metrics(equity_df, trades_df, initial_balance, bars_per_year=bars_per_year)
     return {"equity_df": equity_df, "trades_df": trades_df, "metrics": metrics}
