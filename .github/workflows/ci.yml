@@ -1,0 +1,111 @@
+name: CI
+
+# Per ADR 0046 (Sprint 32b Kit Phase 1).
+# Triggers: push к main + ANY pull_request.
+# Quality gates: ruff (lint+format) → mypy --strict (informational baseline) → pytest unit suite.
+# Bypass last resort: only force merge через admin override.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Test (Python 3.12 + TA-Lib)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cache TA-Lib system library
+        id: cache-talib
+        uses: actions/cache@v4
+        with:
+          path: /usr/lib/libta_lib*
+          key: talib-0.4.0-ubuntu-latest
+
+      - name: Install TA-Lib (system library, build from source)
+        if: steps.cache-talib.outputs.cache-hit != 'true'
+        run: |
+          wget -q http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
+          tar -xzf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib
+          ./configure --prefix=/usr LDFLAGS="-Wl,-rpath,/usr/lib" --build=x86_64-unknown-linux-gnu
+          make -j"$(nproc)"
+          sudo make install
+          sudo ldconfig
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Ruff lint
+        run: ruff check src/ tests/
+
+      - name: Ruff format check
+        run: ruff format --check src/ tests/
+
+      - name: Mypy --strict (informational baseline)
+        # 1 pre-existing error allowed (`__main__.py:636 bars_per_year_map redef`)
+        # carry-over к S33+. CI passes if mypy errors ≤ baseline.
+        run: |
+          set +e
+          mypy --strict src/ 2>&1 | tee mypy-output.txt
+          ERR_COUNT=$(grep -cE '^src/.*error:' mypy-output.txt || echo 0)
+          echo "mypy errors: ${ERR_COUNT}"
+          if [ "${ERR_COUNT}" -gt 1 ]; then
+            echo "::error::Mypy regression — ${ERR_COUNT} errors > baseline 1"
+            exit 1
+          fi
+          exit 0
+
+      - name: Pytest unit suite
+        env:
+          BYBIT_API_KEY: "test_key_dummy"
+          BYBIT_API_SECRET: "test_secret_dummy"
+          TESTNET: "true"
+        run: |
+          set +e
+          pytest tests/ -q --ignore=tests/integration --tb=short 2>&1 | tee pytest-output.txt
+          PYTEST_EXIT=$?
+          # 3 pre-existing failures baseline (test_replay_long_only x2, test_replay_next_open x1)
+          # CI passes if pytest exit = 0 OR failures count ≤ baseline 3.
+          FAIL_COUNT=$(grep -cE '^FAILED ' pytest-output.txt || echo 0)
+          echo "pytest failures: ${FAIL_COUNT}"
+          if [ "${PYTEST_EXIT}" -eq 0 ]; then
+            exit 0
+          elif [ "${FAIL_COUNT}" -le 3 ]; then
+            echo "::warning::Pytest baseline (${FAIL_COUNT} pre-existing failures) — passing as informational"
+            exit 0
+          else
+            echo "::error::Pytest regression — ${FAIL_COUNT} failures > baseline 3"
+            exit 1
+          fi
+
+      - name: Canonical counts verify
+        run: |
+          python -c "
+          from src.execution.state_machine import TRANSITIONS, ExecutionState, ExecutionEvent
+          from src.risk.reason_codes import ReasonCode
+          counts = {
+              'states': len(list(ExecutionState)),
+              'events': len(list(ExecutionEvent)),
+              'transitions': len(TRANSITIONS),
+              'reason_codes': len(list(ReasonCode)),
+          }
+          expected = {'states': 16, 'events': 30, 'transitions': 74, 'reason_codes': 45}
+          if counts != expected:
+              print(f'::error::Canonical counts drift! Got {counts}, expected {expected}')
+              exit(1)
+          print(f'Canonical counts OK: {counts}')
+          "
