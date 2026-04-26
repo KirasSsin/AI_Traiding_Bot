@@ -33,7 +33,8 @@ tag: v0.1.0-alpha.29
 | T6 tooling-inventory-ru.md | done | (pending commit) | Section 1 expanded (6→9 agents с status legend) + Section 8 +phase-advance.sh + Section 13 NEW cascade + decision matrix +5 entries |
 | T7 sprint-flow-ru.md Phase 6 | done | (pending commit) | Reviewer matrix +3 (security/test/doc) + Phase 5 hook note + Token economy cascade section с link к Section 13 |
 | T8 CLAUDE.md | done | (pending commit) | Repo CLAUDE.md Phase 6 +3 reviewers + Phase 5 hook + cascade rule + 4 anti-patterns. llm-wiki CLAUDE.md +phase-advance hook + cascade rule references |
-| T9 ADR 0043 + sprint-30 page + sync | in_progress | — | Wiki diffs |
+| T9 ADR 0043 + sprint-30 page + sync | done | (pending commit) | ADR + sprint page + index + current-state + log + canonical counts (43 ADRs / 30 sprint pages / 9 agents / 6 hooks) |
+| Ship | in_progress | — | tag alpha.30 |
 
 ## S29 SHIPPED ✅
 
