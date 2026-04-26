@@ -85,6 +85,369 @@ _lock = threading.Lock()
 _RUNS_DIR = Path("data/runs")
 
 
+# S26: educational docs для UI Documentation tab.
+# Indicator descriptions (technical analysis primer для operators).
+INDICATORS_DOC: list[dict[str, Any]] = [
+    {
+        "id": "rsi",
+        "name": "RSI",
+        "full_name": "Relative Strength Index",
+        "author": "J. Welles Wilder Jr. (1978)",
+        "category": "Momentum oscillator",
+        "formula": "RSI = 100 − [100 / (1 + RS)] где RS = avg_gain / avg_loss за period",
+        "range": "0 — 100",
+        "description": (
+            "Oscillator момента, измеряющий силу и направление недавних price changes. "
+            "В нашем боте используется Wilder smoothing (α=1/n), не classical EMA. "
+            "Стандартный period = 14 баров."
+        ),
+        "interpretation": [
+            "RSI < 30 — oversold (потенциальный buy signal mean-reversion)",
+            "RSI > 70 — overbought (потенциальный sell/exit signal)",
+            "RSI 30–70 — neutral zone",
+            "Threshold relaxation (35/65) даёт больше signals но noisier",
+        ],
+        "params_in_strategies": {
+            "period": "14 (Wilder default)",
+            "oversold": "30 (S15) или 35 (S17 relaxed)",
+            "overbought": "65 (S17) или 68 (EMA crossover) или 70 (S15)",
+        },
+        "source": "Wilder, J.W. (1978) New Concepts in Technical Trading Systems",
+    },
+    {
+        "id": "bb",
+        "name": "BB",
+        "full_name": "Bollinger Bands",
+        "author": "John Bollinger (1980s)",
+        "category": "Volatility envelope",
+        "formula": "middle = SMA(close, period); upper = middle + k×stdev_pop; lower = middle − k×stdev_pop",
+        "range": "Зависит от price",
+        "description": (
+            "Volatility-based envelope вокруг moving average. Population standard deviation "
+            "(ddof=0 per Bollinger original spec). Прорыв нижней band = сигнал mean-reversion entry, "
+            "прорыв верхней = exit или overbought condition."
+        ),
+        "interpretation": [
+            "close < lower_BB — price extended below average (oversold extreme)",
+            "close > upper_BB — price extended above average (overbought extreme)",
+            "Band width = volatility proxy (squeeze = low vol, expansion = high vol)",
+            "k=2.0 (S15) — strict bands, fewer breaches",
+            "k=1.5 (S17 relaxed) — narrower bands, more breaches (~1.47× rate vs 2.0σ)",
+        ],
+        "params_in_strategies": {
+            "period": "20 bars (Bollinger default)",
+            "k (stdev multiplier)": "2.0 (S15) или 1.5 (S17 relaxed)",
+        },
+        "source": "Bollinger, J. (2001) Bollinger on Bollinger Bands",
+    },
+    {
+        "id": "ema",
+        "name": "EMA",
+        "full_name": "Exponential Moving Average",
+        "author": "Classical (1960s)",
+        "category": "Trend / smoothing",
+        "formula": "EMA[t] = α × close[t] + (1−α) × EMA[t−1]; classical α=2/(n+1)",
+        "range": "Зависит от price",
+        "description": (
+            "Weighted moving average даёт больший вес recent prices. Classical version "
+            "(α=2/(n+1)) используется для crossover signals; Wilder version (α=1/n) — "
+            "для smoothing других indicators (RSI, ATR per ADR 0011)."
+        ),
+        "interpretation": [
+            "EMA(fast) crosses ABOVE EMA(slow) — bullish trend signal",
+            "EMA(fast) crosses BELOW EMA(slow) — bearish trend signal",
+            "Faster EMA = more responsive, more whipsaws",
+            "Slower EMA = lag, but cleaner signals",
+        ],
+        "params_in_strategies": {
+            "fast_period": "12 (S13)",
+            "slow_period": "26 (S13)",
+        },
+        "source": "Classical TA literature; Wilder variant ADR 0011",
+    },
+    {
+        "id": "atr",
+        "name": "ATR",
+        "full_name": "Average True Range",
+        "author": "J. Welles Wilder Jr. (1978)",
+        "category": "Volatility",
+        "formula": "TR = max(high−low, |high−prev_close|, |low−prev_close|); ATR = Wilder-smooth(TR, period)",
+        "range": "≥ 0",
+        "description": (
+            "Measure of volatility учитывающий gaps между bars. NOT directional. "
+            "Используется для position sizing (risk-adjusted) + stop-loss placement (SL = entry − k × ATR)."
+        ),
+        "interpretation": [
+            "Higher ATR = more volatile market (wider stops needed)",
+            "Lower ATR = quieter market (tighter stops viable)",
+            "SL multiplier (sl_atr_mult) defines risk distance: 1.5 = mid-tight",
+            "TP multiplier (tp_atr_mult) defines reward target: 3.0 = 2:1 RR vs SL",
+        ],
+        "params_in_strategies": {
+            "period": "14 (Wilder default)",
+            "sl_atr_mult": "1.5 (stop-loss = entry − 1.5 × ATR)",
+            "tp_atr_mult": "3.0 (take-profit = entry + 3.0 × ATR)",
+        },
+        "source": "Wilder, J.W. (1978) New Concepts in Technical Trading Systems",
+    },
+    {
+        "id": "adx",
+        "name": "ADX",
+        "full_name": "Average Directional Index",
+        "author": "J. Welles Wilder Jr. (1978)",
+        "category": "Trend strength (NOT directional)",
+        "formula": "ADX = Wilder-smooth(DX, period); DX = 100 × |+DI − −DI| / (+DI + −DI)",
+        "range": "0 — 100",
+        "description": (
+            "Measures trend STRENGTH без направления. Используется как filter: "
+            "trade only когда trend сильный. +DI и −DI определяют direction."
+        ),
+        "interpretation": [
+            "ADX < 20 — weak/no trend (avoid trend-following)",
+            "ADX 20–25 — emerging trend",
+            "ADX > 25 — strong trend (S13 EMA crossover threshold)",
+            "+DI > −DI — bullish direction",
+            "−DI > +DI — bearish direction",
+        ],
+        "params_in_strategies": {
+            "period": "14 (Wilder default)",
+            "threshold": "25 (S13 — only enter в strong trend)",
+        },
+        "source": "Wilder, J.W. (1978) New Concepts in Technical Trading Systems",
+    },
+]
+
+# Multipliers / params explanation
+MULTIPLIERS_DOC: list[dict[str, Any]] = [
+    {
+        "id": "sl_atr_mult",
+        "name": "SL multiplier (Stop Loss)",
+        "default": 1.5,
+        "description": (
+            "Position closed automatically когда price moves AGAINST entry на k × ATR(14) units. "
+            "Lower multiplier (1.0–1.5) = tight stops, frequent exits, smaller per-trade losses. "
+            "Higher (2.0–3.0) = wide stops, fewer stops out, larger losses but trend-friendly."
+        ),
+        "tradeoff": "Tight = many small losses. Wide = few large losses.",
+    },
+    {
+        "id": "tp_atr_mult",
+        "name": "TP multiplier (Take Profit)",
+        "default": 3.0,
+        "description": (
+            "Position closed automatically когда price moves IN FAVOR на k × ATR(14) units. "
+            "Combined с SL multiplier defines RR (Risk-Reward ratio): "
+            "TP=3.0 + SL=1.5 = RR 2:1. Higher TP = wait for bigger moves but lower hit rate."
+        ),
+        "tradeoff": "High RR (3+) = низкий win rate но bigger wins. Low RR (<1.5) = high win rate необходим.",
+    },
+    {
+        "id": "position_size_pct",
+        "name": "Position size %",
+        "default": 10.0,
+        "description": (
+            "Каждая сделка использует X% доступного balance. 10% = умеренный risk per trade. "
+            "Combined с Kelly phase ceiling (1%/2%/3%/5%) даёт final position size."
+        ),
+        "tradeoff": "Higher = больше profit per win, faster drawdown при losses",
+    },
+    {
+        "id": "commission_taker",
+        "name": "Commission rate (taker)",
+        "default": 0.001,
+        "description": (
+            "Bybit Spot taker fee = 0.1% (0.001). Применяется к каждому fill (entry + exit). "
+            "Учитывается при backtest для realistic PnL. На демо аккаунте = same fee schedule."
+        ),
+        "tradeoff": "Не настраивается оператором — exchange-defined",
+    },
+    {
+        "id": "slippage",
+        "name": "Slippage allowance",
+        "default": 0.0005,
+        "description": (
+            "Predicted price impact when executing market orders. 0.05% = optimistic для BTC/ETH/SOL. "
+            "Real Mainnet slippage может быть higher при low liquidity OR high volatility moments."
+        ),
+        "tradeoff": "Higher slippage assumption = более консервативная backtest results",
+    },
+    {
+        "id": "max_drawdown_pct",
+        "name": "Max drawdown halt",
+        "default": 50.0,
+        "description": (
+            "Backtest aborted если cumulative drawdown exceeds X%. Live bot имеет 3-tier circuit breakers "
+            "(L1 5% / L2 10% / L3 15% per ADR 0024) которые triggers HALT cascade на FSM."
+        ),
+        "tradeoff": "Backtest cap = sanity check; live halts = capital protection",
+    },
+]
+
+# Strategy descriptions (long-form, для UI Documentation tab).
+STRATEGIES_DOC: list[dict[str, Any]] = [
+    {
+        "id": "ema_crossover_s13",
+        "name": "EMA crossover (S13 baseline)",
+        "category": "Trend-following",
+        "tagline": "Classic 12/26 crossover с ADX filter и RSI guard.",
+        "entry_logic": (
+            "LONG entry когда EMA(12) crosses ABOVE EMA(26) AND ADX(14) > 25 (strong trend) "
+            "AND +DI > −DI (bullish direction) AND RSI(14) < 68 (not overbought)."
+        ),
+        "exit_logic": (
+            "EXIT когда EMA(12) crosses BELOW EMA(26) AND −DI > +DI (signal flip). "
+            "OR ATR-based stop hit (SL = entry − 1.5 × ATR; TP = entry + 3.0 × ATR)."
+        ),
+        "indicators_used": ["EMA 12/26", "ADX(14)", "+DI/−DI", "RSI(14)", "ATR(14)"],
+        "key_params": {
+            "ema_fast": 12,
+            "ema_slow": 26,
+            "adx_threshold": 25,
+            "rsi_overbought": 68,
+            "atr_sl_mult": 1.5,
+            "atr_tp_mult": 3.0,
+        },
+        "historical_results": (
+            "S13 BTCUSDT 1H 4.81y: 20 OOS trades, T1=-44.46, FAIL T1+T2+T4+T5. "
+            "Frequency structural limit ~1 trade per 5-10 days = T5 floor 100 unreachable."
+        ),
+        "best_for": "Strong directional markets с low noise. NOT recommended для choppy / ranging conditions.",
+        "academic_reference": "Lo & MacKinlay (1990); Hudson & Urquhart (2021)",
+    },
+    {
+        "id": "mean_reversion_s15",
+        "name": "Mean-reversion S15 original (RSI 30/70 + BB 2.0σ)",
+        "category": "Mean-reversion",
+        "tagline": "Strict mean-reversion — buy oversold extremes, exit overbought OR upper BB.",
+        "entry_logic": (
+            "LONG entry когда RSI(14) < 30 (extremely oversold) AND close < lower_BB(20, 2.0σ) "
+            "(price extended below volatility envelope). AND-gated trigger — оба условия required."
+        ),
+        "exit_logic": (
+            "EXIT когда RSI(14) > 70 (overbought) OR close > upper_BB(20, 2.0σ) (extended above envelope) "
+            "OR ATR-based stop hit. FLAT-only strategy — no inverse positions."
+        ),
+        "indicators_used": ["RSI(14)", "BB(20, 2.0σ)", "ATR(14)"],
+        "key_params": {
+            "rsi_period": 14,
+            "rsi_oversold": 30,
+            "rsi_overbought": 70,
+            "bb_period": 20,
+            "bb_k": 2.0,
+            "atr_sl_mult": 1.5,
+            "atr_tp_mult": 3.0,
+        },
+        "historical_results": (
+            "S15 multi-symbol (BTC+ETH+SOL) 1H: 108 OOS trades aggregate (T5 PASSED), но T6 -12.38, "
+            "MC p=0.998 random-equivalent. FAIL T6+MC+DSR. Strict thresholds = редкие но noisy signals."
+        ),
+        "best_for": "Sideways / mean-reverting markets с extreme overshoots. AVOID strong trends (will get crushed на trend continuation).",
+        "academic_reference": "Lo & MacKinlay (1990); De Bondt & Thaler (1985); Bollinger (2001)",
+    },
+    {
+        "id": "mean_reversion_s17_relaxed",
+        "name": "Mean-reversion S17 relaxed (RSI 35/65 + BB 1.5σ)",
+        "category": "Mean-reversion (relaxed thresholds)",
+        "tagline": "Relaxed mean-reversion — больше signals чем S15, регистрировал stat-sig signal.",
+        "entry_logic": (
+            "LONG entry когда RSI(14) < 35 AND close < lower_BB(20, 1.5σ). Relaxed thresholds vs S15 "
+            "дают ~1.34× signal frequency на BTC."
+        ),
+        "exit_logic": "EXIT когда RSI(14) > 65 OR close > upper_BB(20, 1.5σ) OR ATR-based stop hit.",
+        "indicators_used": ["RSI(14)", "BB(20, 1.5σ)", "ATR(14)"],
+        "key_params": {
+            "rsi_period": 14,
+            "rsi_oversold": 35,
+            "rsi_overbought": 65,
+            "bb_period": 20,
+            "bb_k": 1.5,
+            "atr_sl_mult": 1.5,
+            "atr_tp_mult": 3.0,
+        },
+        "historical_results": (
+            "S17 BTC 1H: 59 trades, T1=25.99 (small-sample artifact warning), DSR=1.0, "
+            "MC p=0.01 STAT-SIGNIFICANT, 5/6 + DSR + MC PASS. ТОЛЬКО T5 count fail (sample <100). "
+            "S22 BTC 4H: 62 trades, similar pattern (DSR 0.996, MC p=0.018) — strategy edge "
+            "REGIME-INDEPENDENT (works на 1H AND 4H equally). T5 100 структурно недостижим на BTC-only."
+        ),
+        "best_for": (
+            "Best observed strategy в проекте по DSR/MC (но T5 sample limit blocks MVP DONE). "
+            "Подходит для exploring whether ML filter мог бы capture regime-specific signal "
+            "(combined ~120 trades S17+S22 = small-sample ML viable per architecture)."
+        ),
+        "academic_reference": "Bailey & López de Prado (2014) — DSR; López de Prado AFML Ch.7 — purged CV",
+    },
+]
+
+# WFA + statistical methodology docs
+METHODOLOGY_DOC: list[dict[str, Any]] = [
+    {
+        "id": "wfa",
+        "name": "Walk-Forward Analysis (WFA)",
+        "purpose": "Robust backtest evaluation preventing overfit к single training window",
+        "params": "K=5 folds, train=2000 bars, test=500 bars, embargo=20 bars (per ADR 0014)",
+        "description": (
+            "Data разбит на K=5 sequential train+test windows. На каждом fold strategy runs "
+            "с train-window params на out-of-sample test window. Embargo gap prevents lookahead "
+            "bias из train к test. Aggregated trades across все folds дают OOS metrics."
+        ),
+        "source": "Pardo (1992) Design, Testing, and Optimization of Trading Systems",
+    },
+    {
+        "id": "dsr",
+        "name": "Deflated Sharpe Ratio (DSR)",
+        "purpose": "Multi-testing penalty — учитывает inflated Sharpe из repeated backtests",
+        "formula": "DSR = Φ((SR − E[max SR_n]) × √(n−1) / √(1 − γ_3·SR + (γ_4−1)/4·SR²))",
+        "description": (
+            "Bailey & López de Prado (2014) eq. 13. Adjusts Sharpe Ratio for selection bias. "
+            "Higher N_trials (testing more strategies) → harsher penalty. DSR > 0 = signal "
+            "credible after multi-testing correction."
+        ),
+        "source": "Bailey, D.H. & López de Prado, M. (2014) The Deflated Sharpe Ratio, JPM 40(5)",
+    },
+    {
+        "id": "mc",
+        "name": "MC Permutation Test (sign-flip)",
+        "purpose": "Statistical significance test — distinguishes signal от random noise",
+        "description": (
+            "Sign-flip permutation: randomly multiply trade returns by ±1, recompute Sharpe, "
+            "repeat 2000× с seed=42. P-value = fraction of permutations с Sharpe ≥ observed. "
+            "p < 0.05 = strategy returns significantly better than random."
+        ),
+        "interpretation": [
+            "p < 0.05 — statistically significant edge",
+            "p ≥ 0.05 — cannot reject random-equivalent hypothesis",
+            "p > 0.10 — strong evidence strategy is noise (warning trigger)",
+        ],
+        "source": "Halls-Moore (2015) Successful Algorithmic Trading; Bailey 2014",
+    },
+    {
+        "id": "acceptance_criteria",
+        "name": "Acceptance Criteria T1-T6",
+        "purpose": "Pre-registered gating thresholds — strategy must pass ALL conjointly для MVP DONE",
+        "criteria": [
+            {"id": "T1", "metric": "Sharpe OOS (annualized)", "threshold": "≥ 1.0", "note": "> 3.0 = почти наверняка overfit"},
+            {"id": "T2", "metric": "Sortino OOS", "threshold": "≥ 1.5", "note": "Trend-following с positive skew должен иметь Sortino > Sharpe"},
+            {"id": "T3", "metric": "Max Drawdown", "threshold": "< 25%", "note": "< 10% suspicious; trend-following BTC historically 15–30%"},
+            {"id": "T4", "metric": "Win rate × RR", "threshold": "≥45%@RR≥1.5 OR ≥35%@RR≥2.0", "note": "Trend-following 35–50%; > 65% suspicious"},
+            {"id": "T5", "metric": "Mean expectancy + t-stat", "threshold": "> 0 + t-stat > 2.0 + n ≥ 100", "note": "n ≥ 100 = sample-size minimum для t-test validity (Bailey 2014)"},
+            {"id": "T6", "metric": "OOS/IS Sharpe ratio", "threshold": "≥ 0.7", "note": "Primary overfit detector — degradation > 30% red flag"},
+        ],
+        "source": "wiki/project/architecture/acceptance-criteria.md (immutable per ADR pattern)",
+    },
+]
+
+
+def get_documentation() -> dict[str, Any]:
+    """Return structured documentation для UI Documentation tab."""
+    return {
+        "indicators": INDICATORS_DOC,
+        "multipliers": MULTIPLIERS_DOC,
+        "strategies": STRATEGIES_DOC,
+        "methodology": METHODOLOGY_DOC,
+    }
+
+
 @dataclass(frozen=True)
 class BacktestRequest:
     strategy_id: str

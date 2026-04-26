@@ -2,67 +2,184 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>AI Trading Bot — Dashboard (S25)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUANT::TERMINAL — AI Trading Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 <body>
-  <header>
-    <h1>AI Trading Bot — Backtest Dashboard</h1>
-    <p class="subtitle">S25 ADR 0039 · demo-only · localhost · BTCUSDT/ETHUSDT/SOLUSDT</p>
+
+  <!-- Background atmosphere layers -->
+  <div class="bg-noise"></div>
+  <div class="bg-scanlines"></div>
+  <div class="bg-glow"></div>
+
+  <!-- Header -->
+  <header class="terminal-header">
+    <div class="logo-block">
+      <div class="logo-mark">◉</div>
+      <div class="logo-text">
+        <h1>QUANT<span class="accent">::</span>TERMINAL</h1>
+        <p class="subtitle">AI TRADING BOT // BACKTEST INTERFACE // v0.1.0-alpha.26</p>
+      </div>
+    </div>
+    <div class="status-block">
+      <div class="status-row"><span class="dot dot-live"></span> SYSTEM READY</div>
+      <div class="status-row monospace muted">DEMO MODE · LOCALHOST · NO MAINNET</div>
+      <div class="time-block" id="clock">--:--:--</div>
+    </div>
   </header>
 
-  <section id="config">
-    <h2>1. Конфигурация бэктеста</h2>
-    <form id="backtest-form">
-      <div class="row">
-        <label>Стратегия:
-          <select name="strategy_id" id="strategy-select"></select>
-        </label>
-        <label>Символ:
-          <select name="symbol" id="symbol-select"></select>
-        </label>
-        <label>Таймфрейм:
-          <select name="interval" id="interval-select"></select>
-        </label>
-      </div>
-      <div class="row">
-        <label>Start (YYYY-MM-DD): <input type="date" name="start" value="2023-01-01"></label>
-        <label>End (YYYY-MM-DD): <input type="date" name="end" value="2026-04-26"></label>
-        <label><input type="checkbox" name="force"> Force re-run (skip cache)</label>
-      </div>
-      <button type="submit" id="run-btn">▶ Запустить backtest</button>
-    </form>
-    <div id="data-info" class="info-block"></div>
-  </section>
+  <!-- Tab navigation -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="backtest" role="tab">
+      <span class="tab-num">01</span>
+      <span class="tab-label">BACKTEST</span>
+    </button>
+    <button class="tab-btn" data-tab="documentation" role="tab">
+      <span class="tab-num">02</span>
+      <span class="tab-label">DOCUMENTATION</span>
+    </button>
+    <button class="tab-btn" data-tab="history" role="tab">
+      <span class="tab-num">03</span>
+      <span class="tab-label">HISTORY</span>
+    </button>
+  </nav>
 
-  <section id="results-section" style="display:none;">
-    <h2>2. Результаты</h2>
-    <div id="run-meta"></div>
-    <div id="warnings"></div>
-    <div id="verdict"></div>
-    <div id="metrics-tier1">
-      <h3>Acceptance criteria (T1-T6)</h3>
-      <table id="metrics-table"></table>
-    </div>
-    <div id="trade-stats">
-      <h3>Trade-level stats</h3>
-      <table id="trades-table"></table>
-    </div>
-    <div id="folds-section">
-      <h3>Per-fold Sharpe ratios (WFA K=5)</h3>
-      <table id="folds-table"></table>
-    </div>
-    <details>
-      <summary>Raw JSON</summary>
-      <pre id="raw-json"></pre>
-    </details>
-  </section>
+  <main>
 
-  <section id="history">
-    <h2>3. История запусков (cached)</h2>
-    <button id="refresh-history">↻ Обновить</button>
-    <table id="history-table"></table>
-  </section>
+    <!-- TAB 01: BACKTEST -->
+    <section class="tab-panel active" id="tab-backtest" role="tabpanel">
+
+      <div class="panel">
+        <div class="panel-label">&gt; CONFIGURE_BACKTEST</div>
+        <form id="backtest-form" class="config-grid">
+          <label class="field">
+            <span class="field-label">STRATEGY</span>
+            <select name="strategy_id" id="strategy-select"></select>
+          </label>
+          <label class="field">
+            <span class="field-label">SYMBOL</span>
+            <select name="symbol" id="symbol-select"></select>
+          </label>
+          <label class="field">
+            <span class="field-label">TIMEFRAME</span>
+            <select name="interval" id="interval-select"></select>
+          </label>
+          <label class="field">
+            <span class="field-label">START</span>
+            <input type="date" name="start" value="2023-01-01">
+          </label>
+          <label class="field">
+            <span class="field-label">END</span>
+            <input type="date" name="end" value="2026-04-26">
+          </label>
+          <label class="field field-checkbox">
+            <input type="checkbox" name="force"> <span>FORCE_RECOMPUTE</span>
+          </label>
+          <div class="field field-action">
+            <button type="submit" id="run-btn" class="btn-primary">
+              <span class="btn-text">▶ EXECUTE</span>
+              <span class="btn-meta">~30-60s</span>
+            </button>
+          </div>
+        </form>
+        <div id="data-info" class="data-info"></div>
+      </div>
+
+      <section id="results-section" style="display:none;">
+
+        <div class="panel verdict-panel" id="verdict-panel">
+          <div class="panel-label">&gt; VERDICT</div>
+          <div id="run-meta" class="run-meta"></div>
+          <div id="verdict" class="verdict-block"></div>
+        </div>
+
+        <div class="panel" id="warnings-panel" style="display:none;">
+          <div class="panel-label">&gt; RISK_WARNINGS</div>
+          <div id="warnings"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-label">&gt; ACCEPTANCE_CRITERIA · T1 — T6 + DSR + MC</div>
+          <table id="metrics-table" class="data-table"></table>
+        </div>
+
+        <div class="panel-grid">
+          <div class="panel">
+            <div class="panel-label">&gt; TRADE_STATS</div>
+            <table id="trades-table" class="data-table"></table>
+          </div>
+          <div class="panel">
+            <div class="panel-label">&gt; FOLD_BREAKDOWN · WFA K=5</div>
+            <table id="folds-table" class="data-table"></table>
+          </div>
+        </div>
+
+        <details class="raw-json-details">
+          <summary>&gt; RAW_JSON_RESPONSE</summary>
+          <pre id="raw-json"></pre>
+        </details>
+      </section>
+    </section>
+
+    <!-- TAB 02: DOCUMENTATION -->
+    <section class="tab-panel" id="tab-documentation" role="tabpanel">
+      <div class="docs-intro">
+        <p class="docs-eyebrow">DOCUMENTATION · INDICATORS · STRATEGIES · METHODOLOGY</p>
+        <h2 class="docs-title">Технический <em>лексикон</em> бота</h2>
+        <p class="docs-lead">
+          Полный reference по индикаторам, мультипликаторам и стратегиям. Каждая стратегия
+          использует комбинацию indicators (RSI, BB, ATR, EMA, ADX) с pre-registered параметрами
+          для honest backtest без data-snooping bias.
+        </p>
+      </div>
+
+      <div class="panel docs-section">
+        <div class="panel-label">&gt; INDICATORS · technical analysis primer</div>
+        <div id="docs-indicators" class="docs-cards"></div>
+      </div>
+
+      <div class="panel docs-section">
+        <div class="panel-label">&gt; MULTIPLIERS · risk &amp; sizing parameters</div>
+        <div id="docs-multipliers" class="docs-cards"></div>
+      </div>
+
+      <div class="panel docs-section">
+        <div class="panel-label">&gt; STRATEGIES · entry / exit logic + historical results</div>
+        <div id="docs-strategies" class="docs-strategies"></div>
+      </div>
+
+      <div class="panel docs-section">
+        <div class="panel-label">&gt; METHODOLOGY · WFA + DSR + MC + acceptance criteria</div>
+        <div id="docs-methodology" class="docs-cards"></div>
+      </div>
+    </section>
+
+    <!-- TAB 03: HISTORY -->
+    <section class="tab-panel" id="tab-history" role="tabpanel">
+      <div class="panel">
+        <div class="panel-label">
+          &gt; CACHED_RUNS
+          <button id="refresh-history" class="btn-secondary">↻ REFRESH</button>
+        </div>
+        <table id="history-table" class="data-table history-table"></table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="terminal-footer">
+    <div class="footer-left">
+      <span class="muted">QUANT::TERMINAL</span> · S26 ADR 0040 ·
+      <a href="https://github.com/KirasSsin/AI_Traiding_Bot" target="_blank">GitHub</a>
+    </div>
+    <div class="footer-right monospace muted">
+      v0.1 INFRASTRUCTURE COMPLETE · STRATEGY VALIDATION NEGATIVE · MVP NOT ACHIEVED
+    </div>
+  </footer>
 
   <script src="/static/dashboard.js"></script>
 </body>
