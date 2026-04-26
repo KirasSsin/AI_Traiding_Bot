@@ -23,20 +23,30 @@ sources:
 | Задача | Tool sequence |
 |--------|---------------|
 | Старт сессии / `/clear` | `sprint-orient` skill (project) |
-| Новый sprint scope с questions | `brainstorm-init` skill → `trader-expert` agent (если scope/strategy) |
+| Новый sprint scope с trading questions | `brainstorm-init` skill → `trader-expert` agent |
+| Новый sprint scope с non-trading questions (process/infra) | `superpowers:brainstorming` skill (Socratic refinement) |
 | Plan writing после brainstorm | `superpowers:writing-plans` skill |
-| Execute plan | `superpowers:subagent-driven-development` (code) OR `executing-plans` (controller) |
+| Execute plan (code-heavy) | `superpowers:subagent-driven-development` skill |
+| Execute plan (docs/wiki-heavy) | `superpowers:executing-plans` skill (controller-driven) |
+| TDD test + impl + commit | `superpowers:test-driven-development` skill |
+| **Bug encountered during execution** | `superpowers:systematic-debugging` skill (4-phase root cause) |
+| **Pre-completion verification** | `superpowers:verification-before-completion` skill (checklist) |
+| **Format reviewer brief** | `superpowers:requesting-code-review` skill |
+| **Process reviewer feedback systematically** | `superpowers:receiving-code-review` skill |
+| **Parallel reviewer dispatch** | `superpowers:dispatching-parallel-agents` skill (multiple Agent calls в одном message) |
 | Code change в `src/risk/`, `src/signalgen/`, `src/execution/`, `src/backtest/` | `trading-logic-reviewer` agent |
 | Math формулы (`indicators.py`, `dsr.py`, `mc_permutation.py`, `strategy_metrics.py`) | `quant-stats-reviewer` agent |
 | Storage / migrations / parquet / SQLite WAL | `data-integrity-reviewer` agent |
 | Cross-module refactor / concurrency / DI | `architecture-reviewer` agent |
 | Любой `*.py` (generic) | `python-reviewer` agent (после domain) |
+| Money / API keys / override / signing | `agent-skills:security-and-hardening` checklist |
+| **Parallel sandbox sprint / experiment** | `superpowers:using-git-worktrees` skill |
+| **Создать new project skill (`.claude/skills/`)** | `superpowers:writing-skills` skill (methodology) |
 | Sprint complete | `sprint-finish` skill → `superpowers:finishing-a-development-branch` |
 | После src/ change | `wiki-update` skill |
 | Поиск по прошлым sessions | `mcp__plugin_claude-mem_mcp-search__smart_search` MCP |
 | Chapter mark в session | `mcp__ccd_session__mark_chapter` MCP |
 | Out-of-scope task chip | `mcp__ccd_session__spawn_task` MCP |
-| TDD test + impl + commit | `superpowers:test-driven-development` skill |
 | Cleanup CLAUDE.md / agent prompts (one-time) | `caveman:compress` skill |
 
 ---
@@ -127,69 +137,93 @@ Workflow templates auto-trigger по description match. Заменяют hardcod
 
 ---
 
-## 3. Superpowers Plugin Skills (13) — `~/.claude/plugins/cache/claude-plugins-official/superpowers/`
+## 3. Superpowers Plugin Skills (13 + meta) — `~/.claude/plugins/cache/claude-plugins-official/superpowers/`
 
-L3 process layer. Brainstorm → plans → execute → ship.
+L3 process layer. Brainstorm → plans → execute → review → ship.
 
-### 3.1 brainstorming
+**Status legend:** ✅ EXISTING (используется до S29), 🆕 NEW (intergrated в S29).
+
+### 3.1 brainstorming ✅
 - **Назначение:** Refine vague ideas в fully formed designs через clarifying questions one-at-a-time → propose 2-3 approaches → present design → user approval → spec doc.
 - **Когда:** Vague feature/project request. Перед writing-plans.
+- **Where invoked в kit flow:** **Phase 2** (non-trading scope — process design, infrastructure). Trading scope использует `brainstorm-init` → `trader-expert` instead.
 - **HARD-GATE:** No code/scaffolding до user approves design.
 
-### 3.2 writing-plans
+### 3.2 writing-plans ✅
 - **Назначение:** Comprehensive implementation plans assuming engineer has zero context. Bite-sized tasks (2-5 min steps), exact file paths, exact commands, complete code в каждом step.
 - **Когда:** PHASE 3 plan writing после brainstorm verdicts locked.
-- **HARD-GATE:** No "TBD"/"TODO"/"implement later" placeholders. No "similar to Task N".
+- **Where invoked в kit flow:** **Phase 3** PRIMARY. HARD-GATE — hook `sprint-flow-check.sh` блокирует push без plan file.
 - **Output:** `wiki/project/plans/<YYYY-MM-DD>-sprint-N-<slug>.md`
 
-### 3.3 subagent-driven-development
+### 3.3 subagent-driven-development ✅
 - **Назначение:** Execute plan dispatching fresh subagent per task с two-stage review (spec compliance → code quality). Recommended для code-heavy sprints.
 - **Когда:** PHASE 4 execute. Plan exists, mostly independent tasks.
+- **Where invoked в kit flow:** **Phase 4** PRIMARY для code-heavy sprints.
 - **Pattern:** Implementer subagent → spec reviewer → code quality reviewer → next task.
 
-### 3.4 executing-plans
+### 3.4 executing-plans ✅
 - **Назначение:** Inline execution of plan tasks (controller-driven). Alternative к subagent-driven для docs-heavy sprints.
 - **Когда:** PHASE 4 если subagents excessive overhead.
+- **Where invoked в kit flow:** **Phase 4** ALTERNATIVE для docs/wiki sprints (S28 + S29 использовали этот path).
 
-### 3.5 finishing-a-development-branch
+### 3.5 finishing-a-development-branch ✅
 - **Назначение:** Verify tests → present 4 options (merge local / push+PR / keep / discard) → execute choice → cleanup worktree.
 - **Когда:** PHASE 8 ship. Called by `sprint-finish` skill.
+- **Where invoked в kit flow:** **Phase 8** delegated by project `sprint-finish` skill после HARD-GATEs.
 
-### 3.6 systematic-debugging
-- **Назначение:** Reproduce → localize → fix → guard. Methodical bug isolation.
+### 3.6 systematic-debugging 🆕
+- **Назначение:** 4-phase root cause process — Reproduce → Localize → Fix → Guard. Methodical bug isolation, не ad-hoc guessing.
 - **Когда:** Bug found during execution.
+- **Where invoked в kit flow:** **Phase 4 sub-flow** — STOP current task → systematic-debugging → resume original task. Replaces ad-hoc fix attempts.
+- **Pattern:** minimal failing test (Reproduce) → narrow к function/line (Localize) → minimal change на root cause (Fix) → regression test (Guard).
 
-### 3.7 test-driven-development
+### 3.7 test-driven-development ✅
 - **Назначение:** Failing test first → minimal implementation → verify → commit. RED → GREEN → COMMIT.
 - **Когда:** Каждая task в PHASE 4 с code change.
+- **Where invoked в kit flow:** **Phase 4** — каждая code task. Inherited by subagent-driven-development для individual implementer tasks.
 
-### 3.8 verification-before-completion
-- **Назначение:** Pre-completion verification checklist (tests / linter / runtime check).
-- **Когда:** Каждая task done перед mark complete.
+### 3.8 verification-before-completion 🆕
+- **Назначение:** Pre-completion verification checklist (tests / linter / runtime check / edge cases / docs updated).
+- **Когда:** Каждая task done перед mark complete + PHASE 5 sprint-level verify.
+- **Where invoked в kit flow:** **Phase 5** PRIMARY checklist. Extended beyond pytest/mypy: ruff lint + runtime smoke + edge cases + doc updates.
 
-### 3.9 dispatching-parallel-agents
+### 3.9 dispatching-parallel-agents 🆕
 - **Назначение:** Multiple Agent calls в одном message для independent work parallel.
 - **Когда:** 2+ reviewers / 2+ research questions / parallel implementer subagents (rare — обычно sequential).
+- **Where invoked в kit flow:** **Phase 4** (parallel research) + **Phase 6** (parallel reviewer dispatch — trading-logic + quant-stats + python в одном message).
+- **Pattern:**
+  ```python
+  # Single message с multiple Agent calls
+  Agent(subagent_type="trading-logic-reviewer", prompt=...)
+  Agent(subagent_type="quant-stats-reviewer", prompt=...)
+  ```
 
-### 3.10 receiving-code-review
-- **Назначение:** Process code review feedback systematically.
+### 3.10 receiving-code-review 🆕
+- **Назначение:** Process code review feedback systematically — categorize BLOCKER/CONCERN/SUGGESTION, address per category.
 - **Когда:** После reviewer returned blockers/concerns.
+- **Where invoked в kit flow:** **Phase 6** POST-REVIEW. Replaces ad-hoc feedback processing.
+- **Pattern:** Categorize → BLOCKER (must fix перед merge) → CONCERN (decide fix-now vs defer) → SUGGESTION (consider future).
 
-### 3.11 requesting-code-review
-- **Назначение:** Format request к reviewer с context + diff + specific concerns.
+### 3.11 requesting-code-review 🆕
+- **Назначение:** Format request к reviewer с context + diff + specific concerns + acceptance criteria.
 - **Когда:** Перед dispatch reviewer agent.
+- **Where invoked в kit flow:** **Phase 6** PRE-REVIEW. Standardize reviewer brief format.
+- **Brief structure:** Sprint context + ADR refs + git diff/file refs + specific concerns + acceptance criteria.
 
-### 3.12 using-git-worktrees
-- **Назначение:** Set up isolated worktree workspace перед sprint start.
-- **Когда:** Если parallel sprints / sandbox experiments needed. NOT default для нашего sequential workflow.
+### 3.12 using-git-worktrees 🆕
+- **Назначение:** Set up isolated worktree workspace для parallel sprint OR sandbox experiments.
+- **Когда:** (1) Re-run audit/experiment без disturb текущей branch, (2) parallel sprint (rare для single-developer).
+- **Where invoked в kit flow:** **Cross-phase** OPTIONAL. Sandbox audits (S27 audit re-run примером был — мог использоваться worktree). NOT default — sequential workflow обычно работает direct на feature/sprint-N branch.
 
-### 3.13 using-superpowers
+### 3.13 using-superpowers ✅ (meta)
 - **Назначение:** Meta-skill — discovers и invokes other superpowers skills based on task type.
 - **Когда:** Auto-loaded sessions start.
+- **Where invoked в kit flow:** **Meta** auto-load. NOT manually invoked.
 
-### 3.14 writing-skills
-- **Назначение:** Create new skills following progressive disclosure pattern.
+### 3.14 writing-skills 🆕
+- **Назначение:** Create new skills following progressive disclosure pattern (frontmatter + when to use + steps + anti-patterns).
 - **Когда:** Adding new project skill к `.claude/skills/`.
+- **Where invoked в kit flow:** **Cross-phase** OPTIONAL. Когда existing skill не подходит и нужен new workflow template (S28 sprint-orient/sprint-finish/wiki-update/brainstorm-init были созданы ad-hoc — повторное создание should follow эту methodology).
 
 ---
 
@@ -397,11 +431,50 @@ Mechanical enforcement, не optional reminders.
 - ❌ MCP computer-use для browser — использовать Claude_in_Chrome
 - ❌ Read large file без offset/limit — 25k token overflow
 
+## 12. Skills × Phase integration map (S29)
+
+Полная карта 26 skills × kit flow phases. Source of truth для "какой skill в какой фазе":
+
+| Skill | Type | Phase | Trigger | Status |
+|-------|------|-------|---------|--------|
+| `sprint-orient` | project | 1 | Session start / `/clear` | ✅ |
+| `brainstorm-init` | project | 2 | Trading scope questions | ✅ |
+| `superpowers:brainstorming` | superpowers | 2 | Non-trading scope (process/infra) | 🆕 S29 |
+| `superpowers:writing-plans` | superpowers | 3 | Plan creation (HARD-GATE hook) | ✅ |
+| `agent-skills:planning-and-task-breakdown` | agent-skills | 3 | DEPTH ref task decomposition | ✅ |
+| `superpowers:subagent-driven-development` | superpowers | 4 | Code-heavy execute | ✅ |
+| `superpowers:executing-plans` | superpowers | 4 | Docs-heavy execute | ✅ |
+| `superpowers:test-driven-development` | superpowers | 4 | Каждая code task | ✅ |
+| `superpowers:systematic-debugging` | superpowers | 4 sub-flow | Bug encountered | 🆕 S29 |
+| `superpowers:dispatching-parallel-agents` | superpowers | 4+6 | Parallel reviewers/research | 🆕 S29 |
+| `agent-skills:test-driven-development` | agent-skills | 4 | DEPTH ref TDD anti-patterns | ✅ |
+| `agent-skills:context-engineering` | agent-skills | 4 | Subagent briefs > 200 слов | ✅ |
+| `agent-skills:incremental-implementation` | agent-skills | 4 | DEPTH ref slices | ✅ |
+| `superpowers:verification-before-completion` | superpowers | 5 | Pre-completion checklist | 🆕 S29 |
+| `superpowers:requesting-code-review` | superpowers | 6 | Format reviewer brief | 🆕 S29 |
+| `superpowers:receiving-code-review` | superpowers | 6 | Process reviewer feedback | 🆕 S29 |
+| `agent-skills:code-review-and-quality` | agent-skills | 6 | DEPTH ref five-axis review | ✅ |
+| `agent-skills:security-and-hardening` | agent-skills | 6 | Money/API/override changes | ✅ |
+| `wiki-update` | project | 7 | After src/ change | ✅ |
+| `sprint-finish` | project | 8 | Sprint complete (HARD-GATEs) | ✅ |
+| `superpowers:finishing-a-development-branch` | superpowers | 8 | Delegated by sprint-finish | ✅ |
+| `agent-skills:git-workflow-and-versioning` | agent-skills | 8 | DEPTH ref atomic commits | ✅ |
+| `agent-skills:shipping-and-launch` | agent-skills | 8 | DEPTH ref pre-launch checklist | ✅ |
+| `superpowers:using-git-worktrees` | superpowers | cross | Sandbox/parallel sprint | 🆕 S29 |
+| `superpowers:writing-skills` | superpowers | cross | New project skill creation | 🆕 S29 |
+| `superpowers:using-superpowers` | superpowers | meta | Session start auto-load | ✅ |
+
+**Total integration: 26 skills (13 superpowers + 5 project + 8 agent-skills).**
+
+S29 added 7 NEW superpowers skills к existing 6 = full 13 superpowers integrated.
+
 ## Связанные документы
 
 - [[sprint-flow-ru]] — обязательный sprint процесс (9 фаз)
 - [[../decisions/0017-review-agent-harness]] — review agents matrix policy
-- [[../decisions/0041-sprint-28-process-enforcement]] — этот процесс ADR
+- [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
+- [[../decisions/0042-sprint-29-superpowers-integration]] — full superpowers integration ADR (S29)
 - [[methodology-rejected]] — rejected packages + cleanup
 - `llm-wiki/CLAUDE.md` — Skills hierarchy & integration
 - `~/.claude/CLAUDE.md` — global rules + token economy
+- https://github.com/obra/superpowers — superpowers skills source repo

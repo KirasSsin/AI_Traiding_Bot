@@ -26,8 +26,8 @@ tag: v0.1.0-alpha.28
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
 | T1 sprint-flow-ru.md (explicit skills per phase) | done | (pending commit) | 7 superpowers skills added + Skills × Phase integration map (26 skills total) |
-| T2 tooling-inventory-ru.md (integration map) | in_progress | — | "Where invoked" column + decision matrix |
-| T3 CLAUDE.md (skill names per phase row) | pending | — | Phase table update |
+| T2 tooling-inventory-ru.md (integration map) | done | (pending commit) | "Where invoked" column added к 13 superpowers + new "Skills × Phase integration map" section (26 skills) + decision matrix expanded |
+| T3 CLAUDE.md (skill names per phase row) | in_progress | — | Phase table update |
 | T4 ADR 0042 + sprint-29 page + wiki sync | pending | — | Wiki diffs |
 
 ## S28 SHIPPED ✅
