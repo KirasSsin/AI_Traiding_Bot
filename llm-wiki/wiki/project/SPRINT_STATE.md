@@ -20,22 +20,22 @@ Branch: `feature/sprint-32-kit-phase-0-improvements`. Plan committed: `plans/202
 | 2 Brainstorm | skipped (operator-specified deliverables per КУ analysis) | inline analysis chapter "Kit improvement plan — КУ analysis" |
 | 3 Plan | done | `plans/2026-04-26-sprint-32-kit-phase-0-improvements.md` |
 | 4 Execute | in_progress | T1-T6 controller-driven (docs sprint) |
-| 5 Verify | pending | pytest 762 preserved by construction (no code) |
+| 5 Verify | done | 773 passed (was reported 762 S31 — count drift +11 actual) / mypy 1 error (`__main__.py:636 bars_per_year_map redef`) / canonical counts 16/30/74/45 ✓. **3 pytest failures pre-exist on main** (test_replay_long_only / test_replay_next_open) — NOT S32 regression. **Carry-over к S33**: fix replay tests + mypy redef. |
 | 6 Review | will skip (process/wiki only, no src/ touched) | — |
 | 7 Sync | pending | log.md sprint-end + index/current-state in T6 |
-| 8 Ship | pending | PR + tag v0.1.0-alpha.32 |
+| 8 Ship | in_progress | PR + tag v0.1.0-alpha.32 (agent mtimes bumped, push next) |
 | 9 Close | pending | SPRINT_STATE → between-sprints |
 
 ### Phase 4 — task progress (S32)
 
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
-| T1 SPRINT_STATE.md P0 fix | in_progress | (this edit) | Stale "Текущий статус"/"Последний спринт"/"Следующее действие" → S32 reality + correct counts |
-| T2 current-state.md P0 fix | pending | — | post-S25 → post-S31 + 604→762 + sources/tags update |
-| T3 sprint-flow-ru.md +5 skill mappings | pending | — | idea-refine / spec-driven / source-driven / code-simplification / documentation-and-adrs |
-| T4 cascade smart-explore STEP 2.5 | pending | — | sprint-flow-ru.md + kit-overview-ru.md mirror |
-| T5 Phase 9 consolidate-memory step | pending | — | sprint-flow-ru.md Phase 9 procedure +Step 5 |
-| T6 ADR 0045 + sprint-32 page + index/counts | pending | — | 44→45 ADRs / 31→32 sprints + sprint history row |
+| T1 SPRINT_STATE.md P0 fix | done | c095bd3 | Stale sections → S32 reality + correct counts (30→44 ADRs / 17→31 sprint pages) + Phase tracking S32 |
+| T2 current-state.md P0 fix | done | 2ec9824 | post-S25 → post-S31 + 604→762 + sources/tags/TL;DR update + S25 TL;DR preserved as Previous |
+| T3 sprint-flow-ru.md +5 skill mappings | done | e93e61c | idea-refine (Phase 2 PRE) + spec-driven (Phase 2/3) + source-driven (Phase 4) + code-simplification (Phase 6 OPT) + documentation-and-adrs (Phase 8); Skills×Phase map 26→32 |
+| T4 cascade smart-explore STEP 2.5 | done | f1f60a7 | sprint-flow-ru.md + kit-overview-ru.md mirror + decision matrix +6 entries |
+| T5 Phase 9 consolidate-memory step | done | 660630e | sprint-flow-ru.md Phase 9 procedure +Step 5 + HARD-GATE (every 5 sprints OR >30 obs) |
+| T6 ADR 0045 + sprint-32 page + index/counts | done | 397a655 | 44→45 ADRs / 31→32 sprints + sprint history row + S32 index entry + skills mapped 26→32 |
 | Ship | pending | — | tag alpha.32 |
 
 ## S31 SHIPPED ✅
