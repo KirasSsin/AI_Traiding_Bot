@@ -1,7 +1,7 @@
 ---
-title: Current State — post-S14 inventory + canonical counts (honest close)
+title: Current State — post-S15 inventory + canonical counts (v0.2 retry attempt #1 FAIL)
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-14, honest-close, v0.1-milestone]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-15, v0.2-retry, mean-reversion, multi-symbol, verdict-fail-with-progress]
 created: 2026-04-19
 updated: 2026-04-26
 status: stable
@@ -9,11 +9,13 @@ sources:
   - src/
   - project/sprints/sprint-14-honest-close.md
   - project/decisions/0029-sprint-14-honest-close.md
+  - project/sprints/sprint-15-mean-reversion-multi-symbol.md
+  - project/decisions/0030-sprint-15-mean-reversion-multi-symbol.md
 ---
 
-# Current State (post-S14, 2026-04-26) — v0.1 honest close
+# Current State (post-S15, 2026-04-26) — v0.2 retry attempt #1 FAIL (with progress)
 
-**TL;DR:** Live state v0.1 on tag `v0.1.0-alpha.14` (**honest close marker**, NOT MVP DONE). 16 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14). **Final v0.1 status: infrastructure COMPLETE, strategy validation NEGATIVE.** EMA(12)×EMA(26) + ADX(14) + RSI(14) + ATR(14) на 1H BTCUSDT = no measurable edge across 2 WFA measurements (2.2y prior + 4.81y S13 ship). Trader Q1 EXPAND (S14 PHASE 2): T5 ≥100 trades structurally unreachable (5x signal frequency gap, tuning realistic 2-3x). Per Option B chosen by user: skip theatrical Option A re-measurement, ship honest close. **Future direction (operator-driven, no commitment):** strategy revision / multi-symbol / different timeframe / project pause. All S12+S13 carry-overs preserved (10+ items).
+**TL;DR:** Live state on tag `v0.1.0-alpha.15` (**v0.2 retry attempt #1 — FAIL but T5 reached**). 17 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15). **S15 verdict FAIL** (4/6 criteria: T5+T6+MC+DSR), **но T5 ≥100 trades floor REACHED for first time** (108 trades aggregate via 3-symbol Bybit Spot BTCUSDT+ETHUSDT+SOLUSDT mean-reversion на 1H). ADR 0030 multi-symbol aggregation hypothesis VALIDATED — strategy still has no measurable edge (MC p-value 0.998 = random-equivalent), но different failure mode vs S13 = useful negative result. CrossTrialLog implementation closed S14 Q2 carry-over (DSR cross-trial sigma_SR=22.68 between S13 anchor -44.46 + S15 -12.38). **Operator decision pending S16:** B' broader thresholds / C 15M timeframe / D honest close v0.2 / E ML defer.
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -25,9 +27,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) + S12 (fill-recorder-adapter) + S10 + S9 + C7 + S8c — **S14 added zero components** (docs-only) |
-| ADRs | **29** | `wiki/project/decisions/*.md` (0001-0029) | S14 (ADR 0029 — honest close) |
-| Sprint pages | **16** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-14 + sprint-08a + sprint-08b + sprint-08c) | S14 (sprint-14-honest-close) |
+| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) — **S15 added zero components** (new modules awaited future page sweep) |
+| ADRs | **30** | `wiki/project/decisions/*.md` (0001-0030) | S15 (ADR 0030 — mean-reversion + multi-symbol) |
+| Sprint pages | **17** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-15 + sprint-08a/b/c) | S15 (sprint-15-mean-reversion-multi-symbol) |
 
 **Verify counts live (CI-safe):**
 
@@ -97,7 +99,8 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | S11 | 0026 | v0.1.0-alpha.11 | 2026-04-25 | Operator-readiness + pre-flight gap closure (test_risk_flow.py + `_cmd_run`/`_cmd_reconcile_only`/`_cmd_wfa`/`_cmd_monitor` CLI + halt priority matrix + log-grep-templates + pre-flight checklist) |
 | S12 | 0027 | v0.1.0-alpha.12 | 2026-04-25 | Live demo validation 24-72h + production wiring (FillRecorderAdapter closes `_NoopFillRecorder` stub + `_load_ohlcv` Parquet shim + live-demo-validation + halt-response-protocol runbooks) |
 | S13 | 0028 | v0.1.0-alpha.13 | 2026-04-26 | Backfill 5y BTCUSDT 1H Bybit Spot (42098 bars, 4.81y) + WFA T1-T6 measurement + DSR(N=1) + MC. Verdict: FAIL (4/6 criteria — 20 OOS trades, sample too small). trade_extractor + strategy_metrics components. FSM/counts unchanged. |
-| **S14** | **0029** | **v0.1.0-alpha.14** | **2026-04-26** | **Honest close.** Trader Q1 EXPAND: T5 unreachable (5x signal frequency gap). v0.1 = infrastructure complete, strategy validation negative. Future direction (operator-driven, no commitment): revision / multi-symbol / timeframe / pause. Documentation only. |
+| S14 | 0029 | v0.1.0-alpha.14 | 2026-04-26 | Honest close. Trader Q1 EXPAND: T5 unreachable (5x signal frequency gap). v0.1 = infrastructure complete, strategy validation negative. Future direction (operator-driven, no commitment): revision / multi-symbol / timeframe / pause. Documentation only. |
+| **S15** | **0030** | **v0.1.0-alpha.15** | **2026-04-26** | **v0.2 retry attempt #1 — FAIL but T5 reached.** Mean-reversion (RSI<30 AND close<lower_BB(20, 2σ)) AND-gated × multi-symbol BTC+ETH+SOL на 1H Bybit Spot. T0 CrossTrialLog (closes S14 Q2). T1 load_recent symbol filter (Kelly contamination fix). T2 BB indicator + T3 MeanReversionRsiBBStrategy (NEW). T5 Multi-symbol --symbols CLI. T6 measurement: **108 trades aggregate (T5 PASSED), но T6 mean -12.38 / MC p 0.998 / DSR 0 — FAIL**. Different failure mode vs S13 = honest negative. |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 

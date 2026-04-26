@@ -965,3 +965,49 @@ Operator decides if/when. No S15 commitment.
 ### Roadmap
 
 **v0.1 closed at S14 honest.** Project state: between-sprints с post-MVP-honest-close marker.
+
+## [2026-04-26] sprint-end | Sprint 15 — Mean-reversion + multi-symbol (v0.2 retry attempt #1)
+
+**Verdict: FAIL** (4/6: T5 t_stat 1.04<2.0, T6 mean -12.38<0.7, MC p 0.998>0.05, DSR 0.0).
+**Progress:** T5 ≥100 trades floor REACHED first time (108 aggregate trades). ADR 0030 multi-symbol aggregation hypothesis VALIDATED. Strategy still no edge — different failure mode vs S13.
+
+**Per-symbol (3 Bybit Spot 1H):**
+- BTCUSDT: 44 trades, sharpe ratio mean +1.75, MC p 0.197 (best performer)
+- ETHUSDT: 29 trades, sharpe ratio mean -39.35, MC p 0.998 (one catastrophic fold drives mean)
+- SOLUSDT: 35 trades, sharpe ratio mean +0.45, MC p 0.65
+
+**Aggregate metrics:** T1 9.32 PASS / T2 29.55 PASS / T3 0.053 PASS / T4 win 37%/RR 2.27 PASS / T5 108 PASS-on-count BUT t_stat 1.04 FAIL / T6 -12.38 FAIL / MC 0.998 FAIL / DSR 0 FAIL (n_trials=2, sigma_SR=22.68 cross-trial — closes S14 Q2).
+
+### Deliverables (8 TDD tasks)
+- T0 CrossTrialLog (Bailey eq. 13) — closes S14 Q2 REVISE carry-over (commit fc8c761)
+- T1 TradeHistory.load_recent symbol filter (HIGH BLOCKER per architecture-reviewer Q2 — Kelly contamination fix) — 2d3ad70
+- T2 Bollinger Bands indicator (NEW, 9 unit tests) — d29e004
+- T3 MeanReversionRsiBBStrategy (NEW, 11 unit tests, drop-in Strategy protocol) — 0b43c10
+- T4 _cmd_run wires MeanReversion + symbol→RiskManager (live runtime kept single-symbol — multi-symbol fan-out deferred к v0.2 production wave) — bf9031a
+- T5 Multi-symbol --symbols CLI for backfill+wfa, DSR cross-trial wiring, per-symbol JSON output — bf9031a
+- T6 tz-aware parquet filter fix + indicators.py mean_reversion branch + measurement run — ccfbf71
+- T7 wiki sync (this commit)
+- T8 PHASE 8 ship — pending
+
+### Tests / quality
+- pytest unit: 712 → **732 passed**, 24 skipped (+20: 7 cross_trial_log + 9 BB + 11 MeanRev + 3 trade_history symbol filter + 4 CLI symbols)
+- mypy --strict src/: clean (72 src files)
+- Q7-S12 zero-migration: preserved
+
+### S15 brainstorm key decisions (PHASE 2 — pre-s15-backlog.md)
+- 4 questions delegated к trader-expert (all 4) + architecture-reviewer (Q2/Q3/Q4)
+- ESC-1 RESOLVED Option B (Q1 mean-reversion + Q2 multi-symbol on 1H) — both reviewers converged
+- ESC-2 RESOLVED pre-registered RSI 30/70 + BB(20, 2σ) AND-gated (binding, no post-result tuning)
+- Q3 (15M timeframe) DEFERRED к S16+ — 2 hard blockers identified (interval_map, heal_max_age 1H coupling = production safety bug at 15M)
+- Q4 (ML XGBoost) DEFERRED к v0.3+ — both reviewers concur (root cause = no edge, not signal noise)
+- Architecture-reviewer found NEW HIGH BLOCKER: TradeHistory.load_recent missing symbol filter → multi-symbol Kelly contamination → fixed in T1
+
+### Operator decision pending S16
+- (B') Broader RSI thresholds + variance reduction (more trades = more N_trials = harsher DSR penalty)
+- (C) Q3 15M timeframe — 2 sprints (interval_map + heal_max_age fixes blockers)
+- (D) Honest close v0.2 — accept 2 strategy attempts both failed, freeze
+- (E) Q4 ML XGBoost — viable only if simpler strategy showed partial signal (S15 didn't)
+
+### Roadmap
+
+**v0.2 retry attempt #1 SHIPPED.** Tag v0.1.0-alpha.15. Awaiting operator decision на S16 direction.
