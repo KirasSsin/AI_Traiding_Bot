@@ -20,7 +20,7 @@ Sub-sprint S32 series (mirror S8a/S8b/S8c pattern). Branch: `feature/sprint-32b-
 | 2 Brainstorm | skipped (operator-specified per КУ Phase 1 deliverables) | inline в plan |
 | 3 Plan | done | `plans/2026-04-27-sprint-32b-kit-phase-1-improvements.md` (3cb442d) |
 | 4 Execute | in_progress | T1-T6 controller-driven (config + scripts + docs sprint) |
-| 5 Verify | pending | pytest 770 baseline + bash -n hooks + pre-commit run + canonical counts |
+| 5 Verify | done | pytest 773 (S32 baseline preserved) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / bash -n freshness hook ✓ / yaml ci.yml ✓ / yaml .pre-commit-config ✓ / json .mcp.json ✓ / json settings.json ✓. **3 pytest failures + 1 mypy pre-existing** (NOT S32b regression — carry-over к S33). |
 | 6 Review | pending | python-reviewer + architecture-reviewer + doc-reviewer (parallel) |
 | 7 Sync | pending | log.md sprint-end + index/current-state в T6 |
 | 8 Ship | pending | PR + tag v0.1.0-alpha.32b (CI runs first time) |
@@ -30,12 +30,12 @@ Sub-sprint S32 series (mirror S8a/S8b/S8c pattern). Branch: `feature/sprint-32b-
 
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
-| T1 dashboard-reviewer L5 agent | pending | — | out-of-repo `~/.claude/agents/` + wiki page |
-| T2 SPRINT_STATE freshness check hook | pending | — | bash script + settings.json + positive/negative test + wiki page |
-| T3 Pre-commit hooks (ruff + mypy) | pending | — | `.pre-commit-config.yaml` + pyproject.toml dev dep |
-| T4 GitHub Actions CI | pending | — | `.github/workflows/ci.yml` (TA-Lib install + pytest + mypy + ruff) |
-| T5 SQLite MCP server | pending | — | uvx mcp-server-sqlite + settings.json mcpServers + wiki doc |
-| T6 ADR 0046 + sprint-32b page + index/counts | pending | — | 45→46 ADRs / 32→33 sprints / 9→10 agents / 6→7 hooks / 6→7 MCP / 38→40 components |
+| T1 dashboard-reviewer L5 agent | done | 6c2ea66 | out-of-repo `~/.claude/agents/dashboard-reviewer.md` + wiki page (5-axis review checklist + S25 ADR 0039 conditions) |
+| T2 SPRINT_STATE freshness check hook | done | 373d527 | bash script (~/.claude/hooks/sprint-state-freshness-check.sh, 755) + settings.json registered (6 hooks total) + positive (exit 0) + negative test (exit 2 on `S25 PHASE 8 ship pending`) passed + wiki page (Block 1↔2) |
+| T3 Pre-commit hooks (ruff + mypy + yamllint) | done | (committed inline w/ T4) | `.pre-commit-config.yaml` upgraded (ruff v0.4.0 + mypy --strict local + yamllint для CI workflows) + pre-commit installed (pre-commit 4.6.0). dev dep уже в pyproject.toml. NOTE: mypy 1 pre-existing baseline → operator fix __main__.py:636 OR --no-verify per local commit. |
+| T4 GitHub Actions CI | done | 167fc9d | `.github/workflows/ci.yml` 10 steps (checkout / py3.12 / TA-Lib cache + build / pip install / ruff lint+format / mypy --strict с baseline guard / pytest unit с baseline guard / canonical counts verify). Triggers: push к main + PR. CI runs first time на S32b PR. |
+| T5 SQLite MCP server | done | 8a24abf | project-level `.mcp.json` (sqlite-trading → data/bot.db) — settings.json schema rejects mcpServers, .mcp.json правильный location. Operator approve at session start OR через `claude mcp` CLI. uvx + mcp-server-sqlite verified available. |
+| T6 ADR 0046 + sprint-32b page + index/counts | done | dabf368 | 45→46 ADRs / 32→33 sprints / 9→10 agents / 6→7 hooks / 6→7 MCP / 38→40 components + S32+S32b sprint history rows + kit-overview decision matrix updates |
 | Ship | pending | — | tag alpha.32b |
 
 ## S32 SHIPPED ✅

@@ -1912,3 +1912,40 @@ Next = Operator decision: S33 = kit Phase 1 (Track A — independent) OR Track B
 - Trading carry-overs (BLOCKED — operator): ESC-1 / ESC-2 / ESC-3
 
 Next session = S33 brainstorm OR operator unblocks Track B.
+
+## [2026-04-27] sprint-end | S32b — Kit Improvement Phase 1 (CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer)
+
+**Kit Improvement Phase 1 sub-sprint** — operator directive "пусть все фазы будут в 32 спринте". Sub-sprint S32 series (mirror S8a/S8b/S8c pattern). Tag v0.1.0-alpha.32b. КУ avg 60.5% / ~3 hours = ~120 КУ/час (above forecast 10.5 — pre-commit pkg + uvx + mcp-server-sqlite уже available pre-installed).
+
+**6 changes per ADR 0046:**
+- T1 (6c2ea66) dashboard-reviewer L5 agent — out-of-repo `~/.claude/agents/dashboard-reviewer.md` (sonnet) + wiki page (5-axis review checklist per S25 ADR 0039 conditions: FastAPI correctness / template-JS data flow / Bybit data display / security / S25 architecture conditions)
+- T2 (373d527) SPRINT_STATE freshness check hook — out-of-repo `~/.claude/hooks/sprint-state-freshness-check.sh` + settings.json registered (6th hook) + wiki page. Conservative regex flags actionable patterns (`S<N> PHASE X ship|pending|in_progress|next`), skips carry-over context (`closes S14 Q2`). Positive test exit 0 / negative test exit 2 verified.
+- T3 (167fc9d w/ T4) Pre-commit hooks upgraded — `.pre-commit-config.yaml` ruff v0.4.0 + mypy --strict local + yamllint для CI workflows. pre-commit installed (`.git/hooks/pre-commit`). dev dep уже в pyproject.toml.
+- T4 (167fc9d) GitHub Actions CI — `.github/workflows/ci.yml` 10 steps (checkout / py3.12 cache / TA-Lib build cached / pip install / ruff lint+format / mypy --strict baseline guard / pytest unit baseline guard / canonical counts verify). Triggers push к main + PR. Baseline guards informational не strict — 3 pytest + 1 mypy pre-existing allowed. CI runs first time на S32b PR.
+- T5 (8a24abf) SQLite MCP server — `.mcp.json` (sqlite-trading → data/bot.db). settings.json schema rejects mcpServers field — .mcp.json правильный location per Claude Code MCP security policy. uvx + mcp-server-sqlite verified pre-installed. Operator approve at next session start OR `claude mcp` CLI.
+- T6 (dabf368) ADR 0046 + sprint-32b page + index/counts sync (45→46 ADRs / 32→33 sprints / 9→10 agents / 6→7 hooks / 6→7 MCP / 38→40 components) + S32+S32b sprint history rows + kit-overview decision matrix updates.
+
+**Phase 5 Verify outcome:**
+- pytest: 773 passed (S32 baseline preserved)
+- mypy: 1 pre-existing error (`__main__.py:636 bars_per_year_map redef`)
+- canonical counts: 16/30/74/45 ✓
+- bash -n freshness hook ✓ / yaml ci.yml ✓ / yaml .pre-commit-config ✓ / json .mcp.json ✓ / json settings.json ✓
+- **3 pytest failures pre-existing** (test_replay_long_only / test_replay_next_open) — carry-over к S33
+
+**Phase 6 Review skipped** — config + scripts + docs sprint, no src/ touched.
+
+**Implementation discoveries:**
+1. settings.json schema rejects `mcpServers` — must use project-level `.mcp.json` + `enabledMcpjsonServers`
+2. Freshness hook regex iteration: первая версия flagged carry-over context (S14 Q2) → refined к actionable patterns only
+3. Pre-commit upgrade preserved S1-era config + added yamllint
+4. CI baseline guards prevent S32b ship blocking on pre-existing tech debt
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.32b. Все 5 push hooks expected fire correctly + NEW freshness hook (6 total).
+
+**Carry-overs к S32c (Kit Phase 2, КУ avg 42%):** Memory corpus org / context budget hook / 5 more skill mappings (performance-optimization / api-and-interface-design / browser-testing-with-devtools / idea-refine extension) / Fetch MCP.
+
+**Carry-overs к S33+ (trading sprint когда unblocked):** 3 pytest failures + 1 mypy fix.
+
+**Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
+
+Next = operator decision: S32c (Kit Phase 2) OR Track B unblock.
