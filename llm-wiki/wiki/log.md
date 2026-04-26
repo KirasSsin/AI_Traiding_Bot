@@ -1218,3 +1218,70 @@ NO code changes:
 ### Roadmap
 
 **v0.1 closed FINAL at S18 honest.** Tag v0.1.0-alpha.18. Project state: between-sprints с post-v0.1-honest-close-FINAL marker. 3rd honest close в проекте (S14 + S16 + S18). 3 strategy hypotheses tested + 1 partial signal observed = publishable scientific contribution. Operator decides v0.4 if/when.
+
+## [2026-04-26] sprint-end | Sprint 19 — BTC 15M architectural sprint (v0.4-A prep)
+
+**Verdict: ARCHITECTURAL PREP COMPLETE.** S20 = measurement sprint follows (BINDING per ADR 0034 amendments).
+
+### S19 PHASE 2 brainstorm (joint dispatch per user directive)
+
+User directive 2026-04-26: "Зайди с этими вопросами в агентов трейдеров, пусть они проведут дискуссию и выберут".
+
+- **Trader-expert ROUND 1 EXPAND → CONFIRM (A) с 4 amendments + 2 ESCs**
+- **Architecture-reviewer ROUND 1 APPROVE_WITH_CONDITIONS (A) с 3 conditions**
+- **Convergence:** Option (A) BTC 15M mean-reversion, 2 sprints (S19 architectural + S20 measurement), 7 combined amendments
+
+ESC resolutions (autonomous mode):
+- ESC-1 (continue vs pause): CONTINUE Option (A) — S17 evidence + cheap test
+- ESC-2 (T5 floor 15M): RAISE к 150 trades — simpler scaling
+
+### 7 Amendments applied (all BINDING)
+
+**Architecture Conditions:**
+- A1: rest.py interval_map + interval_ms → single-dict `intervals: dict[str, tuple[str, int]]` refactor
+- A2: config.py heal_max_age semantic → `heal_max_bars: int | None` field + `_derive_heal_max_age_seconds()` bootstrap helper + `_cmd_run`/`_cmd_reconcile_only` wiring
+- A3: sqrt(8760) annualization parameterization (strategy_metrics.py + wfa_reporter.py + vector_backtest.py) — prevents 2× understimate at 15M (false-FAIL risk)
+
+**Trader Amendments BINDING для S20:**
+- T-Amendment 1: T5 floor 150 trades (vs 100 default) для 15M scaling
+- T-Amendment 2: Fold concentration pre-registration check
+- T-Amendment 3: 15M data depth verified (167,383 bars BTCUSDT 15M, 4.78y available from 2021-07-15)
+- T-Amendment 4: heal_max_age production safety encompassed by Condition A2
+
+### Deliverables
+
+- T0 ✅ Bybit 15M data verification (≥150K bars confirmed)
+- T1 ✅ ADR 0034 accepted
+- T2 ✅ rest.py single-dict intervals refactor (Condition A1)
+- T3 ✅ heal_max_bars semantic refactor + bootstrap wiring (Condition A2)
+- T4 ✅ Annualization parameterization 3 files + CLI --interval (Condition A3)
+- T5 ✅ WFA params 15M validation (KEEP ADR 0014 defaults, test=500 bars at 15M = ~5.2 days adequate)
+- T6 ✅ 15M backfill BTCUSDT — **167,383 bars** к data/BTCUSDT_15m.parquet (~6.4MB)
+- T7 ✅ sprint-19 page + wiki sync (this commit)
+- T8 PHASE 8 ship — pending
+
+### Tests / quality
+
+- pytest unit: **732 passed** (S18 baseline preserved, no regressions)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved
+
+### S20 pre-registered command (BINDING per ADR 0034)
+
+```bash
+SPRINT_N=20 .venv/bin/python -m src wfa --symbol BTCUSDT --interval 15 \
+  --start 2021-07-15 --end 2026-04-26
+```
+
+Pre-registered config: MeanReversionRsiBBStrategy (RSI 35/65 + BB(20, 1.5σ) S17 preserved), interval=15, bars_per_year=35040 auto, T5 floor 150, N_trials=1 fresh.
+
+### Verdict criteria для S20 (BINDING)
+
+- T5 < 150 → FAIL count, t_stat skipped
+- T5 ≥ 150 + fold concentration check (T-Amendment 2)
+- All T1-T6 + DSR + MC PASS conjoint → MVP DONE strategy criteria → S21+ S1-S6 system + Mainnet pilot
+- FAIL → S21 = honest close v0.4 (4 hypotheses tested = scientific contribution)
+
+### Roadmap
+
+**S19 SHIPPED.** Tag v0.1.0-alpha.19. Project state: between-sprints с architectural prep complete, S20 measurement command pre-registered.

@@ -24,8 +24,11 @@ import numpy as np
 from src.risk.trade_history import TradeRecord
 
 
-# Annualization factor: sqrt(365*24) для 24/7 crypto 1H bars.
-_ANNUALIZATION_FACTOR = float(np.sqrt(8760))
+# S19 ADR 0034 Condition A3: parameterized annualization factor.
+# Default `bars_per_year=8760` (1H × 24/7 = 8760 bars/year) для backward-compat.
+# At 15M: bars_per_year=35040. Caller MUST pass correct value to avoid
+# 2× Sharpe understimate (false-FAIL risk per S17 institutional knowledge).
+_DEFAULT_BARS_PER_YEAR = 8760  # 1H legacy default
 
 
 def compute_t1_t6_metrics(
@@ -33,6 +36,7 @@ def compute_t1_t6_metrics(
     trades: list[TradeRecord],
     fold_oos_is_sharpe: list[float],
     initial_capital: float = 10000.0,
+    bars_per_year: int = _DEFAULT_BARS_PER_YEAR,
 ) -> dict[str, Any]:
     """Compute T1-T6 acceptance criteria metrics from OOS trades.
 
@@ -44,6 +48,7 @@ def compute_t1_t6_metrics(
     Returns:
         dict с t1-t6 fields. NaN если insufficient data.
     """
+    annualization_factor = float(np.sqrt(bars_per_year))
     n = len(trades)
 
     if n == 0:
@@ -67,7 +72,7 @@ def compute_t1_t6_metrics(
     # T1: Sharpe OOS annualized
     if pnl_pcts.std(ddof=1) > 0:
         sharpe_per_trade = float(pnl_pcts.mean() / pnl_pcts.std(ddof=1))
-        t1_sharpe_oos = sharpe_per_trade * _ANNUALIZATION_FACTOR
+        t1_sharpe_oos = sharpe_per_trade * annualization_factor
     else:
         t1_sharpe_oos = float("nan")
 
@@ -75,7 +80,7 @@ def compute_t1_t6_metrics(
     losers = pnl_pcts[pnl_pcts < 0]
     if len(losers) > 0 and losers.std(ddof=1) > 0:
         sortino_per_trade = float(pnl_pcts.mean() / losers.std(ddof=1))
-        t2_sortino_oos = sortino_per_trade * _ANNUALIZATION_FACTOR
+        t2_sortino_oos = sortino_per_trade * annualization_factor
     else:
         t2_sortino_oos = float("nan")
 

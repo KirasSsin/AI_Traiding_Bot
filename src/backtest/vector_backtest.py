@@ -13,11 +13,18 @@ class VectorBacktester:
     """
 
     def __init__(
-        self, df: pd.DataFrame, initial_capital: float = 10000.0, maker_fee: float = 0.001
+        self, df: pd.DataFrame, initial_capital: float = 10000.0, maker_fee: float = 0.001,
+        bars_per_year: int = 8760,
     ):
+        """S19 ADR 0034 Condition A3: parameterized annualization.
+
+        bars_per_year: 8760 (1H, default) или 35040 (15M). Caller MUST pass correct
+        value к avoid 2× Sharpe understimate at 15M.
+        """
         self.df = df.copy()
         self.initial_capital = initial_capital
         self.maker_fee = maker_fee
+        self.bars_per_year = bars_per_year
 
     def run(self) -> dict[str, float]:
         """
@@ -55,13 +62,13 @@ class VectorBacktester:
         total_return = (self.df["equity_curve"].iloc[-1] / self.initial_capital) - 1
         max_drawdown = self.df["drawdown"].max()
 
-        # N = periods per year for 1H bars: 365 * 24 = 8760
+        # S19 ADR 0034 Condition A3: parameterized via self.bars_per_year (default 8760 = 1H).
         # NOTE (S10 fix): was sqrt(365*24*60) which assumed 1m bars — wrong для 1H BTCUSDT.
         # Off by sqrt(60) ≈ 7.7×. Aligned с replay_engine._compute_metrics:51 convention.
         returns_mean = self.df["strategy_returns"].mean()
         returns_std = self.df["strategy_returns"].std()
         sharpe_ratio = (
-            (returns_mean / returns_std) * np.sqrt(365 * 24) if returns_std != 0 else 0
+            (returns_mean / returns_std) * np.sqrt(self.bars_per_year) if returns_std != 0 else 0
         )
 
         kpis = {
