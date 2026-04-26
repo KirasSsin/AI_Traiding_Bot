@@ -251,6 +251,10 @@ Real cost (S9 incident, 2026-04-25): batched Edit × 6 agents без batch Read 
 
 **HARD-GATE hook `sprint-flow-check.sh`:** блокирует push на `feature/sprint-NN-*` branch без plan file `wiki/project/plans/<YYYY-MM-DD>-sprint-NN-<slug>.md`. Mechanical PHASE 3 enforcement (S16-S27 drift лесон).
 
+**HARD-GATE hook `phase-advance.sh` (S30+):** блокирует `gh pr merge` на feature/sprint-NN-* если SPRINT_STATE Phase 5 status != "done"/"skipped". Mechanical PHASE 5 enforcement (verification-before-completion).
+
+**Cascade rule (BINDING per ADR 0043) — token economy:** lookups ВСЕГДА wiki → mem-search → grep → raw. Skip wiki check = anti-pattern (loses curation). См. [[wiki/project/architecture/tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]].
+
 Wiki-инgest (ingest/query/lint) параллелен code-workflow. Code-tasks активируют Superpowers skills. Завершение code-work → wiki-ingest компонентов.
 
 ---
