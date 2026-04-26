@@ -3,8 +3,8 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 15
-phase: 8-ship
-branch: feature/sprint-15-mean-reversion-multi-symbol
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.15
 ---
 
@@ -43,17 +43,16 @@ Per-symbol: BTC 44 trades, ETH 29 (one outlier fold), SOL 35. Aggregate T1=9.32 
 ## Следующее действие
 
 ```
-S15 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.15.
+S15 SHIPPED (PR #23 → squash-merged d350bc2, tag v0.1.0-alpha.15).
+17 sprints completed. v0.2 retry attempt #1 = FAIL but T5 reached (108 trades).
 
-S15 verdict: FAIL but T5 reached (108 trades agg via 3-symbol mean-reversion).
-ADR 0030 multi-symbol aggregation hypothesis VALIDATED.
-Different failure mode vs S13 = honest negative.
+Operator decides S16 direction:
+(B') broader RSI thresholds + variance reduction (more N_trials → harsher DSR)
+(C) Q3 15M timeframe — 2 sprints (interval_map + heal_max_age fixes blockers known)
+(D) honest close v0.2 (accept 2 strategy attempts both failed, freeze)
+(E) Q4 ML XGBoost (deferred — S15 evidence: no partial signal, MC random-equivalent)
 
-After ship: operator decides S16 direction:
-(B') broader RSI thresholds + variance reduction
-(C) Q3 15M timeframe (interval_map + heal_max_age fixes blockers known)
-(D) honest close v0.2 (accept 2 strategy attempts both failed)
-(E) Q4 ML XGBoost (deferred — S15 didn't show partial signal evidence)
+No commitment. Operator decides if/when.
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
