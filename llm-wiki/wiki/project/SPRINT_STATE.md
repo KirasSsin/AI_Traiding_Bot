@@ -27,11 +27,12 @@ tag: v0.1.0-alpha.30
 |------|--------|--------|------|
 | T1 kit-overview-ru.md | done | (pending commit) | 1-page TL;DR + Quick decision matrix + 9 agents + 6 hooks + 5 skills + ~50 plugin skills + 6 MCP + cascade rule + Top 10 commands + Top 5 anti-patterns + 9-phase lifecycle + 20 best practices applied |
 | T2 tooling-inventory-ru.md sections 14-19 | done | (pending commit) | Section 14 Permission modes / 15 Plugins curated / 16 CLI tools / 17 Status line / 18 Token-saver commands / 19 Non-interactive + fan-out |
-| T3 prune llm-wiki/CLAUDE.md (448→<200) | in_progress | — | Extract verbose к wiki pages |
-| T4 audit ~/.claude/CLAUDE.md (316→<250) | pending | — | Apply prune test |
-| T5 repo CLAUDE.md +kit-overview link | pending | — | Minor refs |
-| T6 status line + `/btw`/`/rewind`/`--continue` | pending | — | Token-saver patterns |
-| T7 ADR 0044 + sprint-31 page + sync | pending | — | Wiki diffs |
+| T3 prune llm-wiki/CLAUDE.md (448→<200) | done | (pending commit) | 448→291 (-35%), 27KB→13KB (-52%) — extracted verbose к kit-overview-ru + tooling-inventory-ru |
+| T4 audit ~/.claude/CLAUDE.md (316→<250) | done | (pending commit) | 316→253 (-20%) — section 9c compressed (80→17 lines) preserving formula |
+| T5 repo CLAUDE.md +kit-overview link | done | (pending commit) | 190→212 lines — added kit-overview/sprint-flow-ru/tooling-inventory references к Ключевые файлы table |
+| T6 status line + `/btw`/`/rewind`/`--continue` | done | (pending commit) | Anti-patterns +4 (kitchen-sink/btw/3+correction/CLAUDE.md bloat) + token-saver commands table 8 commands + link к Section 18 |
+| Total CLAUDE.md prune | done | — | 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens (-25%) per session |
+| T7 ADR 0044 + sprint-31 page + sync | in_progress | — | Wiki diffs |
 
 ## S30 SHIPPED ✅
 

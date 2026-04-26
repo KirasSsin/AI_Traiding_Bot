@@ -67,6 +67,25 @@ STEP 4: Read raw + offset (full content)
 - ❌ 🆕 New module ship без `test-engineer` coverage analysis
 - ❌ 🆕 Skip wiki check (cascade STEP 1) → jump straight к mem-search OR Read raw
 - ❌ 🆕 Merge sprint без Phase 5 status="done" в SPRINT_STATE (`phase-advance.sh` блокирует)
+- ❌ 🆕 (S31) Kitchen-sink session — long context с irrelevant accumulation. Use `/clear` between unrelated tasks
+- ❌ 🆕 (S31) Side question в main thread — pollutes context. Use `/btw` instead
+- ❌ 🆕 (S31) Correcting same issue 3+ times — context cluttered с failed approaches. Use `/clear` + better prompt
+- ❌ 🆕 (S31) CLAUDE.md > 250 lines per file — bloated файл = ignored rules per best practices
+
+### Token-saver commands (per Anthropic best practices)
+
+| Command | Use case |
+|---------|----------|
+| `/btw <question>` | Side question — answer dismissed, не enters history |
+| `/rewind` (Esc+Esc) | Restore previous state — experimental approach failed |
+| `/clear` | Reset context — switching unrelated tasks |
+| `/compact <instructions>` | Controlled summarization — approaching limit |
+| `claude --continue` | Resume последнюю session |
+| `claude --resume` | Choose из recent sessions |
+| `claude -p "<prompt>"` | Non-interactive (CI/CD, batch operations) |
+| `--allowedTools` | Scoped permissions для batch ops |
+
+Detail: [[llm-wiki/wiki/project/architecture/tooling-inventory-ru.md#18-token-saver-commands-binding--best-practices]]
 
 ## ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального)
 
@@ -99,8 +118,11 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | Файл | Роль |
 |------|------|
 | `llm-wiki/wiki/project/SPRINT_STATE.md` | Living sprint state (≤2KB) — FIRST READ |
+| **`llm-wiki/wiki/project/architecture/kit-overview-ru.md`** | **Single source of truth gateway (S31) — 1-page TL;DR всех kit settings** |
 | `llm-wiki/CLAUDE.md` | Wiki maintainer rules + 5-layer skills hierarchy + trigger cascade |
 | `llm-wiki/wiki/project/architecture/development-workflow.md` | MASTER SOP — 9-phase sprint lifecycle |
+| `llm-wiki/wiki/project/architecture/sprint-flow-ru.md` | Russian обязательный 9-фаз процесс с per-phase HARD-GATEs (S28 BINDING) |
+| `llm-wiki/wiki/project/architecture/tooling-inventory-ru.md` | Catalog: 9 reviewer agents + 26 skills + 6 MCP + 6 hooks + cascade rule + 19 sections |
 | `llm-wiki/wiki/index.md` | Wiki catalog (all pages) |
 | `llm-wiki/wiki/log.md` | Chronological sprint journal |
 | `llm-wiki/wiki/project/decisions/` | ADRs (0001-0023) |
