@@ -2,6 +2,39 @@
 
 Этот файл — bootstrap anchor. Claude Code авто-грузит его при старте сессии в этом репозитории.
 
+## ⚠️ BEFORE ANY SPRINT WORK — kit flow обязателен (BINDING per ADR 0041)
+
+Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip".
+
+| Phase | Skill / Tool | HARD-GATE |
+|-------|--------------|-----------|
+| 1 Orient | `sprint-orient` skill OR manual SPRINT_STATE read | Chapter marked |
+| 2 Brainstorm | `brainstorm-init` skill (auto-routes через `trader-expert`) | `pre-s{N}-backlog.md` exists |
+| 3 Plan | `superpowers:writing-plans` skill | **Hook `sprint-flow-check.sh` блокирует push без plan file в `wiki/project/plans/<date>-sprint-N-<slug>.md`** |
+| 4 Execute | `superpowers:subagent-driven-development` (code) OR controller-driven с TodoWrite | Per-task TDD + per-task SPRINT_STATE update |
+| 5 Verify | pytest + mypy + canonical counts | All GREEN |
+| 6 Review | Domain reviewer (L5) per touched area | Blockers addressed |
+| 7 Sync | `wiki-update` skill | Block 1↔Block 2 sync |
+| 8 Ship | `sprint-finish` skill → `superpowers:finishing-a-development-branch` | tag v0.1.0-alpha.N |
+| 9 Close | SPRINT_STATE between-sprints + log session-end | — |
+
+**Per-task SPRINT_STATE update протокол (PHASE 4) — BINDING:**
+После КАЖДОЙ task complete (НЕ только в конце спринта):
+1. Edit `llm-wiki/wiki/project/SPRINT_STATE.md` Phase 4 task table
+2. Update "Текущий статус" + "Следующее действие"
+3. Update `updated:` frontmatter
+4. Optional: commit `docs(sprint): SPRINT_STATE update phase=4 task=Tx done`
+
+**Полный процесс на русском:** [`llm-wiki/wiki/project/architecture/sprint-flow-ru.md`](llm-wiki/wiki/project/architecture/sprint-flow-ru.md)
+**Каталог tooling (агенты / скиллы / плагины / MCP / hooks):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
+
+### Анти-patterns (НЕ делать)
+- ❌ Прямой `Agent` dispatch вместо `brainstorm-init` / `writing-plans` / `subagent-driven-development` skills
+- ❌ Code на feature/sprint-* branch без plan file в `wiki/project/plans/` — hook БЛОКИРУЕТ push
+- ❌ SPRINT_STATE update только в конце спринта (Phase 4 protocol требует per-task)
+- ❌ Batch commit "all of S{N}" в одном commit
+- ❌ Skip фазу потому что "очевидно" / "тривиально"
+
 ## ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального)
 
 ```
