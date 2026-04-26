@@ -46,17 +46,28 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
     out["ema_fast"] = out["close"].ewm(span=fast, adjust=False).mean()
     out["ema_slow"] = out["close"].ewm(span=slow, adjust=False).mean()
 
+    # S27 T3: RSI warm-up gating. Pre-fix used .fillna(50.0) which masked NaN
+    # warm-up — RSI[0..rsi_period-1] would equal 50.0 (or seeded value) instead
+    # of NaN. talib.RSI standard returns NaN for first `period` bars.
+    # Mean_reversion strategy immune (BB gates with min_periods=20). Ema_crossover
+    # affected: RSI<overbought filter could admit invalid entries в warm-up.
     delta = out["close"].diff()
     gain = delta.where(delta > 0, 0.0).ewm(alpha=1 / rsi_period, adjust=False).mean()
     loss = (-delta.where(delta < 0, 0.0)).ewm(alpha=1 / rsi_period, adjust=False).mean()
     rs = gain / loss.replace(0, np.nan)
-    out["rsi"] = (100 - (100 / (1 + rs))).fillna(50.0)
+    rsi = 100 - (100 / (1 + rs))
+    # Mask first `rsi_period` bars NaN (warm-up not complete)
+    rsi.iloc[:rsi_period] = np.nan
+    out["rsi"] = rsi
 
+    # S27 T3: ATR warm-up gating consistency
     high_low = out["high"] - out["low"]
     high_close = (out["high"] - out["close"].shift(1)).abs()
     low_close = (out["low"] - out["close"].shift(1)).abs()
     true_range = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
-    out["atr"] = true_range.ewm(alpha=1 / atr_period, adjust=False).mean()
+    atr = true_range.ewm(alpha=1 / atr_period, adjust=False).mean()
+    atr.iloc[:atr_period] = np.nan
+    out["atr"] = atr
 
     if strategy_type == "mean_reversion":
         # S15 ADR 0030: RSI extreme + Bollinger Bands AND-gated trigger
