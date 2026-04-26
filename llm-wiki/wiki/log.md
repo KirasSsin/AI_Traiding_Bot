@@ -2022,3 +2022,41 @@ Next session = operator decision: S32c (Kit Phase 2) OR Track B unblock OR test 
 **Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
 
 Next = operator decision: S32d (Kit Phase 3) OR Track B unblock OR test debt cleanup sprint.
+
+## [2026-04-27] session-end | S32c — Kit Improvement Phase 2 reduced SHIPPED
+
+**S32c SHIPPED.** PR #41 → df521a6 squash-merge. Tag v0.1.0-alpha.32c pushed. Branch deleted. SPRINT_STATE → between-sprints.
+
+**CI passed first try** — S32b infrastructure validated на non-S32b PR. Baseline guards (3 pytest pre-existing + 1 mypy pre-existing + ~169 ruff pre-existing) work correctly.
+
+**Kit state post-S32c:**
+- 10 reviewer agents (L5) — unchanged
+- 7 active push hooks — unchanged
+- **8 MCP servers** (was 7) — +fetch (project-level `.mcp.json`)
+- **36 skills mapped к kit flow** (was 32) — +api-design (Phase 3) / +browser-test (Phase 5) / +perf-opt (Phase 6 OPT) / +idea-refine extension (Phase 2 PRE workflow)
+- 5-step cascade rule — unchanged
+- Phase 9 consolidate-memory HARD-GATE — unchanged
+- Memory corpus categorization scheme designed (4 partitions trading-decisions/formula-knowledge/process-patterns/debug-knowledge) — bridge 4 ready для script S32d
+- 4 plugins curated — unchanged
+- 20/20 best practices coverage — unchanged
+- CI infrastructure (S32b) — operational, validated on S32c PR
+
+**КУ achieved S32c:** avg ~51% / ~1.5 hours. ROI = ~75 КУ/час (above forecast 4.2 — Phase 2 closer к Phase 1 ROI due to Fetch MCP pre-installed pattern).
+
+**Carry-overs к S32d (Kit Phase 3):**
+- Memory corpus bridges 2-3 + bridge 4 script implementation
+- Context budget hook (>70% warn)
+- bybit-api-reviewer L5 agent
+- anthropic-skills:schedule (audit automation)
+- Sprint metrics tracking
+
+**Test debt carry-over к S33+ (first trading sprint):**
+- 3 pytest failures (test_replay_long_only / test_replay_next_open)
+- 1 mypy error (__main__.py:636)
+- ~169 ruff baseline cleanup
+
+**Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
+
+**Operator action на next session:** Approve `fetch` MCP at session start (one-time prompt).
+
+Next session = operator decision: S32d (Kit Phase 3) OR Track B unblock OR Track C test debt cleanup.

@@ -3,10 +3,14 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 32c
-phase: 4-execution
-branch: feature/sprint-32c-kit-phase-2-improvements
-tag: v0.1.0-alpha.32b
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.32c
 ---
+
+## S32c SHIPPED ✅
+
+PR #41 → df521a6 squash-merge. Tag v0.1.0-alpha.32c pushed. Branch deleted. **CI passed first try** (S32b infrastructure validated).
 
 ## S32c IN PROGRESS 🟡
 
@@ -25,8 +29,8 @@ Sub-sprint S32 series. Branch: `feature/sprint-32c-kit-phase-2-improvements`. Pl
 | 5 Verify | done | pytest 773 (S32b baseline preserved) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / json .mcp.json ✓ (sqlite-trading + fetch). 3 pytest failures + 1 mypy carry-over к S33 (pre-existing, NOT S32c regression). |
 | 6 Review | pending (likely skip) | no src/ touched |
 | 7 Sync | pending | log.md sprint-end + index/current-state в T4 |
-| 8 Ship | pending | PR + tag v0.1.0-alpha.32c (CI runs second time — S32b infrastructure validates) |
-| 9 Close | pending | SPRINT_STATE → between-sprints |
+| 8 Ship | done | PR #41 → df521a6 + tag v0.1.0-alpha.32c. CI passed first try (S32b infrastructure validated 2nd PR). |
+| 9 Close | done | SPRINT_STATE between-sprints (this update) |
 
 ### Phase 4 — task progress (S32c)
 
@@ -36,7 +40,7 @@ Sub-sprint S32 series. Branch: `feature/sprint-32c-kit-phase-2-improvements`. Pl
 | T2 4 skill mappings | done | 09fcdee | sprint-flow-ru.md +api-design Phase 3 / +browser-test Phase 5 / +perf-opt Phase 6 OPT / +idea-refine extension Phase 2 PRE workflow (procedure block с 5 steps). Skills × Phase 32→36 (17 agent-skills total). |
 | T3 Memory corpus scheme docs | done | 47bba48 | tooling-inventory-ru.md NEW Section 22 (4 partitions: trading-decisions / formula-knowledge / process-patterns / debug-knowledge + tag mapping pseudo-code + cascade STEP 2 enhancement spec + operator validation procedure). Bridge 4 design — script implementation S32d candidate. |
 | T4 ADR 0047 + sprint-32c page + index/counts | done | 231d55f | 46→47 ADRs / 33→34 sprints / 7→8 MCP / 32→36 skills + S32c sprint history row + kit-overview decision matrix updates |
-| Ship | pending | — | tag v0.1.0-alpha.32c |
+| Ship | done | df521a6 | tag v0.1.0-alpha.32c. CI passed first try (S32b CI infrastructure validated на non-S32b PR). |
 
 ## S32b SHIPPED ✅
 
@@ -226,51 +230,55 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S32b SHIPPED — Kit Improvement Phase 1 COMPLETE.** Sub-sprint S32 series. CI infrastructure live: GitHub Actions + pre-commit hooks + SPRINT_STATE freshness check hook + dashboard-reviewer L5 agent + SQLite MCP server. CI passed после 3 fix iterations (TA-Lib parallel race / ruff baseline / dashboard deps). КУ avg 60.5% / ~3 hours = ~120 КУ/час (above forecast). NO code changes. 773 pytest preserved (3 pre-existing failures + 1 mypy + ~169 ruff carry-over к S33).
+**S32c SHIPPED — Kit Improvement Phase 2 reduced COMPLETE.** Sub-sprint S32 series. 4 changes: T1 Fetch/HTTP MCP server + T2 4 skill mappings (api-design Phase 3 / browser-test Phase 5 / perf-opt Phase 6 OPT / idea-refine extension Phase 2 PRE workflow) + T3 Memory corpus categorization scheme docs (bridge 4 design, script S32d) + T4 ADR/sync. КУ avg ~51% / ~1.5 hours. CI passed first try. NO code changes. 773 pytest preserved.
 
 **Status:**
-- Infrastructure: ✅ COMPLETE (16/30/74/45 + **40 components** + **46 ADRs** + **33 sprint pages**)
-- Kit infrastructure: ✅ COMPLETE — **10 reviewer agents** + **7 active push hooks** + 32 skills mapped + cascade 5-step + Phase 9 consolidate-memory HARD-GATE + **GitHub Actions CI live** + **pre-commit local gate** + **SQLite MCP** + **20/20 best practices**
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 40 components + **47 ADRs** + **34 sprint pages**)
+- Kit infrastructure: ✅ COMPLETE — 10 reviewer agents + 7 active push hooks + **8 MCP servers** (sqlite-trading + fetch project-level) + **36 skills mapped** + cascade 5-step + Phase 9 consolidate-memory HARD-GATE + GitHub Actions CI live + pre-commit local gate + Memory corpus categorization scheme designed (bridge 4 ready для script S32d) + 20/20 best practices
 - Formula correctness: ✅ FIXED (5 bugs eliminated post-S27)
-- Strategy validation: ❌ NEGATIVE (0 PASS / 30 FAIL — structural failures, trading work blocked pending ESC-1/2/3)
+- Strategy validation: ❌ NEGATIVE (0 PASS / 30 FAIL — trading work blocked pending ESC-1/2/3)
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 unreachable single-symbol 4H)
 - Test debt: ⚠️ 3 pre-existing pytest failures + 1 mypy redef + ~169 ruff issues — carry-over к S33+
 
-## Последний спринт (S32b — Kit Improvement Phase 1)
+## Последний спринт (S32c — Kit Improvement Phase 2 reduced)
 
-Sub-sprint S32 series (mirror S8a/S8b/S8c pattern). 6 infrastructure changes: T1 dashboard-reviewer L5 agent + T2 SPRINT_STATE freshness check hook + T3 pre-commit hooks upgrade (ruff/mypy/yamllint) + T4 GitHub Actions CI (.github/workflows/ci.yml с baseline guards) + T5 SQLite MCP server (.mcp.json) + T6 ADR 0046 + sprint-32b page + index/counts (45→46 ADRs / 32→33 sprints / 9→10 agents / 6→7 hooks / 6→7 MCP / 38→40 components). КУ avg 60.5% / ~3 hours. CI passed после 3 fix iterations. NO code changes. 773 pytest preserved.
+Sub-sprint S32 series. 4 changes: T1 Fetch/HTTP MCP (`.mcp.json` fetch + Section 7.7/7.8 doc) + T2 4 skill mappings к sprint-flow-ru.md (api-design Phase 3 / browser-test Phase 5 / perf-opt Phase 6 OPT / idea-refine extension Phase 2 PRE workflow с 5-step procedure) + T3 Memory corpus categorization scheme (Section 22 NEW: 4 partitions + tag mapping pseudo-code + cascade STEP 2 enhancement spec; bridge 4 design, script S32d) + T4 ADR 0047 + sprint-32c page + index/counts (46→47 ADRs / 33→34 sprints / 7→8 MCP / 32→36 skills). КУ avg ~51% / ~1.5 hours. CI passed first try. NO code changes.
 
 ## Следующее действие
 
 ```
 Operator decides next direction:
 
-Track A — Kit Phase 2 (S32c candidate, КУ avg 42%, ~1 sprint):
-  - Memory corpus organization (bridges 2-4 deferred from S30 + S31)
-  - Context budget hook (>70% warn)
-  - 5 more skill mappings:
-    * AS:performance-optimization (Phase 6 backtest)
-    * AS:api-and-interface-design (Phase 3)
-    * AS:browser-testing-with-devtools (Phase 5 dashboard, requires Chrome MCP)
-    * AS:idea-refine extension (Phase 2 PRE refinement)
-  - Fetch/HTTP MCP (Bybit API docs lookup)
+Track A — Kit Phase 3 (S32d candidate):
+  Phase 2 deferred research:
+    - Memory corpus org bridge 2 (corpus periodic sync)
+    - Memory corpus org bridge 3 (chapter mark auto-link)
+    - Memory corpus org bridge 4 implementation script (uses scheme от S32c Section 22)
+    - Context budget hook (>70% warn) — Claude Code hook API research
+  Phase 3 originals:
+    - bybit-api-reviewer L5 agent (Bybit V5 rate limits / endpoint params / error codes)
+    - anthropic-skills:schedule (audit_formulas.py automation)
+    - Sprint metrics tracking (velocity / revision rate)
 
 Track B — Trading work (BLOCKED — awaits operator):
-  - ESC-1 Multi-symbol authorization (S{N} expanded scope beyond BTCUSDT MVP)
-  - ESC-2 "In profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H?)
-  - ESC-3 Operational implications 4H multi-symbol
+  - ESC-1 multi-symbol authorization
+  - ESC-2 "in profit" semantics
+  - ESC-3 4H operational implications
   
 Trader-expert backlog (когда Track B unblocks):
   - Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
   - Regime filter + SMA50 trend gate
-  - SL calibration {1.0/1.25/1.5}×ATR + t-stat power validation
+  - SL calibration {1.0/1.25/1.5}×ATR
   - Donchian 4H breakout
-  - DSR cross-trial sigma_SR + MC power audit (closes S14 Q2)
+  - DSR cross-trial sigma_SR + MC power audit
 
-Test debt carry-over к first trading sprint (S33+):
-  - 3 pytest failures (test_replay_long_only / test_replay_next_open)
-  - 1 mypy error (__main__.py:636 bars_per_year_map redef)
-  - ~169 ruff baseline (legacy code cleanup)
+Track C — Test debt cleanup sprint (если operator chooses):
+  - Fix 3 pytest failures (test_replay_long_only / test_replay_next_open)
+  - Fix 1 mypy error (__main__.py:636 bars_per_year_map redef)
+  - Cleanup ~169 ruff baseline (gradually OR enable strict gate)
+
+Operator action на next session:
+  - Approve fetch MCP at session start (one-time prompt)
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
