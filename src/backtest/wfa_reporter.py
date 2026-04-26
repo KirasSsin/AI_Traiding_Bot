@@ -20,9 +20,9 @@ from src.analytics.dsr import compute_dsr, compute_returns
 from src.risk.trade_history import TradeRecord
 
 
-# Annualization factor: sqrt(365 * 24) для 24/7 crypto 1H bars.
-# Per Q6 verdict — fixed constant, NOT derived from trade frequency (circular).
-_ANNUALIZATION_FACTOR = float(np.sqrt(8760))
+# S19 ADR 0034 Condition A3: parameterized annualization factor.
+# Default `bars_per_year=8760` (1H) для backward-compat. At 15M caller passes 35040.
+_DEFAULT_BARS_PER_YEAR = 8760  # 1H legacy default
 
 
 def format_wfa_report(
@@ -31,6 +31,7 @@ def format_wfa_report(
     trades_for_dsr: list[TradeRecord],
     mc_p_value: float,
     gate_result: dict[str, Any],
+    bars_per_year: int = _DEFAULT_BARS_PER_YEAR,
 ) -> dict[str, Any]:
     """Format structured WFA report.
 
@@ -45,6 +46,7 @@ def format_wfa_report(
     Returns:
         Structured report dict с per-series Sharpe + DSR + gate details.
     """
+    annualization_factor = float(np.sqrt(bars_per_year))
     folds = runner_result.get("folds", [])
     aggregate = runner_result.get("aggregate", {})
 
@@ -66,7 +68,7 @@ def format_wfa_report(
 
     # Series 3: display Sharpe (per-trade × sqrt(8760))
     display_sharpe = (
-        per_trade_sharpe * _ANNUALIZATION_FACTOR
+        per_trade_sharpe * annualization_factor
         if math.isfinite(per_trade_sharpe)
         else math.nan
     )
@@ -91,7 +93,7 @@ def format_wfa_report(
         "bar_returns_sharpe_per_fold": bar_returns_sharpe_per_fold,
         "per_trade_sharpe": per_trade_sharpe,
         "display_sharpe": display_sharpe,
-        "display_sharpe_annualization_factor": _ANNUALIZATION_FACTOR,
+        "display_sharpe_annualization_factor": annualization_factor,
         "dsr_aggregate": dsr_aggregate,
         "dsr_per_fold": dsr_per_fold,
         "mc_p_value": mc_p_value,

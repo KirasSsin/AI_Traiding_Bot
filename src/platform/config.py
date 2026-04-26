@@ -98,7 +98,18 @@ class Settings(BaseSettings):
         default=3600,
         description="Max age (seconds) of execution_state row for HEAL-narrow on bootstrap. "
         "Beyond this → HALT_BOOTSTRAP_AMBIGUOUS with sub_reason=stale_age. "
-        "Default = 1 bar period of v0.1 strategy (1H).",
+        "Default = 1 bar period of 1H strategy. DEPRECATED at S19: prefer "
+        "heal_max_bars (interval-agnostic). Legacy seconds value used iff "
+        "heal_max_bars=None.",
+    )
+    heal_max_bars: int | None = Field(
+        default=1,
+        description="Max age (bars) of execution_state row for HEAL-narrow on bootstrap. "
+        "S19 ADR 0034 Condition A2: interval-agnostic semantic refactor. "
+        "Bootstrap (e.g. _cmd_run) derives heal_max_age_seconds = "
+        "heal_max_bars * interval_seconds and passes derived value к Reconciler. "
+        "If None, legacy heal_max_age_seconds field used directly (backward-compat). "
+        "Default 1 bar matches pre-S19 1H semantic but applies к any interval.",
     )
     require_mainnet_gate_passed: bool = Field(
         default=True,

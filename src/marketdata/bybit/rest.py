@@ -63,10 +63,18 @@ class BybitRESTClient:
         """
         from src.marketdata.models import Bar, DataQuality
 
-        interval_map = {"60": "1h"}  # extend when adding more TFs
-        interval_ms = {"60": 3_600_000}
-        step_ms = interval_ms[interval]
-        domain_interval = interval_map[interval]
+        # S19 Condition A1 (ADR 0034): single-dict refactor — value = (domain_interval_label, step_ms).
+        # Add new timeframes here only — single source of truth, prevents dict drift.
+        intervals: dict[str, tuple[str, int]] = {
+            "60": ("1h", 3_600_000),
+            "15": ("15m", 900_000),
+        }
+        if interval not in intervals:
+            raise ValueError(
+                f"Unsupported interval '{interval}'. "
+                f"Supported: {sorted(intervals.keys())}. Add к intervals dict в rest.py."
+            )
+        domain_interval, step_ms = intervals[interval]
 
         bars: list[Bar] = []
         cur_end = end_ms

@@ -104,8 +104,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
     adapter = BybitMarketAdapter(rest=rest, filters=filters)
 
     # State + reconciler + coordinator
+    # S19 ADR 0034 Condition A2: derive heal_max_age_seconds from interval (1H для _cmd_run)
+    bar_interval = "60"
+    heal_age = _derive_heal_max_age_seconds(settings, bar_interval)
     repo = ExecutionStateRepo(conn)
-    reconciler = Reconciler(query=adapter, base_coin=base_coin, symbol=symbol)
+    reconciler = Reconciler(
+        query=adapter, base_coin=base_coin, symbol=symbol,
+        heal_max_age_seconds=heal_age,
+    )
     coordinator = Coordinator(
         adapter=adapter,
         repo=repo,
@@ -127,7 +133,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     risk_manager = RiskManager(conn=conn, settings=settings, symbol=symbol)
 
     # Bar source + WS consumer (FillRecorder = production adapter, S12 T1)
-    bar_source = BarSource(adapter=rest, symbol=symbol, interval="60")
+    bar_source = BarSource(adapter=rest, symbol=symbol, interval=bar_interval)
     fill_history_repo = FillHistoryRepository(conn)
     trade_history_repo = TradeHistoryRepository(conn)
     fill_recorder = FillRecorderAdapter(
@@ -167,6 +173,31 @@ def _cmd_run(args: argparse.Namespace) -> int:
         return 1
 
 
+def _derive_heal_max_age_seconds(settings: Settings, interval: str) -> int:
+    """S19 ADR 0034 Condition A2: derive heal_max_age_seconds from heal_max_bars + interval.
+
+    Architecture-recommended pattern: Settings stays pure value store (no derived values),
+    bootstrap (e.g. _cmd_run) computes derived value here + passes к Reconciler.
+
+    If settings.heal_max_bars is None, legacy heal_max_age_seconds field used directly
+    (backward-compat). Otherwise: heal_max_age_seconds = heal_max_bars * interval_seconds.
+
+    Interval string per BarSource convention ("60" = 1H, "15" = 15M).
+    """
+    if settings.heal_max_bars is None:
+        return settings.heal_max_age_seconds
+    interval_seconds_map: dict[str, int] = {
+        "60": 3600,
+        "15": 900,
+    }
+    if interval not in interval_seconds_map:
+        raise ValueError(
+            f"Unsupported interval '{interval}' для heal_max_age derivation. "
+            f"Supported: {sorted(interval_seconds_map.keys())}."
+        )
+    return settings.heal_max_bars * interval_seconds_map[interval]
+
+
 def _resolve_symbols(args: argparse.Namespace) -> list[str]:
     """Resolve symbol list from --symbols (multi) OR --symbol (single, fallback).
 
@@ -186,10 +217,11 @@ def _backfill_one_symbol(
     end_ms: int,
     output_path: Path,
     label: str,
+    interval: str = "60",
 ) -> int:
     """Backfill one symbol → Parquet. Returns 0 on success, 1 on empty response."""
-    print(f"backfill: fetching {symbol} 1H {label} ...", flush=True)
-    bars = rest.get_klines(symbol, "60", start_ms, end_ms, limit_per_call=1000)
+    print(f"backfill: fetching {symbol} {interval}M {label} ...", flush=True)
+    bars = rest.get_klines(symbol, interval, start_ms, end_ms, limit_per_call=1000)
     if not bars:
         print(
             f"backfill: WARNING — empty kline response for {symbol} {label}",
@@ -245,13 +277,17 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
         testnet=settings.testnet,
     )
 
+    interval = getattr(args, "interval", "60")
+    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m"}
+    interval_label = interval_label_map[interval]
+
     overall_rc = 0
     for symbol in symbols:
         # --output ignored when multi-symbol (per arg help)
         if len(symbols) == 1 and args.output_path:
             output_path = Path(args.output_path)
         else:
-            output_path = Path(f"data/{symbol}_1h.parquet")
+            output_path = Path(f"data/{symbol}_{interval_label}.parquet")
         rc = _backfill_one_symbol(
             rest=rest,
             symbol=symbol,
@@ -259,6 +295,7 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
             end_ms=end_ms,
             output_path=output_path,
             label=label,
+            interval=interval,
         )
         if rc != 0:
             overall_rc = rc
@@ -303,8 +340,13 @@ def _cmd_reconcile_only(args: argparse.Namespace) -> int:
     adapter = BybitMarketAdapter(rest=rest, filters=filters)
 
     # State + reconciler + coordinator (no RuntimeManager, no Strategy, no RiskManager)
+    # S19 ADR 0034 Condition A2: heal_max_age derived from interval (1H для _cmd_reconcile_only)
+    heal_age = _derive_heal_max_age_seconds(settings, "60")
     repo = ExecutionStateRepo(conn)
-    reconciler = Reconciler(query=adapter, base_coin=base_coin, symbol=symbol)
+    reconciler = Reconciler(
+        query=adapter, base_coin=base_coin, symbol=symbol,
+        heal_max_age_seconds=heal_age,
+    )
     coordinator = Coordinator(
         adapter=adapter,
         repo=repo,
@@ -350,7 +392,7 @@ def _cmd_kill(_args: argparse.Namespace) -> int:
     return 0
 
 
-def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
+def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> pd.DataFrame:
     """Load OHLCV from Parquet via data_collector.
 
     S12 T2: closes S11 stub. Reuses existing data_collector pipeline.
@@ -358,8 +400,12 @@ def _load_ohlcv(*, symbol: str, start: str, end: str) -> pd.DataFrame:
 
     S13 T4 (CC4): pre-flight NaN assertion — `df.dropna()` post-warmup must yield
     >=90% bars else WFA aborts with explicit error.
+
+    S19 ADR 0034: interval param extends parquet path: 60 → _1h, 15 → _15m.
     """
-    parquet_path = f"data/{symbol}_1h.parquet"
+    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m"}
+    interval_label = interval_label_map.get(interval, "1h")
+    parquet_path = f"data/{symbol}_{interval_label}.parquet"
     config = {
         "data": {
             "source": "parquet",
@@ -492,9 +538,10 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     per_symbol_summary: dict[str, dict[str, object]] = {}
     mc_p_values: list[float] = []
 
+    interval_arg = getattr(args, "interval", "60")
     for symbol in symbols:
         try:
-            df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end)
+            df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end, interval=interval_arg)
         except FileNotFoundError as e:
             print(f"WARNING: skip {symbol} — {e}", flush=True)
             per_symbol_summary[symbol] = {"status": "missing_parquet", "trades": 0}
@@ -558,9 +605,14 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         dsr_value = compute_dsr(trades=all_trades, n_trials=1)
 
     # T1-T6 metrics aggregated across symbols
+    # S19 ADR 0034 Condition A3: pass bars_per_year derived from interval
+    interval = getattr(args, "interval", "60")
+    bars_per_year_map: dict[str, int] = {"60": 8760, "15": 35040}
+    bars_per_year = bars_per_year_map[interval]
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
         fold_oos_is_sharpe=all_fold_sharpes,
+        bars_per_year=bars_per_year,
     )
 
     gate = evaluate_acceptance_gate(
@@ -728,11 +780,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Comma-separated trading pairs for multi-symbol backfill (S15 ADR 0030). "
              "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
     )
+    p_bf.add_argument(
+        "--interval", default="60",
+        choices=["60", "15"],
+        help="Bar interval (S19 ADR 0034): '60' = 1H (default), '15' = 15M.",
+    )
     p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
     p_bf.add_argument("--to", dest="to_date", required=True, help="End date YYYY-MM-DD")
     p_bf.add_argument(
         "--output", dest="output_path", default=None,
-        help="Output Parquet path (default: data/<symbol>_1h.parquet). Ignored when --symbols set."
+        help="Output Parquet path (default: data/<symbol>_<interval>.parquet). Ignored when --symbols set."
     )
     p_bf.set_defaults(func=_cmd_backfill)
 
@@ -749,6 +806,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "--symbols", default=None,
         help="Comma-separated symbols for multi-symbol aggregated WFA (S15 ADR 0030). "
              "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
+    )
+    p_wfa.add_argument(
+        "--interval", default="60",
+        choices=["60", "15"],
+        help="Bar interval (S19 ADR 0034): '60' = 1H (default, bars_per_year=8760), "
+             "'15' = 15M (bars_per_year=35040). Annualization factor derived correctly "
+             "к prevent 2× Sharpe understimate per Condition A3.",
     )
     p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
