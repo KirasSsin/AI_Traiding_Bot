@@ -22,7 +22,7 @@ Sub-sprint S32 series **FINAL**. Branch: `feature/sprint-32d-kit-phase-3-improve
 | 2 Brainstorm | skipped (operator-specified per ADR 0047 carry-overs) | inline pre-plan analysis |
 | 3 Plan | done | `plans/2026-04-27-sprint-32d-kit-phase-3-improvements.md` (29ad020) |
 | 4 Execute | in_progress | T1-T5 controller-driven |
-| 5 Verify | pending | pytest 773 baseline + bash -n hook + canonical counts |
+| 5 Verify | done | pytest 773 (S32c baseline preserved) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / bash -n context-budget-warn ✓ / json settings.json ✓ (6 PreToolUse + 2 UserPromptSubmit hooks). 3 pytest pre-existing failures + 1 mypy carry-over к S33. |
 | 6 Review | pending (likely skip) | no src/ touched |
 | 7 Sync | pending | log.md sprint-end + index/current-state в T5 |
 | 8 Ship | pending | PR + tag v0.1.0-alpha.32d (CI 3rd PR) |
@@ -32,11 +32,11 @@ Sub-sprint S32 series **FINAL**. Branch: `feature/sprint-32d-kit-phase-3-improve
 
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
-| T1 bybit-api-reviewer L5 agent | pending | — | out-of-repo `~/.claude/agents/bybit-api-reviewer.md` + wiki page (6-axis Bybit V5 API checklist) |
-| T2 Context budget hook MVP | pending | — | out-of-repo bash + UserPromptSubmit registration + wiki page (transcript size warn 800KB/1.2MB thresholds) |
-| T3 Schedule wire + Sprint metrics | pending | — | tooling-inventory Section 23 (audit_formulas.py wire) + sprint-metrics.md NEW page |
-| T4 Corpus bridges research notes | pending | — | tooling-inventory Section 24 (Bridge 2 ship-ready cron / Bridge 3 medium / Bridge 4 NOT recommended) |
-| T5 ADR 0048 + sprint-32d page + sync | pending | — | 47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents + S32 series complete note |
+| T1 bybit-api-reviewer L5 agent | done | a15ff4c | out-of-repo `~/.claude/agents/bybit-api-reviewer.md` (sonnet, 6-axis: rate limits / order params / WS schema / retCodes / pagination / HMAC sign) + wiki page Block 1↔2. Specialist гap между trading-logic-reviewer (business) и data-integrity-reviewer (storage). |
+| T2 Context budget hook MVP | done | e87d532 | out-of-repo `~/.claude/hooks/context-budget-warn.sh` (advisory, exit 0 always) + settings.json UserPromptSubmit registered (2nd hook после caveman-mode-tracker) + wiki page Block 1↔2. Tests passed: small file no-warn + 900KB 🟡 yellow + 1300KB 🔴 red + missing path fail-open. Thresholds 800KB (~60%) / 1200KB (~80%). |
+| T3 Schedule wire + Sprint metrics | done | 2707f6f | tooling-inventory Section 23 (anthropic-skills:schedule wire к audit_formulas.py + frequency recommendations + setup procedure operator action) + sprint-metrics.md NEW page (per-sprint table reverse chronological + trends rolling 5 + update protocol). |
+| T4 Corpus bridges research notes | done | 2707f6f | tooling-inventory Section 24 (Bridge 2 ship-ready cron LOW cost MEDIUM value / Bridge 3 PostToolUse hook MEDIUM cost LOW value / Bridge 4 NOT RECOMMENDED HIGH cost LOW value until corpus > 100 obs). Honest recommendation summary + S32 series complete note. |
+| T5 ADR 0048 + sprint-32d page + sync | done | 21b14cb | 47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents + UserPromptSubmit hooks 1→2 + sprint metrics page + S32d sprint history row + S32 series COMPLETE accumulated achievements table |
 | Ship | pending | — | tag v0.1.0-alpha.32d |
 
 ## S32c SHIPPED ✅
