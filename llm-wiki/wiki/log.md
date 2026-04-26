@@ -1709,3 +1709,41 @@ S28 executed по proper kit flow:
 
 ### Roadmap
 **S28 ready к ship.** Tag v0.1.0-alpha.28. Next = S29 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1 operator decision from S27 carry-over).
+
+## [2026-04-26] sprint-end | S29 — Full Superpowers Skills Integration
+
+**Operator directive после S28 ship:** "У нас есть множество полезных скиллов (https://github.com/obra/superpowers). Их надо внедрить в наш flow разработки. Переработай кит и внедри максимально нужное количество скиллов."
+
+**Gap analysis pre-S29:** 6 of 13 superpowers skills used. 7 missing с concrete integration points.
+
+### 7 NEW superpowers skills integrated
+- `systematic-debugging` — Phase 4 sub-flow (bug encountered, 4-phase root cause)
+- `verification-before-completion` — Phase 5 (extended pre-completion checklist)
+- `requesting-code-review` — Phase 6 PRE (format reviewer brief)
+- `receiving-code-review` — Phase 6 POST (categorize feedback BLOCKER/CONCERN/SUGGESTION)
+- `dispatching-parallel-agents` — Phase 4+6 (explicit parallel pattern)
+- `using-git-worktrees` — cross-phase OPTIONAL (sandbox sprint experiments)
+- `writing-skills` — cross-phase OPTIONAL (new project skill methodology)
+
+### Skills × Phase integration map (26 skills total)
+NEW Section 12 в tooling-inventory-ru.md — single source of truth для "какой skill в какой фазе":
+- 13 superpowers (6 EXISTING + 7 NEW S29 = full integration)
+- 5 project skills
+- 8 agent-skills
+
+### Deliverables (4 commits + ship)
+- T1 sprint-flow-ru.md MODIFIED — per-phase Используемые skills + Phase 4 sub-flows + Cross-phase optional + integration map
+- T2 tooling-inventory-ru.md MODIFIED — Section 3 expanded (✅/🆕 status + Where invoked) + Section 12 NEW integration map + decision matrix +8
+- T3 CLAUDE.md (repo) MODIFIED — phase table expanded (Primary + Optional/sub-skills columns) + 6 new anti-patterns
+- T4 ADR 0042 + sprint-29 page + index/current-state sync
+- Ship — pending tag v0.1.0-alpha.29
+
+### S29 itself = proof of process
+S29 executed по proper kit flow per S28 binding rules:
+- PHASE 3 plan file `plans/2026-04-26-sprint-29-superpowers-integration.md`
+- PHASE 4 controller-driven (docs sprint), per-task TDD pattern
+- Per-task SPRINT_STATE update после каждой task (S28 protocol)
+- 4 commits + ship commit (planned)
+
+### Roadmap
+**S29 ready к ship.** Tag v0.1.0-alpha.29. Next = S30 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1 operator decision from S27 carry-over).

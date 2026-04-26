@@ -2,11 +2,34 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 28
-phase: between-sprints
-branch: main
+sprint: 29
+phase: 4-execution
+branch: feature/sprint-29-superpowers-integration
 tag: v0.1.0-alpha.28
 ---
+
+## Phase tracking (S29)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation |
+| 2 Brainstorm | skipped (operator-specified scope) | — |
+| 3 Plan | done | `plans/2026-04-26-sprint-29-superpowers-integration.md` |
+| 4 Execute | in_progress | T1-T4 (see task table) |
+| 5 Verify | pending | — |
+| 6 Review | pending (process/wiki, no code reviewer) | — |
+| 7 Sync | pending | — |
+| 8 Ship | pending | — |
+| 9 Close | pending | — |
+
+### Phase 4 — task progress
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 sprint-flow-ru.md (explicit skills per phase) | done | (pending commit) | 7 superpowers skills added + Skills × Phase integration map (26 skills total) |
+| T2 tooling-inventory-ru.md (integration map) | done | (pending commit) | "Where invoked" column added к 13 superpowers + new "Skills × Phase integration map" section (26 skills) + decision matrix expanded |
+| T3 CLAUDE.md (skill names per phase row) | done | (pending commit) | Phase table expanded — Primary + Optional/sub-skills columns + 6 new anti-patterns |
+| T4 ADR 0042 + sprint-29 page + wiki sync | done | (pending commit) | ADR + sprint page + index + current-state + log |
+| Ship | in_progress | — | tag alpha.29 |
 
 ## S28 SHIPPED ✅
 

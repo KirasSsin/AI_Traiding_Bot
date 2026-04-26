@@ -2,21 +2,26 @@
 
 Этот файл — bootstrap anchor. Claude Code авто-грузит его при старте сессии в этом репозитории.
 
-## ⚠️ BEFORE ANY SPRINT WORK — kit flow обязателен (BINDING per ADR 0041)
+## ⚠️ BEFORE ANY SPRINT WORK — kit flow обязателен (BINDING per ADR 0041 + ADR 0042)
 
-Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip".
+Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip". 26 skills integrated (13 superpowers + 5 project + 8 agent-skills).
 
-| Phase | Skill / Tool | HARD-GATE |
-|-------|--------------|-----------|
-| 1 Orient | `sprint-orient` skill OR manual SPRINT_STATE read | Chapter marked |
-| 2 Brainstorm | `brainstorm-init` skill (auto-routes через `trader-expert`) | `pre-s{N}-backlog.md` exists |
-| 3 Plan | `superpowers:writing-plans` skill | **Hook `sprint-flow-check.sh` блокирует push без plan file в `wiki/project/plans/<date>-sprint-N-<slug>.md`** |
-| 4 Execute | `superpowers:subagent-driven-development` (code) OR controller-driven с TodoWrite | Per-task TDD + per-task SPRINT_STATE update |
-| 5 Verify | pytest + mypy + canonical counts | All GREEN |
-| 6 Review | Domain reviewer (L5) per touched area | Blockers addressed |
-| 7 Sync | `wiki-update` skill | Block 1↔Block 2 sync |
-| 8 Ship | `sprint-finish` skill → `superpowers:finishing-a-development-branch` | tag v0.1.0-alpha.N |
-| 9 Close | SPRINT_STATE between-sprints + log session-end | — |
+| Phase | Primary skill(s) | Optional/sub-skills | HARD-GATE |
+|-------|------------------|---------------------|-----------|
+| 1 Orient | `sprint-orient` (project) | — | Chapter marked + SPRINT_STATE read |
+| 2 Brainstorm | `brainstorm-init` (project) → `trader-expert` | `superpowers:brainstorming` (non-trading scope) | `pre-s{N}-backlog.md` |
+| 3 Plan | `superpowers:writing-plans` | `agent-skills:planning-and-task-breakdown` (DEPTH ref) | **Hook `sprint-flow-check.sh` блокирует push без plan file** |
+| 4 Execute | `superpowers:subagent-driven-development` (code) OR `superpowers:executing-plans` (docs) + `superpowers:test-driven-development` | `superpowers:systematic-debugging` (bug sub-flow), `superpowers:dispatching-parallel-agents` (parallel reviewers), `agent-skills:context-engineering` (briefs > 200 слов) | Per-task TDD + per-task SPRINT_STATE update |
+| 5 Verify | `superpowers:verification-before-completion` | pytest + mypy + canonical counts | All GREEN per checklist |
+| 6 Review | Domain reviewer (L5) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening` (money/API/override) | Blockers addressed |
+| 7 Sync | `wiki-update` (project) | — | Block 1↔Block 2 sync |
+| 8 Ship | `sprint-finish` (project) → `superpowers:finishing-a-development-branch` | `agent-skills:git-workflow-and-versioning`, `agent-skills:shipping-and-launch` | tag v0.1.0-alpha.N |
+| 9 Close | SPRINT_STATE between-sprints + log session-end | — | — |
+
+**Cross-phase optional skills:**
+- `superpowers:using-git-worktrees` — sandbox/parallel sprint experiments (rare)
+- `superpowers:writing-skills` — создание new project skill (`.claude/skills/`)
+- `superpowers:using-superpowers` — meta auto-loaded session start
 
 **Per-task SPRINT_STATE update протокол (PHASE 4) — BINDING:**
 После КАЖДОЙ task complete (НЕ только в конце спринта):
@@ -26,7 +31,7 @@
 4. Optional: commit `docs(sprint): SPRINT_STATE update phase=4 task=Tx done`
 
 **Полный процесс на русском:** [`llm-wiki/wiki/project/architecture/sprint-flow-ru.md`](llm-wiki/wiki/project/architecture/sprint-flow-ru.md)
-**Каталог tooling (агенты / скиллы / плагины / MCP / hooks):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
+**Каталог tooling (26 skills × phases mapped):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
 
 ### Анти-patterns (НЕ делать)
 - ❌ Прямой `Agent` dispatch вместо `brainstorm-init` / `writing-plans` / `subagent-driven-development` skills
@@ -34,6 +39,12 @@
 - ❌ SPRINT_STATE update только в конце спринта (Phase 4 protocol требует per-task)
 - ❌ Batch commit "all of S{N}" в одном commit
 - ❌ Skip фазу потому что "очевидно" / "тривиально"
+- ❌ Bug ad-hoc fix без `superpowers:systematic-debugging` (skip → recurrence risk)
+- ❌ Sequential reviewers где `superpowers:dispatching-parallel-agents` подходит (2-3× slower)
+- ❌ Verify через "looks ok" вместо `superpowers:verification-before-completion` checklist
+- ❌ Reviewer brief ad-hoc без `superpowers:requesting-code-review` skill format
+- ❌ Reviewer feedback ad-hoc без `superpowers:receiving-code-review` categorization
+- ❌ Создать new project skill без `superpowers:writing-skills` methodology
 
 ## ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального)
 

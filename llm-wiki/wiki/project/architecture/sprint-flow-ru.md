@@ -104,7 +104,14 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 - Sprint = pure execution of approved ADR (no new decisions)
 - Operator уже specified deliverables (как в S28 — process enforcement clear)
 
-### Procedure
+### Используемые skills
+
+| Skill | Когда |
+|-------|-------|
+| **`brainstorm-init`** (project) → `trader-expert` agent | Trading scope/strategy/parameter questions (PRIMARY для нашего домена) |
+| **`superpowers:brainstorming`** | Non-trading scope (process design, infrastructure) — Socratic refinement через clarifying questions one-at-a-time |
+
+### Procedure (trader-expert path)
 **Использовать skill:** `.claude/skills/brainstorm-init/SKILL.md`
 
 ```
@@ -139,10 +146,18 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 - ❌ Прямой Agent dispatch без brainstorm-init skill structure
 - ❌ Skipping trader потому что "очевидно" (S8c Q1 caught DELETE bracket.py = catastrophe)
 - ❌ Третий round trader (ROUND 2 BINDING)
+- ❌ Использовать `superpowers:brainstorming` для trading scope (use `brainstorm-init` → `trader-expert` чтобы не пропустить domain knowledge)
 
 ---
 
 ## Phase 3: Plan (writing-plans)
+
+### Используемые skills
+
+| Skill | Когда |
+|-------|-------|
+| **`superpowers:writing-plans`** | PRIMARY — comprehensive implementation plan |
+| **`agent-skills:planning-and-task-breakdown`** | DEPTH reference (не replacement) — checklist для task decomposition quality |
 
 ### Триггер
 - PHASE 2 verdicts locked
@@ -186,8 +201,19 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 - Plan committed к branch
 - SPRINT_STATE phase=4-execution
 
-### Procedure
-**Использовать skill:** `superpowers:subagent-driven-development` (recommended) OR `superpowers:executing-plans` (controller-driven)
+### Используемые skills
+
+| Skill | Когда |
+|-------|-------|
+| **`superpowers:subagent-driven-development`** | PRIMARY для code-heavy sprints — fresh subagent per task с two-stage review |
+| **`superpowers:executing-plans`** | ALTERNATIVE — controller-driven (docs/wiki sprints, batch execution с checkpoints) |
+| **`superpowers:test-driven-development`** | КАЖДАЯ task с code change — RED → GREEN → COMMIT |
+| **`superpowers:systematic-debugging`** | Bug encountered during execution — 4-phase root cause (reproduce → localize → fix → guard) |
+| **`superpowers:dispatching-parallel-agents`** | Parallel reviewer dispatch (multiple Agent calls в одном message) |
+| **`superpowers:requesting-code-review`** | Format request к L5 reviewer (context + diff + specific concerns) |
+| **`agent-skills:test-driven-development`** | DEPTH reference — anti-patterns, pyramid, DAMP |
+| **`agent-skills:incremental-implementation`** | DEPTH reference — thin vertical slices |
+| **`agent-skills:context-engineering`** | Subagent briefs > 200 слов — right context, right time |
 
 #### Subagent-driven (preferred для code-heavy sprints)
 ```
@@ -240,11 +266,43 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 - ✅ Per-task git commit (не batch commit в конце)
 - ❌ Skip review loops если reviewer found issues
 
+### Sub-flow: Bug encountered during Phase 4
+
+Если bug found во время execution:
+
+```
+1. STOP current task
+2. Invoke `superpowers:systematic-debugging` skill (4-phase):
+   a. Reproduce — minimal failing test case
+   b. Localize — narrow to specific function/line
+   c. Fix — minimal change addressing root cause (не симптом)
+   d. Guard — regression test added
+3. Commit fix с reference к bug
+4. Resume original task
+```
+
+Don't ad-hoc guess fixes. Don't add "defensive" code без understanding root cause.
+
+### Sub-flow: Parallel reviewers / agents
+
+**`superpowers:dispatching-parallel-agents`** — explicit pattern для concurrent work:
+
+```python
+# Single message, multiple Agent tool calls:
+Agent(subagent_type="trading-logic-reviewer", prompt=...)
+Agent(subagent_type="quant-stats-reviewer", prompt=...)
+Agent(subagent_type="python-reviewer", prompt=...)
+```
+
+Применять когда reviewers/research independent. NOT для sequential work с dependencies.
+
 ### Anti-patterns
 - ❌ Batch commit "all of S28" в одном commit
 - ❌ SPRINT_STATE update только в конце спринта (drift risk)
 - ❌ TodoWrite пропущен потому что "memory достаточно"
 - ❌ Subagent dispatch с "read plan file для context" (controller предоставляет full text)
+- ❌ Bug found → ad-hoc fix без `systematic-debugging` skill (skip → recurrence risk)
+- ❌ Sequential reviewers где parallel possible (2-3× slower, no `dispatching-parallel-agents` use)
 
 ---
 
@@ -254,6 +312,12 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 - All Phase 4 tasks done
 - TodoWrite all completed
 
+### Используемые skills
+
+| Skill | Когда |
+|-------|-------|
+| **`superpowers:verification-before-completion`** | PRIMARY — pre-completion checklist (tests / linter / runtime check / edge cases) |
+
 ### Procedure
 ```bash
 source .venv/bin/activate
@@ -262,19 +326,37 @@ mypy --strict src/ 2>&1 | tail -3
 python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, ExecutionEvent; from src.risk.reason_codes import ReasonCode; print(f'states={len(list(ExecutionState))}, events={len(list(ExecutionEvent))}, transitions={len(TRANSITIONS)}, reason_codes={len(list(ReasonCode))}')"
 ```
 
+`verification-before-completion` skill — extended checklist beyond pytest/mypy:
+- Tests pass (всех типов: unit / integration / property где applies)
+- Linter clean (ruff)
+- Runtime smoke check (если applies — import module, run CLI command)
+- Edge cases verified (empty input, boundary values, error paths)
+- Documentation updated (если public API changed)
+
 ### HARD-GATE
 - ✅ pytest 0 new failures (baseline preserved)
 - ✅ mypy ≤ baseline (S8c baseline = 44 errors)
 - ✅ Canonical counts текущие
+- ✅ `verification-before-completion` checklist passed
 - ❌ STOP если pytest fails — fix перед Phase 6
 
 ---
 
-## Phase 6: Review (L5 domain reviewers)
+## Phase 6: Review (L5 domain reviewers + superpowers review skills)
 
 ### Триггер
 - Phase 5 verify passed
 - Code changes touched specific layers
+
+### Используемые skills
+
+| Skill | Когда |
+|-------|-------|
+| **`superpowers:requesting-code-review`** | Format request к L5 reviewer — context + diff + specific concerns + file refs |
+| **`superpowers:receiving-code-review`** | Process reviewer feedback systematically — categorize blockers/concerns/suggestions, address per category |
+| **`superpowers:dispatching-parallel-agents`** | Multiple reviewers (trading-logic + quant-stats + python) — single message с multiple Agent calls |
+| **`agent-skills:code-review-and-quality`** | DEPTH reference — five-axis review checklist |
+| **`agent-skills:security-and-hardening`** | MUST для money / API key / override.py changes |
 
 ### Procedure (per touched layer)
 
@@ -285,12 +367,35 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 | `src/marketdata/`, `src/platform/storage/`, `migrations/` | data-integrity-reviewer | YES |
 | Cross-module refactor / concurrency / DI / API stability | architecture-reviewer | YES |
 | Любой `*.py` (generic safety net) | python-reviewer | YES (после domain) |
+| Money / API keys / override / signing | + `agent-skills:security-and-hardening` checklist | YES если applies |
 
-**Параллельный dispatch:** если несколько reviewers применимо, dispatch в одном message (multiple Agent calls).
+### Procedure (using superpowers review skills)
+
+```
+1. PRE-REVIEW (controller):
+   - Use `superpowers:requesting-code-review` to format reviewer brief:
+     * Context (sprint goal, ADR refs)
+     * Diff (git diff or specific file refs)
+     * Specific concerns (areas reviewer should focus)
+     * Acceptance criteria
+2. DISPATCH (parallel если multiple reviewers):
+   - Use `superpowers:dispatching-parallel-agents` pattern:
+     Single message с multiple Agent(subagent_type="<reviewer>") calls
+3. POST-REVIEW (process feedback):
+   - Use `superpowers:receiving-code-review` skill:
+     * Categorize feedback: BLOCKER / CONCERN / SUGGESTION
+     * Address blockers first (must fix перед merge)
+     * Acknowledge concerns (decide fix-now vs defer)
+     * Note suggestions (consider future)
+4. RE-REVIEW если blockers fixed
+```
+
+**Параллельный dispatch:** explicit `superpowers:dispatching-parallel-agents` pattern — multiple Agent calls в одном message.
 
 ### HARD-GATE
 - ✅ Domain reviewer per touched area invoked
-- ✅ Blockers addressed
+- ✅ Reviewer brief formatted per `superpowers:requesting-code-review` (context + diff + concerns)
+- ✅ Blockers addressed (per `superpowers:receiving-code-review` categorization)
 - ✅ Concerns acknowledged (даже если не fix)
 - ❌ Skip review если "тривиально" — нет такого правила
 
@@ -331,6 +436,15 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 ### Триггер
 - Phase 7 sync done
 - All HARD-GATEs passed
+
+### Используемые skills
+
+| Skill | Когда |
+|-------|-------|
+| **`sprint-finish`** (project) | PRIMARY — HARD-GATE checklist (sprint-NN.md + canonical counts + Block 1↔2 sync + orphan-audit + index sync) |
+| **`superpowers:finishing-a-development-branch`** | Delegated by `sprint-finish` после HARD-GATEs — verify tests → 4 options (merge/PR/keep/discard) → execute → cleanup |
+| **`agent-skills:git-workflow-and-versioning`** | DEPTH reference — atomic commits, clean history |
+| **`agent-skills:shipping-and-launch`** | DEPTH reference — pre-launch checklist + monitoring + rollback plan |
 
 ### Procedure
 **Использовать skill:** `.claude/skills/sprint-finish/SKILL.md` → `superpowers:finishing-a-development-branch`
@@ -373,6 +487,60 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 
 ---
 
+## Cross-phase optional skills
+
+Не привязаны к конкретной фазе — invoked по необходимости в любой phase.
+
+### `superpowers:using-git-worktrees`
+- **Назначение:** Isolated worktree workspace для parallel sprint experiments OR sandbox audits.
+- **Когда:** (1) Нужно re-run audit / experiment без disturb текущей branch (S27 audit re-run примером был — мог использоваться worktree), (2) parallel sprint (rare для single-developer workflow).
+- **NOT default** — наш sequential workflow обычно работает на feature/sprint-N branch напрямую.
+
+### `superpowers:writing-skills`
+- **Назначение:** Methodology создания new project-level skill (`.claude/skills/<name>/SKILL.md`).
+- **Когда:** Когда existing skill не подходит и нужно создать новый workflow template (S28 sprint-orient/sprint-finish/wiki-update/brainstorm-init были созданы ad-hoc — повторное создание should follow эту methodology).
+- **Output:** `.claude/skills/<new-name>/SKILL.md` per progressive disclosure pattern (frontmatter + when to use + steps + anti-patterns).
+
+### `superpowers:using-superpowers` (meta)
+- **Назначение:** Auto-loaded session start — discovers и invokes other superpowers skills based on task type.
+- **Когда:** Каждая session — meta-level dispatch.
+- **NOT manually invoked** — runs automatically.
+
+## Skills × Phase integration map
+
+Полная карта какой skill в какой фазе invoked:
+
+| Skill | Phase | Trigger | Status |
+|-------|-------|---------|--------|
+| `sprint-orient` (project) | 1 | Session start | EXISTING |
+| `brainstorm-init` (project) | 2 | Trading scope questions | EXISTING |
+| `superpowers:brainstorming` | 2 | Non-trading scope questions | NEW (S29) |
+| `superpowers:writing-plans` | 3 | Plan creation | EXISTING |
+| `agent-skills:planning-and-task-breakdown` | 3 | DEPTH ref | EXISTING |
+| `superpowers:subagent-driven-development` | 4 | Code-heavy execute | EXISTING |
+| `superpowers:executing-plans` | 4 | Docs-heavy execute | EXISTING |
+| `superpowers:test-driven-development` | 4 | Каждая code task | EXISTING |
+| `superpowers:systematic-debugging` | 4 sub-flow | Bug encountered | NEW (S29) |
+| `superpowers:dispatching-parallel-agents` | 4 sub-flow + 6 | Parallel reviewer dispatch | NEW (S29) |
+| `agent-skills:test-driven-development` | 4 | DEPTH ref | EXISTING |
+| `agent-skills:context-engineering` | 4 | Subagent briefs > 200 слов | EXISTING |
+| `agent-skills:incremental-implementation` | 4 | DEPTH ref | EXISTING |
+| `superpowers:verification-before-completion` | 5 | Pre-completion checklist | NEW (S29) |
+| `superpowers:requesting-code-review` | 6 | Format reviewer brief | NEW (S29) |
+| `superpowers:receiving-code-review` | 6 | Process reviewer feedback | NEW (S29) |
+| `agent-skills:code-review-and-quality` | 6 | DEPTH ref | EXISTING |
+| `agent-skills:security-and-hardening` | 6 | Money/API/override changes | EXISTING |
+| `wiki-update` (project) | 7 | After src/ change | EXISTING |
+| `sprint-finish` (project) | 8 | Sprint complete | EXISTING |
+| `superpowers:finishing-a-development-branch` | 8 | Delegated by sprint-finish | EXISTING |
+| `agent-skills:git-workflow-and-versioning` | 8 | DEPTH ref | EXISTING |
+| `agent-skills:shipping-and-launch` | 8 | DEPTH ref | EXISTING |
+| `superpowers:using-git-worktrees` | cross-phase | Sandbox/parallel | NEW (S29) |
+| `superpowers:writing-skills` | cross-phase | New project skill creation | NEW (S29) |
+| `superpowers:using-superpowers` | meta | Session start auto | EXISTING |
+
+**Total: 26 skills mapped к kit flow** (13 superpowers + 5 project + 8 agent-skills).
+
 ## Anti-patterns (НЕ делать в любой фазе)
 
 - ❌ Skip фазу потому что "очевидно" / "тривиально"
@@ -384,14 +552,39 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 - ❌ Push с new ADR без index.md entry (hook block)
 - ❌ Push с ADR change без agent prompt touch (hook block)
 - ❌ Tag без sprint-NN.md page
+- ❌ Bug ad-hoc fix без `systematic-debugging` skill
+- ❌ Sequential reviewer dispatch где `dispatching-parallel-agents` подходит
+- ❌ Verify через "looks ok" вместо `verification-before-completion` checklist
+- ❌ Reviewer brief ad-hoc без `requesting-code-review` skill format
+- ❌ Reviewer feedback ad-hoc без `receiving-code-review` categorization
+- ❌ Создать new project skill ad-hoc без `writing-skills` methodology
 
 ## Связанные документы
 
 - [[development-workflow]] — английский оригинал (more detail)
-- [[tooling-inventory-ru]] — agents/skills/plugins/MCP catalog
+- [[tooling-inventory-ru]] — agents/skills/plugins/MCP catalog (full)
 - [[../decisions/0017-review-agent-harness]] — review agents matrix
-- [[../decisions/0041-sprint-28-process-enforcement]] — этот процесс ADR
+- [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
+- [[../decisions/0042-sprint-29-superpowers-integration]] — superpowers integration ADR (этот спринт)
+
+### Project skills
 - `.claude/skills/sprint-orient/SKILL.md` — Phase 1
 - `.claude/skills/brainstorm-init/SKILL.md` — Phase 2
 - `.claude/skills/wiki-update/SKILL.md` — Phase 7
 - `.claude/skills/sprint-finish/SKILL.md` — Phase 8
+
+### Superpowers skills (13)
+- `superpowers:brainstorming` — Phase 2 (non-trading)
+- `superpowers:writing-plans` — Phase 3
+- `superpowers:subagent-driven-development` — Phase 4 (code)
+- `superpowers:executing-plans` — Phase 4 (docs)
+- `superpowers:test-driven-development` — Phase 4
+- `superpowers:systematic-debugging` — Phase 4 sub-flow
+- `superpowers:dispatching-parallel-agents` — Phase 4+6
+- `superpowers:verification-before-completion` — Phase 5
+- `superpowers:requesting-code-review` — Phase 6
+- `superpowers:receiving-code-review` — Phase 6
+- `superpowers:finishing-a-development-branch` — Phase 8
+- `superpowers:using-git-worktrees` — cross-phase
+- `superpowers:writing-skills` — cross-phase
+- `superpowers:using-superpowers` — meta auto-loaded
