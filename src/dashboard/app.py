@@ -18,7 +18,7 @@ from __future__ import annotations
 import webbrowser
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -29,6 +29,7 @@ from src.dashboard.backtest_runner import (
     BacktestRequest,
     INTERVAL_LABELS,
     STRATEGY_PRESETS,
+    get_documentation,
     get_run,
     list_data_availability,
     list_runs,
@@ -38,6 +39,20 @@ from src.dashboard.backtest_runner import (
 
 _DIR = Path(__file__).resolve().parent
 _TEMPLATES = Jinja2Templates(directory=str(_DIR / "templates"))
+
+
+class BacktestPayload(BaseModel):
+    """Module-level model — FastAPI resolves к request Body automatically.
+
+    NOTE: Если defined inside create_app() closure → FastAPI 0.136 treats как
+    query parameter (422 "missing field"). Must be module-level.
+    """
+    strategy_id: str
+    symbol: str
+    interval: str
+    start: str
+    end: str
+    force: bool = False
 
 
 def create_app() -> FastAPI:
@@ -75,16 +90,8 @@ def create_app() -> FastAPI:
     async def get_availability() -> dict[str, dict[str, object]]:
         return list_data_availability()
 
-    class BacktestPayload(BaseModel):
-        strategy_id: str
-        symbol: str
-        interval: str
-        start: str
-        end: str
-        force: bool = False
-
     @app.post("/api/backtest")
-    async def post_backtest(payload: BacktestPayload) -> dict[str, object]:
+    async def post_backtest(payload: BacktestPayload = Body(...)) -> dict[str, object]:
         try:
             req = BacktestRequest(
                 strategy_id=payload.strategy_id,
@@ -109,6 +116,14 @@ def create_app() -> FastAPI:
         if result is None:
             raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
         return result
+
+    @app.get("/api/docs")
+    async def get_docs() -> dict[str, object]:
+        """S26: structured documentation для UI Documentation tab.
+
+        Returns indicators / multipliers / strategies / methodology lists.
+        """
+        return get_documentation()
 
     return app
 
