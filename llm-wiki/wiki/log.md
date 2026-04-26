@@ -1150,3 +1150,71 @@ NO new tests (trivial config change):
 3. Mean-reversion RSI+BB BTC-only relaxed (S17) — FAIL T5 count only (5/6 PASS + DSR + MC sig)
 
 **Strategy hypothesis space: positive direction found но не conjoint pass.** Operator decides v0.4 if/when (different timeframe / hybrid ML / multi-symbol revival).
+
+## [2026-04-26] sprint-end | Sprint 18 — v0.1 FINAL honest close
+
+**Verdict: HONEST CLOSE v0.1 FINAL** (pre-committed per ADR 0032 amendment 3 BINDING — S17 T5 count failthrough triggered, no new brainstorm needed).
+
+### Final v0.1 status
+
+3 strategy hypotheses tested across 4.81y BTC Bybit Spot 1H — all FAIL conjoint per acceptance-criteria.md T1-T6 + DSR:
+
+| # | Hypothesis | Sprint | OOS Trades | Pass | Verdict |
+|---|-----------|--------|-----------|------|---------|
+| 1 | EMA crossover trend-following | S13 | 20 | T3 only | FAIL T1+T2+T4+T5 |
+| 2 | Mean-reversion multi-symbol BTC+ETH+SOL | S15 | 108 | T1-T4 | FAIL T6+MC+DSR |
+| 3 | Mean-reversion BTC-only relaxed | S17 | 59 | T1-T4+T6+DSR+MC | FAIL T5 count only |
+
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 33 ADRs + 20 sprint pages)
+- Strategy validation: ❌ NEGATIVE conjoint × 3 hypotheses
+- MVP DONE per acceptance-criteria.md: NOT achieved
+- Mainnet exposure: 0 (33min Bybit demo only since S12)
+- Tag: v0.1.0-alpha.18 = v0.1 FINAL honest close marker
+
+### Critical scientific finding (S17 partial signal preserved)
+
+S17 produced **MC p=0.01 statistically significant** + DSR=1.0 + T1=25.99 + 5/6 criteria PASS на 59 BTC trades. Strategy edge IS real on BTC mean-reversion regime. **Sample size insufficient** на 1H BTC alone — frequency structural limit ~60-70 trades / 4.81y maximum (S15 baseline 44 + S17 relaxed 59, AND-gate joint multiplier 1.34x).
+
+Future MVP-DONE attempts must address frequency dimension:
+- Higher-frequency timeframe (15M = 4x — Q3 architectural blockers preserved)
+- Hybrid ML filter (S17 evidence supports — partial signal exists для ML к learn)
+- Multi-symbol aggregation (out of MVP scope per user 2026-04-26)
+
+### Deliverables (S18, docs-only)
+
+- T1 ADR 0033 accepted
+- T2 sprint-18-honest-close-v01.md created
+- T3 cross_trial_sharpes archival: data/cross_trial_sharpes.json → data/cross_trial_sharpes_v0.1-final.json + reset к {"trials": []} для v0.4 fresh-start
+- T4 wiki sync (current-state TL;DR + ADR 32→33, sprint pages 19→20, +S18 row)
+- T5 log.md sprint-end (this entry)
+- T6 SPRINT_STATE → between-sprints, tag alpha.18
+- T7 PHASE 8 ship via sprint-finish
+
+### Tests / quality
+
+NO code changes:
+- pytest unit: 732 passed (S17 baseline preserved, no regressions)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved (no migrations changed)
+
+### Cross-cutting concerns binding (per ADR 0033)
+
+- **CC1 S17 partial signal preserved** для v0.4 institutional knowledge (mean-reversion regime works)
+- **CC2 cross_trial_sharpes archival** BINDING (mirrors S16 CC2 — Bailey 2014 N_trials per hypothesis)
+- **CC3 Frequency structural limit documented** — single-symbol BTC 1H mean-reversion ~60-70 trades / 4.81y max
+- **CC4 Q3 15M architectural blockers preserved** (interval_map + heal_max_age production safety)
+- **CC5 Tag semantics**: alpha.18 = v0.1 FINAL marker, NOT MVP DONE
+- **CC6 No spec amendment**: T1-T6 thresholds preserved
+- **CC7 Multi-symbol infrastructure preserved post-MVP**: S15 work не trash
+
+### v0.4+ future direction options (operator-driven, no commitment)
+
+- (v0.4-A) BTC 15M mean-reversion — STRONGEST viable path per S17 evidence (4x frequency = T5 floor reachable estimate)
+- (v0.4-B) Hybrid mean-reversion + ML XGBoost filter — S17 evidence reverses ADR 0030 ML defer rationale
+- (v0.4-C) Multi-symbol revival — out of MVP scope per user 2026-04-26
+- (v0.4-D) Different timeframe 4H — НЕ recommended per S17 evidence
+- (v0.4-E) Project pause — 0 sprints, freeze
+
+### Roadmap
+
+**v0.1 closed FINAL at S18 honest.** Tag v0.1.0-alpha.18. Project state: between-sprints с post-v0.1-honest-close-FINAL marker. 3rd honest close в проекте (S14 + S16 + S18). 3 strategy hypotheses tested + 1 partial signal observed = publishable scientific contribution. Operator decides v0.4 if/when.
