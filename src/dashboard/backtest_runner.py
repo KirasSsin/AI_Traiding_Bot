@@ -544,6 +544,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
             )
 
         # S25: build full WFA config from preset
+        # S27 T1: bars_per_year passed к replay_engine для timeframe-correct annualization
         strategy_config: dict[str, object] = {
             "trading": {
                 "initial_balance": 10000.0,
@@ -557,6 +558,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
                 "type": preset["type"],
                 "indicators": preset["indicators"],
             },
+            "bars_per_year": BARS_PER_YEAR[req.interval],
         }
         from typing import cast
         from src.risk.trade_history import TradeRecord
@@ -611,6 +613,23 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     gross_loss = abs(sum(float(t.pnl_quote) for t in sym_trades if float(t.pnl_quote) < 0))
     profit_factor = (gross_profit / gross_loss) if gross_loss > 0 else None
     total_pnl = sum(float(t.pnl_quote) for t in sym_trades)
+
+    # S27: per-trade dump для formula audit (trader-expert optimization)
+    trades_dump: list[dict[str, Any]] = []
+    for t in sym_trades:
+        trades_dump.append({
+            "symbol": t.symbol,
+            "entry_ts": str(t.entry_ts),
+            "exit_ts": str(t.exit_ts),
+            "qty": float(t.qty),
+            "entry_price": float(t.entry_price),
+            "exit_price": float(t.exit_price),
+            "pnl_quote": float(t.pnl_quote),
+            "pnl_pct": float(t.pnl_pct),
+            "fees_paid": float(t.fees_paid),
+            "reason_code": str(t.reason_code),
+            "kelly_phase": int(t.kelly_phase),
+        })
     # Verdict
     failed_criteria: list[str] = []
     t1 = nan_safe(metrics["t1_sharpe_oos"])
@@ -731,11 +750,20 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         "acceptance_gate": gate,
         "bars_per_year": bars_per_year,
         "warnings": warnings,
+        "trades_dump": trades_dump,  # S27 audit
         "cached": False,
     }
 
     # Cache к disk
     cache_path.write_text(json.dumps(result, default=str, indent=2))
+
+    # S27: refresh aggregated audit doc (best-effort, non-blocking)
+    try:
+        from scripts.audit_formulas import rebuild_audit
+        rebuild_audit()
+    except Exception:  # noqa: BLE001 — audit refresh не critical для backtest result
+        pass
+
     return result
 
 

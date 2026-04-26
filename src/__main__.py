@@ -469,12 +469,15 @@ def _default_wfa_config() -> dict[str, object]:
 
 def _run_wfa_single_symbol(
     *, symbol: str, df: pd.DataFrame, strategy_config: dict[str, object] | None = None,
+    bars_per_year: int = 8760,
 ) -> "tuple[list[object], list[float], dict[str, object], float]":
     """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
 
     S15 T5 — extracted from _cmd_wfa for multi-symbol aggregation.
     S25 ADR 0039: optional strategy_config override (для dashboard preset selection).
     None → defaults к _default_wfa_config (S17 mean-reversion).
+    S27 T1: bars_per_year injected в config — fixes replay_engine annualization
+    bug (sqrt(24*365) hardcoded). Default 8760 = 1H для backward compat.
     Note: trades typed as list[object] (forward-compat) — actual TradeRecord
     instances; cast at call site if needed.
     """
@@ -482,6 +485,10 @@ def _run_wfa_single_symbol(
     splitter = WindowSplitter()  # ADR 0014 defaults
     runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
     config = strategy_config if strategy_config is not None else _default_wfa_config()
+    # S27 T1: ensure bars_per_year present (override если уже в strategy_config)
+    if "bars_per_year" not in config:
+        config = dict(config)
+        config["bars_per_year"] = bars_per_year
     runner_result = runner.run(df=df, config=config)
 
     # MC sign-flip on aggregated OOS returns
@@ -553,6 +560,11 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     mc_p_values: list[float] = []
 
     interval_arg = getattr(args, "interval", "60")
+    # S27 T1: bars_per_year derived from interval, passed к replay_engine
+    bars_per_year_map: dict[str, int] = {
+        "5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365,
+    }
+    bars_per_year_cli = bars_per_year_map.get(interval_arg, 8760)
     for symbol in symbols:
         try:
             df = _load_ohlcv(symbol=symbol, start=args.start, end=args.end, interval=interval_arg)
@@ -566,7 +578,7 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
             continue
 
         sym_trades, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
-            symbol=symbol, df=df
+            symbol=symbol, df=df, bars_per_year=bars_per_year_cli,
         )
         from typing import cast as _cast
         all_trades.extend(_cast(list[_TradeRecord], sym_trades))
