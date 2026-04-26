@@ -2,11 +2,41 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 32
-phase: between-sprints
-branch: main
+sprint: 32b
+phase: 4-execution
+branch: feature/sprint-32b-kit-phase-1-improvements
 tag: v0.1.0-alpha.32
 ---
+
+## S32b IN PROGRESS 🟡
+
+Sub-sprint S32 series (mirror S8a/S8b/S8c pattern). Branch: `feature/sprint-32b-kit-phase-1-improvements`. Plan committed: `plans/2026-04-27-sprint-32b-kit-phase-1-improvements.md` (3cb442d).
+
+### Phase tracking (S32b — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S32 ship |
+| 2 Brainstorm | skipped (operator-specified per КУ Phase 1 deliverables) | inline в plan |
+| 3 Plan | done | `plans/2026-04-27-sprint-32b-kit-phase-1-improvements.md` (3cb442d) |
+| 4 Execute | in_progress | T1-T6 controller-driven (config + scripts + docs sprint) |
+| 5 Verify | pending | pytest 770 baseline + bash -n hooks + pre-commit run + canonical counts |
+| 6 Review | pending | python-reviewer + architecture-reviewer + doc-reviewer (parallel) |
+| 7 Sync | pending | log.md sprint-end + index/current-state в T6 |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.32b (CI runs first time) |
+| 9 Close | pending | SPRINT_STATE → between-sprints |
+
+### Phase 4 — task progress (S32b)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 dashboard-reviewer L5 agent | pending | — | out-of-repo `~/.claude/agents/` + wiki page |
+| T2 SPRINT_STATE freshness check hook | pending | — | bash script + settings.json + positive/negative test + wiki page |
+| T3 Pre-commit hooks (ruff + mypy) | pending | — | `.pre-commit-config.yaml` + pyproject.toml dev dep |
+| T4 GitHub Actions CI | pending | — | `.github/workflows/ci.yml` (TA-Lib install + pytest + mypy + ruff) |
+| T5 SQLite MCP server | pending | — | uvx mcp-server-sqlite + settings.json mcpServers + wiki doc |
+| T6 ADR 0046 + sprint-32b page + index/counts | pending | — | 45→46 ADRs / 32→33 sprints / 9→10 agents / 6→7 hooks / 6→7 MCP / 38→40 components |
+| Ship | pending | — | tag alpha.32b |
 
 ## S32 SHIPPED ✅
 
