@@ -2,11 +2,42 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 32c
-phase: between-sprints
-branch: main
+sprint: 32d
+phase: 4-execution
+branch: feature/sprint-32d-kit-phase-3-improvements
 tag: v0.1.0-alpha.32c
 ---
+
+## S32d IN PROGRESS 🟡
+
+Sub-sprint S32 series **FINAL**. Branch: `feature/sprint-32d-kit-phase-3-improvements`. Plan committed: `plans/2026-04-27-sprint-32d-kit-phase-3-improvements.md` (29ad020).
+
+**Honest scope** (per pre-plan analysis): Memory corpus bridges 2-4 implementation = research notes only (claude-mem internal API constraints). 4 implementations + research notes + ADR/sync. КУ ~45% / 2.5-3 hours forecast. **After S32d ship → S33 trading work begins.**
+
+### Phase tracking (S32d — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S32c ship |
+| 2 Brainstorm | skipped (operator-specified per ADR 0047 carry-overs) | inline pre-plan analysis |
+| 3 Plan | done | `plans/2026-04-27-sprint-32d-kit-phase-3-improvements.md` (29ad020) |
+| 4 Execute | in_progress | T1-T5 controller-driven |
+| 5 Verify | pending | pytest 773 baseline + bash -n hook + canonical counts |
+| 6 Review | pending (likely skip) | no src/ touched |
+| 7 Sync | pending | log.md sprint-end + index/current-state в T5 |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.32d (CI 3rd PR) |
+| 9 Close | pending | SPRINT_STATE → between-sprints + S33 trading prep |
+
+### Phase 4 — task progress (S32d)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 bybit-api-reviewer L5 agent | pending | — | out-of-repo `~/.claude/agents/bybit-api-reviewer.md` + wiki page (6-axis Bybit V5 API checklist) |
+| T2 Context budget hook MVP | pending | — | out-of-repo bash + UserPromptSubmit registration + wiki page (transcript size warn 800KB/1.2MB thresholds) |
+| T3 Schedule wire + Sprint metrics | pending | — | tooling-inventory Section 23 (audit_formulas.py wire) + sprint-metrics.md NEW page |
+| T4 Corpus bridges research notes | pending | — | tooling-inventory Section 24 (Bridge 2 ship-ready cron / Bridge 3 medium / Bridge 4 NOT recommended) |
+| T5 ADR 0048 + sprint-32d page + sync | pending | — | 47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents + S32 series complete note |
+| Ship | pending | — | tag v0.1.0-alpha.32d |
 
 ## S32c SHIPPED ✅
 
