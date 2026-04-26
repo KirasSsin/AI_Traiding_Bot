@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 17
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.17
+sprint: 18
+phase: 8-ship
+branch: feature/sprint-18-honest-close-v01
+tag: v0.1.0-alpha.18
 ---
 
 # SPRINT STATE
@@ -15,7 +15,7 @@ tag: v0.1.0-alpha.17
 
 ## Текущий статус
 
-**S17 ready к ship (tag `v0.1.0-alpha.17`).** 19 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15 + S16 + S17. **MVP retry hypothesis #3 = FAIL T5 count only** (59 trades < 100), **5/6 PASS + DSR=1.0 + MC p=0.01 stat-sig** = first time positive direction по most criteria. Per ADR 0032 amendment 3 BINDING → S18 = honest close v0.1 (3 hypotheses tested = publishable scientific contribution).
+**v0.1 FINAL honest close. S18 ready к ship (tag `v0.1.0-alpha.18`).** 20 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15 + S16 + S17 + S18. **3 strategy hypotheses tested across 4.81y BTC Bybit Spot 1H — all FAIL conjoint per acceptance-criteria.md**. S17 partial signal evidence preserved (MC p=0.01 stat-sig institutional knowledge). cross_trial_sharpes archived к v0.1-final.json + reset для v0.4 readiness.
 
 **Final v0.1 status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
@@ -23,42 +23,40 @@ tag: v0.1.0-alpha.17
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
 - Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-## Последний спринт (S17 — BTC-only mean-reversion relaxed, MVP retry hypothesis #3)
+## Последний спринт (S18 — v0.1 FINAL honest close)
 
-Config tuning + measurement. Per S17 PHASE 2 brainstorm trader EXPAND verdict с 3 amendments.
-- T1 ADR 0032 accepted (BTC-only, RSI 35/65 + BB 1.5σ, NO variance cap, T5 failthrough)
-- T2 indicators.py mean_reversion branch (NO change — config-driven from S15)
-- T3 _run_wfa_single_symbol config update (relaxed thresholds) + sprint env var fix
-- T4 measurement BTC-only --symbol BTCUSDT 4.81y → **VERDICT FAIL T5 count only** (59 trades < 100)
-- T5 sprint-17 page + ADR + wiki sync (this commit)
-- T6 PHASE 8 ship — pending
+Documentation only + cross_trial_sharpes archival. NO code changes. Pre-committed per ADR 0032 amendment 3 BINDING.
+- T1 ADR 0033 accepted
+- T2 sprint-18-honest-close-v01.md
+- T3 cross_trial_sharpes.json → _v0.1-final.json archival + reset к [] для v0.4 fresh-start
+- T4 wiki sync (current-state TL;DR + ADR 32→33, sprint pages 19→20, +S18 row)
+- T5 log.md sprint-end
+- T6 SPRINT_STATE → between-sprints, tag alpha.18
+- T7 PHASE 8 ship — pending
 
-Strategy criteria results: T1=25.99 PASS, T2=4446 PASS, T3=2.8% PASS, T4 win 47.5%/RR 154.5 PASS, **T5 FAIL n=59**, T6=0.712 PASS, **DSR=1.0 PASS**, **MC p=0.01 PASS** stat-sig.
+3 strategy hypotheses tested across 4.81y BTC Bybit Spot 1H — all FAIL conjoint:
+- S13 EMA crossover trend-following: 20 trades, FAIL T1+T2+T4+T5
+- S15 mean-reversion multi-symbol BTC+ETH+SOL: 108 trades T5 reached, FAIL T6+MC+DSR
+- S17 mean-reversion BTC-only relaxed: 59 trades, FAIL T5 count only — но 5/6 + DSR=1.0 + MC p=0.01 stat-sig PASS
 
-Per ADR 0032 amendment 3 BINDING: T5 count <100 → FAIL → **S18 = honest close v0.1** (3 hypotheses tested).
-
-Critical insight: strategy edge IS real on BTC mean-reversion regime (5/6 + DSR + MC sig — first time observed), но sample insufficient на 1H BTC alone. Future MVP-DONE attempts требуют higher-frequency timeframe / hybrid ML / multi-symbol revival (out of MVP scope).
+Critical scientific finding: strategy edge IS real on BTC mean-reversion regime (S17 partial signal MC p=0.01 stat-sig). Sample insufficient на 1H BTC alone — frequency structural limit ~60-70 trades / 4.81y maximum. v0.4 must address frequency dimension (15M timeframe / hybrid ML / multi-symbol post-MVP).
 
 ## Следующее действие
 
 ```
-S17 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.17.
+S18 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.18.
 
-S17 verdict: FAIL T5 count only (59 < 100), но 5/6 + DSR + MC sig = strategy edge real.
-Per ADR 0032 amendment 3 BINDING → S18 = honest close v0.1.
+v0.1 closed FINAL honest. 3 strategy hypotheses tested + 1 partial signal observed.
+data/cross_trial_sharpes_v0.1-final.json archived locally, fresh [] для v0.4.
 
-Then S18 docs-only sprint:
-- ADR 0033 v0.1 honest close (3 hypotheses tested negative across 4.81y BTC)
-- sprint-18-honest-close-v01.md
-- Document MC p=0.01 statistically significant signal observed (institutional knowledge)
-- Archive cross_trial_sharpes.json к _v0.1-final.json
-- Tag v0.1.0-alpha.18 = v0.1 final honest close marker
+Operator decides v0.4 direction (no commitment):
+(v0.4-A) BTC 15M mean-reversion — STRONGEST viable per S17 evidence (4x freq = T5 reachable est.)
+(v0.4-B) Hybrid mean-reversion + ML XGBoost filter — S17 evidence reverses ADR 0030 ML defer
+(v0.4-C) Multi-symbol revival — out of MVP scope per user (post-MVP if MVP-DONE achieved BTC-only first)
+(v0.4-D) Different timeframe 4H — НЕ recommended per S17 evidence
+(v0.4-E) Project pause — 0 sprints, freeze
 
-After S18: operator decides v0.4 direction (no commitment):
-- Different timeframe (15M/4H — Q3 blockers documented)
-- Hybrid ML filter (S17 evidence supports — partial signal exists)
-- Multi-symbol revival (out of MVP scope per user 2026-04-26)
-- Project pause
+3 honest closes в проекте (S14 + S16 + S18). Per Bailey 2014 N_trials per hypothesis: v0.4 fresh strategy resets DSR baseline cleanly.
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
