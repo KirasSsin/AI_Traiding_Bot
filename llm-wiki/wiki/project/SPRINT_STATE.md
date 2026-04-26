@@ -29,8 +29,8 @@ tag: v0.1.0-alpha.29
 | T2 test-engineer agent | done | (out-of-repo) | Sonnet, test pyramid + property tests + Hypothesis + Trading-specific rules |
 | T3 doc-reviewer agent | done | (out-of-repo) | Haiku, frontmatter+links+Block 1↔2+canonical counts |
 | T4 phase-advance.sh hook | done | (out-of-repo + settings.json) | bash -n + negative test verified (Phase 5 pending → block + helpful error). Registered к PreToolUse Bash matcher |
-| T5 wiki↔mem cascade design | in_progress | — | Cascade rule + 4 bridges (3 deferred) |
-| T6 tooling-inventory-ru.md | pending | — | 9 agents + new hook + Section 13 cascade |
+| T5 wiki↔mem cascade design | done | (combined с T6) | Section 13 NEW в tooling-inventory-ru.md — 4-step cascade (wiki→mem→grep→raw) + examples + bridges 2-4 deferred |
+| T6 tooling-inventory-ru.md | done | (pending commit) | Section 1 expanded (6→9 agents с status legend) + Section 8 +phase-advance.sh + Section 13 NEW cascade + decision matrix +5 entries |
 | T7 sprint-flow-ru.md Phase 6 | pending | — | Reviewer matrix expanded |
 | T8 CLAUDE.md | pending | — | Tier-2 + cascade rule |
 | T9 ADR 0043 + sprint-30 page + sync | pending | — | Wiki diffs |

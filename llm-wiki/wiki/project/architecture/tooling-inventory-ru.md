@@ -39,7 +39,11 @@ sources:
 | Storage / migrations / parquet / SQLite WAL | `data-integrity-reviewer` agent |
 | Cross-module refactor / concurrency / DI | `architecture-reviewer` agent |
 | Любой `*.py` (generic) | `python-reviewer` agent (после domain) |
-| Money / API keys / override / signing | `agent-skills:security-and-hardening` checklist |
+| **Money / API keys / override / signing / Mainnet** 🆕 | `security-auditor` agent (opus) |
+| **New module без tests / coverage gap / property test design** 🆕 | `test-engineer` agent (sonnet) |
+| **Wiki consistency check (post wiki-update)** 🆕 | `doc-reviewer` agent (haiku, lightweight) |
+| **Pre-merge Phase 5 verify enforcement** 🆕 | `phase-advance.sh` hook fires automatically |
+| **"Did we solve X?" / past decision lookup** | wiki-mem cascade (Section 13): wiki → mem-search → grep → raw |
 | **Parallel sandbox sprint / experiment** | `superpowers:using-git-worktrees` skill |
 | **Создать new project skill (`.claude/skills/`)** | `superpowers:writing-skills` skill (methodology) |
 | Sprint complete | `sprint-finish` skill → `superpowers:finishing-a-development-branch` |
@@ -51,9 +55,11 @@ sources:
 
 ---
 
-## 1. Domain Reviewer Agents (6) — `~/.claude/agents/`
+## 1. Domain Reviewer Agents (9) — `~/.claude/agents/`
 
-L5 layer per ADR 0017. Custom agents с project-specific knowledge. Все имеют `memory: project` (institutional knowledge в `.claude/agent-memory/<agent>/MEMORY.md`).
+L5 layer per ADR 0017 + S30 expansion (ADR 0043). Custom agents с project-specific knowledge. Все имеют `memory: project` (institutional knowledge в `.claude/agent-memory/<agent>/MEMORY.md`).
+
+**Status legend:** ✅ EXISTING (до S30), 🆕 NEW (S30 tier-2 expansion).
 
 ### 1.1 trader-expert
 - **Назначение:** PHASE 2 brainstorm decision-maker. Решает scope/strategy/architecture-with-trading-semantics questions через 5-field structured questionnaire → CONFIRM/REVISE/DEFER/EXPAND verdicts. Поддерживает iterative justify ROUND 2 (BINDING) на REVISE-disagreement.
@@ -98,12 +104,37 @@ L5 layer per ADR 0017. Custom agents с project-specific knowledge. Все им�
 - **Модель:** **haiku** (downgraded post-S13 для cost efficiency)
 - **Memory:** project-stack, ruff-isort config.
 
-### 1.6 architecture-reviewer
+### 1.6 architecture-reviewer ✅
 - **Назначение:** Senior backend architecture reviewer для AI Trading Bot v0.1. Purely architectural decisions без trading semantics: cross-module refactor, concurrency design (async migration, lock policy), DI patterns, component decomposition, cross-cutting concerns (error/retry/logging), performance patterns (batch vs streaming, caching), API stability + cohesion/coupling.
 - **Когда:** MUST BE USED перед любым architectural change spanning multiple modules OR когда concurrency model touched.
 - **Не использовать для:** Trading domain semantics (trader-expert), math (quant-stats), storage (data-integrity), Python idioms (python-reviewer).
 - **Модель:** sonnet 4.6
 - **Memory:** dashboard-context S25, multi-timeframe-multi-symbol S15, concurrency-model, DI-wiring S11, parallel-interval-maps.
+
+### 1.7 security-auditor 🆕 (S30)
+- **Назначение:** Vulnerability detection / threat modeling / secure coding (OWASP / API keys / signing / override paths / Mainnet integration).
+- **Когда:** MUST BE USED для money paths, API keys, override.py, signing/HMAC, withdrawal/transfer code, Mainnet integration changes. S5+ stack hardening planned.
+- **Не использовать для:** Trading logic correctness (trading-logic-reviewer), math (quant-stats-reviewer), generic Python (python-reviewer).
+- **Модель:** opus
+- **Severity output:** BLOCKER / HIGH / MEDIUM / LOW
+- **Trading-specific rules:** API keys NEVER в code, HMAC override.py REQUIRED, withdraw whitelist BINDING, kill-switch auth REQUIRED, position size bounds, Bybit response validation, Mainnet/Testnet detection BINDING.
+- **Memory:** `.claude/agent-memory/security-auditor/` — vulnerability classes observed, secret rotation policies, audit findings + remediation status.
+
+### 1.8 test-engineer 🆕 (S30)
+- **Назначение:** Test strategy / writing tests / coverage analysis (pytest, Hypothesis, pytest-cov, property-based tests для math invariants).
+- **Когда:** New modules без tests, coverage gaps, property test design (DSR/Kelly/MC math invariants), regression tests для historical bugs (S27 lesson — 4 formula bugs survived 25 sprints).
+- **Не использовать для:** Math correctness (quant-stats-reviewer оценивает correctness формулы, test-engineer оценивает coverage/quality test).
+- **Модель:** sonnet
+- **Trading-specific rules:** Math invariants → property tests (DSR ∈ [0,1], MC p ∈ [0,1]). Decimal precision tests. Timeframe parametrization (S27 T1 lesson). OHLCV invariants (high ≥ low etc). FSM transition coverage. ReasonCode coverage. Look-ahead regression tests (S2/S22/S27 lessons).
+- **Memory:** `.claude/agent-memory/test-engineer/` — test patterns, coverage gaps recurring, property test invariants discovered, Hypothesis strategy templates.
+
+### 1.9 doc-reviewer 🆕 (S30)
+- **Назначение:** Lightweight wiki consistency reviewer — frontmatter completeness, link integrity, Block 1↔Block 2 sync (per ADR 0017 amendment 2026-04-25), canonical counts consistency, cross-reference integrity, index.md sync, tag taxonomy.
+- **Когда:** AFTER `wiki-update` skill runs OR before sprint ship для verify wiki consistency.
+- **Не использовать для:** Content quality / accuracy (domain reviewers), code review (python-reviewer), process methodology (controller).
+- **Модель:** haiku (lightweight, speed-optimized)
+- **Tools:** Read/Grep/Glob (read-only)
+- **Memory:** `.claude/agent-memory/doc-reviewer/` — frontmatter omissions recurring, broken link patterns, Block 1↔2 drift patterns, canonical count drift sources.
 
 ---
 
@@ -384,6 +415,13 @@ Mechanical enforcement, не optional reminders.
 - **Block если:** Branch matches `feature/sprint-NN-*` BUT нет plan file в `wiki/project/plans/<YYYY-MM-DD>-sprint-NN-*.md`
 - **Fix:** Invoke `superpowers:writing-plans` skill, create plan file
 
+### 8.6 phase-advance.sh (S30+) 🆕
+- **Trigger:** PreToolUse on `gh pr merge`
+- **Block если:** Branch `feature/sprint-NN-*` AND SPRINT_STATE Phase 5 status != "done" AND != "skipped (...)"
+- **Fix:** Run `superpowers:verification-before-completion` checklist (pytest + mypy + canonical counts) → update SPRINT_STATE Phase 5 → "done"
+- **Mechanism:** Parses Phase tracking table (S28 template) → extracts Phase 5 status (2nd column)
+- **Tested:** positive (Phase 5 done → exit 0), negative (Phase 5 pending → exit 2 + helpful error с required action checklist)
+
 ### 8.4 wiki-broken-link-check.sh
 - **Trigger:** PreToolUse on git push
 - **Block если:** Broken `[[wiki-link]]` в touched files
@@ -468,13 +506,97 @@ Mechanical enforcement, не optional reminders.
 
 S29 added 7 NEW superpowers skills к existing 6 = full 13 superpowers integrated.
 
+## 13. LLMWiki ↔ Claude-mem cascade rule (S30 ADR 0043)
+
+Two systems target token economy + context delivery:
+- **llmwiki** — structured curated wiki/ (frontmatter + cross-links + sources tracking). 4-7× compression vs raw files. Strengths: organized, current, sourced.
+- **claude-mem** — semantic search past sessions (mem-search). "Did we solve X?" в seconds. Strengths: cross-session memory, semantic, fast.
+
+### Cascade order (token-optimal lookup)
+
+ВСЕГДА следуй cascade order для context lookups (NOT random pick):
+
+```
+Query → check sequence:
+  STEP 1: wiki/index.md → wiki/<page>.md (curated structured, tagged)
+            ↓ if not found / insufficient
+  STEP 2: mem-search smart_search "<query>" (past session observations)
+            ↓ if not found
+  STEP 3: Grep raw src/ + Docs/ (current code state)
+            ↓ if needed
+  STEP 4: Read raw file с offset+limit (full content)
+```
+
+### Rationale
+
+| Step | Source | Token cost | Coverage | When best |
+|------|--------|-----------|----------|-----------|
+| 1 wiki | `wiki/components/`, `wiki/decisions/`, `wiki/architecture/` | LOW (curated) | High-value compressed | Architecture / decisions / patterns |
+| 2 mem | `mcp__plugin_claude-mem_mcp-search__smart_search` | LOW (semantic) | Past sessions | "Did we solve X?" / "Did we decide Y?" |
+| 3 grep | `src/`, `Docs/` raw via Grep tool | MEDIUM | Current code | Symbol / function lookup |
+| 4 read | Read с offset+limit | HIGH | Authoritative | Full implementation needed |
+
+### Examples
+
+**Query: "Как работает Wilder smoothing для RSI?"**
+```
+STEP 1 wiki: wiki/trading/indicators/rsi.md → найден (strength: curated formula)
+DONE — не lookup mem/grep/raw.
+```
+
+**Query: "Did we decide об multi-symbol scope для S15?"**
+```
+STEP 1 wiki: wiki/project/decisions/0030-sprint-15-*.md → найден ADR
+DONE.
+```
+
+**Query: "Как S22 решил T5 floor reachability?"**
+```
+STEP 1 wiki: wiki/project/sprints/sprint-22-4h-test.md → найден sprint page
+DONE.
+```
+
+**Query: "Когда мы добавили dispatch parallel pattern?"**
+```
+STEP 1 wiki: search index.md / log.md → не нашёл точно
+STEP 2 mem-search: smart_search "dispatch parallel" → returns S29 observations
+DONE.
+```
+
+**Query: "Где определена calculate_rsi функция?"**
+```
+STEP 1 wiki: wiki/project/components/strategy.md → пишет про calculate_rsi
+STEP 3 grep: grep -rn "def calculate_rsi" src/ → найдено `src/signalgen/indicators.py:50`
+DONE.
+```
+
+### Anti-patterns (cascade violations)
+
+- ❌ Skip STEP 1 wiki — jump straight к mem-search OR Read raw (loses curation)
+- ❌ Use mem-search для current code lookup (mem corpus = past sessions, не current state)
+- ❌ Use Read раньше Grep для symbol search (Grep faster + bounded output)
+- ❌ Read large file без offset+limit (25k token overflow risk)
+- ❌ Use grep на raw `Docs/` files без wiki check first (raw = unstructured)
+
+### Bridges (deferred к S31+)
+
+S30 documents cascade rule. Future bridges (technical implementation):
+
+- **Bridge 2 — wiki-mem-corpus-sync** (S31+): Periodic indexing of wiki/ → claude-mem corpus → unified search. Defer: requires claude-mem API investigation.
+- **Bridge 3 — chapter mark auto-link к log.md** (S31+): `mcp__ccd_session__mark_chapter` writes entry в `wiki/log.md`. Defer: requires hook integration.
+- **Bridge 4 — frontmatter tags → mem corpus categorization** (S31+): wiki frontmatter (type/tags/sources) feed mem corpus filtering. Defer: requires schema understanding.
+
+**S30 deliverable:** documentation enforcement (cascade rule в этом Section 13 + CLAUDE.md token economy + sprint-flow-ru.md). NO new skill creation.
+
 ## Связанные документы
 
 - [[sprint-flow-ru]] — обязательный sprint процесс (9 фаз)
 - [[../decisions/0017-review-agent-harness]] — review agents matrix policy
 - [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
 - [[../decisions/0042-sprint-29-superpowers-integration]] — full superpowers integration ADR (S29)
+- [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] — tier-2 agents + cascade ADR (S30)
 - [[methodology-rejected]] — rejected packages + cleanup
 - `llm-wiki/CLAUDE.md` — Skills hierarchy & integration
 - `~/.claude/CLAUDE.md` — global rules + token economy
 - https://github.com/obra/superpowers — superpowers skills source repo
+- https://github.com/thedotmack/claude-mem — claude-mem source repo
