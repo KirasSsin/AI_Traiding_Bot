@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "sqlite-trading": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/data/bot.db"
+      ]
+    }
+  }
+}

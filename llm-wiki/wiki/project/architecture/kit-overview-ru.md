@@ -89,18 +89,19 @@ Anti-patterns:
 
 Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]]
 
-## 🛡️ Active Hooks (6 — mechanical enforcement)
+## 🛡️ Active Hooks (7 push + 1 session — mechanical enforcement)
 
 | Hook | Triggers | Block если |
 |------|----------|-----------|
 | `adr-agent-sync-check.sh` | git push | ADR changed без agent prompt touch |
 | `adr-index-sync-check.sh` | git push | New ADR без index.md entry |
 | `wiki-broken-link-check.sh` | git push | Broken `[[wiki-link]]` |
-| `caveman-*` | session lifecycle | Caveman mode tracking |
 | `sprint-flow-check.sh` (S28+) | git push | feature/sprint-NN-* без plan file |
 | `phase-advance.sh` (S30+) | gh pr merge | SPRINT_STATE Phase 5 != done/skipped |
+| `sprint-state-freshness-check.sh` 🆕 (S32b+) | git push | "Следующее действие" references S<N-2> с actionable patterns (PHASE X ship/pending/in_progress/next) |
+| `caveman-*` | session lifecycle | Caveman mode tracking (not push-related) |
 
-## 👥 Reviewer agents (9 — `~/.claude/agents/`)
+## 👥 Reviewer agents (10 — `~/.claude/agents/`)
 
 | Agent | Model | Когда |
 |-------|-------|-------|
@@ -113,6 +114,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | `security-auditor` 🆕 | **opus** | Money / API / override / Mainnet (BLOCKER/HIGH/MEDIUM/LOW) |
 | `test-engineer` 🆕 | sonnet | Test pyramid / Hypothesis property / coverage / regression |
 | `doc-reviewer` 🆕 | **haiku** (lightweight) | Frontmatter / links / Block 1↔2 sync / canonical counts |
+| `dashboard-reviewer` 🆕 (S32b) | sonnet | `src/dashboard/` FastAPI + vanilla JS (5-axis review per S25 ADR 0039 conditions) |
 
 ## 🔧 Project skills (5 — `.claude/skills/`)
 
@@ -133,7 +135,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | claude-mem (12.3.7) | 7 (mem-search / version-bump / knowledge-agent / smart-explore / etc) |
 | caveman (84cc3c14fa1e) | 5 (caveman mode / compress / commit / etc) |
 
-## 🔌 MCP servers (6)
+## 🔌 MCP servers (7)
 
 | MCP | Назначение |
 |-----|-----------|
@@ -143,6 +145,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | `mcp-registry` | Discover MCP servers |
 | `computer-use` | Mac native apps (NOT trading work) |
 | `Claude_in_Chrome` | Web automation |
+| `sqlite-trading` 🆕 (S32b) | Direct SQLite queries → `data/bot.db` (execution_states / fills / halts debug). Project-level `.mcp.json`. |
 
 ## 📂 Critical files (navigation anchors)
 
@@ -232,6 +235,8 @@ Detail: [[sprint-flow-ru]]
 | S29 | alpha.29 | 2026-04-26 | Full Superpowers Integration (7 NEW + Skills × Phase map) |
 | S30 | alpha.30 | 2026-04-26 | Tier-2 Agents (security/test/doc) + phase-advance hook + cascade |
 | S31 | alpha.31 | 2026-04-26 | Kit Revision per Best Practices + Single Tools-Overview File |
+| S32 | alpha.32 | 2026-04-27 | Kit Phase 0 (P0 fixes + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory) |
+| S32b | alpha.32b | 2026-04-27 | Kit Phase 1 (CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer) |
 
 Full history: [[../architecture/current-state#карта-спринтов-sprint-history]]
 
