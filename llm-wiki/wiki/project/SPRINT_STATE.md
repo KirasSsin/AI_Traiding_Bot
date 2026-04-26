@@ -26,8 +26,8 @@ tag: v0.1.0-alpha.27
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
 | T1 sprint-flow-ru.md | done | (pending commit) | Russian sprint lifecycle 9 phases |
-| T2 tooling-inventory-ru.md | in_progress | — | agents/skills/plugins/MCP catalog |
-| T3 sprint-flow-check.sh hook | pending | — | mechanical PHASE 3 enforcement |
+| T2 tooling-inventory-ru.md | done | (pending commit) | 11 sections — agents/skills/plugins/MCP/hooks |
+| T3 sprint-flow-check.sh hook | in_progress | — | mechanical PHASE 3 enforcement |
 | T4 SPRINT_STATE template | pending | — | per-phase tracking section |
 | T5 CLAUDE.md updates | pending | — | binding "BEFORE any sprint work" |
 | T6 ADR 0041 + sprint-28 page + sync | pending | — | wiki diffs |
