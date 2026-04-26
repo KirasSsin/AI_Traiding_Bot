@@ -3,33 +3,37 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 29
-phase: 4-execution
-branch: feature/sprint-29-superpowers-integration
-tag: v0.1.0-alpha.28
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.29
 ---
 
-## Phase tracking (S29)
+## S29 SHIPPED ✅
+
+PR #36 → 30d476a squash-merge. Tag v0.1.0-alpha.29 pushed. Branch deleted.
+
+### Phase tracking (S29 — completed)
 
 | Phase | Status | Artifact |
 |-------|--------|----------|
 | 1 Orient | done | session continuation |
-| 2 Brainstorm | skipped (operator-specified scope) | — |
+| 2 Brainstorm | skipped (operator-specified) | — |
 | 3 Plan | done | `plans/2026-04-26-sprint-29-superpowers-integration.md` |
-| 4 Execute | in_progress | T1-T4 (see task table) |
-| 5 Verify | pending | — |
-| 6 Review | pending (process/wiki, no code reviewer) | — |
-| 7 Sync | pending | — |
-| 8 Ship | pending | — |
-| 9 Close | pending | — |
+| 4 Execute | done | 4 commits (T1-T4) с per-task SPRINT_STATE update |
+| 5 Verify | done | 762 pytest passed (S28 baseline preserved) |
+| 6 Review | skipped (process/wiki) | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) |
+| 8 Ship | done | PR #36 + tag v0.1.0-alpha.29 |
+| 9 Close | done | SPRINT_STATE between-sprints |
 
-### Phase 4 — task progress
-| Task | Status | Commit | Note |
-|------|--------|--------|------|
-| T1 sprint-flow-ru.md (explicit skills per phase) | done | (pending commit) | 7 superpowers skills added + Skills × Phase integration map (26 skills total) |
-| T2 tooling-inventory-ru.md (integration map) | done | (pending commit) | "Where invoked" column added к 13 superpowers + new "Skills × Phase integration map" section (26 skills) + decision matrix expanded |
-| T3 CLAUDE.md (skill names per phase row) | done | (pending commit) | Phase table expanded — Primary + Optional/sub-skills columns + 6 new anti-patterns |
-| T4 ADR 0042 + sprint-29 page + wiki sync | done | (pending commit) | ADR + sprint page + index + current-state + log |
-| Ship | in_progress | — | tag alpha.29 |
+### Phase 4 — task progress (completed)
+| Task | Commit | Note |
+|------|--------|------|
+| T1 sprint-flow-ru.md | be4c10b | Explicit skills per phase + Skills × Phase integration map |
+| T2 tooling-inventory-ru.md | 202d915 | Decision matrix +8 + Section 12 NEW + Section 3 expanded |
+| T3 CLAUDE.md | b7b0f16 | Phase table expanded (Primary + Optional columns) |
+| T4 ADR 0042 + sprint-29 page + sync | 50f4ae1 | ADR + sprint page + index + current-state + log |
+| Squash-merge | 30d476a | PR #36, tag alpha.29 |
 
 ## S28 SHIPPED ✅
 
@@ -67,7 +71,7 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S28 SHIPPED. Process enforcement (kit flow mechanical hook + Russian docs).** 28 спринтов завершено. Operator-driven correction после S27 ship — verified 12-sprint drift (S16-S27 без plan files). Mechanical enforcement: `~/.claude/hooks/sprint-flow-check.sh` блокирует push на feature/sprint-NN-* без plan file + Russian process docs (sprint-flow-ru.md + tooling-inventory-ru.md) + CLAUDE.md "BEFORE ANY SPRINT WORK" binding section + per-task SPRINT_STATE protocol. S28 itself = proof of process (executed по proper kit flow с 6 commits + per-task SPRINT_STATE updates).
+**S29 SHIPPED. Full Superpowers Skills Integration (7 NEW + Skills × Phase map).** 29 спринтов завершено. Operator-driven kit upgrade per directive ("их надо внедрить в наш flow разработки. максимально нужное количество скиллов"). Pre-S29 only 6/13 superpowers skills used. **7 NEW integrated:** systematic-debugging (Phase 4 sub-flow) / verification-before-completion (Phase 5) / requesting-code-review + receiving-code-review (Phase 6) / dispatching-parallel-agents (Phase 4+6) / using-git-worktrees + writing-skills (cross-phase). Skills × Phase integration map (26 skills total) NEW Section 12 в tooling-inventory-ru.md = single source of truth. S29 itself executed по proper kit flow per S28 binding rules (4 task commits + per-task SPRINT_STATE updates).
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 30 ADRs + 17 sprint pages)
