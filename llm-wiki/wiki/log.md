@@ -1888,3 +1888,27 @@ Next = S32 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1/
 **Trading carry-overs (BLOCKED — operator):** ESC-1 multi-symbol authorization / ESC-2 "in profit" semantics / ESC-3 4H operational implications.
 
 Next = Operator decision: S33 = kit Phase 1 (Track A — independent) OR Track B unblock (если ESC-1/2/3 resolved).
+
+## [2026-04-27] session-end | S32 — Kit Improvement Phase 0 SHIPPED
+
+**S32 SHIPPED.** PR #39 → 2bad7ee squash-merge. Tag v0.1.0-alpha.32 pushed. Branch `feature/sprint-32-kit-phase-0-improvements` deleted post-merge. SPRINT_STATE → between-sprints.
+
+**Kit state post-S32:**
+- 9 reviewer agents (L5)
+- 6 active hooks (mechanical enforcement)
+- **32 skills mapped** к kit flow (was 26): 13 superpowers + 5 project + 13 agent-skills + 1 anthropic-skills (consolidate-memory NEW)
+- **5-step cascade** (was 4): wiki → mem-search → smart-explore → grep → Read+offset
+- **Phase 9 consolidate-memory HARD-GATE** (every 5 sprints OR >30 observations)
+- 4 plugins curated (superpowers 5.0.7 / agent-skills 1.0.0 / claude-mem 12.3.7 / caveman)
+- 6 MCP servers active
+- 20/20 best practices coverage
+- CLAUDE.md split preserved (3 files, ~14K tokens total post-S31 prune)
+
+**КУ achieved S32:** avg 60% / 45 мин = ~80 КУ/час. Best ROI per phase per КУ analysis (forecast 114 КУ/час).
+
+**Carry-overs к S33:**
+- Kit Phase 1: GitHub Actions CI / pre-commit hooks / SQLite MCP / SPRINT_STATE freshness hook / dashboard-reviewer L5 agent (КУ avg 63% / 6 hours)
+- Test debt: 3 pytest failures (test_replay_long_only / test_replay_next_open) + 1 mypy redef (__main__.py:636) — pre-existing, surfaced via S32 Phase 5 verify
+- Trading carry-overs (BLOCKED — operator): ESC-1 / ESC-2 / ESC-3
+
+Next session = S33 brainstorm OR operator unblocks Track B.

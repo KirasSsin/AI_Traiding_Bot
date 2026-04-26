@@ -3,16 +3,16 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 32
-phase: 4-execution
-branch: feature/sprint-32-kit-phase-0-improvements
-tag: v0.1.0-alpha.31
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.32
 ---
 
-## S32 IN PROGRESS 🟡
+## S32 SHIPPED ✅
 
-Branch: `feature/sprint-32-kit-phase-0-improvements`. Plan committed: `plans/2026-04-26-sprint-32-kit-phase-0-improvements.md`.
+PR #39 → 2bad7ee squash-merge. Tag v0.1.0-alpha.32 pushed. Branch deleted.
 
-### Phase tracking (S32 — in progress)
+### Phase tracking (S32 — completed)
 
 | Phase | Status | Artifact |
 |-------|--------|----------|
@@ -23,8 +23,8 @@ Branch: `feature/sprint-32-kit-phase-0-improvements`. Plan committed: `plans/202
 | 5 Verify | done | 773 passed (was reported 762 S31 — count drift +11 actual) / mypy 1 error (`__main__.py:636 bars_per_year_map redef`) / canonical counts 16/30/74/45 ✓. **3 pytest failures pre-exist on main** (test_replay_long_only / test_replay_next_open) — NOT S32 regression. **Carry-over к S33**: fix replay tests + mypy redef. |
 | 6 Review | will skip (process/wiki only, no src/ touched) | — |
 | 7 Sync | pending | log.md sprint-end + index/current-state in T6 |
-| 8 Ship | in_progress | PR + tag v0.1.0-alpha.32 (agent mtimes bumped, push next) |
-| 9 Close | pending | SPRINT_STATE → between-sprints |
+| 8 Ship | done | PR #39 → 2bad7ee + tag v0.1.0-alpha.32 + all 4 hooks fired correctly |
+| 9 Close | done | SPRINT_STATE between-sprints (this update) |
 
 ### Phase 4 — task progress (S32)
 
@@ -36,7 +36,7 @@ Branch: `feature/sprint-32-kit-phase-0-improvements`. Plan committed: `plans/202
 | T4 cascade smart-explore STEP 2.5 | done | f1f60a7 | sprint-flow-ru.md + kit-overview-ru.md mirror + decision matrix +6 entries |
 | T5 Phase 9 consolidate-memory step | done | 660630e | sprint-flow-ru.md Phase 9 procedure +Step 5 + HARD-GATE (every 5 sprints OR >30 obs) |
 | T6 ADR 0045 + sprint-32 page + index/counts | done | 397a655 | 44→45 ADRs / 31→32 sprints + sprint history row + S32 index entry + skills mapped 26→32 |
-| Ship | pending | — | tag alpha.32 |
+| Ship | done | 2bad7ee | tag v0.1.0-alpha.32 (alpha.32 alpha-channel marker, not MVP DONE) |
 
 ## S31 SHIPPED ✅
 
@@ -164,39 +164,47 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S32 IN PROGRESS — Kit Improvement Phase 0.** Operator-driven kit optimization per КУ analysis (session 2026-04-26 post-S31). Documentation-only sprint: P0 staleness fixes (SPRINT_STATE + current-state) + 5 NEW skill mappings (idea-refine/spec-driven-development/source-driven-development/code-simplification/documentation-and-adrs) + cascade smart-explore STEP 2.5 + Phase 9 consolidate-memory step. КУ avg 57% за 45 мин. Phase 1 deferred к S33 (CI/SQLite MCP/freshness hook/dashboard-reviewer). NO code changes. 762 pytest preserved by construction.
+**S32 SHIPPED — Kit Improvement Phase 0 COMPLETE.** Operator-driven kit optimization per КУ analysis (session 2026-04-26 post-S31). Documentation-only sprint shipped: P0 staleness fixes (SPRINT_STATE + current-state) + 5 NEW skill mappings (idea-refine/spec-driven-development/source-driven-development/code-simplification/documentation-and-adrs) + cascade smart-explore STEP 2.5 + Phase 9 consolidate-memory step. КУ achieved avg 60% за 45 мин (~80 КУ/час, close к forecast 114 КУ/час). NO code changes. 773 pytest passed (3 pre-existing failures carry-over к S33).
 
 **Status:**
-- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + **45 ADRs** + **32 sprint pages** post-S32)
-- Kit infrastructure: ✅ COMPLETE — 9 reviewer agents + 6 hooks + 31 skills mapped (was 26) + cascade rule (5-step с smart-explore) + 20/20 best practices
-- Formula correctness: ✅ FIXED (5 bugs eliminated post-S27, measurement instrument trustworthy)
-- Strategy validation: ❌ NEGATIVE (0 PASS / 30 FAIL — structural failures, не formula bugs; trading work blocked pending ESC-1/2/3)
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + **45 ADRs** + **32 sprint pages**)
+- Kit infrastructure: ✅ COMPLETE — 9 reviewer agents + 6 hooks + **32 skills mapped** (was 26) + cascade rule (5-step с smart-explore STEP 2.5) + 20/20 best practices + Phase 9 consolidate-memory HARD-GATE
+- Formula correctness: ✅ FIXED (5 bugs eliminated post-S27)
+- Strategy validation: ❌ NEGATIVE (0 PASS / 30 FAIL — structural failures, trading work blocked pending ESC-1/2/3)
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 unreachable single-symbol 4H)
+- Test debt: ⚠️ 3 pre-existing pytest failures (test_replay_long_only / test_replay_next_open) + 1 mypy redef — carry-over к S33
 
-## Последний спринт (S31 — Kit Revision per Best Practices + Single Tools-Overview File)
+## Последний спринт (S32 — Kit Improvement Phase 0)
 
-Operator-driven kit optimization per Anthropic Claude Code best practices. NEW `kit-overview-ru.md` (1-page single source of truth). EXPANDED `tooling-inventory-ru.md` Sections 14-19. PRUNED все 3 CLAUDE.md: 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens/session (-25%). 20/20 best practices coverage (was 8/20). 4 NEW anti-patterns + token-saver commands table. NO code changes.
+Operator-driven kit optimization per КУ analysis. 6 changes documentation-only: T1 SPRINT_STATE P0 fix + T2 current-state P0 fix + T3 5 NEW skill mappings (idea-refine/spec-driven/source-driven/code-simplification/documentation-and-adrs) + T4 cascade smart-explore STEP 2.5 + T5 Phase 9 consolidate-memory step + T6 ADR 0045 + sprint-32 page + index/counts sync. Skills × Phase map 26→32. КУ avg 60% за 45 мин. NO code changes. 773 pytest passed (3 pre-existing failures carry-over). Phase 1 deferred к S33.
 
 ## Следующее действие
 
 ```
-S32 Kit Phase 0 ship pending (this sprint, in progress):
-  Plan: llm-wiki/wiki/project/plans/2026-04-26-sprint-32-kit-phase-0-improvements.md
-  Tasks: T1-T6 (P0 fixes + 5 skill mappings + cascade + Phase 9 + ADR/page/sync)
+Operator decides next direction (двойной выбор):
+
+Track A — Kit Phase 1 (S33 candidate, КУ avg 63% / 6 hours):
+  - GitHub Actions CI (pytest + mypy + ruff на каждый PR)
+  - Pre-commit hooks (ruff + mypy перед commit)
+  - SQLite MCP server (debug execution state / fills / halts)
+  - SPRINT_STATE freshness check hook (block push если "Следующее действие" stale)
+  - dashboard-reviewer L5 agent (FastAPI + vanilla JS specialist)
+
+Track B — Trading work (BLOCKED, awaits operator decisions):
+  - ESC-1 Multi-symbol authorization (S{N} expanded scope beyond BTCUSDT MVP)
+  - ESC-2 "In profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H?)
+  - ESC-3 Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
   
-After S32 ship:
-  Track A — Kit Phase 1 (S33 candidate): GitHub Actions CI / pre-commit hooks / SQLite MCP / SPRINT_STATE freshness hook / dashboard-reviewer L5 agent
-  Track B — Trading work (BLOCKED, awaits operator):
-    - ESC-1 Multi-symbol authorization (S{N} expanded scope beyond BTCUSDT MVP)
-    - ESC-2 "In profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H?)
-    - ESC-3 Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
-  
-Trader-expert backlog (when Track B unblocks):
+Trader-expert backlog (когда Track B unblocks):
   - Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
   - Regime filter + SMA50 trend gate (CC2 fold concentration)
   - SL calibration {1.0/1.25/1.5}×ATR + t-stat power validation
   - Donchian 4H breakout (independent hypothesis)
   - DSR cross-trial sigma_SR + MC power audit (closes S14 Q2 carry-over)
+
+S32 carry-over к S33 (technical debt):
+  - 3 pytest failures pre-existing (test_replay_long_only / test_replay_next_open)
+  - 1 mypy error pre-existing (__main__.py:636 bars_per_year_map redef)
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
