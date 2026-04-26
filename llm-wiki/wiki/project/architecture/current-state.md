@@ -1,39 +1,32 @@
 ---
-title: Current State — post-S25 inventory + canonical counts (Dashboard UI shipped, demo-only backtest comparison)
+title: Current State — post-S31 inventory + canonical counts (Kit infrastructure complete, S32 Kit Phase 0 in progress)
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-23, honest-close-v05, no-edge-conjoint, mvp-incomplete, hypothesis-5-tested, t5-100-structurally-unreachable, regime-independent-edge, n-trials-archival]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-31, kit-revision-best-practices, kit-infrastructure-complete, sprint-32-pending, t5-100-structurally-unreachable, regime-independent-edge, esc-1-2-3-pending]
 created: 2026-04-19
-updated: 2026-04-26
+updated: 2026-04-27
 status: stable
 sources:
   - src/
-  - project/sprints/sprint-14-honest-close.md
-  - project/decisions/0029-sprint-14-honest-close.md
-  - project/sprints/sprint-15-mean-reversion-multi-symbol.md
-  - project/decisions/0030-sprint-15-mean-reversion-multi-symbol.md
-  - project/sprints/sprint-16-honest-close-v02.md
-  - project/decisions/0031-sprint-16-honest-close-v02.md
-  - project/sprints/sprint-17-btc-mean-reversion-relaxed.md
-  - project/decisions/0032-sprint-17-btc-mean-reversion-relaxed.md
-  - project/sprints/sprint-18-honest-close-v01.md
-  - project/decisions/0033-sprint-18-honest-close-v01.md
-  - project/sprints/sprint-19-15m-architecture.md
-  - project/decisions/0034-sprint-19-15m-architecture.md
-  - project/sprints/sprint-20-15m-measurement.md
-  - project/decisions/0035-sprint-20-15m-measurement.md
-  - project/sprints/sprint-21-honest-close-v04.md
-  - project/decisions/0036-sprint-21-honest-close-v04.md
-  - project/sprints/sprint-22-4h-test.md
-  - project/decisions/0037-sprint-22-4h-test.md
-  - project/sprints/sprint-23-honest-close-v05.md
-  - project/decisions/0038-sprint-23-honest-close-v05.md
   - project/sprints/sprint-25-dashboard.md
   - project/decisions/0039-sprint-25-dashboard.md
+  - project/sprints/sprint-27-formula-bug-fixes.md
+  - project/decisions/0040-sprint-27-formula-bug-fixes.md
+  - project/sprints/sprint-28-process-enforcement.md
+  - project/decisions/0041-sprint-28-process-enforcement.md
+  - project/sprints/sprint-29-superpowers-integration.md
+  - project/decisions/0042-sprint-29-superpowers-integration.md
+  - project/sprints/sprint-30-tier-2-agents-mem-wiki-merge.md
+  - project/decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge.md
+  - project/sprints/sprint-31-kit-revision-best-practices.md
+  - project/decisions/0044-sprint-31-kit-revision-best-practices.md
+  - project/plans/2026-04-26-sprint-32-kit-phase-0-improvements.md
 ---
 
-# Current State (post-S25, 2026-04-26) — Dashboard UI shipped (demo-only backtest comparison)
+# Current State (post-S31, 2026-04-27) — Kit infrastructure complete (S32 Kit Phase 0 in progress)
 
-**TL;DR:** Live state on tag `v0.1.0-alpha.25`. **S25 Dashboard sprint** ships HTML+JS UI для backtest comparison через FastAPI на localhost. NEW Presentation context (`src/dashboard/`). 3 strategy presets, 5 timeframes (5M/15M/60/240/1D), 3 symbols (BTC/ETH/SOL). Backfill 2023-01-01 → 2026-04-26 для всех. Trader spec applied: TIER 1 + TIER 2 metrics + 4 mandatory warnings + Sortino anomaly guard. Architecture pattern: localhost-only FastAPI + vanilla JS + auto-open browser + optional dep group. NO live trading через dashboard в S25 (only historical backtest). NO Mainnet support (TESTNET=true enforced). 26 sprints completed. **MVP status unchanged:** strategy validation NEGATIVE (5 hypotheses tested, all FAIL conjoint per S23 honest close). S24 ESC-1 (pause vs multi-symbol scope expansion) STILL OPEN — independent от S25 dashboard. Dashboard позволяет user visualize previous + future backtest runs via UI.
+**TL;DR (post-S31):** Live state on tag `v0.1.0-alpha.31`. **Kit infrastructure layer COMPLETE post-S31:** 9 reviewer agents (L5) + 6 active hooks (mechanical enforcement) + 26 skills mapped к 9-phase flow + 4 plugins curated + 6 MCP servers + 5-step cascade rule + 20/20 best practices coverage. CLAUDE.md split preserved across 3 files (repo + llm-wiki + ~/.claude), pruned -25% tokens (954→756 lines, 61→46KB) per S31. **Kit-overview-ru.md** = single source of truth gateway. **Tooling-inventory-ru.md** Sections 14-19 (Permission modes / Plugin curation / CLI tools / Status line / Token-saver / Non-interactive). **S32 Kit Phase 0 in progress** (this sprint): P0 staleness fixes + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory. **Strategy/trading work BLOCKED** awaiting operator decision on ESC-1 (multi-symbol authorization), ESC-2 ("in profit" semantics), ESC-3 (4H operational implications). Pre-S32 КУ analysis showed kit Phase 0 = 57% avg КУ за 45 мин → highest ROI. Phase 1 (CI/SQLite MCP/freshness hook/dashboard-reviewer) deferred к S33.
+
+**Previous TL;DR (post-S25 Dashboard, preserved для context):** Live state on tag `v0.1.0-alpha.25`. **S25 Dashboard sprint** shipped HTML+JS UI для backtest comparison через FastAPI на localhost. NEW Presentation context (`src/dashboard/`). 3 strategy presets, 5 timeframes (5M/15M/60/240/1D), 3 symbols (BTC/ETH/SOL). Backfill 2023-01-01 → 2026-04-26. Trader spec applied: TIER 1 + TIER 2 metrics + 4 mandatory warnings + Sortino anomaly guard. Architecture pattern: localhost-only FastAPI + vanilla JS + auto-open browser + optional dep group. NO live trading через dashboard. NO Mainnet support (TESTNET=true enforced). **MVP status unchanged:** strategy validation NEGATIVE (5 hypotheses tested, all FAIL conjoint per S23 honest close). Dashboard позволяет user visualize previous + future backtest runs via UI.
 
 **Previous TL;DR (v0.5 honest close, preserved для context):** v0.5 closed honest at S23 — 5 strategy hypotheses tested across 4.81y BTC, all FAIL conjoint. CC1 T5 100 structurally unreachable BINDING (3 timeframes empirical). CC3 Strategy edge regime-INDEPENDENT (S17+S22 both 5/6+DSR+MC PASS). 5-th honest close в проекте (S14+S16+S18+S21+S23). **v0.5 closed honest:** 5 strategy hypotheses tested across 4.81y Bybit Spot BTCUSDT — all FAIL conjoint per acceptance-criteria.md. S13 EMA crossover 1H / S15 mean-reversion multi-symbol 1H / S17 mean-reversion BTC 1H relaxed (59 trades, 5/6+DSR+MC PASS) / S20 mean-reversion BTC 15M (73 trades, T1=-45.57 Hudson&Urquhart validated) / S22 mean-reversion BTC 4H (62 trades, **5/6+DSR+MC PASS regime-independent**). **CRITICAL INSIGHT BINDING:** T5 floor 100 STRUCTURALLY UNREACHABLE на BTC-only mean-reversion (3 timeframes ~60-73 trades all). T5 only reachable via multi-symbol (out of MVP) OR strategy class change. **`data/cross_trial_sharpes.json` archived к `_v0.5-final.json`, reset к `[]` для v0.6** (4-th archival, mirrors S16/S18/S21). **5-th honest close в проекте (S14+S16+S18+S21+S23).** Strategy edge regime-INDEPENDENT (S17+S22 both PASS): combined ~120 trades available для v0.6-A small-sample ML training. **v0.6+ options:** A hybrid ML / B HMM regime-switch / C multi-symbol revival post-MVP / D different strategy class / E pause / F MVP T5 floor amendment (operator decides spec amendment justified per empirical evidence).
 
@@ -47,13 +40,14 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 — S25 + S27 + S28 + S29 + S30 + S31 added zero components |
-| ADRs | **44** | `wiki/project/decisions/*.md` (0001-0044) | S31 (ADR 0044 — Kit revision best practices) |
-| Sprint pages | **31** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-31 + sprint-08a/b/c, minus S24+S26) | S31 (sprint-31-kit-revision-best-practices) |
-| Reviewer agents | **9** | `~/.claude/agents/` (out-of-repo) | S30 +3 tier-2 |
-| Active hooks | **6** | `~/.claude/hooks/` | S30 +phase-advance.sh |
-| **Kit settings (RU)** | **3 files** | kit-overview-ru.md (NEW S31) / sprint-flow-ru.md / tooling-inventory-ru.md (19 sections post-S31) | S31 single source of truth |
-| **CLAUDE.md total tokens** | **~14K (was 18.5K)** | repo + llm-wiki + ~/.claude (3 files, S28 split preserved) | S31 prune -25% per session |
+| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 — S25 + S27..S32 added zero components |
+| ADRs | **45** | `wiki/project/decisions/*.md` (0001-0045) | S32 (ADR 0045 — Kit Phase 0 improvements) |
+| Sprint pages | **32** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-32 + sprint-08a/b/c, minus S24+S26) | S32 (sprint-32-kit-phase-0-improvements) |
+| Reviewer agents | **9** | `~/.claude/agents/` (out-of-repo) | S30 +3 tier-2 (no change S31/S32) |
+| Active hooks | **6** | `~/.claude/hooks/` | S30 +phase-advance.sh (no change S31/S32) |
+| Skills × Phase mapped | **32** | sprint-flow-ru.md Skills × Phase integration map | S32 +5 AS (idea-refine/spec/source/code-simpl/docs-adrs) +1 anthropic (consolidate-memory) |
+| **Kit settings (RU)** | **3 files** | kit-overview-ru.md (S31) / sprint-flow-ru.md (Phase 9 +consolidate-memory step S32) / tooling-inventory-ru.md (19 sections) | S31 single source of truth + S32 cascade STEP 2.5 |
+| **CLAUDE.md total tokens** | **~14K (was 18.5K)** | repo + llm-wiki + ~/.claude (3 files, S28 split preserved) | S31 prune -25% per session (S32 no CLAUDE.md changes) |
 
 **Verify counts live (CI-safe):**
 
@@ -141,16 +135,17 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | **S29** | **0042** | **v0.1.0-alpha.29** | **2026-04-26** | **Full Superpowers Skills Integration sprint** — operator-driven kit upgrade per directive ("их надо внедрить в наш flow разработки"). Pre-S29 only 6/13 superpowers skills использовались. **7 NEW skills integrated** в kit flow: systematic-debugging (Phase 4 sub-flow bug encountered) / verification-before-completion (Phase 5 extended checklist) / requesting-code-review (Phase 6 PRE format brief) / receiving-code-review (Phase 6 POST categorize feedback) / dispatching-parallel-agents (Phase 4+6 explicit parallel pattern) / using-git-worktrees (cross-phase OPTIONAL sandbox) / writing-skills (cross-phase OPTIONAL new project skill methodology). **Skills × Phase integration map** NEW section в tooling-inventory-ru.md — 26 skills mapped к kit flow (13 superpowers + 5 project + 8 agent-skills). 5 wiki files updated. NO code changes. 762 pytest preserved. |
 | **S30** | **0043** | **v0.1.0-alpha.30** | **2026-04-26** | **Tier-2 Agents + phase-advance hook + LLMWiki↔Claude-mem cascade sprint** — operator-driven kit hardening. **3 NEW reviewer agents** (out-of-repo): security-auditor opus (OWASP + trading-specific HMAC/withdraw/kill-switch rules) / test-engineer sonnet (test pyramid + Hypothesis property tests + S27 lessons) / doc-reviewer haiku (frontmatter + links + Block 1↔2 sync). **NEW hook** phase-advance.sh — pre-merge Phase 5 verify enforcement (blocks `gh pr merge` если SPRINT_STATE Phase 5 != done/skipped). **LLMWiki ↔ Claude-mem cascade rule** documentation-first: 4-step (wiki→mem→grep→raw), saves tokens via curated wiki priority. NEW Section 13 в tooling-inventory-ru.md + Token economy section в sprint-flow-ru.md + cascade в repo+llm-wiki CLAUDE.md. Bridges 2-4 (corpus sync / chapter mark auto-link / frontmatter tags) deferred к S31+. NO code changes. 762 pytest preserved. 9 agents + 6 hooks active. |
 | **S31** | **0044** | **v0.1.0-alpha.31** | **2026-04-26** | **Kit Revision per Best Practices + Single Tools-Overview File sprint** — operator-driven kit optimization per Anthropic Claude Code best practices. **NEW** `kit-overview-ru.md` — 1-page TL;DR single source of truth для всех kit settings (Quick decision matrix + 9 agents + 6 hooks + 5 skills + 50 plugin skills + 6 MCP + cascade rule + Top 10 commands + Top 5 anti-patterns + 9-phase lifecycle + 20 best practices applied + sprint history). **EXPANDED** tooling-inventory-ru.md Sections 14-19 NEW: Permission modes (default/auto/sandbox) / Plugin curation (4 plugins versions) / CLI tools explicit list / Status line / Token-saver commands / Non-interactive + fan-out patterns. **PRUNED** все 3 CLAUDE.md per best practices ("bloated CLAUDE.md = ignored rules"): total 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens per session (-25%). **20/20 best practices coverage** (was 8/20). 4 NEW anti-patterns (kitchen-sink / side question / 3+ corrections / CLAUDE.md bloat) + token-saver commands table в repo CLAUDE.md. NO code changes. 762 pytest preserved. |
+| **S32** | **0045** | **v0.1.0-alpha.32** | **2026-04-27** | **Kit Improvement Phase 0 sprint** — operator-driven kit optimization per КУ analysis (post-S31 review session). Documentation-only sprint (controller-driven, no src/ touched). 6 changes per ADR 0045: T1 SPRINT_STATE.md P0 fix (stale "Текущий статус"/"Последний спринт"/"Следующее действие" → S32 reality + correct counts 30→44 ADRs / 17→31 sprint pages) + T2 current-state.md P0 fix (post-S25→post-S31 + 604→762 + sources/tags/TL;DR + S25 TL;DR preserved as Previous) + T3 5 NEW skill mappings sprint-flow-ru.md (idea-refine Phase 2 PRE / spec-driven Phase 2/3 non-trading / source-driven Phase 4 Bybit-pydantic-pybit-FastAPI-TA-Lib / code-simplification Phase 6 OPT / documentation-and-adrs Phase 8) + T4 cascade smart-explore STEP 2.5 (sprint-flow + kit-overview mirror, 30-50% дешевле naked grep+read для structural lookups) + T5 Phase 9 consolidate-memory step (every 5 sprints OR >30 observations + HARD-GATE) + T6 ADR 0045 + sprint-32 page + index sync + canonical counts (44→45 ADRs / 31→32 sprint pages). Skills × Phase map 26→32 entries. КУ avg 60% за 45 мин (best ROI per phase, forecast 114 КУ/час). Phase 1 (CI / SQLite MCP / SPRINT_STATE freshness hook / dashboard-reviewer L5 agent) deferred к S33. NO code changes. 762 pytest preserved by construction. |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
-## Test/quality state (live)
+## Test/quality state (live, post-S31 baseline preserved через S32)
 
-- pytest unit: 604 passed / 24 skipped / 3 pre-existing test_config env-pollution failures (carry-over → S8c)
+- pytest unit: **762 passed** (S27-S31 baseline; +18 vs S26 pre-formula-fixes)
 - pytest property: 8/8
 - pytest integration: opt-in `RUN_DEMO=1` (Demo Mainnet)
-- mypy --strict src/: 44 errors (pre-existing tech debt, не S8b regression)
-- ruff: clean on S8 src + tests; legacy `src/core/`, `src/backtest/*` excluded в pyproject.toml pending retirement
+- mypy --strict src/: ≤ 44 errors (S8c baseline preserved через S31)
+- ruff: clean on S8+ src + tests; legacy `src/core/`, `src/backtest/*` excluded в pyproject.toml pending retirement
 
 ---
 

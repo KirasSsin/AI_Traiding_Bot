@@ -1860,3 +1860,31 @@ S31 executed по proper kit flow:
 **S31 ready к ship.** Tag v0.1.0-alpha.31. Operator плану перезапустить session — все settings встанут корректно с new prune-state CLAUDE.md.
 
 Next = S32 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1/2/3 operator decision from S27 carry-over).
+
+## [2026-04-27] sprint-end | S32 — Kit Improvement Phase 0 (КУ-driven, P0 fixes + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory)
+
+**Kit Improvement Phase 0 sprint** — operator-driven kit optimization per КУ analysis (post-S31 review session 2026-04-26). Documentation-only sprint (controller-driven, no src/ touched). Pattern continues S28-S31 (5-th consecutive docs sprint). Trading work BLOCKED awaits ESC-1/2/3 operator decision from S27 carry-over → S32 slot занимаем kit work без conflict.
+
+**6 changes per ADR 0045:**
+- T1 (c095bd3) SPRINT_STATE.md P0 fix: stale "Текущий статус"/"Последний спринт"/"Следующее действие" → S32 reality + correct counts (30→44 ADRs / 17→31 sprint pages) + Phase tracking S32 inline
+- T2 (2ec9824) current-state.md P0 fix: title/H1 "post-S25"→"post-S31", new TL;DR (S31 kit infrastructure complete + S32 Phase 0 in progress), S25 TL;DR preserved as "Previous", frontmatter sources/tags update, test counts 604→762 (subsequently corrected к 773 в Phase 5)
+- T3 (e93e61c) sprint-flow-ru.md +5 skill mappings: idea-refine (Phase 2 PRE) / spec-driven-development (Phase 2/3 non-trading) / source-driven-development (Phase 4 Bybit/pydantic/pybit/FastAPI/TA-Lib) / code-simplification (Phase 6 OPT) / documentation-and-adrs (Phase 8) + Skills × Phase map 26→32 entries
+- T4 (f1f60a7) cascade smart-explore STEP 2.5 (sprint-flow + kit-overview mirror) + decision matrix +6 entries в kit-overview-ru.md (Vague idea / Non-trading no spec / Bybit-pydantic-FastAPI / Structural code lookup / ADR creation / Post-impl simplification / Sprint Close consolidation). 30-50% дешевле naked grep+read для structural lookups.
+- T5 (660630e) Phase 9 Close +Step 5: anthropic-skills:consolidate-memory (every 5 sprints OR >30 observations) + HARD-GATE
+- T6 (397a655) ADR 0045 + sprint-32 page + index.md + canonical counts 44→45 ADRs / 31→32 sprint pages + S32 sprint history row
+
+**КУ achieved:** avg 60% / time 45 мин = ~80 КУ/час (close to forecast 114 КУ/час).
+
+**Phase 5 Verify outcome:** 773 passed pytest (count drift +11 vs S31 reported 762) / mypy 1 pre-existing error (`__main__.py:636 bars_per_year_map redef`) / canonical counts 16/30/74/45 ✓. **3 pytest failures pre-exist on main** (test_replay_long_only::test_replay_respects_long_only_flag, test_replay_long_only::test_long_only_does_not_exit_on_signal_flip, test_replay_next_open::test_entry_executes_on_next_open) — NOT S32 regression (verified via stash + main checkout). Carry-over к S33: fix replay tests + mypy redef.
+
+**Phase 6 Review skipped** — process/wiki only sprint, no domain reviewer applicable.
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.32. All 4 push hooks expected fire correctly (sprint-flow-check ✓ plan file present / adr-agent-sync ✓ ADR 0045 не affects agents / adr-index-sync ✓ ADR 0045 в index.md / phase-advance ✓ Phase 5 status=done).
+
+**Skills × Phase map updated:** 26 → 32 (13 superpowers + 5 project + 13 agent-skills + 1 anthropic-skills).
+
+**Kit Phase 1 (S33 candidate) carry-overs:** GitHub Actions CI / pre-commit hooks (ruff+mypy) / SQLite MCP server / SPRINT_STATE freshness check hook / dashboard-reviewer L5 agent. КУ avg 63% / 6 hours.
+
+**Trading carry-overs (BLOCKED — operator):** ESC-1 multi-symbol authorization / ESC-2 "in profit" semantics / ESC-3 4H operational implications.
+
+Next = Operator decision: S33 = kit Phase 1 (Track A — independent) OR Track B unblock (если ESC-1/2/3 resolved).

@@ -108,8 +108,10 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 
 | Skill | Когда |
 |-------|-------|
+| **`agent-skills:idea-refine`** 🆕 (S32) | Phase 2 PRE — vague operator idea перед brainstorm-init. Структурированный divergent → convergent thinking. Применять когда scope = "что-то улучшить" без конкретики. |
 | **`brainstorm-init`** (project) → `trader-expert` agent | Trading scope/strategy/parameter questions (PRIMARY для нашего домена) |
 | **`superpowers:brainstorming`** | Non-trading scope (process design, infrastructure) — Socratic refinement через clarifying questions one-at-a-time |
+| **`agent-skills:spec-driven-development`** 🆕 (S32) | Phase 2/3 — non-trading features без spec (dashboard / CLI / infrastructure). Создаёт spec с acceptance criteria ДО plan writing. Применять когда: новая UI feature, новая CLI команда, новый module без ADR. NOT для trading strategies (используй trader-expert). |
 
 ### Procedure (trader-expert path)
 **Использовать skill:** `.claude/skills/brainstorm-init/SKILL.md`
@@ -214,6 +216,7 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 | **`agent-skills:test-driven-development`** | DEPTH reference — anti-patterns, pyramid, DAMP |
 | **`agent-skills:incremental-implementation`** | DEPTH reference — thin vertical slices |
 | **`agent-skills:context-engineering`** | Subagent briefs > 200 слов — right context, right time |
+| **`agent-skills:source-driven-development`** 🆕 (S32) | Bybit API / pydantic / pybit / FastAPI / TA-Lib tasks — verify против official docs ДО implementation. Prevents API misuse bugs (S8a/S8b regression vector). Применять при touching: `src/execution/bybit/`, dependency updates, new external API integration. |
 
 #### Subagent-driven (preferred для code-heavy sprints)
 ```
@@ -359,6 +362,7 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 | **`superpowers:dispatching-parallel-agents`** | Multiple reviewers (trading-logic + quant-stats + python) — single message с multiple Agent calls |
 | **`agent-skills:code-review-and-quality`** | DEPTH reference — five-axis review checklist |
 | **`agent-skills:security-and-hardening`** | MUST для money / API key / override.py changes |
+| **`agent-skills:code-simplification`** 🆕 (S32) | Phase 6 OPTIONAL — post-implementation cleanup сложных формул / accumulated complexity. Simplify without behavior change (regression test guards). Применять когда: file > 300 LoC после feature add, formula код после S27-class fixes, перед merge sprint touching `src/{backtest,signalgen,risk}/`. NOT для new code (используй incremental-implementation). |
 
 ### Procedure (per touched layer)
 
@@ -450,6 +454,7 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 | **`superpowers:finishing-a-development-branch`** | Delegated by `sprint-finish` после HARD-GATEs — verify tests → 4 options (merge/PR/keep/discard) → execute → cleanup |
 | **`agent-skills:git-workflow-and-versioning`** | DEPTH reference — atomic commits, clean history |
 | **`agent-skills:shipping-and-launch`** | DEPTH reference — pre-launch checklist + monitoring + rollback plan |
+| **`agent-skills:documentation-and-adrs`** 🆕 (S32) | Phase 8 — ADR creation per sprint. Explicit step для capturing architectural decision context (Status / Context / Options / Decision / Consequences). Применять каждый sprint create new ADR. Replaces ad-hoc ADR writing. |
 
 ### Procedure
 **Использовать skill:** `.claude/skills/sprint-finish/SKILL.md` → `superpowers:finishing-a-development-branch`
@@ -488,27 +493,48 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 2. Append wiki/log.md session-end entry
 3. mark_chapter "Sprint N — ship complete"
 4. git commit -m "docs(sprint): SPRINT_STATE → between-sprints alpha.N"
+5. (Каждые 5 спринтов OR при >30 observations в claude-mem) — invoke `anthropic-skills:consolidate-memory`:
+   - Trigger check: sprint number divisible by 5 (S35, S40, S45, ...) OR
+                    `mcp__plugin_claude-mem_mcp-search__list_corpora` показывает >30 observations
+   - Procedure: reflective pass over claude-mem corpus → organize learnings в structured chunks по категориям
+                (trading-decisions / formula-knowledge / process-patterns / debug-knowledge)
+                → persist consolidated knowledge → reduce noise в future mem-search
+   - Output: cleaner corpus, faster STEP 2 lookups, better cross-session knowledge retention
+   - Anti-pattern: skip consolidation потому что "не пора" — if observations > 30, ALWAYS run
 ```
+
+### HARD-GATE
+- ✅ SPRINT_STATE phase=between-sprints
+- ✅ log.md session-end entry appended
+- ✅ Chapter marked
+- ✅ Если N % 5 == 0 OR observations > 30: consolidate-memory invoked
 
 ---
 
-## Token economy: LLMWiki ↔ Claude-mem cascade (BINDING per ADR 0043)
+## Token economy: LLMWiki ↔ Claude-mem cascade (BINDING per ADR 0043 + ADR 0045 S32 update)
 
-При любом lookup (decision / pattern / API / past learning) — следуй cascade order:
+При любом lookup (decision / pattern / API / past learning / code structure) — следуй cascade order:
 
 ```
-STEP 1: wiki/<page>.md    (curated, structured, tagged)   ← CHECK FIRST
+STEP 1: wiki/<page>.md             (curated, structured, tagged)        ← CHECK FIRST
    ↓ not found
-STEP 2: mem-search        (past sessions semantic search)
+STEP 2: mem-search                 (past sessions semantic search)
    ↓ not found
-STEP 3: Grep raw          (current code state)
+STEP 2.5: claude-mem:smart-explore (token-optimized structural code nav)  ← NEW (S32 ADR 0045)
    ↓ needed
-STEP 4: Read raw + offset (full content, controlled)
+STEP 3: Grep raw                   (current code state — text matching)
+   ↓ needed
+STEP 4: Read raw + offset          (full content, controlled)
 ```
+
+**STEP 2.5 rationale (NEW S32):** `claude-mem:smart-explore` = token-optimized structural code search. Применять когда нужна structural understanding (call graph, file relationships, "where is X used?") ПЕРЕД naked grep. Экономит 30-50% tokens vs grep+full-read sequence на code exploration tasks. Skip STEP 2.5 если уже знаешь exact file (jump к STEP 4 offset Read).
 
 Полный rationale + examples + bridges deferred → [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]]
 
-**Anti-pattern:** ❌ Skip wiki check, jump straight к mem-search OR Read raw — loses curation, increases tokens.
+**Anti-patterns:**
+- ❌ Skip wiki check (STEP 1), jump straight к mem-search OR Read raw — loses curation, increases tokens
+- ❌ Naked Grep (STEP 3) для structural questions — use smart-explore (STEP 2.5) first
+- ❌ Read raw без offset для banned-from-full-read files (см. `~/.claude/CLAUDE.md` section 9)
 
 ## Cross-phase optional skills
 
@@ -536,8 +562,10 @@ STEP 4: Read raw + offset (full content, controlled)
 | Skill | Phase | Trigger | Status |
 |-------|-------|---------|--------|
 | `sprint-orient` (project) | 1 | Session start | EXISTING |
+| `agent-skills:idea-refine` | 2 PRE | Vague operator idea before brainstorm-init | NEW (S32) |
 | `brainstorm-init` (project) | 2 | Trading scope questions | EXISTING |
 | `superpowers:brainstorming` | 2 | Non-trading scope questions | NEW (S29) |
+| `agent-skills:spec-driven-development` | 2/3 | Non-trading features без spec (dashboard/CLI/infra) | NEW (S32) |
 | `superpowers:writing-plans` | 3 | Plan creation | EXISTING |
 | `agent-skills:planning-and-task-breakdown` | 3 | DEPTH ref | EXISTING |
 | `superpowers:subagent-driven-development` | 4 | Code-heavy execute | EXISTING |
@@ -548,21 +576,25 @@ STEP 4: Read raw + offset (full content, controlled)
 | `agent-skills:test-driven-development` | 4 | DEPTH ref | EXISTING |
 | `agent-skills:context-engineering` | 4 | Subagent briefs > 200 слов | EXISTING |
 | `agent-skills:incremental-implementation` | 4 | DEPTH ref | EXISTING |
+| `agent-skills:source-driven-development` | 4 | Bybit/pydantic/pybit/FastAPI/TA-Lib tasks — verify against official docs | NEW (S32) |
 | `superpowers:verification-before-completion` | 5 | Pre-completion checklist | NEW (S29) |
 | `superpowers:requesting-code-review` | 6 | Format reviewer brief | NEW (S29) |
 | `superpowers:receiving-code-review` | 6 | Process reviewer feedback | NEW (S29) |
 | `agent-skills:code-review-and-quality` | 6 | DEPTH ref | EXISTING |
 | `agent-skills:security-and-hardening` | 6 | Money/API/override changes | EXISTING |
+| `agent-skills:code-simplification` | 6 OPT | Post-impl cleanup сложных формул | NEW (S32) |
 | `wiki-update` (project) | 7 | After src/ change | EXISTING |
 | `sprint-finish` (project) | 8 | Sprint complete | EXISTING |
 | `superpowers:finishing-a-development-branch` | 8 | Delegated by sprint-finish | EXISTING |
 | `agent-skills:git-workflow-and-versioning` | 8 | DEPTH ref | EXISTING |
 | `agent-skills:shipping-and-launch` | 8 | DEPTH ref | EXISTING |
+| `agent-skills:documentation-and-adrs` | 8 | ADR creation per sprint | NEW (S32) |
+| `anthropic-skills:consolidate-memory` | 9 | Каждые 5 спринтов OR >30 observations — corpus consolidation | NEW (S32) |
 | `superpowers:using-git-worktrees` | cross-phase | Sandbox/parallel | NEW (S29) |
 | `superpowers:writing-skills` | cross-phase | New project skill creation | NEW (S29) |
 | `superpowers:using-superpowers` | meta | Session start auto | EXISTING |
 
-**Total: 26 skills mapped к kit flow** (13 superpowers + 5 project + 8 agent-skills).
+**Total: 32 skills mapped к kit flow** (13 superpowers + 5 project + 13 agent-skills + 1 anthropic-skills).
 
 ## Anti-patterns (НЕ делать в любой фазе)
 
