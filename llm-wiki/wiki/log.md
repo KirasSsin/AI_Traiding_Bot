@@ -1355,3 +1355,76 @@ S21 = honest close v0.4 docs-only sprint:
 ### Roadmap
 
 **S20 SHIPPED.** Tag v0.1.0-alpha.20. Per ADR 0034 BINDING → S21 honest close v0.4 (pre-committed).
+
+## [2026-04-26] sprint-end | Sprint 21 — v0.4 honest close
+
+**Verdict: HONEST CLOSE v0.4** (pre-committed per ADR 0034 amendment 3 BINDING — S20 T5 count failthrough triggered, no new brainstorm).
+
+### Final v0.4 status
+
+4 strategy hypotheses tested across 4.81y BTC Bybit Spot — all FAIL conjoint per acceptance-criteria.md T1-T6 + DSR + MC:
+
+| # | Hypothesis | Sprint | Trades | Pass | Verdict |
+|---|-----------|--------|--------|------|---------|
+| 1 | EMA crossover trend-following 1H | S13 | 20 | T3 only | FAIL T1+T2+T4+T5 |
+| 2 | Mean-reversion multi-symbol 1H BTC+ETH+SOL | S15 | 108 | T1-T4 | FAIL T6+MC+DSR |
+| 3 | Mean-reversion BTC-only relaxed 1H | S17 | 59 | T1-T4+T6+DSR+MC | FAIL T5 count only |
+| 4 | Mean-reversion BTC-only relaxed **15M** | S20 | 73 | T3 only | FAIL T1+T2+T4+T5+T6 |
+
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 36 ADRs + 23 sprint pages)
+- MVP DONE: NOT achieved
+- Mainnet exposure: 0 (33min Bybit demo only since S12)
+- Tag: v0.1.0-alpha.21 = v0.4 honest close marker
+
+### Critical scientific findings (v0.4 institutional knowledge)
+
+1. **S17 partial signal на 1H** — MC p=0.01 stat-sig + DSR=1.0 + T1=25.99 + 5/6 PASS на 59 trades. Sample insufficient на 1H BTC alone. Edge IS real but regime-specific.
+
+2. **S20 frequency-dimension hypothesis FALSIFIED** — same params at 15M produced T1=-45.57 (vs 1H +25.99). AND-gate joint multiplier 1.24x (predicted 4x). **Hudson & Urquhart 2021 empirically validated** — mean-reversion degrades sub-hourly на BTC.
+
+3. **S17 signal regime-specific к 1H** — не frequency-bound. Fragile к timeframe shift. v0.5+ implications:
+   - Preserve 1H timeframe (4H lower-frequency или 5M higher-frequency без strong hypothesis)
+   - Hybrid ML filter может capture S17 fold #5 positive regime context
+   - Regime-switch HMM addresses S17 fold #5 + S20 fold #2 catastrophic outliers
+
+4. **Annualization Condition A3 (S19) paid off** — S20 T1=-45.57 genuine result, не -22.78 understimate. False-PASS prevented. Architecture investment paid off на first 15M measurement.
+
+### Deliverables (S21, docs-only)
+
+- T1 ADR 0036 accepted
+- T2 sprint-21-honest-close-v04.md created
+- T3 cross_trial_sharpes.json → _v0.4-final.json archival + reset к [] для v0.5 fresh-start (3rd archival, mirror S16/S18)
+- T4 wiki sync (current-state TL;DR + ADR 35→36, sprint pages 22→23, +S21 row)
+- T5 log.md sprint-end (this entry)
+- T6 SPRINT_STATE → between-sprints, tag alpha.21
+- T7 PHASE 8 ship via sprint-finish
+
+### Tests / quality
+
+NO code changes:
+- pytest unit: 732 passed (S20 baseline preserved, no regressions)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved
+
+### Cross-cutting concerns binding (per ADR 0036)
+
+- CC1 S17 partial signal preserved (1H regime-specific institutional knowledge для v0.5-A)
+- CC2 cross_trial_sharpes archival BINDING (mirrors S16/S18 — Bailey 2014 N_trials per hypothesis)
+- CC3 Hudson & Urquhart 2021 empirically validated — institutional knowledge
+- CC4 Frequency-dimension hypothesis FALSIFIED — limits v0.5 option space
+- CC5 Tag semantics: alpha.21 = v0.4 marker, NOT MVP DONE
+- CC6 No spec amendment (T1-T6 thresholds preserved)
+- CC7 Multi-symbol + 15M infrastructure preserved post-MVP
+
+### v0.5+ direction options (operator-driven, no commitment)
+
+- (v0.5-A) Hybrid 1H mean-reversion + ML XGBoost filter — STRONGEST evidence-supported per S17
+- (v0.5-B) HMM regime-switch + mean-reversion — addresses fold concentration patterns
+- (v0.5-C) 4H mean-reversion test — cheap (1-2 sprints), counter-evidence Hudson & Urquhart 2021
+- (v0.5-D) Project pause — 4 hypotheses tested, freeze
+
+### Roadmap
+
+**v0.4 closed at S21 honest.** Tag v0.1.0-alpha.21. Project state: between-sprints с post-v0.4-honest-close marker. **4-th honest close** в проекте (S14 + S16 + S18 + S21). Operator decides v0.5 if/when.
+
+MVP DONE structurally hard на BTC-only 1H mean-reversion alone (sample insufficient), 15M (degrades), multi-symbol (out of MVP scope). Path forward = hybrid ML filter (v0.5-A) OR change strategy class entirely.

@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 20
+sprint: 21
 phase: 8-ship
-branch: feature/sprint-20-15m-measurement
-tag: v0.1.0-alpha.20
+branch: feature/sprint-21-honest-close-v04
+tag: v0.1.0-alpha.21
 ---
 
 # SPRINT STATE
@@ -15,7 +15,7 @@ tag: v0.1.0-alpha.20
 
 ## Текущий статус
 
-**S20 ready к ship (tag `v0.1.0-alpha.20`) — v0.4-A measurement verdict FAIL.** 22 спринтов завершено. **S20 verdict FAIL: T5 73<150 + T1=-45.57 + T2=-345 + T4 RR 1.39 + T6=-37.13** (DSR/MC borderline PASS). Fold #2 -185.21 catastrophic (REGIME CONCENTRATION negative). AND-gate joint multiplier 1.24x на 15M (predicted 4x) — Hudson & Urquhart 2021 empirically validated. S17 partial signal contradicted at 15M = regime-specific к 1H. Per ADR 0034 amendment 3 BINDING → S21 = honest close v0.4 (4 hypotheses tested).
+**v0.4 honest close. S21 ready к ship (tag `v0.1.0-alpha.21`).** 23 спринтов завершено. **4 strategy hypotheses tested across 4.81y BTC — all FAIL conjoint per acceptance-criteria.md**. S17 partial signal preserved (1H regime-specific institutional knowledge). Hudson & Urquhart 2021 empirically validated. cross_trial_sharpes archived к v0.4-final.json + reset для v0.5 readiness (3rd archival, mirrors S16/S18). 4-th honest close в проекте (S14+S16+S18+S21).
 
 **Final v0.1 status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
@@ -23,44 +23,36 @@ tag: v0.1.0-alpha.20
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
 - Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-## Последний спринт (S20 — BTC 15M WFA measurement)
+## Последний спринт (S21 — v0.4 honest close)
 
-Pre-registered measurement per ADR 0034 BINDING. NO code changes.
-- T1 ADR 0035 accepted (verdict FAIL + S21 trigger)
-- T2 sprint-20-15m-measurement.md
-- T3 cross_trial_sharpes auto-persisted (sprint=20, oos_sharpe=-37.13)
-- T4 wiki sync (current-state TL;DR + ADR 34→35, sprint pages 21→22, +S20 row)
-- T5 PHASE 8 ship — pending
+Documentation only + cross_trial_sharpes archival. NO code changes. Pre-committed per ADR 0034 amendment 3 BINDING (S20 T5 failthrough triggered).
+- T1 ADR 0036 accepted
+- T2 sprint-21-honest-close-v04.md
+- T3 cross_trial_sharpes.json → _v0.4-final.json archival + reset к [] для v0.5 fresh-start
+- T4 wiki sync (current-state TL;DR + ADR 35→36, sprint pages 22→23, +S21 row)
+- T5 log.md sprint-end
+- T6 SPRINT_STATE → between-sprints, tag alpha.21
+- T7 PHASE 8 ship — pending
 
-Verdict FAIL multi-criteria:
-- T1=-45.57 / T2=-345 / T4 win 30%/RR 1.39 / T5 73<150 / T6=-37.13
-- DSR=0.030 PASS / MC p=0.044 PASS borderline
-- Fold #2 -185.21 catastrophic (regime concentration negative per T-Amendment 2)
-- Frequency multiplier 1.24x (predicted 4x) — Hudson & Urquhart 2021 empirically validated
+4 strategy hypotheses tested (S13+S15+S17+S20) all FAIL conjoint. S17 partial signal preserved (MC p=0.01 stat-sig + DSR=1.0 + T1=25.99 на 1H BTC — regime-specific institutional knowledge для v0.5-A hybrid ML). Hudson & Urquhart 2021 empirically validated (15M mean-reversion degrades for BTC). Frequency-dimension hypothesis FALSIFIED.
 
-Critical insight: S17 partial signal на 1H = regime-specific, не frequency-bound. Same params at 15M fundamentally fail. Per ADR 0034 amendment 3 BINDING → S21 honest close v0.4.
+4-th honest close в проекте (S14+S16+S18+S21). Pattern: documentation + archival, no measurement re-run.
 
 ## Следующее действие
 
 ```
-S20 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.20.
+S21 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.21.
 
-S20 verdict FAIL: 73 trades < 150 floor + multiple T-criteria fail.
-Per ADR 0034 amendment 3 BINDING → S21 = honest close v0.4 (4 hypotheses tested).
+v0.4 closed honest. 4 strategy hypotheses tested. S17 partial signal preserved.
+data/cross_trial_sharpes_v0.4-final.json archived, fresh [] для v0.5.
 
-Then S21 docs-only sprint:
-- ADR 0036 v0.4 honest close
-- sprint-21-honest-close-v04.md
-- Document Hudson & Urquhart 2021 empirical validation
-- Document S17 1H regime-specificity finding (institutional knowledge)
-- Archive cross_trial_sharpes.json к _v0.4-final.json + reset для v0.5
-- Tag v0.1.0-alpha.21
+Operator decides v0.5 direction (no commitment):
+(v0.5-A) Hybrid 1H mean-reversion + ML XGBoost — STRONGEST evidence-supported per S17
+(v0.5-B) HMM regime-switch + mean-reversion — addresses fold concentration
+(v0.5-C) 4H mean-reversion test — cheap (1-2 sprints), counter-evidence
+(v0.5-D) Project pause — 4 hypotheses tested, freeze
 
-After S21: operator decides v0.5 direction (no commitment):
-(v0.5-A) Hybrid 1H mean-reversion + ML XGBoost — S17 evidence supports
-(v0.5-B) 4H mean-reversion test
-(v0.5-C) HMM regime-switch + mean-reversion
-(v0.5-D) Project pause — 4 hypotheses tested
+4-th honest close в проекте. Per Bailey 2014: v0.5 fresh hypothesis resets DSR baseline cleanly.
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
