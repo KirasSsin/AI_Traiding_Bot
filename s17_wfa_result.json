@@ -1,0 +1,60 @@
+{
+  "symbols": [
+    "BTCUSDT"
+  ],
+  "per_symbol": {
+    "BTCUSDT": {
+      "status": "ok",
+      "trades": 59,
+      "k_folds": 5,
+      "mean_oos_is_sharpe": 0.7119196160040075,
+      "mc_p_value": 0.01
+    }
+  },
+  "verdict": "FAIL",
+  "failed_criteria": [
+    "t5"
+  ],
+  "dsr": 0.9999999764870914,
+  "dsr_pass": true,
+  "n_trials": 1,
+  "sigma_sr_cross_trial": null,
+  "trial_log_state": {
+    "pre_existing_sharpes": [],
+    "this_run_aggregate_sharpe": 0.7119196160040075
+  },
+  "metrics": {
+    "t1_sharpe_oos": 25.98613770729977,
+    "t2_sortino_oos": 4446.4933115513095,
+    "t3_max_drawdown": 0.027837012741323514,
+    "t4_win_rate": 0.4745762711864407,
+    "t4_avg_rr": 154.5000935819015,
+    "t5_mean_pnl_pct": 2.399161623389863,
+    "t5_t_stat": 2.132630854936497,
+    "t5_n_trades": 59,
+    "t6_oos_is_sharpe_ratio_mean": 0.7119196160040075
+  },
+  "total_k_folds": 5,
+  "mc_p_value_aggregate": 0.01,
+  "acceptance_gate": {
+    "passed": false,
+    "sharpe_gate_passed": false,
+    "mc_gate_passed": true,
+    "failed_folds": [
+      1,
+      2
+    ],
+    "fold_sharpe_ratios": [
+      0.9596733708270285,
+      -1.017011205970343,
+      -1.4551398538758622,
+      1.5770570872478944,
+      3.4950186817913202
+    ],
+    "mc_p_value": 0.01,
+    "thresholds": {
+      "sharpe": 0.7,
+      "p_value": 0.05
+    }
+  }
+}

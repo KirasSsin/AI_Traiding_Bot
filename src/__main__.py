@@ -401,8 +401,9 @@ def _run_wfa_single_symbol(
     from typing import Any, cast
     splitter = WindowSplitter()  # ADR 0014 defaults
     runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
-    # S15 ADR 0030: strategy.type = "mean_reversion" → indicators.py emits
-    # RSI<30 AND close<lower_BB(20, 2σ) AND-gated long signal.
+    # S17 ADR 0032: BTC-only mean-reversion RELAXED thresholds (RSI 35/65 + BB 1.5σ).
+    # Pre-registered binding parameters per trader EXPAND amendment 1 — NO post-result tuning.
+    # Frequency math: expected 66-88 BTC trades (vs T5 floor 100, borderline).
     config = {
         "trading": {
             "initial_balance": 10000.0,
@@ -416,8 +417,8 @@ def _run_wfa_single_symbol(
             "type": "mean_reversion",
             "indicators": {
                 "atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0},
-                "rsi": {"period": 14, "oversold": 30, "overbought": 70},
-                "bb": {"period": 20, "k": 2.0},
+                "rsi": {"period": 14, "oversold": 35, "overbought": 65},  # S17 relaxed (was 30/70 в S15)
+                "bb": {"period": 20, "k": 1.5},  # S17 relaxed (was 2.0 в S15)
             },
         },
     }
@@ -603,10 +604,12 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
     verdict = "PASS" if len(failed_criteria) == 0 and dsr_pass else "FAIL"
 
-    # S15 T0/T5: persist this trial AFTER measurement (для future S16+ DSR).
+    # S15 T0/T5: persist this trial AFTER measurement (для future DSR n_trials accumulation).
     # Guard: only persist when real trades exist (skip CLI smoke tests с mocked extractor returning [] trades).
+    # S17 fix: sprint number now configurable via SPRINT_N env var (default 0 = unknown).
     if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
-        trial_log.append_trial(sprint=15, oos_sharpe=aggregate_oos_sharpe)
+        sprint_num = int(os.environ.get("SPRINT_N", "0"))
+        trial_log.append_trial(sprint=sprint_num, oos_sharpe=aggregate_oos_sharpe)
 
     print(json.dumps({
         "symbols": symbols,

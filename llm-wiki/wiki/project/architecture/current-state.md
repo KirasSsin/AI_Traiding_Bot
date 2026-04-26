@@ -1,7 +1,7 @@
 ---
-title: Current State — post-S16 inventory + canonical counts (v0.2 honest close)
+title: Current State — post-S17 inventory + canonical counts (MVP retry #3 FAIL T5 count, 5/6 PASS + DSR + MC sig)
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-16, honest-close-v02, no-edge, n-trials-archival, v0.3-readiness]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-17, btc-only-mvp, mean-reversion-relaxed, hypothesis-3, t5-failthrough, dsr-pass-mc-sig, partial-edge-evidence]
 created: 2026-04-19
 updated: 2026-04-26
 status: stable
@@ -13,11 +13,13 @@ sources:
   - project/decisions/0030-sprint-15-mean-reversion-multi-symbol.md
   - project/sprints/sprint-16-honest-close-v02.md
   - project/decisions/0031-sprint-16-honest-close-v02.md
+  - project/sprints/sprint-17-btc-mean-reversion-relaxed.md
+  - project/decisions/0032-sprint-17-btc-mean-reversion-relaxed.md
 ---
 
-# Current State (post-S16, 2026-04-26) — v0.2 honest close (2 strategy families tested, both FAIL)
+# Current State (post-S17, 2026-04-26) — MVP retry #3 verdict FAIL (T5 count only, 5/6 + DSR + MC PASS)
 
-**TL;DR:** Live state on tag `v0.1.0-alpha.16` (**v0.2 honest close marker**, NOT MVP DONE). 18 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15 + S16). **v0.2 closed honest:** 2 strategy families empirically tested across 4.81y Bybit Spot 1H — both FAIL. S13 EMA crossover (-44.46 Sharpe, 20 trades). S15 mean-reversion RSI+BB × 3 symbols (108 trades T5 reached, но MC p=0.998 random-equivalent). Per S16 PHASE 2 trader CONFIRM Option D: DSR cross-trial math (sigma_SR=22.68 с -44.46 anchor, expected max Sharpe gate +21.5 для n_trials=3) makes any retry structurally futile. **`data/cross_trial_sharpes.json` archived к `_v0.2.json`, reset к `[]` для v0.3 fresh-start readiness** (per Bailey 2014 N_trials per hypothesis). **BTC institutional knowledge preserved:** S15 BTCUSDT alone +1.75 sharpe / p 0.197 = strongest signal observed (v0.3-A candidate). Operator decides v0.3 direction.
+**TL;DR:** Live state on tag `v0.1.0-alpha.17` (**MVP retry hypothesis #3 — FAIL T5 count only**). 19 sprints completed (S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15 + S16 + S17). **User constraint (2026-04-26): MVP scope = BTCUSDT only** per ADR 0016. **S17 strategy hypothesis #3** = mean-reversion relaxed (RSI 35/65 + BB(20, 1.5σ) AND-gated, fresh N_trials=1 baseline). **Verdict FAIL only on T5 count** (59 trades < 100 floor) — но **5/6 strategy criteria PASS + DSR=1.0 + MC p=0.01 statistically significant** = first time positive direction observed по most criteria одновременно. T5 floor structural limit: AND-gate joint multiplier ~1.34x baseline (44 trades S15) gave 59, не predicted 66-88. **Per ADR 0032 amendment 3 BINDING: T5 failthrough → S18 = honest close v0.1** (3 hypotheses tested = publishable scientific contribution). Strategy edge IS real on BTC mean-reversion regime (MC p=0.01 statistically significant), но sample insufficient на 1H BTC alone.
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -29,9 +31,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) — **S16 added zero components** (docs-only sprint) |
-| ADRs | **31** | `wiki/project/decisions/*.md` (0001-0031) | S16 (ADR 0031 — v0.2 honest close) |
-| Sprint pages | **18** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-16 + sprint-08a/b/c) | S16 (sprint-16-honest-close-v02) |
+| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) — **S17 added zero components** (config tuning sprint) |
+| ADRs | **32** | `wiki/project/decisions/*.md` (0001-0032) | S17 (ADR 0032 — BTC-only mean-reversion relaxed) |
+| Sprint pages | **19** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-17 + sprint-08a/b/c) | S17 (sprint-17-btc-mean-reversion-relaxed) |
 
 **Verify counts live (CI-safe):**
 
@@ -103,7 +105,8 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | S13 | 0028 | v0.1.0-alpha.13 | 2026-04-26 | Backfill 5y BTCUSDT 1H Bybit Spot (42098 bars, 4.81y) + WFA T1-T6 measurement + DSR(N=1) + MC. Verdict: FAIL (4/6 criteria — 20 OOS trades, sample too small). trade_extractor + strategy_metrics components. FSM/counts unchanged. |
 | S14 | 0029 | v0.1.0-alpha.14 | 2026-04-26 | Honest close. Trader Q1 EXPAND: T5 unreachable (5x signal frequency gap). v0.1 = infrastructure complete, strategy validation negative. Future direction (operator-driven, no commitment): revision / multi-symbol / timeframe / pause. Documentation only. |
 | S15 | 0030 | v0.1.0-alpha.15 | 2026-04-26 | v0.2 retry attempt #1 — FAIL but T5 reached. Mean-reversion (RSI<30 AND close<lower_BB(20, 2σ)) AND-gated × multi-symbol BTC+ETH+SOL на 1H Bybit Spot. T0 CrossTrialLog (closes S14 Q2). T1 load_recent symbol filter (Kelly contamination fix). T2 BB indicator + T3 MeanReversionRsiBBStrategy (NEW). T5 Multi-symbol --symbols CLI. T6 measurement: 108 trades aggregate (T5 PASSED), но T6 mean -12.38 / MC p 0.998 / DSR 0 — FAIL. Different failure mode vs S13 = honest negative. |
-| **S16** | **0031** | **v0.1.0-alpha.16** | **2026-04-26** | **v0.2 honest close.** Trader CONFIRM Option D: 2 strategy families (S13 EMA crossover + S15 mean-reversion) both FAIL across 4.81y; DSR cross-trial sigma_SR=22.68 с -44.46 anchor → expected max Sharpe gate +21.5 для n_trials=3 = unrealistic. T6 archives `cross_trial_sharpes.json` к `_v0.2.json` + resets к `[]` для v0.3 fresh-start (Bailey 2014 N_trials per hypothesis). BTC +1.75 institutional knowledge preserved для v0.3-A. Documentation only. |
+| S16 | 0031 | v0.1.0-alpha.16 | 2026-04-26 | v0.2 honest close. Trader CONFIRM Option D: 2 strategy families (S13 EMA crossover + S15 mean-reversion) both FAIL across 4.81y; DSR cross-trial sigma_SR=22.68 с -44.46 anchor → expected max Sharpe gate +21.5 для n_trials=3 = unrealistic. T6 archives `cross_trial_sharpes.json` к `_v0.2.json` + resets к `[]` для v0.3 fresh-start (Bailey 2014 N_trials per hypothesis). BTC +1.75 institutional knowledge preserved для v0.3-A. Documentation only. |
+| **S17** | **0032** | **v0.1.0-alpha.17** | **2026-04-26** | **MVP retry hypothesis #3 — FAIL T5 count only.** BTC-only mean-reversion relaxed (RSI 35/65 + BB 1.5σ AND-gated) per trader EXPAND. User constraint MVP=BTC only. Pre-registered binding, NO variance cap, T5 failthrough clause. **Result: 59 trades < 100 floor, но 5/6 PASS + DSR=1.0 + MC p=0.01 statistically significant.** AND-gate multiplier 1.34x (predicted 1.4-1.7x). Strategy edge IS real on BTC mean-reversion regime but sample insufficient. Per ADR 0032 amendment 3 BINDING: → S18 honest close v0.1 (3 hypotheses tested). |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
