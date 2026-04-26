@@ -493,7 +493,21 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 2. Append wiki/log.md session-end entry
 3. mark_chapter "Sprint N — ship complete"
 4. git commit -m "docs(sprint): SPRINT_STATE → between-sprints alpha.N"
+5. (Каждые 5 спринтов OR при >30 observations в claude-mem) — invoke `anthropic-skills:consolidate-memory`:
+   - Trigger check: sprint number divisible by 5 (S35, S40, S45, ...) OR
+                    `mcp__plugin_claude-mem_mcp-search__list_corpora` показывает >30 observations
+   - Procedure: reflective pass over claude-mem corpus → organize learnings в structured chunks по категориям
+                (trading-decisions / formula-knowledge / process-patterns / debug-knowledge)
+                → persist consolidated knowledge → reduce noise в future mem-search
+   - Output: cleaner corpus, faster STEP 2 lookups, better cross-session knowledge retention
+   - Anti-pattern: skip consolidation потому что "не пора" — if observations > 30, ALWAYS run
 ```
+
+### HARD-GATE
+- ✅ SPRINT_STATE phase=between-sprints
+- ✅ log.md session-end entry appended
+- ✅ Chapter marked
+- ✅ Если N % 5 == 0 OR observations > 30: consolidate-memory invoked
 
 ---
 
