@@ -1510,3 +1510,79 @@ S23 = honest close v0.5 docs-only sprint:
 ### Roadmap
 
 **S22 SHIPPED.** Tag v0.1.0-alpha.22. Per ADR 0037 BINDING → S23 honest close v0.5.
+
+## [2026-04-26] sprint-end | Sprint 23 — v0.5 honest close
+
+**Verdict: HONEST CLOSE v0.5** (pre-committed per ADR 0037 BINDING — S22 T5 count failthrough triggered, no new brainstorm). 5-th honest close в проекте (S14+S16+S18+S21+S23).
+
+### Final v0.5 status
+
+5 strategy hypotheses tested across 4.81y BTC Bybit Spot — all FAIL conjoint per acceptance-criteria.md:
+
+| # | Hypothesis | Sprint | Trades | Verdict |
+|---|-----------|--------|--------|---------|
+| 1 | EMA crossover 1H | S13 | 20 | FAIL T1+T2+T4+T5 |
+| 2 | Mean-rev multi-symbol 1H | S15 | 108 | FAIL T6+MC+DSR |
+| 3 | Mean-rev BTC 1H relaxed | S17 | 59 | FAIL T5 count, **5/6+DSR+MC PASS** |
+| 4 | Mean-rev BTC 15M | S20 | 73 | FAIL T1+T2+T4+T5+T6 |
+| 5 | Mean-rev BTC 4H | S22 | 62 | FAIL T5 count, **5/6+DSR+MC PASS** |
+
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 38 ADRs + 25 sprint pages)
+- MVP DONE: NOT achieved
+- Mainnet exposure: 0
+- Tag: v0.1.0-alpha.23 = v0.5 honest close marker
+
+### Critical scientific findings (v0.5 institutional knowledge)
+
+**Finding 1 — T5 100 structurally unreachable на BTC-only mean-reversion:**
+3 timeframes tested = ~60-73 trades all (S17 1H 59 / S20 15M 73 / S22 4H 62). FLAT-only constraint + AND-gate dominate trade count. T5 100 only reachable via multi-symbol aggregation (S15 108) — out of MVP per user.
+
+**Finding 2 — Strategy edge regime-INDEPENDENT (S17+S22):**
+Both 1H and 4H show 5/6+DSR+MC PASS pattern. Strategy stable в timeframe range. Combined ~120 trades available для v0.6-A small-sample ML training.
+
+**Finding 3 — Hudson & Urquhart 2021 partial-validation:**
+- 15M (S20): degraded — hypothesis CONFIRMED для sub-hourly
+- 4H (S22): stable PASS — hypothesis "lower frequencies better" NOT supported in 1H-4H range для BTC
+
+**Finding 4 — Frequency probe T0 paid off (architecture-mandated):**
+Prevented sprint commitment без validation. Architecture review template improvement: include grep для all interval_label_map usages (5th map missed).
+
+### Deliverables (S23 docs-only)
+
+- T1 ADR 0038 accepted
+- T2 sprint-23-honest-close-v05.md
+- T3 cross_trial_sharpes.json → _v0.5-final.json archival + reset к [] (4-th archival, mirror S16/S18/S21)
+- T4 wiki sync (current-state TL;DR + ADR 37→38, sprint pages 24→25, +S23 row)
+- T5 log.md sprint-end (this entry)
+- T6 SPRINT_STATE → between-sprints, tag alpha.23
+- T7 PHASE 8 ship — pending
+
+### Tests / quality
+
+NO code changes:
+- pytest unit: 732 passed (S22 baseline preserved)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved
+
+### Cross-cutting concerns binding (per ADR 0038)
+
+- CC1 T5 100 structurally unreachable BINDING (3 timeframes empirical)
+- CC2 cross_trial_sharpes archival BINDING (mirror S16/S18/S21)
+- CC3 Repeated 5/6+DSR+MC PASS pattern preserved (S17+S22 strategy edge regime-independent)
+- CC4 Hudson & Urquhart 2021 partial-validation (15M degrades but 4H NOT)
+- CC5 Tag semantics: alpha.23 = v0.5 marker, NOT MVP DONE
+- CC6 No spec amendment (T1-T6 preserved)
+- CC7 Multi-symbol + 15M + 4H infrastructure preserved post-MVP
+
+### v0.6+ direction options (operator-driven, no commitment)
+
+- (v0.6-A) Hybrid mean-reversion + ML XGBoost — combined S17+S22 ~120 trades viable
+- (v0.6-B) HMM regime-switch — 4-6 sprints
+- (v0.6-C) Multi-symbol revival post-MVP — ONLY path к T5 ≥100 conjoint pass
+- (v0.6-D) Different strategy class
+- (v0.6-E) Project pause — 5 hypotheses + structural insight = strong publishable contribution
+- (v0.6-F) MVP T5 floor amendment — operator decides spec amendment justified per empirical evidence
+
+### Roadmap
+
+**v0.5 closed at S23 honest.** Tag v0.1.0-alpha.23. Project state: between-sprints с post-v0.5-honest-close marker. **5-th honest close в проекте** (S14+S16+S18+S21+S23). MVP DONE на BTC-only 1H mean-reversion structurally hard — requires multi-symbol revival OR strategy class pivot OR spec amendment.

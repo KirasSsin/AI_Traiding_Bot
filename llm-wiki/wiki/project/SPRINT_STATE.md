@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 22
+sprint: 23
 phase: 8-ship
-branch: feature/sprint-22-4h-test
-tag: v0.1.0-alpha.22
+branch: feature/sprint-23-honest-close-v05
+tag: v0.1.0-alpha.23
 ---
 
 # SPRINT STATE
@@ -15,7 +15,7 @@ tag: v0.1.0-alpha.22
 
 ## Текущий статус
 
-**S22 ready к ship (tag `v0.1.0-alpha.22`) — v0.5-C 4H test verdict FAIL T5 count.** 24 спринтов завершено. **5/6 + DSR=0.996 + MC p=0.018 PASS** (similar pattern к S17 1H — strategy edge regime-independent). 62 trades < 100 floor → FAIL count alone. **CRITICAL INSIGHT:** T5 100 STRUCTURALLY UNREACHABLE на BTC-only mean-reversion (4 attempts ~60-73 trades all). Per ADR 0037 BINDING → S23 honest close v0.5.
+**v0.5 honest close. S23 ready к ship (tag `v0.1.0-alpha.23`).** 25 спринтов завершено. **5 strategy hypotheses tested across 4.81y BTC — all FAIL conjoint per acceptance-criteria.md**. CC1 T5 100 structurally unreachable BINDING (3 timeframes empirical). CC3 Strategy edge regime-INDEPENDENT (S17+S22 both 5/6+DSR+MC PASS — combined ~120 trades для v0.6-A ML training). cross_trial_sharpes archived к v0.5-final.json + reset для v0.6 readiness (4-th archival, mirrors S16/S18/S21). 5-th honest close в проекте (S14+S16+S18+S21+S23).
 
 **Final v0.1 status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
@@ -23,46 +23,38 @@ tag: v0.1.0-alpha.22
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
 - Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-## Последний спринт (S22 — BTC 4H mean-reversion test, v0.5-C)
+## Последний спринт (S23 — v0.5 honest close)
 
-Combined architectural + measurement sprint per joint trader+architecture verdict. Frequency probe T0 pre-validated (439 raw triggers).
-- T0 ✅ Frequency probe (Option C viable)
-- T1 ADR 0037 accepted
-- T2 5-map atomic extension (rest.py + __main__.py 4 sites + 2× argparse choices, 5th map runtime-discovered)
-- T3 4H BTCUSDT parquet via 1H resample (10,517 bars — Bybit backfill API hung, resample fallback)
-- T4 WFA 4H measurement → VERDICT FAIL T5 count (62 < 100), 5/6+DSR+MC PASS
-- T5 sprint-22 page + wiki sync (this commit)
-- T6 PHASE 8 ship — pending
+Documentation only + cross_trial_sharpes archival. NO code changes. Pre-committed per ADR 0037 BINDING.
+- T1 ADR 0038 accepted
+- T2 sprint-23-honest-close-v05.md
+- T3 cross_trial_sharpes.json → _v0.5-final.json archival + reset (4-th archival)
+- T4 wiki sync (current-state TL;DR + ADR 37→38, sprint pages 24→25, +S23 row)
+- T5 log.md sprint-end
+- T6 SPRINT_STATE → between-sprints, tag alpha.23
+- T7 PHASE 8 ship — pending
 
-Strategy criteria: T1=6.17 PASS / T2=7309 PASS / T3=6.1% PASS / T4 win 37%/RR 580 PASS / **T5 62 FAIL** / T6=2.96 PASS / DSR=0.996 PASS / MC p=0.018 PASS stat-sig.
+5 strategy hypotheses tested all FAIL conjoint. T5 100 structurally unreachable insight (3 timeframes empirical). Strategy edge regime-INDEPENDENT (S17+S22 both 5/6+DSR+MC PASS).
 
-Fold sharpes: [1.93, -2.92, 1.32, 12.70, 1.78] — 4/5 positive, fold #3 dominant (12.70).
-
-CRITICAL INSIGHT: T5 100 structurally unreachable на BTC-only mean-reversion (4 attempts 1H/15M/4H = ~60-73 trades all). FLAT-only constraint dominates trade count. T5 only reachable via multi-symbol aggregation (out of MVP). Per ADR 0037 BINDING → S23 honest close v0.5.
+5-th honest close в проекте (S14+S16+S18+S21+S23). Pattern: documentation + archival, no measurement re-run.
 
 ## Следующее действие
 
 ```
-S22 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.22.
+S23 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.23.
 
-S22 verdict FAIL T5 count only (62 < 100), 5/6+DSR+MC PASS pattern similar к S17.
-CRITICAL INSIGHT: T5 100 structurally unreachable на BTC-only mean-reversion.
-Per ADR 0037 BINDING → S23 honest close v0.5.
+v0.5 closed honest. 5 strategy hypotheses tested. T5 100 structurally unreachable confirmed.
+data/cross_trial_sharpes_v0.5-final.json archived, fresh [] для v0.6.
 
-Then S23 docs-only sprint:
-- ADR 0038 v0.5 honest close (5 hypotheses tested)
-- sprint-23-honest-close-v05.md
-- Document T5 100 structurally unreachable insight (4 BTC-only attempts ~60-73 trades)
-- Archive cross_trial_sharpes.json к _v0.5-final.json (4th archival)
-- Tag v0.1.0-alpha.23
+Operator decides v0.6 direction (no commitment):
+(v0.6-A) Hybrid mean-reversion + ML XGBoost — combined S17+S22 ~120 trades viable
+(v0.6-B) HMM regime-switch — addresses fold concentration
+(v0.6-C) Multi-symbol revival post-MVP — ONLY path к T5 ≥100 conjoint pass
+(v0.6-D) Different strategy class (donchian, ATR-bands, regime-detection)
+(v0.6-E) Project pause — 5 hypotheses + structural insight = strong contribution
+(v0.6-F) MVP T5 floor amendment — operator decides spec amendment justified
 
-After S23: operator decides v0.6 direction (no commitment):
-(v0.6-A) Hybrid mean-reversion + ML XGBoost — combined S17+S22 ~120 trades
-(v0.6-B) HMM regime-switch
-(v0.6-C) Multi-symbol revival post-MVP
-(v0.6-D) Different strategy class
-(v0.6-E) Project pause
-(v0.6-F) MVP T5 floor amendment (operator decides spec amendment justified)
+5-th honest close в проекте (S14+S16+S18+S21+S23). Per Bailey 2014: v0.6 fresh hypothesis resets DSR baseline cleanly.
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)

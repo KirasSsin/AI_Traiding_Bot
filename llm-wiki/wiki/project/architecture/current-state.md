@@ -1,7 +1,7 @@
 ---
-title: Current State — post-S22 inventory + canonical counts (v0.5-C 4H test FAIL T5 count, T5 100 structurally unreachable insight)
+title: Current State — post-S23 inventory + canonical counts (v0.5 honest close, 5 hypotheses tested, T5 100 structurally unreachable confirmed)
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-22, v0.5-direction-C, btc-4h, mean-reversion, hypothesis-5-tested, t5-100-structurally-unreachable, similar-pattern-к-s17]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-23, honest-close-v05, no-edge-conjoint, mvp-incomplete, hypothesis-5-tested, t5-100-structurally-unreachable, regime-independent-edge, n-trials-archival]
 created: 2026-04-19
 updated: 2026-04-26
 status: stable
@@ -25,11 +25,13 @@ sources:
   - project/decisions/0036-sprint-21-honest-close-v04.md
   - project/sprints/sprint-22-4h-test.md
   - project/decisions/0037-sprint-22-4h-test.md
+  - project/sprints/sprint-23-honest-close-v05.md
+  - project/decisions/0038-sprint-23-honest-close-v05.md
 ---
 
-# Current State (post-S22, 2026-04-26) — v0.5-C 4H test FAIL T5 count (5/6+DSR+MC PASS — T5 100 structurally unreachable insight)
+# Current State (post-S23, 2026-04-26) — v0.5 honest close (5 hypotheses tested + T5 100 structurally unreachable confirmed)
 
-**TL;DR:** Live state on tag `v0.1.0-alpha.22` (**v0.5-C 4H test verdict FAIL T5 count**, S23 = honest close v0.5 BINDING). 24 sprints completed. **S22 verdict FAIL — T5 count only (62 trades < 100 floor)** but **5/6 strategy criteria + DSR=0.996 + MC p=0.018 stat-sig PASS** (similar pattern к S17 1H). 4H result confirms strategy edge regime-independent — но FLAT-only constraint + AND-gate dominate trade count. **CRITICAL INSIGHT:** T5 floor 100 STRUCTURALLY UNREACHABLE на BTC-only mean-reversion regardless of timeframe — 4 BTC-only attempts (1H S17 59 trades, 15M S20 73 trades, 4H S22 62 trades) all ~60-73 trades. T5 100 only reachable via multi-symbol aggregation (S15 108 trades) — out of MVP per user. **5 hypotheses tested across 4.81y BTC.** Per ADR 0037 BINDING → S23 honest close v0.5. **v0.6+ options deferred:** A hybrid mean-reversion + ML (combined S17+S22 ~120 trades = small-sample ML viable) / B HMM regime-switch / C multi-symbol revival post-MVP / D different strategy class / E pause / F MVP T5 floor amendment (operator decides if spec amendment justified per empirical evidence).
+**TL;DR:** Live state on tag `v0.1.0-alpha.23` (**v0.5 honest close marker**, NOT MVP DONE). 25 sprints completed. **v0.5 closed honest:** 5 strategy hypotheses tested across 4.81y Bybit Spot BTCUSDT — all FAIL conjoint per acceptance-criteria.md. S13 EMA crossover 1H / S15 mean-reversion multi-symbol 1H / S17 mean-reversion BTC 1H relaxed (59 trades, 5/6+DSR+MC PASS) / S20 mean-reversion BTC 15M (73 trades, T1=-45.57 Hudson&Urquhart validated) / S22 mean-reversion BTC 4H (62 trades, **5/6+DSR+MC PASS regime-independent**). **CRITICAL INSIGHT BINDING:** T5 floor 100 STRUCTURALLY UNREACHABLE на BTC-only mean-reversion (3 timeframes ~60-73 trades all). T5 only reachable via multi-symbol (out of MVP) OR strategy class change. **`data/cross_trial_sharpes.json` archived к `_v0.5-final.json`, reset к `[]` для v0.6** (4-th archival, mirrors S16/S18/S21). **5-th honest close в проекте (S14+S16+S18+S21+S23).** Strategy edge regime-INDEPENDENT (S17+S22 both PASS): combined ~120 trades available для v0.6-A small-sample ML training. **v0.6+ options:** A hybrid ML / B HMM regime-switch / C multi-symbol revival post-MVP / D different strategy class / E pause / F MVP T5 floor amendment (operator decides spec amendment justified per empirical evidence).
 
 **Pre-S1 historical state** archived в section "Pre-S1 Legacy" внизу.
 
@@ -41,9 +43,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) — **S22 added zero components** (combined config + measurement, no new modules) |
-| ADRs | **37** | `wiki/project/decisions/*.md` (0001-0037) | S22 (ADR 0037 — BTC 4H test verdict FAIL) |
-| Sprint pages | **24** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-22 + sprint-08a/b/c) | S22 (sprint-22-4h-test) |
+| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 (strategy-metrics + trade-extractor) — **S23 added zero components** (docs-only sprint) |
+| ADRs | **38** | `wiki/project/decisions/*.md` (0001-0038) | S23 (ADR 0038 — v0.5 honest close) |
+| Sprint pages | **25** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-23 + sprint-08a/b/c) | S23 (sprint-23-honest-close-v05) |
 
 **Verify counts live (CI-safe):**
 
@@ -121,7 +123,8 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | S19 | 0034 | v0.1.0-alpha.19 | 2026-04-26 | v0.4-A architectural sprint (BTC 15M prep). Joint trader+architecture verdict — Option (A) с 7 combined amendments BINDING. 3 architectural Conditions APPLIED + 4 trader Amendments + 167,383 bars 15M backfill. CLI `--interval` arg. NO measurement (S20 = measurement). |
 | S20 | 0035 | v0.1.0-alpha.20 | 2026-04-26 | BTC 15M WFA measurement verdict FAIL — T5 73<150 floor (T-Amendment 1 failthrough triggered) + T1/T2/T4/T6 critical fails. Fold #2 -185.21 catastrophic (regime concentration negative). Hudson & Urquhart 2021 empirically validated. S17 partial signal contradicted at 15M (regime-specific к 1H). → S21 honest close BINDING. |
 | S21 | 0036 | v0.1.0-alpha.21 | 2026-04-26 | v0.4 honest close. Pre-committed per ADR 0034 amendment 3 (S20 T5 failthrough triggered). 4 strategy hypotheses tested across 4.81y BTC Bybit Spot — all FAIL conjoint. CC1 S17 partial signal evidence preserved. CC3 Hudson & Urquhart 2021 empirically validated. v0.5 options A/B/C/D deferred к operator. |
-| **S22** | **0037** | **v0.1.0-alpha.22** | **2026-04-26** | **v0.5-C BTC 4H test — verdict FAIL T5 count.** Joint trader+architecture verdict per user directive — both converged Option (C). **Frequency probe pre-validated** (439 raw triggers via 1H resample к 4H). 5-map atomic extension applied. Result: **62 trades < 100 floor, BUT T1=6.17 + T6=2.96 + DSR=0.996 + MC p=0.018 stat-sig PASS** (similar pattern к S17 1H 59 trades). **CRITICAL INSIGHT:** T5 100 STRUCTURALLY UNREACHABLE на BTC-only mean-reversion (4 attempts ~60-73 trades all). Per ADR 0037 BINDING → S23 honest close v0.5. |
+| S22 | 0037 | v0.1.0-alpha.22 | 2026-04-26 | v0.5-C BTC 4H test — verdict FAIL T5 count. Joint trader+architecture verdict per user directive — both converged Option (C). Frequency probe pre-validated (439 raw triggers). 5-map atomic extension applied. Result: 62 trades < 100 floor, BUT 5/6+DSR=0.996+MC p=0.018 stat-sig PASS (similar pattern к S17 1H). CRITICAL INSIGHT: T5 100 STRUCTURALLY UNREACHABLE на BTC-only mean-reversion. Per ADR 0037 BINDING → S23. |
+| **S23** | **0038** | **v0.1.0-alpha.23** | **2026-04-26** | **v0.5 honest close.** Pre-committed per ADR 0037 BINDING (S22 T5 failthrough triggered). 5 strategy hypotheses tested across 4.81y BTC Bybit Spot — all FAIL conjoint. **CC1 T5 100 structurally unreachable BINDING** (3 timeframes empirical: 1H 59 + 15M 73 + 4H 62). **CC3 Strategy edge regime-INDEPENDENT** (S17+S22 both PASS T1-T6+DSR+MC except T5 count). T3 archives `cross_trial_sharpes.json` к `_v0.5-final.json` + resets к `[]` для v0.6 (4-th archival). v0.6 options A/B/C/D/E/F deferred к operator (incl. F MVP T5 floor amendment). 5-th honest close в проекте. Documentation only. |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
