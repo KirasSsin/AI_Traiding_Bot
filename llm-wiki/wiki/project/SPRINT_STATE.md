@@ -3,24 +3,28 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 31
-phase: 4-execution
-branch: feature/sprint-31-kit-revision-best-practices
-tag: v0.1.0-alpha.30
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.31
 ---
 
-## Phase tracking (S31)
+## S31 SHIPPED ✅
+
+PR #38 → 52a232a squash-merge. Tag v0.1.0-alpha.31 pushed. Branch deleted.
+
+### Phase tracking (S31 — completed)
 
 | Phase | Status | Artifact |
 |-------|--------|----------|
 | 1 Orient | done | session continuation |
-| 2 Brainstorm | done (best practices audit inline в plan) | gap analysis |
+| 2 Brainstorm | done (best practices audit) | gap analysis inline в plan |
 | 3 Plan | done | `plans/2026-04-26-sprint-31-kit-revision-best-practices.md` |
-| 4 Execute | done | T1-T7 done (4 task commits) |
-| 5 Verify | done | 762 pytest passed (S30 baseline preserved) + CLAUDE.md size measurement (954→756 lines, -25% tokens) |
+| 4 Execute | done | 4 task commits (T1-T7) с per-task SPRINT_STATE update |
+| 5 Verify | done | 762 pytest passed + CLAUDE.md prune verified (-25% tokens) |
 | 6 Review | skipped (process/wiki) | — |
-| 7 Sync | done | wiki diffs (index + current-state + log) в T7 commit |
-| 8 Ship | in_progress | tag alpha.31 |
-| 9 Close | pending | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) |
+| 8 Ship | done | PR #38 + tag v0.1.0-alpha.31 + all 4 hooks fired correctly |
+| 9 Close | done | SPRINT_STATE between-sprints |
 
 ### Phase 4 — task progress
 | Task | Status | Commit | Note |
@@ -130,7 +134,7 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S30 SHIPPED. Tier-2 Agents + phase-advance hook + LLMWiki↔Claude-mem cascade.** 30 спринтов завершено. Operator-driven kit hardening. **3 NEW reviewer agents** (out-of-repo): security-auditor opus (OWASP + trading rules) / test-engineer sonnet (Hypothesis property + S27 lessons regression) / doc-reviewer haiku (frontmatter + Block 1↔2 sync + canonical counts). **NEW hook** phase-advance.sh — pre-merge Phase 5 verify enforcement (blocks `gh pr merge` если Phase 5 != done/skipped). **LLMWiki ↔ Claude-mem cascade rule** documentation-first: 4-step (wiki→mem→grep→raw), saves tokens via curated wiki priority. Bridges 2-4 (corpus sync / chapter mark auto-link / frontmatter tags) deferred к S31+. NO code changes. 762 pytest preserved. **9 reviewer agents + 6 active hooks.** S30 itself executed по proper kit flow per S28+S29 binding rules.
+**S31 SHIPPED. Kit Revision per Best Practices + Single Tools-Overview File.** 31 спринт завершён. Operator-driven kit optimization per Anthropic Claude Code best practices. **NEW** `kit-overview-ru.md` — 1-page TL;DR single source of truth. **EXPANDED** `tooling-inventory-ru.md` Sections 14-19 NEW (Permission modes / Plugin curation / CLI tools / Status line / Token-saver commands / Non-interactive + fan-out). **PRUNED** все 3 CLAUDE.md preserving split: 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens per session (-25%, ~4500 saved per session). **20/20 best practices coverage** (was 8/20). 4 NEW anti-patterns + token-saver commands table в repo CLAUDE.md. NO code changes. 762 pytest preserved. **Operator restart session — все settings встанут с new prune-state CLAUDE.md.**
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 30 ADRs + 17 sprint pages)
