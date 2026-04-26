@@ -3,24 +3,28 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 30
-phase: 4-execution
-branch: feature/sprint-30-tier-2-agents-mem-wiki-merge
-tag: v0.1.0-alpha.29
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.30
 ---
 
-## Phase tracking (S30)
+## S30 SHIPPED ✅
+
+PR #37 → 4e719a9 squash-merge. Tag v0.1.0-alpha.30 pushed. Branch deleted.
+
+### Phase tracking (S30 — completed)
 
 | Phase | Status | Artifact |
 |-------|--------|----------|
 | 1 Orient | done | session continuation |
-| 2 Brainstorm | short (operator-specified scope + cascade design) | inline в plan |
+| 2 Brainstorm | short (operator-specified) | inline в plan |
 | 3 Plan | done | `plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md` |
-| 4 Execute | done | T1-T9 done (6 task commits) |
-| 5 Verify | done | 762 pytest passed (S29 baseline preserved) + bash -n hook + positive/negative test |
-| 6 Review | skipped (process/wiki, no code reviewer applicable) | — |
-| 7 Sync | done | wiki diffs (index + current-state + log) в T9 commit |
-| 8 Ship | in_progress | tag alpha.30 |
-| 9 Close | pending | — |
+| 4 Execute | done | 6 task commits (T1-T9) с per-task SPRINT_STATE update |
+| 5 Verify | done | 762 pytest passed + bash -n + positive/negative hook test |
+| 6 Review | skipped (process/wiki) | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) |
+| 8 Ship | done | PR #37 + tag v0.1.0-alpha.30 + phase-advance hook fired correctly |
+| 9 Close | done | SPRINT_STATE between-sprints |
 
 ### Phase 4 — task progress
 | Task | Status | Commit | Note |
@@ -99,7 +103,7 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S29 SHIPPED. Full Superpowers Skills Integration (7 NEW + Skills × Phase map).** 29 спринтов завершено. Operator-driven kit upgrade per directive ("их надо внедрить в наш flow разработки. максимально нужное количество скиллов"). Pre-S29 only 6/13 superpowers skills used. **7 NEW integrated:** systematic-debugging (Phase 4 sub-flow) / verification-before-completion (Phase 5) / requesting-code-review + receiving-code-review (Phase 6) / dispatching-parallel-agents (Phase 4+6) / using-git-worktrees + writing-skills (cross-phase). Skills × Phase integration map (26 skills total) NEW Section 12 в tooling-inventory-ru.md = single source of truth. S29 itself executed по proper kit flow per S28 binding rules (4 task commits + per-task SPRINT_STATE updates).
+**S30 SHIPPED. Tier-2 Agents + phase-advance hook + LLMWiki↔Claude-mem cascade.** 30 спринтов завершено. Operator-driven kit hardening. **3 NEW reviewer agents** (out-of-repo): security-auditor opus (OWASP + trading rules) / test-engineer sonnet (Hypothesis property + S27 lessons regression) / doc-reviewer haiku (frontmatter + Block 1↔2 sync + canonical counts). **NEW hook** phase-advance.sh — pre-merge Phase 5 verify enforcement (blocks `gh pr merge` если Phase 5 != done/skipped). **LLMWiki ↔ Claude-mem cascade rule** documentation-first: 4-step (wiki→mem→grep→raw), saves tokens via curated wiki priority. Bridges 2-4 (corpus sync / chapter mark auto-link / frontmatter tags) deferred к S31+. NO code changes. 762 pytest preserved. **9 reviewer agents + 6 active hooks.** S30 itself executed по proper kit flow per S28+S29 binding rules.
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 30 ADRs + 17 sprint pages)
