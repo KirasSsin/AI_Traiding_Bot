@@ -94,9 +94,9 @@ Both can run parallel via `superpowers:dispatching-parallel-agents`.
 ## Related
 
 - [[../decisions/0017-review-agent-harness]] — L5 agent matrix policy
-- [[../decisions/0016-bybit-venue-migration]] — Bybit V5 chosen (S2)
-- [[../decisions/0020-spot-oco-emulation]] — execution layer (S6)
-- [[../decisions/0022-live-runtime-reconciler]] — WebSocket reconciler (S8a)
+- [[../decisions/0016-bybit-spot-supersedes-binance]] — Bybit V5 chosen (S2)
+- [[../decisions/0020-sprint-6-execution-spot-oco-emulation]] — execution layer (S6)
+- [[../decisions/0022-sprint-8a-live-runtime]] — WebSocket reconciler (S8a)
 - [[../decisions/0048-sprint-32d-kit-phase-3-improvements]] — этот agent создан здесь
 - [[../sprints/sprint-02-bybit-venue-migration]] — S2 (initial Bybit integration)
 - [[../sprints/sprint-08a-live-runtime]] — S8a (WebSocket private stream)
