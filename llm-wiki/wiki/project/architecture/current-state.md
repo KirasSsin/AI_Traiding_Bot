@@ -47,9 +47,9 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **45** | `src/risk/reason_codes.py` `ReasonCode` enum | S8a (ADR 0022 G5, +HALT_RUNTIME_CRASH/HALT_BAR_POLL_STALL/KILL_SWITCH_REQUESTED) |
-| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 — **S25 added zero components** (Presentation context separate, future dashboard.md component possible) |
-| ADRs | **39** | `wiki/project/decisions/*.md` (0001-0039) | S25 (ADR 0039 — Dashboard UI) |
-| Sprint pages | **26** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-25 + sprint-08a/b/c, S24 = backlog-only no sprint) | S25 (sprint-25-dashboard) |
+| Component pages | **38** | `wiki/project/components/*.md` (incl. README.md cluster index) | S13 — S25 + S27 added zero components |
+| ADRs | **40** | `wiki/project/decisions/*.md` (0001-0040) | S27 (ADR 0040 — Formula bug fixes) |
+| Sprint pages | **27** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-25 + sprint-27 + sprint-08a/b/c, S24+S26 = no sprint page) | S27 (sprint-27-formula-bug-fixes) |
 
 **Verify counts live (CI-safe):**
 
@@ -131,6 +131,8 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=45`
 | S23 | 0038 | v0.1.0-alpha.23 | 2026-04-26 | v0.5 honest close. 5 hypotheses tested across 4.81y BTC — all FAIL conjoint. CC1 T5 100 structurally unreachable BINDING. CC3 Strategy edge regime-INDEPENDENT (S17+S22). cross_trial_sharpes archived → fresh `[]` для v0.6. 5-th honest close. |
 | S24 | (backlog-only) | (no tag) | 2026-04-26 | v0.6 brainstorm — joint trader+architecture verdict (E) PROJECT PAUSE. ESC-1 escalated к user (pause vs lift BTC-only constraint). Acceptance gate failure CONFIRMED в S17+S22 (sharpe_gate_passed=false независимо от T5). Option F (T5 floor amendment) cost underestimated. NO sprint created. Backlog committed к main. |
 | **S25** | **0039** | **v0.1.0-alpha.25** | **2026-04-26** | **Dashboard UI sprint** — user-driven feature: web UI для backtest comparison через FastAPI + vanilla JS + auto-open browser. NEW Presentation context (`src/dashboard/`). 3 strategy presets, 5 timeframes (5M/15M/60/240/1D), 3 symbols (BTC/ETH/SOL). T0 backfill 2023-01-01 → 2026-04-26. Trader spec: TIER 1 + TIER 2 metrics + 4 mandatory warnings + Sortino anomaly guard. Architecture APPROVE_WITH_CONDITIONS. Demo-only (TESTNET=true). NO live trading через UI. 740 passed pytest (+8 dashboard tests). |
+| S26 | (no ADR) | v0.1.0-alpha.26 | 2026-04-26 | Dashboard UI redesign — Bloomberg-pro × refined CRT aesthetic + Documentation tab. NO architecture changes — pure UI/CSS/JS работа. JetBrains Mono + Fraunces typography. README.md added для launch instructions. |
+| **S27** | **0040** | **v0.1.0-alpha.27** | **2026-04-26** | **Formula bug fixes sprint** — operator-driven audit per directive ("ревизия всех торговых метрик и формул"). Built `scripts/audit_formulas.py` (30-experiment sweep + 17 formulas inventoried + dashboard auto-refresh hook). Trader+logic-reviewer parallel brainstorm: trader EXPAND (formulas correct, structural failures), logic-reviewer PARTIAL FAIL 4 bugs. **5 bugs fixed TDD:** T1 HIGH replay_engine bars_per_year (corrupted 27/30 experiments) / T2 MEDIUM Sortino canonical Sortino & Price 1994 / T3 MEDIUM RSI/ATR warm-up gating / T4 INFO/CC5 trade_extractor preserve actual reason_code / T5 LOW MC seed=42 default. Sweep re-run preserved verdict counts (0/30 PASS — failures structural не bugs) but reason codes diverse (187 SL / 141 TP / 2 TIME_STOP) + ema_crossover SOL 4H pnl improved. ESC-1/2/3 для S28+ pending operator. Trader-expert backlog S28-S32. 762 passed pytest (+18 new). |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
