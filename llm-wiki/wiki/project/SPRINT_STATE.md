@@ -2,11 +2,38 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 30
-phase: between-sprints
-branch: main
+sprint: 31
+phase: 4-execution
+branch: feature/sprint-31-kit-revision-best-practices
 tag: v0.1.0-alpha.30
 ---
+
+## Phase tracking (S31)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation |
+| 2 Brainstorm | done (best practices audit inline в plan) | gap analysis |
+| 3 Plan | done | `plans/2026-04-26-sprint-31-kit-revision-best-practices.md` |
+| 4 Execute | done | T1-T7 done (4 task commits) |
+| 5 Verify | done | 762 pytest passed (S30 baseline preserved) + CLAUDE.md size measurement (954→756 lines, -25% tokens) |
+| 6 Review | skipped (process/wiki) | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) в T7 commit |
+| 8 Ship | in_progress | tag alpha.31 |
+| 9 Close | pending | — |
+
+### Phase 4 — task progress
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 kit-overview-ru.md | done | (pending commit) | 1-page TL;DR + Quick decision matrix + 9 agents + 6 hooks + 5 skills + ~50 plugin skills + 6 MCP + cascade rule + Top 10 commands + Top 5 anti-patterns + 9-phase lifecycle + 20 best practices applied |
+| T2 tooling-inventory-ru.md sections 14-19 | done | (pending commit) | Section 14 Permission modes / 15 Plugins curated / 16 CLI tools / 17 Status line / 18 Token-saver commands / 19 Non-interactive + fan-out |
+| T3 prune llm-wiki/CLAUDE.md (448→<200) | done | (pending commit) | 448→291 (-35%), 27KB→13KB (-52%) — extracted verbose к kit-overview-ru + tooling-inventory-ru |
+| T4 audit ~/.claude/CLAUDE.md (316→<250) | done | (pending commit) | 316→253 (-20%) — section 9c compressed (80→17 lines) preserving formula |
+| T5 repo CLAUDE.md +kit-overview link | done | (pending commit) | 190→212 lines — added kit-overview/sprint-flow-ru/tooling-inventory references к Ключевые файлы table |
+| T6 status line + `/btw`/`/rewind`/`--continue` | done | (pending commit) | Anti-patterns +4 (kitchen-sink/btw/3+correction/CLAUDE.md bloat) + token-saver commands table 8 commands + link к Section 18 |
+| Total CLAUDE.md prune | done | — | 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens (-25%) per session |
+| T7 ADR 0044 + sprint-31 page + sync | done | (pending commit) | ADR + sprint page + index + current-state (43→44 ADRs / 30→31 sprint pages / +Kit settings RU 3 files / +CLAUDE.md tokens ~14K) + log |
+| Ship | in_progress | — | tag alpha.31 |
 
 ## S30 SHIPPED ✅
 
