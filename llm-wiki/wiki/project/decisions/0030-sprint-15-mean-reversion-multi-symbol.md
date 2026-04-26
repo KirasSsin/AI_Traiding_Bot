@@ -152,9 +152,9 @@ T1-T6 thresholds preserved per `acceptance-criteria.md`. NO spec amendment. S15 
 - [[0029-sprint-14-honest-close]] — S14 honest close (T5 unreachability constraint inherited)
 - [[0028-sprint-13-strategy-validation]] — S13 measurement (-44.46 Sharpe anchor для DSR)
 - [[0016-bybit-spot-supersedes-binance]] — venue policy (multi-symbol compatible)
-- [[0022-execution-state-single-writer]] — single-writer invariant (preserved under replication)
-- [[0011-indicators-wilder-classical]] — RSI/ATR Wilder formulas (reused)
-- [[0014-walk-forward-analysis]] — WFA params (unchanged)
+- [[0022-sprint-8a-live-runtime]] — single-writer invariant (preserved under replication)
+- [[0011-wilder-ema-for-adx-rsi-classical-for-crossover]] — RSI/ATR Wilder formulas (reused)
+- [[0014-walk-forward-train2000-test500]] — WFA params (unchanged)
 - [[0005-1h-timeframe-mvp]] — 1H baseline (no amendment в S15)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 
