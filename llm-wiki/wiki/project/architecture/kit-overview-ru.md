@@ -89,7 +89,7 @@ Anti-patterns:
 
 Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]]
 
-## 🛡️ Active Hooks (7 push + 1 session — mechanical enforcement)
+## 🛡️ Active Hooks (7 push + 2 UserPromptSubmit + 1 session — mechanical enforcement)
 
 | Hook | Triggers | Block если |
 |------|----------|-----------|
@@ -99,9 +99,10 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | `sprint-flow-check.sh` (S28+) | git push | feature/sprint-NN-* без plan file |
 | `phase-advance.sh` (S30+) | gh pr merge | SPRINT_STATE Phase 5 != done/skipped |
 | `sprint-state-freshness-check.sh` 🆕 (S32b+) | git push | "Следующее действие" references S<N-2> с actionable patterns (PHASE X ship/pending/in_progress/next) |
+| `context-budget-warn.sh` 🆕 (S32d) | UserPromptSubmit (every prompt) | Advisory warning при transcript > 800KB ~60% (yellow) / > 1200KB ~80% (red). Always exits 0. |
 | `caveman-*` | session lifecycle | Caveman mode tracking (not push-related) |
 
-## 👥 Reviewer agents (10 — `~/.claude/agents/`)
+## 👥 Reviewer agents (11 — `~/.claude/agents/`)
 
 | Agent | Model | Когда |
 |-------|-------|-------|
@@ -115,6 +116,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | `test-engineer` 🆕 | sonnet | Test pyramid / Hypothesis property / coverage / regression |
 | `doc-reviewer` 🆕 | **haiku** (lightweight) | Frontmatter / links / Block 1↔2 sync / canonical counts |
 | `dashboard-reviewer` 🆕 (S32b) | sonnet | `src/dashboard/` FastAPI + vanilla JS (5-axis review per S25 ADR 0039 conditions) |
+| `bybit-api-reviewer` 🆕 (S32d) | sonnet | Bybit V5 Spot API protocol correctness (6-axis: rate limits / order params / WS schema / retCodes / pagination / HMAC sign) |
 
 ## 🔧 Project skills (5 — `.claude/skills/`)
 
@@ -239,6 +241,7 @@ Detail: [[sprint-flow-ru]]
 | S32 | alpha.32 | 2026-04-27 | Kit Phase 0 (P0 fixes + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory) |
 | S32b | alpha.32b | 2026-04-27 | Kit Phase 1 (CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer) |
 | S32c | alpha.32c | 2026-04-27 | Kit Phase 2 reduced (4 skill mappings + Fetch MCP + corpus categorization scheme docs) |
+| S32d | alpha.32d | 2026-04-27 | Kit Phase 3 final (bybit-api-reviewer + context budget hook + schedule wire + sprint metrics + corpus research notes) — **S32 series COMPLETE** |
 
 Full history: [[../architecture/current-state#карта-спринтов-sprint-history]]
 
