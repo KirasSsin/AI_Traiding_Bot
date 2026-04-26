@@ -27,8 +27,8 @@ tag: v0.1.0-alpha.27
 |------|--------|--------|------|
 | T1 sprint-flow-ru.md | done | (pending commit) | Russian sprint lifecycle 9 phases |
 | T2 tooling-inventory-ru.md | done | (pending commit) | 11 sections — agents/skills/plugins/MCP/hooks |
-| T3 sprint-flow-check.sh hook | in_progress | — | mechanical PHASE 3 enforcement |
-| T4 SPRINT_STATE template | pending | — | per-phase tracking section |
+| T3 sprint-flow-check.sh hook | done | (pending commit) | bash -n + positive + negative tested + registered в settings.json |
+| T4 SPRINT_STATE template | done | (already applied to S28 itself) | per-phase + per-task tracking inline в этом file |
 | T5 CLAUDE.md updates | pending | — | binding "BEFORE any sprint work" |
 | T6 ADR 0041 + sprint-28 page + sync | pending | — | wiki diffs |
 | T7 PHASE 8 ship | pending | — | tag alpha.28 |
