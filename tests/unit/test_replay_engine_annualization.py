@@ -65,14 +65,20 @@ def test_sharpe_uses_15m_annualization_when_bars_per_year_35040() -> None:
 
 
 def test_sortino_uses_same_annualization_as_sharpe() -> None:
-    """Sortino same fix: sqrt(bars_per_year), not hardcoded sqrt(24*365)."""
+    """Sortino same fix: sqrt(bars_per_year), not hardcoded sqrt(24*365).
+
+    Uses canonical downside deviation (S27 T2): sqrt(mean(min(r,0)^2))
+    over ALL returns — not std of negative-returns subset.
+    """
     eq, tr = _synthetic_equity_trades()
     metrics = _compute_metrics(eq, tr, initial_balance=10000.0, bars_per_year=2190)
 
     returns = eq["balance"].pct_change().dropna()
-    downside = returns[returns < 0]
-    if len(downside) > 0 and downside.std() > 0:
-        expected_sortino = float((returns.mean() / downside.std()) * np.sqrt(2190))
+    # Canonical Sortino downside deviation
+    downside_canonical = returns.where(returns < 0, 0.0)
+    downside_dev = float(np.sqrt((downside_canonical ** 2).mean()))
+    if downside_dev > 0:
+        expected_sortino = float((returns.mean() / downside_dev) * np.sqrt(2190))
         assert abs(metrics["Sortino Ratio"] - expected_sortino) < 1e-9
 
 

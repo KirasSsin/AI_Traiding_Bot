@@ -76,12 +76,18 @@ def compute_t1_t6_metrics(
     else:
         t1_sharpe_oos = float("nan")
 
-    # T2: Sortino OOS (downside deviation)
-    losers = pnl_pcts[pnl_pcts < 0]
-    if len(losers) > 0 and losers.std(ddof=1) > 0:
-        sortino_per_trade = float(pnl_pcts.mean() / losers.std(ddof=1))
+    # T2: Sortino OOS (canonical downside deviation per Sortino & Price 1994).
+    # S27 T2: pre-fix used `std(losers_subset, ddof=1)` — std of losers only,
+    # mean-centered. Canonical formula: sqrt(mean(min(r, target)^2)) over ALL
+    # n trades, target=0. Pre-fix produced ~3.6x inflated Sortino, и returned
+    # NaN spuriously when all losers identical (std=0).
+    downside = np.minimum(pnl_pcts, 0.0)
+    downside_dev = float(np.sqrt(np.mean(downside ** 2)))
+    if downside_dev > 0:
+        sortino_per_trade = float(pnl_pcts.mean() / downside_dev)
         t2_sortino_oos = sortino_per_trade * annualization_factor
     else:
+        # No losing trades → undefined Sortino (denominator zero)
         t2_sortino_oos = float("nan")
 
     # T3: Max Drawdown (peak-to-trough on equity curve)

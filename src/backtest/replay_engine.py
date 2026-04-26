@@ -61,12 +61,15 @@ def _compute_metrics(
     if not returns.empty and float(returns.std()) > 0:
         sharpe = float((returns.mean() / returns.std()) * annualization_factor)
 
+    # S27 T2: canonical Sortino downside deviation (Sortino & Price 1994).
+    # Pre-fix used downside.std() — std of negative returns subset, mean-centered.
+    # Canonical: sqrt(mean(min(r, 0)^2)) over ALL returns.
     sortino = 0.0
     if not returns.empty:
-        downside = returns[returns < 0]
-        downside_std = float(downside.std()) if not downside.empty else 0.0
-        if downside_std > 0:
-            sortino = float((returns.mean() / downside_std) * annualization_factor)
+        downside = returns.where(returns < 0, 0.0)
+        downside_dev = float(np.sqrt((downside ** 2).mean()))
+        if downside_dev > 0:
+            sortino = float((returns.mean() / downside_dev) * annualization_factor)
 
     total_trades = float(len(trades_df))
     win_rate = float(len(wins) / total_trades * 100.0) if total_trades > 0 else 0.0
