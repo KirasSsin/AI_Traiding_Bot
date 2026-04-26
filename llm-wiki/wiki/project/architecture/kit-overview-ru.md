@@ -135,7 +135,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | claude-mem (12.3.7) | 7 (mem-search / version-bump / knowledge-agent / smart-explore / etc) |
 | caveman (84cc3c14fa1e) | 5 (caveman mode / compress / commit / etc) |
 
-## 🔌 MCP servers (7)
+## 🔌 MCP servers (8)
 
 | MCP | Назначение |
 |-----|-----------|
@@ -146,6 +146,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | `computer-use` | Mac native apps (NOT trading work) |
 | `Claude_in_Chrome` | Web automation |
 | `sqlite-trading` 🆕 (S32b) | Direct SQLite queries → `data/bot.db` (execution_states / fills / halts debug). Project-level `.mcp.json`. |
+| `fetch` 🆕 (S32c) | Web requests (Bybit V5 API docs / PyPI versions / GitHub releases / Anthropic docs). uvx mcp-server-fetch. Project-level `.mcp.json`. |
 
 ## 📂 Critical files (navigation anchors)
 
@@ -237,6 +238,7 @@ Detail: [[sprint-flow-ru]]
 | S31 | alpha.31 | 2026-04-26 | Kit Revision per Best Practices + Single Tools-Overview File |
 | S32 | alpha.32 | 2026-04-27 | Kit Phase 0 (P0 fixes + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory) |
 | S32b | alpha.32b | 2026-04-27 | Kit Phase 1 (CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer) |
+| S32c | alpha.32c | 2026-04-27 | Kit Phase 2 reduced (4 skill mappings + Fetch MCP + corpus categorization scheme docs) |
 
 Full history: [[../architecture/current-state#карта-спринтов-sprint-history]]
 

@@ -113,6 +113,24 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 | **`superpowers:brainstorming`** | Non-trading scope (process design, infrastructure) — Socratic refinement через clarifying questions one-at-a-time |
 | **`agent-skills:spec-driven-development`** 🆕 (S32) | Phase 2/3 — non-trading features без spec (dashboard / CLI / infrastructure). Создаёт spec с acceptance criteria ДО plan writing. Применять когда: новая UI feature, новая CLI команда, новый module без ADR. NOT для trading strategies (используй trader-expert). |
 
+### Procedure (idea-refine PRE-step — S32c extension)
+
+**Use когда:** operator vague idea без concrete deliverables (e.g., "что-то улучшить в кит'е", "оптимизация", "ускорить"). Skip если operator уже specified deliverables (S28-S32 pattern: explicit task list).
+
+```
+1. Operator vague idea → invoke `agent-skills:idea-refine` skill
+2. Skill structures divergent thinking:
+   - Generate 3-5 alternative refinements (broader scope variants)
+   - Identify constraints + success criteria
+3. Convergent thinking:
+   - Compare alternatives через tradeoff matrix
+   - Select 2-3 best для brainstorm-init questionnaire
+4. Output: refined option list с tradeoffs documented
+5. THEN → brainstorm-init skill (trader-expert ROUND 1 на refined options)
+
+Anti-pattern: skip idea-refine на vague idea → trader-expert получает unfocused questionnaire → poor verdicts → wasted ROUND 2.
+```
+
 ### Procedure (trader-expert path)
 **Использовать skill:** `.claude/skills/brainstorm-init/SKILL.md`
 
@@ -160,6 +178,7 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 |-------|-------|
 | **`superpowers:writing-plans`** | PRIMARY — comprehensive implementation plan |
 | **`agent-skills:planning-and-task-breakdown`** | DEPTH reference (не replacement) — checklist для task decomposition quality |
+| **`agent-skills:api-and-interface-design`** 🆕 (S32c) | CLI commands / module boundaries / endpoint design — stable interface contracts ДО implementation. Use когда Phase 3 plan включает new public API surface (REST endpoint / CLI subcommand / module exports). |
 
 ### Триггер
 - PHASE 2 verdicts locked
@@ -320,6 +339,7 @@ Agent(subagent_type="python-reviewer", prompt=...)
 | Skill | Когда |
 |-------|-------|
 | **`superpowers:verification-before-completion`** | PRIMARY — pre-completion checklist (tests / linter / runtime check / edge cases) |
+| **`agent-skills:browser-testing-with-devtools`** 🆕 (S32c) | Phase 5 для dashboard sprints (S25/S26-class) — Chrome DevTools MCP runtime verification (DOM / console errors / network requests / visual output). Requires Chrome MCP enabled (✓ via Claude_in_Chrome MCP). |
 
 ### Procedure
 ```bash
@@ -363,6 +383,7 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 | **`agent-skills:code-review-and-quality`** | DEPTH reference — five-axis review checklist |
 | **`agent-skills:security-and-hardening`** | MUST для money / API key / override.py changes |
 | **`agent-skills:code-simplification`** 🆕 (S32) | Phase 6 OPTIONAL — post-implementation cleanup сложных формул / accumulated complexity. Simplify without behavior change (regression test guards). Применять когда: file > 300 LoC после feature add, formula код после S27-class fixes, перед merge sprint touching `src/{backtest,signalgen,risk}/`. NOT для new code (используй incremental-implementation). |
+| **`agent-skills:performance-optimization`** 🆕 (S32c) | Phase 6 OPTIONAL — backtest/replay sprints touching `src/backtest/`. Profile FIRST через cProfile/timeit перед optimize ("measure first, optimize only what matters"). Replay engine 5y backfill iteration speed. NOT для premature optimization. Применять когда: backtest run > 30 sec, WFA fold count blow up, vector_backtest memory > 1GB. |
 
 ### Procedure (per touched layer)
 
@@ -577,12 +598,15 @@ STEP 4: Read raw + offset          (full content, controlled)
 | `agent-skills:context-engineering` | 4 | Subagent briefs > 200 слов | EXISTING |
 | `agent-skills:incremental-implementation` | 4 | DEPTH ref | EXISTING |
 | `agent-skills:source-driven-development` | 4 | Bybit/pydantic/pybit/FastAPI/TA-Lib tasks — verify against official docs | NEW (S32) |
+| `agent-skills:api-and-interface-design` | 3 | CLI commands / module boundaries / endpoint design — stable contracts ДО impl | NEW (S32c) |
 | `superpowers:verification-before-completion` | 5 | Pre-completion checklist | NEW (S29) |
+| `agent-skills:browser-testing-with-devtools` | 5 | Dashboard sprints — Chrome DevTools MCP runtime verify | NEW (S32c) |
 | `superpowers:requesting-code-review` | 6 | Format reviewer brief | NEW (S29) |
 | `superpowers:receiving-code-review` | 6 | Process reviewer feedback | NEW (S29) |
 | `agent-skills:code-review-and-quality` | 6 | DEPTH ref | EXISTING |
 | `agent-skills:security-and-hardening` | 6 | Money/API/override changes | EXISTING |
 | `agent-skills:code-simplification` | 6 OPT | Post-impl cleanup сложных формул | NEW (S32) |
+| `agent-skills:performance-optimization` | 6 OPT | Backtest/replay sprints — profile-first, measure перед optimize | NEW (S32c) |
 | `wiki-update` (project) | 7 | After src/ change | EXISTING |
 | `sprint-finish` (project) | 8 | Sprint complete | EXISTING |
 | `superpowers:finishing-a-development-branch` | 8 | Delegated by sprint-finish | EXISTING |
@@ -594,7 +618,7 @@ STEP 4: Read raw + offset          (full content, controlled)
 | `superpowers:writing-skills` | cross-phase | New project skill creation | NEW (S29) |
 | `superpowers:using-superpowers` | meta | Session start auto | EXISTING |
 
-**Total: 32 skills mapped к kit flow** (13 superpowers + 5 project + 13 agent-skills + 1 anthropic-skills).
+**Total: 36 skills mapped к kit flow** (13 superpowers + 5 project + 17 agent-skills + 1 anthropic-skills). +4 в S32c: `api-and-interface-design` (Phase 3) / `browser-testing-with-devtools` (Phase 5) / `performance-optimization` (Phase 6 OPT) / `idea-refine` extension Phase 2 PRE workflow.
 
 ## Anti-patterns (НЕ делать в любой фазе)
 

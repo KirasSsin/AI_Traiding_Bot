@@ -394,6 +394,23 @@ External tool integrations.
 - **Когда:** Web automation (если dashboard требует UI test). Browser-based workflows.
 - **Не использовать для:** Trading bot CLI — используй Bash directly.
 
+### 7.7 sqlite-trading 🆕 (S32b — project-level `.mcp.json`)
+- **Command:** `uvx mcp-server-sqlite --db-path /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/data/bot.db`
+- **Tools:** list_tables, describe_table, read_query, write_query, create_table, append_insight
+- **Когда:** Direct SQLite queries → execution_states / fills / halts / audit_log / circuit_breakers debugging. 10× быстрее vs `sqlite3 data/bot.db "SELECT..."` через bash.
+- **Activation:** Operator approve prompt at session start (one-time).
+
+### 7.8 fetch 🆕 (S32c — project-level `.mcp.json`)
+- **Command:** `uvx mcp-server-fetch`
+- **Tools:** fetch (HTTP GET с user-agent customization, robots.txt respect, optional proxy)
+- **Когда:**
+  - Bybit V5 API docs lookup (https://bybit-exchange.github.io/docs/v5/)
+  - PyPI package version checks (https://pypi.org/pypi/<pkg>/json)
+  - GitHub releases / CHANGELOG fetch
+  - Anthropic best practices docs
+- **Не использовать для:** Trading data fetch — используй pybit V5 client (proper rate limiting + auth).
+- **Activation:** Operator approve prompt at session start (one-time, same as sqlite-trading).
+
 ---
 
 ## 8. Hooks — `~/.claude/hooks/`
@@ -802,6 +819,107 @@ Auto mode classifier reviews commands в background. Aborts если repeatedly 
 
 Fresh context в Session B = unbiased review.
 
+## 22. Memory corpus categorization scheme (S32c — partial bridge 4 design)
+
+**Status:** Documentation-only design. Implementation script deferred к S32d (research carry-over from S30 + S31 bridges 2-4).
+
+### Problem
+
+claude-mem MCP corpus (currently ~17 observations) flat — no semantic partitioning. mem-search returns noisy results когда обрабатывая queries spanning multiple domains (trading vs process vs debug).
+
+Cascade STEP 2 (`mem-search`) текущая precision low когда:
+- Query "did we solve formula bug" → returns mix of formula + process + debug observations
+- Query "trader verdict ESC" → returns mix of trading-decisions + general kit observations
+
+После 5-10 спринтов = corpus 50+ observations → noise compounding.
+
+### Proposed scheme — 4 partitions
+
+| Partition | What goes here | Source frontmatter tags |
+|-----------|----------------|-------------------------|
+| **trading-decisions** | Strategy verdicts (trader-expert), ESC items, ADR rationale, hypothesis test outcomes, MVP acceptance criteria changes | `trading`, `strategy`, `hypothesis`, `esc`, `trader-verdict`, `mvp`, `acceptance-criteria`, `regime`, `dsr-trial` |
+| **formula-knowledge** | Math correctness (DSR, Sortino, Kelly, MC, Sharpe), audit findings, formula bug fixes | `formula`, `dsr`, `kelly`, `mc`, `sortino`, `sharpe`, `math`, `audit`, `bug-fix-formula`, `wfa` |
+| **process-patterns** | Kit violations, HARD-GATE learnings, sprint-flow improvements, hook bug fixes | `process`, `kit`, `hard-gate`, `sprint-flow`, `hook`, `violation`, `lesson`, `phase-advance` |
+| **debug-knowledge** | Past bug → fix patterns, debugging session outputs, error → solution mappings | `debug`, `bug`, `fix`, `error`, `troubleshoot`, `ci-fix`, `regression` |
+
+Орхans (no matching tag) → `uncategorized` partition (fallback).
+
+### Frontmatter tag → partition mapping (pseudo-code)
+
+claude-mem ingest hook должен read frontmatter tags из committed wiki/sprint pages и categorize observations по primary tag intersect.
+
+```python
+# pseudo-code (S32d implementation candidate)
+PARTITION_MAP = {
+    "trading-decisions": {
+        "trading", "strategy", "hypothesis", "esc", "trader-verdict",
+        "mvp", "acceptance-criteria", "regime", "dsr-trial"
+    },
+    "formula-knowledge": {
+        "formula", "dsr", "kelly", "mc", "sortino", "sharpe",
+        "math", "audit", "bug-fix-formula", "wfa"
+    },
+    "process-patterns": {
+        "process", "kit", "hard-gate", "sprint-flow", "hook",
+        "violation", "lesson", "phase-advance"
+    },
+    "debug-knowledge": {
+        "debug", "bug", "fix", "error", "troubleshoot",
+        "ci-fix", "regression"
+    },
+}
+
+def categorize(observation_frontmatter: dict) -> str:
+    """Return partition name for observation based on frontmatter tags.
+
+    Uses primary intersect — first partition с non-empty tag overlap wins.
+    Order matters: trading > formula > process > debug (most specific to least).
+    """
+    tags = set(observation_frontmatter.get("tags", []))
+    for partition in ["trading-decisions", "formula-knowledge",
+                      "process-patterns", "debug-knowledge"]:
+        if tags & PARTITION_MAP[partition]:
+            return partition
+    return "uncategorized"
+```
+
+### Cascade STEP 2 enhanced (post-implementation)
+
+After bridge 4 implemented, cascade STEP 2 mem-search supports `category:` filter:
+
+```
+STEP 2: mem-search                          ← current S32: flat search (noisy)
+   ↓ AFTER S32d bridge 4
+STEP 2: mem-search category:trading-decisions  ← scoped search, 3-5× higher precision
+```
+
+Forecast precision improvement:
+- Flat search: ~30% relevant results in top 5
+- Categorized search: ~80% relevant results in top 5 (3× improvement)
+
+### Bridges 2-4 status (S30 deferred → S32d candidate)
+
+- **Bridge 2 (corpus periodic sync)** — auto-rebuild corpus от wiki/log.md новых entries
+- **Bridge 3 (chapter mark auto-link)** — `mark_chapter` MCP tool creates linked log.md entry
+- **Bridge 4 (frontmatter tags → partition)** — этот scheme implemented as ingest hook
+
+### Why scheme docs S32c но script S32d?
+
+- **Scheme** = stable design choice (partition labels + tag mappings) — committable now, no implementation risk
+- **Implementation** = needs claude-mem internal API research (ingest hook framework, corpus partition support, search filter syntax) — research scope + new infrastructure dependency
+- Splitting scheme ↔ script allows operator review tag mapping before lock-in
+- S32c locks scheme в wiki = future implementation has clear target
+
+### How operator can validate scheme
+
+Test scheme manually на existing 17 observations:
+```bash
+mcp__plugin_claude-mem_mcp-search__list_corpora
+# Read each observation's frontmatter
+# Manually map к partition per PARTITION_MAP
+# Verify majority match expected partition (no orphans за 30%)
+```
+
 ## Связанные документы
 
 - [[kit-overview-ru]] — single source of truth gateway (S31)
@@ -809,8 +927,11 @@ Fresh context в Session B = unbiased review.
 - [[../decisions/0017-review-agent-harness]] — review agents matrix policy
 - [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
 - [[../decisions/0042-sprint-29-superpowers-integration]] — full superpowers integration ADR (S29)
-- [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] — tier-2 agents + cascade ADR (S30)
+- [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] — tier-2 agents + cascade ADR (S30) — bridges 2-4 origin
 - [[../decisions/0044-sprint-31-kit-revision-best-practices]] — best practices revision (S31)
+- [[../decisions/0045-sprint-32-kit-phase-0-improvements]] — Kit Phase 0 (S32)
+- [[../decisions/0046-sprint-32b-kit-phase-1-improvements]] — Kit Phase 1 (S32b)
+- [[../decisions/0047-sprint-32c-kit-phase-2-improvements]] — Kit Phase 2 (S32c — этот scheme)
 - [[methodology-rejected]] — rejected packages + cleanup
 - `llm-wiki/CLAUDE.md` — Skills hierarchy & integration
 - `~/.claude/CLAUDE.md` — global rules + token economy

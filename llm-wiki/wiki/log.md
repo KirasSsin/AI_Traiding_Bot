@@ -1989,3 +1989,36 @@ CI now green and validates: ruff lint baseline / mypy --strict baseline / pytest
 **Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
 
 Next session = operator decision: S32c (Kit Phase 2) OR Track B unblock OR test debt cleanup sprint.
+
+## [2026-04-27] sprint-end | S32c — Kit Improvement Phase 2 (4 skill mappings + Fetch MCP + corpus categorization scheme)
+
+**Kit Improvement Phase 2 sub-sprint** — Sub-sprint S32 series (mirror S8a/S8b/S8c). Tag v0.1.0-alpha.32c. **Reduced scope** decision (per pre-plan analysis): 5 clear wins shipped в S32c, 2 research items (memory corpus bridges 2-4 implementation script + context budget hook) deferred к S32d. КУ avg ~51% / ~1.5 hours.
+
+**4 changes per ADR 0047:**
+- T1 (0761bad) Fetch/HTTP MCP server — `.mcp.json` +fetch (uvx mcp-server-fetch verified pre-installed). Section 7.7 (sqlite-trading post-S32b doc) + Section 7.8 (fetch NEW) в tooling-inventory-ru.md. Use cases: Bybit V5 API docs / PyPI versions / GitHub releases. NOT для trading data (use pybit).
+- T2 (09fcdee) 4 skill mappings к sprint-flow-ru.md: `+api-and-interface-design Phase 3` (CLI commands / module boundaries / endpoint design) / `+browser-testing-with-devtools Phase 5` (dashboard sprints, Chrome MCP enabled) / `+performance-optimization Phase 6 OPT` (backtest profile-first) / `+idea-refine extension Phase 2 PRE` (5-step workflow procedure для vague operator ideas). Skills × Phase 32→36 (17 agent-skills total).
+- T3 (47bba48) Memory corpus categorization scheme — tooling-inventory-ru.md NEW Section 22. 4 partitions (trading-decisions / formula-knowledge / process-patterns / debug-knowledge) + tag mapping pseudo-code + cascade STEP 2 enhancement spec + operator validation procedure. Bridge 4 design — script implementation S32d candidate.
+- T4 (231d55f) ADR 0047 + sprint-32c page + index/counts (46→47 ADRs / 33→34 sprints / 7→8 MCP / 32→36 skills) + S32c sprint history row + kit-overview decision matrix updates.
+
+**Phase 5 Verify outcome:**
+- pytest: 773 passed (S32b baseline preserved by construction — no src/ changes)
+- mypy: 1 pre-existing error (`__main__.py:636 bars_per_year_map redef`)
+- canonical counts: 16/30/74/45 ✓
+- json .mcp.json: ✓ (sqlite-trading + fetch)
+- 3 pytest failures pre-existing (test_replay_long_only / test_replay_next_open) — NOT S32c regression
+
+**Phase 6 Review skipped** — config + docs sprint, no src/ touched.
+
+**Reduced scope rationale (deferred к S32d):**
+1. Memory corpus bridges 2-3 + bridge 4 implementation script — needs claude-mem internal API research (ingest hook framework, corpus partition support, search filter syntax)
+2. Context budget hook (>70% warn) — needs Claude Code hook API research (context % exposure unknown)
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.32c. CI runs second time на этом PR — S32b infrastructure validates.
+
+**Carry-overs к S32d (Kit Phase 3):** Phase 2 deferred research items + Phase 3 originals (bybit-api-reviewer / anthropic-skills:schedule / Sprint metrics tracking).
+
+**Test debt carry-over к S33+ (first trading sprint):** 3 pytest failures + 1 mypy error + ~169 ruff baseline cleanup.
+
+**Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
+
+Next = operator decision: S32d (Kit Phase 3) OR Track B unblock OR test debt cleanup sprint.
