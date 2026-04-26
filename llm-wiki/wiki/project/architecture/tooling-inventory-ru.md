@@ -394,6 +394,23 @@ External tool integrations.
 - **Когда:** Web automation (если dashboard требует UI test). Browser-based workflows.
 - **Не использовать для:** Trading bot CLI — используй Bash directly.
 
+### 7.7 sqlite-trading 🆕 (S32b — project-level `.mcp.json`)
+- **Command:** `uvx mcp-server-sqlite --db-path /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/data/bot.db`
+- **Tools:** list_tables, describe_table, read_query, write_query, create_table, append_insight
+- **Когда:** Direct SQLite queries → execution_states / fills / halts / audit_log / circuit_breakers debugging. 10× быстрее vs `sqlite3 data/bot.db "SELECT..."` через bash.
+- **Activation:** Operator approve prompt at session start (one-time).
+
+### 7.8 fetch 🆕 (S32c — project-level `.mcp.json`)
+- **Command:** `uvx mcp-server-fetch`
+- **Tools:** fetch (HTTP GET с user-agent customization, robots.txt respect, optional proxy)
+- **Когда:**
+  - Bybit V5 API docs lookup (https://bybit-exchange.github.io/docs/v5/)
+  - PyPI package version checks (https://pypi.org/pypi/<pkg>/json)
+  - GitHub releases / CHANGELOG fetch
+  - Anthropic best practices docs
+- **Не использовать для:** Trading data fetch — используй pybit V5 client (proper rate limiting + auth).
+- **Activation:** Operator approve prompt at session start (one-time, same as sqlite-trading).
+
 ---
 
 ## 8. Hooks — `~/.claude/hooks/`
