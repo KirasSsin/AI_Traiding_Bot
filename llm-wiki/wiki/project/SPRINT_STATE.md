@@ -2,11 +2,38 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 29
-phase: between-sprints
-branch: main
+sprint: 30
+phase: 4-execution
+branch: feature/sprint-30-tier-2-agents-mem-wiki-merge
 tag: v0.1.0-alpha.29
 ---
+
+## Phase tracking (S30)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation |
+| 2 Brainstorm | short (operator-specified scope + cascade design) | inline в plan |
+| 3 Plan | done | `plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md` |
+| 4 Execute | in_progress | T1-T9 (see task table) |
+| 5 Verify | pending | — |
+| 6 Review | pending (process/wiki, no code reviewer) | — |
+| 7 Sync | pending | — |
+| 8 Ship | pending | — |
+| 9 Close | pending | — |
+
+### Phase 4 — task progress
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 security-auditor agent | done | (out-of-repo, ~/.claude/agents/) | Opus, OWASP + trading-specific rules + MEMORY.md |
+| T2 test-engineer agent | in_progress | — | Sonnet, test strategy/coverage |
+| T3 doc-reviewer agent | pending | — | Haiku, wiki consistency |
+| T4 phase-advance.sh hook | pending | — | Phase 5 verify enforcement |
+| T5 wiki↔mem cascade design | pending | — | Cascade rule + 4 bridges (3 deferred) |
+| T6 tooling-inventory-ru.md | pending | — | 9 agents + new hook + Section 13 cascade |
+| T7 sprint-flow-ru.md Phase 6 | pending | — | Reviewer matrix expanded |
+| T8 CLAUDE.md | pending | — | Tier-2 + cascade rule |
+| T9 ADR 0043 + sprint-30 page + sync | pending | — | Wiki diffs |
 
 ## S29 SHIPPED ✅
 
