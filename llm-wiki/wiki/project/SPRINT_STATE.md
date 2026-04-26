@@ -15,11 +15,11 @@ tag: v0.1.0-alpha.30
 | 1 Orient | done | session continuation |
 | 2 Brainstorm | done (best practices audit inline в plan) | gap analysis |
 | 3 Plan | done | `plans/2026-04-26-sprint-31-kit-revision-best-practices.md` |
-| 4 Execute | in_progress | T1-T7 |
-| 5 Verify | pending | — |
+| 4 Execute | done | T1-T7 done (4 task commits) |
+| 5 Verify | done | 762 pytest passed (S30 baseline preserved) + CLAUDE.md size measurement (954→756 lines, -25% tokens) |
 | 6 Review | skipped (process/wiki) | — |
-| 7 Sync | pending | — |
-| 8 Ship | pending | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) в T7 commit |
+| 8 Ship | in_progress | tag alpha.31 |
 | 9 Close | pending | — |
 
 ### Phase 4 — task progress
