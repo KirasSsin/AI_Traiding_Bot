@@ -26,10 +26,10 @@ tag: v0.1.0-alpha.29
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
 | T1 security-auditor agent | done | (out-of-repo, ~/.claude/agents/) | Opus, OWASP + trading-specific rules + MEMORY.md |
-| T2 test-engineer agent | in_progress | — | Sonnet, test strategy/coverage |
-| T3 doc-reviewer agent | pending | — | Haiku, wiki consistency |
-| T4 phase-advance.sh hook | pending | — | Phase 5 verify enforcement |
-| T5 wiki↔mem cascade design | pending | — | Cascade rule + 4 bridges (3 deferred) |
+| T2 test-engineer agent | done | (out-of-repo) | Sonnet, test pyramid + property tests + Hypothesis + Trading-specific rules |
+| T3 doc-reviewer agent | done | (out-of-repo) | Haiku, frontmatter+links+Block 1↔2+canonical counts |
+| T4 phase-advance.sh hook | done | (out-of-repo + settings.json) | bash -n + negative test verified (Phase 5 pending → block + helpful error). Registered к PreToolUse Bash matcher |
+| T5 wiki↔mem cascade design | in_progress | — | Cascade rule + 4 bridges (3 deferred) |
 | T6 tooling-inventory-ru.md | pending | — | 9 agents + new hook + Section 13 cascade |
 | T7 sprint-flow-ru.md Phase 6 | pending | — | Reviewer matrix expanded |
 | T8 CLAUDE.md | pending | — | Tier-2 + cascade rule |
