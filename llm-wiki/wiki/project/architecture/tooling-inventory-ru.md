@@ -588,15 +588,232 @@ S30 documents cascade rule. Future bridges (technical implementation):
 
 **S30 deliverable:** documentation enforcement (cascade rule в этом Section 13 + CLAUDE.md token economy + sprint-flow-ru.md). NO new skill creation.
 
+## 14. Permission modes (per Anthropic best practices)
+
+3 режима permissions для balance interruptions vs safety:
+
+| Mode | Trigger | Когда использовать |
+|------|---------|-------------------|
+| **default** | каждое write/Bash/MCP — prompt | Default — careful operations, real money paths |
+| **auto** (`--permission-mode auto`) | classifier reviews → blocks risky | Long-running tasks, trusted general direction (e.g. `claude --permission-mode auto -p "fix all lint errors"`) |
+| **acceptEdits** | auto-accept file edits + common Bash | Mid-execution iterations |
+| **dontAsk** | auto-deny prompts (allowed tools работают) | Strict scope enforcement |
+| **bypassPermissions** | skip all prompts | DANGEROUS — use very carefully |
+| **plan** | read-only exploration | Plan Mode для exploration |
+
+### Sandboxing (`/sandbox`)
+OS-level isolation restricts filesystem + network access. Allow Claude work freely в bounded space. Use для:
+- Sandbox experiments (corpus indexing test, etc)
+- Untrusted code review
+
+Detail: https://docs.claude.com/en/permission-modes + /en/sandboxing
+
+### Permission allowlists (`/permissions`)
+Permit specific tools known safe (e.g. `npm run lint`, `git commit`, `pytest`). Reduces interruptions без auto mode.
+
+### Recommendation для нашего kit
+
+| Workflow | Mode | Reason |
+|----------|------|--------|
+| Sprint code work | **default** | Trade money paths — careful |
+| Sprint docs/wiki sprint (S28-S31) | **acceptEdits** | Doc edits безопасны |
+| Long-running batch (audit_formulas.py sweep) | **auto** | Background ops, classifier blocks risky |
+| Mainnet integration changes | **default** + security-auditor mandatory | Money risk |
+
+## 15. Plugin curation (4 active)
+
+Все plugins установлены через official marketplace. Versions tracked.
+
+| Plugin | Version | Skills count | Rationale |
+|--------|---------|--------------|-----------|
+| **superpowers** | 5.0.7 | 13 | Process layer — brainstorm/plan/execute/ship. Full integration S29. |
+| **addy-agent-skills** | 1.0.0 | 21 | Discipline checklists — TDD/security/perf/code-review. DEPTH refs. |
+| **claude-mem** | 12.3.7 | 7 | Memory continuity — mem-search/version-bump. Cascade STEP 2. |
+| **caveman** | 84cc3c14fa1e | 5 | Mode/compress utility — token economy ~47% saving (CLAUDE.md compress). |
+
+### Rejected plugins
+См. [[methodology-rejected]] для полного списка considered-and-rejected packages.
+
+### Plugin install (reproducibility)
+```bash
+/plugin install superpowers@claude-plugins-official
+/plugin install addy-agent-skills
+/plugin install claude-mem
+/plugin install caveman
+```
+
+### Plugin discovery
+- `/plugin` — browse marketplace
+- `/plugin list` — installed plugins
+- `/agents` — list subagents (включая plugin-provided)
+
+## 16. CLI tools (explicit list)
+
+Per best practices: "CLI tools = most context-efficient way to interact с external services."
+
+| Tool | Использование |
+|------|--------------|
+| `gh` | GitHub: PR create/merge/view, issues, releases. ALWAYS prefer над unauthenticated GitHub API (rate limits). |
+| `git` | Version control: branch / commit / push / log / diff |
+| `pytest` | Testing: `pytest tests/unit -x -q`, `--cov`, `-m property`, `-m integration` |
+| `mypy --strict` | Type checking |
+| `ruff` | Linter (replaces flake8/black/isort) |
+| `bash -n <script>` | Syntax check после editing `~/.claude/hooks/*.sh` (MANDATORY per CLAUDE.md anti-patterns) |
+| `wc -l <file>` | Line count check для CLAUDE.md size discipline |
+| `python3 -m scripts.<module>` | Run script с virtualenv |
+| `source .venv/bin/activate` | Activate venv (Python 3.12 required per pyproject.toml) |
+
+### Trading-specific scripts
+- `python scripts/audit_formulas.py --sweep` — comprehensive formula audit (30 experiments)
+- `python -m src wfa --symbols BTCUSDT --start 2023-01-01 --end 2026-04-26 --interval 60` — single WFA run
+- `python -m src backfill --symbols BTCUSDT --start 2023-01-01 --end 2026-04-26 --interval 60` — backfill OHLCV
+
+### Discovery pattern (per best practices)
+```
+"Use 'foo-cli-tool --help' to learn about foo tool, then use it to solve A, B, C."
+```
+Claude эффективно учит CLI tools которые не знает.
+
+## 17. Status line + context tracking (`/statusline`)
+
+Per best practices: "Track context usage continuously with a custom status line. Context window = #1 constraint."
+
+### Configure (interactive)
+```
+/statusline
+```
+Auto-generates Bash script отображать metrics в terminal status line.
+
+### Recommended displayed fields
+- Sprint number / phase (read SPRINT_STATE.md)
+- Current branch (`git branch --show-current`)
+- Last commit SHA (`git log --oneline -1`)
+- Context fill % (если accessible через CLI hooks)
+
+### Manual config
+Edit `~/.claude/settings.json` или create `~/.claude/scripts/statusline.sh`. Reference: https://docs.claude.com/en/statusline
+
+### Skill для config: `statusline-setup` (built-in)
+Automatically invoked when `/statusline` runs.
+
+## 18. Token-saver commands (BINDING — best practices)
+
+Per best practices: "Context window = most important resource to manage. Performance degrades as context fills."
+
+| Command | Когда использовать | Что делает |
+|---------|-------------------|-----------|
+| **`/btw <question>`** | Side question не относящийся к main task | Answer в dismissible overlay — НЕ enters conversation history |
+| **`/rewind` (Esc+Esc)** | Wrong direction / experimental approach | Restore previous conversation+code state OR summarize from message |
+| **`/clear`** | Switching между unrelated tasks | Reset context window entirely |
+| **`/compact <instructions>`** | Approaching context limit | Controlled summarization preserving critical info |
+| **Esc** | Stop Claude mid-action | Preserves context, redirect |
+| **`claude --continue`** | Resume последнюю session | Load conversation state |
+| **`claude --resume`** | Choose из recent sessions | Interactive session picker |
+| **`/rename <name>`** | Sessions span days | Descriptive name для later find |
+
+### Discipline (BINDING)
+- `/clear` ОБЯЗАТЕЛЕН между unrelated tasks (kitchen sink session anti-pattern)
+- `/btw` для quick lookups (вместо full Read)
+- `/rewind` для experimental approaches вместо careful planning каждый шаг
+- `claude --continue` для multi-session sprints (preserve state across breaks)
+
+### Anti-patterns (token waste)
+- ❌ Long session с irrelevant accumulation (kitchen sink)
+- ❌ Correcting same issue 3+ times — `/clear` + better prompt лучше
+- ❌ Read full file где Grep + offset Read достаточно
+- ❌ Side question в main thread — pollutes context
+
+## 19. Non-interactive mode + fan-out patterns
+
+Per best practices: "Once effective с one Claude, multiply output с parallel sessions, non-interactive mode, fan-out."
+
+### Non-interactive mode (`claude -p`)
+
+```bash
+# One-off query
+claude -p "Explain what this project does"
+
+# Structured output (parseable)
+claude -p "List all API endpoints" --output-format json
+
+# Streaming для real-time processing
+claude -p "Analyze this log file" --output-format stream-json
+```
+
+Useful для:
+- CI/CD pipelines
+- Pre-commit hooks
+- Automated workflows
+- Batch operations
+
+### Fan-out across files
+
+Pattern для bulk operations (migrations, audits):
+
+```bash
+# 1. Generate task list
+claude -p "list all 200 files needing migration" > files.txt
+
+# 2. Loop с scoped permissions
+for file in $(cat files.txt); do
+  claude -p "Migrate $file from React to Vue. Return OK or FAIL." \
+    --allowedTools "Edit,Bash(git commit *)"
+done
+
+# 3. Test on few files first → refine prompt → run at scale
+```
+
+### `--allowedTools` flag
+Restrict tools для batch operations. Critical для unattended runs:
+
+```bash
+--allowedTools "Read,Grep,Bash(pytest *)"
+```
+
+### `--verbose` flag
+Debugging during development. Off в production.
+
+### Pipe data input
+
+```bash
+cat error.log | claude -p "Find root cause"
+```
+
+### Combined с auto mode (long-running)
+
+```bash
+claude --permission-mode auto -p "fix all lint errors"
+```
+Auto mode classifier reviews commands в background. Aborts если repeatedly blocked (no fallback в non-interactive).
+
+### Multiple parallel sessions
+
+3 ways:
+1. **Claude Code desktop app** — manage multiple local sessions visually (each isolated worktree)
+2. **Claude Code on the web** — Anthropic cloud VMs
+3. **Agent teams** — coordinated multi-session с shared tasks/messaging/team lead
+
+### Writer/Reviewer pattern (parallel sessions)
+| Session A (Writer) | Session B (Reviewer) |
+|--------------------|---------------------|
+| Implement rate limiter | (waits) |
+| (waits) | Review @src/middleware/rateLimiter.ts. Look for edge cases, race conditions. |
+| Address review feedback | (done) |
+
+Fresh context в Session B = unbiased review.
+
 ## Связанные документы
 
+- [[kit-overview-ru]] — single source of truth gateway (S31)
 - [[sprint-flow-ru]] — обязательный sprint процесс (9 фаз)
 - [[../decisions/0017-review-agent-harness]] — review agents matrix policy
 - [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
 - [[../decisions/0042-sprint-29-superpowers-integration]] — full superpowers integration ADR (S29)
 - [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] — tier-2 agents + cascade ADR (S30)
+- [[../decisions/0044-sprint-31-kit-revision-best-practices]] — best practices revision (S31)
 - [[methodology-rejected]] — rejected packages + cleanup
 - `llm-wiki/CLAUDE.md` — Skills hierarchy & integration
 - `~/.claude/CLAUDE.md` — global rules + token economy
+- https://docs.claude.com/en/code/best-practices — Anthropic Claude Code best practices
 - https://github.com/obra/superpowers — superpowers skills source repo
 - https://github.com/thedotmack/claude-mem — claude-mem source repo

@@ -26,8 +26,8 @@ tag: v0.1.0-alpha.30
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
 | T1 kit-overview-ru.md | done | (pending commit) | 1-page TL;DR + Quick decision matrix + 9 agents + 6 hooks + 5 skills + ~50 plugin skills + 6 MCP + cascade rule + Top 10 commands + Top 5 anti-patterns + 9-phase lifecycle + 20 best practices applied |
-| T2 tooling-inventory-ru.md sections 14-19 | in_progress | — | Permission modes / plugins / CLI / status line / token-saver / non-interactive |
-| T3 prune llm-wiki/CLAUDE.md (448→<200) | pending | — | Extract verbose к wiki pages |
+| T2 tooling-inventory-ru.md sections 14-19 | done | (pending commit) | Section 14 Permission modes / 15 Plugins curated / 16 CLI tools / 17 Status line / 18 Token-saver commands / 19 Non-interactive + fan-out |
+| T3 prune llm-wiki/CLAUDE.md (448→<200) | in_progress | — | Extract verbose к wiki pages |
 | T4 audit ~/.claude/CLAUDE.md (316→<250) | pending | — | Apply prune test |
 | T5 repo CLAUDE.md +kit-overview link | pending | — | Minor refs |
 | T6 status line + `/btw`/`/rewind`/`--continue` | pending | — | Token-saver patterns |
