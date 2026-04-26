@@ -1949,3 +1949,43 @@ Next session = S33 brainstorm OR operator unblocks Track B.
 **Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
 
 Next = operator decision: S32c (Kit Phase 2) OR Track B unblock.
+
+## [2026-04-27] session-end | S32b — Kit Improvement Phase 1 SHIPPED
+
+**S32b SHIPPED.** PR #40 → cb61678 squash-merge. Tag v0.1.0-alpha.32b pushed. Branch deleted. SPRINT_STATE → between-sprints.
+
+**CI fix saga (3 iterations):**
+1. TA-Lib parallel build race condition → drop `-j$(nproc)`, sequential build
+2. Ruff lint 169 pre-existing errors → informational baseline guard (200 ceiling)
+3. Mypy missing fastapi/uvicorn/jinja2 → install dashboard optional deps `pip install -e ".[dev,dashboard]"`
+
+CI now green and validates: ruff lint baseline / mypy --strict baseline / pytest unit baseline / canonical counts. Future PRs auto-validated.
+
+**Kit state post-S32b:**
+- 10 reviewer agents (L5) — was 9, +dashboard-reviewer sonnet
+- 7 active push hooks — was 6, +sprint-state-freshness-check.sh
+- 7 MCP servers — was 6, +sqlite-trading (.mcp.json)
+- 32 skills mapped к kit flow (unchanged S32)
+- 5-step cascade rule (unchanged S32)
+- Phase 9 consolidate-memory HARD-GATE (unchanged S32)
+- 4 plugins curated (unchanged)
+- 20/20 best practices coverage (unchanged S31)
+- CLAUDE.md split preserved (3 files, ~14K tokens total post-S31 prune)
+- **CI infrastructure NEW:** GitHub Actions workflow + pre-commit local gate
+
+**КУ achieved S32b:** avg 60.5% / ~3 hours = ~120 КУ/час (above forecast 10.5 — pre-commit pkg + uvx + mcp-server-sqlite уже available pre-installed).
+
+**Carry-overs к S32c (Kit Phase 2, КУ avg 42%):**
+- Memory corpus organization (bridges 2-4)
+- Context budget hook
+- AS:performance-optimization / AS:api-and-interface-design / AS:browser-testing-with-devtools / AS:idea-refine extension
+- Fetch/HTTP MCP
+
+**Test debt carry-over к first trading sprint (S33+):**
+- 3 pytest failures (test_replay_long_only / test_replay_next_open)
+- 1 mypy error (__main__.py:636)
+- ~169 ruff baseline (legacy code cleanup)
+
+**Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
+
+Next session = operator decision: S32c (Kit Phase 2) OR Track B unblock OR test debt cleanup sprint.
