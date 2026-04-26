@@ -1285,3 +1285,73 @@ Pre-registered config: MeanReversionRsiBBStrategy (RSI 35/65 + BB(20, 1.5σ) S17
 ### Roadmap
 
 **S19 SHIPPED.** Tag v0.1.0-alpha.19. Project state: between-sprints с architectural prep complete, S20 measurement command pre-registered.
+
+## [2026-04-26] sprint-end | Sprint 20 — BTC 15M WFA measurement (verdict FAIL)
+
+**Verdict: FAIL** — T5 count failthrough triggered (73 < 150 floor) + T1/T2/T4/T6 critical fails. Per ADR 0034 amendment 3 BINDING → S21 = honest close v0.4 (4 hypotheses tested).
+
+User pre-confirmed "T5 ≥ 150" — T-Amendment 1 binding criteria honored.
+
+### Strategy criteria results
+
+- T1 Sharpe OOS: -45.57 FAIL
+- T2 Sortino: -345.70 FAIL
+- T3 MaxDD: 2.1% PASS
+- T4 win 30.1% / RR 1.39 → FAIL (RR<1.5)
+- **T5: 73 trades FAIL** (< 150 T-Amendment 1 floor) + t_stat -2.08 negative
+- T6 OOS/IS: -37.13 FAIL
+- DSR: 0.030 PASS (n_trials=1 single-trial low bar)
+- MC p: 0.044 PASS borderline
+
+Fold sharpes: [-0.74, -4.83, -185.21, +2.27, +2.84]. Fold #2 catastrophic outlier — REGIME CONCENTRATION negative (T-Amendment 2 check). Removing fold #2: mean ≈ +0.13 (still не ≥0.7).
+
+### Frequency math reconciliation (Hudson & Urquhart 2021 empirically validated)
+
+S17 BTC 1H baseline: 59 trades.
+S20 architecture frequency math 4x prediction: ~236.
+**S20 actual: 73 trades.**
+
+AND-gate joint multiplier на 15M ≈ 1.24x baseline (vs predicted 4x). RSI-BB AND-gate correlation pattern weakens на noisier 15M signals.
+
+### Critical insights
+
+1. **Hudson & Urquhart 2021 empirically validated** — mean-reversion degrades sub-hourly на BTC.
+2. **S17 partial signal contradicted at 15M** — regime-specific к 1H, не frequency-bound. Same RSI 35/65 + BB 1.5σ params: 1H MC p=0.01 stat-sig, 15M T1=-45.57 catastrophic.
+3. **Annualization Condition A3 paid off** — T1=-45.57 genuine result, не -22.78 understimate. False-PASS prevented.
+4. **Negative regime concentration** — fold #2 -185.21 different from S17 positive fold #5 outlier. Both = high-variance failure mode.
+
+### Deliverables (S20 measurement only)
+
+- T1 ADR 0035 accepted
+- T2 sprint-20-15m-measurement.md
+- T3 cross_trial_sharpes.json updated (sprint=20, oos_sharpe=-37.13 persisted automatically)
+- T4 wiki sync (current-state TL;DR + ADR 34→35, sprint pages 21→22, +S20 row)
+- T5 PHASE 8 ship — pending
+
+### Tests / quality
+
+NO code changes:
+- pytest unit: 732 passed (S19 baseline preserved, no regressions)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved
+
+### Next sprint (S21 BINDING per ADR 0034)
+
+S21 = honest close v0.4 docs-only sprint:
+- ADR 0036 v0.4 honest close (4 hypotheses tested negative)
+- sprint-21-honest-close-v04.md
+- Document Hudson & Urquhart 2021 empirical validation
+- Document S17 1H regime-specificity finding
+- Archive cross_trial_sharpes.json к _v0.4-final.json (mirror S16/S18)
+- Tag v0.1.0-alpha.21 = v0.4 honest close marker
+
+### v0.5+ direction options (operator-driven, no commitment)
+
+- (v0.5-A) Hybrid 1H mean-reversion + ML XGBoost filter — S17 evidence supports (regime-specific signal на 1H)
+- (v0.5-B) 4H mean-reversion test
+- (v0.5-C) HMM regime-switch + mean-reversion
+- (v0.5-D) Project pause — 4 hypotheses tested
+
+### Roadmap
+
+**S20 SHIPPED.** Tag v0.1.0-alpha.20. Per ADR 0034 BINDING → S21 honest close v0.4 (pre-committed).

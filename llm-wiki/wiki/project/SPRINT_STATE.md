@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 19
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.19
+sprint: 20
+phase: 8-ship
+branch: feature/sprint-20-15m-measurement
+tag: v0.1.0-alpha.20
 ---
 
 # SPRINT STATE
@@ -15,7 +15,7 @@ tag: v0.1.0-alpha.19
 
 ## Текущий статус
 
-**S19 ready к ship (tag `v0.1.0-alpha.19`) — v0.4-A architectural prep complete.** 21 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15 + S16 + S17 + S18 + S19. **Joint trader+architecture verdict on v0.4 direction:** Option (A) BTC 15M mean-reversion с 7 combined amendments BINDING. **3 architectural Conditions APPLIED**: A1 interval_map fix / A2 heal_max_bars semantic refactor / A3 annualization parameterization (prevents 2× Sharpe understimate at 15M). **15M backfill complete:** 167,383 bars BTCUSDT 15M. S20 = measurement sprint (pre-registered).
+**S20 ready к ship (tag `v0.1.0-alpha.20`) — v0.4-A measurement verdict FAIL.** 22 спринтов завершено. **S20 verdict FAIL: T5 73<150 + T1=-45.57 + T2=-345 + T4 RR 1.39 + T6=-37.13** (DSR/MC borderline PASS). Fold #2 -185.21 catastrophic (REGIME CONCENTRATION negative). AND-gate joint multiplier 1.24x на 15M (predicted 4x) — Hudson & Urquhart 2021 empirically validated. S17 partial signal contradicted at 15M = regime-specific к 1H. Per ADR 0034 amendment 3 BINDING → S21 = honest close v0.4 (4 hypotheses tested).
 
 **Final v0.1 status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
@@ -23,42 +23,44 @@ tag: v0.1.0-alpha.19
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
 - Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-## Последний спринт (S19 — v0.4-A architectural sprint, BTC 15M prep)
+## Последний спринт (S20 — BTC 15M WFA measurement)
 
-Joint trader+architecture brainstorm verdict per user directive. 7 combined amendments BINDING. Architectural sprint, NO measurement (S20 = measurement sprint).
-- T0 Bybit 15M data verified (BTC ≥ 2021-07-15, 4.78y available)
-- T1 ADR 0034 accepted
-- T2 rest.py interval_map → single-dict refactor (Condition A1)
-- T3 heal_max_bars semantic refactor + bootstrap wiring (Condition A2)
-- T4 annualization parameterization 3 files + CLI --interval (Condition A3 — HIGH, prevents 2× Sharpe understimate)
-- T5 WFA params kept ADR 0014 defaults (test=500 bars at 15M = ~5.2 days adequate)
-- T6 15M backfill BTCUSDT — 167,383 bars
-- T7 sprint-19 page + wiki sync
-- T8 PHASE 8 ship — pending
+Pre-registered measurement per ADR 0034 BINDING. NO code changes.
+- T1 ADR 0035 accepted (verdict FAIL + S21 trigger)
+- T2 sprint-20-15m-measurement.md
+- T3 cross_trial_sharpes auto-persisted (sprint=20, oos_sharpe=-37.13)
+- T4 wiki sync (current-state TL;DR + ADR 34→35, sprint pages 21→22, +S20 row)
+- T5 PHASE 8 ship — pending
 
-S20 pre-registered (BINDING):
-```bash
-SPRINT_N=20 .venv/bin/python -m src wfa --symbol BTCUSDT --interval 15 \
-  --start 2021-07-15 --end 2026-04-26
-```
-T5 floor 150 trades (T-Amendment 1). Fold concentration check (T-Amendment 2). N_trials=1 fresh.
+Verdict FAIL multi-criteria:
+- T1=-45.57 / T2=-345 / T4 win 30%/RR 1.39 / T5 73<150 / T6=-37.13
+- DSR=0.030 PASS / MC p=0.044 PASS borderline
+- Fold #2 -185.21 catastrophic (regime concentration negative per T-Amendment 2)
+- Frequency multiplier 1.24x (predicted 4x) — Hudson & Urquhart 2021 empirically validated
+
+Critical insight: S17 partial signal на 1H = regime-specific, не frequency-bound. Same params at 15M fundamentally fail. Per ADR 0034 amendment 3 BINDING → S21 honest close v0.4.
 
 ## Следующее действие
 
 ```
-S19 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.19.
+S20 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.20.
 
-v0.4-A architectural prep complete. 7 amendments applied. 167K bars BTCUSDT 15M ready.
+S20 verdict FAIL: 73 trades < 150 floor + multiple T-criteria fail.
+Per ADR 0034 amendment 3 BINDING → S21 = honest close v0.4 (4 hypotheses tested).
 
-S20 = WFA 15M measurement (BINDING per ADR 0034):
-SPRINT_N=20 .venv/bin/python -m src wfa --symbol BTCUSDT --interval 15 \
-  --start 2021-07-15 --end 2026-04-26
+Then S21 docs-only sprint:
+- ADR 0036 v0.4 honest close
+- sprint-21-honest-close-v04.md
+- Document Hudson & Urquhart 2021 empirical validation
+- Document S17 1H regime-specificity finding (institutional knowledge)
+- Archive cross_trial_sharpes.json к _v0.4-final.json + reset для v0.5
+- Tag v0.1.0-alpha.21
 
-Verdict criteria (BINDING):
-- T5 < 150 → FAIL count alone, t_stat skipped
-- T5 ≥ 150 + fold concentration check
-- All T1-T6 + DSR + MC PASS conjoint → MVP DONE strategy criteria → S21+ S1-S6 system + Mainnet
-- FAIL → S21 honest close v0.4 (4 hypotheses tested = scientific contribution)
+After S21: operator decides v0.5 direction (no commitment):
+(v0.5-A) Hybrid 1H mean-reversion + ML XGBoost — S17 evidence supports
+(v0.5-B) 4H mean-reversion test
+(v0.5-C) HMM regime-switch + mean-reversion
+(v0.5-D) Project pause — 4 hypotheses tested
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
