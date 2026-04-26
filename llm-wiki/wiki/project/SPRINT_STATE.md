@@ -2,11 +2,41 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 32b
-phase: between-sprints
-branch: main
+sprint: 32c
+phase: 4-execution
+branch: feature/sprint-32c-kit-phase-2-improvements
 tag: v0.1.0-alpha.32b
 ---
+
+## S32c IN PROGRESS 🟡
+
+Sub-sprint S32 series. Branch: `feature/sprint-32c-kit-phase-2-improvements`. Plan committed: `plans/2026-04-27-sprint-32c-kit-phase-2-improvements.md` (7bab107).
+
+**Reduced scope** (per pre-plan analysis): Memory corpus bridges 2-3 + bridge 4 script + context budget hook → deferred S32d (research-heavy). S32c = 4 skill mappings + Fetch MCP + corpus categorization scheme docs + ADR/sync. КУ ~50% / 1.5-2 hours forecast.
+
+### Phase tracking (S32c — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S32b ship |
+| 2 Brainstorm | skipped (operator-specified per ADR 0046 carry-overs) | inline pre-plan analysis |
+| 3 Plan | done | `plans/2026-04-27-sprint-32c-kit-phase-2-improvements.md` (7bab107) |
+| 4 Execute | in_progress | T1-T4 controller-driven |
+| 5 Verify | pending | pytest 773 baseline + json validate + canonical counts |
+| 6 Review | pending (likely skip) | no src/ touched |
+| 7 Sync | pending | log.md sprint-end + index/current-state в T4 |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.32c (CI runs second time — S32b infrastructure validates) |
+| 9 Close | pending | SPRINT_STATE → between-sprints |
+
+### Phase 4 — task progress (S32c)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 Fetch/HTTP MCP | pending | — | .mcp.json + fetch entry + tooling-inventory Section 4 doc |
+| T2 4 skill mappings | pending | — | sprint-flow-ru.md +api-design Phase 3 / +browser-test Phase 5 / +perf-opt Phase 6 / +idea-refine extension Phase 2 PRE workflow |
+| T3 Memory corpus scheme docs | pending | — | tooling-inventory-ru.md NEW Section 22 (4 partitions + tag mapping pseudo-code) |
+| T4 ADR 0047 + sprint-32c page + index/counts | pending | — | 46→47 ADRs / 33→34 sprints / 7→8 MCP / 32→36 skills |
+| Ship | pending | — | tag v0.1.0-alpha.32c |
 
 ## S32b SHIPPED ✅
 
