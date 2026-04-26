@@ -2,10 +2,10 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 15
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.15
+sprint: 16
+phase: 8-ship
+branch: feature/sprint-16-honest-close-v02
+tag: v0.1.0-alpha.16
 ---
 
 # SPRINT STATE
@@ -15,7 +15,7 @@ tag: v0.1.0-alpha.15
 
 ## Текущий статус
 
-**v0.2 retry attempt #1 — FAIL but T5 reached. S15 ready к ship (tag `v0.1.0-alpha.15`).** 17 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15.
+**v0.2 honest close. S16 ready к ship (tag `v0.1.0-alpha.16`).** 18 спринтов завершено: S1-S7 + S8a + S8b + S8c + S9 + S10 + S11 + S12 + S13 + S14 + S15 + S16. **2 strategy families tested both FAIL** (S13 EMA crossover + S15 mean-reversion). DSR cross-trial state archived к v0.2 file, fresh empty для v0.3 readiness.
 
 **Final v0.1 status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 29 ADRs + 16 sprint pages)
@@ -23,36 +23,33 @@ tag: v0.1.0-alpha.15
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 structurally unreachable)
 - Tag `v0.1.0-alpha.14` = honest close marker (alpha suffix preserved — NOT MVP final)
 
-## Последний спринт (S15 — Mean-reversion + multi-symbol, v0.2 retry attempt #1)
+## Последний спринт (S16 — v0.2 honest close)
 
-8 TDD tasks. Verdict: FAIL but T5 reached (108 trades aggregate first time).
-- T0 CrossTrialLog (closes S14 Q2 — Bailey eq. 13 cross-trial sigma_SR)
-- T1 load_recent symbol filter (HIGH BLOCKER — Kelly contamination fix)
-- T2 BB indicator NEW
-- T3 MeanReversionRsiBBStrategy NEW (RSI<30 AND close<lower_BB AND-gated)
-- T4 _cmd_run wires MeanRev + symbol→RiskManager
-- T5 Multi-symbol --symbols CLI for backfill+wfa, DSR cross-trial wiring
-- T6 tz-aware parquet filter fix + indicators.py mean_reversion branch + measurement run
-- T7 wiki sync (ADR 29→30, sprint pages 16→17)
-- T8 PHASE 8 ship — pending
+Documentation only + cross_trial_sharpes archival. NO code changes.
+- T1 ADR 0031 accepted
+- T2 sprint-16-honest-close-v02.md
+- T3 wiki sync (current-state TL;DR + ADR 30→31, sprint pages 17→18)
+- T4 log.md sprint-end
+- T5 SPRINT_STATE → between-sprints, tag alpha.16
+- T6 cross_trial_sharpes.json → _v0.2.json archival + reset к [] для v0.3 fresh-start
+- T7 PHASE 8 ship via sprint-finish
 
-S15 PHASE 2 brainstorm: ESC-1 Option B (trader+architecture converged). ESC-2 pre-registered RSI 30/70 + BB(20, 2σ) AND-gated. Q3 (15M) + Q4 (ML) deferred.
-
-Per-symbol: BTC 44 trades, ETH 29 (one outlier fold), SOL 35. Aggregate T1=9.32 PASS, T5 n=108 PASS but t_stat 1.04 FAIL, T6 mean -12.38 FAIL, MC 0.998 FAIL, DSR 0 FAIL.
+Trader CONFIRM Option D verified: DSR cross-trial sigma_SR=22.68 с -44.46 anchor → expected max Sharpe gate +21.5 для n_trials=3 unrealistic. BTC +1.75 institutional knowledge preserved для v0.3-A (BTC-only mean-reversion fresh start). ETH outlier fold (-188.65) flagged как data pathology. Q3 15M architectural blockers (interval_map + heal_max_age) preserved для potential future revival.
 
 ## Следующее действие
 
 ```
-S15 SHIPPED (PR #23 → squash-merged d350bc2, tag v0.1.0-alpha.15).
-17 sprints completed. v0.2 retry attempt #1 = FAIL but T5 reached (108 trades).
+S16 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.16.
 
-Operator decides S16 direction:
-(B') broader RSI thresholds + variance reduction (more N_trials → harsher DSR)
-(C) Q3 15M timeframe — 2 sprints (interval_map + heal_max_age fixes blockers known)
-(D) honest close v0.2 (accept 2 strategy attempts both failed, freeze)
-(E) Q4 ML XGBoost (deferred — S15 evidence: no partial signal, MC random-equivalent)
+v0.2 closed honest. 2 strategy families tested both FAIL.
+DSR cross-trial state archived к v0.2 file, fresh empty для v0.3 readiness.
 
-No commitment. Operator decides if/when.
+After ship: operator decides v0.3 direction (no commitment):
+(v0.3-A) BTC-only mean-reversion fresh start — strongest signal observed S15
+(v0.3-B) Regime-switch HMM — 3-5 sprints
+(v0.3-C) ML XGBoost — defer (no partial signal evidence)
+(v0.3-D) Different timeframe (15M/4H) — Q3 blockers documented
+(v0.3-E) Project pause — 0 sprints
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)

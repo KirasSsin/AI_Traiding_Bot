@@ -1011,3 +1011,62 @@ Operator decides if/when. No S15 commitment.
 ### Roadmap
 
 **v0.2 retry attempt #1 SHIPPED.** Tag v0.1.0-alpha.15. Awaiting operator decision на S16 direction.
+
+## [2026-04-26] sprint-end | Sprint 16 — v0.2 honest close
+
+**Verdict: HONEST CLOSE v0.2** (per S16 PHASE 2 trader-expert ROUND 1 CONFIRM Option D — single direction question, no architecture-reviewer needed).
+
+### Trader rationale (verbatim summary)
+
+1. **DSR cross-trial math**: sigma_SR=22.68 с -44.46 anchor → expected max Sharpe gate ≈ +21.5 для n_trials=3 = unrealistic для 1H crypto. Options B' (broader thresholds) и C (15M) structurally futile.
+2. **BTC +1.75 signal noted**: единственный positive direction в проекте, но p=0.197 не passes 0.05 MC gate; 9 trades/fold = unreliable t-stat. Institutional knowledge для v0.3, не decision-reversing.
+3. **ETH fold -188.65** = data pathology (extreme vol window 2021-2022). MC p=0.998 на full distribution = strategy random-equivalent regardless.
+4. **Option C (15M)** = 2 sprints architectural blockers (interval_map + heal_max_age) для academically weaker test (Hudson & Urquhart 2021 mean-reversion degrades sub-hourly).
+5. **Option D breaks DSR accumulation cleanly + preserves v0.3 optionality** (Bailey 2014 N_trials per hypothesis).
+6. **Evidence base sufficient**: 2 families × 5y data × proper WFA+DSR+MC pipeline.
+
+### Final v0.2 status
+
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 31 ADRs + 18 sprint pages)
+- Strategy validation: ❌ NEGATIVE × 2 hypotheses (S13 EMA + S15 mean-reversion both FAIL)
+- MVP DONE per acceptance-criteria.md: NOT achieved
+- Mainnet exposure: 0 (33min Bybit demo only since S12)
+- Tag: v0.1.0-alpha.16 = v0.2 honest close marker (NOT MVP DONE)
+
+### Deliverables (S16, docs-only)
+
+- T1 ADR 0031 accepted
+- T2 sprint-16-honest-close-v02.md created
+- T3 wiki sync (current-state TL;DR + ADR 30→31, sprint pages 17→18, +S16 row)
+- T4 log.md sprint-end (this entry)
+- T5 SPRINT_STATE → between-sprints, tag alpha.16
+- T6 cross_trial_sharpes.json → _v0.2.json archival + reset к [] для v0.3 fresh-start
+- T7 PHASE 8 ship via sprint-finish
+
+### Tests / quality
+
+NO code changes:
+- pytest unit: 732 passed (S15 baseline preserved, no regressions)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved (no migrations changed)
+
+### Cross-cutting concerns binding (per ADR 0031)
+
+- **CC1 BTC institutional knowledge**: documented для v0.3-A (BTC-only mean-reversion fresh start)
+- **CC2 cross_trial_sharpes archival**: BINDING policy — v0.3 fresh hypothesis archives current + resets к empty
+- **CC3 ETH fold pathology**: documented к prevent future misattribution
+- **CC4 Tag semantics**: alpha.16 = honest close marker, NOT MVP DONE
+- **CC5 No spec amendment**: T1-T6 thresholds preserved
+- **CC6 Q3 15M blockers preserved**: documented для potential future revival
+
+### v0.3+ future direction options (operator-driven, no commitment)
+
+- (v0.3-A) BTC-only mean-reversion fresh start — strongest observed signal
+- (v0.3-B) Regime-switch (HMM) — 3-5 sprints
+- (v0.3-C) ML XGBoost — defer (no partial signal evidence S15)
+- (v0.3-D) Different timeframe (15M/4H) — Q3 blockers preserved
+- (v0.3-E) Project pause — 0 sprints, freeze
+
+### Roadmap
+
+**v0.2 closed at S16 honest.** Tag v0.1.0-alpha.16. Project state: between-sprints с post-v0.2-honest-close marker. Operator decides v0.3 if/when.
