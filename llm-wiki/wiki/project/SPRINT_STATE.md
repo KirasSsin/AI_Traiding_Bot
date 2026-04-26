@@ -3,35 +3,39 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
 sprint: 28
-phase: 4-execution
-branch: feature/sprint-28-process-enforcement
-tag: v0.1.0-alpha.27
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.28
 ---
 
-## Phase tracking (S28)
+## S28 SHIPPED ✅
 
-| Phase | Status | Artifact | Updated |
-|-------|--------|----------|---------|
-| 1 Orient | done | mark_chapter | 2026-04-26 |
-| 2 Brainstorm | skipped (deliverables clear, operator-specified) | — | 2026-04-26 |
-| 3 Plan | done | `plans/2026-04-26-sprint-28-process-enforcement.md` | 2026-04-26 |
-| 4 Execute | in_progress | T1-T7 (see task table) | 2026-04-26 |
-| 5 Verify | pending | — | — |
-| 6 Review | pending | — | — |
-| 7 Sync | pending | — | — |
-| 8 Ship | pending | — | — |
-| 9 Close | pending | — | — |
+PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
-### Phase 4 — task progress
-| Task | Status | Commit | Note |
-|------|--------|--------|------|
-| T1 sprint-flow-ru.md | done | (pending commit) | Russian sprint lifecycle 9 phases |
-| T2 tooling-inventory-ru.md | done | (pending commit) | 11 sections — agents/skills/plugins/MCP/hooks |
-| T3 sprint-flow-check.sh hook | done | (pending commit) | bash -n + positive + negative tested + registered в settings.json |
-| T4 SPRINT_STATE template | done | (already applied to S28 itself) | per-phase + per-task tracking inline в этом file |
-| T5 CLAUDE.md updates | done | (pending commit) | repo CLAUDE.md binding section + llm-wiki CLAUDE.md links к Russian docs |
-| T6 ADR 0041 + sprint-28 page + sync | done | (pending commit) | ADR + sprint page + index + current-state + log |
-| T7 PHASE 8 ship | in_progress | — | tag alpha.28 |
+### Phase tracking (S28 — completed)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session resume mark_chapter |
+| 2 Brainstorm | skipped (deliverables operator-specified) | — |
+| 3 Plan | done | `plans/2026-04-26-sprint-28-process-enforcement.md` (first plan since S15) |
+| 4 Execute | done | 6 commits (T1-T6) с per-task SPRINT_STATE update |
+| 5 Verify | done | 762 pytest passed (S27 baseline preserved) + bash -n hook + positive/negative test |
+| 6 Review | skipped (process/wiki, no code reviewers applicable) | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) в T6 commit |
+| 8 Ship | done | PR #35 + tag v0.1.0-alpha.28 |
+| 9 Close | done | SPRINT_STATE between-sprints (этот update) |
+
+### Phase 4 — task progress (completed)
+| Task | Commit | Note |
+|------|--------|------|
+| T1 sprint-flow-ru.md | 09b2e02 | Russian sprint lifecycle 9 phases |
+| T2 tooling-inventory-ru.md | 6a62f27 | 11 sections — agents/skills/plugins/MCP/hooks/decision matrix |
+| T3 sprint-flow-check.sh hook | 18387fa | Mechanical PHASE 3 enforcement, registered settings.json |
+| T4 SPRINT_STATE template | 18387fa | Per-phase + per-task tracking inline |
+| T5 CLAUDE.md updates | 900003a | Repo + llm-wiki binding sections |
+| T6 ADR 0041 + sprint-28 page + sync | 4623a5c | ADR + sprint page + index + current-state + log |
+| Squash-merge | 1538a53 | PR #35, tag alpha.28 |
 
 # SPRINT STATE
 
@@ -40,7 +44,7 @@ tag: v0.1.0-alpha.27
 
 ## Текущий статус
 
-**S27 SHIPPED. Formula bug fixes (5 bugs).** 27 спринтов завершено. Audit infrastructure (`scripts/audit_formulas.py` + `data/formulas_audit_v1.json` + dashboard auto-refresh). Trader+logic-reviewer parallel brainstorm verdict: 4 bugs found (1 HIGH, 2 MEDIUM, 1 INFO/CC5, 1 LOW), all fixed TDD (5 commits, 762 passed). Sweep re-run post-fix: verdict count unchanged (0 PASS / 30 FAIL — bugs не fundamentally изменили acceptance gate outcomes), но reason codes diverse (187 SL / 141 TP / 2 TIME_STOP), ema_crossover SOLUSDT 4H pnl +88→+131 (RSI warm-up fix), audit reproducible (MC seed=42 default).
+**S28 SHIPPED. Process enforcement (kit flow mechanical hook + Russian docs).** 28 спринтов завершено. Operator-driven correction после S27 ship — verified 12-sprint drift (S16-S27 без plan files). Mechanical enforcement: `~/.claude/hooks/sprint-flow-check.sh` блокирует push на feature/sprint-NN-* без plan file + Russian process docs (sprint-flow-ru.md + tooling-inventory-ru.md) + CLAUDE.md "BEFORE ANY SPRINT WORK" binding section + per-task SPRINT_STATE protocol. S28 itself = proof of process (executed по proper kit flow с 6 commits + per-task SPRINT_STATE updates).
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 30 ADRs + 17 sprint pages)
