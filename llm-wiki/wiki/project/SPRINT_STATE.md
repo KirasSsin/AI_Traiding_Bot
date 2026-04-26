@@ -15,11 +15,11 @@ tag: v0.1.0-alpha.29
 | 1 Orient | done | session continuation |
 | 2 Brainstorm | short (operator-specified scope + cascade design) | inline в plan |
 | 3 Plan | done | `plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md` |
-| 4 Execute | in_progress | T1-T9 (see task table) |
-| 5 Verify | pending | — |
-| 6 Review | pending (process/wiki, no code reviewer) | — |
-| 7 Sync | pending | — |
-| 8 Ship | pending | — |
+| 4 Execute | done | T1-T9 done (6 task commits) |
+| 5 Verify | done | 762 pytest passed (S29 baseline preserved) + bash -n hook + positive/negative test |
+| 6 Review | skipped (process/wiki, no code reviewer applicable) | — |
+| 7 Sync | done | wiki diffs (index + current-state + log) в T9 commit |
+| 8 Ship | in_progress | tag alpha.30 |
 | 9 Close | pending | — |
 
 ### Phase 4 — task progress
