@@ -1802,3 +1802,61 @@ S30 executed по proper kit flow per S28 binding rules + S29 expanded skills:
 
 ### Roadmap
 **S30 ready к ship.** Tag v0.1.0-alpha.30. Next = S31 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1/2/3 operator decision from S27 carry-over).
+
+## [2026-04-26] sprint-end | S31 — Kit Revision per Best Practices + Single Tools-Overview File
+
+**Operator directives после S30 ship:**
+1. "Все настройки нашего кита укажем в одном файле"
+2. "Проведи ревизию на основе лучших best practices [Anthropic Claude Code best practices URL]"
+3. "Адаптируй кит под максимальное качество и в тоже время экономию токенов без деградации"
+4. "Учитывай что мы CLAUDE.md делили на файлы"
+
+**Pre-S31 baseline:** 3 CLAUDE.md = 954 lines / 61 KB / ~18.5K tokens loaded каждую session. Best practices coverage 8/20.
+
+### Decisions (4)
+1. NEW `kit-overview-ru.md` — 1-page single source of truth (~300 lines): Quick decision matrix + 9 agents + 6 hooks + 5 skills + 50 plugin skills + 6 MCP + cascade rule + Top 10 commands + Top 5 anti-patterns + 9-phase lifecycle + 20 best practices applied + sprint history
+2. EXPANDED `tooling-inventory-ru.md` Sections 14-19 NEW (Permission modes / Plugin curation / CLI tools / Status line / Token-saver commands / Non-interactive + fan-out)
+3. PRUNED все 3 CLAUDE.md preserving CLAUDE.md split (operator explicit) — extracted verbose к wiki pages
+4. ADD 4 NEW anti-patterns + token-saver commands table в repo CLAUDE.md
+
+### Token economy results
+| File | Before | After | Δ |
+|------|--------|-------|---|
+| repo CLAUDE.md | 190 / 14 KB | 212 / 15 KB | +12 lines (best practices links + anti-patterns) |
+| llm-wiki/CLAUDE.md | 448 / 27 KB | 291 / 13 KB | -35% lines, -52% bytes |
+| ~/.claude/CLAUDE.md | 316 / 20 KB | 253 / 17 KB | -20% lines, -15% bytes |
+| **TOTAL** | **954 / 61 KB / ~18.5K tokens** | **756 / 46 KB / ~14K tokens** | **-21% lines, -25% tokens** |
+
+**Per-session savings:** ~4500 tokens × N sessions.
+
+### 20 Best Practices coverage (full)
+Pre-S31: 8/20. Post-S31: 20/20.
+NEW: Permission modes + Plugin curation + CLI tools + Status line + `/btw` + `/rewind` + `--continue` + `claude -p` + Fan-out + Common failure patterns documented + Single source of truth file.
+
+### Deliverables (4 task commits + ship)
+- T1+plan kit-overview-ru.md NEW
+- T2 tooling-inventory-ru.md sections 14-19 NEW
+- T3+T4+T5+T6 prune все 3 CLAUDE.md + anti-patterns + token-saver table
+- T7 ADR 0044 + sprint-31 page + index/current-state/log sync
+- Ship — pending tag v0.1.0-alpha.31
+
+### Canonical counts updated (S31)
+- ADRs 43→44
+- Sprint pages 30→31
+- Components 38 (unchanged)
+- Reviewer agents 9 (unchanged)
+- Active hooks 6 (unchanged)
+- NEW: Kit settings (RU) 3 files = single source of truth
+- NEW: CLAUDE.md total tokens ~14K (was ~18.5K, -25%)
+
+### S31 itself = proof of process
+S31 executed по proper kit flow:
+- PHASE 3 plan file `plans/2026-04-26-sprint-31-kit-revision-best-practices.md`
+- PHASE 4 controller-driven (docs/wiki sprint), per-task pattern
+- Per-task SPRINT_STATE update после каждой task (S28 protocol)
+- 4 task commits + ship commit (planned)
+
+### Roadmap
+**S31 ready к ship.** Tag v0.1.0-alpha.31. Operator плану перезапустить session — все settings встанут корректно с new prune-state CLAUDE.md.
+
+Next = S32 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1/2/3 operator decision from S27 carry-over).

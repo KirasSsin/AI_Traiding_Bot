@@ -32,7 +32,8 @@ tag: v0.1.0-alpha.30
 | T5 repo CLAUDE.md +kit-overview link | done | (pending commit) | 190→212 lines — added kit-overview/sprint-flow-ru/tooling-inventory references к Ключевые файлы table |
 | T6 status line + `/btw`/`/rewind`/`--continue` | done | (pending commit) | Anti-patterns +4 (kitchen-sink/btw/3+correction/CLAUDE.md bloat) + token-saver commands table 8 commands + link к Section 18 |
 | Total CLAUDE.md prune | done | — | 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens (-25%) per session |
-| T7 ADR 0044 + sprint-31 page + sync | in_progress | — | Wiki diffs |
+| T7 ADR 0044 + sprint-31 page + sync | done | (pending commit) | ADR + sprint page + index + current-state (43→44 ADRs / 30→31 sprint pages / +Kit settings RU 3 files / +CLAUDE.md tokens ~14K) + log |
+| Ship | in_progress | — | tag alpha.31 |
 
 ## S30 SHIPPED ✅
 
