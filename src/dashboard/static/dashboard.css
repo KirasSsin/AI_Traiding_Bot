@@ -1,0 +1,99 @@
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  line-height: 1.5;
+}
+header {
+  background: #1d1d1f;
+  color: #fff;
+  padding: 20px 30px;
+}
+header h1 { margin: 0; font-size: 24px; }
+header .subtitle { color: #aaa; font-size: 13px; margin-top: 4px; }
+section {
+  background: #fff;
+  margin: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+h2 { margin-top: 0; color: #1d1d1f; }
+h3 { color: #333; }
+form .row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+form label { display: flex; flex-direction: column; font-size: 13px; color: #555; }
+form select, form input[type="date"] {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 4px;
+  min-width: 200px;
+}
+form input[type="checkbox"] { margin-top: 8px; }
+button {
+  background: #007aff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 500;
+}
+button:hover { background: #005bb5; }
+button:disabled { background: #888; cursor: not-allowed; }
+.info-block {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 4px;
+  background: #f0f0f0;
+  font-size: 13px;
+}
+.info-block .ok { color: #008800; }
+.info-block .warn { color: #cc6600; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+th, td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+th { background: #f8f8fa; font-weight: 600; }
+.warning {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.warn-high { background: #ffe5e5; color: #a30000; border-left: 4px solid #cc0000; }
+.warn-mid { background: #fff5e5; color: #884400; border-left: 4px solid #cc8800; }
+.warn-info { background: #e5f0ff; color: #003388; border-left: 4px solid #0066cc; }
+.verdict-pass { color: #008800; font-size: 28px; }
+.verdict-fail { color: #cc0000; font-size: 28px; }
+.metric-pass { color: #008800; font-weight: 600; }
+.metric-fail { color: #cc0000; font-weight: 600; }
+.metric-warn { color: #cc8800; font-weight: 600; }
+pre {
+  background: #1d1d1f;
+  color: #e0e0e0;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 12px;
+  font-family: "SF Mono", "Monaco", monospace;
+}
+code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+details summary { cursor: pointer; font-weight: 500; padding: 8px 0; }
