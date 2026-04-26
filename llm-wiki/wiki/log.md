@@ -1678,3 +1678,34 @@ CC1 process isolation / CC2 optional dep / CC3 localhost-only / CC4 read-only da
 
 ### Roadmap
 **S27 SHIPPED.** Tag v0.1.0-alpha.27. Audit infrastructure live + 5 formula bugs eliminated. Measurement instrument now trustworthy. Strategy work (S28+) pending ESC-1/2/3 operator decision.
+
+## [2026-04-26] sprint-end | S28 — Process enforcement (kit flow mechanical hook + RU docs)
+
+**Operator complaint после S27 ship:** "Последний спринт выглядит flow так что наш кит сломан. В S27 не подключались скиллы планирования, todo, superpowers:brainstorming."
+
+**Verified drift:** Last plan file = S15. S16-S27 = 12 sprints без plans. Kit invocation = polite reminder, not enforcement.
+
+### Decision (ADR 0041): Mechanical enforcement
+- Hook `sprint-flow-check.sh` блокирует push на feature/sprint-NN-* без plan file
+- Russian process docs = single source of truth для operator
+- CLAUDE.md binding section "BEFORE ANY SPRINT WORK"
+- Per-task SPRINT_STATE update protocol
+
+### Deliverables (T1-T6 + ship)
+- T1 `wiki/project/architecture/sprint-flow-ru.md` NEW — 9 фаз с per-phase HARD-GATEs
+- T2 `wiki/project/architecture/tooling-inventory-ru.md` NEW — full catalog с decision matrix
+- T3 `~/.claude/hooks/sprint-flow-check.sh` NEW + registered в settings.json
+- T4 SPRINT_STATE phase tracking template applied inline
+- T5 `CLAUDE.md` (repo + llm-wiki) binding sections
+- T6 ADR 0041 + sprint-28 page + index/current-state sync
+- T7 PHASE 8 ship — pending tag v0.1.0-alpha.28
+
+### S28 itself = proof of process
+S28 executed по proper kit flow:
+- PHASE 3 plan file `wiki/project/plans/2026-04-26-sprint-28-process-enforcement.md` (first since S15)
+- PHASE 4 per-task TDD + per-task SPRINT_STATE update + per-task commit
+- TodoWrite phase tracker
+- 5 commits + 1 ship commit (planned)
+
+### Roadmap
+**S28 ready к ship.** Tag v0.1.0-alpha.28. Next = S29 trader-expert backlog (multi-symbol 4H mean_reversion, depends ESC-1 operator decision from S27 carry-over).

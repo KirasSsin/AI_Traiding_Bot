@@ -244,8 +244,12 @@ Real cost (S9 incident, 2026-04-25): batched Edit × 6 agents без batch Read 
 3. mcp__ccd_session__mark_chapter "Sprint N — session end"
 ```
 
-**MASTER SOP:** [[wiki/project/architecture/development-workflow]] — полный sprint lifecycle (9 фаз).
+**MASTER SOP:** [[wiki/project/architecture/development-workflow]] — полный sprint lifecycle (9 фаз) (English).
+**Русская версия (BINDING per ADR 0041):** [[wiki/project/architecture/sprint-flow-ru]] — 9 фаз с per-phase HARD-GATEs.
+**Tooling catalog (RU):** [[wiki/project/architecture/tooling-inventory-ru]] — agents/skills/plugins/MCP/hooks.
 **Wiki-first rule:** читай `wiki/project/components/<name>.md` ДО сырого ADR. 4-7× экономия токенов.
+
+**HARD-GATE hook `sprint-flow-check.sh`:** блокирует push на `feature/sprint-NN-*` branch без plan file `wiki/project/plans/<YYYY-MM-DD>-sprint-NN-<slug>.md`. Mechanical PHASE 3 enforcement (S16-S27 drift лесон).
 
 Wiki-инgest (ingest/query/lint) параллелен code-workflow. Code-tasks активируют Superpowers skills. Завершение code-work → wiki-ingest компонентов.
 

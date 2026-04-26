@@ -2,11 +2,36 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 27
-phase: between-sprints
-branch: feature/sprint-27-formula-bug-fixes
+sprint: 28
+phase: 4-execution
+branch: feature/sprint-28-process-enforcement
 tag: v0.1.0-alpha.27
 ---
+
+## Phase tracking (S28)
+
+| Phase | Status | Artifact | Updated |
+|-------|--------|----------|---------|
+| 1 Orient | done | mark_chapter | 2026-04-26 |
+| 2 Brainstorm | skipped (deliverables clear, operator-specified) | — | 2026-04-26 |
+| 3 Plan | done | `plans/2026-04-26-sprint-28-process-enforcement.md` | 2026-04-26 |
+| 4 Execute | in_progress | T1-T7 (see task table) | 2026-04-26 |
+| 5 Verify | pending | — | — |
+| 6 Review | pending | — | — |
+| 7 Sync | pending | — | — |
+| 8 Ship | pending | — | — |
+| 9 Close | pending | — | — |
+
+### Phase 4 — task progress
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 sprint-flow-ru.md | done | (pending commit) | Russian sprint lifecycle 9 phases |
+| T2 tooling-inventory-ru.md | done | (pending commit) | 11 sections — agents/skills/plugins/MCP/hooks |
+| T3 sprint-flow-check.sh hook | done | (pending commit) | bash -n + positive + negative tested + registered в settings.json |
+| T4 SPRINT_STATE template | done | (already applied to S28 itself) | per-phase + per-task tracking inline в этом file |
+| T5 CLAUDE.md updates | done | (pending commit) | repo CLAUDE.md binding section + llm-wiki CLAUDE.md links к Russian docs |
+| T6 ADR 0041 + sprint-28 page + sync | done | (pending commit) | ADR + sprint page + index + current-state + log |
+| T7 PHASE 8 ship | in_progress | — | tag alpha.28 |
 
 # SPRINT STATE
 
