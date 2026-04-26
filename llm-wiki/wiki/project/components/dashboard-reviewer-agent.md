@@ -74,5 +74,5 @@ Severity: BLOCKER (security / look-ahead / TESTNET / live trading violation) / H
 - [[../decisions/0039-sprint-25-dashboard]] — S25 dashboard architecture (APPROVE_WITH_CONDITIONS)
 - [[../decisions/0046-sprint-32b-kit-phase-1-improvements]] — этот agent создан здесь
 - [[../sprints/sprint-25-dashboard]] — S25 dashboard sprint
-- [[../sprints/sprint-26-dashboard-redesign]] — S26 redesign
+- S26 (no separate sprint page — UI/CSS-only redesign, no ADR; tag v0.1.0-alpha.26)
 - [[../sprints/sprint-32b-kit-phase-1-improvements]] — S32b Kit Phase 1 (agent creation)
