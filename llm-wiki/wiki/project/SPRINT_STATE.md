@@ -2,11 +2,36 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-26
-sprint: 30
-phase: between-sprints
-branch: main
+sprint: 31
+phase: 4-execution
+branch: feature/sprint-31-kit-revision-best-practices
 tag: v0.1.0-alpha.30
 ---
+
+## Phase tracking (S31)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation |
+| 2 Brainstorm | done (best practices audit inline в plan) | gap analysis |
+| 3 Plan | done | `plans/2026-04-26-sprint-31-kit-revision-best-practices.md` |
+| 4 Execute | in_progress | T1-T7 |
+| 5 Verify | pending | — |
+| 6 Review | skipped (process/wiki) | — |
+| 7 Sync | pending | — |
+| 8 Ship | pending | — |
+| 9 Close | pending | — |
+
+### Phase 4 — task progress
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 kit-overview-ru.md | done | (pending commit) | 1-page TL;DR + Quick decision matrix + 9 agents + 6 hooks + 5 skills + ~50 plugin skills + 6 MCP + cascade rule + Top 10 commands + Top 5 anti-patterns + 9-phase lifecycle + 20 best practices applied |
+| T2 tooling-inventory-ru.md sections 14-19 | in_progress | — | Permission modes / plugins / CLI / status line / token-saver / non-interactive |
+| T3 prune llm-wiki/CLAUDE.md (448→<200) | pending | — | Extract verbose к wiki pages |
+| T4 audit ~/.claude/CLAUDE.md (316→<250) | pending | — | Apply prune test |
+| T5 repo CLAUDE.md +kit-overview link | pending | — | Minor refs |
+| T6 status line + `/btw`/`/rewind`/`--continue` | pending | — | Token-saver patterns |
+| T7 ADR 0044 + sprint-31 page + sync | pending | — | Wiki diffs |
 
 ## S30 SHIPPED ✅
 
