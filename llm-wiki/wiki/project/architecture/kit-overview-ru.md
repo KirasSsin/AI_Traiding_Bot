@@ -28,12 +28,16 @@ sources:
 | Задача | Tool / Skill |
 |--------|--------------|
 | **Старт сессии** / `/clear` | `sprint-orient` skill |
+| Vague operator idea (pre-brainstorm) | `agent-skills:idea-refine` 🆕 (S32) |
 | Sprint scope с trading questions | `brainstorm-init` skill → `trader-expert` agent |
 | Sprint scope не trading | `superpowers:brainstorming` skill |
+| Non-trading feature без spec | `agent-skills:spec-driven-development` 🆕 (S32) |
 | **Plan writing** (HARD-GATE — hook block) | `superpowers:writing-plans` skill → `wiki/project/plans/<date>-sprint-N-<slug>.md` |
 | Execute plan code-heavy | `superpowers:subagent-driven-development` |
 | Execute plan docs-heavy | `superpowers:executing-plans` (controller) |
 | **TDD** каждая code task | `superpowers:test-driven-development` (RED→GREEN→COMMIT) |
+| Bybit/pydantic/pybit/FastAPI/TA-Lib code | `agent-skills:source-driven-development` 🆕 (S32) — verify docs first |
+| Structural code lookup ("where is X used?") | `claude-mem:smart-explore` 🆕 (S32) |
 | **Bug encountered** | `superpowers:systematic-debugging` (4-phase) |
 | Parallel reviewers / research | `superpowers:dispatching-parallel-agents` |
 | **Pre-completion verify** (HARD-GATE — hook block) | `superpowers:verification-before-completion` checklist |
@@ -48,7 +52,10 @@ sources:
 | **New module без tests** / property test design | `test-engineer` agent |
 | Wiki consistency check | `doc-reviewer` agent (haiku) |
 | Sprint complete | `sprint-finish` skill → `superpowers:finishing-a-development-branch` |
+| ADR creation per sprint | `agent-skills:documentation-and-adrs` 🆕 (S32) |
+| Post-impl cleanup сложных формул | `agent-skills:code-simplification` 🆕 (S32) |
 | После src/ change | `wiki-update` skill |
+| Sprint Close (every 5 OR >30 obs) | `anthropic-skills:consolidate-memory` 🆕 (S32) |
 | Side question (no context pollution) | `/btw` |
 | Restore previous state | `/rewind` (Esc+Esc) |
 | Reset context unrelated tasks | `/clear` |
@@ -56,21 +63,29 @@ sources:
 | Search past sessions | `mem-search` MCP |
 | Chapter mark | `mark_chapter` MCP |
 
-## 📚 Cascade rule (BINDING per ADR 0043 — token economy)
+## 📚 Cascade rule (BINDING per ADR 0043 + ADR 0045 S32 — token economy)
 
-При любом lookup ВСЕГДА следуй cascade order:
+При любом lookup ВСЕГДА следуй cascade order (5 шагов после S32):
 
 ```
-STEP 1: wiki/<page>.md  (curated)        ← CHECK FIRST
+STEP 1: wiki/<page>.md             (curated)                          ← CHECK FIRST
    ↓ not found
-STEP 2: mem-search      (past sessions)
+STEP 2: mem-search                 (past sessions)
    ↓ not found
-STEP 3: Grep raw        (current code)
+STEP 2.5: claude-mem:smart-explore (token-optimized structural code)  ← NEW (S32)
    ↓ needed
-STEP 4: Read + offset   (full content)
+STEP 3: Grep raw                   (current code, text match)
+   ↓ needed
+STEP 4: Read + offset              (full content)
 ```
 
-Anti-pattern: ❌ Skip wiki check → straight к Read raw (loses curation, increases tokens)
+**Когда STEP 2.5 vs STEP 3:**
+- STEP 2.5 = structural questions ("where is X used?", call graph, file relationships)
+- STEP 3 = exact text matching (regex, specific string lookup)
+
+Anti-patterns:
+- ❌ Skip wiki check → straight к Read raw (loses curation, increases tokens)
+- ❌ Naked Grep для structural questions (smart-explore = 30-50% дешевле)
 
 Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]]
 

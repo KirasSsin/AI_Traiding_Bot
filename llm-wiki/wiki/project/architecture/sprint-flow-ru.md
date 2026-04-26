@@ -497,23 +497,30 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 
 ---
 
-## Token economy: LLMWiki ↔ Claude-mem cascade (BINDING per ADR 0043)
+## Token economy: LLMWiki ↔ Claude-mem cascade (BINDING per ADR 0043 + ADR 0045 S32 update)
 
-При любом lookup (decision / pattern / API / past learning) — следуй cascade order:
+При любом lookup (decision / pattern / API / past learning / code structure) — следуй cascade order:
 
 ```
-STEP 1: wiki/<page>.md    (curated, structured, tagged)   ← CHECK FIRST
+STEP 1: wiki/<page>.md             (curated, structured, tagged)        ← CHECK FIRST
    ↓ not found
-STEP 2: mem-search        (past sessions semantic search)
+STEP 2: mem-search                 (past sessions semantic search)
    ↓ not found
-STEP 3: Grep raw          (current code state)
+STEP 2.5: claude-mem:smart-explore (token-optimized structural code nav)  ← NEW (S32 ADR 0045)
    ↓ needed
-STEP 4: Read raw + offset (full content, controlled)
+STEP 3: Grep raw                   (current code state — text matching)
+   ↓ needed
+STEP 4: Read raw + offset          (full content, controlled)
 ```
+
+**STEP 2.5 rationale (NEW S32):** `claude-mem:smart-explore` = token-optimized structural code search. Применять когда нужна structural understanding (call graph, file relationships, "where is X used?") ПЕРЕД naked grep. Экономит 30-50% tokens vs grep+full-read sequence на code exploration tasks. Skip STEP 2.5 если уже знаешь exact file (jump к STEP 4 offset Read).
 
 Полный rationale + examples + bridges deferred → [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]]
 
-**Anti-pattern:** ❌ Skip wiki check, jump straight к mem-search OR Read raw — loses curation, increases tokens.
+**Anti-patterns:**
+- ❌ Skip wiki check (STEP 1), jump straight к mem-search OR Read raw — loses curation, increases tokens
+- ❌ Naked Grep (STEP 3) для structural questions — use smart-explore (STEP 2.5) first
+- ❌ Read raw без offset для banned-from-full-read files (см. `~/.claude/CLAUDE.md` section 9)
 
 ## Cross-phase optional skills
 
