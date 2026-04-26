@@ -1,12 +1,42 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-26
-sprint: 31
-phase: between-sprints
-branch: main
+updated: 2026-04-27
+sprint: 32
+phase: 4-execution
+branch: feature/sprint-32-kit-phase-0-improvements
 tag: v0.1.0-alpha.31
 ---
+
+## S32 IN PROGRESS 🟡
+
+Branch: `feature/sprint-32-kit-phase-0-improvements`. Plan committed: `plans/2026-04-26-sprint-32-kit-phase-0-improvements.md`.
+
+### Phase tracking (S32 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S31 |
+| 2 Brainstorm | skipped (operator-specified deliverables per КУ analysis) | inline analysis chapter "Kit improvement plan — КУ analysis" |
+| 3 Plan | done | `plans/2026-04-26-sprint-32-kit-phase-0-improvements.md` |
+| 4 Execute | in_progress | T1-T6 controller-driven (docs sprint) |
+| 5 Verify | pending | pytest 762 preserved by construction (no code) |
+| 6 Review | will skip (process/wiki only, no src/ touched) | — |
+| 7 Sync | pending | log.md sprint-end + index/current-state in T6 |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.32 |
+| 9 Close | pending | SPRINT_STATE → between-sprints |
+
+### Phase 4 — task progress (S32)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 SPRINT_STATE.md P0 fix | in_progress | (this edit) | Stale "Текущий статус"/"Последний спринт"/"Следующее действие" → S32 reality + correct counts |
+| T2 current-state.md P0 fix | pending | — | post-S25 → post-S31 + 604→762 + sources/tags update |
+| T3 sprint-flow-ru.md +5 skill mappings | pending | — | idea-refine / spec-driven / source-driven / code-simplification / documentation-and-adrs |
+| T4 cascade smart-explore STEP 2.5 | pending | — | sprint-flow-ru.md + kit-overview-ru.md mirror |
+| T5 Phase 9 consolidate-memory step | pending | — | sprint-flow-ru.md Phase 9 procedure +Step 5 |
+| T6 ADR 0045 + sprint-32 page + index/counts | pending | — | 44→45 ADRs / 31→32 sprints + sprint history row |
+| Ship | pending | — | tag alpha.32 |
 
 ## S31 SHIPPED ✅
 
@@ -134,43 +164,39 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S31 SHIPPED. Kit Revision per Best Practices + Single Tools-Overview File.** 31 спринт завершён. Operator-driven kit optimization per Anthropic Claude Code best practices. **NEW** `kit-overview-ru.md` — 1-page TL;DR single source of truth. **EXPANDED** `tooling-inventory-ru.md` Sections 14-19 NEW (Permission modes / Plugin curation / CLI tools / Status line / Token-saver commands / Non-interactive + fan-out). **PRUNED** все 3 CLAUDE.md preserving split: 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens per session (-25%, ~4500 saved per session). **20/20 best practices coverage** (was 8/20). 4 NEW anti-patterns + token-saver commands table в repo CLAUDE.md. NO code changes. 762 pytest preserved. **Operator restart session — все settings встанут с new prune-state CLAUDE.md.**
+**S32 IN PROGRESS — Kit Improvement Phase 0.** Operator-driven kit optimization per КУ analysis (session 2026-04-26 post-S31). Documentation-only sprint: P0 staleness fixes (SPRINT_STATE + current-state) + 5 NEW skill mappings (idea-refine/spec-driven-development/source-driven-development/code-simplification/documentation-and-adrs) + cascade smart-explore STEP 2.5 + Phase 9 consolidate-memory step. КУ avg 57% за 45 мин. Phase 1 deferred к S33 (CI/SQLite MCP/freshness hook/dashboard-reviewer). NO code changes. 762 pytest preserved by construction.
 
 **Status:**
-- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + 30 ADRs + 17 sprint pages)
-- Formula correctness: ✅ FIXED (5 bugs eliminated, measurement instrument trustworthy)
-- Strategy validation: ❌ NEGATIVE (still 0 PASS / 30 FAIL — structural failures, не formula bugs)
-- MVP DONE per acceptance-criteria.md: NOT achieved (T5 still unreachable single-symbol 4H)
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + 38 components + **45 ADRs** + **32 sprint pages** post-S32)
+- Kit infrastructure: ✅ COMPLETE — 9 reviewer agents + 6 hooks + 31 skills mapped (was 26) + cascade rule (5-step с smart-explore) + 20/20 best practices
+- Formula correctness: ✅ FIXED (5 bugs eliminated post-S27, measurement instrument trustworthy)
+- Strategy validation: ❌ NEGATIVE (0 PASS / 30 FAIL — structural failures, не formula bugs; trading work blocked pending ESC-1/2/3)
+- MVP DONE per acceptance-criteria.md: NOT achieved (T5 unreachable single-symbol 4H)
 
-## Последний спринт (S27 — formula bug fixes)
+## Последний спринт (S31 — Kit Revision per Best Practices + Single Tools-Overview File)
 
-Operator-driven audit sprint. 5 bugs (T1-T5) fixed TDD, audit re-run. ESC items для S28+ pending operator decision.
-
-- T1 HIGH replay_engine bars_per_year parameterization (annualization)
-- T2 MEDIUM Sortino canonical downside_dev (Sortino & Price 1994)
-- T3 MEDIUM RSI/ATR warm-up gating (mask first period bars NaN)
-- T4 INFO/CC5 trade_extractor preserve actual reason_code (SL/TP/SIGNAL_FLIP/EOD/KILL_SWITCH)
-- T5 LOW MC seed=42 default (reproducibility)
-- T6 audit re-run + diff snapshot (data/formulas_audit_v1_post_s27.json)
-- T7 ADR 0040 + sprint-27 page + wiki sync
-- T8 PHASE 8 ship pending
+Operator-driven kit optimization per Anthropic Claude Code best practices. NEW `kit-overview-ru.md` (1-page single source of truth). EXPANDED `tooling-inventory-ru.md` Sections 14-19. PRUNED все 3 CLAUDE.md: 954→756 lines (-21%), 61KB→46KB (-25%), ~18.5K→14K tokens/session (-25%). 20/20 best practices coverage (was 8/20). 4 NEW anti-patterns + token-saver commands table. NO code changes.
 
 ## Следующее действие
 
 ```
-S27 PHASE 8 ship: gh pr create + squash merge + tag v0.1.0-alpha.27.
-
-Operator decides ESC items для S28+ scope:
-- ESC-1 Multi-symbol authorization (S28 expanded scope beyond BTCUSDT MVP)
-- ESC-2 "In profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H pre-S28?)
-- ESC-3 Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
-
-Trader-expert backlog (S28-S32):
-- S28 Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
-- S29 Regime filter + SMA50 trend gate (CC2 fold concentration)
-- S30 SL calibration {1.0/1.25/1.5}×ATR + t-stat power validation
-- S31 Donchian 4H breakout (independent hypothesis)
-- S32 DSR cross-trial sigma_SR + MC power audit (closes S14 Q2 carry-over)
+S32 Kit Phase 0 ship pending (this sprint, in progress):
+  Plan: llm-wiki/wiki/project/plans/2026-04-26-sprint-32-kit-phase-0-improvements.md
+  Tasks: T1-T6 (P0 fixes + 5 skill mappings + cascade + Phase 9 + ADR/page/sync)
+  
+After S32 ship:
+  Track A — Kit Phase 1 (S33 candidate): GitHub Actions CI / pre-commit hooks / SQLite MCP / SPRINT_STATE freshness hook / dashboard-reviewer L5 agent
+  Track B — Trading work (BLOCKED, awaits operator):
+    - ESC-1 Multi-symbol authorization (S{N} expanded scope beyond BTCUSDT MVP)
+    - ESC-2 "In profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H?)
+    - ESC-3 Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
+  
+Trader-expert backlog (when Track B unblocks):
+  - Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
+  - Regime filter + SMA50 trend gate (CC2 fold concentration)
+  - SL calibration {1.0/1.25/1.5}×ATR + t-stat power validation
+  - Donchian 4H breakout (independent hypothesis)
+  - DSR cross-trial sigma_SR + MC power audit (closes S14 Q2 carry-over)
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)
