@@ -920,6 +920,137 @@ mcp__plugin_claude-mem_mcp-search__list_corpora
 # Verify majority match expected partition (no orphans за 30%)
 ```
 
+## 23. anthropic-skills:schedule wire к audit_formulas.py (S32d)
+
+**Status:** Operator setup procedure documented. Schedule registration happens at session level через `mcp__scheduled-tasks__create_scheduled_task` MCP tool — НЕ committable к repo (session-state).
+
+### Goal
+
+Auto-run `scripts/audit_formulas.py` on schedule (weekly OR monthly) → produce `data/formulas_audit_v1.json` snapshot. Operator/Claude can review changes без manual invocation.
+
+### Prerequisites
+
+1. `scripts/audit_formulas.py` runs successfully manually (verified S27)
+2. `.venv/` setup at repo root (Python 3.12)
+3. `mcp__scheduled-tasks` MCP enabled (✓ default)
+
+### Setup procedure (operator action — ONE-TIME)
+
+```python
+# Pseudo-code для invocation в Claude Code session
+mcp__scheduled-tasks__create_scheduled_task({
+  "name": "audit_formulas_weekly",
+  "schedule": "0 9 * * MON",  # cron: Monday 09:00 UTC
+  "command": "cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot && source .venv/bin/activate && python scripts/audit_formulas.py",
+  "output_path": "data/formulas_audit_v1.json"
+})
+```
+
+### Frequency recommendations
+
+| Phase | Recommended frequency | Rationale |
+|-------|----------------------|-----------|
+| Active development (S27-style) | Weekly Monday 09:00 UTC | Catch formula regressions early |
+| Stable maintenance | Monthly | Reduce noise если formulas not changing |
+| Pre-release validation | Daily (temporary) | Confidence в final state |
+
+### Output snapshot pattern
+
+Each run overwrites `data/formulas_audit_v1.json`. Manual snapshot для significant runs:
+```bash
+cp data/formulas_audit_v1.json data/formulas_audit_v1_$(date +%Y%m%d).json
+git add data/formulas_audit_v1_*.json
+git commit -m "data: snapshot formulas audit YYYY-MM-DD"
+```
+
+### Verification
+
+After schedule registered:
+```bash
+mcp__scheduled-tasks__list_scheduled_tasks
+# Verify "audit_formulas_weekly" present + next_run timestamp
+```
+
+### Wire к sprint workflow
+
+Optional integration (S33+ kit work): PostToolUse hook on `mcp__scheduled-tasks__create_scheduled_task` invocation auto-appends к `wiki/log.md` schedule registry.
+
+## 24. Memory corpus bridges 2-4 — feasibility research notes (S32d)
+
+**Status:** Research notes only. Implementation BLOCKED on claude-mem internal API constraints. Не shippable until plugin upstream supports OR fork.
+
+### Bridge 2 — corpus periodic sync (auto-rebuild от wiki/log.md)
+
+**Goal:** mem-search corpus auto-rebuilds when wiki/log.md gets new entries (chronological journal).
+
+**API check:**
+- claude-mem MCP exposes: `build_corpus`, `prime_corpus`, `rebuild_corpus`, `list_corpora`, `reprime_corpus`
+- ✅ Build/rebuild API exists
+- ❌ No "watch directory" / "trigger on file change" мechanism в plugin
+- Workaround: Cron-based via anthropic-skills:schedule (Section 23 pattern)
+
+**Implementation cost:** LOW если cron acceptable. Use `mcp__scheduled-tasks__create_scheduled_task` daily 03:00 UTC to invoke `mcp__plugin_claude-mem_mcp-search__rebuild_corpus`.
+
+**Decision:** SHIPPABLE via cron. Operator setup task (not in-repo). S33+ candidate.
+
+### Bridge 3 — chapter mark auto-link к log.md
+
+**Goal:** When `mark_chapter` MCP called, append linked entry к `llm-wiki/wiki/log.md` automatically.
+
+**API check:**
+- ccd_session MCP `mark_chapter` tool — does NOT support post-call hooks (one-shot operation)
+- ❌ No webhook / callback mechanism в MCP server itself
+- Workaround: Claude Code PostToolUse hook fired on `mcp__ccd_session__mark_chapter` invocation
+
+**Implementation cost:** MEDIUM. Need PostToolUse hook script that:
+1. Parses chapter title + summary from tool_input JSON
+2. Appends к `llm-wiki/wiki/log.md`: `## [YYYY-MM-DD] chapter | <title>\n<summary>`
+3. Atomic file write (avoid race conditions, use lockfile или mv-after-write)
+
+**Decision:** SHIPPABLE via PostToolUse hook. Defer к S33+ kit work если operator wants OR skip if redundant с manual log.md updates (current S32 series practice).
+
+### Bridge 4 — frontmatter tags → corpus partition (S32c scheme implementation)
+
+**Goal:** When wiki page committed, parse frontmatter tags + categorize observation into 4 partitions (per S32c Section 22 scheme).
+
+**API check:**
+- claude-mem MCP exposes: corpus management API но **NO partition support** в current version
+- corpora are flat topical (set via `prime_corpus(corpus_name)`)
+- ❌ Cannot create sub-partitions within corpus
+- Workaround: Create 4 SEPARATE corpora — `trading-decisions`, `formula-knowledge`, `process-patterns`, `debug-knowledge` (vs partitions inside one corpus)
+- Then `mem-search` queries specific corpus instead of "category:" filter
+
+**Implementation cost:** HIGH. Requires:
+1. Create 4 corpora via `mcp__plugin_claude-mem_mcp-search__build_corpus(<name>)`
+2. PostToolUse OR PreCompact hook that parses frontmatter, calls `mcp__plugin_claude-mem_mcp-search__prime_corpus(<partition>)` then writes observation
+3. Cascade STEP 2 syntax change в kit-overview-ru.md + sprint-flow-ru.md: `mem-search corpus:trading-decisions`
+4. Existing 17 observations need re-categorization (manual OR script)
+5. Update `~/.claude/CLAUDE.md` cascade section
+
+**Decision:** **NOT RECOMMENDED** этот sprint OR next. High effort vs marginal benefit:
+- Current 17 observations small — flat search precision adequate
+- Bridge 4 implementation = 6-10 hours focused work + possible regression risk
+- Re-evaluate когда corpus > 100 observations (likely S40+)
+
+**Alternative (LOW cost, HIGH value):** Operator manually validate scheme на existing observations per S32c Section 22 procedure. If precision noticeably degrades after S40+, revisit Bridge 4.
+
+### Honest recommendation summary
+
+| Bridge | Cost | Value | Recommendation |
+|--------|------|-------|----------------|
+| Bridge 2 (cron rebuild) | LOW | MEDIUM | ✅ SHIP via operator setup S33+ |
+| Bridge 3 (chapter auto-link) | MEDIUM | LOW (manual log practice works) | ⏸️ DEFER unless operator chooses |
+| Bridge 4 (partition impl) | HIGH | LOW currently (corpus small) | ❌ NOT recommended until corpus > 100 obs |
+
+### What S32c scheme docs (Section 22) provide despite no impl?
+
+- ✅ Lock partition labels в stable contract (4 names won't change retrospectively)
+- ✅ Tag mapping pseudo-code ready для future implementation
+- ✅ Operator can manually validate scheme на existing observations (Section 22 procedure)
+- ✅ Future kit sprint has clear target если priorities change
+
+**S32 series kit improvement COMPLETE per ADR 0048.** Next kit work — only if specific blocker identified OR operator-prioritized.
+
 ## Связанные документы
 
 - [[kit-overview-ru]] — single source of truth gateway (S31)
