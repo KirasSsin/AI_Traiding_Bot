@@ -189,6 +189,7 @@ def _derive_heal_max_age_seconds(settings: Settings, interval: str) -> int:
     interval_seconds_map: dict[str, int] = {
         "60": 3600,
         "15": 900,
+        "240": 14400,
     }
     if interval not in interval_seconds_map:
         raise ValueError(
@@ -278,7 +279,7 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
     )
 
     interval = getattr(args, "interval", "60")
-    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m"}
+    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m", "240": "4h"}
     interval_label = interval_label_map[interval]
 
     overall_rc = 0
@@ -403,7 +404,7 @@ def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> p
 
     S19 ADR 0034: interval param extends parquet path: 60 → _1h, 15 → _15m.
     """
-    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m"}
+    interval_label_map: dict[str, str] = {"60": "1h", "15": "15m", "240": "4h"}
     interval_label = interval_label_map.get(interval, "1h")
     parquet_path = f"data/{symbol}_{interval_label}.parquet"
     config = {
@@ -607,7 +608,7 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     # T1-T6 metrics aggregated across symbols
     # S19 ADR 0034 Condition A3: pass bars_per_year derived from interval
     interval = getattr(args, "interval", "60")
-    bars_per_year_map: dict[str, int] = {"60": 8760, "15": 35040}
+    bars_per_year_map: dict[str, int] = {"60": 8760, "15": 35040, "240": 2190}
     bars_per_year = bars_per_year_map[interval]
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
@@ -782,7 +783,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_bf.add_argument(
         "--interval", default="60",
-        choices=["60", "15"],
+        choices=["60", "15", "240"],
         help="Bar interval (S19 ADR 0034): '60' = 1H (default), '15' = 15M.",
     )
     p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
@@ -809,7 +810,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_wfa.add_argument(
         "--interval", default="60",
-        choices=["60", "15"],
+        choices=["60", "15", "240"],
         help="Bar interval (S19 ADR 0034): '60' = 1H (default, bars_per_year=8760), "
              "'15' = 15M (bars_per_year=35040). Annualization factor derived correctly "
              "к prevent 2× Sharpe understimate per Condition A3.",

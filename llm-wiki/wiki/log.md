@@ -1428,3 +1428,85 @@ NO code changes:
 **v0.4 closed at S21 honest.** Tag v0.1.0-alpha.21. Project state: between-sprints с post-v0.4-honest-close marker. **4-th honest close** в проекте (S14 + S16 + S18 + S21). Operator decides v0.5 if/when.
 
 MVP DONE structurally hard на BTC-only 1H mean-reversion alone (sample insufficient), 15M (degrades), multi-symbol (out of MVP scope). Path forward = hybrid ML filter (v0.5-A) OR change strategy class entirely.
+
+## [2026-04-26] sprint-end | Sprint 22 — BTC 4H mean-reversion test (v0.5-C)
+
+**Verdict: FAIL T5 count only** (62 trades < 100 floor). Similar pattern к S17 1H — 5/6+DSR+MC PASS. Per ADR 0037 BINDING → S23 honest close v0.5.
+
+### S22 PHASE 2 brainstorm (joint dispatch per user directive)
+
+Trader REVISE → Option (C) 4H test (NOT maintainer's A ML XGBoost):
+1. n=59 too small для ML (CPCV needs ≥500)
+2. S17 fold-5-concentrated (без fold #5 mean=0.01) — ML overfit risk
+3. (C) 4H = 1-2 sprint cheap falsification
+
+Architecture APPROVE_WITH_CONDITIONS (C) с frequency probe mandatory T0.
+
+Frequency probe (architecture-mandated): 439 raw triggers via 1H resample к 4H — Option C viable confirmed pre-sprint.
+
+### Strategy criteria results
+
+- T1 Sharpe: 6.17 PASS
+- T2 Sortino: 7309 PASS (sample artifact)
+- T3 MaxDD: 6.1% PASS
+- T4 win 37.1% / RR 580 PASS
+- **T5: 62 trades FAIL** (<100 floor) + t_stat 1.04 borderline
+- T6: 2.96 PASS
+- DSR: 0.996 PASS (n_trials=1 fresh)
+- MC p: 0.018 PASS (statistically significant)
+
+Fold sharpes: [1.93, -2.92, 1.32, 12.70, 1.78] — 4/5 positive, fold #3 (12.70) dominant.
+
+### Critical insight: T5 100 structurally unreachable
+
+| Hypothesis | Sprint | Trades |
+|-----------|--------|--------|
+| Mean-rev BTC-only 1H | S17 | 59 |
+| Mean-rev BTC-only 15M | S20 | 73 |
+| **Mean-rev BTC-only 4H** | **S22** | **62** |
+
+3 timeframes tested = ~60-73 trades all. **FLAT-only constraint + AND-gate dominate trade count, not raw frequency.** T5 100 only reachable via multi-symbol aggregation (S15 108 trades) — out of MVP scope per user.
+
+### Deliverables
+
+- T0 ✅ Frequency probe (439 raw triggers)
+- T1 ✅ ADR 0037
+- T2 ✅ 5-map atomic extension (rest.py + __main__.py 4 sites + 2× argparse choices, 5th map runtime-discovered)
+- T3 ✅ 4H BTCUSDT parquet via 1H resample (Bybit backfill API hung — resample fallback)
+- T4 ✅ WFA 4H measurement → FAIL T5 count
+- T5 ✅ sprint-22 page + wiki sync (this commit)
+- T6 PHASE 8 ship — pending
+
+### Tests / quality
+
+- pytest unit: 732 passed (S21 baseline preserved)
+- mypy --strict src/: clean (72 source files)
+- Q7-S12 zero-migration: trivially preserved
+
+### Code changes summary
+
+- rest.py:68-72 — added "240": ("4h", 14_400_000) к single-dict intervals
+- __main__.py — 4 maps + 2 argparse choices extended (5 sites total)
+
+### S23 BINDING per ADR 0037
+
+S23 = honest close v0.5 docs-only sprint:
+- ADR 0038 v0.5 honest close (5 hypotheses tested)
+- sprint-23-honest-close-v05.md
+- Document T5 100 structurally unreachable insight
+- Document repeated 5/6+DSR+MC PASS pattern (S17 1H + S22 4H — strategy edge regime-independent)
+- Archive cross_trial_sharpes.json к _v0.5-final.json
+- Tag v0.1.0-alpha.23
+
+### v0.6+ direction options (operator-driven)
+
+- (v0.6-A) Hybrid mean-reversion + ML XGBoost — combined S17+S22 ~120 trades, может быть достаточно для small-sample ML
+- (v0.6-B) HMM regime-switch
+- (v0.6-C) Multi-symbol revival post-MVP
+- (v0.6-D) Different strategy class (donchian, ATR-bands, regime-detection)
+- (v0.6-E) Project pause
+- (v0.6-F) MVP T5 floor amendment (operator decides if spec amendment justified per empirical evidence)
+
+### Roadmap
+
+**S22 SHIPPED.** Tag v0.1.0-alpha.22. Per ADR 0037 BINDING → S23 honest close v0.5.
