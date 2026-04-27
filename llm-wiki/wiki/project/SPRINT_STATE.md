@@ -3,10 +3,16 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 32e
-phase: 4-execution
-branch: feature/sprint-32e-kit-audit-doc-sync
-tag: v0.1.0-alpha.32d
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.32e
 ---
+
+## S32e SHIPPED ✅ — Kit Audit + Doc Sync
+
+PR #43 → c4dadd3 squash-merge. Tag v0.1.0-alpha.32e pushed. Branch deleted. **CI passed first try.**
+
+**Audit conclusion: ALL components NEEDED. NO removals.** Documentation drift fixed + tooling-inventory split (60KB → 41+24KB) + audit page snapshot committed.
 
 ## S32e IN PROGRESS 🟡 — Kit Audit + Doc Sync
 
@@ -40,8 +46,8 @@ Sub-sprint S32 series **post-completion audit** (operator initiated). Branch: `f
 | 5 Verify | done | pytest 773 (S32d baseline) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / **file split verify: tooling-inventory-ru.md 41KB ✓ + tooling-inventory-ru-part-2.md 24KB ✓** (both < 50KB threshold) |
 | 6 Review | pending (likely skip) | no src/ touched |
 | 7 Sync | pending | log.md sprint-end + index/current-state в T5 |
-| 8 Ship | pending | PR + tag v0.1.0-alpha.32e (CI 4th PR) |
-| 9 Close | pending | SPRINT_STATE → between-sprints |
+| 8 Ship | done | PR #43 → c4dadd3 + tag v0.1.0-alpha.32e. CI passed first try (4th PR validation). |
+| 9 Close | done | SPRINT_STATE between-sprints (this update) |
 
 ### Phase 4 — task progress (S32e)
 
@@ -52,7 +58,7 @@ Sub-sprint S32 series **post-completion audit** (operator initiated). Branch: `f
 | T3 Split tooling-inventory-ru.md | pending | — | 60KB → part 1 (Sections 1-13) + part 2 (Sections 14-24) per CLAUDE.md sec 9 |
 | T4 CLAUDE.md Read guard update | pending | — | tooling-inventory split — both parts < 50KB safe to Read full |
 | T5 ADR 0049 + sprint-32e page + sync | pending | — | 48→49 ADRs / 35→36 sprints + audit doc + part-2 |
-| Ship | pending | — | tag v0.1.0-alpha.32e |
+| Ship | done | c4dadd3 | tag v0.1.0-alpha.32e. CI passed first try (S32b infrastructure 4th PR validation). |
 
 ## S32d SHIPPED ✅ — S32 SERIES COMPLETE 🎉
 
@@ -319,7 +325,7 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S32d SHIPPED — Kit Improvement Phase 3 final + S32 SERIES COMPLETE.** Sub-sprint S32 series 4 phases (Phase 0/1/2/3) shipped 8 hours total / КУ avg ~53% / ROI ~50 КУ/час. **Kit infrastructure mature.** Next: S33 trading work.
+**S32e SHIPPED — Kit Audit + Doc Sync.** Post-S32 series audit completed. Tag v0.1.0-alpha.32e. **All components NEEDED — no removals.** Doc drift fixed + tooling-inventory split (60KB → 41+24KB both < 50KB threshold) + audit snapshot committed (kit-audit-2026-04-27.md). КУ avg ~48% / ~2 hours. **S32 series total: 5 sub-sprints (Phase 0/1/2/3 + audit), 10 hours, ~52% avg КУ.** Next: S33 trading work.
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + **43 components** + **48 ADRs** + **35 sprint pages**)
@@ -335,7 +341,11 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 - Memory corpus: flat → **scheme designed** (script declined per recommendation)
 - Sprint metrics: NO → **YES** (tracking introduced)
 
-## Последний спринт (S32d — Kit Improvement Phase 3 final + S32 SERIES COMPLETE)
+## Последний спринт (S32e — Kit Audit + Doc Sync)
+
+Post-S32 series audit. 5 changes: T1 NEW kit-audit-2026-04-27.md (full audit findings: 11 agents + 10 hooks + 8 MCP + 5 project skills + ~50 plugin skills usage analysis) + T2 fix kit-overview-ru drift (Best practices section MCP 6→8 / Subagents 9→11 / Hooks 7+2+1 / Skills 26→36) + T3 split tooling-inventory-ru.md (60KB → part 1 41KB Sections 1-13 + part 2 24KB Sections 14-24) per CLAUDE.md sec 9 size threshold + T4 update llm-wiki/CLAUDE.md (split refs + size example + audit page link) + T5 ADR 0049 + sprint-32e page + index/counts (48→49 ADRs / 35→36 sprints / + 2 architecture pages). КУ avg ~48% / ~2 hours. **Audit conclusion: ALL components NEEDED, no removals.** CI passed first try.
+
+## Предпоследний спринт (S32d — Kit Improvement Phase 3 final + S32 SERIES COMPLETE)
 
 Sub-sprint S32 series **FINAL**. 5 changes: T1 bybit-api-reviewer L5 agent (sonnet, 6-axis Bybit V5 API checklist) + T2 Context budget hook MVP (UserPromptSubmit advisory, transcript file size proxy 800KB/1.2MB thresholds) + T3+T4 batch (Section 23 anthropic-skills:schedule wire к audit_formulas.py + sprint-metrics.md NEW page + Section 24 corpus bridges 2-4 research notes — Bridge 2 SHIPPABLE cron / Bridge 3 medium defer / Bridge 4 NOT recommended) + T5 ADR 0048 + sprint-32d page + index/counts (47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents / + UserPromptSubmit 1→2 + sprint metrics page). КУ avg 41% / ~2.5 hours. CI passed first try. **S32 series: 8h total, КУ avg ~53%, ROI ~50 КУ/час.** NO code changes.
 

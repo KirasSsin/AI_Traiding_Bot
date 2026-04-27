@@ -2215,3 +2215,64 @@ Trading carry-overs (BLOCKED — operator decisions ESC-1/2/3 required).
 **Pattern established:** Future audits get NEW dated pages (kit-audit-YYYY-MM-DD.md) для historical comparison.
 
 Next session = S33 trading sprint preparation. Operator action ready (see ADR 0048 follow-ups).
+
+## [2026-04-27] session-end | S32e SHIPPED — Kit Audit + Doc Sync
+
+**S32e SHIPPED.** PR #43 → c4dadd3 squash-merge. Tag v0.1.0-alpha.32e pushed. Branch deleted. SPRINT_STATE → between-sprints.
+
+**CI passed first try** — 4th PR validation S32b infrastructure consistent.
+
+**Audit findings (per kit-audit-2026-04-27.md):**
+- ALL 11 reviewer agents NEEDED (1 ACTIVE + 10 DORMANT/READY for S33+ trading)
+- ALL 10 hooks NEEDED (7 push + 2 UPS + 1 SS — verified active)
+- ALL 8 MCP servers NEEDED (6 active/ready + 2 harmless overhead)
+- ALL 5 project skills NEEDED (3 active + 2 dormant/explicit)
+- ALL ~50 plugin skills NEEDED (heavy use)
+- **NO REMOVALS RECOMMENDED**
+
+**Doc fixes applied:**
+- kit-overview-ru "Best practices" section: MCP 6→8, Subagents 9→11, Hooks → 7+2+1, Skills 26→36
+- tooling-inventory-ru.md split: 60KB → part 1 41KB Sections 1-13 + part 2 24KB Sections 14-24 (NEW)
+- llm-wiki/CLAUDE.md updated with split refs + size example + audit page link
+- index.md + current-state.md + canonical counts updated
+
+**S32 series total accumulated (5 sub-sprints, 10 hours, КУ avg ~52%):**
+- S32 Phase 0 — 45 min — 60% — P0 staleness fix + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory
+- S32b Phase 1 — 3h — 60.5% — CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer
+- S32c Phase 2 reduced — 1.5h — 51% — 4 skill mappings + Fetch MCP + corpus categorization scheme
+- S32d Phase 3 final — 2.5h — 41% — bybit-api-reviewer + context budget hook + schedule wire + sprint metrics + corpus research notes
+- **S32e audit — 2h — 48% — kit-audit page + drift fix + tooling split + CLAUDE.md update**
+
+**Final kit state:**
+- 11 reviewer agents (was 9 pre-S32, +2)
+- 7 push hooks + 2 UPS + 1 SS (was 6+1+1, +1 push +1 UPS)
+- 8 MCP servers (was 6, +2)
+- 36 skills × phase mapped (was 26, +10)
+- 44 components (was 38, +6 — incl S32e +1 architecture page kit-audit)
+- 49 ADRs (was 44, +5)
+- 36 sprint pages (was 31, +5 — S32 a/b/c/d/e)
+- CI infrastructure live (S32b)
+- Pre-commit hooks (S32b)
+- Memory corpus scheme designed (S32c)
+- Sprint metrics tracking (S32d)
+- Audit snapshot (S32e)
+
+**Operator action перед S33 trading sprint (same as ADR 0048):**
+1. Approve `fetch` MCP at next session start (one-time)
+2. Decide ESC-1/2/3 (multi-symbol / "in profit" / 4H operational)
+3. Brainstorm S33 scope (8 candidates A-H per ADR 0048)
+
+**Optional operator setup tasks:**
+- audit_formulas.py weekly schedule per Section 23
+- Corpus bridge 2 cron rebuild per Section 24
+
+**Test debt carry-over к S33+:**
+- 3 pytest failures (test_replay_long_only / test_replay_next_open) pre-existing
+- 1 mypy error (__main__.py:636) pre-existing
+- ~169 ruff baseline cleanup
+
+**Trading carry-overs (BLOCKED — operator):** ESC-1 / ESC-2 / ESC-3.
+
+**Pattern established:** Future kit audits get NEW dated pages (kit-audit-YYYY-MM-DD.md). Re-audit recommended при S40+ OR after corpus > 100 obs.
+
+Next session = S33 trading sprint. **Kit improvement S32 series + audit COMPLETE.**
