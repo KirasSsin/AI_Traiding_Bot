@@ -1,7 +1,7 @@
 """Live-data adapted reporter per ADR 0055 SD-6.
 
 Differences от backtest reporter (src/backtest/wfa_reporter.py):
-  - Sharpe computed on per-TradeRecord pnl_quote returns (NOT bar-level equity)
+  - Sharpe computed on per-TradeRecord pnl_pct returns (dimensionless; NOT pnl_quote absolute P&L)
   - T6 OOS/IS → live/synthetic calibration ratio (S22 pre-registered benchmark)
   - MC gated на sample size (sign-flip n>=20, block-bootstrap n>=40)
   - DSR thresholds per ADR 0056 (<10 NaN, 10-30 UNDERPOWERED, >=30 GATE_ELIGIBLE)
@@ -55,11 +55,14 @@ def compute_live_sharpe(
 
     Returns dict с keys: sharpe (float, NaN если insufficient), status, n.
     Status: INSUFFICIENT_TRADES (n<10) / DEGENERATE_VARIANCE / UNDERPOWERED (10<=n<30) / GATE_ELIGIBLE (n>=30).
+
+    Per ADR 0056 amendment 2 + S38 F2 HIGH: returns extracted from pnl_pct (dimensionless
+    fractional returns), NOT pnl_quote (absolute P&L scales with position size → Kelly bias).
     """
     n = len(records)
     if n < 10:
         return {"sharpe": float("nan"), "status": "INSUFFICIENT_TRADES", "n": n}
-    returns = [float(r.pnl_quote) for r in records]
+    returns = [float(r.pnl_pct) for r in records]
     mean = statistics.mean(returns)
     sd = statistics.stdev(returns) if n > 1 else 0.0
     if sd == 0.0:
