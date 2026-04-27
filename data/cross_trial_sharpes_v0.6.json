@@ -1,0 +1,19 @@
+{
+  "trials": [
+    {
+      "sprint": 33,
+      "symbol": "BTCUSDT",
+      "oos_sharpe": -4.399792852732603
+    },
+    {
+      "sprint": 33,
+      "symbol": "ETHUSDT",
+      "oos_sharpe": -3.847018042518851
+    },
+    {
+      "sprint": 33,
+      "symbol": "SOLUSDT",
+      "oos_sharpe": -0.2798515083980392
+    }
+  ]
+}
