@@ -2,11 +2,43 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 37
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.37
+sprint: 38
+phase: 3-planning
+branch: feature/sprint-38-delta-parallel-hardening
+tag: pending
 ---
+
+## S38 IN PROGRESS 🟡 — δ Parallel Hardening (F2 quant + bybit-api-reviewer + Item #7 + playbook)
+
+**Operator approved Path A** (ROUND 6 consilium binding) — δ activate immediately + S38 sprint runs в parallel.
+
+**Track 1 (operator-side):** δ TESTNET activation per `delta-activation-playbook.md` 5-step procedure (operator action — set `S35_DEMO_ACTIVE=true`).
+**Track 2 (AI-side):** S38 sprint 7 tasks (T1-T7) addresses ROUND 6 NEW findings (F2 + F3 + Item #7 + playbook amendments).
+
+Branch: `feature/sprint-38-delta-parallel-hardening`. Plan: `plans/2026-04-27-sprint-38-delta-parallel-hardening.md` (TBD).
+
+### Phase tracking (S38 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S37 ship |
+| 2 Brainstorm | done | ROUND 6 consilium 3 agents UNANIMOUS Q1 — `pre-s38-backlog.md` (4 verdicts + 8 findings F1-F8 + 7 task structure) |
+| 3 Plan | in_progress | `plans/2026-04-27-sprint-38-delta-parallel-hardening.md` |
+| 4 Execute | pending | T1-T7 subagent-driven |
+| 5 Verify | pending | pytest expected ~907 / mypy 0 / canonical 16/30/74/50 |
+| 6 Review | pending | per task reviewer dispatch |
+| 7 Sync | pending | wiki updates в T7 |
+| 8 Ship | pending | tag v0.1.0-alpha.38 |
+| 9 Close | pending | SPRINT_STATE between-sprints |
+
+### S38 critical pre-commitments (BINDING per ROUND 6 consilium)
+
+1. F2 pnl_quote → pnl_pct fix MUST land before 12mo review uses calibration ratio
+2. Item #7 RiskSharedDeps refactor: DI wiring ONLY, NOT touch _tick body OR HaltGate.evaluate()
+3. Smoke-start gate before Item #7 PR merge (pytest 897+33 + TESTNET smoke check)
+4. F3 bybit-api-reviewer dispatched в S38 (review document deliverable)
+5. Playbook amendments: 5 NEW gates (F4 API key + F5 stale activation_ts + F6 UNDERPOWERED + F7 WAL/bootstrap + halt-triggered immediate review)
+6. NO 12mo MAINNET-promotion ADR в S38 (defer к n=10 milestone per quant anti-snooping)
 
 ## S37 SHIPPED ✅ — Carry-overs Hardening (security HIGH + trading-logic + quant + playbook)
 
