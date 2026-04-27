@@ -21,7 +21,7 @@ Branch: `feature/sprint-35-testnet-donchian-risk`. Plan: `plans/2026-04-27-sprin
 | 1 Orient | done | session continuation post-S34 ship |
 | 2 Brainstorm | done | ROUND 3 consilium 3 agents CONSENSUS — `pre-s35-backlog.md` (8 pre-commitments + LOCKED params + halt criteria) |
 | 3 Plan | done | `plans/2026-04-27-sprint-35-testnet-donchian-risk.md` |
-| 4 Execute | pending | T1-T5 subagent-driven (T1 ζ → T2 δ → T3 α ADR → T4 α impl → T5 sync) |
+| 4 Execute | in_progress | T1 done (b432ce8 + 5b224a6 hardening) — pytest 810 / mypy 0 / Field(gt=0) validator added per trading-logic C1. T2-T5 pending. |
 | 5 Verify | pending | pytest 821 expected / mypy 0 |
 | 6 Review | pending | python-reviewer + trading-logic-reviewer + quant-stats-reviewer + security-auditor (parallel) |
 | 7 Sync | pending | wiki updates в T5 |
