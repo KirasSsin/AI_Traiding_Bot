@@ -117,6 +117,15 @@ def compute_dsr(
                 "compute_dsr: sigma_sr REQUIRED when n_trials > 1. "
                 "Caller must supply std of Sharpes across trials. See ADR 0025."
             )
+        if math.isnan(sigma_sr):
+            # S36 T6 quant-stats-reviewer C1 hardening: NaN<0 evaluates False в Python,
+            # so без explicit isnan check NaN sigma_sr would silently propagate через
+            # sharpe_star → produce silent NaN DSR без exception/log. Defense-in-depth
+            # для future direct callers (donchian_runner already guards at call-site).
+            raise ValueError(
+                "compute_dsr: sigma_sr cannot be NaN when n_trials > 1. "
+                "ADR 0056: cross_trial < 3 entries → use n_trials=1 OR mark UNDERPOWERED."
+            )
         if sigma_sr < 0:
             # std deviation is non-negative by definition. Negative value would
             # produce sharpe_star < benchmark (DSR inflated rather than penalized).
