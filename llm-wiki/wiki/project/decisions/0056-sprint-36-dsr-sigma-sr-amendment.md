@@ -133,3 +133,24 @@ Three statistically-distinct Sharpe variants used в codebase. Future audits MUS
 Trial mean ≠ pooled trade-level в general. Live Sharpe (per-trade) ≠ WFA Sharpe (bar-level equity curve).
 
 ADR 0056 sigma_SR sourcing hierarchy unchanged. n_trades thresholds unchanged. Only constants + semantic doc amended.
+
+---
+
+## S38 Amendment 2 (ROUND 6 quant-stats finding F2)
+
+### Live Sharpe returns semantics
+
+`compute_live_sharpe()` returns input MUST be `pnl_pct` (fractional returns), NOT `pnl_quote` (absolute P&L).
+
+| Variant | Source | Issue |
+|---------|--------|-------|
+| **S37 ORIGINAL** | `[float(r.pnl_quote) for r in records]` | Bias if Kelly sizing varies position sizes — large positions dominate mean/std ratio artificially |
+| **S38 AMENDED** | `[float(r.pnl_pct) for r in records]` | Dimensionless returns commensurable across trade sizes |
+
+Rationale: Sharpe formula `(mean/std) * sqrt(N)` requires returns of comparable magnitude. `pnl_quote` scales с position size; `pnl_pct` normalizes. `dsr.py compute_returns()` correctly uses `pnl_pct` — live reporter brought into consistency.
+
+Per quant-stats-reviewer ROUND 6: "current code uses pnl_quote (live_trade_reporter.py:62), which is implicitly assuming fixed position sizing. If ADR 0057 or future risk changes allow variable Kelly sizing, this becomes a correctness issue."
+
+### Backward-compat note
+
+Existing `test_live_trade_reporter.py` tests pass `_make_records()` synthesizing TradeRecords с `pnl_pct = pnl_quote / Decimal("50000")`. Tests continue passing — only return-extraction changes.
