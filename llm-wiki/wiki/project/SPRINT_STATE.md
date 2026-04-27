@@ -21,7 +21,7 @@ Branch: `feature/sprint-35-testnet-donchian-risk`. Plan: `plans/2026-04-27-sprin
 | 1 Orient | done | session continuation post-S34 ship |
 | 2 Brainstorm | done | ROUND 3 consilium 3 agents CONSENSUS — `pre-s35-backlog.md` (8 pre-commitments + LOCKED params + halt criteria) |
 | 3 Plan | done | `plans/2026-04-27-sprint-35-testnet-donchian-risk.md` |
-| 4 Execute | in_progress | T1 done (b432ce8 + 5b224a6 hardening). T2 done (4f56e64 + f390e4d + ac78ba3 security HIGH #1+#2). pytest 797 / mypy 0. T5 carry: HASH_ALLOWLIST extension. T3-T5 pending. |
+| 4 Execute | in_progress | T1 done (b432ce8 + 5b224a6). T2 done (4f56e64 + f390e4d + ac78ba3). T3 done (32bdbca ADR 0054 LOCKED pre-T4 anti-snooping). pytest 797 / mypy 0. T5 carry: HASH_ALLOWLIST extension + index/current-state sync. T4-T5 pending. |
 | 5 Verify | pending | pytest 821 expected / mypy 0 |
 | 6 Review | pending | python-reviewer + trading-logic-reviewer + quant-stats-reviewer + security-auditor (parallel) |
 | 7 Sync | pending | wiki updates в T5 |
