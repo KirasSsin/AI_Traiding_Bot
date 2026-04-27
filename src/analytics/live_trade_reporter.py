@@ -132,7 +132,10 @@ def generate_live_report(records: list[TradeRecord]) -> dict[str, Any]:
     """
     sharpe_info = compute_live_sharpe(records)
     calibration = compute_calibration_ratio(live_sharpe=sharpe_info["sharpe"])
-    returns = [float(r.pnl_quote) for r in records]
+    # S38 T2 ADR 0056 amendment 2: MC permutation also requires dimensionless returns.
+    # pnl_quote scales с position size — same Kelly variance bias as Sharpe.
+    # Mirror compute_live_sharpe extraction для consistency.
+    returns = [float(r.pnl_pct) for r in records]
     mc_info = compute_mc_with_gating(returns)
     # DSR с n_trials=1 (single hypothesis re-eval, no cross-trial pooling penalty).
     # Future: pass n_trials=DELTA_N_TRIALS_LOCKED с pooled sigma_sr for full
