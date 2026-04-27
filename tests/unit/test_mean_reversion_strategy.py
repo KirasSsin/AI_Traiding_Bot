@@ -3,13 +3,13 @@
 Pre-registered AND-gated trigger: LONG when RSI<oversold AND close<lower_BB,
 EXIT when RSI>overbought OR close>upper_BB.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
-
 from src.marketdata.models import Bar, DataQuality
 from src.signalgen.mean_reversion_strategy import MeanReversionRsiBBStrategy
 from src.signalgen.models import SignalSide
@@ -48,7 +48,7 @@ def _make_strategy(symbol: str = "BTCUSDT") -> MeanReversionRsiBBStrategy:
         symbol=symbol,
         rsi_period=14,
         bb_period=20,
-        bb_k=2.0,
+        bb_std_mult=2.0,
         rsi_oversold=Decimal("30"),
         rsi_overbought=Decimal("70"),
         atr_period=14,
@@ -138,7 +138,6 @@ def test_exit_on_overbought() -> None:
 def test_warmup_method_seeds_buffer_no_signal() -> None:
     """warmup() builds buffer state but never emits Signal."""
     s = _make_strategy()
-    base = datetime(2024, 1, 1, tzinfo=UTC)
     for i in range(50):
         # warmup returns None implicitly
         s.warmup(_bar(100.0 + i * 0.1, i))
@@ -153,9 +152,9 @@ def test_invalid_rsi_period_raises() -> None:
         MeanReversionRsiBBStrategy(symbol="BTCUSDT", rsi_period=1)
 
 
-def test_invalid_bb_k_raises() -> None:
-    with pytest.raises(ValueError, match="bb_k must be > 0"):
-        MeanReversionRsiBBStrategy(symbol="BTCUSDT", bb_k=0.0)
+def test_invalid_bb_std_mult_raises() -> None:
+    with pytest.raises(ValueError, match="bb_std_mult must be > 0"):
+        MeanReversionRsiBBStrategy(symbol="BTCUSDT", bb_std_mult=0.0)
 
 
 def test_invalid_rsi_thresholds_raises() -> None:
