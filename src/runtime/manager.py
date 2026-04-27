@@ -102,6 +102,19 @@ class RuntimeManager:
 
         # Sequencing invariant: bootstrap FIRST, then WS, then loop
         self._coordinator.bootstrap()
+        # S37 ADR 0057 SD-3: operator-visible startup banner когда s35_demo_active=True
+        if self._settings.s35_demo_active:
+            logger.info(
+                "runtime.s35_demo_startup_banner",
+                approved_symbols=list(self._settings.s35_demo_approved_symbols),
+                halt_thresholds={
+                    "dd_intraday": str(self._settings.s35_halt_dd_intraday),
+                    "dd_multiday": str(self._settings.s35_halt_dd_multiday),
+                    "consecutive_losses": self._settings.s35_halt_consecutive_losses,
+                    "no_trade_months": self._settings.s35_halt_no_trade_months,
+                },
+                fail_closed=True,
+            )
         self._ws_consumer.start()
         try:
             self._main_loop()
@@ -159,6 +172,20 @@ class RuntimeManager:
         if not self._settings.s35_demo_active:
             return False
 
+        # S37 ADR 0057 SD-2+SD-3: fail-closed symbol whitelist check.
+        # Performed BEFORE activation_ts persistence to avoid side-effects on
+        # misconfigured boot. T5 will replace _symbol private access с self._coordinator.symbol public property.
+        symbol = getattr(self._coordinator, "_symbol", None)
+        if symbol is None or symbol not in self._settings.s35_demo_approved_symbols:
+            logger.error(
+                "runtime.halt_gate_unknown_symbol",
+                symbol=symbol,
+                whitelist=list(self._settings.s35_demo_approved_symbols),
+            )
+            self._coordinator.request_halt(ReasonCode.HALT_UNKNOWN_SYMBOL)
+            self._stopping = True
+            return True
+
         # S36 T4 architecture-reviewer MEDIUM: instance-cache avoids per-tick DB round-trip.
         # Namespace key per domain-prefix convention (was "s35:activation_ts").
         if self._activation_ts is None:
@@ -170,12 +197,6 @@ class RuntimeManager:
             else:
                 self._activation_ts = datetime.fromisoformat(activation_record["value"])
         activation_ts = self._activation_ts
-
-        # Resolve symbol via existing _poll_bar_and_strategy pattern
-        symbol = getattr(self._coordinator, "_symbol", None)
-        if symbol is None:
-            logger.warning("runtime.halt_gate_skipped_no_symbol")
-            return False
 
         # Compute HaltGate inputs
         intraday_dd = self._equity_tracker.intraday_dd_pct()

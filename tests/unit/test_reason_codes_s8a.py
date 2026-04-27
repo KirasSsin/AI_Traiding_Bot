@@ -15,6 +15,6 @@ def test_reason_code_kill_switch_requested_exists():
     assert ReasonCode.KILL_SWITCH_REQUESTED.value == "KILL_SWITCH_REQUESTED"
 
 
-def test_reason_code_total_count_49():
-    """ADR 0021 baseline = 42; ADR 0022 adds 3 → 45; ADR 0055 (S36) adds 4 → 49 total."""
-    assert len(list(ReasonCode)) == 49
+def test_reason_code_total_count_50():
+    """ADR 0021 baseline = 42; ADR 0022 adds 3 → 45; ADR 0055 (S36) adds 4 → 49; ADR 0057 (S37) adds 1 → 50."""
+    assert len(list(ReasonCode)) == 50

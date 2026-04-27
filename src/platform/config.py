@@ -131,6 +131,16 @@ class Settings(BaseSettings):
         le=24,
         description="S35 δ months без n>=30 closed trades → halt + S36 honest close.",
     )
+    s35_demo_approved_symbols: list[str] = Field(
+        default_factory=lambda: ["BTCUSDT"],
+        min_length=1,
+        description=(
+            "S37 ADR 0057 SD-3: whitelist of symbols permitted under s35_demo_active. "
+            "Default [BTCUSDT] per pre-s35-backlog single-symbol LOCKED. "
+            "_check_halt_gate fails-closed (HALT_UNKNOWN_SYMBOL halt) if coordinator "
+            "symbol not in whitelist. Operator extends list для multi-symbol future."
+        ),
+    )
     risk_tp_atr_multiplier: Decimal = Decimal("3.0")
     risk_cb_l1_dd: Decimal = Decimal("0.15")
     risk_cb_l2_dd: Decimal = Decimal("0.22")

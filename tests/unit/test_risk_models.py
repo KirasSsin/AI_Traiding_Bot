@@ -81,6 +81,8 @@ EXPECTED_CODES = {
     "HALT_S36_DD_MULTIDAY",
     "HALT_S36_CONSECUTIVE_LOSSES",
     "HALT_S36_NO_TRADE_TIMEOUT",
+    # S37 ADR 0057 SD-1+SD-2 — symbol fail-closed
+    "HALT_UNKNOWN_SYMBOL",
 }
 
 
@@ -98,9 +100,9 @@ def test_all_codes_exact_set() -> None:
 
 
 def test_reason_code_count() -> None:
-    # 6 entry + 11 exits + 9 rejects + 23 halts = 49
-    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49)
-    assert len(ReasonCode) == 49
+    # 6 entry + 11 exits + 9 rejects + 24 halts = 50
+    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50)
+    assert len(ReasonCode) == 50
 
 
 def test_reason_code_is_str() -> None:

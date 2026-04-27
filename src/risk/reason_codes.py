@@ -103,3 +103,6 @@ class ReasonCode(StrEnum):
     HALT_S36_DD_MULTIDAY = "HALT_S36_DD_MULTIDAY"  # 47: multi-day DD trigger
     HALT_S36_CONSECUTIVE_LOSSES = "HALT_S36_CONSECUTIVE_LOSSES"  # 48: loss streak trigger
     HALT_S36_NO_TRADE_TIMEOUT = "HALT_S36_NO_TRADE_TIMEOUT"  # 49: signal-frequency starvation
+
+    # S37 — δ TESTNET symbol-resolution fail-closed (ADR 0057 SD-1 + SD-2)
+    HALT_UNKNOWN_SYMBOL = "HALT_UNKNOWN_SYMBOL"  # 50
