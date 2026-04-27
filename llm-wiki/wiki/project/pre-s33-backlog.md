@@ -307,7 +307,64 @@ Per `brainstorm-init` BINDING protocol: ROUND 2 invoked **только** на RE
 
 ---
 
-## Related
+---
+
+## ROUND 2 — Consilium consolidated (2026-04-27)
+
+Operator delegated escalation decisions BACK к 3 agents. ROUND 2 vote + brainstorm extras dispatched parallel.
+
+### Vote summary (all 6 items APPROVED unanimously)
+
+| Item | trader | trading-logic | quant-stats | Consensus |
+|------|--------|---------------|-------------|-----------|
+| ESC-1 BACKTEST F | APPROVE | APPROVE | APPROVE | ✅ APPROVE |
+| ESC-2 in-profit checklist | APPROVE | APPROVE | APPROVE +amend | ✅ APPROVE — explicit POST T1-T6, never parallel bypass |
+| ESC-3 S34 LIVE binding | APPROVE +amend (halt-cascade isolation 4th condition) | APPROVE +caveat | APPROVE +math condition (correlation matrix) | ✅ APPROVE + **4 binding conditions:** operator ack + Kelly capital-split + correlation matrix + halt-cascade isolation |
+| CC6 WFA 4H window | (b) | (b) | (b) | ✅ **(b) train=1000/test=250 ~3.3y OOS** (OOS/IS ratio preserved 0.25, ADR 0014 gate unchanged) |
+| CC-D MC p-value fix | APPROVE | APPROVE +property test | APPROVE +extends к block_bootstrap line 96 | ✅ APPROVE + **scope extension:** fix BOTH `sign_flip_p_value:56` + `block_bootstrap_p_value:96` (same bug) |
+| Q5 synth | APPROVE +amend (pooling protocol pre-spec) | APPROVE | APPROVE | ✅ APPROVE |
+
+### Final positions
+
+- trader: **CONFIRM_REVISE** (Round 1 stands) + 2 amendments (ESC-3 4th condition + Q5 pooling pre-spec)
+- trading-logic: **CONFIRM_REVISE** + UPGRADE ESC-1/3 vote от REVISE→APPROVE (backtest/live split addresses engineering concern)
+- quant-stats: **CONFIRM_REVISE** + 1 clarification (CC6 explicit (b) vote)
+
+### 13 REQUIRED additions для S33 scope (consolidated после dedup)
+
+1. **CC-D extended scope** — fix MC p-value `count/N` → `(count+1)/(N+1)` per ADR 0015 в BOTH `sign_flip_p_value:56` AND `block_bootstrap_p_value:96` (same bug, both lines)
+2. **Property test для MC invariants** — Hypothesis-based: `mc_p_value > 0` always, `1/(N+1) ≤ p ≤ 1`, monotonic в `count_extreme`. Catches CC-D regression. ~30 LoC.
+3. **ESC-3 4th binding condition:** halt-cascade isolation specification (BTC halt → ETH/SOL behavior). Uncovered by capital-split / CB layer.
+4. **Pre-registration checklist 9-item locked list** для S33 ADR ДО measurement: (1) exact param set RSI 35/65 BB 1.5σ no further tuning / (2) WFA train=1000/test=250 / (3) embargo 20 bars / (4) OOS gate OOS/IS ≥ 0.7 / (5) symbols BTC+ETH+SOL no additions / (6) MC p ≤ 0.05 two-tailed / (7) DSR ≥ 0.95 / (8) n_trials counting protocol / (9) sigma_SR pooling protocol
+5. **S17-relaxed params named constant** (anti-S15-recurrence guard) — `MEAN_REVERSION_S17_RELAXED_PARAMS` defined в S33 ADR + referenced в code, не copy-paste от S15 (RSI 30/70 BB 2σ MC p=0.998 noise)
+6. **DSR pooling protocol pre-spec** (Item Q5 amend от trader+quant): (a) pool all (sprint, symbol) pairs as independent trials → n_trials=3 per multi-symbol sprint OR (b) treat sprint as 1 trial с aggregate OOS Sharpe → n_trials=1. **Recommend (a)** per quant — methodologically more honest. Lock в S33 ADR.
+7. **n_trials counter rule** (related к #6): if (a), `cross_trial_log` adds 3 entries per S33 sprint (BTC + ETH + SOL each separate trial)
+8. **n_eff correction в reporting** — report raw n + n_eff = n / (1 + (m-1)*rho) where m=3, rho≈0.75 → n_eff ≈ n/2.5. Document raw vs effective в S33 measurement output. T-stat denominator should use n_eff per Kish 1965 design effect correction.
+9. **TrialEntry schema migration guard** — backfill default `symbol="BTCUSDT"` для existing pre-S33 entries, OR archive `cross_trial_sharpes.json` к `_v0.5-final.json` + reset (mirror S16/S18/S21/S23). +5 LoC src defensive get + 10 LoC tests.
+10. **WFA fold coverage pre-run validation** — assert `len(ohlcv_df) >= (train_bars + test_bars) * n_folds` per symbol перед sweep starts. SOL Bybit listing date may give fewer 4H bars чем BTC — silent fold-skip risk. +20 LoC src + 15 LoC tests.
+11. **bars_per_year annualization path verification test** — 4H-specific assertion `bars_per_year(interval="4H") == 2190` propagates through replay engine `sharpe_ratio` computation, не just unit test of function isolation. +20 LoC tests.
+12. **Pre-committed failure branch для F** (insurance) — S33 ADR MUST include "if F fails T5 OR MC p>0.10, S34 = honest close v0.6 OR operator-driven spec amendment с explicit statistical-framework override statement" ПЕРЕД measurement (mirror S17/S22/ADR 0032/0037 BINDING precedent).
+13. **CI baseline guard update** — `.github/workflows/ci.yml` baseline 773 passed needs update post-S33 test additions (~60-80 new tests). Otherwise CI guard becomes permanently non-binding.
+
+### 2 OPTIONAL additions
+
+14. **Ruff baseline file-scoped clean-on-touch** — каждый touched file ruff-clean on exit, не just CI guard-compliant. Prevents gradual drift (compounds к S34+ baseline degradation). ~5 min/file.
+15. **Reviewer dispatch plan documented в S33 ADR** — S33 = formula/stats only → `quant-stats-reviewer` + `trading-logic-reviewer` only. Skip 5 dormant agents (`python-reviewer`, `architecture-reviewer`, `data-integrity-reviewer`, `security-auditor`, `bybit-api-reviewer`) для pure-backtest sprint. Anti-token-waste.
+
+### S33 scope summary post-ROUND 2
+
+**Original synthesis (6 actions) + 13 required + 2 optional = ~21 items total.** Estimate revised: **8-12 hours** (previous estimate 6-10h was naive — pre-registration discipline + property tests + schema migration add ~30% effort).
+
+**Estimate breakdown:**
+- T1: Q6 test debt fix + investigate root cause (1-2h per engineering analysis)
+- T2: CC-D fix BOTH MC formulas + Item #2 property tests (1h)
+- T3: E impl (DSR cross-trial: TrialEntry schema + migration guard + sigma_SR pooling) (2-3h)
+- T4: Item #11 bars_per_year integration test + Item #10 WFA fold coverage validation (1-2h)
+- T5: F backtest measurement run (BTC+ETH+SOL 4H mean-reversion S17-relaxed params, WFA train=1000/test=250) (2h compute time)
+- T6: ADR 0050 + S33 sprint page + 9-item pre-registration checklist + Item #5 named constant + Item #12 failure branch (1-2h)
+- Phase 5/7/8/9 standard (1-2h)
+
+**Total: ~8-12 hours.**
 
 - `brainstorm-init` skill (`.claude/skills/brainstorm-init/SKILL.md`) — PHASE 2 binding protocol
 - ADR 0048 (S32d Kit Phase 3 final) — 8 candidate directions A-H
