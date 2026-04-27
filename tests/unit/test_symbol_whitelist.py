@@ -107,3 +107,41 @@ def test_custom_whitelist_extends_allowed_symbols(tmp_path: Path) -> None:
     halted = rm._check_halt_gate()
     assert halted is False  # ETHUSDT now whitelisted
     coord.request_halt.assert_not_called()
+
+
+def test_demo_inactive_skips_whitelist_check(tmp_path: Path) -> None:
+    """S37 T2 trading-logic-reviewer C2: s35_demo_active=False MUST skip whitelist.
+
+    Even с unknown symbol, demo inactive → return False без halt.
+    Guards against future refactor accidentally re-ordering early-return.
+    """
+    rm, coord = _runtime(
+        tmp_path,
+        symbol="UNKNOWN",  # NOT в whitelist
+        s35_demo_active=False,  # demo OFF
+    )
+    halted = rm._check_halt_gate()
+    assert halted is False
+    coord.request_halt.assert_not_called()
+
+
+def test_whitelist_case_normalized_к_uppercase(tmp_path: Path) -> None:
+    """S37 T2 security-auditor HIGH: operator typo (lowercase) normalized к uppercase.
+
+    Pre-fix: STRATEGY_SYMBOL=BTCUSDT vs whitelist=[btcusdt] → silent halt loop.
+    Post-fix: validator normalizes whitelist к uppercase at construction.
+    """
+    s = _settings(tmp_path, s35_demo_approved_symbols=["btcusdt", "ethusdt"])
+    assert s.s35_demo_approved_symbols == ["BTCUSDT", "ETHUSDT"]
+
+
+def test_lowercase_whitelist_matches_uppercase_symbol(tmp_path: Path) -> None:
+    """Integration: lowercase whitelist input + uppercase coord symbol → no halt."""
+    rm, coord = _runtime(
+        tmp_path,
+        symbol="BTCUSDT",
+        s35_demo_approved_symbols=["btcusdt"],  # lowercase typo
+    )
+    halted = rm._check_halt_gate()
+    assert halted is False  # normalized к BTCUSDT, matches coord
+    coord.request_halt.assert_not_called()

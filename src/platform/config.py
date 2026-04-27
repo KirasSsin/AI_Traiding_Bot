@@ -268,6 +268,21 @@ class Settings(BaseSettings):
             )
         return self
 
+    @model_validator(mode="after")
+    def _normalize_s35_demo_approved_symbols(self) -> "Settings":
+        """S37 T2 security-auditor HIGH — case-normalize whitelist symbols.
+
+        Operator typo (e.g. STRATEGY_SYMBOL=btcusdt vs whitelist=[BTCUSDT]) → silent
+        halt loop (HaltGate fires HALT_UNKNOWN_SYMBOL every tick). Bybit accepts both
+        cases at API level но mismatch defeats fail-closed contract.
+
+        Normalize to uppercase. Operator-misconfig vector closed.
+        """
+        normalized = [s.upper() for s in self.s35_demo_approved_symbols]
+        if normalized != list(self.s35_demo_approved_symbols):
+            object.__setattr__(self, "s35_demo_approved_symbols", normalized)
+        return self
+
     def config_hash(self) -> str:
         """SHA-256 over the risk-threshold allowlist only.
 
