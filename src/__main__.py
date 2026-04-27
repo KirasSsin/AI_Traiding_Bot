@@ -10,6 +10,7 @@ Note: `_cmd_run` and `_cmd_reconcile_only` bodies are placeholders — full depe
 wiring deferred to T20 integration test (which constructs RuntimeManager directly,
 bypassing this CLI). Update these bodies once the T20 wiring pattern is validated.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,7 +34,9 @@ from src.backtest.walk_forward import (
     WindowSplitter,
     evaluate_acceptance_gate,
 )
-from src.backtest.wfa_reporter import format_wfa_report
+from src.backtest.wfa_reporter import (
+    format_wfa_report,  # noqa: F401 — patched by tests/unit/test_main_wfa_cli.py
+)
 from src.execution.bybit.adapter import BybitMarketAdapter
 from src.execution.bybit.ws_private import BybitPrivateWSConsumer
 from src.execution.coordinator import Coordinator
@@ -49,8 +52,13 @@ from src.risk.manager import RiskManager
 from src.risk.trade_history import TradeHistoryRepository
 from src.runtime.bar_source import BarSource
 from src.runtime.manager import RuntimeManager
-from src.signalgen.mean_reversion_strategy import MeanReversionRsiBBStrategy
-from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy  # noqa: F401 — kept for backward-compat tests
+from src.signalgen.mean_reversion_strategy import (
+    MEAN_REVERSION_S17_RELAXED_PARAMS,
+    MeanReversionRsiBBStrategy,
+)
+from src.signalgen.strategy import (
+    EmaCrossoverAdxRsiStrategy,  # noqa: F401 — kept for backward-compat tests
+)
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
@@ -109,7 +117,9 @@ def _cmd_run(args: argparse.Namespace) -> int:
     heal_age = _derive_heal_max_age_seconds(settings, bar_interval)
     repo = ExecutionStateRepo(conn)
     reconciler = Reconciler(
-        query=adapter, base_coin=base_coin, symbol=symbol,
+        query=adapter,
+        base_coin=base_coin,
+        symbol=symbol,
         heal_max_age_seconds=heal_age,
     )
     coordinator = Coordinator(
@@ -121,14 +131,26 @@ def _cmd_run(args: argparse.Namespace) -> int:
     )
 
     # Strategy + risk manager (S15 ADR 0030: mean-reversion replaces EmaCrossover)
-    strategy = MeanReversionRsiBBStrategy(
-        symbol=symbol,
-        rsi_period=settings.strategy_rsi_period,
-        rsi_oversold=settings.strategy_rsi_oversold,
-        rsi_overbought=settings.strategy_rsi_overbought,
-        atr_period=settings.strategy_atr_period,
-        # bb_period=20, bb_k=2.0 — pre-registered defaults per ADR 0030 (no operator override)
-    )
+    # S36 T2 B1 fix per ADR 0055 SD-2: conditional LOCKED params wiring.
+    # When s35_demo_active=True, MUST use S17-relaxed LOCKED params (S22-validated MC p=0.018).
+    # Otherwise (backtests, ad-hoc runs) Settings-driven defaults apply.
+    if settings.s35_demo_active:
+        from src.platform.logging import get_logger
+
+        strategy = MeanReversionRsiBBStrategy.from_locked_s17_params(symbol=symbol)
+        get_logger(__name__).info(
+            "strategy.s35_demo_locked_params_active",
+            params=dict(MEAN_REVERSION_S17_RELAXED_PARAMS),
+        )
+    else:
+        strategy = MeanReversionRsiBBStrategy(
+            symbol=symbol,
+            rsi_period=settings.strategy_rsi_period,
+            rsi_oversold=settings.strategy_rsi_oversold,
+            rsi_overbought=settings.strategy_rsi_overbought,
+            atr_period=settings.strategy_atr_period,
+            # bb_period=20, bb_std_mult=2.0 — pre-registered defaults per ADR 0030 (no operator override)
+        )
     # S15 T1: pass symbol so RiskManager._compute_p_b queries trade history per-symbol
     risk_manager = RiskManager(conn=conn, settings=settings, symbol=symbol)
 
@@ -153,6 +175,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     )
 
     # RuntimeManager + run
+    # S36 T4: HaltGate DI — share RiskManager's EquityTracker/TradeHistory/StateRepo
+    # via properties (avoids duplicate connection instances on same SQLite DB).
     rm = RuntimeManager(
         coordinator=coordinator,
         reconciler=reconciler,
@@ -161,6 +185,9 @@ def _cmd_run(args: argparse.Namespace) -> int:
         strategy=strategy,
         risk_manager=risk_manager,
         settings=settings,
+        equity_tracker=risk_manager.equity_tracker,
+        trade_repo=risk_manager.trade_repo,
+        state_repo=risk_manager.state_repo,
     )
 
     try:
@@ -283,7 +310,15 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
     )
 
     interval = getattr(args, "interval", "60")
-    interval_label_map: dict[str, str] = {"5": "5m", "15": "15m", "30": "30m", "60": "1h", "120": "2h", "240": "4h", "D": "1d"}
+    interval_label_map: dict[str, str] = {
+        "5": "5m",
+        "15": "15m",
+        "30": "30m",
+        "60": "1h",
+        "120": "2h",
+        "240": "4h",
+        "D": "1d",
+    }
     interval_label = interval_label_map[interval]
 
     overall_rc = 0
@@ -349,7 +384,9 @@ def _cmd_reconcile_only(args: argparse.Namespace) -> int:
     heal_age = _derive_heal_max_age_seconds(settings, "60")
     repo = ExecutionStateRepo(conn)
     reconciler = Reconciler(
-        query=adapter, base_coin=base_coin, symbol=symbol,
+        query=adapter,
+        base_coin=base_coin,
+        symbol=symbol,
         heal_max_age_seconds=heal_age,
     )
     coordinator = Coordinator(
@@ -408,7 +445,15 @@ def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> p
 
     S19 ADR 0034: interval param extends parquet path: 60 → _1h, 15 → _15m.
     """
-    interval_label_map: dict[str, str] = {"5": "5m", "15": "15m", "30": "30m", "60": "1h", "120": "2h", "240": "4h", "D": "1d"}
+    interval_label_map: dict[str, str] = {
+        "5": "5m",
+        "15": "15m",
+        "30": "30m",
+        "60": "1h",
+        "120": "2h",
+        "240": "4h",
+        "D": "1d",
+    }
     interval_label = interval_label_map.get(interval, "1h")
     parquet_path = f"data/{symbol}_{interval_label}.parquet"
     config = {
@@ -468,13 +513,16 @@ def _default_wfa_config() -> dict[str, object]:
 
 
 def _run_wfa_single_symbol(
-    *, symbol: str, df: pd.DataFrame, strategy_config: dict[str, object] | None = None,
+    *,
+    symbol: str,
+    df: pd.DataFrame,
+    strategy_config: dict[str, object] | None = None,
     bars_per_year: int = 8760,
     train_bars: int = 2000,
     test_bars: int = 500,
     k_folds: int = 5,
     embargo_bars: int = 20,
-) -> "tuple[list[object], list[float], dict[str, object], float]":
+) -> tuple[list[object], list[float], dict[str, object], float]:
     """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
 
     S15 T5 — extracted from _cmd_wfa for multi-symbol aggregation.
@@ -485,7 +533,8 @@ def _run_wfa_single_symbol(
     Note: trades typed as list[object] (forward-compat) — actual TradeRecord
     instances; cast at call site if needed.
     """
-    from typing import Any, cast
+    from typing import cast
+
     # S33 T4 (Item #10): WFA window customizable per-call (CC6 (b) consensus train=1000/test=250 для 4H)
     splitter = WindowSplitter(
         train_bars=train_bars, test_bars=test_bars, k_folds=k_folds, embargo_bars=embargo_bars
@@ -505,12 +554,14 @@ def _run_wfa_single_symbol(
         mc_p = 1.0
     else:
         import numpy as np
+
         raw = oos_trades_df["net_pnl"].astype(float).to_numpy()
         returns_arr = np.asarray(raw, dtype=float) / 10000.0
         mc_p = sign_flip_p_value(returns_arr, n_iterations=2000, seed=42)
 
     # Per-fold trade extraction (S13 T5)
     from src.risk.trade_history import TradeRecord as _TradeRecord
+
     trades: list[_TradeRecord] = []
     fold_sharpes: list[float] = []
     for fold_data in runner_result["folds"]:
@@ -518,12 +569,18 @@ def _run_wfa_single_symbol(
         fold_trades_df = fold_data.get("oos_trades_df")
         if fold_trades_df is not None and not fold_trades_df.empty:
             df_normalized = fold_trades_df.copy()
-            if "timestamp_open" in df_normalized.columns and "entry_ts" not in df_normalized.columns:
-                df_normalized = df_normalized.rename(columns={
-                    "timestamp_open": "entry_ts",
-                    "timestamp_close": "exit_ts",
-                })
+            if (
+                "timestamp_open" in df_normalized.columns
+                and "entry_ts" not in df_normalized.columns
+            ):
+                df_normalized = df_normalized.rename(
+                    columns={
+                        "timestamp_open": "entry_ts",
+                        "timestamp_close": "exit_ts",
+                    }
+                )
             from datetime import UTC as _UTC
+
             for _col in ("entry_ts", "exit_ts"):
                 if _col in df_normalized.columns:
                     col_series = pd.to_datetime(df_normalized[_col])
@@ -570,7 +627,13 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     interval_arg = getattr(args, "interval", "60")
     # S27 T1: bars_per_year derived from interval, passed к replay_engine
     bars_per_year_map: dict[str, int] = {
-        "5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365,
+        "5": 105120,
+        "15": 35040,
+        "30": 17520,
+        "60": 8760,
+        "120": 4380,
+        "240": 2190,
+        "D": 365,
     }
     bars_per_year_cli = bars_per_year_map.get(interval_arg, 8760)
     for symbol in symbols:
@@ -587,13 +650,16 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
 
         # S33 T4 (CC6 (b) consensus): WFA window from CLI args (default ADR 0014: train=2000/test=500)
         sym_trades, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
-            symbol=symbol, df=df, bars_per_year=bars_per_year_cli,
+            symbol=symbol,
+            df=df,
+            bars_per_year=bars_per_year_cli,
             train_bars=getattr(args, "wfa_train", 2000),
             test_bars=getattr(args, "wfa_test", 500),
             k_folds=getattr(args, "wfa_folds", 5),
             embargo_bars=getattr(args, "wfa_embargo", 20),
         )
         from typing import cast as _cast
+
         all_trades.extend(_cast(list[_TradeRecord], sym_trades))
         all_fold_sharpes.extend(sym_fold_sharpes)
         mc_p_values.append(sym_mc_p)
@@ -602,8 +668,7 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
             "trades": len(sym_trades),
             "k_folds": len(sym_fold_sharpes),
             "mean_oos_is_sharpe": (
-                float(sum(sym_fold_sharpes) / len(sym_fold_sharpes))
-                if sym_fold_sharpes else None
+                float(sum(sym_fold_sharpes) / len(sym_fold_sharpes)) if sym_fold_sharpes else None
             ),
             "mc_p_value": sym_mc_p,
         }
@@ -611,11 +676,17 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     # Bail-out only if NO symbol succeeded WFA at all (all empty/missing).
     # Empty trades с successful folds still compute metrics → FAIL verdict (T5 n_trades=0).
     if not all_fold_sharpes:
-        print(json.dumps({
-            "verdict": "ERROR",
-            "reason": "no symbol completed WFA (all empty/missing parquet)",
-            "per_symbol": per_symbol_summary,
-        }, default=str, indent=2))
+        print(
+            json.dumps(
+                {
+                    "verdict": "ERROR",
+                    "reason": "no symbol completed WFA (all empty/missing parquet)",
+                    "per_symbol": per_symbol_summary,
+                },
+                default=str,
+                indent=2,
+            )
+        )
         return 1
 
     # Aggregate MC p-value: max (most conservative across symbols)
@@ -628,17 +699,14 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
 
     # Aggregate OOS Sharpe для THIS sprint = mean of all fold sharpes across symbols
     aggregate_oos_sharpe = (
-        float(sum(all_fold_sharpes) / len(all_fold_sharpes))
-        if all_fold_sharpes else float("nan")
+        float(sum(all_fold_sharpes) / len(all_fold_sharpes)) if all_fold_sharpes else float("nan")
     )
     cross_trial_sharpes = pre_existing_sharpes + [aggregate_oos_sharpe]
     n_trials = len(cross_trial_sharpes)
 
     if n_trials >= 2 and not math.isnan(aggregate_oos_sharpe):
         sigma_sr_value = statistics.stdev(cross_trial_sharpes)
-        dsr_value = compute_dsr(
-            trades=all_trades, n_trials=n_trials, sigma_sr=sigma_sr_value
-        )
+        dsr_value = compute_dsr(trades=all_trades, n_trials=n_trials, sigma_sr=sigma_sr_value)
     else:
         sigma_sr_value = None
         dsr_value = compute_dsr(trades=all_trades, n_trials=1)
@@ -647,7 +715,15 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     # S19 ADR 0034 Condition A3: pass bars_per_year derived from interval
     # S33 T1: rename `bars_per_year_map` → `bars_per_year_map_wfa` to fix mypy [no-redef] (line 564 has same name in different scope)
     interval = getattr(args, "interval", "60")
-    bars_per_year_map_wfa: dict[str, int] = {"5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365}
+    bars_per_year_map_wfa: dict[str, int] = {
+        "5": 105120,
+        "15": 35040,
+        "30": 17520,
+        "60": 8760,
+        "120": 4380,
+        "240": 2190,
+        "D": 365,
+    }
     bars_per_year = bars_per_year_map_wfa[interval]
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
@@ -690,7 +766,10 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         or metrics["t5_n_trades"] < 100
     ):
         failed_criteria.append("t5")
-    if _nan_or_value(metrics["t6_oos_is_sharpe_ratio_mean"]) is None or metrics["t6_oos_is_sharpe_ratio_mean"] < 0.7:
+    if (
+        _nan_or_value(metrics["t6_oos_is_sharpe_ratio_mean"]) is None
+        or metrics["t6_oos_is_sharpe_ratio_mean"] < 0.7
+    ):
         failed_criteria.append("t6")
 
     dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
@@ -703,34 +782,42 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         sprint_num = int(os.environ.get("SPRINT_N", "0"))
         trial_log.append_trial(sprint=sprint_num, oos_sharpe=aggregate_oos_sharpe)
 
-    print(json.dumps({
-        "symbols": symbols,
-        "per_symbol": per_symbol_summary,
-        "verdict": verdict,
-        "failed_criteria": failed_criteria,
-        "dsr": _nan_or_value(dsr_value),
-        "dsr_pass": dsr_pass,
-        "n_trials": n_trials,
-        "sigma_sr_cross_trial": sigma_sr_value,
-        "trial_log_state": {
-            "pre_existing_sharpes": pre_existing_sharpes,
-            "this_run_aggregate_sharpe": aggregate_oos_sharpe,
-        },
-        "metrics": {
-            "t1_sharpe_oos": _nan_or_value(metrics["t1_sharpe_oos"]),
-            "t2_sortino_oos": _nan_or_value(metrics["t2_sortino_oos"]),
-            "t3_max_drawdown": _nan_or_value(metrics["t3_max_drawdown"]),
-            "t4_win_rate": _nan_or_value(metrics["t4_win_rate"]),
-            "t4_avg_rr": _nan_or_value(metrics["t4_avg_rr"]),
-            "t5_mean_pnl_pct": _nan_or_value(metrics["t5_mean_pnl_pct"]),
-            "t5_t_stat": _nan_or_value(metrics["t5_t_stat"]),
-            "t5_n_trades": metrics["t5_n_trades"],
-            "t6_oos_is_sharpe_ratio_mean": _nan_or_value(metrics["t6_oos_is_sharpe_ratio_mean"]),
-        },
-        "total_k_folds": len(all_fold_sharpes),
-        "mc_p_value_aggregate": mc_p,
-        "acceptance_gate": gate,
-    }, default=str, indent=2))
+    print(
+        json.dumps(
+            {
+                "symbols": symbols,
+                "per_symbol": per_symbol_summary,
+                "verdict": verdict,
+                "failed_criteria": failed_criteria,
+                "dsr": _nan_or_value(dsr_value),
+                "dsr_pass": dsr_pass,
+                "n_trials": n_trials,
+                "sigma_sr_cross_trial": sigma_sr_value,
+                "trial_log_state": {
+                    "pre_existing_sharpes": pre_existing_sharpes,
+                    "this_run_aggregate_sharpe": aggregate_oos_sharpe,
+                },
+                "metrics": {
+                    "t1_sharpe_oos": _nan_or_value(metrics["t1_sharpe_oos"]),
+                    "t2_sortino_oos": _nan_or_value(metrics["t2_sortino_oos"]),
+                    "t3_max_drawdown": _nan_or_value(metrics["t3_max_drawdown"]),
+                    "t4_win_rate": _nan_or_value(metrics["t4_win_rate"]),
+                    "t4_avg_rr": _nan_or_value(metrics["t4_avg_rr"]),
+                    "t5_mean_pnl_pct": _nan_or_value(metrics["t5_mean_pnl_pct"]),
+                    "t5_t_stat": _nan_or_value(metrics["t5_t_stat"]),
+                    "t5_n_trades": metrics["t5_n_trades"],
+                    "t6_oos_is_sharpe_ratio_mean": _nan_or_value(
+                        metrics["t6_oos_is_sharpe_ratio_mean"]
+                    ),
+                },
+                "total_k_folds": len(all_fold_sharpes),
+                "mc_p_value_aggregate": mc_p,
+                "acceptance_gate": gate,
+            },
+            default=str,
+            indent=2,
+        )
+    )
 
     return 0 if verdict == "PASS" else 2
 
@@ -794,8 +881,7 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
                 for r in trade_rows
             ],
             "recent_halts": [
-                {"halt_ts": r[0], "halt_reason": r[1], "context": r[2]}
-                for r in halt_rows
+                {"halt_ts": r[0], "halt_reason": r[1], "context": r[2]} for r in halt_rows
             ],
         }
 
@@ -806,7 +892,9 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="python -m src", description="AI Trading Bot v0.1 — live runtime CLI (ADR 0022).")
+    p = argparse.ArgumentParser(
+        prog="python -m src", description="AI Trading Bot v0.1 — live runtime CLI (ADR 0022)."
+    )
     sub = p.add_subparsers(dest="cmd", required=True)
 
     p_run = sub.add_parser("run", help="Start RuntimeManager (blocking).")
@@ -816,20 +904,24 @@ def _build_parser() -> argparse.ArgumentParser:
     p_bf = sub.add_parser("backfill", help="OHLCV backfill.")
     p_bf.add_argument("--symbol", default="BTCUSDT", help="Trading pair (single, default: BTCUSDT)")
     p_bf.add_argument(
-        "--symbols", default=None,
+        "--symbols",
+        default=None,
         help="Comma-separated trading pairs for multi-symbol backfill (S15 ADR 0030). "
-             "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
+        "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
     )
     p_bf.add_argument(
-        "--interval", default="60",
+        "--interval",
+        default="60",
         choices=["5", "15", "30", "60", "120", "240", "D"],
         help="Bar interval (S19 ADR 0034): '60' = 1H (default), '15' = 15M.",
     )
     p_bf.add_argument("--from", dest="from_date", required=True, help="Start date YYYY-MM-DD")
     p_bf.add_argument("--to", dest="to_date", required=True, help="End date YYYY-MM-DD")
     p_bf.add_argument(
-        "--output", dest="output_path", default=None,
-        help="Output Parquet path (default: data/<symbol>_<interval>.parquet). Ignored when --symbols set."
+        "--output",
+        dest="output_path",
+        default=None,
+        help="Output Parquet path (default: data/<symbol>_<interval>.parquet). Ignored when --symbols set.",
     )
     p_bf.set_defaults(func=_cmd_backfill)
 
@@ -843,26 +935,34 @@ def _build_parser() -> argparse.ArgumentParser:
     p_wfa = sub.add_parser("wfa", help="Run Walk-Forward Analysis + report.")
     p_wfa.add_argument("--symbol", default="BTCUSDT", help="Single symbol (default: BTCUSDT)")
     p_wfa.add_argument(
-        "--symbols", default=None,
+        "--symbols",
+        default=None,
         help="Comma-separated symbols for multi-symbol aggregated WFA (S15 ADR 0030). "
-             "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
+        "Overrides --symbol when set, e.g. --symbols BTCUSDT,ETHUSDT,SOLUSDT",
     )
     p_wfa.add_argument(
-        "--interval", default="60",
+        "--interval",
+        default="60",
         choices=["5", "15", "30", "60", "120", "240", "D"],
         help="Bar interval (S19 ADR 0034): '60' = 1H (default, bars_per_year=8760), "
-             "'15' = 15M (bars_per_year=35040). Annualization factor derived correctly "
-             "к prevent 2× Sharpe understimate per Condition A3.",
+        "'15' = 15M (bars_per_year=35040). Annualization factor derived correctly "
+        "к prevent 2× Sharpe understimate per Condition A3.",
     )
     p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     # S33 T4 (CC6 (b) consensus per consilium): WFA window override для 4H multi-symbol.
     # Default ADR 0014: train=2000/test=500/k_folds=5/embargo=20.
     # CC6 (b): 4H requires train=1000/test=250 (~3.3y OOS, OOS/IS ratio preserved 0.25).
-    p_wfa.add_argument("--wfa-train", type=int, default=2000, help="WFA train window bars (ADR 0014 default 2000)")
-    p_wfa.add_argument("--wfa-test", type=int, default=500, help="WFA test window bars (ADR 0014 default 500)")
+    p_wfa.add_argument(
+        "--wfa-train", type=int, default=2000, help="WFA train window bars (ADR 0014 default 2000)"
+    )
+    p_wfa.add_argument(
+        "--wfa-test", type=int, default=500, help="WFA test window bars (ADR 0014 default 500)"
+    )
     p_wfa.add_argument("--wfa-folds", type=int, default=5, help="WFA K-folds (ADR 0014 default 5)")
-    p_wfa.add_argument("--wfa-embargo", type=int, default=20, help="WFA embargo bars (ADR 0014 default 20)")
+    p_wfa.add_argument(
+        "--wfa-embargo", type=int, default=20, help="WFA embargo bars (ADR 0014 default 20)"
+    )
     p_wfa.set_defaults(func=_cmd_wfa)
 
     p_mon = sub.add_parser("monitor", help="Read-only state snapshot (FSM + trades + halts).")

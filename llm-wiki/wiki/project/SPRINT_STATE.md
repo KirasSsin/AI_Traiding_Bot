@@ -2,11 +2,41 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 35
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.35
+sprint: 36
+phase: 8-ship
+branch: feature/sprint-36-delta-activation
+tag: v0.1.0-alpha.36
 ---
+
+## S36 COMPLETE 🟢 — δ TESTNET activation (HaltGate wire-up + B1 critical fix + DSR amendment)
+
+**ROUND 4 consilium binding executed.** δ infrastructure WIRED LIVE. 63 NEW tests / pytest 871+33 / mypy 0 / canonical 16/30/74/49.
+
+Branch: `feature/sprint-36-delta-activation`. Tag: `v0.1.0-alpha.36`.
+
+### Phase tracking (S36 — all done)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S35 ship |
+| 2 Brainstorm | done | ROUND 4 consilium 3 agents + ROUND 2 Q4 BINDING — `pre-s36-backlog.md` (8 pre-commitments + hybrid duration option H + B1 critical + DSR amendment text + N_trials freeze=7) |
+| 3 Plan | done | `plans/2026-04-27-sprint-36-delta-activation.md` |
+| 4 Execute | done | T1-T8 all done. 19 commits. 63 NEW tests. |
+| 5 Verify | done | pytest 871 unit + 33 integration / mypy 0 / canonical 16/30/74/49 / anti-snooping preserved |
+| 6 Review | done | 8 reviewer dispatches across T1-T7. BLOCKER + HIGH fixes inline. Carry-overs → pre-s37-backlog. |
+| 7 Sync | done | wiki sync T8: sprint-36 + 2 components + pre-s37-backlog + index + current-state + reason-codes + ESM footer + log |
+| 8 Ship | in_progress | gh pr + squash merge + tag v0.1.0-alpha.36 |
+| 9 Close | pending | SPRINT_STATE between-sprints |
+
+### S36 critical pre-commitments (BINDING per ROUND 4 consilium)
+
+1. B1 fix: MEAN_REVERSION_S17_RELAXED_PARAMS LOCKED params wired к live path BEFORE day-1 trade
+2. DSR sigma_SR sourcing protocol: N≥3 PREFERRED, NaN+UNDERPOWERED для 1-2, fallback REMOVED
+3. N_trials freeze at 7 для δ live demo (S22 hypothesis re-evaluation, no increment)
+4. Adapted gates methodology для live data
+5. Hybrid duration option (H): HaltGate operational + n≥50 PASS + 12mo MAINNET-promotion gate (NOT shutdown). NO 6mo interim.
+6. MAINNET promotion criteria DEFERRED к S37+
+7. ReasonCode enum +4 HALT_S36_* (45→49)
 
 ## S35 SHIPPED ✅ — δ TESTNET ready + α Donchian FAIL conjoint + ζ risk refactor
 

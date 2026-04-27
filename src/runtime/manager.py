@@ -4,14 +4,18 @@ Owns: bootstrap → ws_consumer.start → main loop → graceful shutdown.
 Single thread for tick loop; pybit thread for WS callbacks (lock-protected
 via Coordinator/Reconciler RLock/Lock).
 """
+
 from __future__ import annotations
 
 import time
+from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.marketdata.quality import BarPriceQualityDetector
 from src.platform.logging import get_logger
+from src.risk.halt_gate import HaltGate, HaltTrigger
 from src.risk.reason_codes import ReasonCode
 from src.signalgen.models import SignalSide
 
@@ -20,7 +24,10 @@ if TYPE_CHECKING:
     from src.execution.coordinator import Coordinator
     from src.execution.reconciler import Reconciler
     from src.platform.config import Settings
+    from src.risk.equity_tracker import EquityTracker
     from src.risk.manager import RiskManager
+    from src.risk.state_repo import StateRepository
+    from src.risk.trade_history import TradeHistoryRepository
     from src.runtime.bar_source import BarSource
     from src.signalgen.mean_reversion_strategy import MeanReversionRsiBBStrategy
     from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
@@ -30,6 +37,17 @@ if TYPE_CHECKING:
     Strategy = EmaCrossoverAdxRsiStrategy | MeanReversionRsiBBStrategy
 
 logger = get_logger(__name__)
+
+
+# S36 T4: HaltTrigger → ReasonCode dispatch per ADR 0055 SD-4.
+# HaltTrigger uses "S35_*" string values (legacy enum naming);
+# ReasonCode uses HALT_S36_* (canonical reason taxonomy 46-49).
+_HALT_TRIGGER_TO_REASON: dict[HaltTrigger, ReasonCode] = {
+    HaltTrigger.DD_INTRADAY: ReasonCode.HALT_S36_DD_INTRADAY,
+    HaltTrigger.DD_MULTIDAY: ReasonCode.HALT_S36_DD_MULTIDAY,
+    HaltTrigger.CONSECUTIVE_LOSSES: ReasonCode.HALT_S36_CONSECUTIVE_LOSSES,
+    HaltTrigger.NO_TRADE_TIMEOUT: ReasonCode.HALT_S36_NO_TRADE_TIMEOUT,
+}
 
 
 class RuntimeManager:
@@ -45,6 +63,9 @@ class RuntimeManager:
         strategy: Strategy,
         risk_manager: RiskManager,
         settings: Settings,
+        equity_tracker: EquityTracker,
+        trade_repo: TradeHistoryRepository,
+        state_repo: StateRepository,
     ) -> None:
         self._coordinator = coordinator
         self._reconciler = reconciler
@@ -53,6 +74,12 @@ class RuntimeManager:
         self._strategy = strategy
         self._risk_manager = risk_manager
         self._settings = settings
+        self._equity_tracker = equity_tracker
+        self._trade_repo = trade_repo
+        self._state_repo = state_repo
+        # S36 T4 architecture-reviewer MEDIUM: instance-side cache avoids per-tick
+        # state_repo.get() round-trip after first call. activation_ts immutable post-write.
+        self._activation_ts: datetime | None = None
         self._stopping: bool = False
         self._kill_switch_path: Path = Path(settings.runtime_kill_switch_path)
         self._quality_detector = BarPriceQualityDetector(
@@ -103,15 +130,99 @@ class RuntimeManager:
             time.sleep(self._settings.runtime_bar_poll_cadence_seconds)
 
     def _tick(self) -> None:
-        """One tick: kill_switch → check_alive → poll → strategy → risk → bracket.
+        """One tick: kill_switch → check_alive → halt_gate → poll → strategy → risk → bracket.
 
         Sequential by ADR 0022 sub-decisions 1, 2, 4, 5.
+        S36 T4: HaltGate evaluation per-tick when settings.s35_demo_active=True.
         """
         if self._maybe_kill_switch():
             return
         if not self._check_alive_inline():
             return
+        if self._settings.s35_demo_active and self._check_halt_gate():
+            return
         self._poll_bar_and_strategy()
+
+    def _check_halt_gate(self) -> bool:
+        """S36 T4 — HaltGate evaluation per ADR 0055 SD-3 + SD-4.
+
+        Returns True если halt fired (caller should skip rest of tick).
+        Inactive когда settings.s35_demo_active=False (returns False without inspection).
+
+        On first call (no `s35:activation_ts` в StateRepository):
+          - persists `now()` as activation timestamp;
+          - subsequent calls re-use persisted ts для multiday HWM window.
+
+        Halt dispatch: HaltTrigger → ReasonCode via _HALT_TRIGGER_TO_REASON,
+        coordinator.request_halt(reason) + self._stopping=True.
+        """
+        if not self._settings.s35_demo_active:
+            return False
+
+        # S36 T4 architecture-reviewer MEDIUM: instance-cache avoids per-tick DB round-trip.
+        # Namespace key per domain-prefix convention (was "s35:activation_ts").
+        if self._activation_ts is None:
+            activation_record = self._state_repo.get("runtime:halt_gate:activation_ts")
+            if activation_record is None:
+                now = datetime.now(UTC)
+                self._state_repo.set("runtime:halt_gate:activation_ts", {"value": now.isoformat()})
+                self._activation_ts = now
+            else:
+                self._activation_ts = datetime.fromisoformat(activation_record["value"])
+        activation_ts = self._activation_ts
+
+        # Resolve symbol via existing _poll_bar_and_strategy pattern
+        symbol = getattr(self._coordinator, "_symbol", None)
+        if symbol is None:
+            logger.warning("runtime.halt_gate_skipped_no_symbol")
+            return False
+
+        # Compute HaltGate inputs
+        intraday_dd = self._equity_tracker.intraday_dd_pct()
+        hwm = self._equity_tracker.hwm_since(since_ts=activation_ts)
+        current = self._equity_tracker.current_total() or Decimal("0")
+        if hwm is not None and hwm > Decimal("0") and current < hwm:
+            multiday_dd = (hwm - current) / hwm
+        else:
+            multiday_dd = Decimal("0")
+        consec = self._trade_repo.consecutive_losses(symbol=symbol)
+        last_ts = self._trade_repo.last_trade_ts(symbol=symbol)
+        if last_ts is not None:
+            months_since = (datetime.now(UTC) - last_ts).days // 30
+        else:
+            # No trades yet — measure от activation_ts (NOT zero, чтобы fire 6mo timeout
+            # если no trades closed — signal-frequency starvation pre-commit ROUND 3).
+            months_since = (datetime.now(UTC) - activation_ts).days // 30
+
+        gate = HaltGate(
+            dd_intraday_threshold=self._settings.s35_halt_dd_intraday,
+            dd_multiday_threshold=self._settings.s35_halt_dd_multiday,
+            consecutive_losses_threshold=self._settings.s35_halt_consecutive_losses,
+            no_trade_months_threshold=self._settings.s35_halt_no_trade_months,
+        )
+        trigger = gate.evaluate(
+            intraday_dd=intraday_dd,
+            multiday_dd=multiday_dd,
+            consecutive_losses=consec,
+            months_since_last_trade=months_since,
+        )
+        if trigger is None:
+            return False
+
+        reason = _HALT_TRIGGER_TO_REASON[trigger]
+        logger.error(
+            "runtime.halt_gate_fired",
+            trigger=trigger.value,
+            reason=reason.value,
+            symbol=symbol,
+            intraday_dd=str(intraday_dd),
+            multiday_dd=str(multiday_dd),
+            consecutive_losses=consec,
+            months_since=months_since,
+        )
+        self._coordinator.request_halt(reason)
+        self._stopping = True
+        return True
 
     def _maybe_kill_switch(self) -> bool:
         """Sentinel-file check (ADR 0022 sub-decision 5). True => caller should exit tick."""

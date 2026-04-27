@@ -15,11 +15,10 @@ import statistics
 from pathlib import Path
 
 import pytest
-
 from src.analytics.cross_trial_log import CrossTrialLog
 
 
-def test_multi_symbol_S33_adds_3_trials(tmp_path: Path) -> None:
+def test_multi_symbol_s33_adds_3_trials(tmp_path: Path) -> None:
     """S33 BTC+ETH+SOL → n_trials=3 (NOT 1 pooled sprint)."""
     p = tmp_path / "trials.json"
     log = CrossTrialLog(path=p)
@@ -61,9 +60,13 @@ def test_sigma_sr_pools_across_multiple_sprints_and_symbols(tmp_path: Path) -> N
     assert log.sigma_sr() == pytest.approx(expected, abs=1e-9)
 
 
-def test_sigma_sr_one_trial_returns_none(tmp_path: Path) -> None:
-    """sigma_sr requires ≥ 2 entries (cannot compute stdev на 1 sample)."""
+def test_sigma_sr_one_trial_returns_nan(tmp_path: Path) -> None:
+    """ADR 0056 (S36): N<3 → NaN (was: None для N=1). DEGENERATE marker."""
+    import math
+
     p = tmp_path / "trials.json"
     log = CrossTrialLog(path=p)
     log.append_trial(sprint=33, symbol="BTCUSDT", oos_sharpe=0.85)
-    assert log.sigma_sr() is None
+    sigma = log.sigma_sr()
+    assert sigma is not None
+    assert math.isnan(sigma)

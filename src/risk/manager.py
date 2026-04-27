@@ -73,6 +73,23 @@ class RiskManager:
         self._prev_close: Decimal | None = None
 
     # ------------------------------------------------------------------
+    # DI accessors (S36 T4) — exposes shared SQLite-backed deps к RuntimeManager
+    # для HaltGate wire-up (avoids duplicate connection instances + private attr leak).
+    # ------------------------------------------------------------------
+
+    @property
+    def equity_tracker(self) -> EquityTracker:
+        return self._equity
+
+    @property
+    def trade_repo(self) -> TradeHistoryRepository:
+        return self._trades
+
+    @property
+    def state_repo(self) -> StateRepository:
+        return self._state
+
+    # ------------------------------------------------------------------
     # State persistence
     # ------------------------------------------------------------------
 
@@ -94,9 +111,7 @@ class RiskManager:
     # Equity update
     # ------------------------------------------------------------------
 
-    def update_equity(
-        self, *, realized: Decimal, unrealized: Decimal, ts: datetime
-    ) -> None:
+    def update_equity(self, *, realized: Decimal, unrealized: Decimal, ts: datetime) -> None:
         """Snapshot equity, evaluate drawdown, persist state atomically.
 
         Invariant #5 (risk-manager.md): equity snapshot + CB state are
@@ -117,7 +132,9 @@ class RiskManager:
             self._current_halt = new_halt
             logger.warning(
                 "CB level escalated to %s (peak=%s current=%s)",
-                self._current_halt, peak, current,
+                self._current_halt,
+                peak,
+                current,
             )
 
         # Atomic flush — equity snapshot + CB state in ONE transaction.
@@ -192,7 +209,9 @@ class RiskManager:
                 prev_close=self._prev_close,
                 atr=signal.atr_14,
             )
-            if is_flash and self._halt_severity(HaltState.FLASH) > self._halt_severity(self._current_halt):
+            if is_flash and self._halt_severity(HaltState.FLASH) > self._halt_severity(
+                self._current_halt
+            ):
                 self._current_halt = HaltState.FLASH
 
         # Halt check (Adjustment 3 — correct reason codes)
@@ -205,9 +224,7 @@ class RiskManager:
                 self._override.consume(override=override)
                 # Bypass succeeded — proceed to sizing.
             else:
-                return self._reject(
-                    signal, assessed_at, self._halt_to_reason(self._current_halt)
-                )
+                return self._reject(signal, assessed_at, self._halt_to_reason(self._current_halt))
 
         # Kelly phase + fraction
         trade_count = self._trades.count()
@@ -233,8 +250,11 @@ class RiskManager:
         # Adjustment 3 — zero-qty after rounding → REJECT_MIN_NOTIONAL
         if qty <= 0:
             return self._reject(
-                signal, assessed_at, ReasonCode.REJECT_MIN_NOTIONAL,
-                kelly_phase=phase, kelly_fraction=f,
+                signal,
+                assessed_at,
+                ReasonCode.REJECT_MIN_NOTIONAL,
+                kelly_phase=phase,
+                kelly_fraction=f,
             )
 
         sl = mark_price - self._settings.risk_sl_atr_multiplier * signal.atr_14
@@ -268,9 +288,7 @@ class RiskManager:
         """Return (p, b) for Kelly. Uses Wilson lower bound for phases 3/4."""
         if phase < 3:
             return (0.5, 1.0)  # ignored by phase_adjusted_fraction
-        recent = self._trades.load_recent(
-            window_days=90, now=self._clock(), symbol=self._symbol
-        )
+        recent = self._trades.load_recent(window_days=90, now=self._clock(), symbol=self._symbol)
         if len(recent) < 30:
             return (0.5, 1.0)
         wins = [t for t in recent if t.pnl_quote > 0]

@@ -97,3 +97,31 @@ class EquityTracker:
         if row is None:
             return None
         return Decimal(row[0])
+
+    def intraday_dd_pct(self, *, now: datetime | None = None) -> Decimal:
+        """Rolling 24h drawdown as Decimal fraction. Returns 0 if no drawdown OR no snapshots.
+
+        DD = (peak_24h - current) / peak_24h. Used by HaltGate `intraday_dd` input
+        per ADR 0055 SD-3.
+        """
+        peak = self.peak_equity_24h(now=now)
+        current = self.current_total()
+        if peak is None or current is None or peak <= Decimal("0"):
+            return Decimal("0")
+        if current >= peak:
+            return Decimal("0")
+        return (peak - current) / peak
+
+    def hwm_since(self, *, since_ts: datetime) -> Decimal | None:
+        """Highest total_equity since timestamp (inclusive). None if no records after ts.
+
+        Per ADR 0055 SD-3 — multiday_dd HWM source.
+        """
+        rows = self._conn.execute(
+            "SELECT total_equity FROM equity_snapshots WHERE ts >= ?",
+            (since_ts.isoformat(),),
+        ).fetchall()
+        values = [Decimal(r[0]) for r in rows if r[0] is not None]
+        if not values:
+            return None
+        return max(values)

@@ -2453,3 +2453,19 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - CI passed (7th PR с strict baselines). pytest 828 / mypy 0 / canonical 16/30/74/45 unchanged
 - α direction CLOSED per ADR 0054. δ TESTNET ready не activated.
 - SPRINT_STATE → between-sprints. Next operator decision: β pause OR δ activate OR new strategy ADR.
+
+## [2026-04-27] sprint-end | S36 — δ TESTNET activation
+- Tag v0.1.0-alpha.36
+- ROUND 4 consilium binding executed (3 agents CONSENSUS + ROUND 2 BINDING Q4 hybrid)
+- T1 ADR 0055 + 0056 LOCKED pre-commit (anti-snooping)
+- T2 B1 CRITICAL fix: MEAN_REVERSION_S17_RELAXED_PARAMS wired к live path (+ MappingProxyType immutability)
+- T3 4 NEW state-source methods (intraday_dd_pct + hwm_since + consecutive_losses + last_trade_ts)
+- T4 HaltGate wire-up в RuntimeManager._tick (+7 integration tests + reviewer fixes inline)
+- T5 ReasonCode +4 HALT_S36_* (45→49 canonical)
+- T6 DSR sigma_SR amendment ADR 0056 (sigma_SR hierarchy + n_trades thresholds + variable rename + fallback REMOVED)
+- T7 Live trade reporter ADR 0055 SD-6 (live Sharpe + calibration + MC gating)
+- T8 sync: sprint-36 page + 2 NEW component pages (halt-gate-wireup + live-trade-reporter) + pre-s37-backlog + index + current-state + reason-codes-schema + ESM footer + log
+- 63 NEW tests / pytest 871 unit + 33 integration / mypy 0 / canonical 16/30/74/49
+- δ infrastructure WIRED LIVE — operator sets S35_DEMO_ACTIVE=true к activate
+- Carry-overs к S37+: 10 items (3 security HIGH symbol/activation_ts/whitelist + 3 trading-logic clock/symbol/months + 1 architecture RiskSharedDeps + 2 quant boundary tests + 1 operational extended scenarios)
+- ADRs 0055 + 0056 (54 → 56 total)

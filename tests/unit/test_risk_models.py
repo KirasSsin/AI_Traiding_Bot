@@ -76,6 +76,11 @@ EXPECTED_CODES = {
     "EXIT_RECONCILE_DETECTED",
     # Sentinel-triggered kill (S8a ADR 0022 sub-decision 12)
     "KILL_SWITCH_REQUESTED",
+    # S36 ADR 0055 SD-4 — δ TESTNET HaltGate triggers
+    "HALT_S36_DD_INTRADAY",
+    "HALT_S36_DD_MULTIDAY",
+    "HALT_S36_CONSECUTIVE_LOSSES",
+    "HALT_S36_NO_TRADE_TIMEOUT",
 }
 
 
@@ -87,15 +92,15 @@ def test_each_code_present(code_name: str) -> None:
 
 def test_all_codes_exact_set() -> None:
     actual = {code.name for code in ReasonCode}
-    assert actual == EXPECTED_CODES, (
-        f"Missing: {EXPECTED_CODES - actual}; Extra: {actual - EXPECTED_CODES}"
-    )
+    assert (
+        actual == EXPECTED_CODES
+    ), f"Missing: {EXPECTED_CODES - actual}; Extra: {actual - EXPECTED_CODES}"
 
 
 def test_reason_code_count() -> None:
-    # 6 entry + 11 exits + 9 rejects + 19 halts = 45
-    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45)
-    assert len(ReasonCode) == 45
+    # 6 entry + 11 exits + 9 rejects + 23 halts = 49
+    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49)
+    assert len(ReasonCode) == 49
 
 
 def test_reason_code_is_str() -> None:
@@ -118,6 +123,7 @@ def test_risk_relevant_codes_accessible() -> None:
 # Task 4 — HaltState StrEnum
 # ---------------------------------------------------------------------------
 
+
 def test_halt_state_has_five_values() -> None:
     assert len(HaltState) == 5
 
@@ -134,6 +140,7 @@ def test_halt_state_is_str() -> None:
 # ---------------------------------------------------------------------------
 # Task 4 — RiskAssessment helpers
 # ---------------------------------------------------------------------------
+
 
 def _approved(**overrides) -> dict:
     base = dict(
@@ -173,6 +180,7 @@ def _rejected(**overrides) -> dict:
 # Task 4 — RiskAssessment basic construction
 # ---------------------------------------------------------------------------
 
+
 def test_approved_assessment_constructs() -> None:
     ra = RiskAssessment(**_approved())
     assert ra.approved is True
@@ -189,6 +197,7 @@ def test_rejected_assessment_constructs() -> None:
 # Task 4 — frozen model
 # ---------------------------------------------------------------------------
 
+
 def test_risk_assessment_frozen() -> None:
     ra = RiskAssessment(**_approved())
     with pytest.raises((TypeError, ValidationError)):
@@ -198,6 +207,7 @@ def test_risk_assessment_frozen() -> None:
 # ---------------------------------------------------------------------------
 # Task 4 — model_validator: approved=True requires qty > 0
 # ---------------------------------------------------------------------------
+
 
 def test_approved_true_requires_qty() -> None:
     with pytest.raises(ValidationError, match="qty"):
@@ -233,6 +243,7 @@ def test_approved_true_tp_equal_sl_rejected() -> None:
 # Task 4 — model_validator: approved=False constraints
 # ---------------------------------------------------------------------------
 
+
 def test_approved_false_allows_qty_none() -> None:
     ra = RiskAssessment(**_rejected(qty=None))
     assert ra.qty is None
@@ -251,6 +262,7 @@ def test_approved_false_rejects_nonzero_qty() -> None:
 # ---------------------------------------------------------------------------
 # Task 4 — serialization
 # ---------------------------------------------------------------------------
+
 
 def test_decimal_serialized_as_string_in_json() -> None:
     ra = RiskAssessment(**_approved())

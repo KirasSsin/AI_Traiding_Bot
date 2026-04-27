@@ -114,9 +114,7 @@ class TradeHistoryRepository:
         return [self._row_to_record(r) for r in rows]
 
     def count(self) -> int:
-        return int(
-            self._conn.execute("SELECT COUNT(*) FROM trade_history").fetchone()[0]
-        )
+        return int(self._conn.execute("SELECT COUNT(*) FROM trade_history").fetchone()[0])
 
     def find_trade_id_by_signal(self, entry_signal_id: UUID) -> int | None:
         """Find trade_id by entry_signal_id (returns None если trade not yet closed).
@@ -130,6 +128,37 @@ class TradeHistoryRepository:
             (str(entry_signal_id),),
         ).fetchone()
         return int(row[0]) if row else None
+
+    def consecutive_losses(self, *, symbol: str) -> int:
+        """Count of trailing consecutive losing trades, reset on first winning trade.
+
+        Per ADR 0055 SD-4 — used by HaltGate `consecutive_losses` input.
+        Loss = pnl_quote < 0. Symbol-scoped.
+        """
+        rows = self._conn.execute(
+            "SELECT pnl_quote FROM trade_history WHERE symbol = ? ORDER BY exit_ts DESC",
+            (symbol,),
+        ).fetchall()
+        streak = 0
+        for (pnl_str,) in rows:
+            if Decimal(str(pnl_str)) < Decimal("0"):
+                streak += 1
+            else:
+                break
+        return streak
+
+    def last_trade_ts(self, *, symbol: str) -> datetime | None:
+        """Most-recent exit_ts for symbol. None if no trades.
+
+        Per ADR 0055 SD-4 — used by HaltGate `months_since_last_trade` derivation.
+        """
+        row = self._conn.execute(
+            "SELECT MAX(exit_ts) FROM trade_history WHERE symbol = ?",
+            (symbol,),
+        ).fetchone()
+        if not row or row[0] is None:
+            return None
+        return datetime.fromisoformat(row[0]).astimezone(UTC)
 
     @staticmethod
     def _row_to_record(row: tuple[Any, ...]) -> TradeRecord:

@@ -90,6 +90,16 @@ class ReasonCode(StrEnum):
     EXIT_RECONCILE_DETECTED = "EXIT_RECONCILE_DETECTED"
 
     # --- ADR 0022 — Sprint 8a Live runtime ---
-    HALT_RUNTIME_CRASH = "HALT_RUNTIME_CRASH"           # 43: unhandled exception in RuntimeManager.run()
-    HALT_BAR_POLL_STALL = "HALT_BAR_POLL_STALL"         # 44: N consecutive REST kline failures (default N=24)
-    KILL_SWITCH_REQUESTED = "KILL_SWITCH_REQUESTED"     # 45: sentinel-file `.kill_switch` detected (operator-initiated)
+    HALT_RUNTIME_CRASH = "HALT_RUNTIME_CRASH"  # 43: unhandled exception in RuntimeManager.run()
+    HALT_BAR_POLL_STALL = (
+        "HALT_BAR_POLL_STALL"  # 44: N consecutive REST kline failures (default N=24)
+    )
+    KILL_SWITCH_REQUESTED = (
+        "KILL_SWITCH_REQUESTED"  # 45: sentinel-file `.kill_switch` detected (operator-initiated)
+    )
+
+    # --- ADR 0055 — Sprint 36 δ TESTNET HaltGate triggers (SD-4) ---
+    HALT_S36_DD_INTRADAY = "HALT_S36_DD_INTRADAY"  # 46: intraday DD trigger
+    HALT_S36_DD_MULTIDAY = "HALT_S36_DD_MULTIDAY"  # 47: multi-day DD trigger
+    HALT_S36_CONSECUTIVE_LOSSES = "HALT_S36_CONSECUTIVE_LOSSES"  # 48: loss streak trigger
+    HALT_S36_NO_TRADE_TIMEOUT = "HALT_S36_NO_TRADE_TIMEOUT"  # 49: signal-frequency starvation

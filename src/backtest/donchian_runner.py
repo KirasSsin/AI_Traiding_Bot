@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from src.analytics.cross_trial_log import CrossTrialLog
-from src.analytics.dsr import compute_dsr
+from src.analytics.dsr import compute_dsr_with_status
 from src.backtest.data_collector import load_market_data
 from src.backtest.mc_permutation import sign_flip_p_value
 from src.backtest.replay_engine import run_replay
@@ -167,8 +167,9 @@ def _run_donchian_wfa(
 
     n_trades_raw = len(trades)
 
-    # Aggregate OOS Sharpe для cross-trial pooling.
-    aggregate_oos_sharpe = (
+    # Trial-level mean of fold OOS Sharpes для cross-trial pooling per ADR 0056
+    # (clarifies arithmetic mean of fold OOS Sharpes vs pooled trade-level OOS Sharpe).
+    trial_mean_fold_oos_sharpe = (
         float(sum(fold_sharpes) / len(fold_sharpes)) if fold_sharpes else float("nan")
     )
 
@@ -180,25 +181,37 @@ def _run_donchian_wfa(
     )
 
     # DSR per ADR 0054: N_trials = 5 LOCKED (S13/S15/S17/S22/S35 cumulative).
-    # Cross-trial sigma_SR: prefer pre-existing log + this run's aggregate Sharpe;
-    # if log empty (degenerate at S35 — log was reset), fall back к per-fold OOS
-    # Sharpe stdev as conservative proxy (5 folds → defensible stdev base).
+    # ADR 0056 sigma_SR sourcing hierarchy:
+    #   - N >= 3 cross-trial entries: stdev(cross_trial_sharpes) [PREFERRED]
+    #   - 1-2 entries:                NaN [DEGENERATE — df<2 inadmissible]
+    #   - 0 entries:                  None [EMPTY]
+    # REMOVED (S36 T6): per-fold Sharpe stdev as sigma_SR proxy — confounds within-trial
+    # noise с cross-trial selection variability per Bailey 2014 eq.12.
     trial_log = CrossTrialLog(path=Path("data/cross_trial_sharpes.json"))
     pre_existing = trial_log.get_oos_sharpes()
-    cross_trial_sharpes = pre_existing + [aggregate_oos_sharpe]
-    if len(cross_trial_sharpes) >= 2 and not math.isnan(aggregate_oos_sharpe):
+    cross_trial_sharpes = pre_existing + [trial_mean_fold_oos_sharpe]
+    if len(cross_trial_sharpes) >= 3 and not math.isnan(trial_mean_fold_oos_sharpe):
         sigma_sr: float | None = statistics.stdev(cross_trial_sharpes)
-    elif len(fold_sharpes) >= 2:
-        # Fallback: use per-fold variation as sigma proxy (single-trial degenerate).
-        sigma_sr = statistics.stdev(fold_sharpes)
+    elif len(cross_trial_sharpes) >= 1:
+        # DEGENERATE: 1-2 entries → NaN sigma; caller falls back к n_trials=1 path.
+        sigma_sr = float("nan")
     else:
         sigma_sr = None
-    if sigma_sr is not None and not math.isnan(aggregate_oos_sharpe):
-        dsr_value = compute_dsr(trades=trades, n_trials=N_TRIALS_LOCKED, sigma_sr=sigma_sr)
+
+    # Compute DSR с status flag per ADR 0056 n_trades thresholds.
+    if (
+        sigma_sr is not None
+        and not math.isnan(sigma_sr)
+        and not math.isnan(trial_mean_fold_oos_sharpe)
+    ):
+        dsr_info = compute_dsr_with_status(
+            trades=trades, n_trials=N_TRIALS_LOCKED, sigma_sr=sigma_sr
+        )
     else:
-        # Last-resort: n_trials=1 — DSR без multi-testing penalty.
-        # Honest reporting: gate will likely FAIL, recorded в failed_criteria.
-        dsr_value = compute_dsr(trades=trades, n_trials=1)
+        # DEGENERATE OR EMPTY log path: n_trials=1, no multi-testing penalty.
+        # Honest reporting: gate likely FAIL, recorded в failed_criteria.
+        dsr_info = compute_dsr_with_status(trades=trades, n_trials=1)
+    dsr_value = dsr_info["dsr"]
 
     # Acceptance gate (ADR 0052 amended thresholds).
     gate = evaluate_acceptance_gate(
@@ -242,9 +255,10 @@ def _run_donchian_wfa(
         "n_trades_raw": n_trades_raw,
         "n_trades_n_eff": n_trades_raw,
         "fold_oos_is_sharpe_ratios": fold_sharpes,
-        "aggregate_oos_sharpe": aggregate_oos_sharpe,
+        "trial_mean_fold_oos_sharpe": trial_mean_fold_oos_sharpe,
         "mc_p_value": mc_p,
         "dsr": dsr_value,
+        "dsr_status": dsr_info["status"],
         "sigma_sr_cross_trial": sigma_sr,
         "n_trials_counter": N_TRIALS_LOCKED,
         "metrics": {

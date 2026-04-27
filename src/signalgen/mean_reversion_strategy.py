@@ -14,10 +14,13 @@ Invariant: signal on close(T) → execution at open(T+1) — no look-ahead
 Thread-safety: NOT thread-safe. One instance — one producer thread per symbol
 (per ADR 0022 single-writer; ADR 0030 multi-symbol uses one instance per symbol).
 """
+
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from decimal import Decimal
+from types import MappingProxyType
 from uuid import uuid4
 
 import numpy as np
@@ -31,14 +34,21 @@ from src.signalgen.models import Signal, SignalSide
 # Reference: sprint-17-btc-mean-reversion-relaxed.md PASS partial verdict (5/6 + DSR=1.0 + MC p=0.01).
 # DO NOT inherit S15 params (RSI 30/70, BB 2σ) — they produced MC p=0.998 noise per S15 honest close.
 # Per consilium ROUND 2 binding condition: explicit named constant prevents copy-paste regression.
-MEAN_REVERSION_S17_RELAXED_PARAMS: dict[str, object] = {
-    "rsi_period": 14,
-    "rsi_oversold": Decimal("35"),    # NOT 30 (S15 noise)
-    "rsi_overbought": Decimal("65"),  # NOT 70 (S15 noise)
-    "bb_period": 20,
-    "bb_std_mult": 1.5,                # NOT 2.0 (S15 noise)
-    "and_gate_required": True,         # AND (RSI + BB), не OR
-}
+#
+# S36 T2 security-auditor BLOCKER fix: wrapped в MappingProxyType — raises TypeError на mutation
+# attempt (fail-loud). Without this, future test fixture / monkeypatch could mutate dict in-place,
+# silently breaking LOCKED contract per ADR 0030 + ADR 0053 + pre-commit #7. Real-money TESTNET
+# trades would run on tampered params без alarm.
+MEAN_REVERSION_S17_RELAXED_PARAMS: Mapping[str, object] = MappingProxyType(
+    {
+        "rsi_period": 14,
+        "rsi_oversold": Decimal("35"),  # NOT 30 (S15 noise)
+        "rsi_overbought": Decimal("65"),  # NOT 70 (S15 noise)
+        "bb_period": 20,
+        "bb_std_mult": 1.5,  # NOT 2.0 (S15 noise)
+        "and_gate_required": True,  # AND (RSI + BB), не OR
+    }
+)
 
 
 class MeanReversionRsiBBStrategy:
@@ -50,17 +60,18 @@ class MeanReversionRsiBBStrategy:
         symbol: str,
         rsi_period: int = 14,
         bb_period: int = 20,
-        bb_k: float = 2.0,
+        bb_std_mult: float = 2.0,  # S36 T2: renamed от bb_k для consistency с LOCKED dict key
         rsi_oversold: Decimal = Decimal("30"),
         rsi_overbought: Decimal = Decimal("70"),
         atr_period: int = 14,
+        and_gate_required: bool = True,  # S36 T2: explicit param (AND mode default per ADR 0030)
     ) -> None:
         if rsi_period < 2:
             raise ValueError(f"rsi_period must be >= 2, got {rsi_period}")
         if bb_period < 2:
             raise ValueError(f"bb_period must be >= 2, got {bb_period}")
-        if bb_k <= 0:
-            raise ValueError(f"bb_k must be > 0, got {bb_k}")
+        if bb_std_mult <= 0:
+            raise ValueError(f"bb_std_mult must be > 0, got {bb_std_mult}")
         if not (Decimal("0") <= rsi_oversold < rsi_overbought <= Decimal("100")):
             raise ValueError(
                 f"require 0 <= rsi_oversold ({rsi_oversold}) < "
@@ -70,15 +81,36 @@ class MeanReversionRsiBBStrategy:
         self._symbol = symbol
         self._rsi_n = rsi_period
         self._bb_n = bb_period
-        self._bb_k = bb_k
+        self._bb_std_mult = bb_std_mult
         self._rsi_oversold = rsi_oversold
         self._rsi_overbought = rsi_overbought
         self._atr_n = atr_period
+        self._and_gate_required = and_gate_required
 
         # Buffer >= max(rsi, bb, atr) + 5 для warm-up + lookback safety
         self._buffer_size = max(rsi_period, bb_period, atr_period) + 5
         self._bars: list[Bar] = []
         self._current_side: SignalSide = SignalSide.FLAT
+
+    @classmethod
+    def from_locked_s17_params(cls, *, symbol: str) -> MeanReversionRsiBBStrategy:
+        """S36 T2 — Factory per ADR 0055 SD-2: single point of truth для LOCKED params wiring.
+
+        Maps MEAN_REVERSION_S17_RELAXED_PARAMS dict к constructor args. Used когда
+        settings.s35_demo_active=True. Anti-pattern guard: ensures δ TESTNET runs
+        S22-validated S17-relaxed params (MC p=0.018), NOT S15-noise (MC p=0.998).
+        """
+        p = MEAN_REVERSION_S17_RELAXED_PARAMS
+        return cls(
+            symbol=symbol,
+            rsi_period=int(str(p["rsi_period"])),
+            rsi_oversold=Decimal(str(p["rsi_oversold"])),
+            rsi_overbought=Decimal(str(p["rsi_overbought"])),
+            atr_period=14,
+            bb_period=int(str(p["bb_period"])),
+            bb_std_mult=float(str(p["bb_std_mult"])),
+            and_gate_required=bool(p["and_gate_required"]),
+        )
 
     def _append_bar(self, bar: Bar) -> bool:
         """Filter + dedup + append + buffer truncate. True if bar landed."""
@@ -112,7 +144,7 @@ class MeanReversionRsiBBStrategy:
 
         rsi_arr = rsi(closes, self._rsi_n)
         upper_bb, middle_bb, lower_bb = bollinger_bands(
-            closes, period=self._bb_n, k=self._bb_k
+            closes, period=self._bb_n, k=self._bb_std_mult
         )
         atr_arr = atr(highs, lows, closes, self._atr_n)
 
@@ -142,12 +174,13 @@ class MeanReversionRsiBBStrategy:
             )
 
         # EXIT: in LONG, RSI > overbought OR close > upper_BB
-        if self._current_side == SignalSide.LONG:
-            if rsi_val > self._rsi_overbought or close_val > snapshot["bb_upper"]:
-                self._current_side = SignalSide.FLAT
-                return self._build_signal(
-                    bar, SignalSide.FLAT, snapshot, reason="EXIT_FLAT_MEANREV_REVERT"
-                )
+        if self._current_side == SignalSide.LONG and (
+            rsi_val > self._rsi_overbought or close_val > snapshot["bb_upper"]
+        ):
+            self._current_side = SignalSide.FLAT
+            return self._build_signal(
+                bar, SignalSide.FLAT, snapshot, reason="EXIT_FLAT_MEANREV_REVERT"
+            )
 
         return None
 
