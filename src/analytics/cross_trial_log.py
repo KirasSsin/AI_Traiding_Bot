@@ -19,6 +19,7 @@ Backward-compat: legacy entries без `symbol` field backfilled к "BTCUSDT" on
 
 Atomic write via tmp+rename. JSON для operator readability + git diff transparency.
 """
+
 from __future__ import annotations
 
 import json
@@ -117,12 +118,20 @@ class CrossTrialLog:
         tmp.rename(self._path)
 
     def sigma_sr(self) -> float | None:
-        """Sample stdev of OOS Sharpes across trials (pooling protocol (a)).
+        """Sample stdev of OOS Sharpes across trials per ADR 0056 hierarchy.
 
-        Pool ALL (sprint, symbol) entries — methodologically conservative.
-        None if < 2 trials (cannot compute stdev на 1 sample).
+        Sourcing hierarchy (S36 T6 ADR 0056):
+          - N >= 3 entries: PREFERRED — return stdev(oos_sharpes)
+          - 1-2 entries:    DEGENERATE — return NaN (df<2 statistically inadmissible)
+          - 0 entries:      EMPTY — return None (caller знает использовать n_trials=1)
+
+        ADR 0056 rationale: stdev на N=2 has df=1 (extreme variance) — consilium
+        ruled inadmissible per Bailey 2014 eq.12. NaN signals "underpowered" к caller.
         """
         sharpes = self.get_oos_sharpes()
-        if len(sharpes) < 2:
+        n = len(sharpes)
+        if n == 0:
             return None
+        if n < 3:
+            return float("nan")
         return float(statistics.stdev(sharpes))

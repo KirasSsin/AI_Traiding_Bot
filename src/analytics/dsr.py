@@ -18,9 +18,11 @@ No look-ahead: each TradeRecord's pnl_pct is realized at exit_ts.
 quant-stats-reviewer mandatory before merge — verify formula correctness +
 look-ahead invariant + sigma_sr usage (S10 Q7).
 """
+
 from __future__ import annotations
 
 import math
+from typing import Any
 
 from scipy import stats
 
@@ -119,9 +121,7 @@ def compute_dsr(
             # std deviation is non-negative by definition. Negative value would
             # produce sharpe_star < benchmark (DSR inflated rather than penalized).
             # Per quant-stats-reviewer T4 concern.
-            raise ValueError(
-                f"compute_dsr: sigma_sr must be >= 0, got {sigma_sr}"
-            )
+            raise ValueError(f"compute_dsr: sigma_sr must be >= 0, got {sigma_sr}")
         gamma = 0.5772156649  # Euler-Mascheroni
         z1 = float(stats.norm.ppf(1.0 - 1.0 / n_trials))
         z2 = float(stats.norm.ppf(1.0 - 1.0 / (n_trials * math.e)))
@@ -138,3 +138,39 @@ def compute_dsr(
     denom = math.sqrt(denom_inner)
     z_dsr = (sharpe - sharpe_star) * math.sqrt(len(finite_returns) - 1) / denom
     return float(stats.norm.cdf(z_dsr))
+
+
+def compute_dsr_with_status(
+    *,
+    trades: list[TradeRecord],
+    n_trials: int = 1,
+    sigma_sr: float | None = None,
+    benchmark_sharpe: float = 0.0,
+    use_log: bool = True,
+) -> dict[str, Any]:
+    """ADR 0056 — DSR с n_trades-threshold status flag.
+
+    Returns dict с keys:
+      - dsr (float): NaN если n_trades < 10
+      - status (str): "INSUFFICIENT_TRADES" | "UNDERPOWERED" | "GATE_ELIGIBLE"
+      - n_trades (int): closed trade count
+
+    Per ADR 0056 thresholds:
+      - n_trades < 10:   DSR=NaN, status=INSUFFICIENT_TRADES
+      - 10 <= n < 30:    DSR computed, status=UNDERPOWERED
+      - n >= 30:         DSR computed, status=GATE_ELIGIBLE
+
+    Args same semantics as `compute_dsr` (delegates для DSR computation).
+    """
+    n = len(trades)
+    if n < 10:
+        return {"dsr": float("nan"), "status": "INSUFFICIENT_TRADES", "n_trades": n}
+    dsr = compute_dsr(
+        trades,
+        benchmark_sharpe=benchmark_sharpe,
+        n_trials=n_trials,
+        sigma_sr=sigma_sr,
+        use_log=use_log,
+    )
+    status = "UNDERPOWERED" if n < 30 else "GATE_ELIGIBLE"
+    return {"dsr": dsr, "status": status, "n_trades": n}
