@@ -3,7 +3,7 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 33
-phase: 2-brainstorming
+phase: 4-execution
 branch: feature/sprint-33-trading-restart
 tag: v0.1.0-alpha.32e
 ---
@@ -24,14 +24,25 @@ PHASE 2 brainstorm в progress:
 | Phase | Status | Artifact |
 |-------|--------|----------|
 | 1 Orient | done | session continuation post-S32e ship |
-| 2 Brainstorm | in_progress | 3-agent консилиум — trader-expert + trading-logic-reviewer + quant-stats-reviewer |
-| 3 Plan | pending | После verdicts known |
-| 4 Execute | pending | TDD (formula fixes + strategy implementation) |
+| 2 Brainstorm | done | 3-agent консилиум 2 rounds — `pre-s33-backlog.md` (20bfb83 + 5ea378e). Consensus APPROVE all 6 escalations + 13 required + 2 optional NEW items. |
+| 3 Plan | done | `plans/2026-04-27-sprint-33-trading-restart.md` (860b209) — 6 tasks T1-T6 + 21 items consolidated, 8-12h forecast |
+| 4 Execute | in_progress | T1-T6 controller-driven TDD. Per-task SPRINT_STATE update protocol. |
 | 5 Verify | pending | pytest + mypy + canonical counts + WFA backtest measurement |
 | 6 Review | pending | L5 reviewer matrix per touched files (parallel dispatch) |
 | 7 Sync | pending | wiki updates |
 | 8 Ship | pending | tag v0.1.0-alpha.33 |
 | 9 Close | pending | SPRINT_STATE → between-sprints |
+
+### Phase 4 — task progress (S33)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 Test debt fix + bars_per_year integration | pending | — | 3 pytest + 1 mypy fix + investigate root cause + new 4H end-to-end test (Item #11) |
+| T2 CC-D MC p-value fix BOTH formulas + property tests | pending | — | sign_flip_p_value:56 + block_bootstrap_p_value:96 + Hypothesis tests (Items #1+#2) |
+| T3 E DSR cross-trial extension | pending | — | TrialEntry +symbol field with backfill BTCUSDT + sigma_SR pooling protocol (a) + cross_trial_sharpes archive к v0.5-final + reset (Items #6+#7+#9) |
+| T4 F preparation (validation + named constants) | pending | — | WFA fold coverage validation per-symbol + MEAN_REVERSION_S17_RELAXED_PARAMS named constant anti-S15-recurrence (Items #5+#10) |
+| T5 F BACKTEST measurement run | pending | — | BTC+ETH+SOL 4H mean-reversion S17-relaxed params, WFA train=1000/test=250 K=5, 30-90 min runtime + n_eff correction reporting (Items #7+#8) |
+| T6 ADR 0050 + sprint-33 page + sync | pending | — | 9-item pre-registration LOCKED + ESC-3 4 binding conditions + pre-committed failure branch + reviewer dispatch + CI baseline update (Items #3+#4+#12+#13+#15) |
 
 ## S32e SHIPPED ✅ — Kit Audit + Doc Sync
 
