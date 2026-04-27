@@ -210,10 +210,10 @@ Detail: [[sprint-flow-ru]]
 4. ✅ CLAUDE.md разумно короткий — S31 prune (target -35%)
 5. ✅ Auto mode permissions — documented (Section 14)
 6. ✅ Sandboxing — documented (Section 14)
-7. ✅ MCP servers — 6 active
-8. ✅ Hooks — 6 active mechanical enforcement
-9. ✅ Skills — 26 mapped к kit flow
-10. ✅ Subagents — 9 reviewer agents
+7. ✅ MCP servers — 8 active (post-S32d: +sqlite-trading + fetch)
+8. ✅ Hooks — 7 push + 2 UserPromptSubmit + 1 SessionStart active mechanical enforcement
+9. ✅ Skills — 36 mapped к kit flow (post-S32c)
+10. ✅ Subagents — 11 reviewer agents (post-S32d: +dashboard-reviewer + bybit-api-reviewer)
 11. ✅ Plugins — 4 curated (Section 15)
 12. ✅ `/clear` discipline — anti-pattern documented
 13. ✅ `/btw` для side questions — Section 18
@@ -253,7 +253,8 @@ Full history: [[../architecture/current-state#карта-спринтов-sprint
 - [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
 - [[../decisions/0042-sprint-29-superpowers-integration]] — full superpowers integration
 - [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] — tier-2 agents + cascade
-- [[../decisions/0044-sprint-31-kit-revision-best-practices]] — best practices revision (S31 этот)
+- [[../decisions/0044-sprint-31-kit-revision-best-practices]] — best practices revision (S31)
+- [[kit-audit-2026-04-27]] — Kit audit findings post-S32 series (S32e — usage analysis: ALL components NEEDED, no removals)
 - https://docs.claude.com/en/code/best-practices — Anthropic Claude Code best practices
 - https://github.com/obra/superpowers — superpowers source
 - https://github.com/thedotmack/claude-mem — claude-mem source
