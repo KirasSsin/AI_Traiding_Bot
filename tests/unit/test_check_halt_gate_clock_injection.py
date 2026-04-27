@@ -44,7 +44,7 @@ def _runtime(tmp_path: Path, *, clock=None) -> tuple[RuntimeManager, MagicMock]:
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
     coord = MagicMock()
-    coord._symbol = "BTCUSDT"
+    coord.symbol = "BTCUSDT"
     kwargs = {
         "coordinator": coord,
         "reconciler": MagicMock(),

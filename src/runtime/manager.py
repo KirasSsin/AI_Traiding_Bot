@@ -177,8 +177,8 @@ class RuntimeManager:
 
         # S37 ADR 0057 SD-2+SD-3: fail-closed symbol whitelist check.
         # Performed BEFORE activation_ts persistence to avoid side-effects on
-        # misconfigured boot. T5 will replace _symbol private access с self._coordinator.symbol public property.
-        symbol = getattr(self._coordinator, "_symbol", None)
+        # misconfigured boot. SD-6 (T5): direct public property access (fallback chain closed).
+        symbol = getattr(self._coordinator, "symbol", None)
         if symbol is None or symbol not in self._settings.s35_demo_approved_symbols:
             logger.error(
                 "runtime.halt_gate_unknown_symbol",
@@ -317,7 +317,7 @@ class RuntimeManager:
             return
         # FSM pre-check — only call start_bracket from FLAT (one-open-order invariant).
         # Reading via _repo (matches T17 plan pattern; no public current_state() on Coordinator).
-        symbol = getattr(self._coordinator, "_symbol", None)
+        symbol = getattr(self._coordinator, "symbol", None)
         if symbol is None:
             logger.warning("runtime.coordinator_missing_symbol_attr")
             return
@@ -380,7 +380,7 @@ class RuntimeManager:
         try:
             from src.execution.state_machine import ExecutionState
 
-            symbol = getattr(self._coordinator, "_symbol", None)
+            symbol = getattr(self._coordinator, "symbol", None)
             if symbol is not None:
                 row = self._coordinator._repo.get(symbol)
                 if row is not None and row.state in {

@@ -63,7 +63,7 @@ def runtime_with_demo_active(
     sr = StateRepository(conn)
 
     coord = MagicMock()
-    coord._symbol = "BTCUSDT"
+    coord.symbol = "BTCUSDT"
 
     rm = RuntimeManager(
         coordinator=coord,
@@ -160,7 +160,7 @@ def test_halt_gate_inactive_when_demo_disabled(tmp_path: Path) -> None:
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
     coord = MagicMock()
-    coord._symbol = "BTCUSDT"
+    coord.symbol = "BTCUSDT"
     rm = RuntimeManager(
         coordinator=coord,
         reconciler=MagicMock(),

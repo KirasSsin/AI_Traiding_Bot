@@ -51,7 +51,7 @@ def _runtime(
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
     coord = MagicMock()
-    coord._symbol = symbol
+    coord.symbol = symbol
     rm = RuntimeManager(
         coordinator=coord,
         reconciler=MagicMock(),

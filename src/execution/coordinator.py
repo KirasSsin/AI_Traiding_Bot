@@ -7,6 +7,7 @@ Orchestrates 3-order Spot OCO emulation:
 
 S5 handle_ws_reconnect removed — ws-reconnect handling moves to Task 22 bootstrap.
 """
+
 from __future__ import annotations
 
 import logging
@@ -32,27 +33,31 @@ from src.risk.reason_codes import ReasonCode
 
 _log = logging.getLogger(__name__)
 
-_TERMINAL_STATES: frozenset[ExecutionState] = frozenset({
-    ExecutionState.FLAT,
-    ExecutionState.HALTED,
-    ExecutionState.KILLED,
-    ExecutionState.ERROR,
-})
+_TERMINAL_STATES: frozenset[ExecutionState] = frozenset(
+    {
+        ExecutionState.FLAT,
+        ExecutionState.HALTED,
+        ExecutionState.KILLED,
+        ExecutionState.ERROR,
+    }
+)
 
-_RECONCILABLE_STATES: frozenset[ExecutionState] = frozenset({
-    # Entry/exit/arm transitions — primary HEAL targets (ADR 0021 sub-dec 3)
-    ExecutionState.ENTRY_PENDING,
-    ExecutionState.EXIT_PENDING,
-    ExecutionState.OCO_ARMING,
-    ExecutionState.EXIT_SIBLING_CANCELLING,
-    ExecutionState.EXIT_SL_RESIDUAL,
-    # Live armed/open states — covered by S5 (state, WS_RECONNECT)→RECONCILING
-    # transitions; reconcile yields AGREE on quiet path, DIVERGENCE on drift.
-    ExecutionState.LONG_OPEN,
-    ExecutionState.OCO_ARMED,
-    ExecutionState.PARTIAL_FILL,  # legacy S5 — back-compat
-    ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
-})
+_RECONCILABLE_STATES: frozenset[ExecutionState] = frozenset(
+    {
+        # Entry/exit/arm transitions — primary HEAL targets (ADR 0021 sub-dec 3)
+        ExecutionState.ENTRY_PENDING,
+        ExecutionState.EXIT_PENDING,
+        ExecutionState.OCO_ARMING,
+        ExecutionState.EXIT_SIBLING_CANCELLING,
+        ExecutionState.EXIT_SL_RESIDUAL,
+        # Live armed/open states — covered by S5 (state, WS_RECONNECT)→RECONCILING
+        # transitions; reconcile yields AGREE on quiet path, DIVERGENCE on drift.
+        ExecutionState.LONG_OPEN,
+        ExecutionState.OCO_ARMED,
+        ExecutionState.PARTIAL_FILL,  # legacy S5 — back-compat
+        ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
+    }
+)
 
 
 def _now_iso() -> str:
@@ -78,6 +83,15 @@ class Coordinator:
         self._base_coin = base_coin
         self._bootstrap_done: bool = False
         self._lock: threading.RLock = threading.RLock()  # ADR 0022 sub-decision 1 — reentrant
+
+    @property
+    def symbol(self) -> str:
+        """S37 ADR 0057 SD-6: public symbol accessor.
+
+        Replaces `getattr(coord, "_symbol", None)` private leak в RuntimeManager.
+        Coordinator owns symbol per ADR 0019 — public property is canonical access.
+        """
+        return self._symbol
 
     def on_ws_reconnect(self) -> None:
         """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
@@ -118,6 +132,7 @@ class Coordinator:
     def _build_local_state(self, row: ExecutionStateRow) -> LocalState:
         """Build reconciler LocalState from current repo row."""
         from src.execution.reconciler import LocalState
+
         return LocalState(
             state=row.state.name,
             position_qty=row.position_qty,
@@ -276,7 +291,10 @@ class Coordinator:
                 if row is not None and row.state in _TERMINAL_STATES:
                     _log.warning(
                         "on_order_event.dropped_in_terminal_state state=%s status=%s role=%s link_id=%s",
-                        row.state, status, role, link_id,
+                        row.state,
+                        status,
+                        role,
+                        link_id,
                     )
                 return
             try:
@@ -299,7 +317,10 @@ class Coordinator:
                 # past. Log + drop — never crash the executor on a stale echo.
                 _log.warning(
                     "on_order_event.illegal_transition_dropped error=%s status=%s role=%s link_id=%s",
-                    e, status, role, link_id,
+                    e,
+                    status,
+                    role,
+                    link_id,
                 )
 
     def _handle_sl_partial(self, evt: dict[str, Any]) -> None:
@@ -326,7 +347,9 @@ class Coordinator:
             return
         try:
             self._adapter.place_order(
-                symbol=self._symbol, side="Sell", qty=leaves_qty,
+                symbol=self._symbol,
+                side="Sell",
+                qty=leaves_qty,
             )
         except Exception:
             self._set_halt(
@@ -385,8 +408,11 @@ class Coordinator:
             )
             try:
                 tp_ack = self._adapter.place_limit_order(
-                    symbol=self._symbol, side="Sell", qty=oco_qty,
-                    price=tp_price, order_link_id=tp_lid,
+                    symbol=self._symbol,
+                    side="Sell",
+                    qty=oco_qty,
+                    price=tp_price,
+                    order_link_id=tp_lid,
                 )
                 self._upsert_fields(oco_tp_order_id=tp_ack.order_id)
                 # Transition LONG_OPEN→OCO_ARMING only on first attempt (already there on retry)
@@ -397,8 +423,11 @@ class Coordinator:
                 return
             try:
                 sl_ack = self._adapter.place_stop_market_order(
-                    symbol=self._symbol, side="Sell", qty=oco_qty,
-                    trigger_price=sl_trigger_price, order_link_id=sl_lid,
+                    symbol=self._symbol,
+                    side="Sell",
+                    qty=oco_qty,
+                    trigger_price=sl_trigger_price,
+                    order_link_id=sl_lid,
                 )
                 self._upsert_fields(oco_sl_order_id=sl_ack.order_id)
                 self._transition(ExecutionEvent.SL_PLACED)
@@ -456,7 +485,8 @@ class Coordinator:
                 return
             _log.warning(
                 "arm_oco.stale_cancel_unknown_failure order_id=%s reason=%s",
-                order_id, res.reason_code,
+                order_id,
+                res.reason_code,
             )
         except Exception as e:
             _log.warning("arm_oco.stale_cancel_exception order_id=%s err=%s", order_id, e)
@@ -478,9 +508,7 @@ class Coordinator:
             return Decimal("0")
         return (value / step).quantize(Decimal("1"), rounding=ROUND_DOWN) * step
 
-    def reconcile_arming_ttl(
-        self, *, now: datetime | None = None, ttl_seconds: int = 60
-    ) -> None:
+    def reconcile_arming_ttl(self, *, now: datetime | None = None, ttl_seconds: int = 60) -> None:
         """ADR 0020 sub-decision 11: stuck OCO_ARMING > TTL → BRACKET_TIMEOUT → HALTED.
 
         Args:
@@ -509,6 +537,7 @@ class Coordinator:
     def _upsert_fields(self, **changes: object) -> None:
         """Read current row, replace named fields, upsert. Bumps updated_at."""
         from dataclasses import replace
+
         cur = self._repo.get(self._symbol)
         if cur is None:
             return
