@@ -632,9 +632,10 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
 
     # T1-T6 metrics aggregated across symbols
     # S19 ADR 0034 Condition A3: pass bars_per_year derived from interval
+    # S33 T1: rename `bars_per_year_map` → `bars_per_year_map_wfa` to fix mypy [no-redef] (line 564 has same name in different scope)
     interval = getattr(args, "interval", "60")
-    bars_per_year_map: dict[str, int] = {"5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365}
-    bars_per_year = bars_per_year_map[interval]
+    bars_per_year_map_wfa: dict[str, int] = {"5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365}
+    bars_per_year = bars_per_year_map_wfa[interval]
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
         fold_oos_is_sharpe=all_fold_sharpes,

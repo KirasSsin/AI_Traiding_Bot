@@ -4,7 +4,14 @@ from src.backtest.replay_engine import run_replay
 
 
 def _sample_df_for_crosses() -> pd.DataFrame:
-    prices = [100, 101, 102, 103, 104, 103, 102, 101, 100, 99, 98, 97]
+    """Fixture с cross_up (bar 6) + cross_down (bar 12) AFTER RSI warm-up.
+
+    Post-S27 T3 (RSI warm-up gating fix) requires RSI defined ДО cross signals fire
+    (RSI NaN < overbought = False suppresses signal). Period=2 RSI needs 5 bars warm-up.
+    Fixture: 5 bars decline (establish baseline), rally bar 6 (cross_up + RSI defined),
+    plateau bars 9-11, then sharp decline bars 12-15 (cross_down).
+    """
+    prices = [110, 108, 106, 104, 102, 100, 105, 110, 115, 120, 118, 116, 110, 105, 100, 95]
     rows = []
     for i, price in enumerate(prices):
         rows.append(
