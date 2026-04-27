@@ -88,6 +88,39 @@ class Settings(BaseSettings):
             "downstream (per S35 T1 trading-logic-reviewer C1 hardening)."
         ),
     )
+    # Sprint 35 — δ TESTNET live demo (ADR 0053 LOCKED, pre-s35-backlog ROUND 3 binding)
+    s35_demo_active: bool = Field(
+        default=False,
+        description=(
+            "S35 δ TESTNET live demo flag. When True, HaltGate activates "
+            "S35-specific halt criteria (DD bounds, consecutive losses, no-trade timeout). "
+            "MUST be False on MAINNET (live_trading=True invariant violated otherwise)."
+        ),
+    )
+    s35_halt_dd_intraday: Decimal = Field(
+        default=Decimal("0.20"),
+        gt=Decimal("0"),
+        le=Decimal("0.50"),
+        description="S35 δ intraday DD halt threshold (-20% per pre-commit ROUND 3).",
+    )
+    s35_halt_dd_multiday: Decimal = Field(
+        default=Decimal("0.15"),
+        gt=Decimal("0"),
+        le=Decimal("0.50"),
+        description="S35 δ multi-day DD halt threshold (-15% per pre-commit ROUND 3).",
+    )
+    s35_halt_consecutive_losses: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="S35 δ consecutive losing trades trigger operator review.",
+    )
+    s35_halt_no_trade_months: int = Field(
+        default=6,
+        ge=1,
+        le=24,
+        description="S35 δ months без n>=30 closed trades → halt + S36 honest close.",
+    )
     risk_tp_atr_multiplier: Decimal = Decimal("3.0")
     risk_cb_l1_dd: Decimal = Decimal("0.15")
     risk_cb_l2_dd: Decimal = Decimal("0.22")
@@ -180,6 +213,21 @@ class Settings(BaseSettings):
             raise ValueError("live_trading requires trading_enabled=True")
         if self.live_trading and self.testnet:
             raise ValueError("live_trading requires testnet=False (mainnet-only)")
+        return self
+
+    @model_validator(mode="after")
+    def _validate_s35_demo_mainnet_exclusion(self) -> "Settings":
+        """S35 pre-commit #1: δ is TESTNET ONLY. Block s35_demo_active=True если live_trading.
+
+        Per pre-s35-backlog.md ROUND 3 binding pre-commitment #1 LOCKED.
+        Mistake here = real MAINNET activation = capital loss risk.
+        """
+        if self.s35_demo_active and self.live_trading:
+            raise ValueError(
+                "S35 δ TESTNET demo cannot run на MAINNET. "
+                "Set live_trading=False (testnet=True) OR disable s35_demo_active. "
+                "Per pre-s35-backlog.md pre-commitment #1 LOCKED."
+            )
         return self
 
     def config_hash(self) -> str:
