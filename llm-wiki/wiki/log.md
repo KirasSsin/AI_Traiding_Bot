@@ -2060,3 +2060,64 @@ Next = operator decision: S32d (Kit Phase 3) OR Track B unblock OR test debt cle
 **Operator action на next session:** Approve `fetch` MCP at session start (one-time prompt).
 
 Next session = operator decision: S32d (Kit Phase 3) OR Track B unblock OR Track C test debt cleanup.
+
+## [2026-04-27] sprint-end | S32d — Kit Improvement Phase 3 final + S32 series COMPLETE
+
+**Kit Improvement Phase 3 sub-sprint FINAL** — Sub-sprint S32 series concluded. Tag v0.1.0-alpha.32d. Operator directive "к 33 спринту после 32 перейдём" — kit improvement series ends here. КУ avg 41% / ~2.5 hours.
+
+**5 changes per ADR 0048:**
+- T1 (a15ff4c) bybit-api-reviewer L5 agent — out-of-repo `~/.claude/agents/bybit-api-reviewer.md` sonnet (6-axis Bybit V5 API checklist: rate limits 600 req/min spot + 60 orders/sec / order param validation lotSizeFilter+priceFilter+TIF / WebSocket V5 schema data list+ms timestamps / retCode handling 10001-170134 / pagination cursor + alignment / HMAC SHA256 signing recv_window+NTP+no secret leak) + wiki page
+- T2 (e87d532) Context budget hook MVP — out-of-repo `~/.claude/hooks/context-budget-warn.sh` advisory hook (transcript file size proxy thresholds 800KB ~60% yellow / 1200KB ~80% red, exit 0 always) + settings.json UserPromptSubmit registered 2nd hook + wiki page. 4 test scenarios passed.
+- T3+T4 (2707f6f) Schedule wire (Section 23: anthropic-skills:schedule wire к audit_formulas.py + setup procedure + frequency recommendations) + Sprint metrics (sprint-metrics.md NEW: per-sprint table + trends + update protocol) + Memory corpus bridges 2-4 research notes (Section 24: Bridge 2 ship-ready cron / Bridge 3 medium defer / Bridge 4 NOT recommended HIGH cost LOW value until corpus > 100 obs)
+- T5 (21b14cb) ADR 0048 + sprint-32d page + index/counts (47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents / + UserPromptSubmit hooks 1→2 / + sprint metrics page) + S32d sprint history row + S32 series COMPLETE accumulated achievements table
+
+**Phase 5 Verify outcome:**
+- pytest: 773 passed (S32c baseline preserved by construction)
+- mypy: 1 pre-existing error
+- canonical counts: 16/30/74/45 ✓
+- bash -n context-budget-warn ✓ / json settings.json ✓ (6 PreToolUse + 2 UserPromptSubmit hooks)
+
+**Phase 6 Review skipped** — config + scripts + docs sprint, no src/ touched.
+
+## S32 SERIES COMPLETE — accumulated achievements
+
+**Pre-S32 baseline → Post-S32d:**
+
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Reviewer agents (L5) | 9 | **11** | +2 (dashboard-reviewer + bybit-api-reviewer) |
+| Active push hooks | 6 | **7** | +1 (sprint-state-freshness-check) |
+| UserPromptSubmit hooks | 1 | **2** | +1 (context-budget-warn) |
+| MCP servers | 6 | **8** | +2 (sqlite-trading + fetch) |
+| Skills × Phase mapped | 26 | **36** | +10 |
+| Components | 38 | **43** | +5 |
+| ADRs | 44 | **48** | +4 |
+| Sprint pages | 31 | **35** | +4 |
+| CI infrastructure | NO | **YES** | GitHub Actions + pre-commit + baseline guards |
+| Memory corpus design | flat | **scheme designed** (script declined per recommendation) |
+| Sprint metrics tracking | NO | **YES** | sprint-metrics.md |
+
+**S32 series time investment:** ~8 hours total (45 min S32 + 3h S32b + 1.5h S32c + 2.5h S32d). КУ avg ~53%. ROI ~50 КУ/час.
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.32d. CI 3rd PR validation.
+
+**Carry-overs к S33+ (first trading sprint):**
+- 3 pytest failures (test_replay_long_only / test_replay_next_open) pre-existing
+- 1 mypy error (__main__.py:636 bars_per_year_map redef) pre-existing
+- ~169 ruff baseline (legacy code cleanup gradually OR strict gate)
+
+**Trading carry-overs (BLOCKED — operator decisions):**
+- ESC-1 multi-symbol authorization
+- ESC-2 "in profit" semantics
+- ESC-3 4H operational implications
+
+**Operator action на next session:**
+- Approve `fetch` MCP at session start (one-time prompt)
+- Decide S33 trading scope: single-symbol BTC mean-reversion (S22 PASS) OR multi-symbol pending ESC-1 OR regime filter OR Donchian breakout OR SL calibration
+
+**Kit work future (low priority unless blocker):**
+- Bridge 4 corpus partition implementation — re-evaluate когда corpus > 100 obs (likely S40+)
+- Context budget hook exact token counter — заменить file size proxy
+- bybit-api-reviewer first real-world validation — at S33+ Bybit-touching sprint
+
+Next session = S33 trading sprint preparation. **S32 series KIT IMPROVEMENT COMPLETE.**
