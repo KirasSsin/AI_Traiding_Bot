@@ -78,7 +78,16 @@ class Settings(BaseSettings):
 
     # Risk-module parameters (Sprint 4 Task 2 — locked design)
     risk_max_position_pct_cap: Decimal = Decimal("0.05")
-    risk_sl_atr_multiplier: Decimal = Decimal("1.5")
+    risk_sl_atr_multiplier: Decimal = Field(
+        default=Decimal("1.5"),
+        gt=Decimal("0"),
+        description=(
+            "Stop-loss distance в ATR multiples (k в qty = (f * equity) / (k * atr)). "
+            "S35 ζ refactor: explicit setting (no hard-coded sizing.compute_qty default). "
+            "Calibration range 1.0-2.0 × ATR per ADR 0007. gt=0 prevents ZeroDivisionError "
+            "downstream (per S35 T1 trading-logic-reviewer C1 hardening)."
+        ),
+    )
     risk_tp_atr_multiplier: Decimal = Decimal("3.0")
     risk_cb_l1_dd: Decimal = Decimal("0.15")
     risk_cb_l2_dd: Decimal = Decimal("0.22")
@@ -185,7 +194,5 @@ class Settings(BaseSettings):
 
         data = self.model_dump(mode="json")
         risk_only = {k: data[k] for k in sorted(_HASH_ALLOWLIST) if k in data}
-        canonical = json.dumps(
-            risk_only, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(risk_only, sort_keys=True, separators=(",", ":"), default=str)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
