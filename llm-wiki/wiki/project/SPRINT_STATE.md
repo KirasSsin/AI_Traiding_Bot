@@ -24,7 +24,7 @@ Branch: `feature/sprint-38-delta-parallel-hardening`. Plan: `plans/2026-04-27-sp
 | 1 Orient | done | session continuation post-S37 ship |
 | 2 Brainstorm | done | ROUND 6 consilium 3 agents UNANIMOUS Q1 — `pre-s38-backlog.md` (4 verdicts + 8 findings F1-F8 + 7 task structure) |
 | 3 Plan | in_progress | `plans/2026-04-27-sprint-38-delta-parallel-hardening.md` |
-| 4 Execute | in_progress | T1 done. T2 done (2711ef9 + follow-up — F2 pnl_pct fix в compute_live_sharpe + generate_live_report MC). pytest 869+ / mypy 0. T3-T7 pending. |
+| 4 Execute | in_progress | T1+T2 done. T3 done (6ab8e7f — bybit-api-reviewer 6-axis: 0 BLOCKER, 3 HIGH (H1 rate-limit + H2 WS reconnect → pre-s39, H3 accountType → T6 playbook gate), 4 MED, 3 LOW, 10 VERIFIED). T4-T7 pending. |
 | 5 Verify | pending | pytest expected ~907 / mypy 0 / canonical 16/30/74/50 |
 | 6 Review | pending | per task reviewer dispatch |
 | 7 Sync | pending | wiki updates в T7 |
