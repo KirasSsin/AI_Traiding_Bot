@@ -8,6 +8,7 @@ via Coordinator/Reconciler RLock/Lock).
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -66,6 +67,7 @@ class RuntimeManager:
         equity_tracker: EquityTracker,
         trade_repo: TradeHistoryRepository,
         state_repo: StateRepository,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),  # S37 ADR 0057 SD-5
     ) -> None:
         self._coordinator = coordinator
         self._reconciler = reconciler
@@ -77,6 +79,7 @@ class RuntimeManager:
         self._equity_tracker = equity_tracker
         self._trade_repo = trade_repo
         self._state_repo = state_repo
+        self._clock = clock
         # S36 T4 architecture-reviewer MEDIUM: instance-side cache avoids per-tick
         # state_repo.get() round-trip after first call. activation_ts immutable post-write.
         self._activation_ts: datetime | None = None
@@ -204,7 +207,7 @@ class RuntimeManager:
                 self._stopping = True
                 return True
             if activation_record is None:
-                now = datetime.now(UTC)
+                now = self._clock()
                 self._state_repo.set_signed(
                     "runtime:halt_gate:activation_ts",
                     {"value": now.isoformat()},
@@ -226,11 +229,11 @@ class RuntimeManager:
         consec = self._trade_repo.consecutive_losses(symbol=symbol)
         last_ts = self._trade_repo.last_trade_ts(symbol=symbol)
         if last_ts is not None:
-            months_since = (datetime.now(UTC) - last_ts).days // 30
+            months_since = (self._clock() - last_ts).days // 30
         else:
             # No trades yet — measure от activation_ts (NOT zero, чтобы fire 6mo timeout
             # если no trades closed — signal-frequency starvation pre-commit ROUND 3).
-            months_since = (datetime.now(UTC) - activation_ts).days // 30
+            months_since = (self._clock() - activation_ts).days // 30
 
         gate = HaltGate(
             dd_intraday_threshold=self._settings.s35_halt_dd_intraday,
