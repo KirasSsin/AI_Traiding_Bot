@@ -3,10 +3,28 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 35
-phase: 8-ship
-branch: feature/sprint-35-testnet-donchian-risk
-tag: pending
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.35
 ---
+
+## S35 SHIPPED ✅ — δ TESTNET ready + α Donchian FAIL conjoint + ζ risk refactor
+
+PR #46 → 69ea6ea squash-merge. Tag v0.1.0-alpha.35 pushed. Branch deleted. **CI passed (7th PR с strict baselines).**
+
+**ROUND 3 consilium binding executed.** α direction CLOSED per ADR 0054 (FAIL conjoint: n=21<<50 / aggregate Sharpe -0.95 / DSR<<0.95 / 4 of 6 gates fail). δ TESTNET infrastructure ready, NOT yet activated — operator decides activation timing.
+
+**v0.7+ next decision (operator):**
+- (a) **β pause** — per pre-commit #8 since α FAIL (default fallback)
+- (b) **δ activate** — wire HaltGate к RiskManager + start TESTNET demo (S36 wire-up sprint)
+- (c) **Different strategy** — new ADR pre-registration (N_trials=6)
+- (d) **ε pairs/stat arb** — deferred к v0.8+ per pre-commit #7
+
+**Carry-overs к S36+:**
+- Donchian reason codes к ReasonCode enum (45→48) если α revival
+- DSR sigma_SR fallback formal ADR amendment (per-fold stdev proxy документирован но не canonical)
+- Channel exit replay path implementation (currently ATR-only в indicators.py donchian branch)
+- HaltGate wire-up к RiskManager.assess() (S36 если δ activates)
 
 ## S35 IN PROGRESS 🟡 — δ TESTNET + α Donchian + ζ Risk Mgmt
 

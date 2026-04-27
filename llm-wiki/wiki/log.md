@@ -2446,3 +2446,10 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - 19 NEW tests / pytest 808→802 passed (net +14 visible) / mypy 0 errors / canonical 16/30/74/45
 - Carry-overs S36+: Donchian ReasonCode enum + DSR sigma_SR ADR amendment + channel exit replay path + HaltGate wire-up
 - ADRs 0053 + 0054 (52 → 54)
+
+## [2026-04-27] session-end | S35 shipped — alpha.35 tagged
+- PR #46 squash-merged (69ea6ea), tag v0.1.0-alpha.35 pushed
+- 5 tasks: T1 ζ refactor + T2 δ TESTNET + T3 ADR 0054 LOCKED + T4 α Donchian FAIL conjoint + T5 sync
+- CI passed (7th PR с strict baselines). pytest 828 / mypy 0 / canonical 16/30/74/45 unchanged
+- α direction CLOSED per ADR 0054. δ TESTNET ready не activated.
+- SPRINT_STATE → between-sprints. Next operator decision: β pause OR δ activate OR new strategy ADR.
