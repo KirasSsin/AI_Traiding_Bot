@@ -4,7 +4,13 @@ from src.backtest.replay_engine import run_replay
 
 
 def _build_df() -> pd.DataFrame:
-    prices = [100, 101, 102, 103, 104, 103, 102, 101, 100]
+    """Fixture с cross_up at bar 6 AFTER RSI warm-up.
+
+    Post-S27 T3 (RSI warm-up gating fix): RSI NaN bars 0-4, defined bar 5+.
+    Cross_up signal требует RSI defined (NaN < overbought = False suppresses).
+    Fixture: 5 bars decline (baseline), rally bar 6 → cross_up + RSI=72 < 100 → signal=1.
+    """
+    prices = [110, 108, 106, 104, 102, 100, 105, 110, 115, 120, 118, 116]
     rows = []
     for i, p in enumerate(prices):
         rows.append(
@@ -45,7 +51,8 @@ def test_entry_executes_on_next_open():
     assert not trades.empty
 
     first_trade = trades.iloc[0]
-    signal_index = 1  # for this synthetic setup (ema 2/3), first long signal appears on candle 1
+    # Post-S27 T3 RSI warm-up fix: cross_up at bar 6 (RSI defined), entry at bar 7 (next open).
+    signal_index = 6
     expected_entry_ts = df.iloc[signal_index + 1]["timestamp"]
     expected_entry_price = float(df.iloc[signal_index + 1]["open"])
 

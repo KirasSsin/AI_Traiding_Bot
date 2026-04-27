@@ -470,6 +470,10 @@ def _default_wfa_config() -> dict[str, object]:
 def _run_wfa_single_symbol(
     *, symbol: str, df: pd.DataFrame, strategy_config: dict[str, object] | None = None,
     bars_per_year: int = 8760,
+    train_bars: int = 2000,
+    test_bars: int = 500,
+    k_folds: int = 5,
+    embargo_bars: int = 20,
 ) -> "tuple[list[object], list[float], dict[str, object], float]":
     """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
 
@@ -482,14 +486,18 @@ def _run_wfa_single_symbol(
     instances; cast at call site if needed.
     """
     from typing import Any, cast
-    splitter = WindowSplitter()  # ADR 0014 defaults
+    # S33 T4 (Item #10): WFA window customizable per-call (CC6 (b) consensus train=1000/test=250 для 4H)
+    splitter = WindowSplitter(
+        train_bars=train_bars, test_bars=test_bars, k_folds=k_folds, embargo_bars=embargo_bars
+    )
     runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
     config = strategy_config if strategy_config is not None else _default_wfa_config()
     # S27 T1: ensure bars_per_year present (override если уже в strategy_config)
     if "bars_per_year" not in config:
         config = dict(config)
         config["bars_per_year"] = bars_per_year
-    runner_result = runner.run(df=df, config=config)
+    # S33 T4 (Item #10): pass symbol для error context
+    runner_result = runner.run(df=df, config=config, symbol=symbol)
 
     # MC sign-flip on aggregated OOS returns
     oos_trades_df = runner_result["aggregate"]["oos_trades_df"]
@@ -577,8 +585,13 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
             per_symbol_summary[symbol] = {"status": "empty_ohlcv", "trades": 0}
             continue
 
+        # S33 T4 (CC6 (b) consensus): WFA window from CLI args (default ADR 0014: train=2000/test=500)
         sym_trades, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
             symbol=symbol, df=df, bars_per_year=bars_per_year_cli,
+            train_bars=getattr(args, "wfa_train", 2000),
+            test_bars=getattr(args, "wfa_test", 500),
+            k_folds=getattr(args, "wfa_folds", 5),
+            embargo_bars=getattr(args, "wfa_embargo", 20),
         )
         from typing import cast as _cast
         all_trades.extend(_cast(list[_TradeRecord], sym_trades))
@@ -632,9 +645,10 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
 
     # T1-T6 metrics aggregated across symbols
     # S19 ADR 0034 Condition A3: pass bars_per_year derived from interval
+    # S33 T1: rename `bars_per_year_map` → `bars_per_year_map_wfa` to fix mypy [no-redef] (line 564 has same name in different scope)
     interval = getattr(args, "interval", "60")
-    bars_per_year_map: dict[str, int] = {"5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365}
-    bars_per_year = bars_per_year_map[interval]
+    bars_per_year_map_wfa: dict[str, int] = {"5": 105120, "15": 35040, "30": 17520, "60": 8760, "120": 4380, "240": 2190, "D": 365}
+    bars_per_year = bars_per_year_map_wfa[interval]
     metrics = compute_t1_t6_metrics(
         trades=all_trades,
         fold_oos_is_sharpe=all_fold_sharpes,
@@ -842,6 +856,13 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_wfa.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_wfa.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    # S33 T4 (CC6 (b) consensus per consilium): WFA window override для 4H multi-symbol.
+    # Default ADR 0014: train=2000/test=500/k_folds=5/embargo=20.
+    # CC6 (b): 4H requires train=1000/test=250 (~3.3y OOS, OOS/IS ratio preserved 0.25).
+    p_wfa.add_argument("--wfa-train", type=int, default=2000, help="WFA train window bars (ADR 0014 default 2000)")
+    p_wfa.add_argument("--wfa-test", type=int, default=500, help="WFA test window bars (ADR 0014 default 500)")
+    p_wfa.add_argument("--wfa-folds", type=int, default=5, help="WFA K-folds (ADR 0014 default 5)")
+    p_wfa.add_argument("--wfa-embargo", type=int, default=20, help="WFA embargo bars (ADR 0014 default 20)")
     p_wfa.set_defaults(func=_cmd_wfa)
 
     p_mon = sub.add_parser("monitor", help="Read-only state snapshot (FSM + trades + halts).")

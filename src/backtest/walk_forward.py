@@ -82,11 +82,39 @@ class WalkForwardRunner:
         self._splitter = splitter
         self._replay_fn = replay_fn
 
-    def run(self, *, df: pd.DataFrame, config: dict[str, Any]) -> dict[str, Any]:
-        """Execute K-fold WFA. Returns per-fold + aggregate results."""
+    def run(
+        self,
+        *,
+        df: pd.DataFrame,
+        config: dict[str, Any],
+        symbol: str = "unknown",
+    ) -> dict[str, Any]:
+        """Execute K-fold WFA. Returns per-fold + aggregate results.
+
+        Args:
+            df: OHLCV bars DataFrame (must have train + embargo + k_folds*test bars)
+            config: replay engine config (per-fold passed к replay_fn)
+            symbol: symbol identifier для error messages (per S33 T4 Item #10 — operator
+                visibility into which symbol failed insufficient-data check; SOL Bybit
+                listing date may give fewer 4H bars чем BTC, silent fold-skip risk)
+        """
         total_bars = len(df)
         folds: list[dict[str, Any]] = []
         all_oos_trades: list[pd.DataFrame] = []
+
+        # S33 T4 Item #10: pre-run validation с symbol context
+        min_required = (
+            self._splitter.train_bars
+            + self._splitter.embargo_bars
+            + self._splitter.k_folds * self._splitter.test_bars
+        )
+        if total_bars < min_required:
+            raise ValueError(
+                f"Symbol {symbol}: insufficient data {total_bars} bars, WFA needs "
+                f"{min_required} (train={self._splitter.train_bars} + embargo="
+                f"{self._splitter.embargo_bars} + k_folds={self._splitter.k_folds} × "
+                f"test={self._splitter.test_bars})"
+            )
 
         for fold_idx, (tr_start, tr_end, te_start, te_end) in enumerate(
             self._splitter.split(total_bars=total_bars)
