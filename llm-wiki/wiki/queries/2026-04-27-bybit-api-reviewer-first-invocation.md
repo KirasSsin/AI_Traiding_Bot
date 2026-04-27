@@ -120,9 +120,9 @@ The four files reviewed delegate ALL signing + transport (HMAC SHA256, recv_wind
 
 ### Follow-ups для wiki
 
-- Update [[components/bybit-adapter]] add section "Rate-limit posture" stating: single-symbol BTCUSDT-4H δ TESTNET cadence guarantees < 5 req/min, well under 60/sec и 600/min limits. Document explicitly the **dependency** that S38 deployment is single-symbol.
-- Update [[components/ws-private-consumer]] add section "Reconnect verification gap" linking H2.
-- Consider new component page [[components/bybit-error-taxonomy]] enumerating mapped retCodes + ReasonCode bridge — currently scattered between `errors.py` + `risk/reason_codes.py`.
+- Update `src/execution/bybit/adapter.py` add section "Rate-limit posture" stating: single-symbol BTCUSDT-4H δ TESTNET cadence guarantees < 5 req/min, well under 60/sec и 600/min limits. Document explicitly the **dependency** that S38 deployment is single-symbol.
+- Update `src/execution/bybit/ws_private.py` add section "Reconnect verification gap" linking H2.
+- Consider new component page `src/execution/bybit/errors.py` enumerating mapped retCodes + ReasonCode bridge — currently scattered between `errors.py` + `risk/reason_codes.py`.
 
 ## Triage decisions
 
