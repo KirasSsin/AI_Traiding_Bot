@@ -375,3 +375,63 @@ Operator delegated escalation decisions BACK к 3 agents. ROUND 2 vote + brainst
 - Sprint S15 (multi-symbol failure) — anti-S15-recurrence learnings
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique) — CC-E reference
 - Bailey & López de Prado (DSR + cross-trial) — quant prerequisite
+
+---
+
+## S34 Direction Consilium (post-S33 ship, 2026-04-27)
+
+Operator delegated S34 direction к 3-agent consilium. Vote table:
+
+### Vote summary
+
+| Path | trader-expert | trading-logic | quant-stats | Consensus |
+|------|---------------|---------------|-------------|-----------|
+| **A(a) project pause** | APPROVE (default acceptable, equally defensible) | CONFIRM (clean, low-effort close) | RECOMMENDED (most rigorous) | ✅ ACCEPTABLE FALLBACK |
+| **A(b) T5 floor amendment** | CONDITIONAL APPROVE (mandatory 10-item pre-commit list) | CONFIRM (minimal LoC, no new code paths) | DEFENSIBLE с conditions | ✅ **PRIMARY RECOMMENDED** |
+| A(c-Donchian) | REJECT (no cheap falsification) | REVISE (FSM SHORT guard blocker — long_only=True invariant) | NOT recommended (N_trials penalty) | ❌ REJECT |
+| A(c-ML XGBoost) | REJECT (n_eff=26 makes ML infeasible) | REVISE (HIGH effort 500-800 LoC + new deps) | NOT recommended (overfitting) | ❌ REJECT |
+| A(c-HMM) | REJECT | REVISE (HIGH effort 400-600 LoC) | NOT recommended | ❌ REJECT |
+| A(d) different timeframe (1D) | REJECT (T5 worse, not better — fewer trades) | CONCERN (pre-check needed: n_trades on 1D likely < T5) | NOT recommended (same T5 problem worse) | ❌ REJECT |
+| **B override gates** | REJECT (precedent risk) | REVISE (real-money loss risk) | NOT recommended (abandons rigor) | ❌ STRONG REJECT |
+
+### Final positions
+
+- trader: CONFIRM_REVISE — A(b) с 10-item mandatory pre-commitment list
+- trading-logic: CONFIRM_REVISE — A(b) primary / A(a) fallback / REVISE on Donchian (FSM blocker), ML/HMM (effort)
+- quant-stats: (response truncated; institutional memory updated `memory_neff_asymptote_kish.md`; prior consistent с A(b) defensible + A(a) most rigorous)
+
+### Mandatory pre-commitments S34 ADR (per trader 10-item list)
+
+If operator chooses A(b), S34 ADR MUST lock следующее ДО measurement:
+
+1. **T5 floor: 100 → 50** (cite Hudson & Urquhart 2021 crypto sparse-signal reality)
+2. **n_eff threshold: ≥ 50** — n_eff applies Kish 1965 correction; raw n does NOT substitute (S33 lesson)
+3. **MC threshold: ≤ 0.05** (tightened from 0.10 — partial compensation для floor relaxation)
+4. **T6 OOS/IS: ≥ 0.7 UNCHANGED** — independently blocking, not relaxed
+5. **acceptance_gate.sharpe_gate_passed: UNCHANGED** — fold-level gates remain at existing thresholds
+6. **Operator written acknowledgment:** "Statistical evidence as of v0.6 DOES NOT support live deployment; this amendment reflects crypto-specific sample-size reality (Hudson & Urquhart 2021), not evidence of positive edge"
+7. **Strategy params: `MEAN_REVERSION_S17_RELAXED_PARAMS` LOCKED** — no new parameter search permitted (anti-snooping)
+8. **Backtest data period:** must extend through full available OHLCV history beyond S33 measurement date
+9. **Multi-symbol: n_eff correction mandatory** — rho и Kish factor pre-registered
+10. **N_trials counter starts ≥ 4** (accumulating prior trials в sigma_SR pooling)
+
+### Engineering caveat (trading-logic)
+
+A(b) gate change ~20 LoC + 5-10 tests + ADR amendment. **CRITICAL:** if amended gate STILL fails на S33 data (n_eff=26 < n_eff_threshold=50), operator MUST choose A(a) — gate change alone не enough.
+
+**Pre-check before A(b) implementation:** check whether existing data (no new measurement) clears amended gates. If не clears — A(a).
+
+### Strong reject Option B
+
+ALL 3 agents REJECT B (override gates):
+- trader: precedent risk + sets dangerous norm
+- trading-logic: real-money loss risk (strategy demonstrated negative OOS edge — fold #3 BTC -32.68 catastrophic)
+- quant: abandons statistical rigor
+
+### S34 path forward
+
+**Recommended (consensus):** A(b) с 10-item pre-commit list — minimal effort, leverages existing infra, scientifically defensible if conditions honored.
+
+**Acceptable fallback:** A(a) project pause — most rigorous if operator concludes strategy class exhausted.
+
+**STRONGLY REJECTED:** B override + A(c-ML/HMM/Donchian) + A(d) 1D timeframe.
