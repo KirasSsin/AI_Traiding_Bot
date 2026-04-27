@@ -21,7 +21,7 @@ Branch: `feature/sprint-37-carry-overs-hardening`. Plan: `plans/2026-04-27-sprin
 | 1 Orient | done | session continuation post-S36 ship |
 | 2 Brainstorm | done | ROUND 5 consilium 3 agents CONSENSUS — `pre-s37-backlog.md` (6 pre-commitments + EXPAND scope: HALT_UNKNOWN_SYMBOL ReasonCode +1 / calibration baseline 6.17→2.96 / ADR 0056 amendment) |
 | 3 Plan | in_progress | `plans/2026-04-27-sprint-37-carry-overs-hardening.md` |
-| 4 Execute | in_progress | T1-T5 done. T6 done (cf44af4 — S22_SYNTHETIC_SHARPE 6.17→2.96 + DSR boundary tests n=9/10/29/30). pytest 866 unit + 33 integration / mypy 0. T7-T8 pending. |
+| 4 Execute | in_progress | T1-T6 done. T7 done (63ddac6 — delta-activation-playbook.md 243 lines: pre-checklist + 5 steps + monitoring + halt response + DSR guide + 12mo review). T8 pending (sprint page + counts + ship). |
 | 5 Verify | pending | pytest expected ~889 / mypy 0 / canonical 16/30/74/**50** (reason codes 49→50) |
 | 6 Review | pending | per task reviewer dispatch |
 | 7 Sync | pending | wiki updates в T8 |
