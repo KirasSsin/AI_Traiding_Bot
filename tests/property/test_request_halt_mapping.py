@@ -8,6 +8,7 @@ Selection rule (allow-list): codes that enter via Coordinator.request_halt
 bracket lifecycle, reconcile divergence) are excluded — they hit _set_halt
 directly inside on_ws_reconnect / risk handlers / etc.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -28,12 +29,18 @@ MIG_DIR = Path(__file__).resolve().parents[2] / "migrations"
 
 # Allow-list of halt-class ReasonCode that flow through Coordinator.request_halt.
 # Per ADR 0023: each entry MUST have explicit dispatch branch in request_halt.
-_REQUEST_HALT_CODES = frozenset({
-    ReasonCode.KILL_SWITCH_REQUESTED,
-    ReasonCode.HALT_RUNTIME_CRASH,
-    ReasonCode.HALT_BAR_POLL_STALL,
-    ReasonCode.HALT_DATA_QUALITY,  # S9 Q1 — REST-vs-REST quality detector
-})
+_REQUEST_HALT_CODES = frozenset(
+    {
+        ReasonCode.KILL_SWITCH_REQUESTED,
+        ReasonCode.HALT_RUNTIME_CRASH,
+        ReasonCode.HALT_BAR_POLL_STALL,
+        ReasonCode.HALT_DATA_QUALITY,  # S9 Q1 — REST-vs-REST quality detector
+        ReasonCode.HALT_S36_DD_INTRADAY,
+        ReasonCode.HALT_S36_DD_MULTIDAY,
+        ReasonCode.HALT_S36_CONSECUTIVE_LOSSES,
+        ReasonCode.HALT_S36_NO_TRADE_TIMEOUT,
+    }
+)
 
 
 def _now_iso() -> str:
@@ -51,20 +58,22 @@ def _build(tmp_path, *, initial_state: ExecutionState = ExecutionState.FLAT):
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     repo = ExecutionStateRepo(conn)
-    repo.upsert(ExecutionStateRow(
-        symbol="BTCUSDT",
-        state=initial_state,
-        position_qty=Decimal("0"),
-        entry_price=None,
-        oco_main_order_id=None,
-        bracket_id=None,
-        oco_tp_order_id=None,
-        oco_sl_order_id=None,
-        expected_oco_qty=None,
-        arming_started_at=None,
-        last_attempt_num=0,
-        updated_at=_now_iso(),
-    ))
+    repo.upsert(
+        ExecutionStateRow(
+            symbol="BTCUSDT",
+            state=initial_state,
+            position_qty=Decimal("0"),
+            entry_price=None,
+            oco_main_order_id=None,
+            bracket_id=None,
+            oco_tp_order_id=None,
+            oco_sl_order_id=None,
+            expected_oco_qty=None,
+            arming_started_at=None,
+            last_attempt_num=0,
+            updated_at=_now_iso(),
+        )
+    )
     coord = Coordinator(
         adapter=MagicMock(),
         repo=repo,
@@ -101,6 +110,6 @@ def test_request_halt_dispatches_every_allow_listed_code(code, tmp_path):
         f"got state={row.state.name}; missing dispatch in Coordinator.request_halt? "
         "See ADR 0023."
     )
-    assert row.halt_reason == code.value, (
-        f"halt_reason={row.halt_reason!r} != expected={code.value!r}"
-    )
+    assert (
+        row.halt_reason == code.value
+    ), f"halt_reason={row.halt_reason!r} != expected={code.value!r}"
