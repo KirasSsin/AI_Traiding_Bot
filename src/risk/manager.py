@@ -9,6 +9,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
 from sqlite3 import Connection
+from typing import NamedTuple
 
 from src.platform.config import Settings
 from src.risk.circuit_breakers import CircuitBreakerConfig, CircuitBreakerDetector
@@ -23,6 +24,20 @@ from src.risk.trade_history import TradeHistoryRepository, TradeRecord
 from src.signalgen.models import Signal, SignalSide
 
 logger = logging.getLogger(__name__)
+
+
+class RiskSharedDeps(NamedTuple):
+    """S38 T4 ADR 0058 SD-3: shared risk infrastructure bundle для DI.
+
+    Replaces RuntimeManager accessing risk_manager.equity_tracker / trade_repo /
+    state_repo properties (Demeter violation per S37 T4 architecture-reviewer).
+
+    Single bundle passed к both RiskManager (internal) и RuntimeManager (DI).
+    """
+
+    equity_tracker: EquityTracker
+    trade_repo: TradeHistoryRepository
+    state_repo: StateRepository
 
 
 class RiskManager:
@@ -88,6 +103,19 @@ class RiskManager:
     @property
     def state_repo(self) -> StateRepository:
         return self._state
+
+    @property
+    def shared_deps(self) -> RiskSharedDeps:
+        """S38 T4 ADR 0058 SD-3: bundle accessor для RuntimeManager DI.
+
+        Returns RiskSharedDeps NamedTuple wrapping все 3 internal repositories.
+        Use as `RuntimeManager(shared_deps=risk_manager.shared_deps, ...)`.
+        """
+        return RiskSharedDeps(
+            equity_tracker=self._equity,
+            trade_repo=self._trades,
+            state_repo=self._state,
+        )
 
     # ------------------------------------------------------------------
     # State persistence

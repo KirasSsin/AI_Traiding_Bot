@@ -142,3 +142,34 @@ Per S37 plan (`plans/2026-04-27-sprint-37-carry-overs-hardening.md`):
 - ADR 0022 (RuntimeManager lifecycle — SD-5 clock pattern)
 - pre-s37-backlog.md ROUND 5 consilium trail
 - delta-activation-playbook.md (T7 operator procedure)
+
+---
+
+## S38 Item #6 Amendment — `months_since` truncation semantics
+
+`RuntimeManager._check_halt_gate()` computes:
+
+```python
+months_since = (self._clock() - last_ts).days // 30
+```
+
+**Truncation** (Python integer division `//`):
+
+| Days elapsed | months_since |
+|---|---|
+| 29 | 0 |
+| 30 | 1 |
+| 59 | 1 |
+| 60 | 2 |
+| 179 | 5 |
+| 180 | 6 (HALT_S36_NO_TRADE_TIMEOUT trigger) |
+
+Implication: HALT_S36_NO_TRADE_TIMEOUT fires only after FULL 6 × 30 = 180 days without trade. NOT after 5 months 29 days. Conservative bias (under-fires by ≤30 days).
+
+Operator interpretation (legitimate halt vs boundary artifact):
+- True halt: bot active >180 days, n=0 trades — strategy degraded OR market regime shift OR config error
+- Boundary artifact: NONE — truncation is one-directional under-fire, never spurious fire
+
+Per ROUND 6 trading-logic-reviewer C4 (S37 T4 carry-over): "truncation is intentional, conservative under-fire by up to 30 days. Document explicitly."
+
+**Item #9 (Sharpe semantics extended ADR doc)** closed via ADR 0056 amendment 2 (S38 T1) — see paired ADR for `trial_mean_fold_oos_sharpe` vs `pooled_trade_oos_sharpe` vs `live_sharpe` semantic 3-row table.

@@ -175,8 +175,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     )
 
     # RuntimeManager + run
-    # S36 T4: HaltGate DI — share RiskManager's EquityTracker/TradeHistory/StateRepo
-    # via properties (avoids duplicate connection instances on same SQLite DB).
+    # S38 T4 ADR 0058 SD-3: HaltGate DI via RiskSharedDeps bundle (Demeter compliance).
+    # Replaces S36 T4 individual property access (equity_tracker/trade_repo/state_repo).
     rm = RuntimeManager(
         coordinator=coordinator,
         reconciler=reconciler,
@@ -185,9 +185,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         strategy=strategy,
         risk_manager=risk_manager,
         settings=settings,
-        equity_tracker=risk_manager.equity_tracker,
-        trade_repo=risk_manager.trade_repo,
-        state_repo=risk_manager.state_repo,
+        shared_deps=risk_manager.shared_deps,
     )
 
     try:
