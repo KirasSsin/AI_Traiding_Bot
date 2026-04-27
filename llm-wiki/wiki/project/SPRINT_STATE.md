@@ -21,7 +21,7 @@ Branch: `feature/sprint-37-carry-overs-hardening`. Plan: `plans/2026-04-27-sprin
 | 1 Orient | done | session continuation post-S36 ship |
 | 2 Brainstorm | done | ROUND 5 consilium 3 agents CONSENSUS — `pre-s37-backlog.md` (6 pre-commitments + EXPAND scope: HALT_UNKNOWN_SYMBOL ReasonCode +1 / calibration baseline 6.17→2.96 / ADR 0056 amendment) |
 | 3 Plan | in_progress | `plans/2026-04-27-sprint-37-carry-overs-hardening.md` |
-| 4 Execute | pending | T1-T8 subagent-driven |
+| 4 Execute | in_progress | T1 done (2dc5542 ADR 0057 + ADR 0056 amendment LOCKED pre-T2 anti-snooping). T2-T8 pending. |
 | 5 Verify | pending | pytest expected ~889 / mypy 0 / canonical 16/30/74/**50** (reason codes 49→50) |
 | 6 Review | pending | per task reviewer dispatch |
 | 7 Sync | pending | wiki updates в T8 |
