@@ -37,7 +37,7 @@ PHASE 2 brainstorm в progress:
 
 | Task | Status | Commit | Note |
 |------|--------|--------|------|
-| T1 Test debt fix + bars_per_year integration | pending | — | 3 pytest + 1 mypy fix + investigate root cause + new 4H end-to-end test (Item #11) |
+| T1 Test debt fix + bars_per_year integration | done | 88b3670 | Root cause confirmed: S27 T3 RSI warm-up gating suppressed cross_up signals (NaN<overbought=False) в test fixtures. Lengthen fixtures (12→16 bars test_long_only / 9→12 bars test_next_open). Mypy redef → rename `bars_per_year_map_wfa`. NEW `tests/test_bars_per_year_integration.py` 5 tests + critical invariant `4H vs 1H Sharpe ratio = sqrt(2190/8760) = 0.5` PASSED — confirms S27 T1 fix integrity end-to-end. pytest: 773→781 (0 failures), mypy: 1→0 errors. |
 | T2 CC-D MC p-value fix BOTH formulas + property tests | pending | — | sign_flip_p_value:56 + block_bootstrap_p_value:96 + Hypothesis tests (Items #1+#2) |
 | T3 E DSR cross-trial extension | pending | — | TrialEntry +symbol field with backfill BTCUSDT + sigma_SR pooling protocol (a) + cross_trial_sharpes archive к v0.5-final + reset (Items #6+#7+#9) |
 | T4 F preparation (validation + named constants) | pending | — | WFA fold coverage validation per-symbol + MEAN_REVERSION_S17_RELAXED_PARAMS named constant anti-S15-recurrence (Items #5+#10) |
