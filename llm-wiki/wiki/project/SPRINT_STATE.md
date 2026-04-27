@@ -2,11 +2,41 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 35
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.35
+sprint: 36
+phase: 3-planning
+branch: feature/sprint-36-delta-activation
+tag: pending
 ---
+
+## S36 IN PROGRESS 🟡 — δ TESTNET activation (HaltGate wire-up + B1 critical fix + DSR amendment)
+
+**Operator approved ROUND 4 consilium binding** (3 agents CONSENSUS + ROUND 2 hybrid Q4) — δ TESTNET activate primary path.
+
+Branch: `feature/sprint-36-delta-activation`. Plan: `plans/2026-04-27-sprint-36-delta-activation.md`. 8 tasks T1-T8 (~520 LoC + 24 tests + 1 ADR + 1 amendment + 2 component pages, ~10-15h forecast).
+
+### Phase tracking (S36 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S35 ship |
+| 2 Brainstorm | done | ROUND 4 consilium 3 agents + ROUND 2 Q4 BINDING — `pre-s36-backlog.md` (8 pre-commitments + hybrid duration option H + B1 critical + DSR amendment text + N_trials freeze=7) |
+| 3 Plan | in_progress | `plans/2026-04-27-sprint-36-delta-activation.md` |
+| 4 Execute | pending | T1-T8 subagent-driven |
+| 5 Verify | pending | pytest expected ~852 / mypy 0 / canonical 16/30/74/49 (reason codes 45→49) |
+| 6 Review | pending | python+trading-logic+security-auditor+test-engineer per task |
+| 7 Sync | pending | wiki updates в T8 |
+| 8 Ship | pending | tag v0.1.0-alpha.36 |
+| 9 Close | pending | SPRINT_STATE between-sprints |
+
+### S36 critical pre-commitments (BINDING per ROUND 4 consilium)
+
+1. B1 fix: MEAN_REVERSION_S17_RELAXED_PARAMS LOCKED params wired к live path BEFORE day-1 trade
+2. DSR sigma_SR sourcing protocol: N≥3 PREFERRED, NaN+UNDERPOWERED для 1-2, fallback REMOVED
+3. N_trials freeze at 7 для δ live demo (S22 hypothesis re-evaluation, no increment)
+4. Adapted gates methodology для live data
+5. Hybrid duration option (H): HaltGate operational + n≥50 PASS + 12mo MAINNET-promotion gate (NOT shutdown). NO 6mo interim.
+6. MAINNET promotion criteria DEFERRED к S37+
+7. ReasonCode enum +4 HALT_S36_* (45→49)
 
 ## S35 SHIPPED ✅ — δ TESTNET ready + α Donchian FAIL conjoint + ζ risk refactor
 
