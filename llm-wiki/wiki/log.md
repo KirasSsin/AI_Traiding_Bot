@@ -2400,3 +2400,37 @@ Next session = operator decides S34 direction:
 - (e) Different asset class — beyond v0.1 scope
 
 Next session = operator decides v0.7+ path.
+
+## [2026-04-27] session-end | S34 SHIPPED — Hybrid 6-th honest close v0.6 + amendment LOCKED. v0.6 chapter end.
+
+**S34 SHIPPED.** PR #45 → ac55c08 squash-merge. Tag v0.1.0-alpha.34 pushed. Branch deleted. SPRINT_STATE → between-sprints + v0.7+ direction options documented.
+
+**CI passed (6th PR с strict baselines)** — S32b infrastructure validates strict mode consistently.
+
+**S34 — Hybrid path operator-chosen post-S33 consilium:**
+- 5 tasks shipped (T1-T5) с per-task SPRINT_STATE updates
+- 5 NEW tests (test_acceptance_gate_amendment) + 0 fixed (no regression)
+- pytest: 803 → 808 (+5)
+- mypy --strict: 0 errors preserved
+- canonical counts: 16/30/74/45 unchanged
+- ADRs: 50 → 52 (+ADR 0051 honest close + ADR 0052 amendment LOCKED)
+- Sprint pages: 37 → 38
+
+**Both consilium recommendations honored:**
+- A(a) от honest close: ADR 0051 + cross_trial archive _v0.6 + reset + 6-hypothesis falsification record
+- A(b) от amendment: ADR 0052 LOCKED + 10-item pre-commit list + operator acknowledgment template + acceptance-criteria.md amendment section
+
+**Pre-check verified amendment alone insufficient:** S33 data на amended gates STILL FAILS 4/5 (n_eff=26<<50, MC=0.52>>0.05, T6=-2.84<<0.7, DSR=0.919<0.95). Confirms 6-th honest close v0.6 fully justified.
+
+**Engineering: evaluate_acceptance_gate() extended с n_eff/T5/MC kwargs (backward-compat default — existing v0.5 callers preserved). 5 NEW tests verify amended thresholds + backward-compat.
+
+**v0.6 chapter end. v0.7+ direction TBD operator:**
+- (a) Project pause indefinitely
+- (b) Run new measurement amended (RECOMMENDED if forward path desired)
+- (c) Different strategy class (Donchian/ML/HMM)
+- (d) Different timeframe (1D с volume gate) — NOT recommended
+- (e) Different asset class — beyond v0.1 scope
+
+**Anti-snooping discipline preserved** — amendment LOCKED ДО future measurement, paired с honest close documents falsification record.
+
+Next session = operator decides v0.7+ direction (no pre-commitment в этом sprint).

@@ -3,10 +3,23 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 34
-phase: 4-execution
-branch: feature/sprint-34-honest-close-v06-hybrid
-tag: v0.1.0-alpha.33
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.34
 ---
+
+## S34 SHIPPED ✅ — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED
+
+PR #45 → ac55c08 squash-merge. Tag v0.1.0-alpha.34 pushed. Branch deleted. **CI passed (6th PR с strict baselines).**
+
+**v0.6 chapter end. Both consilium recommendations honored** (A(a) honest close + A(b) amendment LOCKED). Anti-snooping discipline preserved.
+
+**v0.7+ direction (operator decides — NOT pre-committed):**
+- (a) Project pause indefinitely
+- (b) New measurement с amended spec (operator acknowledgment per ADR 0052 + new data)
+- (c) Different strategy class (Donchian / ML / HMM)
+- (d) Different timeframe (1D с volume gate) — NOT recommended
+- (e) Different asset class — beyond v0.1 scope
 
 ## S34 IN PROGRESS 🟡 — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED
 
@@ -23,8 +36,8 @@ tag: v0.1.0-alpha.33
 | 5 Verify | done | pytest 808 / mypy 0 / canonical 16/30/74/45 ✓ / cross_trial.json `{"trials": []}` ✓ / archive _v0.6.json 3 entries ✓ / acceptance-criteria amendment section ✓ / pre-check overall_pass=False (4/5 amended gates fail) ✓ |
 | 6 Review | skipped | docs+minor code (backward-compat default), no production trading code logic changes |
 | 7 Sync | done | log.md sprint-end + index/current-state synced |
-| 8 Ship | pending | PR + tag v0.1.0-alpha.34 |
-| 9 Close | pending | SPRINT_STATE → between-sprints + v0.7+ deferred к operator |
+| 8 Ship | done | PR #45 → ac55c08 + tag v0.1.0-alpha.34. CI passed (6th PR с strict baselines). |
+| 9 Close | done | SPRINT_STATE between-sprints + v0.7+ deferred к operator (this update) |
 
 ### Phase 4 — task progress (S34)
 
@@ -397,7 +410,11 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S33 SHIPPED — Trading Restart, F multi-symbol BACKTEST verdict FAIL conjoint.** First trading sprint после S32 series. 30 NEW tests (pytest 773→803), mypy 0 errors (was 1 — S33 T1 cleared), CI strict baselines. КУ avg ~55% / ~6-8 hours. **F empirically falsified:** multi-symbol BTC+ETH+SOL 4H mean-reversion S17-relaxed params hypothesis NOT viable — correlation deflation (n_eff=26<<100) prevents T5 reachability even с 3-symbol expansion. **6-th honest close v0.6 trigger documented per pre-committed failure branch (Item #12).**
+**S34 SHIPPED — Hybrid 6-th honest close v0.6 + Acceptance-Criteria Amendment LOCKED.** v0.6 chapter end. Both consilium recommendations honored. КУ avg ~47% / ~3 hours. pytest 808 / mypy 0 errors / 6th PR CI с strict baselines.
+
+**6 prior strategy hypotheses tested** (S13/S15/S17/S20/S22/S33) — все FAIL conjoint. Multi-symbol expansion EMPIRICALLY FALSIFIED (correlation deflation rho=0.75). Amendment LOCKED для future resumption (ADR 0052), не active until operator acknowledgment + new measurement.
+
+**Project state v0.6 stable end. v0.7+ direction TBD operator.**
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + **43 components** + **48 ADRs** + **35 sprint pages**)
@@ -413,7 +430,11 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 - Memory corpus: flat → **scheme designed** (script declined per recommendation)
 - Sprint metrics: NO → **YES** (tracking introduced)
 
-## Последний спринт (S33 — Trading Restart, F BACKTEST FAIL conjoint)
+## Последний спринт (S34 — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED)
+
+Operator chose hybrid path post-S33 consilium. 5 tasks: T1 engineering pre-check (S33 на amended gates STILL FAILS 4/5) + T2 ADR 0051 6-th honest close v0.6 (mirror S14/S16/S18/S21/S23 + 6-hypothesis falsification record + cross_trial archive _v0.6 + reset) + T3 ADR 0052 acceptance-criteria amendment LOCKED (T5 100→50 / n_eff≥50 NEW Kish 1965 / MC≤0.05 tightened / T6+DSR unchanged) + 10-item pre-commit list + operator acknowledgment template + T4 evaluate_acceptance_gate() extended backward-compat + 5 NEW tests + T5 sprint-34 + index/counts (50→52 ADRs / 37→38 sprints). Both A(a)+A(b) consilium recommendations honored. Anti-snooping discipline preserved.
+
+## Предпредпоследний спринт (S33 — Trading Restart, F BACKTEST FAIL conjoint)
 
 First trading sprint после 8-sprint S32 series. 6 tasks: T1 test debt fix (3 pytest + 1 mypy + 4H bars_per_year integration test verifies S27 T1 integrity end-to-end) + T2 CC-D MC p-value fix BOTH formulas + T3 E DSR cross-trial extension (closes S14 Q2) + T4 F preparation (WFA validation + S17 named constant) + T5 F BACKTEST run (BTC+ETH+SOL 4H mean-reversion S17-relaxed params, WFA train=1000/test=250 K=5 per CC6 (b)) + T6 ADR 0050 + sprint-33 page + counts (49→50 ADRs / 36→37 sprints) + CI baseline tightened к 0. Per-symbol: BTC=23 (-4.40), ETH=25 (-3.85), SOL=18 (-0.28). Aggregate FAIL: T5 raw 66<100 / n_eff 26 / T6 -2.84 / MC 0.52 / DSR 0.919. Pre-committed failure branch TRIGGERED → S34 = 6-th honest close v0.6.
 
@@ -428,8 +449,44 @@ Sub-sprint S32 series **FINAL**. 5 changes: T1 bybit-api-reviewer L5 agent (sonn
 ## Следующее действие
 
 ```
-S34 = 6-TH HONEST CLOSE v0.6 (default per pre-committed failure branch Item #12)
-       OR operator-driven spec amendment override.
+v0.7+ DIRECTION — operator decides (NOT pre-committed в S34):
+
+═══ Option (a) — Project pause indefinitely (S24 Option E precedent) ═══
+  Tag stable end at v0.1.0-alpha.34. No new sprints. Resume позже когда conditions change.
+
+═══ Option (b) — New measurement amended spec (S35+) ═══
+  RECOMMENDED if operator wants forward path:
+  Step 1: Write S35+ ADR с verbatim operator acknowledgment template (per ADR 0052):
+    "Statistical evidence as of v0.6 DOES NOT support live deployment;
+     this amendment reflects crypto-specific sample-size reality (Hudson & Urquhart 2021),
+     not evidence of positive edge."
+  Step 2: Extend OHLCV data beyond S33 measurement date (data/{BTC,ETH,SOL}USDT_4h.parquet)
+  Step 3: Pre-register multi-symbol rho + Kish factor (если multi-symbol)
+  Step 4: Run new measurement sprint с amended gates LOCKED:
+    - T5 floor 50, n_eff threshold ≥50 mandatory
+    - MC threshold ≤0.05 tightened
+    - T6 ≥0.7 unchanged, DSR ≥0.95 unchanged, acceptance_gate unchanged
+  Step 5: n_trials counter starts ≥4 (sigma_SR pooling protocol (a))
+  
+═══ Option (c) — Different strategy class ═══
+  Donchian breakout / ML XGBoost / HMM regime-switch (paradigm shift beyond mean-reversion).
+  Pre-requisites: new ADR с pre-registered hypothesis + N_trials counter accumulates ≥4.
+  Engineering blocker: Donchian SHORT signals conflict с long_only=True FSM invariant.
+  
+═══ Option (d) — Different timeframe ═══
+  1D mean-reversion + volume gate. NOT recommended per S34 consilium (T5 problem worse —
+  even fewer trades expected).
+  
+═══ Option (e) — Different asset class ═══
+  Uncorrelated instruments (commodity futures, FX). Beyond v0.1 scope. Major refactor.
+
+═══ Operator action когда ready ═══
+
+1. Choose option a/b/c/d/e
+2. Если (b): write acknowledgment template verbatim + extend data + new sprint S35+
+3. Если (c)/(d)/(e): new ADR с pre-registered hypothesis (anti-snooping)
+4. Если (a): no action — tag stable end preserved
+```
 
 ═══ Operator decision required ═══
 
