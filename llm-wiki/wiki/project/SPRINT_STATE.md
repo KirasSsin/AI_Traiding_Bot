@@ -3,12 +3,40 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 38
-phase: 3-planning
-branch: feature/sprint-38-delta-parallel-hardening
-tag: pending
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.38
 ---
 
-## S38 IN PROGRESS 🟡 — δ Parallel Hardening (F2 quant + bybit-api-reviewer + Item #7 + playbook)
+## S38 SHIPPED ✅ — δ Parallel Hardening (F2 quant + bybit-api-reviewer + Item #7 Demeter + playbook)
+
+PR #49 → 297d1ea squash-merge. Tag v0.1.0-alpha.38 pushed. Branch deleted. **CI passed first try (10th PR с strict baselines).**
+
+**δ TESTNET activate Track 1 operator-side parallel** (per `delta-activation-playbook.md` 5-step + S38 NEW gates F4-F7 + T3 H3 accountType).
+
+**S38 closures:**
+- F2 quant HIGH (compute_live_sharpe pnl_pct correctness)
+- F3 bybit-api-reviewer first invocation (dormant since S30) — 0 BLOCKER, 3 HIGH triaged
+- Item #7 RiskSharedDeps Demeter refactor (DI ONLY)
+- Playbook 5 NEW gates + UNDERPOWERED expected + halt-triggered immediate review
+- ADR 0057 amendment (months_since truncation semantics)
+
+**v0.7+ next operator decision (post-S38):**
+- (a) **Operator activates δ TESTNET** per playbook (если not yet done) — forward profit path
+- (b) **S39 carry-overs** — bybit-api H1+H2 + M1-M4 + 3 LOW + Item #7 backward-compat shim cleanup
+- (c) **Wait для δ data accumulation** — n=10 milestone triggers 12mo MAINNET-promotion ADR draft (per quant anti-snooping)
+
+**Carry-overs к S39+:**
+- T3 bybit-api-reviewer H1 rate-limit backoff missing
+- T3 bybit-api-reviewer H2 WS reconnect verification gap
+- T3 M1 retCode taxonomy gaps + M2 pybit response-shape + M3 WS data isinstance + M4 __repr__ secret redaction
+- T3 3 LOW cosmetic
+- F8 block_size constant unification
+- 12mo MAINNET-promotion ADR (draft trigger: n=10 first non-NaN DSR)
+- Item #7 backward-compat shim cleanup (post all callers migrated к shared_deps)
+- Item #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios
+
+## S38 SHIPPED — Earlier in-progress section (preserved для history)
 
 **Operator approved Path A** (ROUND 6 consilium binding) — δ activate immediately + S38 sprint runs в parallel.
 

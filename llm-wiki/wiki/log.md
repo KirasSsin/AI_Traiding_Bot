@@ -2518,3 +2518,13 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - δ TESTNET activate Track 1 operator-side parallel (set S35_DEMO_ACTIVE=true per playbook)
 - Carry-overs к S39+: bybit-api H1+H2 + M1-M4 + 3 LOW + 12mo MAINNET ADR (n=10 trigger)
 - ADR 0058 (57 → 58)
+
+## [2026-04-27] session-end | S38 shipped — alpha.38 tagged
+- PR #49 squash-merged (297d1ea), tag v0.1.0-alpha.38 pushed
+- 7 tasks: T1 ADRs LOCKED + T2 F2 pnl_pct fix + T3 bybit-api-reviewer + T4 RiskSharedDeps Demeter + T5 ADR 0057 amendment + T6 playbook + T7 sync
+- CI passed first try (10th PR с strict baselines)
+- 8 NEW tests / pytest 905 unit + 33 integration / mypy 0 / canonical 16/30/74/50 unchanged
+- Track 1 operator-side: δ TESTNET activate per playbook (parallel)
+- Track 2 AI-side: S38 sprint closed F2/F3/Item #7/playbook + 4 ROUND 6 carry-overs
+- 8 carry-overs persisted к S39+
+- SPRINT_STATE → between-sprints
