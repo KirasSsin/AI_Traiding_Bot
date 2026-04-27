@@ -3,10 +3,22 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 32d
-phase: 4-execution
-branch: feature/sprint-32d-kit-phase-3-improvements
-tag: v0.1.0-alpha.32c
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.32d
 ---
+
+## S32d SHIPPED ✅ — S32 SERIES COMPLETE 🎉
+
+PR #42 → 4cfe408 squash-merge. Tag v0.1.0-alpha.32d pushed. Branch deleted. **CI passed first try.**
+
+**S32 series 4 sub-sprints completed (Phase 0/1/2/3):**
+- S32 Phase 0 (alpha.32) — P0 staleness fix + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory
+- S32b Phase 1 (alpha.32b) — CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer
+- S32c Phase 2 reduced (alpha.32c) — 4 skill mappings + Fetch MCP + corpus categorization scheme docs
+- S32d Phase 3 final (alpha.32d) — bybit-api-reviewer + context budget hook + schedule wire + sprint metrics + corpus research notes
+
+**Next: S33 trading work begins.**
 
 ## S32d IN PROGRESS 🟡
 
@@ -25,8 +37,8 @@ Sub-sprint S32 series **FINAL**. Branch: `feature/sprint-32d-kit-phase-3-improve
 | 5 Verify | done | pytest 773 (S32c baseline preserved) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / bash -n context-budget-warn ✓ / json settings.json ✓ (6 PreToolUse + 2 UserPromptSubmit hooks). 3 pytest pre-existing failures + 1 mypy carry-over к S33. |
 | 6 Review | pending (likely skip) | no src/ touched |
 | 7 Sync | pending | log.md sprint-end + index/current-state в T5 |
-| 8 Ship | pending | PR + tag v0.1.0-alpha.32d (CI 3rd PR) |
-| 9 Close | pending | SPRINT_STATE → between-sprints + S33 trading prep |
+| 8 Ship | done | PR #42 → 4cfe408 + tag v0.1.0-alpha.32d. CI passed first try (S32b infrastructure validated 3rd PR). |
+| 9 Close | done | SPRINT_STATE between-sprints + S33 trading prep section (this update) |
 
 ### Phase 4 — task progress (S32d)
 
@@ -37,7 +49,7 @@ Sub-sprint S32 series **FINAL**. Branch: `feature/sprint-32d-kit-phase-3-improve
 | T3 Schedule wire + Sprint metrics | done | 2707f6f | tooling-inventory Section 23 (anthropic-skills:schedule wire к audit_formulas.py + frequency recommendations + setup procedure operator action) + sprint-metrics.md NEW page (per-sprint table reverse chronological + trends rolling 5 + update protocol). |
 | T4 Corpus bridges research notes | done | 2707f6f | tooling-inventory Section 24 (Bridge 2 ship-ready cron LOW cost MEDIUM value / Bridge 3 PostToolUse hook MEDIUM cost LOW value / Bridge 4 NOT RECOMMENDED HIGH cost LOW value until corpus > 100 obs). Honest recommendation summary + S32 series complete note. |
 | T5 ADR 0048 + sprint-32d page + sync | done | 21b14cb | 47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents + UserPromptSubmit hooks 1→2 + sprint metrics page + S32d sprint history row + S32 series COMPLETE accumulated achievements table |
-| Ship | pending | — | tag v0.1.0-alpha.32d |
+| Ship | done | 4cfe408 | tag v0.1.0-alpha.32d. CI passed first try (3rd PR validation S32b infrastructure). |
 
 ## S32c SHIPPED ✅
 
@@ -261,55 +273,75 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S32c SHIPPED — Kit Improvement Phase 2 reduced COMPLETE.** Sub-sprint S32 series. 4 changes: T1 Fetch/HTTP MCP server + T2 4 skill mappings (api-design Phase 3 / browser-test Phase 5 / perf-opt Phase 6 OPT / idea-refine extension Phase 2 PRE workflow) + T3 Memory corpus categorization scheme docs (bridge 4 design, script S32d) + T4 ADR/sync. КУ avg ~51% / ~1.5 hours. CI passed first try. NO code changes. 773 pytest preserved.
+**S32d SHIPPED — Kit Improvement Phase 3 final + S32 SERIES COMPLETE.** Sub-sprint S32 series 4 phases (Phase 0/1/2/3) shipped 8 hours total / КУ avg ~53% / ROI ~50 КУ/час. **Kit infrastructure mature.** Next: S33 trading work.
 
 **Status:**
-- Infrastructure: ✅ COMPLETE (16/30/74/45 + 40 components + **47 ADRs** + **34 sprint pages**)
-- Kit infrastructure: ✅ COMPLETE — 10 reviewer agents + 7 active push hooks + **8 MCP servers** (sqlite-trading + fetch project-level) + **36 skills mapped** + cascade 5-step + Phase 9 consolidate-memory HARD-GATE + GitHub Actions CI live + pre-commit local gate + Memory corpus categorization scheme designed (bridge 4 ready для script S32d) + 20/20 best practices
+- Infrastructure: ✅ COMPLETE (16/30/74/45 + **43 components** + **48 ADRs** + **35 sprint pages**)
+- Kit infrastructure: ✅ COMPLETE — **11 reviewer agents** + **7 active push hooks** + **2 UserPromptSubmit hooks** + **8 MCP servers** + **36 skills mapped** + cascade 5-step + Phase 9 consolidate-memory + GitHub Actions CI live + pre-commit gates + Memory corpus scheme designed (Section 22) + Memory corpus bridges feasibility documented (Section 24) + **Sprint metrics tracking** (sprint-metrics.md) + 20/20 best practices
 - Formula correctness: ✅ FIXED (5 bugs eliminated post-S27)
 - Strategy validation: ❌ NEGATIVE (0 PASS / 30 FAIL — trading work blocked pending ESC-1/2/3)
 - MVP DONE per acceptance-criteria.md: NOT achieved (T5 unreachable single-symbol 4H)
 - Test debt: ⚠️ 3 pre-existing pytest failures + 1 mypy redef + ~169 ruff issues — carry-over к S33+
 
-## Последний спринт (S32c — Kit Improvement Phase 2 reduced)
+**S32 series accumulated changes (pre-S32 → post-S32d):**
+- Reviewer agents 9→**11** / Push hooks 6→**7** / UserPromptSubmit 1→**2** / MCP 6→**8** / Skills 26→**36** / Components 38→**43** / ADRs 44→**48** / Sprint pages 31→**35**
+- CI infrastructure: NO → **YES** (GitHub Actions + pre-commit + baseline guards)
+- Memory corpus: flat → **scheme designed** (script declined per recommendation)
+- Sprint metrics: NO → **YES** (tracking introduced)
 
-Sub-sprint S32 series. 4 changes: T1 Fetch/HTTP MCP (`.mcp.json` fetch + Section 7.7/7.8 doc) + T2 4 skill mappings к sprint-flow-ru.md (api-design Phase 3 / browser-test Phase 5 / perf-opt Phase 6 OPT / idea-refine extension Phase 2 PRE workflow с 5-step procedure) + T3 Memory corpus categorization scheme (Section 22 NEW: 4 partitions + tag mapping pseudo-code + cascade STEP 2 enhancement spec; bridge 4 design, script S32d) + T4 ADR 0047 + sprint-32c page + index/counts (46→47 ADRs / 33→34 sprints / 7→8 MCP / 32→36 skills). КУ avg ~51% / ~1.5 hours. CI passed first try. NO code changes.
+## Последний спринт (S32d — Kit Improvement Phase 3 final + S32 SERIES COMPLETE)
+
+Sub-sprint S32 series **FINAL**. 5 changes: T1 bybit-api-reviewer L5 agent (sonnet, 6-axis Bybit V5 API checklist) + T2 Context budget hook MVP (UserPromptSubmit advisory, transcript file size proxy 800KB/1.2MB thresholds) + T3+T4 batch (Section 23 anthropic-skills:schedule wire к audit_formulas.py + sprint-metrics.md NEW page + Section 24 corpus bridges 2-4 research notes — Bridge 2 SHIPPABLE cron / Bridge 3 medium defer / Bridge 4 NOT recommended) + T5 ADR 0048 + sprint-32d page + index/counts (47→48 ADRs / 34→35 sprints / 40→43 components / 10→11 agents / + UserPromptSubmit 1→2 + sprint metrics page). КУ avg 41% / ~2.5 hours. CI passed first try. **S32 series: 8h total, КУ avg ~53%, ROI ~50 КУ/час.** NO code changes.
 
 ## Следующее действие
 
 ```
-Operator decides next direction:
+S33 = TRADING SPRINT — operator brainstorm scope.
 
-Track A — Kit Phase 3 (S32d candidate):
-  Phase 2 deferred research:
-    - Memory corpus org bridge 2 (corpus periodic sync)
-    - Memory corpus org bridge 3 (chapter mark auto-link)
-    - Memory corpus org bridge 4 implementation script (uses scheme от S32c Section 22)
-    - Context budget hook (>70% warn) — Claude Code hook API research
-  Phase 3 originals:
-    - bybit-api-reviewer L5 agent (Bybit V5 rate limits / endpoint params / error codes)
-    - anthropic-skills:schedule (audit_formulas.py automation)
-    - Sprint metrics tracking (velocity / revision rate)
+═══ Operator action перед S33 brainstorm ═══
 
-Track B — Trading work (BLOCKED — awaits operator):
-  - ESC-1 multi-symbol authorization
-  - ESC-2 "in profit" semantics
-  - ESC-3 4H operational implications
-  
-Trader-expert backlog (когда Track B unblocks):
-  - Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) — depends ESC-1
-  - Regime filter + SMA50 trend gate
-  - SL calibration {1.0/1.25/1.5}×ATR
-  - Donchian 4H breakout
-  - DSR cross-trial sigma_SR + MC power audit
+1. Approve `fetch` MCP at next session start (one-time prompt — same pattern S32b sqlite-trading)
 
-Track C — Test debt cleanup sprint (если operator chooses):
-  - Fix 3 pytest failures (test_replay_long_only / test_replay_next_open)
-  - Fix 1 mypy error (__main__.py:636 bars_per_year_map redef)
-  - Cleanup ~169 ruff baseline (gradually OR enable strict gate)
+2. Decide ESC-1/2/3 (BLOCKING multi-symbol scope):
+   ESC-1: Multi-symbol authorization beyond BTCUSDT MVP?
+     - Y → unlocks scope expansion ETH/SOL/etc
+     - N → S33 limited single-symbol BTC scope
+   ESC-2: "In profit" vs "pass acceptance criteria" — different goals?
+     - Live pilot ETH 4H pre-S33?
+     - Spec amendment T5 floor?
+   ESC-3: Operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)?
 
-Operator action на next session:
-  - Approve fetch MCP at session start (one-time prompt)
+3. Brainstorm S33 scope (use brainstorm-init skill → trader-expert ROUND 1):
+
+   Single-symbol options (если ESC-1 = N):
+     A) BTC mean-reversion 4H regime-confirmed (S22 PASS evidence preserved, n=62 < 100 floor)
+     B) Regime filter + SMA50 trend gate (CC2 fold concentration)
+     C) SL calibration {1.0/1.25/1.5}×ATR + t-stat power validation
+     D) Donchian 4H breakout (independent hypothesis)
+     E) DSR cross-trial sigma_SR + MC power audit (closes S14 Q2 carry-over)
+
+   Multi-symbol options (если ESC-1 = Y):
+     F) Multi-symbol 4H mean_reversion (n≈135 → T5 PASS) BTC+ETH+SOL
+     G) Multi-symbol regime filter
+     H) Cross-symbol DSR aggregation
+
+═══ S33 test debt fix (либо встроить в S33, либо отдельный sprint) ═══
+
+   - 3 pytest failures (test_replay_long_only x2 + test_replay_next_open x1) pre-existing
+   - 1 mypy error (__main__.py:636 bars_per_year_map redef) pre-existing
+   - ~169 ruff baseline cleanup (gradual OR strict gate)
+
+═══ Optional kit setup (operator one-time tasks при желании) ═══
+
+   - Setup audit_formulas.py weekly schedule per Section 23 
+     (mcp__scheduled-tasks__create_scheduled_task; cron weekly Monday 09:00 UTC)
+   - Setup corpus bridge 2 cron rebuild per Section 24
+     (rebuild claude-mem corpus от wiki/log.md новых entries)
+
+═══ NOT priority (low ROI per Section 24 honest assessment) ═══
+
+   - Bridge 4 corpus partition implementation (re-evaluate когда corpus > 100 obs, likely S40+)
+   - Context budget hook exact token counter (file size proxy adequate)
 ```
 
 ## Carry-over preserved (v0.2+ if any future direction chosen)

@@ -2121,3 +2121,48 @@ Next session = operator decision: S32d (Kit Phase 3) OR Track B unblock OR Track
 - bybit-api-reviewer first real-world validation — at S33+ Bybit-touching sprint
 
 Next session = S33 trading sprint preparation. **S32 series KIT IMPROVEMENT COMPLETE.**
+
+## [2026-04-27] session-end | S32d SHIPPED + S32 SERIES COMPLETE 🎉
+
+**S32d SHIPPED.** PR #42 → 4cfe408 squash-merge. Tag v0.1.0-alpha.32d pushed. Branch deleted. SPRINT_STATE → between-sprints + S33 trading prep section.
+
+**CI passed first try** — 3rd PR validation S32b infrastructure. Baseline guards working consistently.
+
+**S32 SERIES COMPLETE 🎉** — 4 sub-sprints (Phase 0/1/2/3) over 8 hours:
+- S32 Phase 0 (alpha.32) — 45 min — P0 staleness fix + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory — КУ 60%
+- S32b Phase 1 (alpha.32b) — 3h — CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer — КУ 60.5% (CI 3 fix iterations)
+- S32c Phase 2 reduced (alpha.32c) — 1.5h — 4 skill mappings + Fetch MCP + corpus categorization scheme — КУ 51%
+- S32d Phase 3 final (alpha.32d) — 2.5h — bybit-api-reviewer + context budget hook + schedule wire + sprint metrics + corpus research notes — КУ 41%
+
+**Total S32 series:** 8h / КУ avg ~53% / ROI ~50 КУ/час. Kit infrastructure mature.
+
+**S32 series achievements:**
+- 9 → 11 reviewer agents (+dashboard-reviewer + bybit-api-reviewer)
+- 6 → 7 push hooks (+sprint-state-freshness-check)
+- 1 → 2 UserPromptSubmit hooks (+context-budget-warn)
+- 6 → 8 MCP servers (+sqlite-trading + fetch)
+- 26 → 36 skills × phase mapped (+10)
+- 38 → 43 components (+5)
+- 44 → 48 ADRs (+4)
+- 31 → 35 sprint pages (+4)
+- CI infrastructure NEW (GitHub Actions + pre-commit + baseline guards)
+- Memory corpus scheme designed (Section 22, script declined per Section 24 honest recommendation)
+- Sprint metrics tracking introduced (sprint-metrics.md)
+
+**Next: S33 trading sprint preparation.**
+
+Operator action перед S33 brainstorm:
+1. Approve `fetch` MCP at session start (one-time)
+2. Decide ESC-1/2/3 (multi-symbol authorization / "in profit" semantics / 4H operational)
+3. Brainstorm S33 scope (8 candidates: A-E single-symbol, F-H multi-symbol)
+
+Optional operator setup tasks:
+- audit_formulas.py weekly schedule per Section 23
+- Corpus bridge 2 cron rebuild per Section 24
+
+Test debt carry-over к S33+ (либо в S33 либо отдельный cleanup sprint):
+- 3 pytest failures + 1 mypy error + ~169 ruff baseline
+
+Trading carry-overs (BLOCKED — operator decisions ESC-1/2/3 required).
+
+**S32 series Kit Improvement COMPLETE. Next session = S33 trading work. Operator: ready brainstorm.**
