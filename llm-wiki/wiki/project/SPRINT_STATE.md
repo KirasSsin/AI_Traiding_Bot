@@ -21,7 +21,7 @@ Branch: `feature/sprint-36-delta-activation`. Plan: `plans/2026-04-27-sprint-36-
 | 1 Orient | done | session continuation post-S35 ship |
 | 2 Brainstorm | done | ROUND 4 consilium 3 agents + ROUND 2 Q4 BINDING — `pre-s36-backlog.md` (8 pre-commitments + hybrid duration option H + B1 critical + DSR amendment text + N_trials freeze=7) |
 | 3 Plan | in_progress | `plans/2026-04-27-sprint-36-delta-activation.md` |
-| 4 Execute | in_progress | T1 done (ce38eab ADR 0055+0056 LOCKED pre-T2 anti-snooping). T2-T8 pending. |
+| 4 Execute | in_progress | T1 done (ce38eab). T2 done (e82608e + ae67fc6 + 91a0294 security BLOCKER MappingProxyType). pytest 806 / mypy 0. T3-T8 pending. |
 | 5 Verify | pending | pytest expected ~852 / mypy 0 / canonical 16/30/74/49 (reason codes 45→49) |
 | 6 Review | pending | python+trading-logic+security-auditor+test-engineer per task |
 | 7 Sync | pending | wiki updates в T8 |
