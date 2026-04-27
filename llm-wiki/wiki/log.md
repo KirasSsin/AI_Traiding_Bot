@@ -2322,3 +2322,37 @@ Strategic finding: multi-symbol expansion path empirically falsified — correla
 **Items satisfied S33:** #1-#3 / #5-#13 / #15. Items deferred: #4 (LOCKED documented), #14 (optional ruff drift).
 
 Next session = operator decides S34 direction (default 6-th honest close OR override).
+
+## [2026-04-27] session-end | S33 SHIPPED — Trading Restart, F BACKTEST FAIL conjoint, S34 6-th honest close v0.6 trigger
+
+**S33 SHIPPED.** PR #44 → 3d97aa0 squash-merge. Tag v0.1.0-alpha.33 pushed. Branch deleted. SPRINT_STATE → between-sprints + S34 trigger documented.
+
+**CI passed (5th PR — first time с strict baselines mypy=0/pytest=0 failures).** S32b CI infrastructure validates strict mode correctly.
+
+**S33 — first trading sprint после 8-sprint S32 series kit improvements:**
+- 3-agent consilium ROUND 1 + 2 (trader-expert + trading-logic-reviewer + quant-stats-reviewer) unanimous APPROVE 6 escalations + 13 required + 2 optional NEW items
+- 6 tasks shipped (T1-T6) с per-task SPRINT_STATE updates
+- 30 NEW tests + 3 fixed pre-existing failures (pytest 773→803)
+- mypy --strict 1→0 errors (8-sprint test debt accumulation cleared)
+- CI baselines tightened к 0 (strict mode active)
+- Closes S14 Q2 REVISE carry-over (DSR cross-trial multi-symbol support)
+- Implements CC-D MC p-value formula fix per ADR 0015 / Phipson & Smyth 2010
+
+**F BACKTEST verdict FAIL conjoint:**
+- Per-symbol: BTC=23 trades (-4.40 mean fold OOS Sharpe, fold #3 catastrophic -32.68) / ETH=25 (-3.85 all folds negative) / SOL=18 (-0.28 best но still negative)
+- T5 raw n=66<100, n_eff=26 << 100 (Item #8 correlation-deflated rho=0.75 / Kish 1965)
+- T6 OOS/IS Sharpe ratio mean=-2.84 < 0.7
+- MC p=0.52 > 0.10 (pre-committed threshold)
+- DSR=0.919 < 0.95 (n_trials=3 multi-symbol DSR computed first time, sigma_SR pooled=2.24)
+
+**Strategic finding:** multi-symbol expansion path empirically falsified. Correlation deflation prevents T5 reachability even с 3-symbol aggregation.
+
+**Pre-committed failure branch (Item #12) TRIGGERED → S34 = 6-th honest close v0.6** (mirror S14/S16/S18/S21/S23 BINDING precedent) OR operator override.
+
+**S33 process artifact:** Demonstrated full pre-registration discipline + pre-committed failure branch для first time в проекте. Anti-data-snooping per Bailey & López de Prado 2014.
+
+**Items satisfied:** #1-#3, #5-#13, #15. Deferred: #4 (LOCKED documented в ADR), #14 (optional ruff drift).
+
+Next session = operator decides S34 direction:
+- DEFAULT: 6-th honest close v0.6 ADR + cross_trial_sharpes archive к _v0.6.json + reset
+- OVERRIDE: operator-driven explicit statistical-framework override statement + spec amendment

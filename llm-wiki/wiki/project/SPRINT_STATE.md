@@ -3,10 +3,18 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 33
-phase: 4-execution
-branch: feature/sprint-33-trading-restart
-tag: v0.1.0-alpha.32e
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.33
 ---
+
+## S33 SHIPPED ✅ — Trading Restart, F BACKTEST FAIL conjoint
+
+PR #44 → 3d97aa0 squash-merge. Tag v0.1.0-alpha.33 pushed. Branch deleted. **CI passed (5th PR — first time с strict baselines mypy=0, pytest=0 failures).**
+
+**F BACKTEST verdict FAIL conjoint** на 5/9 acceptance gates (T5 raw 66<100 + n_eff 26 + T6 -2.84 + MC 0.52 + DSR 0.919). Per-symbol: BTC=23 (-4.40), ETH=25 (-3.85), SOL=18 (-0.28).
+
+**Pre-committed failure branch (Item #12) TRIGGERED → S34 = 6-th honest close v0.6** (mirror S14/S16/S18/S21/S23 BINDING precedent) OR operator-driven spec amendment с explicit statistical-framework override statement.
 
 ## S33 IN PROGRESS 🟡 — Trading restart brainstorm
 
@@ -30,8 +38,8 @@ PHASE 2 brainstorm в progress:
 | 5 Verify | done | pytest 803 / mypy 0 errors / canonical 16/30/74/45 ✓ / cross_trial_log 3 entries (BTC/ETH/SOL S33) / F measurement.json verdict=FAIL ✓ |
 | 6 Review | pending | L5 reviewer matrix per touched files (parallel dispatch) |
 | 7 Sync | pending | wiki updates |
-| 8 Ship | pending | tag v0.1.0-alpha.33 |
-| 9 Close | pending | SPRINT_STATE → between-sprints |
+| 8 Ship | done | PR #44 → 3d97aa0 + tag v0.1.0-alpha.33. CI passed (5th PR с strict baselines mypy=0/pytest=0 failures). |
+| 9 Close | done | SPRINT_STATE between-sprints + S34 6-th honest close v0.6 trigger documented (this update) |
 
 ### Phase 4 — task progress (S33)
 
@@ -361,7 +369,7 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 
 ## Текущий статус
 
-**S32e SHIPPED — Kit Audit + Doc Sync.** Post-S32 series audit completed. Tag v0.1.0-alpha.32e. **All components NEEDED — no removals.** Doc drift fixed + tooling-inventory split (60KB → 41+24KB both < 50KB threshold) + audit snapshot committed (kit-audit-2026-04-27.md). КУ avg ~48% / ~2 hours. **S32 series total: 5 sub-sprints (Phase 0/1/2/3 + audit), 10 hours, ~52% avg КУ.** Next: S33 trading work.
+**S33 SHIPPED — Trading Restart, F multi-symbol BACKTEST verdict FAIL conjoint.** First trading sprint после S32 series. 30 NEW tests (pytest 773→803), mypy 0 errors (was 1 — S33 T1 cleared), CI strict baselines. КУ avg ~55% / ~6-8 hours. **F empirically falsified:** multi-symbol BTC+ETH+SOL 4H mean-reversion S17-relaxed params hypothesis NOT viable — correlation deflation (n_eff=26<<100) prevents T5 reachability even с 3-symbol expansion. **6-th honest close v0.6 trigger documented per pre-committed failure branch (Item #12).**
 
 **Status:**
 - Infrastructure: ✅ COMPLETE (16/30/74/45 + **43 components** + **48 ADRs** + **35 sprint pages**)
@@ -377,7 +385,11 @@ PR #35 → 1538a53 squash-merge. Tag v0.1.0-alpha.28 pushed. Branch deleted.
 - Memory corpus: flat → **scheme designed** (script declined per recommendation)
 - Sprint metrics: NO → **YES** (tracking introduced)
 
-## Последний спринт (S32e — Kit Audit + Doc Sync)
+## Последний спринт (S33 — Trading Restart, F BACKTEST FAIL conjoint)
+
+First trading sprint после 8-sprint S32 series. 6 tasks: T1 test debt fix (3 pytest + 1 mypy + 4H bars_per_year integration test verifies S27 T1 integrity end-to-end) + T2 CC-D MC p-value fix BOTH formulas + T3 E DSR cross-trial extension (closes S14 Q2) + T4 F preparation (WFA validation + S17 named constant) + T5 F BACKTEST run (BTC+ETH+SOL 4H mean-reversion S17-relaxed params, WFA train=1000/test=250 K=5 per CC6 (b)) + T6 ADR 0050 + sprint-33 page + counts (49→50 ADRs / 36→37 sprints) + CI baseline tightened к 0. Per-symbol: BTC=23 (-4.40), ETH=25 (-3.85), SOL=18 (-0.28). Aggregate FAIL: T5 raw 66<100 / n_eff 26 / T6 -2.84 / MC 0.52 / DSR 0.919. Pre-committed failure branch TRIGGERED → S34 = 6-th honest close v0.6.
+
+## Предпредпоследний спринт (S32e — Kit Audit + Doc Sync)
 
 Post-S32 series audit. 5 changes: T1 NEW kit-audit-2026-04-27.md (full audit findings: 11 agents + 10 hooks + 8 MCP + 5 project skills + ~50 plugin skills usage analysis) + T2 fix kit-overview-ru drift (Best practices section MCP 6→8 / Subagents 9→11 / Hooks 7+2+1 / Skills 26→36) + T3 split tooling-inventory-ru.md (60KB → part 1 41KB Sections 1-13 + part 2 24KB Sections 14-24) per CLAUDE.md sec 9 size threshold + T4 update llm-wiki/CLAUDE.md (split refs + size example + audit page link) + T5 ADR 0049 + sprint-32e page + index/counts (48→49 ADRs / 35→36 sprints / + 2 architecture pages). КУ avg ~48% / ~2 hours. **Audit conclusion: ALL components NEEDED, no removals.** CI passed first try.
 
@@ -388,7 +400,49 @@ Sub-sprint S32 series **FINAL**. 5 changes: T1 bybit-api-reviewer L5 agent (sonn
 ## Следующее действие
 
 ```
-S33 = TRADING SPRINT — operator brainstorm scope.
+S34 = 6-TH HONEST CLOSE v0.6 (default per pre-committed failure branch Item #12)
+       OR operator-driven spec amendment override.
+
+═══ Operator decision required ═══
+
+Option A (DEFAULT — recommended path):
+  S34 = 6-th honest close v0.6 ADR (mirror S14/S16/S18/S21/S23 BINDING precedent):
+    - Document FAIL conjoint S33 verdict
+    - Archive cross_trial_sharpes.json к _v0.6.json + reset
+    - v0.7+ direction options:
+      (a) Project pause (S24 Option E precedent)
+      (b) Spec amendment к acceptance-criteria.md T5 floor (operator override)
+      (c) Different strategy class (Donchian breakout / ML-driven / etc — beyond mean-reversion)
+      (d) Different timeframe (1D mean-reversion с volume gate / etc)
+
+Option B (OVERRIDE — operator only):
+  S34 = explicit statistical-framework override statement в ADR
+    + adjust acceptance gates (T5 floor amendment / MC threshold relax)
+    + full acknowledgment statistical evidence does NOT support live deployment
+
+═══ Strategic context ═══
+
+S33 demonstrated: multi-symbol expansion path empirically NOT viable.
+  - All 3 symbols negative OOS edge (BTC=-4.40, ETH=-3.85, SOL=-0.28 mean fold Sharpe)
+  - n_eff=26 (correlation-deflated) << T5=100 floor
+  - 6 strategy hypotheses tested across 4.81y BTC+ETH+SOL — все FAIL conjoint
+  - Edge regime-INDEPENDENT confirmed (S17+S22 partial PASS) but T5 unreachable
+
+═══ Items satisfied S33 ═══
+
+#1 (CC-D fix) ✓ / #2 (property tests) ✓ / #3 (ESC-3 4 binding) ✓ / #5 (S17 named constant) ✓ /
+#6 (sigma_SR pooling (a)) ✓ / #7 (n_trials=3) ✓ / #8 (n_eff correction) ✓ /
+#10 (WFA validation) ✓ / #11 (bars_per_year integration) ✓ / #12 (failure branch) ✓ /
+#13 (CI baseline tightened) ✓ / #15 (reviewer dispatch documented) ✓
+Deferred: #4 (LOCKED ADR documented), #14 (optional ruff drift)
+
+═══ Carry-overs к S35+ ═══
+
+- bybit-api-reviewer first real-world validation
+- Bridge 4 corpus partition implementation (S40+ когда corpus > 100 obs)
+- t-stat heavy-tail correction (Hudson&Urquhart 2021 — CC-E, math improvement)
+- ESC-3 4 binding conditions (для S34+ LIVE multi-symbol если ever triggered)
+```
 
 ═══ Operator action перед S33 brainstorm ═══
 
