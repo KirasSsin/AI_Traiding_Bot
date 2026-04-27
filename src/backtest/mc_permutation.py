@@ -53,7 +53,10 @@ def sign_flip_p_value(
         if abs(float(np.mean(permuted))) >= observed:
             count_extreme += 1
 
-    return float(count_extreme / n_iterations)
+    # S33 T2 (CC-D fix): (count + 1) / (N + 1) per Phipson & Smyth 2010 / ADR 0015.
+    # Avoids p=0 (logically impossible с finite permutations).
+    # Minimum p = 1/(N+1), не 0.
+    return float((count_extreme + 1) / (n_iterations + 1))
 
 
 def block_bootstrap_p_value(
@@ -93,4 +96,6 @@ def block_bootstrap_p_value(
         if abs(float(np.mean(sampled))) >= observed:
             count_extreme += 1
 
-    return float(count_extreme / n_iterations)
+    # S33 T2 (CC-D fix extended scope ROUND 2 Item #1): (count+1)/(N+1) per Phipson & Smyth 2010.
+    # Same fix as sign_flip_p_value — avoids p=0 (impossible с finite permutations).
+    return float((count_extreme + 1) / (n_iterations + 1))
