@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from src.analytics.dsr import compute_dsr_with_status
 from src.risk.reason_codes import ReasonCode
 from src.risk.trade_history import TradeRecord
@@ -66,3 +67,21 @@ def test_dsr_gate_eligible_when_n_above_30() -> None:
     assert not math.isnan(result["dsr"])
     assert result["status"] == "GATE_ELIGIBLE"
     assert result["n_trades"] == 35
+
+
+@pytest.mark.parametrize(
+    "n,expected_status",
+    [
+        (9, "INSUFFICIENT_TRADES"),  # below boundary
+        (10, "UNDERPOWERED"),  # boundary INCLUSIVE per ADR 0056
+        (29, "UNDERPOWERED"),  # below upper boundary
+        (30, "GATE_ELIGIBLE"),  # boundary INCLUSIVE per ADR 0056
+    ],
+)
+def test_dsr_status_boundary_exact(n: int, expected_status: str) -> None:
+    """ADR 0056 boundary: n>=10 → UNDERPOWERED, n>=30 → GATE_ELIGIBLE.
+
+    Closes S36 T6 quant-stats-reviewer C2 (off-by-one coverage gap).
+    """
+    result = compute_dsr_with_status(trades=_make_trades(n), n_trials=1)
+    assert result["status"] == expected_status
