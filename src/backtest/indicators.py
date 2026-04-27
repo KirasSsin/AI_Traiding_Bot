@@ -85,7 +85,30 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
         out["signal"] = signal
         logger.info(
             "Indicators ready (mean_reversion): RSI(%s)<%.0f AND close<lower_BB(%s, %.1fσ), long signals=%s",
-            rsi_period, oversold, bb_period, bb_k, int(signal.sum()),
+            rsi_period,
+            oversold,
+            bb_period,
+            bb_k,
+            int(signal.sum()),
+        )
+    elif strategy_type == "donchian":
+        # S35 ADR 0054 LOCKED: Donchian breakout long-only (lookback_n=20).
+        # Entry: close(T) > max(high[T-lookback_n:T]) excluding current bar AND FLAT.
+        # Exit emitted via SL=ATR×atr_stop_mult (replay_engine SL handler) — TP disabled
+        # by setting tp_atr_mult astronomically high in donchian_runner config.
+        donchian_cfg = strategy_cfg.get("donchian", {})
+        lookback_n = int(donchian_cfg.get("lookback_n", 20))
+        prior_high = out["high"].shift(1).rolling(window=lookback_n, min_periods=lookback_n).max()
+        out["donchian_high"] = prior_high
+        signal = np.zeros(len(out), dtype=np.int8)
+        long_mask = out["close"] > prior_high
+        signal[np.where(long_mask.fillna(False))[0]] = 1
+        out["signal"] = signal
+        logger.info(
+            "Indicators ready (donchian): lookback_n=%s, ATR(%s) stop, long signals=%s",
+            lookback_n,
+            atr_period,
+            int(signal.sum()),
         )
     else:
         # ema_crossover (legacy default)
@@ -98,7 +121,11 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
         out["signal"] = signal
         logger.info(
             "Indicators ready (ema_crossover): EMA %s/%s, RSI %s, ATR %s, long signals=%s",
-            fast, slow, rsi_period, atr_period, int(signal.sum()),
+            fast,
+            slow,
+            rsi_period,
+            atr_period,
+            int(signal.sum()),
         )
 
     return out
