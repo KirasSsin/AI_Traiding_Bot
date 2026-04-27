@@ -118,7 +118,9 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14]
         "REJECT_MIN_NOTIONAL","REJECT_FILTER_PRICE","REJECT_DUPLICATE_SIGNAL",
         "HALT_DRAWDOWN_L1","HALT_DRAWDOWN_L2","HALT_DRAWDOWN_L3",
         "HALT_FLASH_CRASH","HALT_DATA_QUALITY","HALT_EXCHANGE_OUTAGE",
-        "HALT_KILL_SWITCH"
+        "HALT_KILL_SWITCH",
+        "HALT_S36_DD_INTRADAY","HALT_S36_DD_MULTIDAY",
+        "HALT_S36_CONSECUTIVE_LOSSES","HALT_S36_NO_TRADE_TIMEOUT"
       ]
     },
     "notes": {"type": "string", "maxLength": 2048},
@@ -182,8 +184,20 @@ Old records остаются immutable; chain NOT regenerated.
 - JSON Schema Draft 2020-12.
 - MiFID II RTS 24, SEC 17a-4, CFTC 1.31 (retention requirements).
 
+## Reason codes count
+
+**Current total: 49** (45 baseline + 4 HALT_S36_* added S36 T5 per ADR 0055 SD-4).
+
+| Sprint | Added | Count | Description |
+|--------|-------|-------|-------------|
+| S1-S6 | +39 | 39 | Foundation codes |
+| S7 | +3 | 42 | HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE + EXIT_RECONCILE_DETECTED |
+| S8a | +3 | 45 | HALT_RUNTIME_CRASH + HALT_BAR_POLL_STALL + KILL_SWITCH_REQUESTED |
+| S36 T5 | +4 | **49** | HALT_S36_DD_INTRADAY(46) + HALT_S36_DD_MULTIDAY(47) + HALT_S36_CONSECUTIVE_LOSSES(48) + HALT_S36_NO_TRADE_TIMEOUT(49) |
+
 ## Related
 
 - [[../../trading/concepts/reason-codes]] — enum enumeration.
 - [[storage]] — SQLite `audit_index`.
 - [[domain-events]] — events that produce audit records.
+- [[../components/halt-gate-wireup]] — S36 wire-up using HALT_S36_* codes.

@@ -3,29 +3,29 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 36
-phase: 3-planning
+phase: 8-ship
 branch: feature/sprint-36-delta-activation
-tag: pending
+tag: v0.1.0-alpha.36
 ---
 
-## S36 IN PROGRESS 🟡 — δ TESTNET activation (HaltGate wire-up + B1 critical fix + DSR amendment)
+## S36 COMPLETE 🟢 — δ TESTNET activation (HaltGate wire-up + B1 critical fix + DSR amendment)
 
-**Operator approved ROUND 4 consilium binding** (3 agents CONSENSUS + ROUND 2 hybrid Q4) — δ TESTNET activate primary path.
+**ROUND 4 consilium binding executed.** δ infrastructure WIRED LIVE. 63 NEW tests / pytest 871+33 / mypy 0 / canonical 16/30/74/49.
 
-Branch: `feature/sprint-36-delta-activation`. Plan: `plans/2026-04-27-sprint-36-delta-activation.md`. 8 tasks T1-T8 (~520 LoC + 24 tests + 1 ADR + 1 amendment + 2 component pages, ~10-15h forecast).
+Branch: `feature/sprint-36-delta-activation`. Tag: `v0.1.0-alpha.36`.
 
-### Phase tracking (S36 — in progress)
+### Phase tracking (S36 — all done)
 
 | Phase | Status | Artifact |
 |-------|--------|----------|
 | 1 Orient | done | session continuation post-S35 ship |
 | 2 Brainstorm | done | ROUND 4 consilium 3 agents + ROUND 2 Q4 BINDING — `pre-s36-backlog.md` (8 pre-commitments + hybrid duration option H + B1 critical + DSR amendment text + N_trials freeze=7) |
-| 3 Plan | in_progress | `plans/2026-04-27-sprint-36-delta-activation.md` |
-| 4 Execute | in_progress | T1-T6 done. T7 done (93a6a78 — live trade reporter ADR 0055 SD-6: live Sharpe + calibration + MC gating + S22_SYNTHETIC_SHARPE=6.17 + DELTA_N_TRIALS_LOCKED=7). pytest 841 unit + 7 integration / mypy 0. T8 pending. |
-| 5 Verify | pending | pytest expected ~852 / mypy 0 / canonical 16/30/74/49 (reason codes 45→49) |
-| 6 Review | pending | python+trading-logic+security-auditor+test-engineer per task |
-| 7 Sync | pending | wiki updates в T8 |
-| 8 Ship | pending | tag v0.1.0-alpha.36 |
+| 3 Plan | done | `plans/2026-04-27-sprint-36-delta-activation.md` |
+| 4 Execute | done | T1-T8 all done. 19 commits. 63 NEW tests. |
+| 5 Verify | done | pytest 871 unit + 33 integration / mypy 0 / canonical 16/30/74/49 / anti-snooping preserved |
+| 6 Review | done | 8 reviewer dispatches across T1-T7. BLOCKER + HIGH fixes inline. Carry-overs → pre-s37-backlog. |
+| 7 Sync | done | wiki sync T8: sprint-36 + 2 components + pre-s37-backlog + index + current-state + reason-codes + ESM footer + log |
+| 8 Ship | in_progress | gh pr + squash merge + tag v0.1.0-alpha.36 |
 | 9 Close | pending | SPRINT_STATE between-sprints |
 
 ### S36 critical pre-commitments (BINDING per ROUND 4 consilium)
