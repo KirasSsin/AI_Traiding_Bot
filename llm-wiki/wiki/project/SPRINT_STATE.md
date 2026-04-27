@@ -24,7 +24,7 @@ Branch: `feature/sprint-38-delta-parallel-hardening`. Plan: `plans/2026-04-27-sp
 | 1 Orient | done | session continuation post-S37 ship |
 | 2 Brainstorm | done | ROUND 6 consilium 3 agents UNANIMOUS Q1 — `pre-s38-backlog.md` (4 verdicts + 8 findings F1-F8 + 7 task structure) |
 | 3 Plan | in_progress | `plans/2026-04-27-sprint-38-delta-parallel-hardening.md` |
-| 4 Execute | in_progress | T1-T3 done. T4 done (b3b611c — RiskSharedDeps NamedTuple + property + backward-compat constructor). pytest 874 unit + 33 integration / mypy 0. T5-T7 pending. |
+| 4 Execute | in_progress | T1-T4 done. T5 done (c4f01f3 ADR 0057 amendment months_since truncation). T6 done (b3a7add δ playbook amendments — 5 NEW gates + UNDERPOWERED + halt-triggered + T3 H3 accountType). T7 pending. |
 | 5 Verify | pending | pytest expected ~907 / mypy 0 / canonical 16/30/74/50 |
 | 6 Review | pending | per task reviewer dispatch |
 | 7 Sync | pending | wiki updates в T7 |
