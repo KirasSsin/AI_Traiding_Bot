@@ -77,6 +77,9 @@ class RuntimeManager:
         self._equity_tracker = equity_tracker
         self._trade_repo = trade_repo
         self._state_repo = state_repo
+        # S36 T4 architecture-reviewer MEDIUM: instance-side cache avoids per-tick
+        # state_repo.get() round-trip after first call. activation_ts immutable post-write.
+        self._activation_ts: datetime | None = None
         self._stopping: bool = False
         self._kill_switch_path: Path = Path(settings.runtime_kill_switch_path)
         self._quality_detector = BarPriceQualityDetector(
@@ -156,14 +159,17 @@ class RuntimeManager:
         if not self._settings.s35_demo_active:
             return False
 
-        # Persist activation_ts on first call (idempotent for subsequent calls)
-        activation_record = self._state_repo.get("s35:activation_ts")
-        if activation_record is None:
-            now = datetime.now(UTC)
-            self._state_repo.set("s35:activation_ts", {"value": now.isoformat()})
-            activation_ts = now
-        else:
-            activation_ts = datetime.fromisoformat(activation_record["value"])
+        # S36 T4 architecture-reviewer MEDIUM: instance-cache avoids per-tick DB round-trip.
+        # Namespace key per domain-prefix convention (was "s35:activation_ts").
+        if self._activation_ts is None:
+            activation_record = self._state_repo.get("runtime:halt_gate:activation_ts")
+            if activation_record is None:
+                now = datetime.now(UTC)
+                self._state_repo.set("runtime:halt_gate:activation_ts", {"value": now.isoformat()})
+                self._activation_ts = now
+            else:
+                self._activation_ts = datetime.fromisoformat(activation_record["value"])
+        activation_ts = self._activation_ts
 
         # Resolve symbol via existing _poll_bar_and_strategy pattern
         symbol = getattr(self._coordinator, "_symbol", None)

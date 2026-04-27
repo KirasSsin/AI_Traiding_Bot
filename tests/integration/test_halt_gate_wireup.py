@@ -185,12 +185,63 @@ def test_halt_gate_activation_ts_persisted_on_first_call(
 ) -> None:
     rm, _, _, _ = runtime_with_demo_active
     rm._check_halt_gate()
-    activation = rm._state_repo.get("s35:activation_ts")
+    activation = rm._state_repo.get("runtime:halt_gate:activation_ts")
     assert activation is not None
     assert "value" in activation
     # Subsequent call should not overwrite
     first_ts = activation["value"]
     rm._check_halt_gate()
-    activation2 = rm._state_repo.get("s35:activation_ts")
+    activation2 = rm._state_repo.get("runtime:halt_gate:activation_ts")
     assert activation2 is not None
     assert activation2["value"] == first_ts
+
+
+def test_halt_gate_dd_multiday_fires(
+    runtime_with_demo_active: tuple[
+        RuntimeManager, MagicMock, EquityTracker, TradeHistoryRepository
+    ],
+) -> None:
+    """S36 T4 trading-logic-reviewer C1: missing direct integration test for DD_MULTIDAY.
+
+    HWM since activation_ts = 1500 → current = 1200 → multiday_dd = 20% > 15% threshold.
+    Intraday window 24h carries только current = no intraday DD competing.
+    """
+    rm, coord, et, _ = runtime_with_demo_active
+    now = datetime.now(UTC)
+    # Pre-seed activation_ts 3 days ago — equity records placed AFTER activation
+    activation = now - timedelta(days=3)
+    rm._state_repo.set("runtime:halt_gate:activation_ts", {"value": activation.isoformat()})
+    # Peak 1500 (2 days ago, > 24h window — outside intraday but inside multiday)
+    et.record(
+        realized=Decimal("1500"),
+        unrealized=Decimal("0"),
+        ts=now - timedelta(days=2),
+        source="MANUAL",
+    )
+    # Current 1200 (now, inside 24h window)
+    et.record(
+        realized=Decimal("1200"),
+        unrealized=Decimal("0"),
+        ts=now,
+        source="MANUAL",
+    )
+    halted = rm._check_halt_gate()
+    assert halted is True
+    coord.request_halt.assert_called_once_with(ReasonCode.HALT_S36_DD_MULTIDAY)
+
+
+def test_halt_gate_no_trade_timeout_fires_after_activation(
+    runtime_with_demo_active: tuple[
+        RuntimeManager, MagicMock, EquityTracker, TradeHistoryRepository
+    ],
+) -> None:
+    """S36 T4 trading-logic-reviewer C1: missing direct integration test для NO_TRADE_TIMEOUT.
+
+    No trades + activation_ts > 6mo ago (pre-seeded в state_repo) → fires NO_TRADE_TIMEOUT.
+    """
+    rm, coord, _, _ = runtime_with_demo_active
+    seven_months_ago = datetime.now(UTC) - timedelta(days=7 * 30)
+    rm._state_repo.set("runtime:halt_gate:activation_ts", {"value": seven_months_ago.isoformat()})
+    halted = rm._check_halt_gate()
+    assert halted is True
+    coord.request_halt.assert_called_once_with(ReasonCode.HALT_S36_NO_TRADE_TIMEOUT)
