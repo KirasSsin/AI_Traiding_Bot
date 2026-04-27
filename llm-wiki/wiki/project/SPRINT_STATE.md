@@ -2,11 +2,36 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 32e
-phase: between-sprints
-branch: main
+sprint: 33
+phase: 2-brainstorming
+branch: feature/sprint-33-trading-restart
 tag: v0.1.0-alpha.32e
 ---
+
+## S33 IN PROGRESS 🟡 — Trading restart brainstorm
+
+**First trading sprint after S32 series kit improvements.** Branch: `feature/sprint-33-trading-restart`. Operator directive: 3-agent консилиум (trader-expert + trading-logic-reviewer + quant-stats-reviewer) для ESC-1/2/3 + formulas correctness + strategy direction.
+
+PHASE 2 brainstorm в progress:
+- 6 structured questions: ESC-1 / ESC-2 / ESC-3 / formulas post-S27 / S33 strategy direction / test debt
+- Dispatch 3 agents parallel via `superpowers:dispatching-parallel-agents`
+- Consolidate verdicts: CONSENSUS / MAJORITY / DISAGREE
+- ROUND 2 iterative justify if disagreement
+- Document `pre-s33-backlog.md`
+
+### Phase tracking (S33 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S32e ship |
+| 2 Brainstorm | in_progress | 3-agent консилиум — trader-expert + trading-logic-reviewer + quant-stats-reviewer |
+| 3 Plan | pending | После verdicts known |
+| 4 Execute | pending | TDD (formula fixes + strategy implementation) |
+| 5 Verify | pending | pytest + mypy + canonical counts + WFA backtest measurement |
+| 6 Review | pending | L5 reviewer matrix per touched files (parallel dispatch) |
+| 7 Sync | pending | wiki updates |
+| 8 Ship | pending | tag v0.1.0-alpha.33 |
+| 9 Close | pending | SPRINT_STATE → between-sprints |
 
 ## S32e SHIPPED ✅ — Kit Audit + Doc Sync
 
