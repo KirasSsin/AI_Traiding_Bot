@@ -185,6 +185,7 @@ Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB
 **Banned-from-full-read** список → `~/.claude/CLAUDE.md` section 9 (10+ files: Docs/00-All.md / sprint plans / log.md).
 
 **Wiki-страницы** держим < 50KB. Если близко — `<topic>.md` index + `<topic>-part-N.md`.
+Example (S32e split): `tooling-inventory-ru.md` (60KB) → `tooling-inventory-ru.md` (41KB Sections 1-13) + `tooling-inventory-ru-part-2.md` (24KB Sections 14-24).
 **Output budget субагента:** одна Write/Edit ≤ 40KB.
 
 ---
@@ -217,7 +218,8 @@ Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB
 
 **MASTER SOP (English):** [[wiki/project/architecture/development-workflow]]
 **Русская версия (BINDING per ADR 0041):** [[wiki/project/architecture/sprint-flow-ru]] — 9 фаз с per-phase HARD-GATEs
-**Tooling catalog (RU):** [[wiki/project/architecture/tooling-inventory-ru]] — 9 agents + 26 skills + 6 MCP + 6 hooks + cascade
+**Tooling catalog (RU):** [[wiki/project/architecture/tooling-inventory-ru]] (Sections 1-13) + [[wiki/project/architecture/tooling-inventory-ru-part-2]] (Sections 14-24, S32e split) — 11 agents + 36 skills + 8 MCP + 7+2+1 hooks + cascade
+**Kit audit (S32e):** [[wiki/project/architecture/kit-audit-2026-04-27]] — usage analysis: ALL components NEEDED, no removals
 **Kit overview (RU):** [[wiki/project/architecture/kit-overview-ru]] — 1-page single source of truth (S31)
 **Wiki-first rule:** читай `wiki/project/components/<name>.md` ДО сырого ADR.
 
