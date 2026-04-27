@@ -31,6 +31,14 @@ sources:
 - [ ] Bybit TESTNET API credentials ready в production .env
 - [ ] `risk_override_hmac_key` (32+ chars) configured
 
+### S38 ADR 0058 SD-4 NEW gates (post-ROUND 6 consilium):
+
+- [ ] **F4 — Bybit TESTNET API key scope verification**: confirm key has Order (read+write) AND Position permissions enabled. Pre-flight: `GET /v5/account/info` + verify `POST /v5/order/create` reachable. Read-only key → `retCode=10003` permission denied на first signal (unhandled error path).
+- [ ] **F5 — No stale `runtime:halt_gate:activation_ts` row check**: query `sqlite3 data/bot.db "SELECT * FROM state WHERE key='runtime:halt_gate:activation_ts';"` — must be empty OR signed с current `risk_override_hmac_key`. Different HMAC key version → tamper halt on first tick (HALT_UNKNOWN_SYMBOL).
+- [ ] **F7 (Gate 2) — SQLite WAL mode + disk space**: confirm > 1GB free disk space. halt_log accumulates rows over 12mo TESTNET window.
+- [ ] **F7 (Gate 3) — Bootstrap ordering invariant**: `coordinator.bootstrap()` MUST complete before `ws_consumer.start()`. Current code at `src/runtime/manager.py:104-105` correct order. DO NOT reorder без verifying assertion paths.
+- [ ] **T3 H3 — Bybit account type verification**: confirm TESTNET account is **UNIFIED** account type. Code hardcodes `accountType="UNIFIED"` в Bybit V5 API calls. If account is **CLASSIC** (non-UNIFIED) → orders rejected с retCode=10001 OR misclassified. Pre-flight: `GET /v5/account/info` returns `unifiedMarginStatus`. If non-UNIFIED → escalate к maintainer для config-knob refactor (S38a hotfix OR pre-s39-backlog).
+
 ## Activation steps
 
 ### Step 1 — Set environment variable
@@ -137,6 +145,31 @@ cat data/cross_trial_sharpes.json
 ```
 
 Expected baseline (S22 reference): ~13 trades/year на BTCUSDT 4H mean-reversion.
+
+### Important — DSR UNDERPOWERED is EXPECTED for entire 12mo window
+
+Per quant-stats-reviewer ROUND 6:
+> At S22 baseline 13 trades/year: expected n=13 после 12mo TESTNET.
+> ADR 0056 thresholds: 10 ≤ n < 30 → DSR_UNDERPOWERED status.
+> This is NOT failure signal — это expected small-n regime.
+
+DO NOT abort δ TESTNET because of UNDERPOWERED DSR alone. Halt только если HaltGate triggers (DD/streak/timeout) OR operator decides honest close per separate criteria.
+
+GATE_ELIGIBLE (n≥30) expected at ~28 months at baseline rate — outside 12mo MAINNET-promotion review window. 12mo review = "continue TESTNET" recommendation likely (per quant-stats expected outcome).
+
+### Halt-triggered immediate review (S38 trading-logic-reviewer addition)
+
+Weekly cadence catches operational health BUT может miss weekend halt (3-day blind spot).
+
+**Additional trigger:** if `halt_log` has any entry within last 24H → immediate review (don't wait для weekly slot).
+
+Quick check command:
+
+```bash
+sqlite3 data/bot.db "SELECT halt_ts, halt_reason FROM halt_log WHERE halt_ts > datetime('now', '-24 hours');"
+```
+
+If non-empty → execute halt response procedure immediately (see Halt response procedure section below).
 
 ## Halt response procedure
 
