@@ -111,6 +111,17 @@ def test_mc_gating_both_when_n_above_40() -> None:
     assert result["block_bootstrap"] is not None
 
 
+def test_calibration_baseline_amended_to_2_96() -> None:
+    """ADR 0056 S37 amendment: S22_SYNTHETIC_SHARPE = 2.96 (mean fold conservative).
+
+    Pre-S37: 6.17 (T1 aggregate inflated by fold #4 outlier).
+    Post-S37: 2.96 (mean of fold sharpes [1.93, -2.92, 1.32, 12.70, 1.78]).
+    """
+    from src.analytics.live_trade_reporter import S22_SYNTHETIC_SHARPE
+
+    assert S22_SYNTHETIC_SHARPE == 2.96
+
+
 def test_generate_live_report_full_metrics() -> None:
     """Single entry-point produces all required ADR 0055 SD-6 metrics."""
     records = _make_records(35, mean_pnl=20.0, var_factor=2.0)

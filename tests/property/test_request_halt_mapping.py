@@ -39,6 +39,7 @@ _REQUEST_HALT_CODES = frozenset(
         ReasonCode.HALT_S36_DD_MULTIDAY,
         ReasonCode.HALT_S36_CONSECUTIVE_LOSSES,
         ReasonCode.HALT_S36_NO_TRADE_TIMEOUT,
+        ReasonCode.HALT_UNKNOWN_SYMBOL,  # S37 ADR 0057 SD-1+SD-2: symbol fail-closed
     }
 )
 

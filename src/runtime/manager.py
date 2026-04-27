@@ -8,6 +8,7 @@ via Coordinator/Reconciler RLock/Lock).
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -66,6 +67,7 @@ class RuntimeManager:
         equity_tracker: EquityTracker,
         trade_repo: TradeHistoryRepository,
         state_repo: StateRepository,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),  # S37 ADR 0057 SD-5
     ) -> None:
         self._coordinator = coordinator
         self._reconciler = reconciler
@@ -77,6 +79,7 @@ class RuntimeManager:
         self._equity_tracker = equity_tracker
         self._trade_repo = trade_repo
         self._state_repo = state_repo
+        self._clock = clock
         # S36 T4 architecture-reviewer MEDIUM: instance-side cache avoids per-tick
         # state_repo.get() round-trip after first call. activation_ts immutable post-write.
         self._activation_ts: datetime | None = None
@@ -102,6 +105,19 @@ class RuntimeManager:
 
         # Sequencing invariant: bootstrap FIRST, then WS, then loop
         self._coordinator.bootstrap()
+        # S37 ADR 0057 SD-3: operator-visible startup banner когда s35_demo_active=True
+        if self._settings.s35_demo_active:
+            logger.info(
+                "runtime.s35_demo_startup_banner",
+                approved_symbols=list(self._settings.s35_demo_approved_symbols),
+                halt_thresholds={
+                    "dd_intraday": str(self._settings.s35_halt_dd_intraday),
+                    "dd_multiday": str(self._settings.s35_halt_dd_multiday),
+                    "consecutive_losses": self._settings.s35_halt_consecutive_losses,
+                    "no_trade_months": self._settings.s35_halt_no_trade_months,
+                },
+                fail_closed=True,
+            )
         self._ws_consumer.start()
         try:
             self._main_loop()
@@ -159,23 +175,48 @@ class RuntimeManager:
         if not self._settings.s35_demo_active:
             return False
 
+        # S37 ADR 0057 SD-2+SD-3: fail-closed symbol whitelist check.
+        # Performed BEFORE activation_ts persistence to avoid side-effects on
+        # misconfigured boot. SD-6 (T5): direct public property access (fallback chain closed).
+        symbol = getattr(self._coordinator, "symbol", None)
+        if symbol is None or symbol not in self._settings.s35_demo_approved_symbols:
+            logger.error(
+                "runtime.halt_gate_unknown_symbol",
+                symbol=symbol,
+                whitelist=list(self._settings.s35_demo_approved_symbols),
+            )
+            self._coordinator.request_halt(ReasonCode.HALT_UNKNOWN_SYMBOL)
+            self._stopping = True
+            return True
+
         # S36 T4 architecture-reviewer MEDIUM: instance-cache avoids per-tick DB round-trip.
         # Namespace key per domain-prefix convention (was "s35:activation_ts").
         if self._activation_ts is None:
-            activation_record = self._state_repo.get("runtime:halt_gate:activation_ts")
+            try:
+                activation_record = self._state_repo.get_signed(
+                    "runtime:halt_gate:activation_ts",
+                    hmac_key=self._settings.risk_override_hmac_key,
+                )
+            except ValueError as exc:
+                # S37 ADR 0057 SD-4: tampered activation_ts → halt fail-closed.
+                logger.error(
+                    "runtime.halt_gate_activation_ts_tampered",
+                    error=str(exc),
+                )
+                self._coordinator.request_halt(ReasonCode.HALT_UNKNOWN_SYMBOL)
+                self._stopping = True
+                return True
             if activation_record is None:
-                now = datetime.now(UTC)
-                self._state_repo.set("runtime:halt_gate:activation_ts", {"value": now.isoformat()})
+                now = self._clock()
+                self._state_repo.set_signed(
+                    "runtime:halt_gate:activation_ts",
+                    {"value": now.isoformat()},
+                    hmac_key=self._settings.risk_override_hmac_key,
+                )
                 self._activation_ts = now
             else:
                 self._activation_ts = datetime.fromisoformat(activation_record["value"])
         activation_ts = self._activation_ts
-
-        # Resolve symbol via existing _poll_bar_and_strategy pattern
-        symbol = getattr(self._coordinator, "_symbol", None)
-        if symbol is None:
-            logger.warning("runtime.halt_gate_skipped_no_symbol")
-            return False
 
         # Compute HaltGate inputs
         intraday_dd = self._equity_tracker.intraday_dd_pct()
@@ -188,11 +229,11 @@ class RuntimeManager:
         consec = self._trade_repo.consecutive_losses(symbol=symbol)
         last_ts = self._trade_repo.last_trade_ts(symbol=symbol)
         if last_ts is not None:
-            months_since = (datetime.now(UTC) - last_ts).days // 30
+            months_since = (self._clock() - last_ts).days // 30
         else:
             # No trades yet — measure от activation_ts (NOT zero, чтобы fire 6mo timeout
             # если no trades closed — signal-frequency starvation pre-commit ROUND 3).
-            months_since = (datetime.now(UTC) - activation_ts).days // 30
+            months_since = (self._clock() - activation_ts).days // 30
 
         gate = HaltGate(
             dd_intraday_threshold=self._settings.s35_halt_dd_intraday,
@@ -276,7 +317,7 @@ class RuntimeManager:
             return
         # FSM pre-check — only call start_bracket from FLAT (one-open-order invariant).
         # Reading via _repo (matches T17 plan pattern; no public current_state() on Coordinator).
-        symbol = getattr(self._coordinator, "_symbol", None)
+        symbol = getattr(self._coordinator, "symbol", None)
         if symbol is None:
             logger.warning("runtime.coordinator_missing_symbol_attr")
             return
@@ -339,7 +380,7 @@ class RuntimeManager:
         try:
             from src.execution.state_machine import ExecutionState
 
-            symbol = getattr(self._coordinator, "_symbol", None)
+            symbol = getattr(self._coordinator, "symbol", None)
             if symbol is not None:
                 row = self._coordinator._repo.get(symbol)
                 if row is not None and row.state in {

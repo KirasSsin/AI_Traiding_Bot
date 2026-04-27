@@ -99,3 +99,37 @@ S36 T6 paired commit:
 - pre-s36-backlog.md (ROUND 4 binding consilium trail)
 - Bailey & López de Prado 2014 (DSR formula + sigma_SR pooling)
 - S35 T4 quant-stats-reviewer review (carry-over source)
+
+---
+
+## S37 Amendment (ROUND 5 quant-stats-reviewer verdict)
+
+### Calibration baseline correction (ADR 0055 SD-6 dependency)
+
+`S22_SYNTHETIC_SHARPE` constant в `src/analytics/live_trade_reporter.py:28`:
+
+| Variant | Value | Source |
+|---------|-------|--------|
+| **S36 T7 ORIGINAL** | 6.17 | T1 aggregate Sharpe per `sprint-22-4h-test.md` |
+| **S37 T6 AMENDED** | **2.96** | mean of fold OOS Sharpes [1.93, -2.92, 1.32, 12.70, 1.78] |
+
+Rationale: T1 aggregate 6.17 inflated by fold #4 outlier (Sharpe=12.70 at n≈12 trades — small-n + fold concentration extreme). Mean fold = 2.96 conservative baseline для calibration ratio target ≥0.7 (live_Sharpe / S22_synthetic).
+
+Δ calibration ratio interpretation:
+- live_Sharpe=2.0 vs 6.17 baseline → ratio 0.32 (FAIL <0.7) — too pessimistic
+- live_Sharpe=2.0 vs 2.96 baseline → ratio 0.68 (FAIL <0.7) — borderline conservative
+- live_Sharpe=2.5 vs 2.96 baseline → ratio 0.84 (PASS) — realistic target
+
+### Sharpe computation semantics (clarification per quant-stats C3)
+
+Three statistically-distinct Sharpe variants used в codebase. Future audits MUST cite which:
+
+| Metric | Definition | Use site |
+|--------|------------|----------|
+| `trial_mean_fold_oos_sharpe` | arithmetic mean of K WFA fold OOS Sharpes (donchian_runner.py:171 post-S36 T6 rename) | cross_trial log entry, sigma_SR pooling |
+| `pooled_trade_oos_sharpe` | trade-level Sharpe over ALL OOS trades concatenated | overall trial Sharpe metric |
+| `live_sharpe` | per-TradeRecord pnl_quote returns annualized via `sqrt(bars_per_year/avg_bars_per_trade)` | δ live demo evaluation (live_trade_reporter.py:67) |
+
+Trial mean ≠ pooled trade-level в general. Live Sharpe (per-trade) ≠ WFA Sharpe (bar-level equity curve).
+
+ADR 0056 sigma_SR sourcing hierarchy unchanged. n_trades thresholds unchanged. Only constants + semantic doc amended.

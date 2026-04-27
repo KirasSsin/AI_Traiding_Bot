@@ -131,6 +131,16 @@ class Settings(BaseSettings):
         le=24,
         description="S35 δ months без n>=30 closed trades → halt + S36 honest close.",
     )
+    s35_demo_approved_symbols: list[str] = Field(
+        default_factory=lambda: ["BTCUSDT"],
+        min_length=1,
+        description=(
+            "S37 ADR 0057 SD-3: whitelist of symbols permitted under s35_demo_active. "
+            "Default [BTCUSDT] per pre-s35-backlog single-symbol LOCKED. "
+            "_check_halt_gate fails-closed (HALT_UNKNOWN_SYMBOL halt) if coordinator "
+            "symbol not in whitelist. Operator extends list для multi-symbol future."
+        ),
+    )
     risk_tp_atr_multiplier: Decimal = Decimal("3.0")
     risk_cb_l1_dd: Decimal = Decimal("0.15")
     risk_cb_l2_dd: Decimal = Decimal("0.22")
@@ -256,6 +266,21 @@ class Settings(BaseSettings):
                 "testnet=False routes к MAINNET endpoint regardless of live_trading. "
                 "Per pre-s35-backlog.md pre-commitment #1 LOCKED."
             )
+        return self
+
+    @model_validator(mode="after")
+    def _normalize_s35_demo_approved_symbols(self) -> "Settings":
+        """S37 T2 security-auditor HIGH — case-normalize whitelist symbols.
+
+        Operator typo (e.g. STRATEGY_SYMBOL=btcusdt vs whitelist=[BTCUSDT]) → silent
+        halt loop (HaltGate fires HALT_UNKNOWN_SYMBOL every tick). Bybit accepts both
+        cases at API level но mismatch defeats fail-closed contract.
+
+        Normalize to uppercase. Operator-misconfig vector closed.
+        """
+        normalized = [s.upper() for s in self.s35_demo_approved_symbols]
+        if normalized != list(self.s35_demo_approved_symbols):
+            object.__setattr__(self, "s35_demo_approved_symbols", normalized)
         return self
 
     def config_hash(self) -> str:

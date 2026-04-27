@@ -14,7 +14,7 @@ status: stable
 
 **Growth history:** S5 v1 = 12 states / 28 events / 29 transitions. S6 v2 (ADR 0020) = 16/29/55. S7 v3 (ADR 0021) = 16/29/59 (dedup S6 silent overrides). S8a (ADR 0022) = +1 event (KILL_SWITCH_REQUESTED) + 11 transitions → 16/30/70. S8b T1 (ADR 0023) = +3 RISK_HALT rows для ENTRY_PENDING/EXIT_PENDING/RECONCILING → 16/30/73. S8b T7 fix-up = +1 (FLAT, RISK_HALT) → **16/30/74 current**.
 
-**Last sync:** Sprint 36 (2026-04-27, tag `v0.1.0-alpha.36`). count = **49 reason codes** — added 4 HALT_S36_* per ADR 0055 SD-4 (T5). FSM states/events/transitions unchanged: 16/30/74.
+**Last sync:** Sprint 37 (2026-04-27, tag `v0.1.0-alpha.37`). count = **50 reason codes** — added HALT_UNKNOWN_SYMBOL per ADR 0057 SD-1 (T2). FSM states/events/transitions unchanged: 16/30/74.
 
 ## States (16)
 

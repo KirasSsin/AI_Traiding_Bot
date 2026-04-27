@@ -22,10 +22,11 @@ from src.analytics.dsr import compute_dsr_with_status
 from src.backtest.mc_permutation import block_bootstrap_p_value, sign_flip_p_value
 from src.risk.trade_history import TradeRecord
 
-# Pre-registered S22 synthetic benchmark per ADR 0055 SD-6 + sprint-22-4h-test.md.
-# T1 aggregate Sharpe (small-n + fold concentration). Future post-12mo review may
-# substitute с mean fold Sharpe = 2.96 if calibration ratio target unrealistic.
-S22_SYNTHETIC_SHARPE: float = 6.17
+# S37 T6 ADR 0056 amendment: mean fold Sharpe (conservative) replaces T1 aggregate (extreme).
+# Mean of S22 fold_sharpe_ratios [1.93, -2.92, 1.32, 12.70, 1.78] = 2.962
+# Original 6.17 was T1 aggregate inflated by fold #4 outlier (Sharpe=12.70 at n≈12 trades).
+# Conservative mean fold = realistic calibration ratio target ≥0.7.
+S22_SYNTHETIC_SHARPE: float = 2.96
 
 # Cumulative mean-reversion family hypothesis count per ADR 0055 SD-7:
 # S13 EMA crossover, S15 mean-reversion strict, S17 mean-reversion relaxed,
