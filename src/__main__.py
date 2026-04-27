@@ -34,6 +34,9 @@ from src.backtest.walk_forward import (
     WindowSplitter,
     evaluate_acceptance_gate,
 )
+from src.backtest.wfa_reporter import (
+    format_wfa_report,  # noqa: F401 — patched by tests/unit/test_main_wfa_cli.py
+)
 from src.execution.bybit.adapter import BybitMarketAdapter
 from src.execution.bybit.ws_private import BybitPrivateWSConsumer
 from src.execution.coordinator import Coordinator
