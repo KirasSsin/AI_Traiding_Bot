@@ -2,11 +2,39 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 33
-phase: between-sprints
-branch: main
+sprint: 34
+phase: 4-execution
+branch: feature/sprint-34-honest-close-v06-hybrid
 tag: v0.1.0-alpha.33
 ---
+
+## S34 IN PROGRESS 🟡 — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED
+
+**Operator chose hybrid** (merge A(a) + A(b) per S33 consilium consensus). Branch: `feature/sprint-34-honest-close-v06-hybrid`. Plan: `plans/2026-04-27-sprint-34-honest-close-v06-hybrid.md` (d89217f).
+
+### Phase tracking (S34 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S33 ship |
+| 2 Brainstorm | done | S34 consilium в `pre-s33-backlog.md` (acab8e3 main) — CONSENSUS A(b) primary / A(a) fallback / hybrid operator-chosen |
+| 3 Plan | done | `plans/2026-04-27-sprint-34-honest-close-v06-hybrid.md` (d89217f) |
+| 4 Execute | in_progress | T1-T5 controller-driven (~3-4h forecast, ~85 LoC + 2 ADRs) |
+| 5 Verify | pending | pytest 808 + mypy 0 + canonical + cross_trial reset verified |
+| 6 Review | pending (likely skip) | docs+minor code |
+| 7 Sync | pending | log.md + index/current-state |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.34 |
+| 9 Close | pending | SPRINT_STATE → between-sprints + v0.7+ deferred к operator |
+
+### Phase 4 — task progress (S34)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 Engineering pre-check (S33 data на amended gates) | pending | — | Verify outcome — most likely STILL FAIL (n_eff=26<<50) confirms honest close justified |
+| T2 ADR 0051 6-th honest close v0.6 + cross_trial archive + reset | pending | — | Mirror S14 ADR 0029 pattern + 6-hypothesis falsification record |
+| T3 ADR 0052 acceptance-criteria amendment + 10-item pre-commit list LOCKED | pending | — | T5=50 / n_eff≥50 / MC≤0.05 / T6+DSR unchanged + acceptance-criteria.md amendment section |
+| T4 n_eff gate enforcement в evaluate_acceptance_gate() + tests | pending | — | TDD ~30 LoC src + 50 LoC tests, backward-compat default |
+| T5 sprint-34 page + index/counts (50→52 ADRs / 37→38 sprints) | pending | — | Standard sync |
 
 ## S33 SHIPPED ✅ — Trading Restart, F BACKTEST FAIL conjoint
 
