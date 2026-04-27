@@ -68,15 +68,15 @@ jobs:
         run: ruff format --check src/ tests/ || echo "::warning::Ruff format drift — run \`ruff format src/ tests/\` locally"
 
       - name: Mypy --strict (informational baseline)
-        # 1 pre-existing error allowed (`__main__.py:636 bars_per_year_map redef`)
-        # carry-over к S33+. CI passes if mypy errors ≤ baseline.
+        # S33 T1: pre-existing mypy error fixed. New baseline = 0 errors.
+        # CI passes if mypy errors == 0 (strict).
         run: |
           set +e
           mypy --strict src/ 2>&1 | tee mypy-output.txt
           ERR_COUNT=$(grep -cE '^src/.*error:' mypy-output.txt || echo 0)
           echo "mypy errors: ${ERR_COUNT}"
-          if [ "${ERR_COUNT}" -gt 1 ]; then
-            echo "::error::Mypy regression — ${ERR_COUNT} errors > baseline 1"
+          if [ "${ERR_COUNT}" -gt 0 ]; then
+            echo "::error::Mypy regression — ${ERR_COUNT} errors > baseline 0 (S33 T1 cleared all pre-existing)"
             exit 1
           fi
           exit 0
@@ -90,17 +90,13 @@ jobs:
           set +e
           pytest tests/ -q --ignore=tests/integration --tb=short 2>&1 | tee pytest-output.txt
           PYTEST_EXIT=$?
-          # 3 pre-existing failures baseline (test_replay_long_only x2, test_replay_next_open x1)
-          # CI passes if pytest exit = 0 OR failures count ≤ baseline 3.
+          # S33 T1: 3 pre-existing failures FIXED. New baseline = 0 failures (strict).
           FAIL_COUNT=$(grep -cE '^FAILED ' pytest-output.txt || echo 0)
           echo "pytest failures: ${FAIL_COUNT}"
           if [ "${PYTEST_EXIT}" -eq 0 ]; then
             exit 0
-          elif [ "${FAIL_COUNT}" -le 3 ]; then
-            echo "::warning::Pytest baseline (${FAIL_COUNT} pre-existing failures) — passing as informational"
-            exit 0
           else
-            echo "::error::Pytest regression — ${FAIL_COUNT} failures > baseline 3"
+            echo "::error::Pytest regression — ${FAIL_COUNT} failures > baseline 0 (S33 T1 cleared all pre-existing)"
             exit 1
           fi
 
