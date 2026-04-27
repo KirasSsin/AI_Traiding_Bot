@@ -189,10 +189,27 @@ class RuntimeManager:
         # S36 T4 architecture-reviewer MEDIUM: instance-cache avoids per-tick DB round-trip.
         # Namespace key per domain-prefix convention (was "s35:activation_ts").
         if self._activation_ts is None:
-            activation_record = self._state_repo.get("runtime:halt_gate:activation_ts")
+            try:
+                activation_record = self._state_repo.get_signed(
+                    "runtime:halt_gate:activation_ts",
+                    hmac_key=self._settings.risk_override_hmac_key,
+                )
+            except ValueError as exc:
+                # S37 ADR 0057 SD-4: tampered activation_ts → halt fail-closed.
+                logger.error(
+                    "runtime.halt_gate_activation_ts_tampered",
+                    error=str(exc),
+                )
+                self._coordinator.request_halt(ReasonCode.HALT_UNKNOWN_SYMBOL)
+                self._stopping = True
+                return True
             if activation_record is None:
                 now = datetime.now(UTC)
-                self._state_repo.set("runtime:halt_gate:activation_ts", {"value": now.isoformat()})
+                self._state_repo.set_signed(
+                    "runtime:halt_gate:activation_ts",
+                    {"value": now.isoformat()},
+                    hmac_key=self._settings.risk_override_hmac_key,
+                )
                 self._activation_ts = now
             else:
                 self._activation_ts = datetime.fromisoformat(activation_record["value"])

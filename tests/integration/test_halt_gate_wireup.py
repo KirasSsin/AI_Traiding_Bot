@@ -185,13 +185,20 @@ def test_halt_gate_activation_ts_persisted_on_first_call(
 ) -> None:
     rm, _, _, _ = runtime_with_demo_active
     rm._check_halt_gate()
-    activation = rm._state_repo.get("runtime:halt_gate:activation_ts")
+    # S37 T3: activation_ts is HMAC-signed envelope per ADR 0057 SD-4.
+    activation = rm._state_repo.get_signed(
+        "runtime:halt_gate:activation_ts",
+        hmac_key=rm._settings.risk_override_hmac_key,
+    )
     assert activation is not None
     assert "value" in activation
     # Subsequent call should not overwrite
     first_ts = activation["value"]
     rm._check_halt_gate()
-    activation2 = rm._state_repo.get("runtime:halt_gate:activation_ts")
+    activation2 = rm._state_repo.get_signed(
+        "runtime:halt_gate:activation_ts",
+        hmac_key=rm._settings.risk_override_hmac_key,
+    )
     assert activation2 is not None
     assert activation2["value"] == first_ts
 
@@ -210,7 +217,11 @@ def test_halt_gate_dd_multiday_fires(
     now = datetime.now(UTC)
     # Pre-seed activation_ts 3 days ago — equity records placed AFTER activation
     activation = now - timedelta(days=3)
-    rm._state_repo.set("runtime:halt_gate:activation_ts", {"value": activation.isoformat()})
+    rm._state_repo.set_signed(
+        "runtime:halt_gate:activation_ts",
+        {"value": activation.isoformat()},
+        hmac_key=rm._settings.risk_override_hmac_key,
+    )
     # Peak 1500 (2 days ago, > 24h window — outside intraday but inside multiday)
     et.record(
         realized=Decimal("1500"),
@@ -241,7 +252,11 @@ def test_halt_gate_no_trade_timeout_fires_after_activation(
     """
     rm, coord, _, _ = runtime_with_demo_active
     seven_months_ago = datetime.now(UTC) - timedelta(days=7 * 30)
-    rm._state_repo.set("runtime:halt_gate:activation_ts", {"value": seven_months_ago.isoformat()})
+    rm._state_repo.set_signed(
+        "runtime:halt_gate:activation_ts",
+        {"value": seven_months_ago.isoformat()},
+        hmac_key=rm._settings.risk_override_hmac_key,
+    )
     halted = rm._check_halt_gate()
     assert halted is True
     coord.request_halt.assert_called_once_with(ReasonCode.HALT_S36_NO_TRADE_TIMEOUT)
