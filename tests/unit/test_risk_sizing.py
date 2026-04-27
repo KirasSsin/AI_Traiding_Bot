@@ -11,6 +11,7 @@ from src.risk.sizing import compute_qty
 # Basic correctness
 # ---------------------------------------------------------------------------
 
+
 def test_basic_value():
     """qty = (fraction * equity) / (k * atr) = (0.02 * 10000) / (1.5 * 500) = 200 / 750."""
     result = compute_qty(
@@ -18,6 +19,7 @@ def test_basic_value():
         fraction=Decimal("0.02"),
         atr=Decimal("500"),
         price=Decimal("40000"),
+        k=Decimal("1.5"),
     )
     expected = Decimal("200") / Decimal("750")
     assert abs(result - expected) < Decimal("0.0001")
@@ -29,6 +31,7 @@ def test_returns_decimal():
         fraction=Decimal("0.02"),
         atr=Decimal("500"),
         price=Decimal("40000"),
+        k=Decimal("1.5"),
     )
     assert isinstance(result, Decimal)
 
@@ -39,6 +42,7 @@ def test_result_non_negative():
         fraction=Decimal("0.01"),
         atr=Decimal("100"),
         price=Decimal("1000"),
+        k=Decimal("1.5"),
     )
     assert result >= Decimal("0")
 
@@ -47,12 +51,14 @@ def test_result_non_negative():
 # Defensive zero cases
 # ---------------------------------------------------------------------------
 
+
 def test_fraction_zero_returns_zero():
     result = compute_qty(
         equity=Decimal("10000"),
         fraction=Decimal("0"),
         atr=Decimal("500"),
         price=Decimal("40000"),
+        k=Decimal("1.5"),
     )
     assert result == Decimal("0")
 
@@ -63,6 +69,7 @@ def test_atr_zero_returns_zero():
         fraction=Decimal("0.02"),
         atr=Decimal("0"),
         price=Decimal("40000"),
+        k=Decimal("1.5"),
     )
     assert result == Decimal("0")
 
@@ -71,6 +78,7 @@ def test_atr_zero_returns_zero():
 # ValueError on negative inputs
 # ---------------------------------------------------------------------------
 
+
 def test_negative_equity_raises():
     with pytest.raises(ValueError):
         compute_qty(
@@ -78,6 +86,7 @@ def test_negative_equity_raises():
             fraction=Decimal("0.02"),
             atr=Decimal("500"),
             price=Decimal("40000"),
+            k=Decimal("1.5"),
         )
 
 
@@ -88,6 +97,7 @@ def test_negative_fraction_raises():
             fraction=Decimal("-0.01"),
             atr=Decimal("500"),
             price=Decimal("40000"),
+            k=Decimal("1.5"),
         )
 
 
@@ -98,6 +108,7 @@ def test_negative_atr_raises():
             fraction=Decimal("0.02"),
             atr=Decimal("-1"),
             price=Decimal("40000"),
+            k=Decimal("1.5"),
         )
 
 
