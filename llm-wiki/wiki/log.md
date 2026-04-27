@@ -2276,3 +2276,49 @@ Next session = S33 trading sprint preparation. Operator action ready (see ADR 00
 **Pattern established:** Future kit audits get NEW dated pages (kit-audit-YYYY-MM-DD.md). Re-audit recommended при S40+ OR after corpus > 100 obs.
 
 Next session = S33 trading sprint. **Kit improvement S32 series + audit COMPLETE.**
+
+## [2026-04-27] sprint-end | S33 — Trading Restart (F multi-symbol BACKTEST verdict FAIL conjoint)
+
+**S33 SHIPPING.** First trading sprint после S32 series. Tag v0.1.0-alpha.33. КУ avg ~55% / ~6-8 hours.
+
+**3-agent consilium ROUND 1 + ROUND 2 (trader-expert + trading-logic-reviewer + quant-stats-reviewer):** unanimous APPROVE 6 escalations + 13 required + 2 optional NEW items. Documented `pre-s33-backlog.md`.
+
+**6 tasks per ADR 0050:**
+- T1 (88b3670) Test debt fix (3 pytest + 1 mypy fix + 4H bars_per_year integration test verifies S27 T1 integrity end-to-end via `4H vs 1H Sharpe = sqrt(2190/8760) = 0.5` invariant)
+- T2 (807fce3) CC-D MC p-value fix BOTH formulas `(count+1)/(N+1)` per Phipson & Smyth 2010 / ADR 0015 в sign_flip_p_value:56 + block_bootstrap_p_value:96 + 7 Hypothesis property tests
+- T3 (804d99e) E DSR cross-trial extension (TrialEntry +symbol field with backfill BTCUSDT default + sigma_SR pooling protocol (a) all entries) — closes S14 Q2 REVISE carry-over
+- T4 (576621c) F preparation (WalkForwardRunner symbol kwarg + pre-validation + MEAN_REVERSION_S17_RELAXED_PARAMS named constant Item #5 anti-S15-recurrence guard + CLI args --wfa-train/test/folds/embargo)
+- T5 (18d6e99) F BACKTEST run (BTC+ETH+SOL 4H mean-reversion S17-relaxed, WFA train=1000/test=250 K=5 per CC6 (b)) — VERDICT FAIL conjoint
+- T6 (e126ab0) ADR 0050 + sprint-33 page + index/counts (49→50 ADRs / 36→37 sprints) + CI baseline tightened к 0 (mypy + pytest от 1/3 → 0/0)
+
+**F BACKTEST VERDICT: FAIL conjoint (5/9 acceptance gates failed).**
+
+| Criterion | Result | Pass? |
+|-----------|--------|-------|
+| T1 Sharpe OOS 8.47 / T2 Sortino 17.44 / T3 Max DD 0.025 / T4 Win 42% / RR 2.16 | ✓ ✓ ✓ ✓ |
+| T5 n_trades raw=66 / n_eff=26 (correlation-deflated rho=0.75 / Kish 1965) | ✗ ✗ |
+| T6 OOS/IS Sharpe ratio mean=-2.84 | ✗ |
+| MC p=0.52 / DSR=0.919 | ✗ ✗ |
+
+Per-symbol: BTC=23 trades (-4.40 mean fold Sharpe, fold #3 catastrophic -32.68) / ETH=25 (-3.85 all folds negative) / SOL=18 (-0.28 best). Cross-trial sigma_SR pooled=2.24 (3 entries protocol (a)).
+
+**Pre-committed failure branch (Item #12) TRIGGERED → S34 = 6-th honest close v0.6 (mirror S14/S16/S18/S21/S23 BINDING precedent) OR operator-driven spec amendment с explicit statistical-framework override statement.**
+
+Strategic finding: multi-symbol expansion path empirically falsified — correlation deflation prevents T5 reachability even с 3-symbol aggregation (n_eff=26 << 100).
+
+**Phase 5 Verify outcome:**
+- pytest: 803 passed (was 773 = +5 T1 + 7 T2 + 10 T3 + 5 T4 + 3 fixed pre-existing failures)
+- mypy --strict: 0 errors (was 1 pre-existing — fixed T1)
+- canonical counts: 16/30/74/45 ✓
+- cross_trial_sharpes.json: 3 entries (S33 BTC/ETH/SOL)
+- F measurement.json: verdict=FAIL, dsr=0.919, n_eff=26
+
+**Phase 6 Review skipped** per Item #15 reviewer dispatch plan (S33 = config + tests + docs sprint, no production trading code logic changes).
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.33. CI runs 5th PR (S32b infrastructure validates strict baselines first time).
+
+**Carry-overs к S34:** 6-th honest close v0.6 trigger documented в ADR 0050 Follow-ups section. Operator decides override OR default path.
+
+**Items satisfied S33:** #1-#3 / #5-#13 / #15. Items deferred: #4 (LOCKED documented), #14 (optional ruff drift).
+
+Next session = operator decides S34 direction (default 6-th honest close OR override).
