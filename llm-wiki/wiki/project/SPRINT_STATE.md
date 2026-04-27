@@ -2,11 +2,57 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 32d
-phase: between-sprints
-branch: main
+sprint: 32e
+phase: 4-execution
+branch: feature/sprint-32e-kit-audit-doc-sync
 tag: v0.1.0-alpha.32d
 ---
+
+## S32e IN PROGRESS 🟡 — Kit Audit + Doc Sync
+
+Sub-sprint S32 series **post-completion audit** (operator initiated). Branch: `feature/sprint-32e-kit-audit-doc-sync`. Plan: `plans/2026-04-27-sprint-32e-kit-audit-doc-sync.md` (899d227).
+
+**Pre-plan empirical findings:**
+- Doc drift: kit-overview-ru "Best practices" section MCP=6 stale (real 8) / Subagents=9 stale (real 11)
+- File size: tooling-inventory-ru.md = **60KB exceeds 50KB safe Read threshold** (CLAUDE.md sec 9 BINDING) → MUST SPLIT
+- Reviewer agents: All 11 NEEDED (5 active + 5 dormant ready / 1 = bybit-api-reviewer NEW). NO removals.
+- Hooks: All 7 push + 2 UPS + 1 SS NEEDED. ALL ACTIVE.
+- MCP: 6/8 active or ready / 2/8 (computer-use + Claude_in_Chrome) not used trading но harmless overhead — keep. NO removals.
+- Skills: All 5 project + ~50 plugin NEEDED.
+
+**5 changes scope:**
+- T1 NEW kit-audit-2026-04-27.md
+- T2 Fix kit-overview drift
+- T3 Split tooling-inventory (60KB → 2 files < 50KB)
+- T4 Update CLAUDE.md Read guard
+- T5 ADR 0049 + sprint-32e page + sync
+
+КУ ~50% / ~2 hours forecast.
+
+### Phase tracking (S32e — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S32d ship |
+| 2 Brainstorm | skipped (operator-specified audit task) | inline pre-plan analysis |
+| 3 Plan | done | `plans/2026-04-27-sprint-32e-kit-audit-doc-sync.md` (899d227) |
+| 4 Execute | in_progress | T1-T5 controller-driven |
+| 5 Verify | done | pytest 773 (S32d baseline) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / **file split verify: tooling-inventory-ru.md 41KB ✓ + tooling-inventory-ru-part-2.md 24KB ✓** (both < 50KB threshold) |
+| 6 Review | pending (likely skip) | no src/ touched |
+| 7 Sync | pending | log.md sprint-end + index/current-state в T5 |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.32e (CI 4th PR) |
+| 9 Close | pending | SPRINT_STATE → between-sprints |
+
+### Phase 4 — task progress (S32e)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 kit-audit-2026-04-27.md NEW | pending | — | Audit findings: 11 agents + 8 hooks + 8 MCP + 5 project skills + ~50 plugin usage |
+| T2 Fix kit-overview drift | pending | — | "Best practices applied" MCP 6→8, Subagents 9→11 |
+| T3 Split tooling-inventory-ru.md | pending | — | 60KB → part 1 (Sections 1-13) + part 2 (Sections 14-24) per CLAUDE.md sec 9 |
+| T4 CLAUDE.md Read guard update | pending | — | tooling-inventory split — both parts < 50KB safe to Read full |
+| T5 ADR 0049 + sprint-32e page + sync | pending | — | 48→49 ADRs / 35→36 sprints + audit doc + part-2 |
+| Ship | pending | — | tag v0.1.0-alpha.32e |
 
 ## S32d SHIPPED ✅ — S32 SERIES COMPLETE 🎉
 

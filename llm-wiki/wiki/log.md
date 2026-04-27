@@ -2166,3 +2166,52 @@ Test debt carry-over к S33+ (либо в S33 либо отдельный cleanu
 Trading carry-overs (BLOCKED — operator decisions ESC-1/2/3 required).
 
 **S32 series Kit Improvement COMPLETE. Next session = S33 trading work. Operator: ready brainstorm.**
+
+## [2026-04-27] sprint-end | S32e — Kit Audit + Doc Sync (post-S32 series review)
+
+**S32e SHIPPING.** Sub-sprint S32 series post-completion audit. Tag v0.1.0-alpha.32e. КУ avg ~48% / ~2 hours.
+
+**Operator request:** "проведём ревью кита, проверим всё ли используется, всё ли нужно если нет — почему, обновим документацию".
+
+**Pre-plan empirical findings:**
+1. Doc drift: kit-overview-ru "Best practices" section MCP=6 stale (real 8) + Subagents=9 stale (real 11)
+2. File size violation: tooling-inventory-ru.md = 60KB exceeds 50KB safe Read threshold (CLAUDE.md sec 9 BINDING)
+3. **All components NEEDED** — empirical analysis показал: 11 reviewer agents (5 dormant ready S33+) / 7 push hooks + 2 UPS + 1 SS all active / 8 MCP (6 active+ready / 2 harmless overhead) / 5 project skills (3 active + 2 dormant/explicit) / ~50 plugin skills heavy use. **NO removals justified.**
+
+**5 changes per ADR 0049:**
+- T1 (af3991e) NEW kit-audit-2026-04-27.md (203 lines) — full audit findings: 11 reviewer agents detailed status + 10 hooks active verification + 8 MCP usage analysis + 5 project skills + ~50 plugin skills + doc drift findings + recommendations
+- T2 (cf293c7) Fix kit-overview-ru drift — Best practices section MCP 6→8 / Subagents 9→11 / Hooks → 7+2+1 / Skills 26→36 + audit page link
+- T3 (d5d6773) Split tooling-inventory-ru.md (60KB → part 1 41KB Sections 1-13 + part 2 24KB Sections 14-24 NEW) per CLAUDE.md sec 9 size threshold
+- T4 (e7d7e09) Update llm-wiki/CLAUDE.md — tooling-inventory split references (part 1 + part 2) + Read guard size example + kit-audit page link
+- T5 (5cc1eac) ADR 0049 + sprint-32e page + index/counts (48→49 ADRs / 35→36 sprints / + 2 architecture pages kit-audit + tooling-inventory-part-2)
+
+**Phase 5 Verify outcome:**
+- pytest: 773 passed (S32d baseline preserved)
+- mypy: 1 pre-existing error
+- canonical counts: 16/30/74/45 ✓
+- File split verify: part 1 41KB ✓ + part 2 24KB ✓ (both < 50KB threshold)
+
+**Phase 6 Review skipped** — config + docs sprint, no production src/ touched.
+
+**Audit conclusion (per kit-audit-2026-04-27.md):**
+
+| Category | Count | Status |
+|----------|-------|--------|
+| Reviewer agents | 11 | ✅ All NEEDED — 1 ACTIVE + 10 DORMANT/READY |
+| Push hooks | 7 | ✅ All ACTIVE (verified S32 series) |
+| UserPromptSubmit hooks | 2 | ✅ All ACTIVE |
+| SessionStart hooks | 1 | ✅ ACTIVE |
+| MCP servers | 8 | ✅ 6 active/ready + 2 (computer-use/Claude_in_Chrome) harmless overhead |
+| Project skills | 5 | ✅ All NEEDED — 3 ACTIVE + 2 DORMANT/EXPLICIT |
+| Plugin skills | ~50 | ✅ All NEEDED |
+| **Recommendations** | — | **NO REMOVALS. Doc updates only.** |
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.32e. CI 4th PR validation.
+
+**Carry-overs к S33+ (same as ADR 0048):**
+- 3 pytest failures + 1 mypy error + ~169 ruff baseline cleanup
+- ESC-1/2/3 (BLOCKED — operator)
+
+**Pattern established:** Future audits get NEW dated pages (kit-audit-YYYY-MM-DD.md) для historical comparison.
+
+Next session = S33 trading sprint preparation. Operator action ready (see ADR 0048 follow-ups).
