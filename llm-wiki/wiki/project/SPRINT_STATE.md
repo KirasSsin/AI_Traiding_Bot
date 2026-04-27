@@ -3,29 +3,29 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 37
-phase: 3-planning
+phase: 8-ship
 branch: feature/sprint-37-carry-overs-hardening
 tag: pending
 ---
 
-## S37 IN PROGRESS 🟡 — Carry-overs Hardening (security HIGH + trading-logic + quant + playbook)
+## S37 READY TO SHIP — Carry-overs Hardening (security HIGH + trading-logic + quant + playbook)
 
 **Operator approved ROUND 5 consilium binding** — (c) carry-overs sprint first, then S38 δ activate. 8 tasks consilium-merged.
 
-Branch: `feature/sprint-37-carry-overs-hardening`. Plan: `plans/2026-04-27-sprint-37-carry-overs-hardening.md` (TBD).
+Branch: `feature/sprint-37-carry-overs-hardening`. Plan: `plans/2026-04-27-sprint-37-carry-overs-hardening.md`.
 
-### Phase tracking (S37 — in progress)
+### Phase tracking (S37 — all done)
 
 | Phase | Status | Artifact |
 |-------|--------|----------|
 | 1 Orient | done | session continuation post-S36 ship |
 | 2 Brainstorm | done | ROUND 5 consilium 3 agents CONSENSUS — `pre-s37-backlog.md` (6 pre-commitments + EXPAND scope: HALT_UNKNOWN_SYMBOL ReasonCode +1 / calibration baseline 6.17→2.96 / ADR 0056 amendment) |
-| 3 Plan | in_progress | `plans/2026-04-27-sprint-37-carry-overs-hardening.md` |
-| 4 Execute | in_progress | T1-T6 done. T7 done (63ddac6 — delta-activation-playbook.md 243 lines: pre-checklist + 5 steps + monitoring + halt response + DSR guide + 12mo review). T8 pending (sprint page + counts + ship). |
-| 5 Verify | pending | pytest expected ~889 / mypy 0 / canonical 16/30/74/**50** (reason codes 49→50) |
-| 6 Review | pending | per task reviewer dispatch |
-| 7 Sync | pending | wiki updates в T8 |
-| 8 Ship | pending | tag v0.1.0-alpha.37 |
+| 3 Plan | done | `plans/2026-04-27-sprint-37-carry-overs-hardening.md` |
+| 4 Execute | done | T1-T8 all done. 17 commits. 26 NEW tests. |
+| 5 Verify | done | pytest 897 unit + 33 integration / mypy 0 / canonical 16/30/74/50 / anti-snooping preserved |
+| 6 Review | done | T2 security-auditor + trading-logic-reviewer parallel (BLOCKER+HIGH fixed inline e686dba). T3-T7 skipped per pattern. |
+| 7 Sync | done | T8 wiki sync: sprint-37 + index + current-state + reason-codes + ESM footer + log + CI bump 49→50 |
+| 8 Ship | in_progress | gh pr + squash merge + tag v0.1.0-alpha.37 |
 | 9 Close | pending | SPRINT_STATE between-sprints + δ activate operator action |
 
 ### S37 critical pre-commitments (BINDING per ROUND 5 consilium)

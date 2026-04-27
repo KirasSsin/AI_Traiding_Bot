@@ -2478,3 +2478,19 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - δ infrastructure WIRED LIVE — operator sets S35_DEMO_ACTIVE=true к activate
 - 10 carry-overs persisted в pre-s37-backlog
 - SPRINT_STATE → between-sprints
+
+## [2026-04-27] sprint-end | S37 — carry-overs hardening
+- Tag v0.1.0-alpha.37
+- ROUND 5 consilium binding executed (3 agents CONSENSUS — (c) carry-overs first, expanded scope)
+- T1 ADR 0057 + ADR 0056 amendment LOCKED pre-commit (anti-snooping)
+- T2 Security #1+#2: symbol whitelist + fail-closed + HALT_UNKNOWN_SYMBOL (49→50) + case normalization
+- T3 Security #3: activation_ts HMAC integrity per ADR 0018 pattern
+- T4 Trading-logic #4: clock injection per ADR 0057 SD-5 (S8a precedent)
+- T5 Trading-logic #5: Coordinator.symbol public property + fixture migration
+- T6 Quant #8: DSR boundary tests + S22 baseline 6.17→2.96
+- T7 Operator playbook: delta-activation-playbook.md (243 lines)
+- T8 sync (this entry)
+- 26 NEW tests / pytest 897 unit + 33 integration / mypy 0 / canonical 16/30/74/50
+- delta TESTNET production-ready — operator sets S35_DEMO_ACTIVE=true per playbook
+- Carry-overs к S38+: Items 6+7+9+10 deferred (months_since doc + Demeter refactor + Sharpe semantics + extended scenarios)
+- ADR 0057 (56 → 57)

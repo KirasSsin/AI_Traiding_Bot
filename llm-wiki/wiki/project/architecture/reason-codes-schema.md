@@ -120,7 +120,8 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14]
         "HALT_FLASH_CRASH","HALT_DATA_QUALITY","HALT_EXCHANGE_OUTAGE",
         "HALT_KILL_SWITCH",
         "HALT_S36_DD_INTRADAY","HALT_S36_DD_MULTIDAY",
-        "HALT_S36_CONSECUTIVE_LOSSES","HALT_S36_NO_TRADE_TIMEOUT"
+        "HALT_S36_CONSECUTIVE_LOSSES","HALT_S36_NO_TRADE_TIMEOUT",
+        "HALT_UNKNOWN_SYMBOL"
       ]
     },
     "notes": {"type": "string", "maxLength": 2048},
@@ -186,14 +187,15 @@ Old records остаются immutable; chain NOT regenerated.
 
 ## Reason codes count
 
-**Current total: 49** (45 baseline + 4 HALT_S36_* added S36 T5 per ADR 0055 SD-4).
+**Current total: 50** (45 baseline + 4 HALT_S36_* added S36 T5 per ADR 0055 SD-4 + 1 HALT_UNKNOWN_SYMBOL S37 T2 per ADR 0057 SD-1).
 
 | Sprint | Added | Count | Description |
 |--------|-------|-------|-------------|
 | S1-S6 | +39 | 39 | Foundation codes |
 | S7 | +3 | 42 | HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE + EXIT_RECONCILE_DETECTED |
 | S8a | +3 | 45 | HALT_RUNTIME_CRASH + HALT_BAR_POLL_STALL + KILL_SWITCH_REQUESTED |
-| S36 T5 | +4 | **49** | HALT_S36_DD_INTRADAY(46) + HALT_S36_DD_MULTIDAY(47) + HALT_S36_CONSECUTIVE_LOSSES(48) + HALT_S36_NO_TRADE_TIMEOUT(49) |
+| S36 T5 | +4 | 49 | HALT_S36_DD_INTRADAY(46) + HALT_S36_DD_MULTIDAY(47) + HALT_S36_CONSECUTIVE_LOSSES(48) + HALT_S36_NO_TRADE_TIMEOUT(49) |
+| S37 T2 | +1 | **50** | HALT_UNKNOWN_SYMBOL(50) — fail-closed symbol whitelist per ADR 0057 SD-1+SD-2 |
 
 ## Related
 

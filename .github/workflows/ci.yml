@@ -111,7 +111,7 @@ jobs:
               'transitions': len(TRANSITIONS),
               'reason_codes': len(list(ReasonCode)),
           }
-          expected = {'states': 16, 'events': 30, 'transitions': 74, 'reason_codes': 49}
+          expected = {'states': 16, 'events': 30, 'transitions': 74, 'reason_codes': 50}
           if counts != expected:
               print(f'::error::Canonical counts drift! Got {counts}, expected {expected}')
               exit(1)
