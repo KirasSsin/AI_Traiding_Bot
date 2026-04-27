@@ -1,0 +1,95 @@
+{
+  "strategy": "DonchianBreakoutStrategy",
+  "params": {
+    "lookback_n": 20,
+    "exit_lookback_n": 10,
+    "atr_period": 14,
+    "atr_stop_mult": "2.0",
+    "signal_side_mode": "long_only"
+  },
+  "symbol": "BTCUSDT",
+  "timeframe": "4h",
+  "period": {
+    "start": "2023-01-01",
+    "end": "2026-04-26",
+    "n_bars": 7273
+  },
+  "wfa": {
+    "train_bars": 1000,
+    "test_bars": 250,
+    "embargo_bars": 20,
+    "k_folds": 5
+  },
+  "n_trades_raw": 21,
+  "n_trades_n_eff": 21,
+  "fold_oos_is_sharpe_ratios": [
+    -4.956514687479239,
+    -4.253278032643607,
+    -0.5390050032863009,
+    6.263670788316963,
+    -1.2458805888381377
+  ],
+  "aggregate_oos_sharpe": -0.9462015047860642,
+  "mc_p_value": 0.013993003498250875,
+  "dsr": 1.5733875398498498e-37,
+  "sigma_sr_cross_trial": 4.451326824989814,
+  "n_trials_counter": 5,
+  "metrics": {
+    "t1_sharpe_oos": -27.203981975111546,
+    "t2_sortino_oos": -32.01892936471305,
+    "t3_max_drawdown": 0.03545587155194153,
+    "t4_win_rate": 0.09523809523809523,
+    "t4_avg_rr": 2.5123900022281624,
+    "t5_n_trades": 21,
+    "t5_mean_pnl_pct": -0.01692013488669219,
+    "t5_t_stat": -2.6639131910028744,
+    "t6_oos_is_sharpe_ratio_mean": -0.9462015047860641
+  },
+  "acceptance_gate": {
+    "passed": false,
+    "sharpe_gate_passed": false,
+    "mc_gate_passed": true,
+    "failed_folds": [
+      0,
+      1,
+      2,
+      4
+    ],
+    "failed_criteria": [
+      "n_eff_threshold",
+      "t5_floor",
+      "sharpe_gate"
+    ],
+    "fold_sharpe_ratios": [
+      -4.956514687479239,
+      -4.253278032643607,
+      -0.5390050032863009,
+      6.263670788316963,
+      -1.2458805888381377
+    ],
+    "mc_p_value": 0.013993003498250875,
+    "n_trades_raw": 21,
+    "n_trades_n_eff": 21,
+    "thresholds": {
+      "sharpe": 0.7,
+      "p_value": 0.05,
+      "n_eff_threshold": 50,
+      "t5_floor": 50
+    }
+  },
+  "thresholds": {
+    "sharpe_per_fold": 0.7,
+    "mc_p_value": 0.05,
+    "n_eff": 50,
+    "t5_floor": 50,
+    "dsr": 0.95
+  },
+  "verdict": "FAIL",
+  "failed_criteria": [
+    "n_eff_threshold",
+    "t5_floor",
+    "sharpe_gate",
+    "dsr_threshold"
+  ],
+  "ran_at": "2026-04-27T04:35:33.903227+00:00"
+}

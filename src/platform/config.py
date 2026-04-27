@@ -33,6 +33,11 @@ _HASH_ALLOWLIST: frozenset[str] = frozenset(
         "risk_kelly_phase2_cap",
         "risk_kelly_phase3_cap",
         "risk_kelly_phase4_cap",
+        # S35 T2 — δ TESTNET halt criteria (architecture-reviewer T2 carry: ADR 0018 H1)
+        "s35_halt_dd_intraday",
+        "s35_halt_dd_multiday",
+        "s35_halt_consecutive_losses",
+        "s35_halt_no_trade_months",
     }
 )
 
@@ -45,6 +50,11 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        # S35 T2 security-auditor HIGH #1 — close runtime-mutation bypass of money-path
+        # invariants (`_live_trading_guards`, `_validate_s35_demo_mainnet_exclusion`).
+        # validate_assignment re-runs validators on every attribute set, preventing
+        # post-construction `settings.live_trading = True` from skipping pre-commit #1.
+        validate_assignment=True,
     )
 
     # Bybit credentials (REQUIRED — no defaults; CWE-798)
@@ -78,7 +88,49 @@ class Settings(BaseSettings):
 
     # Risk-module parameters (Sprint 4 Task 2 — locked design)
     risk_max_position_pct_cap: Decimal = Decimal("0.05")
-    risk_sl_atr_multiplier: Decimal = Decimal("1.5")
+    risk_sl_atr_multiplier: Decimal = Field(
+        default=Decimal("1.5"),
+        gt=Decimal("0"),
+        description=(
+            "Stop-loss distance в ATR multiples (k в qty = (f * equity) / (k * atr)). "
+            "S35 ζ refactor: explicit setting (no hard-coded sizing.compute_qty default). "
+            "Calibration range 1.0-2.0 × ATR per ADR 0007. gt=0 prevents ZeroDivisionError "
+            "downstream (per S35 T1 trading-logic-reviewer C1 hardening)."
+        ),
+    )
+    # Sprint 35 — δ TESTNET live demo (ADR 0053 LOCKED, pre-s35-backlog ROUND 3 binding)
+    s35_demo_active: bool = Field(
+        default=False,
+        description=(
+            "S35 δ TESTNET live demo flag. When True, HaltGate activates "
+            "S35-specific halt criteria (DD bounds, consecutive losses, no-trade timeout). "
+            "MUST be False on MAINNET (live_trading=True invariant violated otherwise)."
+        ),
+    )
+    s35_halt_dd_intraday: Decimal = Field(
+        default=Decimal("0.20"),
+        gt=Decimal("0"),
+        le=Decimal("0.50"),
+        description="S35 δ intraday DD halt threshold (-20% per pre-commit ROUND 3).",
+    )
+    s35_halt_dd_multiday: Decimal = Field(
+        default=Decimal("0.15"),
+        gt=Decimal("0"),
+        le=Decimal("0.50"),
+        description="S35 δ multi-day DD halt threshold (-15% per pre-commit ROUND 3).",
+    )
+    s35_halt_consecutive_losses: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="S35 δ consecutive losing trades trigger operator review.",
+    )
+    s35_halt_no_trade_months: int = Field(
+        default=6,
+        ge=1,
+        le=24,
+        description="S35 δ months без n>=30 closed trades → halt + S36 honest close.",
+    )
     risk_tp_atr_multiplier: Decimal = Decimal("3.0")
     risk_cb_l1_dd: Decimal = Decimal("0.15")
     risk_cb_l2_dd: Decimal = Decimal("0.22")
@@ -173,6 +225,39 @@ class Settings(BaseSettings):
             raise ValueError("live_trading requires testnet=False (mainnet-only)")
         return self
 
+    @model_validator(mode="after")
+    def _validate_s35_demo_mainnet_exclusion(self) -> "Settings":
+        """S35 pre-commit #1: δ is TESTNET ONLY. Block any path к MAINNET.
+
+        Per pre-s35-backlog.md ROUND 3 binding pre-commitment #1 LOCKED. Verbatim:
+        "δ is TESTNET ONLY. No MAINNET until 12-month TESTNET evidence reviewed."
+
+        Two checks per S35 T2 security-auditor HIGH #2:
+          1. Block live_trading=True (mainnet routing flag)
+          2. Block testnet=False (Bybit endpoint flag — adapter routes by `testnet`,
+             not just live_trading; testnet=False alone routes к MAINNET endpoint
+             with real-money creds even если live_trading=False)
+
+        Mistake here = real MAINNET activation = capital loss risk.
+
+        Implicit ordering note: depends on `_live_trading_guards` running first
+        (per architecture-reviewer C4). Pydantic v2 `mode="after"` validators run
+        в declaration order — DO NOT reorder без verifying invariant chain.
+        """
+        if self.s35_demo_active and self.live_trading:
+            raise ValueError(
+                "S35 δ TESTNET demo cannot run на MAINNET (live_trading=True). "
+                "Set live_trading=False (testnet=True) OR disable s35_demo_active. "
+                "Per pre-s35-backlog.md pre-commitment #1 LOCKED."
+            )
+        if self.s35_demo_active and not self.testnet:
+            raise ValueError(
+                "S35 δ TESTNET demo requires testnet=True (Bybit endpoint flag). "
+                "testnet=False routes к MAINNET endpoint regardless of live_trading. "
+                "Per pre-s35-backlog.md pre-commitment #1 LOCKED."
+            )
+        return self
+
     def config_hash(self) -> str:
         """SHA-256 over the risk-threshold allowlist only.
 
@@ -185,7 +270,5 @@ class Settings(BaseSettings):
 
         data = self.model_dump(mode="json")
         risk_only = {k: data[k] for k in sorted(_HASH_ALLOWLIST) if k in data}
-        canonical = json.dumps(
-            risk_only, sort_keys=True, separators=(",", ":"), default=str
-        )
+        canonical = json.dumps(risk_only, sort_keys=True, separators=(",", ":"), default=str)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

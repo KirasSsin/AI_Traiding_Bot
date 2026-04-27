@@ -52,6 +52,19 @@ def test_config_hash_is_deterministic(settings: Settings) -> None:
     assert len(h1) == 64  # SHA-256 hex
 
 
+def test_s35_halt_thresholds_in_hash_allowlist() -> None:
+    """S35 T5 architecture-reviewer carry: halt thresholds = risk-decision fields,
+    must be in config_hash to invalidate stale CB overrides if changed mid-demo."""
+    from src.platform.config import _HASH_ALLOWLIST
+
+    assert "s35_halt_dd_intraday" in _HASH_ALLOWLIST
+    assert "s35_halt_dd_multiday" in _HASH_ALLOWLIST
+    assert "s35_halt_consecutive_losses" in _HASH_ALLOWLIST
+    assert "s35_halt_no_trade_months" in _HASH_ALLOWLIST
+    # s35_demo_active is mode flag, not risk threshold — NOT в allowlist
+    assert "s35_demo_active" not in _HASH_ALLOWLIST
+
+
 def test_config_hash_changes_with_value(tmp_path: Path) -> None:
     common = dict(
         data_dir=tmp_path / "data",
