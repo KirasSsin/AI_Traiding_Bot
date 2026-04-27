@@ -83,3 +83,28 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 - [[../../trading/concepts/deflated-sharpe-ratio]]
 - [[../../trading/concepts/monte-carlo-permutations]]
 - [[risk-register]]
+
+---
+
+## S34 Amendment (LOCKED ADR 0052 — pending operator acknowledgment for v0.7+ resumption)
+
+Per S34 consilium consensus + ADR 0052 LOCKED:
+
+| Threshold | v0.5 (original) | v0.7+ (amended LOCKED) |
+|-----------|----------------|-----------------------|
+| T5 n_trades raw floor | 100 | **50** |
+| T5 n_eff threshold (NEW) | N/A | **≥ 50** (Kish 1965 mandatory) |
+| MC p-value threshold | ≤ 0.10 | **≤ 0.05** (tightened) |
+| T6 OOS/IS Sharpe ratio | ≥ 0.7 | ≥ 0.7 UNCHANGED |
+| DSR | ≥ 0.95 | ≥ 0.95 UNCHANGED |
+| acceptance_gate.sharpe_gate_passed | per-fold strict | UNCHANGED |
+
+**LOCKED — no further modifications without new ADR + operator written acknowledgment.**
+
+**Operator acknowledgment required (template per ADR 0052):**
+
+> "Statistical evidence as of v0.6 DOES NOT support live deployment; this amendment reflects crypto-specific sample-size reality (Hudson & Urquhart 2021), not evidence of positive edge."
+
+See [[../decisions/0052-sprint-34-acceptance-criteria-amendment]] для full rationale + 10-item pre-commit list + operator acknowledgment template.
+
+**S34 T1 pre-check outcome:** S33 data на amended gates STILL FAILS 4/5 (n_eff 26<<50, MC 0.52>>0.05, T6 -2.84<<0.7, DSR 0.919<0.95). Amendment alone insufficient — future resumption requires NEW measurement sprint.

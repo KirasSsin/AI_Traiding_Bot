@@ -2356,3 +2356,47 @@ Next session = operator decides S34 direction (default 6-th honest close OR over
 Next session = operator decides S34 direction:
 - DEFAULT: 6-th honest close v0.6 ADR + cross_trial_sharpes archive к _v0.6.json + reset
 - OVERRIDE: operator-driven explicit statistical-framework override statement + spec amendment
+
+## [2026-04-27] sprint-end | S34 — Hybrid 6-th honest close v0.6 + acceptance-criteria amendment LOCKED
+
+**S34 SHIPPING.** Operator chose hybrid path post-S33 consilium (merge A(a) honest close + A(b) amendment). Tag v0.1.0-alpha.34. КУ avg ~47% / ~3 hours. **Both consilium recommendations honored.**
+
+**5 tasks:**
+- T1 (a2e455b) Engineering pre-check: S33 data на amended gates (T5=50/n_eff≥50/MC≤0.05/T6+DSR unchanged) STILL FAILS 4/5 (T5 raw 66 PASS / n_eff 26<<50 / MC 0.52>>0.05 / T6 -2.84<<0.7 / DSR 0.919<0.95). Confirms 6-th honest close v0.6 fully justified.
+- T2 (b1ae20f) ADR 0051 6-th honest close v0.6 (mirror S14/S16/S18/S21/S23 BINDING precedent) + cross_trial_sharpes archive к _v0.6.json (3 S33 entries) + reset `{}` + 6-hypothesis falsification record + structural insights binding (T5=100 single-symbol unreachable / multi-symbol n_eff deflation rho=0.75 / Hudson&Urquhart 2021 validated 3rd time / strategy edge regime-INDEPENDENT preserved).
+- T3 (40f9c6f) ADR 0052 acceptance-criteria amendment LOCKED + acceptance-criteria.md amendment section (T5 floor 100→50 / n_eff threshold ≥50 NEW Kish 1965 mandatory / MC tightened ≤0.05 / T6+DSR+acceptance_gate unchanged) + 10-item pre-commit list verbatim per consilium + operator acknowledgment template (Hudson & Urquhart 2021 cite + statistical evidence does NOT support live deployment).
+- T4 (ffcf9bc) evaluate_acceptance_gate() extended с n_trades_raw/n_trades_n_eff/n_eff_threshold/t5_floor optional kwargs (backward-compat default — existing v0.5 callers preserved) + 5 NEW tests test_acceptance_gate_amendment.
+- T5 (f9b6e42) sprint-34 page + index/counts (50→52 ADRs / 37→38 sprints + amendment note).
+
+**Phase 5 Verify outcome:**
+- pytest: 808 passed (was 803 = +5 T4 NEW tests)
+- mypy --strict: 0 errors preserved
+- canonical counts: 16/30/74/45 ✓
+- cross_trial.json: `{"trials": []}` (reset) ✓
+- archive _v0.6.json: 3 S33 entries ✓
+- acceptance-criteria amendment section ✓
+- pre-check overall_pass=False (4/5 amended gates fail) ✓
+
+**Phase 6 Review skipped** — config + docs sprint + minor code (backward-compat default).
+
+**Strategic state post-S34:**
+- 6 prior strategy hypotheses tested (S13/S15/S17/S20/S22/S33) — все FAIL conjoint
+- T5=100 STRUCTURALLY UNREACHABLE single-symbol BTC (3 timeframes 60-73 trades)
+- Multi-symbol expansion EMPIRICALLY FALSIFIED (correlation deflation rho=0.75 → n_eff=26 << T5)
+- Strategy edge regime-INDEPENDENT (S17+S22 partial PASS) preserved as institutional knowledge
+- Hudson & Urquhart 2021 empirically validated 3rd time
+- Amendment LOCKED для future resumption (ADR 0052)
+- 10-item pre-commit list LOCKED верbatim per consilium
+- Operator acknowledgment template mandatory verbatim в S35+ resumption ADR
+- Anti-snooping discipline preserved — amendment LOCKED ДО measurement
+
+**Phase 8 Ship pending:** PR + squash merge + tag v0.1.0-alpha.34. CI runs 6th PR (strict baselines).
+
+**v0.7+ direction (operator decides — NO pre-commitment в этом sprint):**
+- (a) Project pause indefinitely
+- (b) Run new measurement с amended spec (operator acknowledgment + new data + new sprint S35+)
+- (c) Different strategy class (Donchian / ML / HMM)
+- (d) Different timeframe (1D с volume gate) — NOT recommended
+- (e) Different asset class — beyond v0.1 scope
+
+Next session = operator decides v0.7+ path.

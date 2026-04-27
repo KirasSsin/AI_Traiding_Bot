@@ -1,0 +1,46 @@
+{
+  "test": "S33 data \u043d\u0430 S34 amended gates pre-check",
+  "amendment_per_consilium_S34": {
+    "T5_FLOOR": "100 \u2192 50",
+    "N_EFF_FLOOR": "NEW \u2265 50",
+    "MC_THRESHOLD": "0.10 \u2192 0.05 (tightened)",
+    "T6_THRESHOLD": "0.7 UNCHANGED",
+    "DSR_THRESHOLD": "0.95 UNCHANGED"
+  },
+  "S33_actual_values": {
+    "n_raw": 66,
+    "n_eff": 26,
+    "mc_p": 0.5197,
+    "t6_oos_is_sharpe_ratio_mean": -2.8422,
+    "dsr": 0.9193
+  },
+  "per_gate_outcome": {
+    "T5_raw": {
+      "value": 66,
+      "threshold": 50,
+      "pass": true
+    },
+    "T5_n_eff": {
+      "value": 26,
+      "threshold": 50,
+      "pass": false
+    },
+    "MC_p": {
+      "value": 0.5197,
+      "threshold": 0.05,
+      "pass": false
+    },
+    "T6_OOS_IS": {
+      "value": -2.8422,
+      "threshold": 0.7,
+      "pass": false
+    },
+    "DSR": {
+      "value": 0.9193,
+      "threshold": 0.95,
+      "pass": false
+    }
+  },
+  "overall_pass": false,
+  "interpretation": "FAIL \u2014 amendment alone insufficient. S33 data still fails 4/5 amended gates (T5 raw 66 PASS but n_eff 26 << 50, MC 0.52 >> 0.05, T6 -2.84 << 0.7, DSR 0.919 < 0.95). Confirms 6-th honest close v0.6 justified \u2014 amendment locks pre-commits \u0434\u043b\u044f future resumption but S33 measurement does NOT clear new gates. Operator MUST run new measurement sprint \u043a\u043e\u0433\u0434\u0430 resuming."
+}

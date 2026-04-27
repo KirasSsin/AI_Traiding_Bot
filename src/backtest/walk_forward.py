@@ -158,19 +158,37 @@ def evaluate_acceptance_gate(
     mc_p_value: float,
     sharpe_threshold: float = 0.7,
     p_threshold: float = 0.05,
+    # S34 ADR 0052 amendment LOCKED — optional kwargs for backward-compat.
+    # Existing callers (v0.5 behavior) work без new args.
+    n_trades_raw: int | None = None,
+    n_trades_n_eff: int | None = None,
+    n_eff_threshold: int | None = None,
+    t5_floor: int | None = None,
 ) -> dict[str, Any]:
-    """Evaluate WFA acceptance gate per ADR 0014 + 0015 AND-combined.
+    """Evaluate WFA acceptance gate per ADR 0014 + 0015 + 0052 (S34 amendment) AND-combined.
 
     Per pre-s10-backlog.md Q2 verdict (trader REVISE accepted): DSR is
     computed and reported (informational) but NOT в gate decision.
 
     Gates:
     - L1 (per ADR 0014): every fold's OOS/IS Sharpe ratio >= sharpe_threshold (0.7 default)
-    - L2 (per ADR 0015): MC permutation p-value <= p_threshold (0.05 default)
-    - PASS = L1 AND L2
+    - L2 (per ADR 0015): MC permutation p-value <= p_threshold (0.05 default; S34 ADR 0052 tightened от 0.10 для v0.7+)
+    - L3 (NEW S34 ADR 0052 — optional): n_eff >= n_eff_threshold (Kish 1965 design effect mandatory для multi-symbol)
+    - L4 (NEW S34 ADR 0052 — optional): n_raw >= t5_floor (amended T5 floor 50 для v0.7+)
+    - PASS = L1 AND L2 AND (L3 если applicable) AND (L4 если applicable)
+
+    Args:
+        fold_oos_is_sharpe_ratios: per-fold OOS/IS Sharpe ratios
+        mc_p_value: MC permutation test p-value
+        sharpe_threshold: per-fold Sharpe gate threshold (default 0.7)
+        p_threshold: MC p-value threshold (default 0.05; v0.5 callers passing 0.10 — overridable)
+        n_trades_raw: total OOS trades raw count (S34 amendment)
+        n_trades_n_eff: effective sample size after correlation deflation (Kish 1965)
+        n_eff_threshold: minimum n_eff (S34 amendment, default None = no check)
+        t5_floor: minimum n_raw (S34 amendment, default None = no check)
 
     Returns:
-        dict с 'passed' bool + per-gate details + failed_folds list.
+        dict с 'passed' bool + per-gate details + failed_folds list + failed_criteria list.
     """
     failed_folds = [
         idx
@@ -180,15 +198,45 @@ def evaluate_acceptance_gate(
     sharpe_gate_passed = len(failed_folds) == 0
     mc_gate_passed = mc_p_value <= p_threshold
 
+    # S34 amendment gates (optional)
+    failed_criteria: list[str] = []
+
+    # L3: n_eff threshold (Kish 1965 — S34 amendment)
+    if n_eff_threshold is not None and n_trades_n_eff is not None:
+        if n_trades_n_eff < n_eff_threshold:
+            failed_criteria.append("n_eff_threshold")
+
+    # L4: T5 raw floor (amended 50 для v0.7+)
+    if t5_floor is not None and n_trades_raw is not None:
+        if n_trades_raw < t5_floor:
+            failed_criteria.append("t5_floor")
+
+    if not sharpe_gate_passed:
+        failed_criteria.append("sharpe_gate")
+    if not mc_gate_passed:
+        failed_criteria.append("mc_gate")
+
+    overall_passed = (
+        sharpe_gate_passed
+        and mc_gate_passed
+        and "n_eff_threshold" not in failed_criteria
+        and "t5_floor" not in failed_criteria
+    )
+
     return {
-        "passed": sharpe_gate_passed and mc_gate_passed,
+        "passed": overall_passed,
         "sharpe_gate_passed": sharpe_gate_passed,
         "mc_gate_passed": mc_gate_passed,
         "failed_folds": failed_folds,
+        "failed_criteria": failed_criteria,
         "fold_sharpe_ratios": list(fold_oos_is_sharpe_ratios),
         "mc_p_value": mc_p_value,
+        "n_trades_raw": n_trades_raw,
+        "n_trades_n_eff": n_trades_n_eff,
         "thresholds": {
             "sharpe": sharpe_threshold,
             "p_value": p_threshold,
+            "n_eff_threshold": n_eff_threshold,
+            "t5_floor": t5_floor,
         },
     }

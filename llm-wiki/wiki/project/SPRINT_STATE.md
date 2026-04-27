@@ -2,11 +2,39 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 33
-phase: between-sprints
-branch: main
+sprint: 34
+phase: 4-execution
+branch: feature/sprint-34-honest-close-v06-hybrid
 tag: v0.1.0-alpha.33
 ---
+
+## S34 IN PROGRESS 🟡 — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED
+
+**Operator chose hybrid** (merge A(a) + A(b) per S33 consilium consensus). Branch: `feature/sprint-34-honest-close-v06-hybrid`. Plan: `plans/2026-04-27-sprint-34-honest-close-v06-hybrid.md` (d89217f).
+
+### Phase tracking (S34 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S33 ship |
+| 2 Brainstorm | done | S34 consilium в `pre-s33-backlog.md` (acab8e3 main) — CONSENSUS A(b) primary / A(a) fallback / hybrid operator-chosen |
+| 3 Plan | done | `plans/2026-04-27-sprint-34-honest-close-v06-hybrid.md` (d89217f) |
+| 4 Execute | in_progress | T1-T5 controller-driven (~3-4h forecast, ~85 LoC + 2 ADRs) |
+| 5 Verify | done | pytest 808 / mypy 0 / canonical 16/30/74/45 ✓ / cross_trial.json `{"trials": []}` ✓ / archive _v0.6.json 3 entries ✓ / acceptance-criteria amendment section ✓ / pre-check overall_pass=False (4/5 amended gates fail) ✓ |
+| 6 Review | skipped | docs+minor code (backward-compat default), no production trading code logic changes |
+| 7 Sync | done | log.md sprint-end + index/current-state synced |
+| 8 Ship | pending | PR + tag v0.1.0-alpha.34 |
+| 9 Close | pending | SPRINT_STATE → between-sprints + v0.7+ deferred к operator |
+
+### Phase 4 — task progress (S34)
+
+| Task | Status | Commit | Note |
+|------|--------|--------|------|
+| T1 Engineering pre-check (S33 data на amended gates) | done | a2e455b | Pre-check: S33 data на S34 amended gates STILL FAILS 4/5 (T5 raw 66 PASS / n_eff 26<<50 FAIL / MC 0.52>>0.05 FAIL / T6 -2.84<<0.7 FAIL / DSR 0.919<0.95 FAIL). Confirms honest close justified — amendment alone insufficient. |
+| T2 ADR 0051 6-th honest close v0.6 + cross_trial archive + reset | done | b1ae20f | ADR 0051 (6-th honest close) + cross_trial archive _v0.6.json (3 S33 entries) + reset `{}` (mirror S14/S16/S18/S21/S23) + 6-hypothesis falsification record + structural insights binding. |
+| T3 ADR 0052 acceptance-criteria amendment + 10-item pre-commit list LOCKED | done | 40f9c6f | ADR 0052 (T5 100→50 / n_eff≥50 NEW Kish / MC≤0.05 tightened / T6+DSR unchanged) + acceptance-criteria.md amendment section + 10-item pre-commit list verbatim + operator acknowledgment template. |
+| T4 n_eff gate enforcement в evaluate_acceptance_gate() + tests | done | ffcf9bc | evaluate_acceptance_gate() extended с n_eff/T5/MC kwargs (backward-compat default) + 5 NEW tests (n_eff threshold / T5 floor 50 / MC tightened / all amended pass / backward-compat). pytest 803→808 / mypy 0. |
+| T5 sprint-34 page + index/counts (50→52 ADRs / 37→38 sprints) | done | f9b6e42 | sprint-34 page + index entries (S34 + ADR 0051 + ADR 0052) + current-state.md counts updated. |
 
 ## S33 SHIPPED ✅ — Trading Restart, F BACKTEST FAIL conjoint
 
