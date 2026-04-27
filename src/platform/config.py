@@ -45,6 +45,11 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        # S35 T2 security-auditor HIGH #1 — close runtime-mutation bypass of money-path
+        # invariants (`_live_trading_guards`, `_validate_s35_demo_mainnet_exclusion`).
+        # validate_assignment re-runs validators on every attribute set, preventing
+        # post-construction `settings.live_trading = True` from skipping pre-commit #1.
+        validate_assignment=True,
     )
 
     # Bybit credentials (REQUIRED — no defaults; CWE-798)
@@ -217,15 +222,33 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_s35_demo_mainnet_exclusion(self) -> "Settings":
-        """S35 pre-commit #1: δ is TESTNET ONLY. Block s35_demo_active=True если live_trading.
+        """S35 pre-commit #1: δ is TESTNET ONLY. Block any path к MAINNET.
 
-        Per pre-s35-backlog.md ROUND 3 binding pre-commitment #1 LOCKED.
+        Per pre-s35-backlog.md ROUND 3 binding pre-commitment #1 LOCKED. Verbatim:
+        "δ is TESTNET ONLY. No MAINNET until 12-month TESTNET evidence reviewed."
+
+        Two checks per S35 T2 security-auditor HIGH #2:
+          1. Block live_trading=True (mainnet routing flag)
+          2. Block testnet=False (Bybit endpoint flag — adapter routes by `testnet`,
+             not just live_trading; testnet=False alone routes к MAINNET endpoint
+             with real-money creds even если live_trading=False)
+
         Mistake here = real MAINNET activation = capital loss risk.
+
+        Implicit ordering note: depends on `_live_trading_guards` running first
+        (per architecture-reviewer C4). Pydantic v2 `mode="after"` validators run
+        в declaration order — DO NOT reorder без verifying invariant chain.
         """
         if self.s35_demo_active and self.live_trading:
             raise ValueError(
-                "S35 δ TESTNET demo cannot run на MAINNET. "
+                "S35 δ TESTNET demo cannot run на MAINNET (live_trading=True). "
                 "Set live_trading=False (testnet=True) OR disable s35_demo_active. "
+                "Per pre-s35-backlog.md pre-commitment #1 LOCKED."
+            )
+        if self.s35_demo_active and not self.testnet:
+            raise ValueError(
+                "S35 δ TESTNET demo requires testnet=True (Bybit endpoint flag). "
+                "testnet=False routes к MAINNET endpoint regardless of live_trading. "
                 "Per pre-s35-backlog.md pre-commitment #1 LOCKED."
             )
         return self
