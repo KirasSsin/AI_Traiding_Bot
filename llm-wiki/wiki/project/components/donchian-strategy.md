@@ -73,4 +73,4 @@ cross_trial_sharpes.json **NOT appended** per ADR 0052 Item #10 protocol (a) (fa
 - [[../decisions/0054-sprint-35-donchian-pre-registration]] — LOCKED params + acceptance gates ADR
 - [[../decisions/0052-sprint-34-acceptance-criteria-amendment]] — gate thresholds source
 - [[../sprints/sprint-35-testnet-donchian-risk]] — sprint context
-- [[mean-reversion-strategy]] — sister long-only strategy (S22 partial PASS evidence)
+- `src/signalgen/mean_reversion_strategy.py` — sister long-only strategy (S22 partial PASS evidence)
