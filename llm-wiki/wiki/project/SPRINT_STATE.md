@@ -2,11 +2,40 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 36
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.36
+sprint: 37
+phase: 3-planning
+branch: feature/sprint-37-carry-overs-hardening
+tag: pending
 ---
+
+## S37 IN PROGRESS 🟡 — Carry-overs Hardening (security HIGH + trading-logic + quant + playbook)
+
+**Operator approved ROUND 5 consilium binding** — (c) carry-overs sprint first, then S38 δ activate. 8 tasks consilium-merged.
+
+Branch: `feature/sprint-37-carry-overs-hardening`. Plan: `plans/2026-04-27-sprint-37-carry-overs-hardening.md` (TBD).
+
+### Phase tracking (S37 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S36 ship |
+| 2 Brainstorm | done | ROUND 5 consilium 3 agents CONSENSUS — `pre-s37-backlog.md` (6 pre-commitments + EXPAND scope: HALT_UNKNOWN_SYMBOL ReasonCode +1 / calibration baseline 6.17→2.96 / ADR 0056 amendment) |
+| 3 Plan | in_progress | `plans/2026-04-27-sprint-37-carry-overs-hardening.md` |
+| 4 Execute | pending | T1-T8 subagent-driven |
+| 5 Verify | pending | pytest expected ~889 / mypy 0 / canonical 16/30/74/**50** (reason codes 49→50) |
+| 6 Review | pending | per task reviewer dispatch |
+| 7 Sync | pending | wiki updates в T8 |
+| 8 Ship | pending | tag v0.1.0-alpha.37 |
+| 9 Close | pending | SPRINT_STATE between-sprints + δ activate operator action |
+
+### S37 critical pre-commitments (BINDING per ROUND 5 consilium)
+
+1. HALT_UNKNOWN_SYMBOL distinct ReasonCode (NOT reuse) per audit-log attribution
+2. Calibration baseline amendment к S22 mean fold Sharpe = 2.96 (conservative)
+3. activation_ts HMAC integrity per ADR 0018 pattern
+4. δ activate immediately post-S37 ship (no observation gap)
+5. Operator playbook page mandatory (NOT just ADR references)
+6. Items 6+7+9+10 explicitly DEFERRED к S38+ (NOT silently dropped)
 
 ## S36 SHIPPED ✅ — δ TESTNET Activation (HaltGate wired + B1 fix + DSR amendment + ReasonCode +4)
 

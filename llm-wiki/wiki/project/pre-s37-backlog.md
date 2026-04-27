@@ -119,3 +119,66 @@ Recommended priority order per risk:
 - [[decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — ADR 0056 DSR thresholds
 - [[components/halt-gate-wireup]] — primary carry-over source
 - [[components/live-trade-reporter]] — quant carry-overs source
+
+---
+
+## ROUND 5 Consilium BINDING (S37 PHASE 2 brainstorm)
+
+3-agent consilium (trader-expert + trading-logic-reviewer + quant-stats-reviewer) parallel ROUND 1 → CONSENSUS, no ROUND 2 needed.
+
+### Verdict table
+
+| Q | Question | Vote | Final |
+|---|----------|------|-------|
+| Q1 | v0.7+ ordering | 3× CONFIRM (c) | **(c) S37 carry-overs sprint first** |
+| Q2 | S37 scope | 3× EXPAND | **6+1+amendments expanded scope** |
+| Q3 | δ activate timing | 3× CONFIRM immediate | **Immediately post-S37 ship** |
+| Q4 | Operator playbook | 3× CONFIRM | **Dedicated page** wiki/project/components/delta-activation-playbook.md |
+
+### Cross-cutting EXPAND (Q2)
+
+Original maintainer: 6 items (security 1-3 + trading-logic 4-5 + quant 8). Consilium expanded:
+
+1. **NEW ReasonCode HALT_UNKNOWN_SYMBOL** (trader + trading-logic CONSENSUS) — reusing existing code destroys halt_log attribution. Canonical 49 → **50**.
+2. **Calibration baseline amendment** (quant) — `S22_SYNTHETIC_SHARPE = 6.17` (extreme T1 aggregate) → use mean fold Sharpe = 2.96 (more conservative). Update `src/analytics/live_trade_reporter.py:28`.
+3. **ADR 0056 amendment** (quant C3) — document trial_mean_fold_oos_sharpe vs pooled trade-level Sharpe semantic distinction.
+
+### S37 task structure (consilium-merged 8 tasks)
+
+| T | Task | Domain | LoC est |
+|---|------|--------|---------|
+| T1 | ADR 0057 — S37 carry-overs sprint scope + ADR 0056 amendment (calibration baseline + Sharpe semantics doc) | docs anti-snooping | ~150 lines |
+| T2 | Security #1+#2 — symbol whitelist + fail-closed (HALT_UNKNOWN_SYMBOL ReasonCode +1, 49→50) + startup banner | code | ~150 LoC + 5 tests |
+| T3 | Security #3 — activation_ts integrity HMAC signature per ADR 0018 pattern | code | ~80 LoC + 4 tests |
+| T4 | Trading-logic #4 — clock injection в `_check_halt_gate` (testability per S8a precedent) | code | ~50 LoC + 3 tests |
+| T5 | Trading-logic #5 — coordinator.symbol public property (replace `_symbol` private leak) | code | ~30 LoC + 2 tests |
+| T6 | Quant #8 — DSR boundary tests n=10 + n=30 (parametrized) | tests | ~30 LoC + 4 tests |
+| T7 | Operator playbook — `wiki/project/components/delta-activation-playbook.md` (step-by-step δ activate + DSR status interpretation guide + halt_log monitoring) | docs | ~80 lines |
+| T8 | sprint-37 + counts (49→50 reason codes / 56→57 ADRs / 40→41 sprints / 47→48 components) + sync | wiki | wiki sync |
+
+**Total: ~340 LoC + 18 NEW tests + 1 ADR + 1 ADR amendment + 1 component page. Forecast ~8-10h.**
+
+Items 6+7+9+10 deferred к S38+:
+- #6 months_since truncation doc (low urgency)
+- #7 RiskSharedDeps refactor (medium effort, defer post δ activation feedback)
+- #9 trial_mean_fold_oos_sharpe doc (covered partially в T1 ADR amendment)
+- #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios (accumulate как regression tests)
+
+### S37 critical pre-commitments BINDING
+
+1. HALT_UNKNOWN_SYMBOL distinct ReasonCode (NOT reuse existing) per audit-log attribution rule
+2. Calibration baseline amendment к S22 mean fold Sharpe = 2.96 (more conservative)
+3. activation_ts HMAC integrity per ADR 0018 pattern
+4. δ activate immediately post-S37 ship (no observation gap)
+5. Operator playbook page mandatory (not just ADR references)
+6. Items 6+7+9+10 explicitly DEFERRED к S38+ (NOT silently dropped)
+
+### NO ROUND 2 needed
+
+All 3 agents REVISE same direction (EXPAND scope) — convergent enhancement, не disagreement. No REVISE-disagreement triggering iterative justify loop per brainstorm-init Step 5.
+
+### S38 path (post-S37 + δ activation)
+
+- δ TESTNET running, accumulating data
+- S38 = architecture refactor (Item #7 RiskSharedDeps Demeter) + extended test coverage (#6, #9, #10)
+- S38+ = monitor δ data, prepare 12mo MAINNET-promotion review per ADR 0055 SD-8
