@@ -37,7 +37,7 @@ Sub-sprint S32 series **post-completion audit** (operator initiated). Branch: `f
 | 2 Brainstorm | skipped (operator-specified audit task) | inline pre-plan analysis |
 | 3 Plan | done | `plans/2026-04-27-sprint-32e-kit-audit-doc-sync.md` (899d227) |
 | 4 Execute | in_progress | T1-T5 controller-driven |
-| 5 Verify | pending | pytest 773 baseline + file size verify split + canonical counts |
+| 5 Verify | done | pytest 773 (S32d baseline) / mypy 1 pre-existing / canonical 16/30/74/45 ✓ / **file split verify: tooling-inventory-ru.md 41KB ✓ + tooling-inventory-ru-part-2.md 24KB ✓** (both < 50KB threshold) |
 | 6 Review | pending (likely skip) | no src/ touched |
 | 7 Sync | pending | log.md sprint-end + index/current-state в T5 |
 | 8 Ship | pending | PR + tag v0.1.0-alpha.32e (CI 4th PR) |
