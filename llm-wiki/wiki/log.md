@@ -2469,3 +2469,12 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - δ infrastructure WIRED LIVE — operator sets S35_DEMO_ACTIVE=true к activate
 - Carry-overs к S37+: 10 items (3 security HIGH symbol/activation_ts/whitelist + 3 trading-logic clock/symbol/months + 1 architecture RiskSharedDeps + 2 quant boundary tests + 1 operational extended scenarios)
 - ADRs 0055 + 0056 (54 → 56 total)
+
+## [2026-04-27] session-end | S36 shipped — alpha.36 tagged
+- PR #47 squash-merged (aab7e32), tag v0.1.0-alpha.36 pushed
+- 8 tasks: T1 ADRs LOCKED + T2 B1 CRITICAL fix + T3 state methods + T4 HaltGate wire-up + T5 ReasonCode +4 + T6 DSR amendment + T7 live reporter + T8 sync
+- CI passed (8th PR, fixed canonical reason_codes 45→49 inline)
+- pytest 871 unit + 33 integration / mypy 0 / canonical 16/30/74/49
+- δ infrastructure WIRED LIVE — operator sets S35_DEMO_ACTIVE=true к activate
+- 10 carry-overs persisted в pre-s37-backlog
+- SPRINT_STATE → between-sprints

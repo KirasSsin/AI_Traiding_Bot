@@ -3,10 +3,35 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 36
-phase: 8-ship
-branch: feature/sprint-36-delta-activation
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.36
 ---
+
+## S36 SHIPPED ✅ — δ TESTNET Activation (HaltGate wired + B1 fix + DSR amendment + ReasonCode +4)
+
+PR #47 → aab7e32 squash-merge. Tag v0.1.0-alpha.36 pushed. Branch deleted. **CI passed (8th PR с strict baselines, fixed canonical reason_codes 45→49 inline).**
+
+**δ TESTNET infrastructure NOW WIRED LIVE.** HaltGate connected к RuntimeManager._tick. B1 CRITICAL fix applied (S17-relaxed LOCKED params wired live — δ NO LONGER runs S15-noise params silently). DSR sigma_SR ADR 0056 amendment closes S35 T4 carry-overs.
+
+**Operator action для δ activate:**
+1. Set `S35_DEMO_ACTIVE=true` в .env file
+2. Restart bot — first tick auto-records activation_ts в SQLite
+3. HaltGate evaluates per-tick — fires halt + bot exits cleanly если any of 4 triggers (DD intraday/multiday/streak/timeout)
+4. 12mo MAINNET-promotion gate per ADR 0053 + ADR 0055 SD-1 (NOT TESTNET shutdown)
+
+**v0.7+ next decision (operator post-S36):**
+- (a) **δ activate now** — set env var + restart + monitor 12mo (operator action)
+- (b) **β pause indefinitely** — δ infrastructure ready но defer activation
+- (c) **S37 carry-overs sprint** — address 10 items in pre-s37-backlog ДО δ activate (security HIGH + architecture refactor)
+- (d) **Different strategy** — new ADR pre-registration
+
+**Carry-overs к S37+ (`pre-s37-backlog.md`):**
+- 2 security HIGH (symbol fail-closed + activation_ts integrity)
+- 3 trading-logic (clock injection + coordinator.symbol public + months truncation doc)
+- 1 architecture MEDIUM (RiskSharedDeps refactor — Demeter)
+- 2 quant-stats (boundary tests n=10/30 + pooled trade-level Sharpe doc)
+- 2 operational (DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios + δ activation operator playbook)
 
 ## S36 COMPLETE 🟢 — δ TESTNET activation (HaltGate wire-up + B1 critical fix + DSR amendment)
 
