@@ -2494,3 +2494,12 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - delta TESTNET production-ready — operator sets S35_DEMO_ACTIVE=true per playbook
 - Carry-overs к S38+: Items 6+7+9+10 deferred (months_since doc + Demeter refactor + Sharpe semantics + extended scenarios)
 - ADR 0057 (56 → 57)
+
+## [2026-04-27] session-end | S37 shipped — alpha.37 tagged
+- PR #48 squash-merged (e837b38), tag v0.1.0-alpha.37 pushed
+- 8 tasks: T1 ADRs LOCKED + T2 symbol whitelist + T3 HMAC + T4 clock + T5 property + T6 DSR boundary + T7 playbook + T8 sync
+- CI passed first try (CI workflow 49→50 synced inline в T8 — no second iteration)
+- pytest 897 unit + 33 integration / mypy 0 / canonical 16/30/74/50
+- δ TESTNET production-ready — operator sets S35_DEMO_ACTIVE=true per playbook
+- 4 carry-overs persisted в pre-s38+ context (Items 6+7+9+10)
+- SPRINT_STATE → between-sprints

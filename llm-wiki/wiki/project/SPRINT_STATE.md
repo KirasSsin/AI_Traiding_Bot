@@ -3,10 +3,40 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 37
-phase: 8-ship
-branch: feature/sprint-37-carry-overs-hardening
-tag: pending
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.37
 ---
+
+## S37 SHIPPED ✅ — Carry-overs Hardening (security HIGH + trading-logic + quant + playbook)
+
+PR #48 → e837b38 squash-merge. Tag v0.1.0-alpha.37 pushed. Branch deleted. **CI passed first try (9th PR с strict baselines, CI workflow synced 49→50 inline в T8).**
+
+**δ TESTNET production-ready.** Operator action required:
+1. Set `S35_DEMO_ACTIVE=true` в .env
+2. Restart bot per `delta-activation-playbook.md` 5-step procedure
+3. Verify startup banner + signed activation_ts persisted
+4. Monitor halt_log + trade_history per playbook weekly procedure
+
+**6 critical S36 carry-overs CLOSED:**
+- Security HIGH 1+2: symbol whitelist + fail-closed + HALT_UNKNOWN_SYMBOL (49→50)
+- Security HIGH 3: activation_ts HMAC integrity per ADR 0018 pattern
+- Trading-logic 4: clock injection (deterministic property tests)
+- Trading-logic 5: coordinator.symbol public property (Demeter)
+- Quant 8: DSR boundary tests + S22 baseline 6.17→2.96 (calibration)
+
+**v0.7+ next operator decision (post-S37):**
+- (a) **δ activate now** — set env var per playbook (forward profit path)
+- (b) **β pause** — defer activation indefinitely
+- (c) **S38 architecture refactor** — Item #7 RiskSharedDeps + extended docs first
+- (d) **New strategy** — new ADR pre-registration
+
+**Carry-overs к S38+:**
+- Item #6 months_since truncation documentation
+- Item #7 RiskSharedDeps refactor (Demeter — RuntimeManager properties)
+- Item #9 Sharpe semantics extended ADR doc
+- Item #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios
+- 12mo MAINNET-promotion ADR (per ADR 0055 SD-8 deferred)
 
 ## S37 READY TO SHIP — Carry-overs Hardening (security HIGH + trading-logic + quant + playbook)
 
