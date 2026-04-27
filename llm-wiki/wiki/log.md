@@ -2503,3 +2503,18 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - δ TESTNET production-ready — operator sets S35_DEMO_ACTIVE=true per playbook
 - 4 carry-overs persisted в pre-s38+ context (Items 6+7+9+10)
 - SPRINT_STATE → between-sprints
+
+## [2026-04-27] sprint-end | S38 — δ Parallel Hardening
+- Tag pending v0.1.0-alpha.38 (PR ship next)
+- ROUND 6 consilium UNANIMOUS Path A (δ activate + S38 parallel)
+- T1 ADR 0058 + ADR 0056 amendment 2 LOCKED pre-commit (anti-snooping)
+- T2 F2 quant HIGH: compute_live_sharpe pnl_pct fix + generate_live_report MC same fix
+- T3 F3 bybit-api-reviewer first invocation (dormant since S30) — 6-axis review: 0 BLOCKER / 3 HIGH (H1 rate-limit + H2 WS reconnect → pre-s39 / H3 accountType → T6 playbook gate) / 4 MED / 3 LOW / 10 VERIFIED
+- T4 Item #7 RiskSharedDeps Demeter refactor: NamedTuple + property + backward-compat constructor
+- T5 ADR 0057 amendment: months_since truncation semantics
+- T6 δ playbook 5 NEW gates + UNDERPOWERED + halt-triggered + T3 H3 accountType
+- T7 sync (this entry)
+- 8 NEW tests / pytest 905 unit + 33 integration / mypy 0 / canonical 16/30/74/50 unchanged
+- δ TESTNET activate Track 1 operator-side parallel (set S35_DEMO_ACTIVE=true per playbook)
+- Carry-overs к S39+: bybit-api H1+H2 + M1-M4 + 3 LOW + 12mo MAINNET ADR (n=10 trigger)
+- ADR 0058 (57 → 58)
