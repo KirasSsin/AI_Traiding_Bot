@@ -2434,3 +2434,15 @@ Next session = operator decides v0.7+ path.
 **Anti-snooping discipline preserved** — amendment LOCKED ДО future measurement, paired с honest close documents falsification record.
 
 Next session = operator decides v0.7+ direction (no pre-commitment в этом sprint).
+
+## [2026-04-27] sprint-end | S35 — δ TESTNET + α Donchian + ζ Risk Mgmt
+- Tag v0.1.0-alpha.35
+- ROUND 3 consilium binding executed (3 agents CONSENSUS — δ primary + α parallel + ζ complement)
+- T1 ζ refactor: explicit ATR SL multiplier Setting + Kelly cap audit + Field gt=0 hardening
+- T2 δ TESTNET: HaltGate (4 priority triggers) + 5 s35_* settings + MAINNET-exclusion validator (security HIGH #1 validate_assignment + HIGH #2 testnet check)
+- T3 ADR 0054 LOCKED pre-T4 (anti-snooping discipline preserved)
+- T4 α Donchian backtest: VERDICT FAIL CONJOINT (n=21<<50, aggregate Sharpe=-0.95, DSR<<0.95, 4/6 gates fail) → α direction CLOSED per ADR 0054 pre-commit #8
+- T5 wiki sync + HASH_ALLOWLIST extension (architecture-reviewer T2 carry)
+- 19 NEW tests / pytest 808→802 passed (net +14 visible) / mypy 0 errors / canonical 16/30/74/45
+- Carry-overs S36+: Donchian ReasonCode enum + DSR sigma_SR ADR amendment + channel exit replay path + HaltGate wire-up
+- ADRs 0053 + 0054 (52 → 54)

@@ -3,7 +3,7 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
 sprint: 35
-phase: 3-planning
+phase: 8-ship
 branch: feature/sprint-35-testnet-donchian-risk
 tag: pending
 ---
@@ -21,11 +21,11 @@ Branch: `feature/sprint-35-testnet-donchian-risk`. Plan: `plans/2026-04-27-sprin
 | 1 Orient | done | session continuation post-S34 ship |
 | 2 Brainstorm | done | ROUND 3 consilium 3 agents CONSENSUS — `pre-s35-backlog.md` (8 pre-commitments + LOCKED params + halt criteria) |
 | 3 Plan | done | `plans/2026-04-27-sprint-35-testnet-donchian-risk.md` |
-| 4 Execute | in_progress | T1-T4 done. T4 verdict FAIL conjoint (n=21<<50 / aggregate Sharpe -0.95 / DSR<<0.95 / 4 of 6 gates fail). α direction CLOSED per ADR 0054. cross_trial NOT appended (FAIL protocol). pytest 801 / mypy 0. T5 carries: HASH_ALLOWLIST extension + DSR sigma_SR fallback ADR amendment (S36+) + Donchian reason codes к ReasonCode enum (S36+ если revival) + channel exit replay path gap (S36+). T5 pending. |
-| 5 Verify | pending | pytest 821 expected / mypy 0 |
-| 6 Review | pending | python-reviewer + trading-logic-reviewer + quant-stats-reviewer + security-auditor (parallel) |
-| 7 Sync | pending | wiki updates в T5 |
-| 8 Ship | pending | tag v0.1.0-alpha.35 |
+| 4 Execute | done | T1-T5 all done. T4 verdict FAIL conjoint (n=21<<50 / aggregate Sharpe -0.95 / DSR<<0.95 / 4 of 6 gates fail). α direction CLOSED per ADR 0054. cross_trial NOT appended (FAIL protocol). pytest 802 / mypy 0. T5: HASH_ALLOWLIST +4 s35_halt_* + sprint-35 page + 2 components + index/counts sync. |
+| 5 Verify | done | pytest 802 passed / mypy 0 / canonical 16/30/74/45 / Donchian FAIL verdict recorded / HaltGate purity verified |
+| 6 Review | done | T1=2 reviewers / T2=3 reviewers / T3=1 reviewer / T4=4 reviewers parallel |
+| 7 Sync | done | wiki sync in T5 — sprint-35 page + 2 components + index/current-state + log.md |
+| 8 Ship | pending | tag v0.1.0-alpha.35 — sprint-finish skill next |
 | 9 Close | pending | SPRINT_STATE between-sprints |
 
 ## S34 SHIPPED ✅ — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED

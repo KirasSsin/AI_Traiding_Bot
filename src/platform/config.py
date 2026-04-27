@@ -33,6 +33,11 @@ _HASH_ALLOWLIST: frozenset[str] = frozenset(
         "risk_kelly_phase2_cap",
         "risk_kelly_phase3_cap",
         "risk_kelly_phase4_cap",
+        # S35 T2 — δ TESTNET halt criteria (architecture-reviewer T2 carry: ADR 0018 H1)
+        "s35_halt_dd_intraday",
+        "s35_halt_dd_multiday",
+        "s35_halt_consecutive_losses",
+        "s35_halt_no_trade_months",
     }
 )
 
