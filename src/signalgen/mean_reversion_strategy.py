@@ -17,8 +17,10 @@ Thread-safety: NOT thread-safe. One instance — one producer thread per symbol
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from decimal import Decimal
+from types import MappingProxyType
 from uuid import uuid4
 
 import numpy as np
@@ -32,14 +34,21 @@ from src.signalgen.models import Signal, SignalSide
 # Reference: sprint-17-btc-mean-reversion-relaxed.md PASS partial verdict (5/6 + DSR=1.0 + MC p=0.01).
 # DO NOT inherit S15 params (RSI 30/70, BB 2σ) — they produced MC p=0.998 noise per S15 honest close.
 # Per consilium ROUND 2 binding condition: explicit named constant prevents copy-paste regression.
-MEAN_REVERSION_S17_RELAXED_PARAMS: dict[str, object] = {
-    "rsi_period": 14,
-    "rsi_oversold": Decimal("35"),  # NOT 30 (S15 noise)
-    "rsi_overbought": Decimal("65"),  # NOT 70 (S15 noise)
-    "bb_period": 20,
-    "bb_std_mult": 1.5,  # NOT 2.0 (S15 noise)
-    "and_gate_required": True,  # AND (RSI + BB), не OR
-}
+#
+# S36 T2 security-auditor BLOCKER fix: wrapped в MappingProxyType — raises TypeError на mutation
+# attempt (fail-loud). Without this, future test fixture / monkeypatch could mutate dict in-place,
+# silently breaking LOCKED contract per ADR 0030 + ADR 0053 + pre-commit #7. Real-money TESTNET
+# trades would run on tampered params без alarm.
+MEAN_REVERSION_S17_RELAXED_PARAMS: Mapping[str, object] = MappingProxyType(
+    {
+        "rsi_period": 14,
+        "rsi_oversold": Decimal("35"),  # NOT 30 (S15 noise)
+        "rsi_overbought": Decimal("65"),  # NOT 70 (S15 noise)
+        "bb_period": 20,
+        "bb_std_mult": 1.5,  # NOT 2.0 (S15 noise)
+        "and_gate_required": True,  # AND (RSI + BB), не OR
+    }
+)
 
 
 class MeanReversionRsiBBStrategy:

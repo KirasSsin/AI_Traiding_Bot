@@ -52,3 +52,23 @@ def test_strategy_from_locked_params_factory() -> None:
     assert s._rsi_overbought == Decimal("65")
     assert s._bb_std_mult == 1.5
     assert s._and_gate_required is True
+
+
+def test_locked_params_immutable_mappingproxytype() -> None:
+    """S36 T2 security-auditor BLOCKER fix: LOCKED dict wrapped в MappingProxyType.
+
+    Mutation attempts MUST raise TypeError (fail-loud). Without this, future test
+    fixture / monkeypatch could silently mutate dict in-place, breaking LOCKED
+    contract per ADR 0030 + ADR 0053 + pre-commit #7. Real-money TESTNET trades
+    would run on tampered params без alarm.
+    """
+    import pytest
+
+    with pytest.raises(TypeError):
+        MEAN_REVERSION_S17_RELAXED_PARAMS["rsi_oversold"] = Decimal("30")  # type: ignore[index]
+
+    with pytest.raises(TypeError):
+        del MEAN_REVERSION_S17_RELAXED_PARAMS["bb_std_mult"]  # type: ignore[attr-defined]
+
+    # Confirm value unchanged after attempted mutation
+    assert MEAN_REVERSION_S17_RELAXED_PARAMS["rsi_oversold"] == Decimal("35")
