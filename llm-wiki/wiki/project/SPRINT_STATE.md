@@ -2,11 +2,31 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-04-27
-sprint: 34
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.34
+sprint: 35
+phase: 3-planning
+branch: feature/sprint-35-testnet-donchian-risk
+tag: pending
 ---
+
+## S35 IN PROGRESS 🟡 — δ TESTNET + α Donchian + ζ Risk Mgmt
+
+**Operator approved ROUND 3 binding consilium decision** — δ TESTNET live demo primary + α Donchian 4H long-only parallel synthetic + ζ risk management complement bundled into S35.
+
+Branch: `feature/sprint-35-testnet-donchian-risk`. Plan: `plans/2026-04-27-sprint-35-testnet-donchian-risk.md` (~5 TDD tasks T1-T5, ~480 LoC + 2 ADRs + 2 components + 13 tests).
+
+### Phase tracking (S35 — in progress)
+
+| Phase | Status | Artifact |
+|-------|--------|----------|
+| 1 Orient | done | session continuation post-S34 ship |
+| 2 Brainstorm | done | ROUND 3 consilium 3 agents CONSENSUS — `pre-s35-backlog.md` (8 pre-commitments + LOCKED params + halt criteria) |
+| 3 Plan | done | `plans/2026-04-27-sprint-35-testnet-donchian-risk.md` |
+| 4 Execute | pending | T1-T5 subagent-driven (T1 ζ → T2 δ → T3 α ADR → T4 α impl → T5 sync) |
+| 5 Verify | pending | pytest 821 expected / mypy 0 |
+| 6 Review | pending | python-reviewer + trading-logic-reviewer + quant-stats-reviewer + security-auditor (parallel) |
+| 7 Sync | pending | wiki updates в T5 |
+| 8 Ship | pending | tag v0.1.0-alpha.35 |
+| 9 Close | pending | SPRINT_STATE between-sprints |
 
 ## S34 SHIPPED ✅ — Hybrid 6-th Honest Close v0.6 + Amendment LOCKED
 
