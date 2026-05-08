@@ -8,23 +8,42 @@ Algorithmic trading bot для **Bybit Spot**. TESTNET-only deployment per ADR 0
 
 ---
 
-## Quick start (1 command)
+## Quick start (1 command, локально из любой папки терминала)
 
 ```bash
-./scripts/start-bot.sh
+cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot && ./scripts/start-bot.sh
 ```
 
-→ Dashboard UI на **http://127.0.0.1:8000/** (Ctrl+C к stop).
+Что произойдёт:
+- Бот стартует на **http://127.0.0.1:8000/**
+- **Браузер автоматически открывается** на этой ссылке (через 1.5 сек после старта)
+- Ctrl+C в терминале → бот останавливается
 
 В browser выбираешь strategy + symbol + timeframe + date range → "Run Backtest" → результаты с TIER 1+2 metrics + warnings.
+
+### Если репозиторий в другом месте
+
+Замени путь после `cd` на свой:
+
+```bash
+cd /path/to/your/AI_Traiding_Bot && ./scripts/start-bot.sh
+```
 
 ### Other modes
 
 ```bash
-./scripts/start-bot.sh --help        # Show usage
-./scripts/start-bot.sh --live        # δ TESTNET live trading (advanced — see playbook)
-./scripts/start-bot.sh --backfill    # Download OHLCV bars
+cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot && ./scripts/start-bot.sh --help        # Show usage
+cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot && ./scripts/start-bot.sh --live        # δ TESTNET live trading (advanced — see playbook)
+cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot && ./scripts/start-bot.sh --backfill    # Download OHLCV bars
 ```
+
+**Совет**: если запускаешь часто — добавь alias в `~/.zshrc` OR `~/.bashrc`:
+
+```bash
+alias bot='cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot && ./scripts/start-bot.sh'
+```
+
+После `source ~/.zshrc` (или новый terminal) — просто пишешь `bot` из любой директории.
 
 ---
 
