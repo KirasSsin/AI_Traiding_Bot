@@ -1,0 +1,2 @@
+commit	metric	n_trades	mc_p	status	description
+baseline	0.9016	17	0.2804	keep	baseline ADR 0054 LOCKED (lookback=20, exit=10, atr=2.0)
