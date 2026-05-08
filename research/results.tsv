@@ -69,3 +69,5 @@ P5v2_4	-999.0000	-2.7819	24	-3.36	ok	p5v2 random #4 (L16E9A3.51P5EMA181)
 P5v2_5	2.9412	1.2000	53	44.72	ok	p5v2 random #5 (L11E7A1.73P6EMA0)
 ITER2_BEST	5.7026	2.4985	44	63.36	ok	iter2 BEST train (L15E6A2.5P7EMA0) — search v2 P4v2_1 — EARLY STOP early-trial threshold
 ITER2_HELDOUT	-2.0493	-2.0493	29	-16.08	heldout_FAIL	iter2 held-out verdict — overfit confirmed (train 2.50 → held-out -2.05) — 8th honest close
+ITER3_PRECHECK	0.0000	0.0000	29	0.00	paradigm_dead	iter3 pre-check (vol regime gate) — held-out projected n=12 < halt 20 → ABORT no search; (f) paradigm-dead confirmed
+ITER_FINAL_CLOSE	0.0000	0.0000	0	0.00	honest_close	S35 Donchian autoresearch CLOSED — 9th honest close (8 + final). δ TESTNET = forward path
