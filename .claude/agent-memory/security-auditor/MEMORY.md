@@ -1,0 +1,6 @@
+- [s35-mainnet-exclusion](s35_mainnet_exclusion.md) — Pydantic model_validator MAINNET-exclusion patterns + bypass classes
+- [config-attribute-mutation](config_attribute_mutation.md) — pydantic v2 BaseSettings mutability & validator-bypass risk
+- [override-store-hmac](override_store_hmac.md) — override.py HMAC + config_hash binding (verified clean S35 T2)
+- [locked-params-factory](locked_params_factory.md) — S36 T2 LOCKED dict factory wiring patterns + defensive-copy / MappingProxyType / symbol-trust
+- [s36-haltgate-wireup](s36_haltgate_wireup.md) — S36 T4 HaltGate wire-up: verified controls + symbol fail-skip HIGH + activation_ts integrity gap
+- [s37-haltgate-unknown-symbol](s37_haltgate_unknown_symbol.md) — S37 T2 fail-closed whitelist + HALT_UNKNOWN_SYMBOL + case-norm HIGH carry

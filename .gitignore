@@ -6,6 +6,11 @@ __pycache__/
 *.pyc
 web/data.json
 
+# Reference clones (karpathy/autoresearch) — local toy, не tracked
+/autoresearch/
+# Research worktrees per autoresearch convention — separate branches autoresearch/<tag>
+/research/
+
 .agent/
 
 # macOS
