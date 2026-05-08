@@ -1,11 +1,40 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-04-27
-sprint: 38
-phase: between-sprints
+updated: 2026-05-08
+sprint: 39
+phase: 0-prep
 branch: main
 tag: v0.1.0-alpha.38
+---
+
+## S39 BRAINSTORM PENDING — Autoresearch Metric Improvement Loop
+
+**Operator direction:** автоматизировать поиск improvements торговых метрик через autoresearch paradigm. Iter 1 (S35 Donchian, branch `autoresearch/donchian-may8`) ЗАКРЫТ как 7-я honest close — overfit на held-out (train Sharpe 1.27 → held-out -3.23) confirmed trader-expert prior: Donchian needs trend filter, не hyperparameter tuning.
+
+**Iter 2 candidate:** EMA200 trend filter as new strategy variant в src/backtest/indicators.py + new preset `donchian_ema200_filter` UI dropdown.
+
+**Two execution modes:**
+- **(R) Research toy** — продолжаем в research/ branch `autoresearch/<strategy>-<tag>`, bypass kit per skill `autoresearch-iterate` rules. ~2h. Result: held-out PASS/FAIL verdict.
+- **(K) Formal kit cycle** — full 9-phase sprint 39 для EMA200 filter. ~10-12h. Result: новый production strategy + ADR + tests + tag alpha.39.
+
+**Current state post-S38 ship:**
+- main @ de78073 (agent-memory + gitignore commit)
+- branches alive: `autoresearch/donchian-may8` (research toy iter 1)
+- skill `autoresearch-iterate` ready на trigger "запусти autoresearch на N итераций"
+- 4 strategy presets в UI dropdown с WFA auto-scale active
+
+**Pre-S39 carry-overs (preserved from S38):**
+- T3 bybit-api-reviewer H1 rate-limit backoff missing
+- T3 bybit-api-reviewer H2 WS reconnect verification gap
+- T3 M1-M4 + 3 LOW
+- F8 block_size constant unification
+- 12mo MAINNET-promotion ADR (draft trigger: n=10 first non-NaN DSR)
+- Item #7 backward-compat shim cleanup
+- Item #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios
+
+**Operator next action:** выбрать R или K mode для iter 2 + initiate.
+
 ---
 
 ## S38 SHIPPED ✅ — δ Parallel Hardening (F2 quant + bybit-api-reviewer + Item #7 Demeter + playbook)
