@@ -3248,3 +3248,1624 @@ Train: 5818 / Held-out: 1455
 === FINAL (394.0s, 210000 trials, 210/100 sweeps) ===
 PASS count: 5 в sweeps [134, 155, 172, 181, 183]
 All PASS rows: grep '★ PASS' results.tsv | grep P6v6s
+=== research search v6 — 4H multi-seed sweep (211..310) ===
+PASS criterion: held-out PnL > 10.0% AND Sharpe > 0.0
+Sweeps: 100 × 1000 trials = 100000 budget
+Train: 5818 / Held-out: 1455
+
+
+========== SWEEP #211 (seed=253) ==========
+
+  · donchian_raw: sign-flip (+11.78→-1.99) (train=+11.78 held_pnl=-7.3%)
+  · rsi_mean_reversion: sign-flip (+3.24→-2.29) (train=+3.24 held_pnl=-18.2%)
+  · bollinger_breakout: sign-flip (+29.20→-1.03) (train=+29.20 held_pnl=-2.4%)
+  · bollinger_mr: sign-flip (+10.29→-2.83) (train=+10.29 held_pnl=-12.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+35.62→-9.51) (train=+35.62 held_pnl=-18.2%)
+  · momentum_n_consec: sign-flip (+8.44→-5.25) (train=+8.44 held_pnl=-26.7%)
+  · volume_breakout: PnL fail (+0.2% < 10.0%) (train=+9.71 held_pnl=+0.2%)
+  · ema_crossover: sign-flip (+7.42→-6.35) (train=+7.42 held_pnl=-33.0%)
+  · price_channel_with_atr: sign-flip (+9.98→-8.26) (train=+9.98 held_pnl=-34.5%)
+
+  Sweep #211 PASS candidates: 0
+
+
+========== SWEEP #212 (seed=254) ==========
+
+  · donchian_raw: sign-flip (+11.10→-1.04) (train=+11.10 held_pnl=-3.5%)
+  · rsi_mean_reversion: sign-flip (+16.26→-7.72) (train=+16.26 held_pnl=-39.3%)
+  · bollinger_breakout: sign-flip (+13.16→-7.04) (train=+13.16 held_pnl=-26.0%)
+  · bollinger_mr: sign-flip (+10.40→-3.58) (train=+10.40 held_pnl=-12.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.71→-8.78) (train=+33.71 held_pnl=-18.5%)
+  · momentum_n_consec: sign-flip (+11.98→-6.23) (train=+11.98 held_pnl=-28.3%)
+  · volume_breakout: PnL fail (+1.3% < 10.0%) (train=+8.10 held_pnl=+1.3%)
+  · ema_crossover: sign-flip (+6.29→-1.81) (train=+6.29 held_pnl=-12.2%)
+  · price_channel_with_atr: sign-flip (+10.04→-4.63) (train=+10.04 held_pnl=-26.8%)
+
+  Sweep #212 PASS candidates: 0
+
+
+========== SWEEP #213 (seed=255) ==========
+
+  · donchian_raw: sign-flip (+11.13→-6.83) (train=+11.13 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+29.00→-6.04) (train=+29.00 held_pnl=-51.0%)
+  · bollinger_breakout: sign-flip (+13.69→-2.79) (train=+13.69 held_pnl=-14.6%)
+  · bollinger_mr: sign-flip (+12.21→-2.68) (train=+12.21 held_pnl=-9.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.07→-5.16) (train=+28.07 held_pnl=-20.5%)
+  · momentum_n_consec: sign-flip (+10.19→-5.67) (train=+10.19 held_pnl=-29.9%)
+  · volume_breakout: PnL fail (+9.3% < 10.0%) (train=+8.84 held_pnl=+9.3%)
+  · ema_crossover: sign-flip (+7.89→-4.03) (train=+7.89 held_pnl=-22.2%)
+  · price_channel_with_atr: sign-flip (+9.84→-5.75) (train=+9.84 held_pnl=-22.4%)
+
+  Sweep #213 PASS candidates: 0
+
+
+========== SWEEP #214 (seed=256) ==========
+
+  · donchian_raw: sign-flip (+10.50→-1.35) (train=+10.50 held_pnl=-4.7%)
+  · rsi_mean_reversion: sign-flip (+82.97→-14.38) (train=+82.97 held_pnl=-31.3%)
+  · bollinger_breakout: sign-flip (+14.39→-6.24) (train=+14.39 held_pnl=-23.1%)
+  · bollinger_mr: sign-flip (+8.96→-1.21) (train=+8.96 held_pnl=-6.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.01→-5.22) (train=+32.01 held_pnl=-8.7%)
+  · momentum_n_consec: sign-flip (+10.05→-6.39) (train=+10.05 held_pnl=-33.1%)
+  · volume_breakout: sign-flip (+9.10→-5.36) (train=+9.10 held_pnl=-15.5%)
+  · ema_crossover: sign-flip (+8.32→-4.12) (train=+8.32 held_pnl=-22.1%)
+  · price_channel_with_atr: sign-flip (+9.88→-5.22) (train=+9.88 held_pnl=-25.7%)
+
+  Sweep #214 PASS candidates: 0
+
+
+========== SWEEP #215 (seed=257) ==========
+
+  · donchian_raw: sign-flip (+9.69→-2.89) (train=+9.69 held_pnl=-8.2%)
+  · rsi_mean_reversion: sign-flip (+40.43→-5.54) (train=+40.43 held_pnl=-49.6%)
+  · bollinger_breakout: sign-flip (+13.20→-1.34) (train=+13.20 held_pnl=-6.1%)
+  · bollinger_mr: sign-flip (+9.41→-3.60) (train=+9.41 held_pnl=-12.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.33→-6.03) (train=+30.33 held_pnl=-13.2%)
+  · momentum_n_consec: sign-flip (+11.79→-7.24) (train=+11.79 held_pnl=-32.0%)
+  · volume_breakout: sign-flip (+11.17→-5.06) (train=+11.17 held_pnl=-16.2%)
+  · ema_crossover: sign-flip (+7.36→-4.28) (train=+7.36 held_pnl=-20.6%)
+  · price_channel_with_atr: sign-flip (+10.96→-5.74) (train=+10.96 held_pnl=-23.9%)
+
+  Sweep #215 PASS candidates: 0
+
+
+========== SWEEP #216 (seed=258) ==========
+
+  · donchian_raw: sign-flip (+11.56→-5.60) (train=+11.56 held_pnl=-24.2%)
+  · rsi_mean_reversion: sign-flip (+37.69→-15.04) (train=+37.69 held_pnl=-39.4%)
+  · bollinger_breakout: sign-flip (+15.33→-2.35) (train=+15.33 held_pnl=-11.9%)
+  · bollinger_mr: sign-flip (+9.98→-1.24) (train=+9.98 held_pnl=-5.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.69→-9.31) (train=+30.69 held_pnl=-14.0%)
+  · momentum_n_consec: sign-flip (+10.18→-4.83) (train=+10.18 held_pnl=-23.8%)
+  · volume_breakout: sign-flip (+9.60→-4.00) (train=+9.60 held_pnl=-13.4%)
+  · ema_crossover: sign-flip (+8.00→-5.39) (train=+8.00 held_pnl=-24.6%)
+  · price_channel_with_atr: sign-flip (+10.68→-4.12) (train=+10.68 held_pnl=-16.5%)
+
+  Sweep #216 PASS candidates: 0
+
+
+========== SWEEP #217 (seed=259) ==========
+
+  · donchian_raw: sign-flip (+11.03→-4.36) (train=+11.03 held_pnl=-16.9%)
+  · rsi_mean_reversion: sign-flip (+33.18→-9.46) (train=+33.18 held_pnl=-36.0%)
+  · bollinger_breakout: sign-flip (+14.79→-5.58) (train=+14.79 held_pnl=-24.1%)
+  · bollinger_mr: sign-flip (+9.65→-2.72) (train=+9.65 held_pnl=-13.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.05→-10.19) (train=+33.05 held_pnl=-42.4%)
+  · momentum_n_consec: sign-flip (+14.11→-7.02) (train=+14.11 held_pnl=-31.3%)
+  · volume_breakout: PnL fail (+3.6% < 10.0%) (train=+9.29 held_pnl=+3.6%)
+  · ema_crossover: sign-flip (+8.62→-3.55) (train=+8.62 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+9.43→-4.41) (train=+9.43 held_pnl=-18.8%)
+
+  Sweep #217 PASS candidates: 0
+
+
+========== SWEEP #218 (seed=260) ==========
+
+  · donchian_raw: sign-flip (+10.19→-7.78) (train=+10.19 held_pnl=-27.3%)
+  · rsi_mean_reversion: sign-flip (+14.08→-4.87) (train=+14.08 held_pnl=-25.2%)
+  · bollinger_breakout: sign-flip (+13.44→-7.76) (train=+13.44 held_pnl=-29.9%)
+  · bollinger_mr: sign-flip (+12.04→-2.99) (train=+12.04 held_pnl=-14.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.86→-9.51) (train=+33.86 held_pnl=-19.7%)
+  · momentum_n_consec: sign-flip (+13.80→-6.66) (train=+13.80 held_pnl=-30.2%)
+  · volume_breakout: sign-flip (+10.17→-7.32) (train=+10.17 held_pnl=-32.4%)
+  · ema_crossover: sign-flip (+7.84→-4.54) (train=+7.84 held_pnl=-32.8%)
+  · price_channel_with_atr: sign-flip (+10.47→-4.17) (train=+10.47 held_pnl=-16.8%)
+
+  Sweep #218 PASS candidates: 0
+
+
+========== SWEEP #219 (seed=261) ==========
+
+  · donchian_raw: sign-flip (+10.98→-3.81) (train=+10.98 held_pnl=-14.4%)
+  · rsi_mean_reversion: sign-flip (+8.47→-7.58) (train=+8.47 held_pnl=-36.7%)
+  · bollinger_breakout: sign-flip (+13.43→-2.81) (train=+13.43 held_pnl=-8.7%)
+  · bollinger_mr: sign-flip (+7.48→-2.31) (train=+7.48 held_pnl=-11.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+34.26→-8.17) (train=+34.26 held_pnl=-17.1%)
+  · momentum_n_consec: sign-flip (+12.04→-6.69) (train=+12.04 held_pnl=-30.0%)
+  · volume_breakout: sign-flip (+9.15→-6.03) (train=+9.15 held_pnl=-24.3%)
+  · ema_crossover: sign-flip (+8.00→-4.58) (train=+8.00 held_pnl=-32.3%)
+  · price_channel_with_atr: sign-flip (+8.44→-5.03) (train=+8.44 held_pnl=-16.3%)
+
+  Sweep #219 PASS candidates: 0
+
+
+========== SWEEP #220 (seed=262) ==========
+
+  · donchian_raw: sign-flip (+12.24→-6.83) (train=+12.24 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+59.00→-4.62) (train=+59.00 held_pnl=-25.0%)
+  · bollinger_breakout: sign-flip (+12.20→-1.75) (train=+12.20 held_pnl=-9.0%)
+  · bollinger_mr: sign-flip (+12.25→-1.87) (train=+12.25 held_pnl=-6.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.58→-10.44) (train=+28.58 held_pnl=-39.8%)
+  · momentum_n_consec: sign-flip (+10.35→-5.60) (train=+10.35 held_pnl=-29.3%)
+  · volume_breakout: sign-flip (+9.64→-3.61) (train=+9.64 held_pnl=-14.6%)
+  · ema_crossover: sign-flip (+6.72→-5.61) (train=+6.72 held_pnl=-43.3%)
+  · price_channel_with_atr: sign-flip (+10.65→-5.87) (train=+10.65 held_pnl=-25.9%)
+
+  Sweep #220 PASS candidates: 0
+
+
+========== SWEEP #221 (seed=263) ==========
+
+  · donchian_raw: sign-flip (+12.20→-6.83) (train=+12.20 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+13.04→-5.84) (train=+13.04 held_pnl=-31.0%)
+  · bollinger_breakout: sign-flip (+28.24→-2.67) (train=+28.24 held_pnl=-8.2%)
+  · bollinger_mr: sign-flip (+10.02→-1.13) (train=+10.02 held_pnl=-4.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.39→-8.83) (train=+31.39 held_pnl=-17.1%)
+  · momentum_n_consec: sign-flip (+12.07→-6.19) (train=+12.07 held_pnl=-28.0%)
+  · volume_breakout: sign-flip (+7.40→-4.22) (train=+7.40 held_pnl=-17.2%)
+  · ema_crossover: sign-flip (+7.97→-6.35) (train=+7.97 held_pnl=-33.0%)
+  · price_channel_with_atr: sign-flip (+9.59→-6.45) (train=+9.59 held_pnl=-26.9%)
+
+  Sweep #221 PASS candidates: 0
+
+
+========== SWEEP #222 (seed=264) ==========
+
+  · donchian_raw: sign-flip (+9.93→-3.35) (train=+9.93 held_pnl=-12.9%)
+  · rsi_mean_reversion: sign-flip (+35.56→-5.16) (train=+35.56 held_pnl=-32.2%)
+  · bollinger_breakout: sign-flip (+12.96→-2.68) (train=+12.96 held_pnl=-13.8%)
+  · bollinger_mr: sign-flip (+8.97→-3.34) (train=+8.97 held_pnl=-16.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.43→-7.23) (train=+30.43 held_pnl=-31.4%)
+  · momentum_n_consec: sign-flip (+8.49→-4.38) (train=+8.49 held_pnl=-32.1%)
+  · volume_breakout: sign-flip (+8.89→-0.98) (train=+8.89 held_pnl=-2.6%)
+  · ema_crossover: sign-flip (+8.00→-4.61) (train=+8.00 held_pnl=-31.1%)
+  · price_channel_with_atr: sign-flip (+8.71→-2.82) (train=+8.71 held_pnl=-8.6%)
+
+  Sweep #222 PASS candidates: 0
+
+
+========== SWEEP #223 (seed=265) ==========
+
+  · donchian_raw: sign-flip (+9.50→-1.68) (train=+9.50 held_pnl=-4.9%)
+  · rsi_mean_reversion: sign-flip (+14.37→-1.52) (train=+14.37 held_pnl=-8.5%)
+  · bollinger_breakout: sign-flip (+23.78→-3.66) (train=+23.78 held_pnl=-8.0%)
+  · bollinger_mr: sign-flip (+8.05→-4.70) (train=+8.05 held_pnl=-19.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.97→-10.12) (train=+29.97 held_pnl=-14.9%)
+  · momentum_n_consec: PnL fail (+1.7% < 10.0%) (train=+8.93 held_pnl=+1.7%)
+  · volume_breakout: sign-flip (+8.14→-1.23) (train=+8.14 held_pnl=-3.5%)
+  · ema_crossover: sign-flip (+8.62→-3.55) (train=+8.62 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+9.00→-4.90) (train=+9.00 held_pnl=-27.7%)
+
+  Sweep #223 PASS candidates: 0
+
+
+========== SWEEP #224 (seed=266) ==========
+
+  · donchian_raw: sign-flip (+10.99→-3.82) (train=+10.99 held_pnl=-14.5%)
+  · rsi_mean_reversion: sign-flip (+13.31→-14.07) (train=+13.31 held_pnl=-34.0%)
+  · bollinger_breakout: sign-flip (+14.21→-5.13) (train=+14.21 held_pnl=-17.8%)
+  · bollinger_mr: sign-flip (+9.97→-1.48) (train=+9.97 held_pnl=-6.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.88→-8.91) (train=+30.88 held_pnl=-36.3%)
+  · momentum_n_consec: sign-flip (+13.78→-6.37) (train=+13.78 held_pnl=-32.0%)
+  · volume_breakout: sign-flip (+9.57→-2.18) (train=+9.57 held_pnl=-8.1%)
+  · ema_crossover: sign-flip (+9.83→-7.43) (train=+9.83 held_pnl=-31.4%)
+  · price_channel_with_atr: sign-flip (+8.93→-2.92) (train=+8.93 held_pnl=-8.4%)
+
+  Sweep #224 PASS candidates: 0
+
+
+========== SWEEP #225 (seed=267) ==========
+
+  · donchian_raw: sign-flip (+10.90→-2.06) (train=+10.90 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+33.21→-6.86) (train=+33.21 held_pnl=-32.5%)
+  · bollinger_breakout: sign-flip (+11.43→-2.09) (train=+11.43 held_pnl=-10.6%)
+  · bollinger_mr: sign-flip (+7.86→-3.10) (train=+7.86 held_pnl=-13.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+35.12→-7.31) (train=+35.12 held_pnl=-17.1%)
+  · momentum_n_consec: sign-flip (+10.09→-5.01) (train=+10.09 held_pnl=-31.6%)
+  · volume_breakout: sign-flip (+8.58→-4.55) (train=+8.58 held_pnl=-18.1%)
+  · ema_crossover: sign-flip (+8.00→-5.39) (train=+8.00 held_pnl=-24.6%)
+  · price_channel_with_atr: sign-flip (+10.92→-6.17) (train=+10.92 held_pnl=-26.3%)
+
+  Sweep #225 PASS candidates: 0
+
+
+========== SWEEP #226 (seed=268) ==========
+
+  · donchian_raw: sign-flip (+10.97→-3.81) (train=+10.97 held_pnl=-14.4%)
+  · rsi_mean_reversion: sign-flip (+5.75→-2.89) (train=+5.75 held_pnl=-20.6%)
+  · bollinger_breakout: sign-flip (+14.58→-1.03) (train=+14.58 held_pnl=-5.0%)
+  · bollinger_mr: sign-flip (+8.60→-0.65) (train=+8.60 held_pnl=-3.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.05→-7.66) (train=+32.05 held_pnl=-28.3%)
+  · momentum_n_consec: sign-flip (+9.33→-5.87) (train=+9.33 held_pnl=-29.4%)
+  · volume_breakout: sign-flip (+9.77→-3.50) (train=+9.77 held_pnl=-10.6%)
+  · ema_crossover: sign-flip (+8.74→-3.54) (train=+8.74 held_pnl=-18.9%)
+  · price_channel_with_atr: sign-flip (+8.94→-2.72) (train=+8.94 held_pnl=-11.2%)
+
+  Sweep #226 PASS candidates: 0
+
+
+========== SWEEP #227 (seed=269) ==========
+
+  · donchian_raw: sign-flip (+11.82→-3.40) (train=+11.82 held_pnl=-12.9%)
+  · rsi_mean_reversion: sign-flip (+34.76→-11.19) (train=+34.76 held_pnl=-29.4%)
+  · bollinger_breakout: sign-flip (+12.04→-4.12) (train=+12.04 held_pnl=-12.8%)
+  · bollinger_mr: sign-flip (+9.43→-1.35) (train=+9.43 held_pnl=-5.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.20→-8.62) (train=+28.20 held_pnl=-32.5%)
+  · momentum_n_consec: sign-flip (+8.46→-3.99) (train=+8.46 held_pnl=-26.6%)
+  · volume_breakout: sign-flip (+9.20→-4.52) (train=+9.20 held_pnl=-16.2%)
+  · ema_crossover: sign-flip (+6.99→-4.35) (train=+6.99 held_pnl=-32.3%)
+  · price_channel_with_atr: sign-flip (+9.50→-2.24) (train=+9.50 held_pnl=-10.4%)
+
+  Sweep #227 PASS candidates: 0
+
+
+========== SWEEP #228 (seed=270) ==========
+
+  · donchian_raw: sign-flip (+10.04→-5.75) (train=+10.04 held_pnl=-20.9%)
+  · rsi_mean_reversion: sign-flip (+30.43→-4.86) (train=+30.43 held_pnl=-42.4%)
+  · bollinger_breakout: sign-flip (+15.14→-3.17) (train=+15.14 held_pnl=-11.6%)
+  · bollinger_mr: sign-flip (+8.68→-3.21) (train=+8.68 held_pnl=-13.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.63→-6.62) (train=+33.63 held_pnl=-12.9%)
+  · momentum_n_consec: sign-flip (+9.94→-4.94) (train=+9.94 held_pnl=-24.3%)
+  · volume_breakout: sign-flip (+9.00→-1.91) (train=+9.00 held_pnl=-6.7%)
+  · ema_crossover: sign-flip (+8.74→-3.69) (train=+8.74 held_pnl=-17.2%)
+  · price_channel_with_atr: sign-flip (+9.60→-6.43) (train=+9.60 held_pnl=-27.0%)
+
+  Sweep #228 PASS candidates: 0
+
+
+========== SWEEP #229 (seed=271) ==========
+
+  · donchian_raw: sign-flip (+10.81→-6.83) (train=+10.81 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+14.87→-6.98) (train=+14.87 held_pnl=-52.3%)
+  · bollinger_breakout: sign-flip (+28.13→-1.60) (train=+28.13 held_pnl=-4.4%)
+  · bollinger_mr: sign-flip (+10.90→-2.00) (train=+10.90 held_pnl=-6.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.18→-7.39) (train=+29.18 held_pnl=-13.5%)
+  · momentum_n_consec: sign-flip (+10.16→-5.92) (train=+10.16 held_pnl=-33.3%)
+  · volume_breakout: PnL fail (+6.9% < 10.0%) (train=+12.77 held_pnl=+6.9%)
+  · ema_crossover: sign-flip (+8.63→-4.44) (train=+8.63 held_pnl=-26.7%)
+  · price_channel_with_atr: sign-flip (+12.09→-6.66) (train=+12.09 held_pnl=-28.0%)
+
+  Sweep #229 PASS candidates: 0
+
+
+========== SWEEP #230 (seed=272) ==========
+
+  · donchian_raw: sign-flip (+11.77→-1.61) (train=+11.77 held_pnl=-5.6%)
+  · rsi_mean_reversion: sign-flip (+12.20→-7.09) (train=+12.20 held_pnl=-25.3%)
+  · bollinger_breakout: sign-flip (+13.73→-9.49) (train=+13.73 held_pnl=-37.3%)
+  · bollinger_mr: sign-flip (+8.82→-4.09) (train=+8.82 held_pnl=-17.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.88→-8.46) (train=+28.88 held_pnl=-27.0%)
+  · momentum_n_consec: sign-flip (+9.41→-5.19) (train=+9.41 held_pnl=-30.3%)
+  ★ volume_breakout: PASS held-out Sharpe=4.60 PnL=+10.6% ★
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+9.38→-2.26) (train=+9.38 held_pnl=-11.1%)
+
+  Sweep #230 PASS candidates: 1
+    volume_breakout: train Sharpe=8.82 → held-out PnL=+10.6%
+      params: atr_period=14_atr_stop_mult=3.1785_exit_lookback_n=9_lookback_n=11_vol_mult=1.2282_vol_window=13
+
+  ★ PASS #1 в sweep #230 (продолжаем continuous)
+
+
+========== SWEEP #231 (seed=273) ==========
+
+  · donchian_raw: sign-flip (+9.64→-3.23) (train=+9.64 held_pnl=-9.4%)
+  · rsi_mean_reversion: sign-flip (+19.59→-5.12) (train=+19.59 held_pnl=-17.7%)
+  · bollinger_breakout: PnL fail (+0.0% < 10.0%) (train=+30.95 held_pnl=+0.0%)
+  · bollinger_mr: sign-flip (+12.26→-4.89) (train=+12.26 held_pnl=-17.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.57→-7.74) (train=+28.57 held_pnl=-12.7%)
+  · momentum_n_consec: sign-flip (+14.26→-6.59) (train=+14.26 held_pnl=-29.2%)
+  · volume_breakout: sign-flip (+7.52→-4.66) (train=+7.52 held_pnl=-15.2%)
+  · ema_crossover: sign-flip (+8.63→-4.44) (train=+8.63 held_pnl=-26.8%)
+  · price_channel_with_atr: sign-flip (+11.75→-5.72) (train=+11.75 held_pnl=-23.9%)
+
+  Sweep #231 PASS candidates: 0
+
+
+========== SWEEP #232 (seed=274) ==========
+
+  · donchian_raw: sign-flip (+10.95→-6.27) (train=+10.95 held_pnl=-27.2%)
+  · rsi_mean_reversion: sign-flip (+16.17→-7.36) (train=+16.17 held_pnl=-39.3%)
+  · bollinger_breakout: sign-flip (+13.53→-3.59) (train=+13.53 held_pnl=-12.8%)
+  · bollinger_mr: PnL fail (+2.6% < 10.0%) (train=+8.70 held_pnl=+2.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.86→-10.99) (train=+30.86 held_pnl=-20.7%)
+  · momentum_n_consec: sign-flip (+7.73→-3.38) (train=+7.73 held_pnl=-27.8%)
+  · volume_breakout: sign-flip (+8.39→-3.73) (train=+8.39 held_pnl=-14.4%)
+  · ema_crossover: sign-flip (+6.72→-5.61) (train=+6.72 held_pnl=-43.3%)
+  · price_channel_with_atr: sign-flip (+10.73→-5.70) (train=+10.73 held_pnl=-23.9%)
+
+  Sweep #232 PASS candidates: 0
+
+
+========== SWEEP #233 (seed=275) ==========
+
+  · donchian_raw: sign-flip (+11.68→-5.61) (train=+11.68 held_pnl=-24.5%)
+  · rsi_mean_reversion: sign-flip (+9.63→-5.87) (train=+9.63 held_pnl=-32.6%)
+  · bollinger_breakout: sign-flip (+24.87→-5.31) (train=+24.87 held_pnl=-16.0%)
+  · bollinger_mr: sign-flip (+11.97→-0.61) (train=+11.97 held_pnl=-2.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.17→-11.01) (train=+28.17 held_pnl=-39.8%)
+  · momentum_n_consec: sign-flip (+11.06→-4.85) (train=+11.06 held_pnl=-24.1%)
+  · volume_breakout: sign-flip (+10.61→-0.37) (train=+10.61 held_pnl=-1.0%)
+  · ema_crossover: sign-flip (+8.23→-5.09) (train=+8.23 held_pnl=-22.3%)
+  · price_channel_with_atr: sign-flip (+11.84→-5.69) (train=+11.84 held_pnl=-23.9%)
+
+  Sweep #233 PASS candidates: 0
+
+
+========== SWEEP #234 (seed=276) ==========
+
+  · donchian_raw: sign-flip (+11.78→-1.61) (train=+11.78 held_pnl=-5.6%)
+  · rsi_mean_reversion: sign-flip (+9.39→-12.73) (train=+9.39 held_pnl=-44.4%)
+  · bollinger_breakout: sign-flip (+15.31→-5.16) (train=+15.31 held_pnl=-18.9%)
+  · bollinger_mr: sign-flip (+10.70→-1.69) (train=+10.70 held_pnl=-7.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.65→-10.43) (train=+30.65 held_pnl=-21.5%)
+  · momentum_n_consec: sign-flip (+12.31→-6.53) (train=+12.31 held_pnl=-30.3%)
+  · volume_breakout: sign-flip (+8.03→-2.74) (train=+8.03 held_pnl=-13.9%)
+  · ema_crossover: sign-flip (+8.52→-3.98) (train=+8.52 held_pnl=-18.8%)
+  · price_channel_with_atr: sign-flip (+9.39→-4.71) (train=+9.39 held_pnl=-19.1%)
+
+  Sweep #234 PASS candidates: 0
+
+
+========== SWEEP #235 (seed=277) ==========
+
+  · donchian_raw: sign-flip (+11.79→-1.95) (train=+11.79 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+52.34→-6.44) (train=+52.34 held_pnl=-42.4%)
+  · bollinger_breakout: sign-flip (+12.96→-3.92) (train=+12.96 held_pnl=-13.3%)
+  · bollinger_mr: sign-flip (+11.31→-1.72) (train=+11.31 held_pnl=-7.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.77→-9.00) (train=+28.77 held_pnl=-40.4%)
+  · momentum_n_consec: sign-flip (+10.48→-5.04) (train=+10.48 held_pnl=-25.5%)
+  · volume_breakout: sign-flip (+8.06→-2.53) (train=+8.06 held_pnl=-6.9%)
+  · ema_crossover: sign-flip (+8.74→-3.69) (train=+8.74 held_pnl=-17.2%)
+  · price_channel_with_atr: sign-flip (+8.89→-4.93) (train=+8.89 held_pnl=-25.6%)
+
+  Sweep #235 PASS candidates: 0
+
+
+========== SWEEP #236 (seed=278) ==========
+
+  · donchian_raw: sign-flip (+10.49→-2.81) (train=+10.49 held_pnl=-10.3%)
+  · rsi_mean_reversion: sign-flip (+21.74→-12.41) (train=+21.74 held_pnl=-49.1%)
+  · bollinger_breakout: sign-flip (+13.86→-2.76) (train=+13.86 held_pnl=-9.1%)
+  · bollinger_mr: sign-flip (+8.85→-4.52) (train=+8.85 held_pnl=-19.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.38→-9.15) (train=+30.38 held_pnl=-43.0%)
+  · momentum_n_consec: sign-flip (+13.87→-6.57) (train=+13.87 held_pnl=-29.6%)
+  · volume_breakout: sign-flip (+8.93→-2.05) (train=+8.93 held_pnl=-7.2%)
+  · ema_crossover: sign-flip (+7.56→-5.61) (train=+7.56 held_pnl=-28.7%)
+  · price_channel_with_atr: sign-flip (+9.87→-6.13) (train=+9.87 held_pnl=-26.5%)
+
+  Sweep #236 PASS candidates: 0
+
+
+========== SWEEP #237 (seed=279) ==========
+
+  · donchian_raw: sign-flip (+11.71→-1.61) (train=+11.71 held_pnl=-5.6%)
+  · rsi_mean_reversion: sign-flip (+47.52→-3.80) (train=+47.52 held_pnl=-13.9%)
+  · bollinger_breakout: sign-flip (+14.83→-5.86) (train=+14.83 held_pnl=-22.1%)
+  · bollinger_mr: sign-flip (+8.67→-1.48) (train=+8.67 held_pnl=-7.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.70→-8.87) (train=+33.70 held_pnl=-18.2%)
+  · momentum_n_consec: sign-flip (+10.57→-4.98) (train=+10.57 held_pnl=-25.0%)
+  · volume_breakout: sign-flip (+9.54→-1.14) (train=+9.54 held_pnl=-3.5%)
+  · ema_crossover: sign-flip (+8.07→-4.97) (train=+8.07 held_pnl=-20.7%)
+  · price_channel_with_atr: sign-flip (+8.26→-5.47) (train=+8.26 held_pnl=-18.0%)
+
+  Sweep #237 PASS candidates: 0
+
+
+========== SWEEP #238 (seed=280) ==========
+
+  · donchian_raw: sign-flip (+10.88→-2.06) (train=+10.88 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+14.00→-5.77) (train=+14.00 held_pnl=-41.6%)
+  · bollinger_breakout: sign-flip (+12.58→-2.44) (train=+12.58 held_pnl=-7.5%)
+  · bollinger_mr: sign-flip (+10.90→-6.28) (train=+10.90 held_pnl=-17.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.94→-10.41) (train=+31.94 held_pnl=-24.5%)
+  · momentum_n_consec: PnL fail (+1.6% < 10.0%) (train=+9.66 held_pnl=+1.6%)
+  · volume_breakout: sign-flip (+10.03→-0.24) (train=+10.03 held_pnl=-0.7%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+9.75→-4.73) (train=+9.75 held_pnl=-19.4%)
+
+  Sweep #238 PASS candidates: 0
+
+
+========== SWEEP #239 (seed=281) ==========
+
+  · donchian_raw: sign-flip (+11.60→-6.12) (train=+11.60 held_pnl=-24.8%)
+  · rsi_mean_reversion: sign-flip (+75.86→-8.23) (train=+75.86 held_pnl=-27.5%)
+  · bollinger_breakout: sign-flip (+23.60→-0.80) (train=+23.60 held_pnl=-1.2%)
+  · bollinger_mr: sign-flip (+10.38→-2.77) (train=+10.38 held_pnl=-12.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.42→-8.18) (train=+29.42 held_pnl=-24.6%)
+  · momentum_n_consec: sign-flip (+9.76→-4.93) (train=+9.76 held_pnl=-24.1%)
+  · volume_breakout: sign-flip (+9.99→-5.77) (train=+9.99 held_pnl=-21.4%)
+  · ema_crossover: sign-flip (+8.95→-8.08) (train=+8.95 held_pnl=-32.3%)
+  · price_channel_with_atr: sign-flip (+11.83→-5.73) (train=+11.83 held_pnl=-24.4%)
+
+  Sweep #239 PASS candidates: 0
+
+
+========== SWEEP #240 (seed=282) ==========
+
+  · donchian_raw: sign-flip (+11.43→-1.96) (train=+11.43 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+80.11→-11.24) (train=+80.11 held_pnl=-29.9%)
+  · bollinger_breakout: sign-flip (+12.86→-3.45) (train=+12.86 held_pnl=-10.6%)
+  · bollinger_mr: sign-flip (+9.41→-1.99) (train=+9.41 held_pnl=-8.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.72→-9.62) (train=+30.72 held_pnl=-37.3%)
+  · momentum_n_consec: sign-flip (+10.38→-6.20) (train=+10.38 held_pnl=-30.1%)
+  ★ volume_breakout: PASS held-out Sharpe=5.64 PnL=+14.8% ★
+  · ema_crossover: sign-flip (+8.09→-3.55) (train=+8.09 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+10.28→-4.23) (train=+10.28 held_pnl=-17.4%)
+
+  Sweep #240 PASS candidates: 1
+    volume_breakout: train Sharpe=9.31 → held-out PnL=+14.8%
+      params: atr_period=17_atr_stop_mult=2.7854_exit_lookback_n=9_lookback_n=10_vol_mult=1.2652_vol_window=12
+
+  ★ PASS #2 в sweep #240 (продолжаем continuous)
+
+
+========== SWEEP #241 (seed=283) ==========
+
+  · donchian_raw: sign-flip (+10.68→-2.87) (train=+10.68 held_pnl=-10.4%)
+  · rsi_mean_reversion: sign-flip (+26.36→-7.96) (train=+26.36 held_pnl=-34.3%)
+  · bollinger_breakout: sign-flip (+15.25→-4.81) (train=+15.25 held_pnl=-20.3%)
+  · bollinger_mr: sign-flip (+10.91→-0.77) (train=+10.91 held_pnl=-2.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.87→-9.12) (train=+28.87 held_pnl=-18.6%)
+  · momentum_n_consec: PnL fail (+1.4% < 10.0%) (train=+8.59 held_pnl=+1.4%)
+  · volume_breakout: sign-flip (+8.86→-3.92) (train=+8.86 held_pnl=-22.3%)
+  · ema_crossover: sign-flip (+8.63→-4.54) (train=+8.63 held_pnl=-25.4%)
+  · price_channel_with_atr: sign-flip (+9.93→-6.81) (train=+9.93 held_pnl=-38.8%)
+
+  Sweep #241 PASS candidates: 0
+
+
+========== SWEEP #242 (seed=284) ==========
+
+  · donchian_raw: sign-flip (+10.99→-3.81) (train=+10.99 held_pnl=-14.5%)
+  · rsi_mean_reversion: sign-flip (+61.18→-7.84) (train=+61.18 held_pnl=-36.3%)
+  · bollinger_breakout: sign-flip (+15.38→-7.19) (train=+15.38 held_pnl=-39.2%)
+  · bollinger_mr: sign-flip (+11.83→-7.86) (train=+11.83 held_pnl=-26.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+27.53→-6.22) (train=+27.53 held_pnl=-25.4%)
+  · momentum_n_consec: sign-flip (+12.50→-7.15) (train=+12.50 held_pnl=-31.2%)
+  · volume_breakout: sign-flip (+6.50→-1.08) (train=+6.50 held_pnl=-4.5%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+11.07→-6.20) (train=+11.07 held_pnl=-26.7%)
+
+  Sweep #242 PASS candidates: 0
+
+
+========== SWEEP #243 (seed=285) ==========
+
+  · donchian_raw: sign-flip (+12.39→-6.83) (train=+12.39 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+17.27→-3.43) (train=+17.27 held_pnl=-21.7%)
+  · bollinger_breakout: sign-flip (+13.77→-5.87) (train=+13.77 held_pnl=-20.6%)
+  · bollinger_mr: sign-flip (+6.63→-2.74) (train=+6.63 held_pnl=-16.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.48→-6.66) (train=+29.48 held_pnl=-22.9%)
+  · momentum_n_consec: sign-flip (+11.37→-6.38) (train=+11.37 held_pnl=-32.2%)
+  ★ volume_breakout: PASS held-out Sharpe=6.95 PnL=+16.8% ★
+  · ema_crossover: sign-flip (+8.74→-3.56) (train=+8.74 held_pnl=-18.8%)
+  · price_channel_with_atr: sign-flip (+9.94→-6.29) (train=+9.94 held_pnl=-27.3%)
+
+  Sweep #243 PASS candidates: 1
+    volume_breakout: train Sharpe=9.86 → held-out PnL=+16.8%
+      params: atr_period=17_atr_stop_mult=2.4472_exit_lookback_n=8_lookback_n=9_vol_mult=1.2794_vol_window=12
+
+  ★ PASS #3 в sweep #243 (продолжаем continuous)
+
+
+========== SWEEP #244 (seed=286) ==========
+
+  · donchian_raw: sign-flip (+12.16→-6.83) (train=+12.16 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+8.92→-4.37) (train=+8.92 held_pnl=-29.5%)
+  · bollinger_breakout: sign-flip (+14.90→-0.82) (train=+14.90 held_pnl=-4.2%)
+  · bollinger_mr: sign-flip (+10.30→-1.20) (train=+10.30 held_pnl=-4.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.14→-10.32) (train=+32.14 held_pnl=-38.9%)
+  · momentum_n_consec: PnL fail (+1.8% < 10.0%) (train=+9.62 held_pnl=+1.8%)
+  · volume_breakout: sign-flip (+8.98→-4.60) (train=+8.98 held_pnl=-13.3%)
+  · ema_crossover: sign-flip (+9.02→-4.74) (train=+9.02 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+9.19→-2.79) (train=+9.19 held_pnl=-8.3%)
+
+  Sweep #244 PASS candidates: 0
+
+
+========== SWEEP #245 (seed=287) ==========
+
+  · donchian_raw: sign-flip (+11.13→-6.10) (train=+11.13 held_pnl=-24.5%)
+  · rsi_mean_reversion: sign-flip (+58.85→-13.28) (train=+58.85 held_pnl=-34.6%)
+  · bollinger_breakout: sign-flip (+12.92→-1.51) (train=+12.92 held_pnl=-7.8%)
+  · bollinger_mr: sign-flip (+8.14→-1.97) (train=+8.14 held_pnl=-7.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.47→-7.40) (train=+30.47 held_pnl=-24.9%)
+  · momentum_n_consec: sign-flip (+8.04→-4.95) (train=+8.04 held_pnl=-27.8%)
+  · volume_breakout: sign-flip (+10.13→-7.15) (train=+10.13 held_pnl=-27.6%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+9.96→-6.26) (train=+9.96 held_pnl=-26.9%)
+
+  Sweep #245 PASS candidates: 0
+
+
+========== SWEEP #246 (seed=288) ==========
+
+  · donchian_raw: sign-flip (+9.66→-3.59) (train=+9.66 held_pnl=-13.6%)
+  · rsi_mean_reversion: sign-flip (+35.46→-14.86) (train=+35.46 held_pnl=-38.9%)
+  · bollinger_breakout: sign-flip (+13.58→-4.51) (train=+13.58 held_pnl=-18.1%)
+  · bollinger_mr: sign-flip (+9.64→-1.37) (train=+9.64 held_pnl=-5.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.62→-8.17) (train=+31.62 held_pnl=-16.4%)
+  · momentum_n_consec: sign-flip (+14.13→-6.64) (train=+14.13 held_pnl=-29.7%)
+  · volume_breakout: PnL fail (+3.1% < 10.0%) (train=+10.29 held_pnl=+3.1%)
+  · ema_crossover: sign-flip (+8.54→-3.97) (train=+8.54 held_pnl=-18.7%)
+  · price_channel_with_atr: sign-flip (+8.55→-4.78) (train=+8.55 held_pnl=-26.5%)
+
+  Sweep #246 PASS candidates: 0
+
+
+========== SWEEP #247 (seed=289) ==========
+
+  · donchian_raw: sign-flip (+12.37→-6.83) (train=+12.37 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+71.52→-6.86) (train=+71.52 held_pnl=-31.7%)
+  · bollinger_breakout: sign-flip (+13.80→-6.18) (train=+13.80 held_pnl=-25.5%)
+  · bollinger_mr: sign-flip (+10.33→-4.93) (train=+10.33 held_pnl=-16.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+34.88→-11.22) (train=+34.88 held_pnl=-28.7%)
+  · momentum_n_consec: sign-flip (+10.09→-5.66) (train=+10.09 held_pnl=-27.2%)
+  · volume_breakout: PnL fail (+5.3% < 10.0%) (train=+8.69 held_pnl=+5.3%)
+  · ema_crossover: sign-flip (+8.20→-4.74) (train=+8.20 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+9.11→-1.60) (train=+9.11 held_pnl=-5.4%)
+
+  Sweep #247 PASS candidates: 0
+
+
+========== SWEEP #248 (seed=290) ==========
+
+  · donchian_raw: sign-flip (+10.62→-5.64) (train=+10.62 held_pnl=-24.1%)
+  · rsi_mean_reversion: sign-flip (+16.19→-3.80) (train=+16.19 held_pnl=-31.3%)
+  · bollinger_breakout: sign-flip (+12.79→-0.67) (train=+12.79 held_pnl=-3.5%)
+  · bollinger_mr: sign-flip (+10.39→-3.90) (train=+10.39 held_pnl=-12.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+27.76→-7.14) (train=+27.76 held_pnl=-24.9%)
+  · momentum_n_consec: sign-flip (+9.55→-5.05) (train=+9.55 held_pnl=-29.1%)
+  · volume_breakout: sign-flip (+8.88→-4.67) (train=+8.88 held_pnl=-18.0%)
+  · ema_crossover: sign-flip (+7.58→-2.73) (train=+7.58 held_pnl=-10.6%)
+  · price_channel_with_atr: sign-flip (+9.27→-1.98) (train=+9.27 held_pnl=-9.8%)
+
+  Sweep #248 PASS candidates: 0
+
+
+========== SWEEP #249 (seed=291) ==========
+
+  · donchian_raw: sign-flip (+10.96→-3.54) (train=+10.96 held_pnl=-12.8%)
+  · rsi_mean_reversion: sign-flip (+15.95→-7.15) (train=+15.95 held_pnl=-46.1%)
+  · bollinger_breakout: PnL fail (+2.2% < 10.0%) (train=+14.31 held_pnl=+2.2%)
+  · bollinger_mr: sign-flip (+10.39→-0.63) (train=+10.39 held_pnl=-2.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.62→-10.39) (train=+32.62 held_pnl=-21.2%)
+  · momentum_n_consec: sign-flip (+10.34→-5.38) (train=+10.34 held_pnl=-26.9%)
+  · volume_breakout: sign-flip (+11.52→-2.24) (train=+11.52 held_pnl=-7.0%)
+  · ema_crossover: sign-flip (+7.68→-2.97) (train=+7.68 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+12.21→-6.25) (train=+12.21 held_pnl=-26.0%)
+
+  Sweep #249 PASS candidates: 0
+
+
+========== SWEEP #250 (seed=292) ==========
+
+  · donchian_raw: sign-flip (+11.80→-1.95) (train=+11.80 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+59.84→-8.12) (train=+59.84 held_pnl=-38.7%)
+  · bollinger_breakout: sign-flip (+12.34→-1.62) (train=+12.34 held_pnl=-8.2%)
+  · bollinger_mr: sign-flip (+8.80→-4.75) (train=+8.80 held_pnl=-17.4%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.73→-5.24) (train=+33.73 held_pnl=-19.9%)
+  · momentum_n_consec: sign-flip (+10.08→-5.72) (train=+10.08 held_pnl=-27.9%)
+  · volume_breakout: sign-flip (+11.05→-2.56) (train=+11.05 held_pnl=-8.5%)
+  · ema_crossover: sign-flip (+8.74→-3.69) (train=+8.74 held_pnl=-17.2%)
+  · price_channel_with_atr: sign-flip (+8.90→-0.90) (train=+8.90 held_pnl=-3.1%)
+
+  Sweep #250 PASS candidates: 0
+
+
+========== SWEEP #251 (seed=293) ==========
+
+  · donchian_raw: sign-flip (+10.60→-6.05) (train=+10.60 held_pnl=-26.5%)
+  · rsi_mean_reversion: sign-flip (+56.55→-5.43) (train=+56.55 held_pnl=-20.3%)
+  · bollinger_breakout: sign-flip (+14.07→-4.18) (train=+14.07 held_pnl=-14.8%)
+  · bollinger_mr: sign-flip (+11.22→-0.26) (train=+11.22 held_pnl=-0.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+34.40→-6.29) (train=+34.40 held_pnl=-10.6%)
+  · momentum_n_consec: sign-flip (+7.49→-2.96) (train=+7.49 held_pnl=-23.8%)
+  · volume_breakout: sign-flip (+8.73→-3.77) (train=+8.73 held_pnl=-12.1%)
+  · ema_crossover: sign-flip (+8.25→-4.74) (train=+8.25 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+7.48→-2.32) (train=+7.48 held_pnl=-10.5%)
+
+  Sweep #251 PASS candidates: 0
+
+
+========== SWEEP #252 (seed=294) ==========
+
+  · donchian_raw: sign-flip (+10.71→-5.70) (train=+10.71 held_pnl=-23.9%)
+  · rsi_mean_reversion: sign-flip (+38.50→-7.66) (train=+38.50 held_pnl=-35.5%)
+  · bollinger_breakout: insufficient n=4 (train=+27.09 held_pnl=+8.4%)
+  · bollinger_mr: sign-flip (+8.17→-2.68) (train=+8.17 held_pnl=-10.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.13→-3.81) (train=+28.13 held_pnl=-8.3%)
+  · momentum_n_consec: sign-flip (+13.97→-6.85) (train=+13.97 held_pnl=-30.6%)
+  · volume_breakout: sign-flip (+8.07→-0.05) (train=+8.07 held_pnl=-0.2%)
+  · ema_crossover: sign-flip (+9.02→-4.74) (train=+9.02 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+8.53→-2.24) (train=+8.53 held_pnl=-7.7%)
+
+  Sweep #252 PASS candidates: 0
+
+
+========== SWEEP #253 (seed=295) ==========
+
+  · donchian_raw: sign-flip (+12.19→-6.83) (train=+12.19 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+13.18→-6.08) (train=+13.18 held_pnl=-39.8%)
+  · bollinger_breakout: sign-flip (+13.75→-2.85) (train=+13.75 held_pnl=-9.5%)
+  · bollinger_mr: sign-flip (+11.87→-0.07) (train=+11.87 held_pnl=-0.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+26.23→-8.32) (train=+26.23 held_pnl=-24.9%)
+  · momentum_n_consec: sign-flip (+9.87→-5.73) (train=+9.87 held_pnl=-32.1%)
+  · volume_breakout: sign-flip (+9.30→-5.10) (train=+9.30 held_pnl=-21.3%)
+  · ema_crossover: sign-flip (+8.23→-5.09) (train=+8.23 held_pnl=-22.3%)
+  · price_channel_with_atr: sign-flip (+11.06→-5.77) (train=+11.06 held_pnl=-23.9%)
+
+  Sweep #253 PASS candidates: 0
+
+
+========== SWEEP #254 (seed=296) ==========
+
+  · donchian_raw: sign-flip (+11.27→-6.83) (train=+11.27 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+11.82→-5.23) (train=+11.82 held_pnl=-43.6%)
+  · bollinger_breakout: sign-flip (+13.96→-3.05) (train=+13.96 held_pnl=-16.1%)
+  · bollinger_mr: sign-flip (+8.45→-2.36) (train=+8.45 held_pnl=-12.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.29→-9.94) (train=+29.29 held_pnl=-35.4%)
+  · momentum_n_consec: sign-flip (+11.08→-6.29) (train=+11.08 held_pnl=-31.5%)
+  · volume_breakout: sign-flip (+8.91→-0.88) (train=+8.91 held_pnl=-3.0%)
+  · ema_crossover: sign-flip (+8.37→-4.30) (train=+8.37 held_pnl=-25.2%)
+  · price_channel_with_atr: sign-flip (+8.57→-0.98) (train=+8.57 held_pnl=-3.3%)
+
+  Sweep #254 PASS candidates: 0
+
+
+========== SWEEP #255 (seed=297) ==========
+
+  · donchian_raw: sign-flip (+10.56→-3.82) (train=+10.56 held_pnl=-14.5%)
+  · rsi_mean_reversion: sign-flip (+11.52→-6.21) (train=+11.52 held_pnl=-40.9%)
+  · bollinger_breakout: sign-flip (+15.33→-2.69) (train=+15.33 held_pnl=-9.7%)
+  · bollinger_mr: sign-flip (+8.69→-4.07) (train=+8.69 held_pnl=-13.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+35.19→-9.48) (train=+35.19 held_pnl=-39.7%)
+  · momentum_n_consec: sign-flip (+8.90→-4.06) (train=+8.90 held_pnl=-26.7%)
+  · volume_breakout: sign-flip (+9.14→-5.07) (train=+9.14 held_pnl=-17.1%)
+  · ema_crossover: sign-flip (+7.90→-3.50) (train=+7.90 held_pnl=-17.8%)
+  · price_channel_with_atr: sign-flip (+10.03→-6.73) (train=+10.03 held_pnl=-38.9%)
+
+  Sweep #255 PASS candidates: 0
+
+
+========== SWEEP #256 (seed=298) ==========
+
+  · donchian_raw: sign-flip (+10.90→-2.39) (train=+10.90 held_pnl=-8.8%)
+  · rsi_mean_reversion: sign-flip (+26.59→-6.00) (train=+26.59 held_pnl=-43.4%)
+  · bollinger_breakout: sign-flip (+13.70→-1.88) (train=+13.70 held_pnl=-6.4%)
+  · bollinger_mr: sign-flip (+8.78→-1.51) (train=+8.78 held_pnl=-7.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.27→-9.04) (train=+31.27 held_pnl=-16.6%)
+  · momentum_n_consec: sign-flip (+12.19→-6.14) (train=+12.19 held_pnl=-27.5%)
+  · volume_breakout: sign-flip (+6.98→-3.70) (train=+6.98 held_pnl=-13.7%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+11.12→-6.31) (train=+11.12 held_pnl=-27.9%)
+
+  Sweep #256 PASS candidates: 0
+
+
+========== SWEEP #257 (seed=299) ==========
+
+  · donchian_raw: sign-flip (+11.36→-1.61) (train=+11.36 held_pnl=-5.6%)
+  · rsi_mean_reversion: sign-flip (+22.69→-3.78) (train=+22.69 held_pnl=-22.0%)
+  · bollinger_breakout: sign-flip (+16.16→-2.79) (train=+16.16 held_pnl=-9.9%)
+  · bollinger_mr: sign-flip (+9.70→-1.15) (train=+9.70 held_pnl=-4.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.81→-6.23) (train=+29.81 held_pnl=-11.1%)
+  · momentum_n_consec: sign-flip (+9.68→-5.26) (train=+9.68 held_pnl=-27.1%)
+  · volume_breakout: sign-flip (+10.16→-3.51) (train=+10.16 held_pnl=-10.2%)
+  · ema_crossover: sign-flip (+7.90→-4.01) (train=+7.90 held_pnl=-22.1%)
+  · price_channel_with_atr: sign-flip (+11.23→-4.85) (train=+11.23 held_pnl=-20.8%)
+
+  Sweep #257 PASS candidates: 0
+
+
+========== SWEEP #258 (seed=300) ==========
+
+  · donchian_raw: sign-flip (+11.87→-3.35) (train=+11.87 held_pnl=-12.6%)
+  · rsi_mean_reversion: sign-flip (+52.49→-5.88) (train=+52.49 held_pnl=-51.3%)
+  · bollinger_breakout: sign-flip (+12.26→-2.64) (train=+12.26 held_pnl=-13.9%)
+  · bollinger_mr: sign-flip (+11.99→-2.98) (train=+11.99 held_pnl=-9.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.07→-9.72) (train=+29.07 held_pnl=-41.3%)
+  · momentum_n_consec: sign-flip (+10.45→-5.00) (train=+10.45 held_pnl=-25.3%)
+  · volume_breakout: sign-flip (+8.19→-3.51) (train=+8.19 held_pnl=-17.4%)
+  · ema_crossover: sign-flip (+9.83→-7.43) (train=+9.83 held_pnl=-31.4%)
+  · price_channel_with_atr: sign-flip (+10.16→-4.41) (train=+10.16 held_pnl=-25.4%)
+
+  Sweep #258 PASS candidates: 0
+
+
+========== SWEEP #259 (seed=301) ==========
+
+  · donchian_raw: sign-flip (+11.47→-3.37) (train=+11.47 held_pnl=-13.1%)
+  · rsi_mean_reversion: sign-flip (+59.19→-5.78) (train=+59.19 held_pnl=-22.1%)
+  · bollinger_breakout: sign-flip (+31.42→-1.23) (train=+31.42 held_pnl=-3.1%)
+  · bollinger_mr: sign-flip (+10.45→-0.68) (train=+10.45 held_pnl=-2.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.59→-10.16) (train=+32.59 held_pnl=-16.8%)
+  · momentum_n_consec: sign-flip (+11.76→-6.37) (train=+11.76 held_pnl=-28.4%)
+  · volume_breakout: sign-flip (+9.73→-2.66) (train=+9.73 held_pnl=-7.3%)
+  · ema_crossover: sign-flip (+8.78→-4.01) (train=+8.78 held_pnl=-19.0%)
+  · price_channel_with_atr: sign-flip (+9.62→-6.46) (train=+9.62 held_pnl=-26.9%)
+
+  Sweep #259 PASS candidates: 0
+
+
+========== SWEEP #260 (seed=302) ==========
+
+  · donchian_raw: sign-flip (+10.34→-3.69) (train=+10.34 held_pnl=-14.1%)
+  · rsi_mean_reversion: sign-flip (+17.50→-7.12) (train=+17.50 held_pnl=-49.2%)
+  · bollinger_breakout: PnL fail (+0.8% < 10.0%) (train=+31.07 held_pnl=+0.8%)
+  · bollinger_mr: sign-flip (+10.71→-0.33) (train=+10.71 held_pnl=-1.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.44→-4.89) (train=+29.44 held_pnl=-6.9%)
+  · momentum_n_consec: sign-flip (+8.47→-5.69) (train=+8.47 held_pnl=-31.8%)
+  · volume_breakout: sign-flip (+9.35→-3.48) (train=+9.35 held_pnl=-10.6%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+9.89→-6.13) (train=+9.89 held_pnl=-26.5%)
+
+  Sweep #260 PASS candidates: 0
+
+
+========== SWEEP #261 (seed=303) ==========
+
+  · donchian_raw: sign-flip (+10.91→-5.27) (train=+10.91 held_pnl=-21.4%)
+  · rsi_mean_reversion: sign-flip (+24.05→-9.66) (train=+24.05 held_pnl=-33.6%)
+  · bollinger_breakout: sign-flip (+14.84→-2.97) (train=+14.84 held_pnl=-15.2%)
+  · bollinger_mr: sign-flip (+9.44→-2.10) (train=+9.44 held_pnl=-8.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.54→-8.50) (train=+30.54 held_pnl=-29.1%)
+  · momentum_n_consec: sign-flip (+10.12→-4.77) (train=+10.12 held_pnl=-23.0%)
+  · volume_breakout: sign-flip (+8.43→-2.03) (train=+8.43 held_pnl=-7.9%)
+  · ema_crossover: sign-flip (+8.63→-4.43) (train=+8.63 held_pnl=-26.8%)
+  · price_channel_with_atr: sign-flip (+11.05→-6.24) (train=+11.05 held_pnl=-26.5%)
+
+  Sweep #261 PASS candidates: 0
+
+
+========== SWEEP #262 (seed=304) ==========
+
+  · donchian_raw: sign-flip (+10.56→-2.62) (train=+10.56 held_pnl=-9.1%)
+  · rsi_mean_reversion: sign-flip (+24.18→-4.24) (train=+24.18 held_pnl=-27.7%)
+  · bollinger_breakout: sign-flip (+13.55→-3.54) (train=+13.55 held_pnl=-14.3%)
+  · bollinger_mr: sign-flip (+12.21→-1.18) (train=+12.21 held_pnl=-4.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.39→-9.48) (train=+32.39 held_pnl=-31.9%)
+  · momentum_n_consec: sign-flip (+10.52→-6.32) (train=+10.52 held_pnl=-32.7%)
+  · volume_breakout: PnL fail (+3.7% < 10.0%) (train=+7.92 held_pnl=+3.7%)
+  · ema_crossover: sign-flip (+7.97→-4.25) (train=+7.97 held_pnl=-22.5%)
+  · price_channel_with_atr: sign-flip (+9.57→-4.88) (train=+9.57 held_pnl=-20.9%)
+
+  Sweep #262 PASS candidates: 0
+
+
+========== SWEEP #263 (seed=305) ==========
+
+  · donchian_raw: sign-flip (+12.39→-6.83) (train=+12.39 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+10.38→-2.97) (train=+10.38 held_pnl=-15.9%)
+  · bollinger_breakout: PnL fail (+3.7% < 10.0%) (train=+25.95 held_pnl=+3.7%)
+  · bollinger_mr: sign-flip (+11.68→-0.54) (train=+11.68 held_pnl=-1.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.13→-9.96) (train=+30.13 held_pnl=-37.7%)
+  · momentum_n_consec: sign-flip (+9.43→-5.33) (train=+9.43 held_pnl=-26.7%)
+  · volume_breakout: sign-flip (+8.49→-2.39) (train=+8.49 held_pnl=-10.7%)
+  · ema_crossover: sign-flip (+7.68→-2.97) (train=+7.68 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+8.67→-4.86) (train=+8.67 held_pnl=-21.0%)
+
+  Sweep #263 PASS candidates: 0
+
+
+========== SWEEP #264 (seed=306) ==========
+
+  · donchian_raw: sign-flip (+11.03→-5.77) (train=+11.03 held_pnl=-23.9%)
+  · rsi_mean_reversion: sign-flip (+14.76→-9.08) (train=+14.76 held_pnl=-29.3%)
+  · bollinger_breakout: sign-flip (+14.83→-5.30) (train=+14.83 held_pnl=-20.2%)
+  · bollinger_mr: sign-flip (+8.71→-3.68) (train=+8.71 held_pnl=-16.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.35→-6.57) (train=+32.35 held_pnl=-16.4%)
+  · momentum_n_consec: sign-flip (+10.05→-4.83) (train=+10.05 held_pnl=-23.4%)
+  · volume_breakout: sign-flip (+9.38→-4.91) (train=+9.38 held_pnl=-17.5%)
+  · ema_crossover: sign-flip (+6.84→-5.23) (train=+6.84 held_pnl=-37.5%)
+  · price_channel_with_atr: sign-flip (+11.79→-5.71) (train=+11.79 held_pnl=-23.9%)
+
+  Sweep #264 PASS candidates: 0
+
+
+========== SWEEP #265 (seed=307) ==========
+
+  · donchian_raw: sign-flip (+11.91→-7.21) (train=+11.91 held_pnl=-31.9%)
+  · rsi_mean_reversion: sign-flip (+20.78→-2.40) (train=+20.78 held_pnl=-15.9%)
+  · bollinger_breakout: sign-flip (+15.27→-0.50) (train=+15.27 held_pnl=-2.5%)
+  · bollinger_mr: sign-flip (+10.33→-1.30) (train=+10.33 held_pnl=-5.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.42→-10.87) (train=+32.42 held_pnl=-27.1%)
+  · momentum_n_consec: PnL fail (+1.1% < 10.0%) (train=+9.62 held_pnl=+1.1%)
+  · volume_breakout: sign-flip (+9.29→-1.34) (train=+9.29 held_pnl=-5.8%)
+  · ema_crossover: sign-flip (+8.62→-3.55) (train=+8.62 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+8.61→-3.27) (train=+8.61 held_pnl=-9.9%)
+
+  Sweep #265 PASS candidates: 0
+
+
+========== SWEEP #266 (seed=308) ==========
+
+  · donchian_raw: sign-flip (+11.75→-1.99) (train=+11.75 held_pnl=-7.3%)
+  · rsi_mean_reversion: sign-flip (+68.45→-15.08) (train=+68.45 held_pnl=-37.6%)
+  · bollinger_breakout: sign-flip (+12.91→-0.13) (train=+12.91 held_pnl=-0.4%)
+  · bollinger_mr: sign-flip (+12.24→-4.01) (train=+12.24 held_pnl=-13.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.46→-7.99) (train=+30.46 held_pnl=-31.9%)
+  · momentum_n_consec: sign-flip (+13.89→-6.91) (train=+13.89 held_pnl=-31.1%)
+  · volume_breakout: sign-flip (+9.65→-4.28) (train=+9.65 held_pnl=-14.7%)
+  · ema_crossover: sign-flip (+7.43→-6.35) (train=+7.43 held_pnl=-33.0%)
+  · price_channel_with_atr: sign-flip (+8.93→-3.57) (train=+8.93 held_pnl=-10.4%)
+
+  Sweep #266 PASS candidates: 0
+
+
+========== SWEEP #267 (seed=309) ==========
+
+  · donchian_raw: sign-flip (+11.19→-1.92) (train=+11.19 held_pnl=-7.0%)
+  · rsi_mean_reversion: sign-flip (+73.99→-10.69) (train=+73.99 held_pnl=-36.8%)
+  · bollinger_breakout: sign-flip (+15.54→-1.40) (train=+15.54 held_pnl=-7.0%)
+  · bollinger_mr: sign-flip (+9.37→-5.16) (train=+9.37 held_pnl=-19.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.59→-7.10) (train=+31.59 held_pnl=-12.9%)
+  · momentum_n_consec: sign-flip (+11.59→-7.35) (train=+11.59 held_pnl=-32.9%)
+  · volume_breakout: sign-flip (+8.54→-1.70) (train=+8.54 held_pnl=-7.5%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+11.09→-5.78) (train=+11.09 held_pnl=-23.7%)
+
+  Sweep #267 PASS candidates: 0
+
+
+========== SWEEP #268 (seed=310) ==========
+
+  · donchian_raw: sign-flip (+10.97→-1.10) (train=+10.97 held_pnl=-3.8%)
+  · rsi_mean_reversion: sign-flip (+49.24→-5.48) (train=+49.24 held_pnl=-45.6%)
+  · bollinger_breakout: sign-flip (+13.41→-2.76) (train=+13.41 held_pnl=-14.7%)
+  · bollinger_mr: PnL fail (+0.1% < 10.0%) (train=+11.28 held_pnl=+0.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.84→-9.18) (train=+31.84 held_pnl=-39.4%)
+  · momentum_n_consec: sign-flip (+10.03→-4.85) (train=+10.03 held_pnl=-23.6%)
+  · volume_breakout: PnL fail (+10.0% < 10.0%) (train=+7.92 held_pnl=+10.0%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+10.54→-4.16) (train=+10.54 held_pnl=-16.9%)
+
+  Sweep #268 PASS candidates: 0
+
+
+========== SWEEP #269 (seed=311) ==========
+
+  · donchian_raw: sign-flip (+11.04→-3.74) (train=+11.04 held_pnl=-14.0%)
+  · rsi_mean_reversion: sign-flip (+10.28→-5.98) (train=+10.28 held_pnl=-36.3%)
+  · bollinger_breakout: sign-flip (+15.09→-6.96) (train=+15.09 held_pnl=-27.8%)
+  · bollinger_mr: sign-flip (+8.88→-1.53) (train=+8.88 held_pnl=-6.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.02→-7.97) (train=+28.02 held_pnl=-32.9%)
+  · momentum_n_consec: sign-flip (+13.46→-6.23) (train=+13.46 held_pnl=-27.6%)
+  · volume_breakout: sign-flip (+9.72→-1.18) (train=+9.72 held_pnl=-4.0%)
+  · ema_crossover: sign-flip (+8.62→-3.55) (train=+8.62 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+11.00→-6.18) (train=+11.00 held_pnl=-26.1%)
+
+  Sweep #269 PASS candidates: 0
+
+
+========== SWEEP #270 (seed=312) ==========
+
+  · donchian_raw: sign-flip (+10.22→-0.65) (train=+10.22 held_pnl=-2.0%)
+  · rsi_mean_reversion: sign-flip (+15.59→-6.48) (train=+15.59 held_pnl=-30.7%)
+  · bollinger_breakout: sign-flip (+12.85→-2.60) (train=+12.85 held_pnl=-13.9%)
+  · bollinger_mr: sign-flip (+12.06→-0.51) (train=+12.06 held_pnl=-1.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.35→-9.49) (train=+31.35 held_pnl=-28.9%)
+  · momentum_n_consec: sign-flip (+8.63→-4.60) (train=+8.63 held_pnl=-30.5%)
+  · volume_breakout: sign-flip (+7.11→-1.67) (train=+7.11 held_pnl=-8.2%)
+  · ema_crossover: sign-flip (+8.74→-3.57) (train=+8.74 held_pnl=-18.7%)
+  · price_channel_with_atr: sign-flip (+7.33→-4.03) (train=+7.33 held_pnl=-12.7%)
+
+  Sweep #270 PASS candidates: 0
+
+
+========== SWEEP #271 (seed=313) ==========
+
+  · donchian_raw: sign-flip (+9.29→-1.68) (train=+9.29 held_pnl=-4.9%)
+  · rsi_mean_reversion: sign-flip (+34.61→-8.09) (train=+34.61 held_pnl=-37.0%)
+  · bollinger_breakout: sign-flip (+11.12→-5.77) (train=+11.12 held_pnl=-25.7%)
+  · bollinger_mr: sign-flip (+9.02→-1.51) (train=+9.02 held_pnl=-7.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.48→-7.79) (train=+28.48 held_pnl=-24.2%)
+  · momentum_n_consec: sign-flip (+9.54→-4.98) (train=+9.54 held_pnl=-24.9%)
+  · volume_breakout: PnL fail (+3.1% < 10.0%) (train=+8.46 held_pnl=+3.1%)
+  · ema_crossover: sign-flip (+7.89→-4.28) (train=+7.89 held_pnl=-20.6%)
+  · price_channel_with_atr: sign-flip (+9.15→-0.73) (train=+9.15 held_pnl=-2.4%)
+
+  Sweep #271 PASS candidates: 0
+
+
+========== SWEEP #272 (seed=314) ==========
+
+  · donchian_raw: sign-flip (+9.20→-3.43) (train=+9.20 held_pnl=-12.5%)
+  · rsi_mean_reversion: sign-flip (+13.84→-4.13) (train=+13.84 held_pnl=-27.4%)
+  · bollinger_breakout: sign-flip (+14.40→-3.11) (train=+14.40 held_pnl=-9.5%)
+  · bollinger_mr: sign-flip (+10.73→-5.93) (train=+10.73 held_pnl=-19.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.19→-10.43) (train=+33.19 held_pnl=-24.6%)
+  · momentum_n_consec: sign-flip (+8.88→-5.24) (train=+8.88 held_pnl=-30.5%)
+  · volume_breakout: sign-flip (+12.20→-2.63) (train=+12.20 held_pnl=-7.3%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+8.26→-4.63) (train=+8.26 held_pnl=-13.9%)
+
+  Sweep #272 PASS candidates: 0
+
+
+========== SWEEP #273 (seed=315) ==========
+
+  · donchian_raw: sign-flip (+11.81→-1.89) (train=+11.81 held_pnl=-6.9%)
+  · rsi_mean_reversion: sign-flip (+51.39→-6.16) (train=+51.39 held_pnl=-28.6%)
+  · bollinger_breakout: sign-flip (+15.73→-0.89) (train=+15.73 held_pnl=-4.5%)
+  · bollinger_mr: sign-flip (+9.11→-0.31) (train=+9.11 held_pnl=-1.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+35.03→-8.76) (train=+35.03 held_pnl=-17.9%)
+  · momentum_n_consec: sign-flip (+13.91→-6.88) (train=+13.91 held_pnl=-30.5%)
+  · volume_breakout: sign-flip (+7.72→-3.66) (train=+7.72 held_pnl=-13.2%)
+  · ema_crossover: sign-flip (+7.97→-4.25) (train=+7.97 held_pnl=-22.5%)
+  · price_channel_with_atr: sign-flip (+9.70→-4.16) (train=+9.70 held_pnl=-16.7%)
+
+  Sweep #273 PASS candidates: 0
+
+
+========== SWEEP #274 (seed=316) ==========
+
+  · donchian_raw: sign-flip (+11.79→-1.61) (train=+11.79 held_pnl=-5.6%)
+  · rsi_mean_reversion: sign-flip (+20.66→-3.06) (train=+20.66 held_pnl=-10.8%)
+  · bollinger_breakout: sign-flip (+15.83→-2.15) (train=+15.83 held_pnl=-10.9%)
+  · bollinger_mr: sign-flip (+12.17→-2.63) (train=+12.17 held_pnl=-9.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.75→-7.45) (train=+30.75 held_pnl=-11.2%)
+  · momentum_n_consec: sign-flip (+10.62→-5.35) (train=+10.62 held_pnl=-27.3%)
+  · volume_breakout: sign-flip (+9.88→-2.94) (train=+9.88 held_pnl=-7.7%)
+  · ema_crossover: sign-flip (+7.97→-6.35) (train=+7.97 held_pnl=-33.0%)
+  · price_channel_with_atr: sign-flip (+7.94→-3.48) (train=+7.94 held_pnl=-11.3%)
+
+  Sweep #274 PASS candidates: 0
+
+
+========== SWEEP #275 (seed=317) ==========
+
+  · donchian_raw: sign-flip (+11.72→-1.61) (train=+11.72 held_pnl=-5.6%)
+  · rsi_mean_reversion: sign-flip (+63.36→-7.10) (train=+63.36 held_pnl=-51.4%)
+  · bollinger_breakout: sign-flip (+14.25→-5.26) (train=+14.25 held_pnl=-18.2%)
+  · bollinger_mr: PnL fail (+1.4% < 10.0%) (train=+11.96 held_pnl=+1.4%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.78→-6.57) (train=+30.78 held_pnl=-12.4%)
+  · momentum_n_consec: sign-flip (+12.13→-6.52) (train=+12.13 held_pnl=-29.4%)
+  · volume_breakout: sign-flip (+6.79→-3.74) (train=+6.79 held_pnl=-20.1%)
+  · ema_crossover: sign-flip (+8.23→-5.09) (train=+8.23 held_pnl=-22.3%)
+  · price_channel_with_atr: sign-flip (+10.13→-6.22) (train=+10.13 held_pnl=-25.9%)
+
+  Sweep #275 PASS candidates: 0
+
+
+========== SWEEP #276 (seed=318) ==========
+
+  · donchian_raw: sign-flip (+11.64→-5.62) (train=+11.64 held_pnl=-24.1%)
+  · rsi_mean_reversion: sign-flip (+63.96→-6.84) (train=+63.96 held_pnl=-49.6%)
+  · bollinger_breakout: sign-flip (+14.61→-5.40) (train=+14.61 held_pnl=-20.5%)
+  · bollinger_mr: sign-flip (+11.66→-6.90) (train=+11.66 held_pnl=-21.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.28→-7.67) (train=+33.28 held_pnl=-16.6%)
+  · momentum_n_consec: sign-flip (+10.14→-5.70) (train=+10.14 held_pnl=-30.2%)
+  · volume_breakout: sign-flip (+9.60→-3.68) (train=+9.60 held_pnl=-11.6%)
+  · ema_crossover: sign-flip (+8.00→-4.61) (train=+8.00 held_pnl=-31.1%)
+  · price_channel_with_atr: sign-flip (+8.88→-0.98) (train=+8.88 held_pnl=-3.2%)
+
+  Sweep #276 PASS candidates: 0
+
+
+========== SWEEP #277 (seed=319) ==========
+
+  · donchian_raw: sign-flip (+10.44→-6.83) (train=+10.44 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+3.24→-2.29) (train=+3.24 held_pnl=-18.2%)
+  · bollinger_breakout: sign-flip (+27.86→-0.66) (train=+27.86 held_pnl=-1.7%)
+  · bollinger_mr: sign-flip (+11.79→-1.89) (train=+11.79 held_pnl=-5.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.45→-11.00) (train=+29.45 held_pnl=-19.0%)
+  · momentum_n_consec: sign-flip (+10.60→-5.49) (train=+10.60 held_pnl=-25.9%)
+  · volume_breakout: PnL fail (+6.2% < 10.0%) (train=+7.22 held_pnl=+6.2%)
+  · ema_crossover: sign-flip (+8.62→-3.55) (train=+8.62 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+10.84→-5.72) (train=+10.84 held_pnl=-24.4%)
+
+  Sweep #277 PASS candidates: 0
+
+
+========== SWEEP #278 (seed=320) ==========
+
+  · donchian_raw: sign-flip (+10.93→-3.81) (train=+10.93 held_pnl=-14.5%)
+  · rsi_mean_reversion: sign-flip (+23.33→-7.29) (train=+23.33 held_pnl=-18.6%)
+  · bollinger_breakout: sign-flip (+12.75→-1.71) (train=+12.75 held_pnl=-8.5%)
+  · bollinger_mr: sign-flip (+8.62→-1.24) (train=+8.62 held_pnl=-6.4%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.77→-8.68) (train=+32.77 held_pnl=-16.3%)
+  · momentum_n_consec: sign-flip (+10.04→-6.05) (train=+10.04 held_pnl=-33.6%)
+  · volume_breakout: sign-flip (+8.16→-4.69) (train=+8.16 held_pnl=-27.0%)
+  · ema_crossover: sign-flip (+7.97→-4.25) (train=+7.97 held_pnl=-22.5%)
+  · price_channel_with_atr: sign-flip (+9.08→-4.92) (train=+9.08 held_pnl=-26.6%)
+
+  Sweep #278 PASS candidates: 0
+
+
+========== SWEEP #279 (seed=321) ==========
+
+  · donchian_raw: sign-flip (+11.51→-5.13) (train=+11.51 held_pnl=-19.9%)
+  · rsi_mean_reversion: sign-flip (+48.86→-4.58) (train=+48.86 held_pnl=-18.7%)
+  · bollinger_breakout: sign-flip (+13.64→-2.96) (train=+13.64 held_pnl=-10.3%)
+  · bollinger_mr: sign-flip (+9.20→-1.82) (train=+9.20 held_pnl=-9.4%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.56→-11.17) (train=+32.56 held_pnl=-25.3%)
+  · momentum_n_consec: sign-flip (+9.67→-4.38) (train=+9.67 held_pnl=-21.8%)
+  · volume_breakout: sign-flip (+12.34→-2.70) (train=+12.34 held_pnl=-7.3%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+12.00→-6.21) (train=+12.00 held_pnl=-26.3%)
+
+  Sweep #279 PASS candidates: 0
+
+
+========== SWEEP #280 (seed=322) ==========
+
+  · donchian_raw: sign-flip (+11.84→-2.07) (train=+11.84 held_pnl=-7.9%)
+  · rsi_mean_reversion: sign-flip (+7.94→-4.03) (train=+7.94 held_pnl=-27.1%)
+  · bollinger_breakout: sign-flip (+16.53→-0.66) (train=+16.53 held_pnl=-3.3%)
+  · bollinger_mr: sign-flip (+8.75→-1.08) (train=+8.75 held_pnl=-5.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.40→-7.79) (train=+29.40 held_pnl=-12.7%)
+  · momentum_n_consec: sign-flip (+9.54→-5.59) (train=+9.54 held_pnl=-30.1%)
+  · volume_breakout: sign-flip (+10.85→-5.21) (train=+10.85 held_pnl=-20.8%)
+  · ema_crossover: sign-flip (+7.09→-4.34) (train=+7.09 held_pnl=-29.2%)
+  · price_channel_with_atr: sign-flip (+8.75→-5.99) (train=+8.75 held_pnl=-19.1%)
+
+  Sweep #280 PASS candidates: 0
+
+
+========== SWEEP #281 (seed=323) ==========
+
+  · donchian_raw: sign-flip (+12.26→-6.83) (train=+12.26 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+11.61→-2.85) (train=+11.61 held_pnl=-14.0%)
+  · bollinger_breakout: sign-flip (+26.62→-1.35) (train=+26.62 held_pnl=-4.0%)
+  · bollinger_mr: PnL fail (+4.0% < 10.0%) (train=+10.82 held_pnl=+4.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.42→-8.93) (train=+31.42 held_pnl=-17.8%)
+  · momentum_n_consec: sign-flip (+12.12→-6.17) (train=+12.12 held_pnl=-27.8%)
+  · volume_breakout: sign-flip (+9.40→-4.07) (train=+9.40 held_pnl=-12.1%)
+  · ema_crossover: sign-flip (+8.63→-4.42) (train=+8.63 held_pnl=-26.9%)
+  · price_channel_with_atr: sign-flip (+9.27→-0.92) (train=+9.27 held_pnl=-3.1%)
+
+  Sweep #281 PASS candidates: 0
+
+
+========== SWEEP #282 (seed=324) ==========
+
+  · donchian_raw: sign-flip (+11.76→-3.10) (train=+11.76 held_pnl=-11.2%)
+  · rsi_mean_reversion: sign-flip (+33.90→-14.21) (train=+33.90 held_pnl=-37.6%)
+  · bollinger_breakout: sign-flip (+15.39→-2.19) (train=+15.39 held_pnl=-11.1%)
+  · bollinger_mr: sign-flip (+10.76→-1.01) (train=+10.76 held_pnl=-4.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+27.72→-8.58) (train=+27.72 held_pnl=-37.7%)
+  · momentum_n_consec: sign-flip (+7.22→-3.31) (train=+7.22 held_pnl=-26.0%)
+  · volume_breakout: PnL fail (+4.9% < 10.0%) (train=+10.41 held_pnl=+4.9%)
+  · ema_crossover: sign-flip (+7.00→-3.32) (train=+7.00 held_pnl=-18.5%)
+  · price_channel_with_atr: sign-flip (+8.40→-3.33) (train=+8.40 held_pnl=-10.2%)
+
+  Sweep #282 PASS candidates: 0
+
+
+========== SWEEP #283 (seed=325) ==========
+
+  · donchian_raw: sign-flip (+11.60→-5.12) (train=+11.60 held_pnl=-19.8%)
+  · rsi_mean_reversion: sign-flip (+29.35→-4.53) (train=+29.35 held_pnl=-33.8%)
+  · bollinger_breakout: sign-flip (+15.31→-4.05) (train=+15.31 held_pnl=-13.5%)
+  · bollinger_mr: sign-flip (+9.96→-1.35) (train=+9.96 held_pnl=-4.7%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.35→-10.32) (train=+32.35 held_pnl=-39.7%)
+  · momentum_n_consec: sign-flip (+12.19→-6.57) (train=+12.19 held_pnl=-29.9%)
+  · volume_breakout: sign-flip (+8.24→-0.16) (train=+8.24 held_pnl=-0.7%)
+  · ema_crossover: sign-flip (+8.63→-4.54) (train=+8.63 held_pnl=-25.4%)
+  · price_channel_with_atr: sign-flip (+10.27→-6.09) (train=+10.27 held_pnl=-26.4%)
+
+  Sweep #283 PASS candidates: 0
+
+
+========== SWEEP #284 (seed=326) ==========
+
+  · donchian_raw: sign-flip (+11.60→-5.77) (train=+11.60 held_pnl=-23.4%)
+  · rsi_mean_reversion: sign-flip (+49.49→-3.42) (train=+49.49 held_pnl=-26.3%)
+  · bollinger_breakout: sign-flip (+14.72→-5.23) (train=+14.72 held_pnl=-19.3%)
+  · bollinger_mr: sign-flip (+11.55→-2.90) (train=+11.55 held_pnl=-8.4%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+34.24→-11.30) (train=+34.24 held_pnl=-22.7%)
+  · momentum_n_consec: sign-flip (+8.44→-5.32) (train=+8.44 held_pnl=-28.7%)
+  · volume_breakout: sign-flip (+7.77→-4.66) (train=+7.77 held_pnl=-13.2%)
+  · ema_crossover: sign-flip (+7.97→-6.35) (train=+7.97 held_pnl=-33.0%)
+  · price_channel_with_atr: sign-flip (+9.68→-4.67) (train=+9.68 held_pnl=-20.9%)
+
+  Sweep #284 PASS candidates: 0
+
+
+========== SWEEP #285 (seed=327) ==========
+
+  · donchian_raw: sign-flip (+11.53→-5.13) (train=+11.53 held_pnl=-20.0%)
+  · rsi_mean_reversion: sign-flip (+16.18→-2.82) (train=+16.18 held_pnl=-11.9%)
+  · bollinger_breakout: sign-flip (+13.58→-0.70) (train=+13.58 held_pnl=-3.6%)
+  · bollinger_mr: sign-flip (+10.67→-0.57) (train=+10.67 held_pnl=-2.0%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.84→-9.68) (train=+28.84 held_pnl=-44.1%)
+  · momentum_n_consec: sign-flip (+9.67→-5.74) (train=+9.67 held_pnl=-32.0%)
+  · volume_breakout: sign-flip (+8.94→-3.03) (train=+8.94 held_pnl=-12.7%)
+  · ema_crossover: sign-flip (+9.02→-4.74) (train=+9.02 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+8.91→-0.90) (train=+8.91 held_pnl=-3.0%)
+
+  Sweep #285 PASS candidates: 0
+
+
+========== SWEEP #286 (seed=328) ==========
+
+  · donchian_raw: sign-flip (+10.83→-2.06) (train=+10.83 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+92.62→-12.17) (train=+92.62 held_pnl=-43.2%)
+  · bollinger_breakout: sign-flip (+14.72→-3.38) (train=+14.72 held_pnl=-12.3%)
+  · bollinger_mr: sign-flip (+7.43→-1.65) (train=+7.43 held_pnl=-6.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.53→-11.22) (train=+32.53 held_pnl=-37.8%)
+  · momentum_n_consec: sign-flip (+14.03→-7.01) (train=+14.03 held_pnl=-31.6%)
+  · volume_breakout: PnL fail (+0.4% < 10.0%) (train=+8.48 held_pnl=+0.4%)
+  · ema_crossover: sign-flip (+7.50→-2.97) (train=+7.50 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+10.20→-4.31) (train=+10.20 held_pnl=-17.7%)
+
+  Sweep #286 PASS candidates: 0
+
+
+========== SWEEP #287 (seed=329) ==========
+
+  · donchian_raw: sign-flip (+10.03→-1.52) (train=+10.03 held_pnl=-5.4%)
+  · rsi_mean_reversion: sign-flip (+9.36→-8.42) (train=+9.36 held_pnl=-38.0%)
+  · bollinger_breakout: sign-flip (+14.95→-5.31) (train=+14.95 held_pnl=-18.8%)
+  · bollinger_mr: sign-flip (+10.65→-0.56) (train=+10.65 held_pnl=-1.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.43→-11.10) (train=+33.43 held_pnl=-23.5%)
+  · momentum_n_consec: sign-flip (+13.93→-7.06) (train=+13.93 held_pnl=-32.2%)
+  · volume_breakout: sign-flip (+9.38→-3.90) (train=+9.38 held_pnl=-12.0%)
+  · ema_crossover: sign-flip (+9.83→-7.43) (train=+9.83 held_pnl=-31.4%)
+  · price_channel_with_atr: sign-flip (+10.97→-7.32) (train=+10.97 held_pnl=-32.2%)
+
+  Sweep #287 PASS candidates: 0
+
+
+========== SWEEP #288 (seed=330) ==========
+
+  · donchian_raw: sign-flip (+9.90→-1.78) (train=+9.90 held_pnl=-6.2%)
+  · rsi_mean_reversion: sign-flip (+13.41→-4.39) (train=+13.41 held_pnl=-36.7%)
+  · bollinger_breakout: sign-flip (+24.92→-0.20) (train=+24.92 held_pnl=-0.5%)
+  · bollinger_mr: sign-flip (+11.48→-1.47) (train=+11.48 held_pnl=-4.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.61→-9.47) (train=+30.61 held_pnl=-45.1%)
+  · momentum_n_consec: sign-flip (+12.43→-6.16) (train=+12.43 held_pnl=-27.8%)
+  · volume_breakout: sign-flip (+10.59→-3.45) (train=+10.59 held_pnl=-9.8%)
+  · ema_crossover: sign-flip (+8.74→-3.54) (train=+8.74 held_pnl=-19.0%)
+  · price_channel_with_atr: sign-flip (+9.01→-2.76) (train=+9.01 held_pnl=-8.2%)
+
+  Sweep #288 PASS candidates: 0
+
+
+========== SWEEP #289 (seed=331) ==========
+
+  · donchian_raw: sign-flip (+10.95→-2.06) (train=+10.95 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+29.84→-6.77) (train=+29.84 held_pnl=-34.1%)
+  · bollinger_breakout: sign-flip (+13.46→-4.15) (train=+13.46 held_pnl=-13.0%)
+  · bollinger_mr: sign-flip (+7.91→-1.93) (train=+7.91 held_pnl=-8.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+33.89→-8.50) (train=+33.89 held_pnl=-17.5%)
+  · momentum_n_consec: sign-flip (+9.42→-4.74) (train=+9.42 held_pnl=-31.2%)
+  · volume_breakout: sign-flip (+8.77→-0.62) (train=+8.77 held_pnl=-1.7%)
+  · ema_crossover: sign-flip (+7.97→-4.25) (train=+7.97 held_pnl=-22.5%)
+  · price_channel_with_atr: sign-flip (+9.33→-1.24) (train=+9.33 held_pnl=-4.1%)
+
+  Sweep #289 PASS candidates: 0
+
+
+========== SWEEP #290 (seed=332) ==========
+
+  · donchian_raw: sign-flip (+10.91→-2.55) (train=+10.91 held_pnl=-9.8%)
+  · rsi_mean_reversion: sign-flip (+4.62→-4.66) (train=+4.62 held_pnl=-40.3%)
+  · bollinger_breakout: sign-flip (+14.66→-5.37) (train=+14.66 held_pnl=-20.9%)
+  · bollinger_mr: sign-flip (+11.44→-0.86) (train=+11.44 held_pnl=-3.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.39→-8.75) (train=+29.39 held_pnl=-30.3%)
+  · momentum_n_consec: sign-flip (+12.19→-6.69) (train=+12.19 held_pnl=-29.6%)
+  · volume_breakout: sign-flip (+8.71→-3.01) (train=+8.71 held_pnl=-11.3%)
+  · ema_crossover: sign-flip (+8.51→-4.00) (train=+8.51 held_pnl=-18.9%)
+  · price_channel_with_atr: sign-flip (+7.75→-3.57) (train=+7.75 held_pnl=-17.3%)
+
+  Sweep #290 PASS candidates: 0
+
+
+========== SWEEP #291 (seed=333) ==========
+
+  · donchian_raw: sign-flip (+11.83→-3.10) (train=+11.83 held_pnl=-11.2%)
+  · rsi_mean_reversion: sign-flip (+79.92→-4.34) (train=+79.92 held_pnl=-22.0%)
+  · bollinger_breakout: sign-flip (+24.75→-0.96) (train=+24.75 held_pnl=-2.3%)
+  · bollinger_mr: sign-flip (+9.94→-3.19) (train=+9.94 held_pnl=-13.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.02→-10.61) (train=+31.02 held_pnl=-40.9%)
+  · momentum_n_consec: sign-flip (+14.08→-6.72) (train=+14.08 held_pnl=-30.2%)
+  · volume_breakout: sign-flip (+9.97→-3.51) (train=+9.97 held_pnl=-14.0%)
+  · ema_crossover: sign-flip (+9.02→-4.74) (train=+9.02 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+12.05→-5.76) (train=+12.05 held_pnl=-23.8%)
+
+  Sweep #291 PASS candidates: 0
+
+
+========== SWEEP #292 (seed=334) ==========
+
+  · donchian_raw: sign-flip (+10.55→-2.87) (train=+10.55 held_pnl=-10.4%)
+  · rsi_mean_reversion: sign-flip (+5.89→-6.10) (train=+5.89 held_pnl=-48.2%)
+  · bollinger_breakout: sign-flip (+14.26→-1.25) (train=+14.26 held_pnl=-6.2%)
+  · bollinger_mr: sign-flip (+10.78→-0.83) (train=+10.78 held_pnl=-3.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.94→-6.98) (train=+29.94 held_pnl=-9.2%)
+  · momentum_n_consec: sign-flip (+14.04→-6.70) (train=+14.04 held_pnl=-30.2%)
+  · volume_breakout: sign-flip (+8.82→-5.46) (train=+8.82 held_pnl=-25.9%)
+  · ema_crossover: sign-flip (+8.28→-4.74) (train=+8.28 held_pnl=-21.1%)
+  · price_channel_with_atr: sign-flip (+8.29→-2.42) (train=+8.29 held_pnl=-11.5%)
+
+  Sweep #292 PASS candidates: 0
+
+
+========== SWEEP #293 (seed=335) ==========
+
+  · donchian_raw: sign-flip (+11.53→-3.33) (train=+11.53 held_pnl=-12.5%)
+  · rsi_mean_reversion: sign-flip (+30.85→-7.19) (train=+30.85 held_pnl=-37.5%)
+  · bollinger_breakout: sign-flip (+14.88→-5.02) (train=+14.88 held_pnl=-19.3%)
+  · bollinger_mr: sign-flip (+8.91→-1.14) (train=+8.91 held_pnl=-5.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.01→-5.16) (train=+31.01 held_pnl=-19.4%)
+  · momentum_n_consec: sign-flip (+10.84→-3.96) (train=+10.84 held_pnl=-20.1%)
+  · volume_breakout: sign-flip (+8.47→-3.42) (train=+8.47 held_pnl=-16.5%)
+  · ema_crossover: sign-flip (+7.89→-4.28) (train=+7.89 held_pnl=-20.6%)
+  · price_channel_with_atr: sign-flip (+9.50→-1.56) (train=+9.50 held_pnl=-5.6%)
+
+  Sweep #293 PASS candidates: 0
+
+
+========== SWEEP #294 (seed=336) ==========
+
+  · donchian_raw: sign-flip (+10.87→-2.06) (train=+10.87 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+17.29→-6.98) (train=+17.29 held_pnl=-53.2%)
+  · bollinger_breakout: sign-flip (+13.57→-2.75) (train=+13.57 held_pnl=-14.4%)
+  · bollinger_mr: sign-flip (+11.16→-4.60) (train=+11.16 held_pnl=-13.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.42→-6.42) (train=+31.42 held_pnl=-12.1%)
+  · momentum_n_consec: sign-flip (+10.53→-5.00) (train=+10.53 held_pnl=-25.2%)
+  · volume_breakout: PnL fail (+3.6% < 10.0%) (train=+9.12 held_pnl=+3.6%)
+  · ema_crossover: sign-flip (+7.97→-4.25) (train=+7.97 held_pnl=-22.5%)
+  · price_channel_with_atr: sign-flip (+9.82→-5.65) (train=+9.82 held_pnl=-24.0%)
+
+  Sweep #294 PASS candidates: 0
+
+
+========== SWEEP #295 (seed=337) ==========
+
+  · donchian_raw: sign-flip (+11.00→-3.78) (train=+11.00 held_pnl=-14.2%)
+  · rsi_mean_reversion: sign-flip (+6.54→-4.05) (train=+6.54 held_pnl=-22.1%)
+  · bollinger_breakout: sign-flip (+14.86→-4.36) (train=+14.86 held_pnl=-14.0%)
+  · bollinger_mr: sign-flip (+10.40→-6.84) (train=+10.40 held_pnl=-29.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.85→-11.89) (train=+32.85 held_pnl=-20.1%)
+  · momentum_n_consec: sign-flip (+9.89→-5.89) (train=+9.89 held_pnl=-29.2%)
+  · volume_breakout: PnL fail (+3.1% < 10.0%) (train=+10.83 held_pnl=+3.1%)
+  · ema_crossover: sign-flip (+8.62→-3.47) (train=+8.62 held_pnl=-18.2%)
+  · price_channel_with_atr: sign-flip (+9.03→-4.78) (train=+9.03 held_pnl=-20.2%)
+
+  Sweep #295 PASS candidates: 0
+
+
+========== SWEEP #296 (seed=338) ==========
+
+  · donchian_raw: sign-flip (+10.80→-2.79) (train=+10.80 held_pnl=-9.9%)
+  · rsi_mean_reversion: sign-flip (+19.12→-7.67) (train=+19.12 held_pnl=-19.7%)
+  · bollinger_breakout: sign-flip (+12.28→-1.59) (train=+12.28 held_pnl=-8.1%)
+  · bollinger_mr: sign-flip (+9.02→-0.97) (train=+9.02 held_pnl=-5.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+35.60→-10.26) (train=+35.60 held_pnl=-30.5%)
+  · momentum_n_consec: sign-flip (+10.65→-4.92) (train=+10.65 held_pnl=-24.5%)
+  · volume_breakout: sign-flip (+10.92→-0.41) (train=+10.92 held_pnl=-1.0%)
+  · ema_crossover: sign-flip (+8.63→-4.54) (train=+8.63 held_pnl=-25.4%)
+  · price_channel_with_atr: sign-flip (+8.62→-2.70) (train=+8.62 held_pnl=-10.2%)
+
+  Sweep #296 PASS candidates: 0
+
+
+========== SWEEP #297 (seed=339) ==========
+
+  · donchian_raw: sign-flip (+10.69→-1.54) (train=+10.69 held_pnl=-5.5%)
+  · rsi_mean_reversion: sign-flip (+10.71→-3.94) (train=+10.71 held_pnl=-29.1%)
+  · bollinger_breakout: sign-flip (+14.95→-4.35) (train=+14.95 held_pnl=-21.5%)
+  · bollinger_mr: sign-flip (+7.68→-0.35) (train=+7.68 held_pnl=-1.4%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.79→-9.79) (train=+30.79 held_pnl=-48.4%)
+  · momentum_n_consec: PnL fail (+0.9% < 10.0%) (train=+8.61 held_pnl=+0.9%)
+  · volume_breakout: sign-flip (+9.14→-1.79) (train=+9.14 held_pnl=-8.4%)
+  · ema_crossover: sign-flip (+8.37→-4.19) (train=+8.37 held_pnl=-27.0%)
+  · price_channel_with_atr: sign-flip (+8.84→-5.39) (train=+8.84 held_pnl=-26.7%)
+
+  Sweep #297 PASS candidates: 0
+
+
+========== SWEEP #298 (seed=340) ==========
+
+  · donchian_raw: sign-flip (+10.58→-2.37) (train=+10.58 held_pnl=-8.7%)
+  · rsi_mean_reversion: sign-flip (+29.12→-7.41) (train=+29.12 held_pnl=-44.6%)
+  · bollinger_breakout: sign-flip (+14.01→-2.87) (train=+14.01 held_pnl=-14.2%)
+  · bollinger_mr: sign-flip (+8.77→-1.66) (train=+8.77 held_pnl=-9.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+31.55→-7.81) (train=+31.55 held_pnl=-14.5%)
+  · momentum_n_consec: sign-flip (+8.45→-5.65) (train=+8.45 held_pnl=-31.4%)
+  · volume_breakout: sign-flip (+9.79→-4.59) (train=+9.79 held_pnl=-18.5%)
+  · ema_crossover: sign-flip (+8.23→-5.09) (train=+8.23 held_pnl=-22.3%)
+  · price_channel_with_atr: sign-flip (+8.60→-0.76) (train=+8.60 held_pnl=-2.5%)
+
+  Sweep #298 PASS candidates: 0
+
+
+========== SWEEP #299 (seed=341) ==========
+
+  · donchian_raw: sign-flip (+11.01→-3.86) (train=+11.01 held_pnl=-15.1%)
+  · rsi_mean_reversion: sign-flip (+74.87→-14.11) (train=+74.87 held_pnl=-38.0%)
+  · bollinger_breakout: sign-flip (+27.81→-2.76) (train=+27.81 held_pnl=-8.5%)
+  · bollinger_mr: sign-flip (+11.80→-0.46) (train=+11.80 held_pnl=-1.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+27.92→-9.54) (train=+27.92 held_pnl=-34.2%)
+  · momentum_n_consec: sign-flip (+10.35→-5.11) (train=+10.35 held_pnl=-32.6%)
+  · volume_breakout: PnL fail (+5.0% < 10.0%) (train=+11.17 held_pnl=+5.0%)
+  · ema_crossover: sign-flip (+8.74→-3.64) (train=+8.74 held_pnl=-18.0%)
+  · price_channel_with_atr: sign-flip (+10.87→-6.15) (train=+10.87 held_pnl=-25.9%)
+
+  Sweep #299 PASS candidates: 0
+
+
+========== SWEEP #300 (seed=342) ==========
+
+  · donchian_raw: sign-flip (+10.88→-4.10) (train=+10.88 held_pnl=-14.7%)
+  · rsi_mean_reversion: sign-flip (+26.52→-12.43) (train=+26.52 held_pnl=-29.2%)
+  · bollinger_breakout: sign-flip (+15.91→-2.07) (train=+15.91 held_pnl=-7.1%)
+  · bollinger_mr: sign-flip (+10.85→-2.21) (train=+10.85 held_pnl=-7.1%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+34.10→-8.91) (train=+34.10 held_pnl=-13.6%)
+  · momentum_n_consec: sign-flip (+10.59→-4.95) (train=+10.59 held_pnl=-24.8%)
+  · volume_breakout: sign-flip (+10.61→-1.32) (train=+10.61 held_pnl=-6.2%)
+  · ema_crossover: sign-flip (+8.74→-3.69) (train=+8.74 held_pnl=-17.2%)
+  · price_channel_with_atr: sign-flip (+8.95→-1.67) (train=+8.95 held_pnl=-5.7%)
+
+  Sweep #300 PASS candidates: 0
+
+
+========== SWEEP #301 (seed=343) ==========
+
+  · donchian_raw: sign-flip (+10.32→-6.83) (train=+10.32 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+30.83→-5.18) (train=+30.83 held_pnl=-28.4%)
+  · bollinger_breakout: sign-flip (+15.06→-1.88) (train=+15.06 held_pnl=-6.9%)
+  · bollinger_mr: sign-flip (+10.32→-2.89) (train=+10.32 held_pnl=-10.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+27.94→-8.95) (train=+27.94 held_pnl=-38.6%)
+  · momentum_n_consec: PnL fail (+2.9% < 10.0%) (train=+8.04 held_pnl=+2.9%)
+  · volume_breakout: sign-flip (+10.68→-2.87) (train=+10.68 held_pnl=-9.4%)
+  · ema_crossover: sign-flip (+8.18→-3.11) (train=+8.18 held_pnl=-12.5%)
+  · price_channel_with_atr: sign-flip (+11.07→-6.21) (train=+11.07 held_pnl=-26.6%)
+
+  Sweep #301 PASS candidates: 0
+
+
+========== SWEEP #302 (seed=344) ==========
+
+  · donchian_raw: sign-flip (+11.94→-3.39) (train=+11.94 held_pnl=-13.1%)
+  · rsi_mean_reversion: sign-flip (+61.76→-14.01) (train=+61.76 held_pnl=-30.3%)
+  · bollinger_breakout: sign-flip (+14.20→-4.80) (train=+14.20 held_pnl=-19.7%)
+  · bollinger_mr: sign-flip (+9.57→-1.31) (train=+9.57 held_pnl=-5.2%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+30.39→-8.46) (train=+30.39 held_pnl=-15.2%)
+  · momentum_n_consec: sign-flip (+7.97→-4.31) (train=+7.97 held_pnl=-30.7%)
+  · volume_breakout: sign-flip (+8.91→-4.08) (train=+8.91 held_pnl=-18.6%)
+  · ema_crossover: sign-flip (+8.62→-3.55) (train=+8.62 held_pnl=-16.8%)
+  · price_channel_with_atr: sign-flip (+9.67→-6.25) (train=+9.67 held_pnl=-24.6%)
+
+  Sweep #302 PASS candidates: 0
+
+
+========== SWEEP #303 (seed=345) ==========
+
+  · donchian_raw: sign-flip (+11.26→-6.83) (train=+11.26 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+54.55→-5.33) (train=+54.55 held_pnl=-39.0%)
+  · bollinger_breakout: sign-flip (+26.67→-1.32) (train=+26.67 held_pnl=-3.9%)
+  · bollinger_mr: sign-flip (+10.97→-0.73) (train=+10.97 held_pnl=-2.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.38→-8.33) (train=+32.38 held_pnl=-34.7%)
+  · momentum_n_consec: sign-flip (+10.28→-5.19) (train=+10.28 held_pnl=-26.7%)
+  · volume_breakout: sign-flip (+9.14→-3.37) (train=+9.14 held_pnl=-9.6%)
+  · ema_crossover: sign-flip (+7.58→-2.73) (train=+7.58 held_pnl=-10.6%)
+  · price_channel_with_atr: sign-flip (+8.73→-2.76) (train=+8.73 held_pnl=-8.2%)
+
+  Sweep #303 PASS candidates: 0
+
+
+========== SWEEP #304 (seed=346) ==========
+
+  · donchian_raw: sign-flip (+11.71→-3.10) (train=+11.71 held_pnl=-11.2%)
+  · rsi_mean_reversion: sign-flip (+52.10→-4.84) (train=+52.10 held_pnl=-41.6%)
+  · bollinger_breakout: PnL fail (+5.6% < 10.0%) (train=+35.27 held_pnl=+5.6%)
+  · bollinger_mr: sign-flip (+8.46→-2.62) (train=+8.46 held_pnl=-8.3%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+32.51→-10.79) (train=+32.51 held_pnl=-17.6%)
+  · momentum_n_consec: sign-flip (+11.68→-7.30) (train=+11.68 held_pnl=-32.5%)
+  · volume_breakout: sign-flip (+9.31→-1.43) (train=+9.31 held_pnl=-6.6%)
+  · ema_crossover: sign-flip (+7.89→-4.28) (train=+7.89 held_pnl=-20.6%)
+  · price_channel_with_atr: sign-flip (+9.92→-4.69) (train=+9.92 held_pnl=-26.9%)
+
+  Sweep #304 PASS candidates: 0
+
+
+========== SWEEP #305 (seed=347) ==========
+
+  · donchian_raw: sign-flip (+11.62→-5.64) (train=+11.62 held_pnl=-24.5%)
+  · rsi_mean_reversion: sign-flip (+7.65→-4.60) (train=+7.65 held_pnl=-30.4%)
+  · bollinger_breakout: sign-flip (+13.04→-3.83) (train=+13.04 held_pnl=-14.7%)
+  · bollinger_mr: sign-flip (+9.68→-1.09) (train=+9.68 held_pnl=-4.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.63→-8.12) (train=+28.63 held_pnl=-31.2%)
+  · momentum_n_consec: sign-flip (+13.84→-6.63) (train=+13.84 held_pnl=-30.0%)
+  · volume_breakout: sign-flip (+9.85→-4.69) (train=+9.85 held_pnl=-14.2%)
+  · ema_crossover: sign-flip (+8.00→-5.39) (train=+8.00 held_pnl=-24.6%)
+  · price_channel_with_atr: sign-flip (+10.11→-0.94) (train=+10.11 held_pnl=-3.1%)
+
+  Sweep #305 PASS candidates: 0
+
+
+========== SWEEP #306 (seed=348) ==========
+
+  · donchian_raw: sign-flip (+12.33→-6.83) (train=+12.33 held_pnl=-24.3%)
+  · rsi_mean_reversion: sign-flip (+42.89→-14.71) (train=+42.89 held_pnl=-39.1%)
+  · bollinger_breakout: sign-flip (+15.79→-2.06) (train=+15.79 held_pnl=-10.4%)
+  · bollinger_mr: sign-flip (+8.86→-4.18) (train=+8.86 held_pnl=-14.6%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+29.57→-5.40) (train=+29.57 held_pnl=-9.3%)
+  · momentum_n_consec: sign-flip (+13.55→-6.54) (train=+13.55 held_pnl=-30.0%)
+  · volume_breakout: sign-flip (+8.24→-0.85) (train=+8.24 held_pnl=-3.8%)
+  · ema_crossover: sign-flip (+7.95→-3.00) (train=+7.95 held_pnl=-13.4%)
+  · price_channel_with_atr: sign-flip (+9.29→-2.72) (train=+9.29 held_pnl=-7.9%)
+
+  Sweep #306 PASS candidates: 0
+
+
+========== SWEEP #307 (seed=349) ==========
+
+  · donchian_raw: sign-flip (+11.79→-1.95) (train=+11.79 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+29.00→-3.51) (train=+29.00 held_pnl=-18.6%)
+  · bollinger_breakout: sign-flip (+14.63→-1.74) (train=+14.63 held_pnl=-6.4%)
+  · bollinger_mr: sign-flip (+10.80→-0.15) (train=+10.80 held_pnl=-0.5%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+35.14→-8.34) (train=+35.14 held_pnl=-16.5%)
+  · momentum_n_consec: sign-flip (+10.66→-4.84) (train=+10.66 held_pnl=-24.0%)
+  · volume_breakout: sign-flip (+10.86→-2.05) (train=+10.86 held_pnl=-6.1%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+9.78→-3.12) (train=+9.78 held_pnl=-9.2%)
+
+  Sweep #307 PASS candidates: 0
+
+
+========== SWEEP #308 (seed=350) ==========
+
+  · donchian_raw: sign-flip (+9.78→-2.00) (train=+9.78 held_pnl=-7.1%)
+  · rsi_mean_reversion: PnL fail (+3.8% < 10.0%) (train=+16.43 held_pnl=+3.8%)
+  · bollinger_breakout: sign-flip (+13.45→-0.82) (train=+13.45 held_pnl=-4.2%)
+  · bollinger_mr: sign-flip (+8.55→-4.56) (train=+8.55 held_pnl=-16.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+28.09→-8.41) (train=+28.09 held_pnl=-32.6%)
+  · momentum_n_consec: sign-flip (+10.22→-5.96) (train=+10.22 held_pnl=-34.8%)
+  · volume_breakout: sign-flip (+7.60→-4.51) (train=+7.60 held_pnl=-17.8%)
+  · ema_crossover: sign-flip (+7.89→-4.28) (train=+7.89 held_pnl=-20.6%)
+  · price_channel_with_atr: sign-flip (+9.64→-4.19) (train=+9.64 held_pnl=-16.8%)
+
+  Sweep #308 PASS candidates: 0
+
+
+========== SWEEP #309 (seed=351) ==========
+
+  · donchian_raw: sign-flip (+11.65→-5.00) (train=+11.65 held_pnl=-19.6%)
+  · rsi_mean_reversion: sign-flip (+13.09→-8.53) (train=+13.09 held_pnl=-34.2%)
+  · bollinger_breakout: sign-flip (+14.49→-1.93) (train=+14.49 held_pnl=-7.0%)
+  · bollinger_mr: sign-flip (+12.08→-3.20) (train=+12.08 held_pnl=-9.8%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+41.78→-6.51) (train=+41.78 held_pnl=-12.3%)
+  · momentum_n_consec: sign-flip (+9.77→-5.19) (train=+9.77 held_pnl=-26.6%)
+  · volume_breakout: PnL fail (+6.8% < 10.0%) (train=+10.05 held_pnl=+6.8%)
+  · ema_crossover: sign-flip (+7.24→-6.35) (train=+7.24 held_pnl=-33.0%)
+  · price_channel_with_atr: sign-flip (+10.87→-5.70) (train=+10.87 held_pnl=-23.9%)
+
+  Sweep #309 PASS candidates: 0
+
+
+========== SWEEP #310 (seed=352) ==========
+
+  · donchian_raw: sign-flip (+10.81→-2.06) (train=+10.81 held_pnl=-7.2%)
+  · rsi_mean_reversion: sign-flip (+29.05→-14.72) (train=+29.05 held_pnl=-32.7%)
+  · bollinger_breakout: sign-flip (+15.06→-7.32) (train=+15.06 held_pnl=-38.5%)
+  · bollinger_mr: PnL fail (+3.9% < 10.0%) (train=+8.25 held_pnl=+3.9%)
+  · macd_momentum: train_fail s=-999.00 (train=+nan held_pnl=+0.0%)
+  · atr_squeeze_breakout: sign-flip (+27.71→-8.68) (train=+27.71 held_pnl=-37.5%)
+  · momentum_n_consec: sign-flip (+13.85→-6.59) (train=+13.85 held_pnl=-29.8%)
+  · volume_breakout: sign-flip (+8.59→-1.48) (train=+8.59 held_pnl=-6.7%)
+  · ema_crossover: sign-flip (+8.78→-3.37) (train=+8.78 held_pnl=-15.2%)
+  · price_channel_with_atr: sign-flip (+9.27→-4.93) (train=+9.27 held_pnl=-26.8%)
+
+  Sweep #310 PASS candidates: 0
+
+
+=== FINAL (387.0s, 310000 trials, 310/100 sweeps) ===
+PASS count: 3 в sweeps [230, 240, 243]
+All PASS rows: grep '★ PASS' results.tsv | grep P6v6s
