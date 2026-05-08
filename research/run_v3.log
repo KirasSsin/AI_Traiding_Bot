@@ -1,0 +1,175 @@
+/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/lib/python3.12/site-packages/numpy/_core/_methods.py:219: RuntimeWarning: Degrees of freedom <= 0 for slice
+  ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/lib/python3.12/site-packages/numpy/_core/_methods.py:211: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+=== research search v3 — multi-paradigm sweep ===
+Strategies: ['donchian_raw', 'rsi_mean_reversion', 'bollinger_breakout', 'bollinger_mr', 'macd_momentum', 'atr_squeeze_breakout', 'momentum_n_consec', 'volume_breakout', 'ema_crossover', 'price_channel_with_atr']
+Total trials: 91
+PASS threshold: held-out Sharpe >= 0.5 * train Sharpe AND held-out > 0
+
+Train: 5818 bars / Held-out: 1455 bars
+
+=== STRATEGY: donchian_raw ===
+  #1 score=-999.000 sharpe=+0.278 pnl= +16.7% n= 67 win=0.34 (0.00s)
+  #2 score=+2.585 sharpe=+1.002 pnl= +34.2% n= 61 win=0.39 (0.00s)
+  #3 score=+2.254 sharpe=+0.873 pnl= +33.2% n= 61 win=0.39 (0.00s)
+  #4 score=+0.680 sharpe=+0.316 pnl= +25.6% n= 38 win=0.32 (0.00s)
+  #5 score=+3.414 sharpe=+1.683 pnl= +38.8% n= 33 win=0.39 (0.00s)
+  #6 score=+2.668 sharpe=+1.315 pnl= +38.6% n= 33 win=0.39 (0.00s)
+  #7 score=+0.387 sharpe=+0.220 pnl= +39.0% n= 24 win=0.33 (0.00s)
+  #8 score=+0.367 sharpe=+0.213 pnl= +29.0% n= 23 win=0.39 (0.00s)
+  #9 score=-0.157 sharpe=-0.091 pnl= +17.4% n= 23 win=0.39 (0.00s)
+  → BEST: score=3.414 train Sharpe=+1.683 atr_period=14_atr_stop_mult=2.5_exit_lookback_n=10_lookback_n=20
+  → Running held-out verify...
+  → HELDOUT: sharpe=-3.362 pnl=-24.2% n=24 win=0.33
+  → VERDICT: held-out FAIL: sign-flip (train +1.68 → held-out -3.36)
+
+=== STRATEGY: rsi_mean_reversion ===
+  #1 score=-2.675 sharpe=-1.049 pnl= -11.3% n= 59 win=0.54 (0.00s)
+  #2 score=-999.000 sharpe=-1.015 pnl= -17.1% n= 58 win=0.43 (0.00s)
+  #3 score=-999.000 sharpe=-2.763 pnl= -38.9% n= 89 win=0.54 (0.00s)
+  #4 score=-999.000 sharpe=-2.405 pnl= -47.7% n= 80 win=0.44 (0.00s)
+  #5 score=-4.763 sharpe=-3.568 pnl=  +4.4% n= 14 win=0.57 (0.00s)
+  #6 score=-7.992 sharpe=-5.987 pnl=  +3.3% n= 14 win=0.43 (0.00s)
+  #7 score=+2.817 sharpe=+1.427 pnl=  +9.4% n= 31 win=0.48 (0.00s)
+  #8 score=+3.907 sharpe=+1.979 pnl= +27.8% n= 31 win=0.42 (0.00s)
+  → BEST: score=3.907 train Sharpe=+1.979 atr_period=14_atr_stop_mult=2.0_rsi_high=60_rsi_low=30_rsi_period=14
+  → Running held-out verify...
+  → HELDOUT: sharpe=-1.043 pnl=-12.1% n=28 win=0.36
+  → VERDICT: held-out FAIL: sign-flip (train +1.98 → held-out -1.04)
+
+=== STRATEGY: bollinger_breakout ===
+  #1 score=+3.296 sharpe=+1.364 pnl= +56.3% n= 51 win=0.43 (0.00s)
+  #2 score=+3.096 sharpe=+1.424 pnl= +56.4% n= 39 win=0.41 (0.00s)
+  #3 score=+1.598 sharpe=+0.892 pnl= +31.3% n= 25 win=0.44 (0.00s)
+  #4 score=+2.880 sharpe=+1.262 pnl= +60.8% n= 44 win=0.45 (0.00s)
+  #5 score=+3.870 sharpe=+1.908 pnl= +57.7% n= 33 win=0.48 (0.00s)
+  #6 score=+0.932 sharpe=+0.565 pnl= +41.2% n= 21 win=0.38 (0.00s)
+  #7 score=-0.039 sharpe=-0.020 pnl= +30.9% n= 32 win=0.31 (0.00s)
+  #8 score=-999.000 sharpe=-1.199 pnl= +16.5% n= 28 win=0.29 (0.00s)
+  #9 score=-2.106 sharpe=-1.277 pnl= +19.7% n= 21 win=0.29 (0.00s)
+  → BEST: score=3.870 train Sharpe=+1.908 atr_period=14_atr_stop_mult=2.0_bb_k=2.0_bb_period=20
+  → Running held-out verify...
+  → HELDOUT: sharpe=-2.453 pnl=-20.1% n=20 win=0.25
+  → VERDICT: held-out FAIL: sign-flip (train +1.91 → held-out -2.45)
+
+=== STRATEGY: bollinger_mr ===
+  #1 score=-999.000 sharpe=-1.050 pnl= -20.8% n=107 win=0.59 (0.00s)
+  #2 score=-999.000 sharpe=-0.696 pnl=  -7.8% n= 70 win=0.60 (0.00s)
+  #3 score=-999.000 sharpe=-6.804 pnl= -27.9% n= 35 win=0.49 (0.00s)
+  #4 score=-999.000 sharpe=-0.889 pnl= -23.0% n= 93 win=0.58 (0.00s)
+  #5 score=-999.000 sharpe=-2.267 pnl= -27.2% n= 68 win=0.53 (0.00s)
+  #6 score=-999.000 sharpe=-5.169 pnl= -29.3% n= 39 win=0.51 (0.00s)
+  #7 score=-999.000 sharpe=-2.091 pnl= -30.4% n= 71 win=0.49 (0.00s)
+  #8 score=-999.000 sharpe=-0.179 pnl=  -4.4% n= 53 win=0.53 (0.00s)
+  #9 score=+0.329 sharpe=+0.160 pnl=  +5.7% n= 34 win=0.56 (0.00s)
+  → BEST: score=0.329 train Sharpe=+0.160 atr_period=14_atr_stop_mult=2.0_bb_k=2.5_bb_period=30
+  → Running held-out verify...
+  → HELDOUT: sharpe=-2.468 pnl=-14.8% n=23 win=0.35
+  → VERDICT: held-out FAIL: sign-flip (train +0.16 → held-out -2.47)
+
+=== STRATEGY: macd_momentum ===
+  #1 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #2 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #3 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #4 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #5 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #6 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #7 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #8 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #9 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  #10 score=-999.000 sharpe=+0.000 pnl=  +0.0% n=  0 win=nan (0.00s)
+  → BEST: score=-999.000 train Sharpe=+0.000 atr_period=14_atr_stop_mult=2.0_macd_fast=8_macd_signal=9_macd_slow=21
+  → SKIP held-out (train FAIL): score=-999.0 train Sharpe=0.0
+
+=== STRATEGY: atr_squeeze_breakout ===
+  #1 score=-999.000 sharpe=-28.440 pnl= -11.3% n= 12 win=0.17 (0.01s)
+  #2 score=-999.000 sharpe=-34.199 pnl=  -4.0% n= 18 win=0.17 (0.00s)
+  #3 score=-999.000 sharpe=-30.516 pnl= +26.5% n= 15 win=0.20 (0.00s)
+  #4 score=-999.000 sharpe=-284.968 pnl= -16.0% n=  6 win=0.00 (0.00s)
+  #5 score=-999.000 sharpe=-101.002 pnl=  -6.8% n= 12 win=0.08 (0.00s)
+  #6 score=-999.000 sharpe=-36.692 pnl=  -9.5% n= 15 win=0.13 (0.00s)
+  #7 score=-999.000 sharpe=-281.175 pnl= -10.0% n=  4 win=0.00 (0.00s)
+  #8 score=-999.000 sharpe=-998.079 pnl= -24.6% n=  9 win=0.00 (0.00s)
+  #9 score=-999.000 sharpe=-925.866 pnl=  -8.7% n= 14 win=0.14 (0.00s)
+  → BEST: score=-999.000 train Sharpe=-28.440 atr_period=14_atr_stop_mult=2.0_lookback_n=10_squeeze_pct=20_squeeze_window=100
+  → SKIP held-out (train FAIL): score=-999.0 train Sharpe=-28.439969779426143
+
+=== STRATEGY: momentum_n_consec ===
+  #1 score=-999.000 sharpe=-0.853 pnl= -25.7% n=214 win=0.35 (0.00s)
+  #2 score=-1.737 sharpe=-0.466 pnl= -15.1% n=203 win=0.36 (0.00s)
+  #3 score=-2.136 sharpe=-0.574 pnl= -17.7% n=201 win=0.37 (0.00s)
+  #4 score=-999.000 sharpe=-0.657 pnl= -15.4% n=132 win=0.36 (0.00s)
+  #5 score=-999.000 sharpe=-1.134 pnl= -27.1% n=131 win=0.37 (0.00s)
+  #6 score=-999.000 sharpe=-0.610 pnl= -17.3% n=128 win=0.38 (0.00s)
+  #7 score=+3.058 sharpe=+1.178 pnl= +13.7% n= 62 win=0.31 (0.00s)
+  #8 score=+2.167 sharpe=+0.835 pnl= +11.5% n= 62 win=0.31 (0.00s)
+  #9 score=+3.965 sharpe=+1.528 pnl= +16.3% n= 62 win=0.31 (0.00s)
+  #10 score=+1.178 sharpe=+0.589 pnl=  +6.1% n= 32 win=0.34 (0.00s)
+  → BEST: score=3.965 train Sharpe=+1.528 atr_period=14_atr_stop_mult=3.0_exit_n_reverse=2_n_consec=4
+  → Running held-out verify...
+  → HELDOUT: sharpe=-2.018 pnl=-7.6% n=36 win=0.28
+  → VERDICT: held-out FAIL: sign-flip (train +1.53 → held-out -2.02)
+
+=== STRATEGY: volume_breakout ===
+  #1 score=+1.684 sharpe=+0.791 pnl= +37.8% n= 37 win=0.43 (0.00s)
+  #2 score=-1.035 sharpe=-0.540 pnl= +39.4% n= 29 win=0.48 (0.00s)
+  #3 score=-7.253 sharpe=-4.753 pnl= +17.6% n= 18 win=0.33 (0.00s)
+  #4 score=+0.261 sharpe=+0.134 pnl= +29.2% n= 30 win=0.37 (0.00s)
+  #5 score=-2.939 sharpe=-1.611 pnl= +26.8% n= 26 win=0.38 (0.00s)
+  #6 score=-999.000 sharpe=-7.227 pnl= +21.2% n= 18 win=0.28 (0.00s)
+  #7 score=-0.376 sharpe=-0.210 pnl= +29.6% n= 25 win=0.36 (0.00s)
+  #8 score=-1.261 sharpe=-0.748 pnl= +23.9% n= 22 win=0.36 (0.00s)
+  #9 score=-999.000 sharpe=-5.525 pnl=  +8.2% n= 16 win=0.19 (0.00s)
+  → BEST: score=1.684 train Sharpe=+0.791 atr_period=14_atr_stop_mult=2.0_exit_lookback_n=7_lookback_n=15_vol_mult=1.2_vol_window=20
+  → Running held-out verify...
+  → HELDOUT: sharpe=-2.428 pnl=-13.8% n=23 win=0.30
+  → VERDICT: held-out FAIL: sign-flip (train +0.79 → held-out -2.43)
+
+=== STRATEGY: ema_crossover ===
+  #1 score=+2.943 sharpe=+1.184 pnl= +53.3% n= 55 win=0.36 (0.01s)
+  #2 score=-5.211 sharpe=-2.448 pnl= +20.4% n= 37 win=0.27 (0.01s)
+  #3 score=-4.649 sharpe=-2.263 pnl= +24.8% n= 34 win=0.29 (0.01s)
+  #4 score=+0.137 sharpe=+0.078 pnl= +23.0% n= 24 win=0.29 (0.01s)
+  #5 score=-2.359 sharpe=-1.643 pnl=  +9.1% n= 16 win=0.31 (0.00s)
+  #6 score=-999.000 sharpe=-11.309 pnl= -23.8% n= 34 win=0.15 (0.01s)
+  #7 score=-6.393 sharpe=-3.112 pnl= +26.6% n= 34 win=0.24 (0.01s)
+  #8 score=+1.481 sharpe=+0.721 pnl= +35.6% n= 34 win=0.35 (0.01s)
+  #9 score=+2.122 sharpe=+1.033 pnl= +40.9% n= 34 win=0.35 (0.01s)
+  → BEST: score=2.943 train Sharpe=+1.184 atr_period=14_atr_stop_mult=2.0_ema_fast=5_ema_slow=20
+  → Running held-out verify...
+  → HELDOUT: sharpe=-3.594 pnl=-32.0% n=45 win=0.22
+  → VERDICT: held-out FAIL: sign-flip (train +1.18 → held-out -3.59)
+
+=== STRATEGY: price_channel_with_atr ===
+  #1 score=+2.819 sharpe=+1.224 pnl= +39.1% n= 45 win=0.40 (0.00s)
+  #2 score=+2.819 sharpe=+1.224 pnl= +39.1% n= 45 win=0.40 (0.00s)
+  #3 score=+2.547 sharpe=+1.116 pnl= +36.6% n= 44 win=0.41 (0.00s)
+  #4 score=+1.757 sharpe=+0.845 pnl= +33.0% n= 35 win=0.37 (0.00s)
+  #5 score=+1.757 sharpe=+0.845 pnl= +33.0% n= 35 win=0.37 (0.00s)
+  #6 score=+1.779 sharpe=+0.856 pnl= +32.9% n= 35 win=0.37 (0.00s)
+  #7 score=-1.370 sharpe=-0.715 pnl= +24.3% n= 29 win=0.31 (0.00s)
+  #8 score=-1.370 sharpe=-0.715 pnl= +24.3% n= 29 win=0.31 (0.00s)
+  #9 score=-1.370 sharpe=-0.715 pnl= +24.3% n= 29 win=0.31 (0.00s)
+  → BEST: score=2.819 train Sharpe=+1.224 atr_pct_max=0.05_atr_pct_min=0.003_atr_period=14_atr_stop_mult=2.0_exit_lookback_n=7_lookback_n=15
+  → Running held-out verify...
+  → HELDOUT: sharpe=-3.088 pnl=-21.1% n=29 win=0.24
+  → VERDICT: held-out FAIL: sign-flip (train +1.22 → held-out -3.09)
+
+
+=== FINAL SUMMARY (0.5s, 91 total trials) ===
+
+Strategy                     |  Train Sharpe |   Held-out | Verdict
+----------------------------------------------------------------------------------------------------
+donchian_raw                 |        +1.683 |     -3.362 | held-out FAIL: sign-flip (train +1.68 → held-out -3.36)
+rsi_mean_reversion           |        +1.979 |     -1.043 | held-out FAIL: sign-flip (train +1.98 → held-out -1.04)
+bollinger_breakout           |        +1.908 |     -2.453 | held-out FAIL: sign-flip (train +1.91 → held-out -2.45)
+bollinger_mr                 |        +0.160 |     -2.468 | held-out FAIL: sign-flip (train +0.16 → held-out -2.47)
+macd_momentum                |        +0.000 |       +nan | train_fail score=-999.00 sharpe=0.00
+atr_squeeze_breakout         |       -28.440 |       +nan | train_fail score=-999.00 sharpe=-28.44
+momentum_n_consec            |        +1.528 |     -2.018 | held-out FAIL: sign-flip (train +1.53 → held-out -2.02)
+volume_breakout              |        +0.791 |     -2.428 | held-out FAIL: sign-flip (train +0.79 → held-out -2.43)
+ema_crossover                |        +1.184 |     -3.594 | held-out FAIL: sign-flip (train +1.18 → held-out -3.59)
+price_channel_with_atr       |        +1.224 |     -3.088 | held-out FAIL: sign-flip (train +1.22 → held-out -3.09)
+
+PASS candidates: 0
