@@ -45,7 +45,7 @@ Confirm с operator before starting большой N (>10 = 10+ hours).
 
 ### Step 2: Identify current strategy variant
 
-From context + `autoresearch_donchian/train_donchian.py` `PARAMS` dict OR new variant. State explicitly:
+From context + `research/train_donchian.py` `PARAMS` dict OR new variant. State explicitly:
 - Strategy name (e.g. "Donchian breakout S35")
 - Current params + ranges
 - Iteration counter (i=1 of N)
@@ -55,7 +55,7 @@ From context + `autoresearch_donchian/train_donchian.py` `PARAMS` dict OR new va
 ```
 FOR i in 1..N:
     [3a] AUTORESEARCH RUN (bypass kit)
-        - Branch: autoresearch/<strategy>-<date>-iter<i>
+        - Branch: research/<strategy>-<date>-iter<i>
         - Run search loop (30-100 trials)
         - Held-out verification
         - Honest verdict (PASS / FAIL / DEGRADE)
@@ -76,7 +76,7 @@ FOR i in 1..N:
         - PHASE 4 execute: implement variant в src/backtest/indicators.py + new strategy preset
         - PHASE 5-8 standard kit cycle
         - Tag v0.1.0-alpha.<N> ship к main
-        - Update autoresearch_donchian/ к accept new variant param
+        - Update research/ к accept new variant param
 
     [3e] RETURN к 3a с new iteration counter
 END FOR
@@ -173,8 +173,8 @@ Final summary:
 
 ## Related kit references
 
-- `autoresearch_donchian/` — first instance of pattern (S35 Donchian iteration 1, FAIL held-out)
-- `autoresearch_donchian/program_donchian.md` — single autoresearch run instructions
+- `research/` — first instance of pattern (S35 Donchian iteration 1, FAIL held-out)
+- `research/program.md` — single autoresearch run instructions
 - `karpathy/autoresearch` upstream — `autoresearch/` cloned reference (LLM training original)
 - ADR 0052 (LOCKED acceptance gates — preserved across iterations)
 - ADR 0055 SD-8 (12mo MAINNET promotion — autoresearch results NOT counted)
