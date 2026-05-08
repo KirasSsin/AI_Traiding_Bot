@@ -1,0 +1,78 @@
+=== research search v2 (iter 2 — EMA filter dimension) ===
+Trial budget: 100
+Hard floor: n_trades < 10 → -999
+Consistency: <3/5 folds positive → -999
+Train: 5818 bars / Held-out: 1455 bars (locked)
+
+=== PHASE 1: lookback_n sweep (7 trials, ema=0 baseline) ===
+  P1v2_1 L=5 → score=-999.000 sharpe=-1.069 pnl= -17.1% n=122 win=0.34
+  P1v2_2 L=10 → score=+1.781 sharpe=+0.682 pnl= +27.7% n= 63 win=0.38
+  P1v2_3 L=15 → score=+3.205 sharpe=+1.392 pnl= +43.9% n= 45 win=0.40
+  P1v2_4 L=20 → score=+1.757 sharpe=+0.845 pnl= +33.0% n= 35 win=0.37
+  P1v2_5 L=30 → score=-1.370 sharpe=-0.715 pnl= +24.3% n= 29 win=0.31
+  P1v2_6 L=40 → score=+1.085 sharpe=+0.630 pnl= +36.3% n= 23 win=0.39
+  P1v2_7 L=55 → score=-3.005 sharpe=-1.744 pnl= +14.3% n= 23 win=0.35
+  → best lookback: 15
+
+=== PHASE 2: atr_mult sweep on L=15 (8 trials) ===
+  P2v2_1 ATR×1.0 → score=+3.178 sharpe=+1.297 pnl= +33.6% n= 53 win=0.32
+  P2v2_2 ATR×1.5 → score=+1.618 sharpe=+0.675 pnl= +26.5% n= 50 win=0.34
+  P2v2_3 ATR×2.0 → score=+3.205 sharpe=+1.392 pnl= +43.9% n= 45 win=0.40
+  P2v2_4 ATR×2.5 → score=+5.209 sharpe=+2.325 pnl= +57.6% n= 42 win=0.45
+  P2v2_5 ATR×3.0 → score=+4.922 sharpe=+2.196 pnl= +58.6% n= 42 win=0.45
+  P2v2_6 ATR×3.5 → score=+4.469 sharpe=+1.994 pnl= +55.5% n= 42 win=0.45
+  P2v2_7 ATR×4.0 → score=+4.726 sharpe=+2.109 pnl= +54.9% n= 42 win=0.45
+  P2v2_8 ATR×5.0 → score=+4.620 sharpe=+2.062 pnl= +53.0% n= 42 win=0.45
+  → best atr_mult: 2.5
+
+=== PHASE 3: exit_lb sweep on L=15 ATR×2.5 (5 trials) ===
+  P3v2_1 E=3 → score=+2.613 sharpe=+1.031 pnl= +28.3% n= 58 win=0.38
+  P3v2_2 E=6 → score=+5.275 sharpe=+2.311 pnl= +58.2% n= 44 win=0.45
+  P3v2_3 E=7 → score=+5.209 sharpe=+2.325 pnl= +57.6% n= 42 win=0.45
+  P3v2_4 E=10 → score=+2.535 sharpe=+1.154 pnl= +50.8% n= 40 win=0.45
+  P3v2_5 E=13 → score=+3.632 sharpe=+1.707 pnl= +56.3% n= 37 win=0.49
+  → best exit: 6
+
+=== PHASE 4: atr_period sweep (5 trials) ===
+  P4v2_1 P=7 → score=+5.703 sharpe=+2.499 pnl= +63.4% n= 44 win=0.45
+  P4v2_2 P=10 → score=+5.277 sharpe=+2.312 pnl= +57.5% n= 44 win=0.45
+  P4v2_3 P=14 → score=+5.275 sharpe=+2.311 pnl= +58.2% n= 44 win=0.45
+  P4v2_4 P=21 → score=+5.638 sharpe=+2.493 pnl= +56.2% n= 43 win=0.47
+  P4v2_5 P=30 → score=+3.990 sharpe=+1.764 pnl= +46.9% n= 43 win=0.44
+  → best atr_period: 7
+
+=== PHASE 6: EMA filter sweep on L=15 E=6 P=7 ATR×2.5 (7 trials) ===
+  P6v2_1 EMA=0 → score=+5.703 sharpe=+2.499 pnl= +63.4% n= 44 win=0.45
+  P6v2_2 EMA=50 → score=+3.873 sharpe=+1.712 pnl= +37.2% n= 43 win=0.44
+  P6v2_3 EMA=100 → score=+2.556 sharpe=+1.244 pnl= +20.5% n= 34 win=0.44
+  P6v2_4 EMA=150 → score=+0.268 sharpe=+0.138 pnl=  +9.9% n= 30 win=0.43
+  P6v2_5 EMA=200 → score=-999.000 sharpe=-0.683 pnl=  +9.5% n= 26 win=0.42
+  P6v2_6 EMA=250 → score=-0.308 sharpe=-0.191 pnl= +14.5% n= 20 win=0.45
+  P6v2_7 EMA=300 → score=-3.385 sharpe=-2.285 pnl= +13.6% n= 17 win=0.35
+  → best ema: 0
+
+Deterministic best: {'lookback_n': 15, 'exit_lookback_n': 6, 'atr_period': 7, 'atr_stop_mult': 2.5, 'ema_filter_period': 0}
+  score=5.703 sharpe=2.499 n=44
+
+=== PHASE 5: random exploration around best (68 trials) ===
+  P5v2_1 L=17 E=5 P=5 ATR×2.06 EMA=262 → score=-999.000 sharpe=-3.215 pnl=  -1.9% n= 24 win=0.29  
+  P5v2_2 L=21 E=7 P=6 ATR×1.57 EMA=0 → score=+0.256 sharpe=+0.118 pnl= +17.2% n= 39 win=0.36 ↑
+  P5v2_3 L=15 E=4 P=5 ATR×3.12 EMA=152 → score=-999.000 sharpe=-0.905 pnl=  -6.8% n= 35 win=0.31  
+  P5v2_4 L=16 E=9 P=5 ATR×3.51 EMA=181 → score=-999.000 sharpe=-2.782 pnl=  -3.4% n= 24 win=0.33  
+  P5v2_5 L=11 E=7 P=6 ATR×1.73 EMA=0 → score=+2.941 sharpe=+1.200 pnl= +44.7% n= 53 win=0.38 ↑
+  → Early stop: score 2.941 >= 2.5
+
+=== FINAL ITER 2 SEARCH RESULT ===
+Trials run: 37 / 100
+Elapsed: 0.2s
+BEST PARAMS: {'lookback_n': 15, 'exit_lookback_n': 6, 'atr_period': 7, 'atr_stop_mult': 2.5, 'ema_filter_period': 0}
+  trial_id: P4v2_1
+  composite score: 5.7026
+  aggregate Sharpe: 2.4985
+  total_pnl_pct: 63.36
+  win_rate: 0.4545
+  n_trades: 44
+  fold_sharpes: [2.382, 4.9384, -1.4359, 3.798, 2.8101]
+  fold_pnls: [12.65, 17.77, -3.39, 11.82, 24.52]
+
+Next: held-out verification on best params (verify_heldout.py update)

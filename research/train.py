@@ -1,17 +1,22 @@
-"""research — single experiment runner.
+"""research — single experiment runner (iter 2: EMA200 trend filter dimension).
 
 Адаптировано из karpathy/autoresearch train.py paradigm.
 
 Agent EDITS THIS FILE. Each experiment = one git commit с modified params.
 
-Per program_donchian.md: tune `PARAMS` dict + run → check metric → keep/discard.
+Per program.md: tune `PARAMS` dict + run → check metric → keep/discard.
 
-Output format mirrors karpathy spec:
+Iter 1 (closed FAIL): pure Donchian S35 hyperparameter tuning. Held-out -3.23.
+Iter 2 (active): + EMA200 trend filter dimension (per trader-expert prior).
+
+Output:
     ---
     metric (sharpe):  X.XX
     n_trades:         N
-    mc_p:             X.XXX
+    total_pnl_pct:    X.XX
+    win_rate:         X.XXX
     fold_sharpes:     [...]
+    fold_pnls:        [...]
     status:           ok|insufficient_data|crash
     seconds_total:    X.X
 """
@@ -25,23 +30,25 @@ from pathlib import Path
 # Add bot project к sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from research.prepare import evaluate_metric, load_split
+from research.backtest_v2 import evaluate_wfa
+from research.prepare import load_split
 
 # ============================================================
 # AGENT EDITS THIS BLOCK
 # ============================================================
-# Baseline = ADR 0054 LOCKED Donchian S35 (lookback=20, exit=10, atr_mult=2.0)
-# Per autoresearch loop: tune values, commit, run, log result, keep/discard.
+# Iter 2 baseline = ADR 0054 LOCKED Donchian + EMA200 filter (new dimension).
+# ema_filter_period=0 disables filter (= iter 1 baseline). Set к 200 для standard EMA200 filter.
 
 PARAMS: dict[str, float | int] = {
     "lookback_n": 20,  # Donchian channel lookback (entry breakout window)
     "exit_lookback_n": 10,  # Donchian channel exit window (Turtle Trading variant)
     "atr_period": 14,  # ATR smoothing period (Wilder)
     "atr_stop_mult": 2.0,  # ATR multiplier для stop loss
+    "ema_filter_period": 200,  # EMA trend filter (0 = disabled, 200 = standard EMA200)
 }
 
 # ============================================================
-# DO NOT MODIFY BELOW (per program_donchian.md anti-snooping)
+# DO NOT MODIFY BELOW (per program.md anti-snooping)
 # ============================================================
 
 
@@ -50,21 +57,23 @@ def main() -> int:
     split = load_split()
     train_df = split.train_df
 
-    print("research experiment START")
+    print("research experiment START (iter 2 — EMA filter dimension)")
     print(f"  PARAMS: {PARAMS}")
     print(f"  train data: {len(train_df)} bars ({split.train_start} → {split.train_end})")
     print(f"  held-out: {len(split.heldout_df)} bars (NOT touched in search)")
     print()
 
     try:
-        result = evaluate_metric(df=train_df, params=PARAMS, use_wfa=True)
+        result = evaluate_wfa(train_df, PARAMS)
     except Exception as exc:  # noqa: BLE001 — autoresearch crash log
         elapsed = time.time() - t0
         print("---")
         print("metric (sharpe):  nan")
         print("n_trades:         0")
-        print("mc_p:             nan")
+        print("total_pnl_pct:    nan")
+        print("win_rate:         nan")
         print("fold_sharpes:     []")
+        print("fold_pnls:        []")
         print("status:           crash")
         print(f"error:            {type(exc).__name__}: {exc}")
         print(f"seconds_total:    {elapsed:.1f}")
@@ -74,8 +83,10 @@ def main() -> int:
     print("---")
     print(f"metric (sharpe):  {result['metric']:.4f}")
     print(f"n_trades:         {result['n_trades']}")
-    print(f"mc_p:             {result['mc_p']:.4f}")
-    print(f"fold_sharpes:     {[round(s, 3) for s in result['fold_sharpes']]}")
+    print(f"total_pnl_pct:    {result.get('total_pnl_pct', 0.0):.2f}")
+    print(f"win_rate:         {result.get('win_rate', float('nan')):.4f}")
+    print(f"fold_sharpes:     {result['fold_sharpes']}")
+    print(f"fold_pnls:        {result.get('fold_pnls', [])}")
     print(f"status:           {result['status']}")
     print(f"seconds_total:    {elapsed:.1f}")
     return 0

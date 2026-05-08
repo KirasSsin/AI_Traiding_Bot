@@ -17,17 +17,20 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from research.prepare import evaluate_metric, load_split
+from research.backtest_v2 import evaluate_heldout
+from research.prepare import load_split
 
-# BEST PARAMS from search loop (P5_5, train score=2.5766 Sharpe=1.27 n=33)
+# Iter 2 BEST PARAMS from search_v2 loop (P4v2_1, train score=5.70 Sharpe=2.50 n=44 PnL+63%)
+# EMA filter EMPIRICALLY FALSIFIED — best ema_filter_period=0 (disabled).
 BEST_PARAMS: dict[str, Any] = {
-    "lookback_n": 11,
-    "exit_lookback_n": 5,
-    "atr_period": 13,
-    "atr_stop_mult": 0.61,
+    "lookback_n": 15,
+    "exit_lookback_n": 6,
+    "atr_period": 7,
+    "atr_stop_mult": 2.5,
+    "ema_filter_period": 0,
 }
 
-TRAIN_SHARPE = 1.2704  # from search output
+TRAIN_SHARPE = 2.4985  # from search_v2 output
 PASS_THRESHOLD_RATIO = 0.5  # trader-expert Q6
 
 
@@ -41,10 +44,12 @@ def main() -> int:
     print()
 
     # Held-out: single contiguous backtest (NO WFA — too short for K=5)
-    result = evaluate_metric(df=split.heldout_df, params=BEST_PARAMS, use_wfa=False)
+    result = evaluate_heldout(split.heldout_df, BEST_PARAMS)
     print("=== HELD-OUT RESULT ===")
     print(f"Sharpe (held-out): {result['metric']:.4f}")
     print(f"n_trades: {result['n_trades']}")
+    print(f"total_pnl_pct: {result.get('total_pnl_pct', 0):.2f}")
+    print(f"win_rate: {result.get('win_rate', float('nan')):.4f}")
     print(f"status: {result['status']}")
     print()
 
