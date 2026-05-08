@@ -38,7 +38,7 @@ MIN_POSITIVE_FOLDS = 3
 TRIAL_BUDGET_PER_STRAT = 100
 GRID_PORTION = 30
 RANDOM_PORTION = TRIAL_BUDGET_PER_STRAT - GRID_PORTION
-MAX_SWEEPS = 5  # 5 × 1000 = 5000 additional trials max
+MAX_SWEEPS = 100  # operator continuous mode — 100 × 1000 = 100k trials
 PASS_PNL_THRESHOLD = 10.0  # 10% = $1000 USDT
 PASS_SHARPE_THRESHOLD = 0.0
 
@@ -318,15 +318,16 @@ def main() -> int:
     split = load_split()
     print(f"Train: {len(split.train_df)} / Held-out: {len(split.heldout_df)}")
 
-    pass_found = False
+    pass_count = 0
     completed_sweeps = 0
+    pass_log: list[int] = []
     for sweep_id in range(start_sweep, end_sweep + 1):
         if run_sweep(sweep_id, split.train_df, split.heldout_df):
-            pass_found = True
-            completed_sweeps = sweep_id
-            print(f"\n\n★★★ PASS FOUND IN SWEEP #{sweep_id} ★★★")
-            break
+            pass_count += 1
+            pass_log.append(sweep_id)
+            print(f"\n  ★ PASS #{pass_count} в sweep #{sweep_id} (продолжаем continuous)")
         completed_sweeps = sweep_id
+    pass_found = pass_count > 0
 
     elapsed = time.time() - t0
     n_total = completed_sweeps * 1000
@@ -334,9 +335,10 @@ def main() -> int:
         f"\n\n=== FINAL ({elapsed:.1f}s, {n_total} trials, {completed_sweeps}/{MAX_SWEEPS} sweeps) ==="
     )
     if pass_found:
-        print("PASS achieved — see results.tsv P6v6s*_HELDOUT rows")
+        print(f"PASS count: {pass_count} в sweeps {pass_log}")
+        print("All PASS rows: grep '★ PASS' results.tsv | grep P6v6s")
     else:
-        print(f"NO PASS in {n_total} trials — empirical evidence universal sign-flip on 4H")
+        print(f"NO PASS in {n_total} trials — universal sign-flip persists on 4H")
 
     append_tsv(
         "P6v6_FINAL",
