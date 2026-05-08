@@ -59,3 +59,7 @@ llm-wiki/.obsidian/
 .claude/worktrees/
 .claude/.DS_Store
 # Track .claude/skills/ (project-level workflow templates, version-controlled per Anthropic guidance)
+
+# Research artifacts (large)
+/research/results_full_trials.tsv.bak.gz
+/research/run_v6_4h_continuous.log
