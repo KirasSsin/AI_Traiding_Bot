@@ -1,0 +1,59 @@
+=== research search v7 — volume_breakout multi-TF replication ===
+PASS criterion: held-out PnL > 10.0% AND Sharpe > 0.0
+Per TF: 10 sweeps × 100 trials = 1000
+
+
+========== TIMEFRAME: 5M ==========
+  Train: 279293 / Held-out: 69824
+  Sweep#1: train fail (no positive trial)
+  Sweep#2: train fail (no positive trial)
+  Sweep#3: train fail (no positive trial)
+  Sweep#4: train fail (no positive trial)
+  Sweep#5: train fail (no positive trial)
+  Sweep#6: train fail (no positive trial)
+  Sweep#7: train fail (no positive trial)
+  Sweep#8: train fail (no positive trial)
+  Sweep#9: train fail (no positive trial)
+  Sweep#10: train fail (no positive trial)
+
+  No PASS на 5M в 10 sweeps
+
+
+========== TIMEFRAME: 15M ==========
+  Train: 93097 / Held-out: 23275
+  Sweep#1: train fail (no positive trial)
+  Sweep#2: train fail (no positive trial)
+  Sweep#3: train fail (no positive trial)
+  Sweep#4: train fail (no positive trial)
+  Sweep#5: train fail (no positive trial)
+  Sweep#6: train fail (no positive trial)
+  Sweep#7: train fail (no positive trial)
+  Sweep#8: train fail (no positive trial)
+  Sweep#9: train fail (no positive trial)
+  Sweep#10: train fail (no positive trial)
+
+  No PASS на 15M в 10 sweeps
+
+
+========== TIMEFRAME: 1H ==========
+  Train: 23274 / Held-out: 5819
+  Sweep#1: train fail (no positive trial)
+  Sweep#2: train fail (no positive trial)
+  Sweep#3: train fail (no positive trial)
+  Sweep#4: train fail (no positive trial)
+  Sweep#5: train fail (no positive trial)
+  Sweep#6: train fail (no positive trial)
+  Sweep#7: train fail (no positive trial)
+  Sweep#8: train fail (no positive trial)
+  Sweep#9: train fail (no positive trial)
+  Sweep#10: train fail (no positive trial)
+
+  No PASS на 1H в 10 sweeps
+
+
+=== FINAL (42.3s) ===
+  5M: NO viable result (all sweeps train_fail)
+  15M: NO viable result (all sweeps train_fail)
+  1H: NO viable result (all sweeps train_fail)
+
+Total PASS across timeframes: 0/3
