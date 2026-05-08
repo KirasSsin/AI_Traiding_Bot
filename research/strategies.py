@@ -32,8 +32,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from research.prepare import BARS_PER_YEAR  # noqa: E402  — derive from prepare.py
 
-BARS_PER_YEAR = 2190
 COMMISSION_TAKER = 0.001
 SLIPPAGE = 0.0005
 
@@ -467,7 +467,12 @@ STRATEGY_REGISTRY: dict[str, Callable[[pd.DataFrame, dict[str, Any]], list[Trade
 # ---------- WFA + held-out shells ----------
 
 
-def _metrics_from_trades(trades: list[TradeRecord]) -> dict[str, Any]:
+def _metrics_from_trades(trades: list[TradeRecord], n_bars: int | None = None) -> dict[str, Any]:
+    """Bar-based Sharpe annualization (cross-timeframe consistent).
+
+    Old formula (trade-frequency based) blew up на 5M (sqrt(21000)=145× scale).
+    New formula: per-bar return series, annualize sqrt(BARS_PER_YEAR).
+    """
     n = len(trades)
     if n == 0:
         return {
@@ -477,17 +482,26 @@ def _metrics_from_trades(trades: list[TradeRecord]) -> dict[str, Any]:
             "win_rate": float("nan"),
         }
     pnls = np.array([t.pnl_pct for t in trades])
-    mean_holding = np.mean([t.exit_idx - t.entry_idx for t in trades])
-    if pnls.std(ddof=1) > 0 and mean_holding > 0:
-        trades_per_year = BARS_PER_YEAR / mean_holding
-        sharpe = (pnls.mean() / pnls.std(ddof=1)) * np.sqrt(trades_per_year)
+    total_pnl_pct = float(pnls.sum() * 100.0)
+    win_rate = float((pnls > 0).mean())
+
+    if n_bars is None:
+        n_bars = max(t.exit_idx for t in trades) + 1
+    per_bar = np.zeros(n_bars, dtype=np.float64)
+    for t in trades:
+        hold = t.exit_idx - t.entry_idx
+        if hold > 0:
+            per_bar[t.entry_idx : t.exit_idx] = t.pnl_pct / hold
+
+    if per_bar.std(ddof=1) > 0:
+        sharpe = (per_bar.mean() / per_bar.std(ddof=1)) * np.sqrt(BARS_PER_YEAR)
     else:
-        sharpe = 0.0 if pnls.std(ddof=1) == 0 else float("nan")
+        sharpe = 0.0
     return {
         "n_trades": n,
         "sharpe": float(sharpe),
-        "total_pnl_pct": float(pnls.sum() * 100.0),
-        "win_rate": float((pnls > 0).mean()),
+        "total_pnl_pct": total_pnl_pct,
+        "win_rate": win_rate,
     }
 
 
@@ -529,7 +543,7 @@ def evaluate_wfa(
             break
         test_df = df.iloc[test_start:test_end].reset_index(drop=True)
         trades = fn(test_df, params)
-        m = _metrics_from_trades(trades)
+        m = _metrics_from_trades(trades, n_bars=len(test_df))
         if m["n_trades"] > 0 and not np.isnan(m["sharpe"]):
             fold_sharpes.append(m["sharpe"])
             fold_pnls.append(m["total_pnl_pct"])
@@ -557,7 +571,7 @@ def evaluate_heldout(
     if strategy_name not in STRATEGY_REGISTRY:
         return {"metric": float("nan"), "n_trades": 0, "status": "unknown_strategy"}
     trades = STRATEGY_REGISTRY[strategy_name](df, params)
-    m = _metrics_from_trades(trades)
+    m = _metrics_from_trades(trades, n_bars=len(df))
     return {
         "metric": m["sharpe"],
         "n_trades": m["n_trades"],

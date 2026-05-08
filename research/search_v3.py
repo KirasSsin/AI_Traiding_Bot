@@ -35,96 +35,97 @@ N_TRADES_FLOOR = 10
 MIN_POSITIVE_FOLDS = 3
 HELDOUT_PASS_RATIO = 0.5
 
-# Per-strategy hyperparameter grid (compact ~10 trials each)
+# Per-strategy hyperparameter grid (compact ~10 trials each).
+# 5M scaling: lookbacks ~ 4H × 12-48 (since 5M = 4H/48). Holds longer = lower commission impact.
 GRIDS: dict[str, list[dict[str, Any]]] = {
     "donchian_raw": [
         {
             "lookback_n": lb,
             "exit_lookback_n": max(2, lb // 2),
-            "atr_period": 14,
+            "atr_period": 50,
             "atr_stop_mult": am,
         }
-        for lb in [10, 20, 40]
-        for am in [1.5, 2.5, 3.5]
+        for lb in [100, 200, 400]
+        for am in [2.0, 3.0, 4.0]
     ],
     "rsi_mean_reversion": [
-        {"rsi_period": p, "rsi_low": low, "rsi_high": high, "atr_period": 14, "atr_stop_mult": 2.0}
-        for p in [7, 14]
-        for low in [25, 30]
-        for high in [50, 60]
+        {"rsi_period": p, "rsi_low": low, "rsi_high": high, "atr_period": 50, "atr_stop_mult": 2.5}
+        for p in [50, 100]
+        for low in [20, 25]
+        for high in [55, 65]
     ][:10],
     "bollinger_breakout": [
-        {"bb_period": p, "bb_k": k, "atr_period": 14, "atr_stop_mult": 2.0}
-        for p in [15, 20, 30]
-        for k in [1.5, 2.0, 2.5]
+        {"bb_period": p, "bb_k": k, "atr_period": 50, "atr_stop_mult": 2.5}
+        for p in [100, 200, 300]
+        for k in [2.0, 2.5, 3.0]
     ],
     "bollinger_mr": [
-        {"bb_period": p, "bb_k": k, "atr_period": 14, "atr_stop_mult": 2.0}
-        for p in [15, 20, 30]
-        for k in [1.5, 2.0, 2.5]
+        {"bb_period": p, "bb_k": k, "atr_period": 50, "atr_stop_mult": 2.5}
+        for p in [100, 200, 300]
+        for k in [2.0, 2.5, 3.0]
     ],
     "macd_momentum": [
-        {"macd_fast": f, "macd_slow": s, "macd_signal": 9, "atr_period": 14, "atr_stop_mult": 2.0}
-        for f, s in [(8, 21), (12, 26), (5, 35), (12, 30)]
+        {"macd_fast": f, "macd_slow": s, "macd_signal": 60, "atr_period": 50, "atr_stop_mult": 2.5}
+        for f, s in [(60, 130), (90, 200), (45, 110), (120, 260)]
     ]
     + [
         {
-            "macd_fast": 12,
-            "macd_slow": 26,
+            "macd_fast": 60,
+            "macd_slow": 130,
             "macd_signal": sig,
-            "atr_period": 14,
+            "atr_period": 50,
             "atr_stop_mult": am,
         }
-        for sig in [9, 14]
-        for am in [1.5, 2.5, 3.5]
+        for sig in [45, 90]
+        for am in [2.0, 3.0, 4.0]
     ][:10],
     "atr_squeeze_breakout": [
         {
             "lookback_n": lb,
-            "squeeze_window": 100,
+            "squeeze_window": 500,
             "squeeze_pct": pct,
-            "atr_period": 14,
-            "atr_stop_mult": 2.0,
+            "atr_period": 50,
+            "atr_stop_mult": 2.5,
         }
-        for lb in [10, 20, 30]
+        for lb in [100, 200, 300]
         for pct in [20, 30, 40]
     ],
     "momentum_n_consec": [
-        {"n_consec": n, "exit_n_reverse": 2, "atr_period": 14, "atr_stop_mult": am}
-        for n in [2, 3, 4, 5]
-        for am in [1.5, 2.0, 3.0]
+        {"n_consec": n, "exit_n_reverse": 3, "atr_period": 50, "atr_stop_mult": am}
+        for n in [4, 6, 8, 10]
+        for am in [2.0, 3.0, 4.0]
     ][:10],
     "volume_breakout": [
         {
             "lookback_n": lb,
             "exit_lookback_n": max(2, lb // 2),
-            "vol_window": 20,
+            "vol_window": 100,
             "vol_mult": vm,
-            "atr_period": 14,
-            "atr_stop_mult": 2.0,
+            "atr_period": 50,
+            "atr_stop_mult": 2.5,
         }
-        for lb in [15, 20, 30]
-        for vm in [1.2, 1.5, 2.0]
+        for lb in [100, 200, 300]
+        for vm in [1.5, 2.0, 3.0]
     ],
     "ema_crossover": [
-        {"ema_fast": f, "ema_slow": s, "atr_period": 14, "atr_stop_mult": 2.0}
-        for f, s in [(5, 20), (10, 30), (12, 26), (15, 50), (20, 100)]
+        {"ema_fast": f, "ema_slow": s, "atr_period": 50, "atr_stop_mult": 2.5}
+        for f, s in [(20, 100), (50, 200), (60, 240), (100, 400), (30, 150)]
     ]
     + [
-        {"ema_fast": 12, "ema_slow": 26, "atr_period": 14, "atr_stop_mult": am}
-        for am in [1.0, 1.5, 2.5, 3.5]
+        {"ema_fast": 50, "ema_slow": 200, "atr_period": 50, "atr_stop_mult": am}
+        for am in [1.5, 2.0, 3.0, 4.0]
     ][:10],
     "price_channel_with_atr": [
         {
             "lookback_n": lb,
             "exit_lookback_n": max(2, lb // 2),
             "atr_pct_min": pmin,
-            "atr_pct_max": 0.05,
-            "atr_period": 14,
-            "atr_stop_mult": 2.0,
+            "atr_pct_max": 0.02,
+            "atr_period": 50,
+            "atr_stop_mult": 2.5,
         }
-        for lb in [15, 20, 30]
-        for pmin in [0.003, 0.005, 0.01]
+        for lb in [100, 200, 300]
+        for pmin in [0.001, 0.002, 0.004]
     ],
 }
 

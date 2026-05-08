@@ -21,21 +21,22 @@ from typing import Any
 
 import pandas as pd
 
-# Fixed constants — DO NOT MODIFY (per program_donchian.md anti-snooping)
-DATA_PATH = Path(__file__).parent.parent / "data" / "BTCUSDT_4h.parquet"
+# Constants — 5M timeframe (per operator directive iter 4: more trades + better PnL)
+# Original 4H constants preserved в git history (commit 4231a17 + earlier).
+DATA_PATH = Path(__file__).parent.parent / "data" / "BTCUSDT_5m.parquet"
 TRAIN_RATIO = 0.80  # 80% search / 20% held-out
-BARS_PER_YEAR = 2190  # 4H = 365.25 * 24 / 4 = 2190
+BARS_PER_YEAR = 105192  # 5M = 365.25 * 24 * 60 / 5 = 105192
 SYMBOL = "BTCUSDT"
-INTERVAL = "240"
+INTERVAL = "5"
 
-# Search-time WFA defaults (apply на train portion only)
-WFA_TRAIN_BARS = 2000
-WFA_TEST_BARS = 500
+# Search-time WFA defaults (5M scale: ~28 days train / ~8.7 days test windows)
+WFA_TRAIN_BARS = 10000  # ~34.7 days @ 5M
+WFA_TEST_BARS = 2500  # ~8.7 days @ 5M
 WFA_K_FOLDS = 5
-WFA_EMBARGO_BARS = 20
+WFA_EMBARGO_BARS = 100  # ~8.3h gap (overnight regime change buffer)
 
 # Held-out evaluation — NO WFA, single contiguous backtest
-HELDOUT_MIN_BARS = 200  # safety check
+HELDOUT_MIN_BARS = 5000  # ~17 days safety check (5M scale)
 
 
 @dataclass(frozen=True)
