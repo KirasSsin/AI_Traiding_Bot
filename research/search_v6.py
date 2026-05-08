@@ -268,7 +268,7 @@ def search_strategy(name: str, train_df: Any, held_df: Any, sweep_id: int) -> di
         h["n_trades"],
         held_pnl,
         h["status"],
-        f"v6 4H sweep#{sweep_id} {name} HELDOUT — {verdict} train Sharpe={train_sharpe:.2f}",
+        f"v6 4H sweep#{sweep_id} {name} HELDOUT — {verdict} train_Sharpe={train_sharpe:.2f} | params: {_params_str(best['params'])}",
     )
     return {
         "strategy": name,
