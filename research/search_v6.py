@@ -32,6 +32,7 @@ from research.strategies import (  # noqa: E402
 )
 
 RESULTS_PATH = Path(__file__).parent / "results.tsv"
+DETAILED_LOG = Path(__file__).parent / "results_detailed.tsv"  # gitignored — full trials
 
 N_TRADES_FLOOR = 10
 MIN_POSITIVE_FOLDS = 3
@@ -146,7 +147,11 @@ def _params_str(p: dict[str, Any]) -> str:
 def append_tsv(
     trial_id: str, score: float, sharpe: float, n: int, pnl: float, status: str, desc: str
 ) -> None:
-    with open(RESULTS_PATH, "a") as f:
+    # Per-trial rows → gitignored detailed log (avoid TSV bloat > 100MB GitHub limit).
+    # Only HELDOUT/PASS/summary rows go к tracked results.tsv.
+    is_summary = "HELDOUT" in trial_id or "FINAL" in trial_id or "SUMMARY" in trial_id
+    target = RESULTS_PATH if is_summary else DETAILED_LOG
+    with open(target, "a") as f:
         f.write(f"{trial_id}\t{score:.4f}\t{sharpe:.4f}\t{n}\t{pnl:.2f}\t{status}\t{desc}\n")
 
 

@@ -63,3 +63,4 @@ llm-wiki/.obsidian/
 # Research artifacts (large)
 /research/results_full_trials.tsv.bak.gz
 /research/run_v6_4h_continuous.log
+/research/results_detailed.tsv
