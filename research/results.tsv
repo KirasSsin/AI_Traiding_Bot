@@ -379,3 +379,4 @@ P3v3_price_channel_with_atr_9	-999.0000	0.0000	0	0.00	ok	v3 price_channel_with_a
 P3v3_price_channel_with_atr_HELDOUT_SKIP	0.0000	0.0000	0	0.00	skipped_train_fail	v3 price_channel_with_atr held-out skipped — train FAIL
 P3v3_FINAL_SUMMARY	0.0000	0.0000	91	0.00	summary	v3 multi-paradigm sweep complete — 0 PASS candidates
 ITER4_5M_SUMMARY	0.0000	0.0000	91	0.00	universal_fail_5m	5M sweep — 91 trials × 10 strategies × 0 PASS — n_trades GROWS on 5M (276-926 vs 17-44 on 4H) but PnL negative due commission overhead
+ITER5_15M_PRECHECK	0.0000	0.0000	0	0.00	gate_fail	iter5 15M pre-check FAIL — median bar range 0.243% < 0.25% gate (trader-expert ROUND 2 BINDING CONFIRM_REVISE close-direction); ESC-1 operator override available
