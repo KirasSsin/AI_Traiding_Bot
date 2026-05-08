@@ -9,6 +9,7 @@ Disk-based, no DB schema change.
 
 Concurrency: 1 backtest at-a-time per architecture verdict. Simple threading.Lock.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -24,9 +25,13 @@ from src.backtest.strategy_metrics import compute_t1_t6_metrics
 from src.backtest.walk_forward import evaluate_acceptance_gate
 
 # S25: strategy presets. Operator can extend.
+# S38 T8 dashboard extension: explicit sprint markers в labels + S35 α Donchian added.
+# Latest sprint marker `[Sxx LATEST]` помогает operator distinguish recent additions.
 STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
     "ema_crossover_s13": {
-        "label": "EMA crossover (S13 baseline)",
+        "label": "[S13 baseline] EMA crossover (12/26 + ADX + RSI)",
+        "sprint": "S13",
+        "verdict": "FAIL conjoint (T1=-44.46 на BTC 1H)",
         "type": "ema_crossover",
         "indicators": {
             "ema": {"fast_period": 12, "slow_period": 26},
@@ -35,7 +40,9 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "mean_reversion_s15": {
-        "label": "Mean-reversion (RSI 30/70 + BB 2.0σ) — S15 original",
+        "label": "[S15 original] Mean-reversion (RSI 30/70 + BB 2.0σ)",
+        "sprint": "S15",
+        "verdict": "FAIL conjoint (MC p=0.998 noise)",
         "type": "mean_reversion",
         "indicators": {
             "rsi": {"period": 14, "oversold": 30, "overbought": 70},
@@ -44,12 +51,24 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "mean_reversion_s17_relaxed": {
-        "label": "Mean-reversion (RSI 35/65 + BB 1.5σ) — S17 relaxed",
+        "label": "[S17 relaxed] Mean-reversion (RSI 35/65 + BB 1.5σ) — S22-validated edge",
+        "sprint": "S17",
+        "verdict": "PARTIAL PASS 5/6+DSR+MC (S22 4H DSR=0.996, MC p=0.018) — T5 floor unreachable",
         "type": "mean_reversion",
         "indicators": {
             "rsi": {"period": 14, "oversold": 35, "overbought": 65},
             "bb": {"period": 20, "k": 1.5},
             "atr": {"period": 14, "sl_atr_mult": 1.5, "tp_atr_mult": 3.0},
+        },
+    },
+    "donchian_breakout_s35": {
+        "label": "[S35 LATEST] Donchian breakout (long-only, lookback=20, ATR 2.0× stop)",
+        "sprint": "S35",
+        "verdict": "FAIL conjoint (n=21<<50, aggregate Sharpe=-0.95) — α direction CLOSED per ADR 0054",
+        "type": "donchian",
+        "indicators": {
+            "donchian": {"lookback_n": 20, "exit_lookback_n": 10},
+            "atr": {"period": 14, "sl_atr_mult": 2.0, "tp_atr_mult": 1000000.0},
         },
     },
 }
@@ -83,6 +102,64 @@ BARS_PER_YEAR: dict[str, int] = {
 
 _lock = threading.Lock()
 _RUNS_DIR = Path("data/runs")
+
+
+def _autoscale_wfa_params(total_bars: int) -> dict[str, int]:
+    """S38 dashboard extension: auto-scale WFA params для small data ranges.
+
+    ADR 0014 default: train=2000 / test=500 / k_folds=5 / embargo=20 = 4520 bars min.
+    Operator may select short date range (e.g. 1Q on 1D = ~90 bars) where defaults fail.
+
+    Auto-scale rule (preserves WFA shape):
+      - total >= 4520: use ADR 0014 defaults (best statistical validity)
+      - 1000-4520: scale linearly (train ~ 40%, test ~ 10%, k_folds=5)
+      - 300-1000: k_folds=3, train ~ 50%, test ~ 10%
+      - 100-300: k_folds=2, train ~ 60%, test ~ 15%, embargo=5
+      - <100: BLOCKED (insufficient even для smallest WFA)
+
+    Trade-off: smaller train = less indicator warm-up margin, smaller test = noisier OOS metrics.
+    UI displays actual WFA params used so operator sees scale impact.
+
+    Returns dict с keys: train_bars / test_bars / k_folds / embargo_bars.
+    """
+    if total_bars >= 4520:
+        return {"train_bars": 2000, "test_bars": 500, "k_folds": 5, "embargo_bars": 20}
+    if total_bars >= 1000:
+        # Scale: target = (train + embargo + k×test) <= total
+        # Solve для k=5: train ≈ 0.4*total, test ≈ 0.1*total
+        train = int(total_bars * 0.40)
+        test = int(total_bars * 0.10)
+        return {
+            "train_bars": max(200, train),
+            "test_bars": max(50, test),
+            "k_folds": 5,
+            "embargo_bars": 20,
+        }
+    if total_bars >= 300:
+        # k_folds=3 для smaller window
+        train = int(total_bars * 0.50)
+        test = int(total_bars * 0.10)
+        return {
+            "train_bars": max(100, train),
+            "test_bars": max(30, test),
+            "k_folds": 3,
+            "embargo_bars": 10,
+        }
+    if total_bars >= 100:
+        # k_folds=2 minimum
+        train = int(total_bars * 0.60)
+        test = int(total_bars * 0.15)
+        return {
+            "train_bars": max(50, train),
+            "test_bars": max(15, test),
+            "k_folds": 2,
+            "embargo_bars": 5,
+        }
+    # < 100 bars — too small even с k_folds=2
+    raise ValueError(
+        f"Insufficient data: {total_bars} bars. Minimum 100 bars required для WFA "
+        f"(extend date range OR pick finer interval — 5M/15M produce more bars per same period)."
+    )
 
 
 # S26: educational docs для UI Documentation tab.
@@ -426,12 +503,42 @@ METHODOLOGY_DOC: list[dict[str, Any]] = [
         "name": "Acceptance Criteria T1-T6",
         "purpose": "Pre-registered gating thresholds — strategy must pass ALL conjointly для MVP DONE",
         "criteria": [
-            {"id": "T1", "metric": "Sharpe OOS (annualized)", "threshold": "≥ 1.0", "note": "> 3.0 = почти наверняка overfit"},
-            {"id": "T2", "metric": "Sortino OOS", "threshold": "≥ 1.5", "note": "Trend-following с positive skew должен иметь Sortino > Sharpe"},
-            {"id": "T3", "metric": "Max Drawdown", "threshold": "< 25%", "note": "< 10% suspicious; trend-following BTC historically 15–30%"},
-            {"id": "T4", "metric": "Win rate × RR", "threshold": "≥45%@RR≥1.5 OR ≥35%@RR≥2.0", "note": "Trend-following 35–50%; > 65% suspicious"},
-            {"id": "T5", "metric": "Mean expectancy + t-stat", "threshold": "> 0 + t-stat > 2.0 + n ≥ 100", "note": "n ≥ 100 = sample-size minimum для t-test validity (Bailey 2014)"},
-            {"id": "T6", "metric": "OOS/IS Sharpe ratio", "threshold": "≥ 0.7", "note": "Primary overfit detector — degradation > 30% red flag"},
+            {
+                "id": "T1",
+                "metric": "Sharpe OOS (annualized)",
+                "threshold": "≥ 1.0",
+                "note": "> 3.0 = почти наверняка overfit",
+            },
+            {
+                "id": "T2",
+                "metric": "Sortino OOS",
+                "threshold": "≥ 1.5",
+                "note": "Trend-following с positive skew должен иметь Sortino > Sharpe",
+            },
+            {
+                "id": "T3",
+                "metric": "Max Drawdown",
+                "threshold": "< 25%",
+                "note": "< 10% suspicious; trend-following BTC historically 15–30%",
+            },
+            {
+                "id": "T4",
+                "metric": "Win rate × RR",
+                "threshold": "≥45%@RR≥1.5 OR ≥35%@RR≥2.0",
+                "note": "Trend-following 35–50%; > 65% suspicious",
+            },
+            {
+                "id": "T5",
+                "metric": "Mean expectancy + t-stat",
+                "threshold": "> 0 + t-stat > 2.0 + n ≥ 100",
+                "note": "n ≥ 100 = sample-size minimum для t-test validity (Bailey 2014)",
+            },
+            {
+                "id": "T6",
+                "metric": "OOS/IS Sharpe ratio",
+                "threshold": "≥ 0.7",
+                "note": "Primary overfit detector — degradation > 30% red flag",
+            },
         ],
         "source": "wiki/project/architecture/acceptance-criteria.md (immutable per ADR pattern)",
     },
@@ -494,7 +601,7 @@ def list_data_availability() -> dict[str, dict[str, Any]]:
                 "end": str(ts.iloc[-1]),
                 "file": str(parquet),
             }
-        except Exception as e:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             continue
     return out
 
@@ -528,8 +635,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         )
     if req.interval not in BARS_PER_YEAR:
         raise ValueError(
-            f"Unknown interval '{req.interval}'. "
-            f"Supported: {sorted(BARS_PER_YEAR.keys())}"
+            f"Unknown interval '{req.interval}'. " f"Supported: {sorted(BARS_PER_YEAR.keys())}"
         )
     preset = STRATEGY_PRESETS[req.strategy_id]
 
@@ -542,6 +648,10 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
             raise FileNotFoundError(
                 f"No OHLCV data для {req.symbol} {req.interval} в {req.start}..{req.end}"
             )
+
+        # S38 dashboard extension: auto-scale WFA params для small data ranges
+        # (operator может select short period где ADR 0014 defaults 4520 bars fail).
+        wfa_params = _autoscale_wfa_params(len(df))
 
         # S25: build full WFA config from preset
         # S27 T1: bars_per_year passed к replay_engine для timeframe-correct annualization
@@ -561,9 +671,17 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
             "bars_per_year": BARS_PER_YEAR[req.interval],
         }
         from typing import cast
+
         from src.risk.trade_history import TradeRecord
+
         _sym_trades_raw, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
-            symbol=req.symbol, df=df, strategy_config=strategy_config,
+            symbol=req.symbol,
+            df=df,
+            strategy_config=strategy_config,
+            train_bars=wfa_params["train_bars"],
+            test_bars=wfa_params["test_bars"],
+            k_folds=wfa_params["k_folds"],
+            embargo_bars=wfa_params["embargo_bars"],
         )
         sym_trades: list[TradeRecord] = cast(list[TradeRecord], _sym_trades_raw)
 
@@ -577,10 +695,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         fold_oos_is_sharpe_ratios=sym_fold_sharpes,
         mc_p_value=sym_mc_p,
     )
-    if sym_trades:
-        dsr_value = compute_dsr(trades=list(sym_trades), n_trials=1)
-    else:
-        dsr_value = float("nan")
+    dsr_value = compute_dsr(trades=list(sym_trades), n_trials=1) if sym_trades else float("nan")
 
     def nan_safe(v: Any) -> Any:
         return None if (isinstance(v, float) and math.isnan(v)) else v
@@ -590,7 +705,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     n_trades = metrics["t5_n_trades"]
     sortino_display: Any
     sortino_warning: bool
-    if isinstance(sortino_raw, (int, float)) and abs(sortino_raw) > 50 and n_trades < 100:
+    if isinstance(sortino_raw, int | float) and abs(sortino_raw) > 50 and n_trades < 100:
         sortino_display = None
         sortino_warning = True
     else:
@@ -603,11 +718,13 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     total_commissions = sum(float(t.fees_paid) for t in sym_trades)
     avg_win_quote = (
         sum(float(t.pnl_quote) for t in sym_trades if float(t.pnl_quote) > 0) / n_winners
-        if n_winners > 0 else 0.0
+        if n_winners > 0
+        else 0.0
     )
     avg_loss_quote = (
         sum(float(t.pnl_quote) for t in sym_trades if float(t.pnl_quote) < 0) / n_losers
-        if n_losers > 0 else 0.0
+        if n_losers > 0
+        else 0.0
     )
     gross_profit = sum(float(t.pnl_quote) for t in sym_trades if float(t.pnl_quote) > 0)
     gross_loss = abs(sum(float(t.pnl_quote) for t in sym_trades if float(t.pnl_quote) < 0))
@@ -617,19 +734,21 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     # S27: per-trade dump для formula audit (trader-expert optimization)
     trades_dump: list[dict[str, Any]] = []
     for t in sym_trades:
-        trades_dump.append({
-            "symbol": t.symbol,
-            "entry_ts": str(t.entry_ts),
-            "exit_ts": str(t.exit_ts),
-            "qty": float(t.qty),
-            "entry_price": float(t.entry_price),
-            "exit_price": float(t.exit_price),
-            "pnl_quote": float(t.pnl_quote),
-            "pnl_pct": float(t.pnl_pct),
-            "fees_paid": float(t.fees_paid),
-            "reason_code": str(t.reason_code),
-            "kelly_phase": int(t.kelly_phase),
-        })
+        trades_dump.append(
+            {
+                "symbol": t.symbol,
+                "entry_ts": str(t.entry_ts),
+                "exit_ts": str(t.exit_ts),
+                "qty": float(t.qty),
+                "entry_price": float(t.entry_price),
+                "exit_price": float(t.exit_price),
+                "pnl_quote": float(t.pnl_quote),
+                "pnl_pct": float(t.pnl_pct),
+                "fees_paid": float(t.fees_paid),
+                "reason_code": str(t.reason_code),
+                "kelly_phase": int(t.kelly_phase),
+            }
+        )
     # Verdict
     failed_criteria: list[str] = []
     t1 = nan_safe(metrics["t1_sharpe_oos"])
@@ -643,7 +762,8 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     t4_win = nan_safe(metrics["t4_win_rate"])
     t4_rr = nan_safe(metrics["t4_avg_rr"])
     t4_fail = (
-        t4_win is None or t4_rr is None
+        t4_win is None
+        or t4_rr is None
         or (t4_rr >= 2.0 and t4_win < 0.35)
         or (1.5 <= t4_rr < 2.0 and t4_win < 0.45)
         or t4_rr < 1.5
@@ -652,11 +772,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         failed_criteria.append("t4")
     t5_t = nan_safe(metrics["t5_t_stat"])
     t5_mean = nan_safe(metrics["t5_mean_pnl_pct"])
-    if (
-        n_trades < 100
-        or t5_mean is None or t5_mean <= 0
-        or t5_t is None or t5_t < 2.0
-    ):
+    if n_trades < 100 or t5_mean is None or t5_mean <= 0 or t5_t is None or t5_t < 2.0:
         failed_criteria.append("t5")
     t6 = nan_safe(metrics["t6_oos_is_sharpe_ratio_mean"])
     if t6 is None or t6 < 0.7:
@@ -666,45 +782,57 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
 
     # Risk warnings (trader spec, 4 mandatory)
     warnings: list[dict[str, str]] = []
-    if isinstance(t1, (int, float)) and t1 > 3.0:
-        warnings.append({
-            "level": "high",
-            "code": "overfit_sharpe",
-            "message": f"T1 Sharpe={t1:.2f} > 3.0 — почти наверняка overfit (Hudson & Urquhart 2021).",
-        })
+    if isinstance(t1, int | float) and t1 > 3.0:
+        warnings.append(
+            {
+                "level": "high",
+                "code": "overfit_sharpe",
+                "message": f"T1 Sharpe={t1:.2f} > 3.0 — почти наверняка overfit (Hudson & Urquhart 2021).",
+            }
+        )
     fold_max = max(sym_fold_sharpes) if sym_fold_sharpes else 0.0
     positive_folds = [s for s in sym_fold_sharpes if s > 0]
     fold_median_pos = sorted(positive_folds)[len(positive_folds) // 2] if positive_folds else 0.0
     if fold_max > 5 or (positive_folds and fold_max > 2 * fold_median_pos):
-        warnings.append({
-            "level": "high",
-            "code": "regime_concentration",
-            "message": f"Fold с Sharpe={fold_max:.2f} drives aggregate — regime-specific signal.",
-        })
-    if isinstance(sym_mc_p, (int, float)) and sym_mc_p > 0.10:
-        warnings.append({
-            "level": "high",
-            "code": "mc_noise",
-            "message": f"MC permutation p={sym_mc_p:.3f} > 0.10 — returns indistinguishable от random.",
-        })
-    if isinstance(dsr_value, (int, float)) and not math.isnan(dsr_value) and dsr_value <= 0:
-        warnings.append({
-            "level": "high",
-            "code": "dsr_penalty",
-            "message": f"DSR={dsr_value:.3f} ≤ 0 — claimed edge не credible after multi-testing adjustment.",
-        })
+        warnings.append(
+            {
+                "level": "high",
+                "code": "regime_concentration",
+                "message": f"Fold с Sharpe={fold_max:.2f} drives aggregate — regime-specific signal.",
+            }
+        )
+    if isinstance(sym_mc_p, int | float) and sym_mc_p > 0.10:
+        warnings.append(
+            {
+                "level": "high",
+                "code": "mc_noise",
+                "message": f"MC permutation p={sym_mc_p:.3f} > 0.10 — returns indistinguishable от random.",
+            }
+        )
+    if isinstance(dsr_value, int | float) and not math.isnan(dsr_value) and dsr_value <= 0:
+        warnings.append(
+            {
+                "level": "high",
+                "code": "dsr_penalty",
+                "message": f"DSR={dsr_value:.3f} ≤ 0 — claimed edge не credible after multi-testing adjustment.",
+            }
+        )
     if sortino_warning:
-        warnings.append({
-            "level": "info",
-            "code": "sortino_anomaly",
-            "message": "Sortino > 50 + n_trades < 100 = small-sample artifact (отображено как N/A).",
-        })
+        warnings.append(
+            {
+                "level": "info",
+                "code": "sortino_anomaly",
+                "message": "Sortino > 50 + n_trades < 100 = small-sample artifact (отображено как N/A).",
+            }
+        )
     if n_trades < 100:
-        warnings.append({
-            "level": "warn",
-            "code": "low_sample",
-            "message": f"n_trades={n_trades} < 100 — недостаточно для t-test validity.",
-        })
+        warnings.append(
+            {
+                "level": "warn",
+                "code": "low_sample",
+                "message": f"n_trades={n_trades} < 100 — недостаточно для t-test validity.",
+            }
+        )
 
     result = {
         "run_id": run_id,
@@ -749,10 +877,27 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         "mc_p_value": sym_mc_p,
         "acceptance_gate": gate,
         "bars_per_year": bars_per_year,
+        "wfa_params": wfa_params,  # S38: auto-scaled per data range
+        "wfa_total_bars": len(df),
         "warnings": warnings,
         "trades_dump": trades_dump,  # S27 audit
         "cached": False,
     }
+
+    # S38 dashboard: warn если auto-scaled below ADR 0014 defaults
+    if wfa_params["train_bars"] < 2000:
+        warnings.append(
+            {
+                "level": "warn",
+                "code": "wfa_autoscale",
+                "message": (
+                    f"WFA auto-scaled (data {len(df)} bars < 4520 ADR 0014 default): "
+                    f"train={wfa_params['train_bars']} / test={wfa_params['test_bars']} / "
+                    f"k_folds={wfa_params['k_folds']} / embargo={wfa_params['embargo_bars']}. "
+                    "Smaller windows = noisier OOS metrics. Extend date range OR pick finer interval (5M/15M)."
+                ),
+            }
+        )
 
     # Cache к disk
     cache_path.write_text(json.dumps(result, default=str, indent=2))
@@ -760,6 +905,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     # S27: refresh aggregated audit doc (best-effort, non-blocking)
     try:
         from scripts.audit_formulas import rebuild_audit
+
         rebuild_audit()
     except Exception:  # noqa: BLE001 — audit refresh не critical для backtest result
         pass
@@ -775,14 +921,16 @@ def list_runs() -> list[dict[str, Any]]:
     for p in sorted(_RUNS_DIR.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
         try:
             data = json.loads(p.read_text())
-            entries.append({
-                "run_id": data.get("run_id"),
-                "request": data.get("request", {}),
-                "verdict": data.get("verdict"),
-                "metrics": data.get("metrics", {}),
-                "warnings_count": len(data.get("warnings", [])),
-                "mtime": p.stat().st_mtime,
-            })
+            entries.append(
+                {
+                    "run_id": data.get("run_id"),
+                    "request": data.get("request", {}),
+                    "verdict": data.get("verdict"),
+                    "metrics": data.get("metrics", {}),
+                    "warnings_count": len(data.get("warnings", [])),
+                    "mtime": p.stat().st_mtime,
+                }
+            )
         except Exception:  # noqa: BLE001
             continue
     return entries

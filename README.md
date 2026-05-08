@@ -1,172 +1,198 @@
 # AI Trading Bot v0.1
 
-Алгоритмический торговый бот для Bybit Spot. Mean-reversion стратегии (RSI + Bollinger Bands) на BTC/ETH/SOL. Полный walk-forward analysis (WFA) backtest pipeline + DSR + MC permutations + dashboard UI.
+Algorithmic trading bot для **Bybit Spot**. TESTNET-only deployment per ADR 0055 + ADR 0057. Mean-reversion + Donchian breakout strategies на BTC/ETH/SOL. Walk-forward analysis (WFA) + DSR + MC permutations + dashboard UI.
 
-**Текущий статус:** v0.1 infrastructure complete. Strategy validation NEGATIVE (5 hypotheses tested, all FAIL conjoint per acceptance-criteria.md). См. [`llm-wiki/wiki/project/architecture/current-state.md`](llm-wiki/wiki/project/architecture/current-state.md).
+**Текущий статус:** v0.1 infrastructure complete (tag `v0.1.0-alpha.38`). Strategy validation NEGATIVE — **7 hypotheses tested, все FAIL conjoint** per [`acceptance-criteria.md`](llm-wiki/wiki/project/architecture/acceptance-criteria.md). δ TESTNET infrastructure production-ready (S36 wired + S37/S38 hardened).
+
+См. [`current-state.md`](llm-wiki/wiki/project/architecture/current-state.md) для актуальной картины.
 
 ---
 
-## Установка
+## Quick start (1 command)
 
-### Требования
+```bash
+./scripts/start-bot.sh
+```
 
-- macOS / Linux (Windows не testowany)
+→ Dashboard UI на **http://127.0.0.1:8000/** (Ctrl+C к stop).
+
+В browser выбираешь strategy + symbol + timeframe + date range → "Run Backtest" → результаты с TIER 1+2 metrics + warnings.
+
+### Other modes
+
+```bash
+./scripts/start-bot.sh --help        # Show usage
+./scripts/start-bot.sh --live        # δ TESTNET live trading (advanced — see playbook)
+./scripts/start-bot.sh --backfill    # Download OHLCV bars
+```
+
+---
+
+## Setup (one-time)
+
+### Requirements
+
+- macOS / Linux
 - Python 3.12 (StrEnum, PEP 604 unions, pydantic v2)
 - TA-Lib system library (`brew install ta-lib` на macOS)
-- Bybit аккаунт (demo OR mainnet) с API key + secret
+- Bybit аккаунт (TESTNET) с API key + secret
 
-### Setup
+### Install
 
 ```bash
 # 1. Clone repo
 git clone https://github.com/KirasSsin/AI_Traiding_Bot.git
 cd AI_Traiding_Bot
 
-# 2. Python venv (требует Python 3.12)
+# 2. Python venv (Python 3.12 required)
 python3.12 -m venv .venv
-source .venv/bin/activate  # или: .venv/bin/python для прямого вызова
 
-# 3. Install core dependencies
-pip install -e ".[dev]"
+# 3. Install all deps (core + dashboard)
+.venv/bin/pip install -e ".[dev,dashboard]"
 
-# 4. Install dashboard dependencies (опционально, для UI)
-pip install -e ".[dashboard]"
-
-# 5. Создай .env (см. шаблон ниже)
+# 4. Create .env (см. шаблон ниже)
 cp .env.example .env  # OR создай вручную
-# Заполни BYBIT_API_KEY, BYBIT_API_SECRET, RISK_OVERRIDE_HMAC_KEY
+# Edit .env: BYBIT_API_KEY, BYBIT_API_SECRET, RISK_OVERRIDE_HMAC_KEY
 
-# 6. Sanity check
-.venv/bin/pytest tests/unit -q  # ожидается 740 passed
-.venv/bin/mypy --strict src/    # ожидается clean (75 src files)
+# 5. Sanity check (optional)
+.venv/bin/pytest tests/unit -q     # 905 passed
+.venv/bin/mypy --strict src/       # 0 errors (79 source files)
 ```
 
-### .env шаблон
+### .env template
 
 ```bash
-# Bybit API credentials (demo OR mainnet)
-BYBIT_API_KEY=your_key_here
-BYBIT_API_SECRET=your_secret_here
+# Bybit TESTNET API credentials (https://testnet.bybit.com → API Management)
+BYBIT_API_KEY=your_testnet_key_here
+BYBIT_API_SECRET=your_testnet_secret_here
 
-# TESTNET=true → Bybit demo (api-testnet.bybit.com, бесплатные fake fills)
-# TESTNET=false → Bybit Mainnet (api.bybit.com, РЕАЛЬНЫЕ ДЕНЬГИ)
+# TESTNET enforcement (per ADR 0055 SD-1 — δ is TESTNET ONLY)
 TESTNET=true
+LIVE_TRADING=false
 
 # Risk override HMAC key (REQUIRED, min 32 chars, separate от API secret)
 # Generate: python -c "import secrets; print(secrets.token_hex(32))"
-RISK_OVERRIDE_HMAC_KEY=your_32_char_hex_key_here
+RISK_OVERRIDE_HMAC_KEY=your_64_char_hex_key_here
+
+# δ TESTNET live demo (set true когда готов к live activation per playbook)
+S35_DEMO_ACTIVE=false
 ```
 
 ---
 
-## Использование
+## Что доступно через UI
 
-### 1. Dashboard UI (рекомендуется для первого запуска)
+### Strategy presets (4)
 
-Web UI для backtest comparison + visual results display. Demo-only (TESTNET=true), no live trading.
+| ID | Sprint | Description | Verdict |
+|----|--------|-------------|---------|
+| `ema_crossover_s13` | S13 baseline | EMA 12/26 + ADX + RSI 14 | FAIL conjoint (T1=-44.46) |
+| `mean_reversion_s15` | S15 original | RSI 30/70 + BB(20, 2.0σ) AND-gated | FAIL conjoint (MC p=0.998 noise) |
+| `mean_reversion_s17_relaxed` | S17 relaxed | RSI 35/65 + BB(20, 1.5σ) AND-gated | **5/6+DSR+MC PASS** / T5 floor unreachable |
+| `donchian_breakout_s35` | **S35 LATEST** | Donchian 20/10 + ATR 2.0× stop, long-only | FAIL conjoint (n=21<<50, α CLOSED per ADR 0054) |
+
+### Symbols × Timeframes
+
+| Symbol | 5M | 15M | 1H | 4H | 1D |
+|--------|---|----|----|----|-----|
+| **BTCUSDT** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **ETHUSDT** | — | ✅ | ✅ | ✅ | — |
+| **SOLUSDT** | — | ✅ | ✅ | ✅ | — |
+
+Data range: **2023-01-01 → 2026-04-26** (3.31 years).
+
+### WFA auto-scale (S38 dashboard extension)
+
+ADR 0014 default = train 2000 / test 500 / k_folds 5 / embargo 20 = 4520 bars min.
+
+UI auto-scales для small date ranges:
+- ≥ 4520 bars: ADR 0014 default (best statistical validity)
+- 1000-4520: linear scale (k=5)
+- 300-1000: k=3, scaled
+- 100-300: k=2 minimum
+- < 100: BLOCKED (extend range OR pick finer interval)
+
+Result JSON shows `wfa_params` actual values + warning если auto-scaled below default.
+
+---
+
+## Live δ TESTNET mode (advanced)
+
+**ВНИМАНИЕ:** перед активацией прочитай [`delta-activation-playbook.md`](llm-wiki/wiki/project/components/delta-activation-playbook.md) полностью — 8 pre-activation gates + 5 NEW S38 gates (F4-F7 + T3 H3 accountType).
+
+### Activation procedure
+
+1. Verify pre-activation checklist (8 + 5 NEW gates per playbook)
+2. Set `S35_DEMO_ACTIVE=true` в `.env`
+3. Restart bot:
 
 ```bash
-./scripts/dashboard.sh
-# → uvicorn запускается на http://127.0.0.1:8000/
-# → браузер открывается автоматически
+./scripts/start-bot.sh --live
 ```
 
-**Что видишь в UI:**
-- Dropdown: strategy (3 пресета) / symbol (BTC/ETH/SOL) / timeframe (5M/15M/1H/4H/1D) / date range
-- "▶ Запустить backtest" — WFA на исторических данных (~30-60s)
-- Результаты:
-  - VERDICT (PASS/FAIL — color-coded)
-  - 4 risk warnings (если применимо: overfit Sharpe / regime concentration / MC noise / DSR penalty)
-  - T1-T6 + DSR + MC table (color-coded по thresholds)
-  - Trade-level stats (winners, losers, commissions, avg win/loss, profit factor)
-  - Per-fold sharpe ratios (WFA K=5)
-- "История запусков" — re-display previous cached runs (instant)
+Bot:
+- Boots с startup banner (whitelist + halt thresholds)
+- Persists signed activation_ts (HMAC integrity per ADR 0057 SD-4)
+- Streams Bybit WS private + REST kline
+- HaltGate evaluates per-tick (4 triggers + tamper detection)
+- Trades MeanReversionRsiBBStrategy с MEAN_REVERSION_S17_RELAXED_PARAMS LOCKED
 
-**Стратегии available:**
-- `ema_crossover_s13` — EMA 12/26 + RSI 14 + ATR 14 (S13 baseline, FAIL T1+T2+T4+T5)
-- `mean_reversion_s15` — RSI 30/70 + BB(20, 2.0σ) AND-gated (S15 original)
-- `mean_reversion_s17_relaxed` — RSI 35/65 + BB(20, 1.5σ) AND-gated (S17 relaxed, лучшие результаты по DSR+MC)
+### Halt criteria (LOCKED per ADR 0055 + ADR 0057)
 
-См. [`llm-wiki/wiki/project/sprints/sprint-25-dashboard.md`](llm-wiki/wiki/project/sprints/sprint-25-dashboard.md) для деталей.
+| Trigger | Threshold | Action |
+|---------|-----------|--------|
+| Intraday DD | ≥ 20% (24h rolling) | halt + bot exit |
+| Multi-day DD | ≥ 15% (HWM since activation) | halt + bot exit |
+| Consecutive losses | ≥ 5 trades | halt + bot exit |
+| No-trade timeout | ≥ 6 months без n≥30 | halt + bot exit |
+| Unknown symbol | NOT в whitelist | halt + bot exit (fail-closed) |
+| activation_ts tamper | HMAC mismatch | halt + bot exit |
 
-### 2. CLI: Backfill historical data
+When HaltGate fires → bot exits cleanly. Manual operator restart required (per playbook halt response procedure). NO automatic resume.
 
-Скачать OHLCV bars с Bybit для backtest:
+---
 
-```bash
-# Demo / public data (no API key required for klines)
-TESTNET=false .venv/bin/python -m src backfill \
-  --symbol BTCUSDT \
-  --interval 60 \
-  --from 2023-01-01 \
-  --to 2026-04-26
-# → data/BTCUSDT_1h.parquet
+## CLI commands (advanced)
 
-# Multi-symbol
-TESTNET=false .venv/bin/python -m src backfill \
-  --symbols BTCUSDT,ETHUSDT,SOLUSDT \
-  --interval 60 \
-  --from 2023-01-01 \
-  --to 2026-04-26
-```
-
-**Поддерживаемые intervals:** `5` (5M) / `15` (15M) / `60` (1H) / `240` (4H) / `D` (1D). 30M и 2H пока не supported (Bar.interval Literal limit).
-
-### 3. CLI: Walk-Forward Analysis (WFA)
-
-Запустить backtest без UI:
+### Backfill historical data
 
 ```bash
-SPRINT_N=99 .venv/bin/python -m src wfa \
+TESTNET=false .venv/bin/python -m src backfill \
   --symbol BTCUSDT \
   --interval 60 \
   --start 2023-01-01 \
   --end 2026-04-26
 ```
 
-Output: JSON в stdout с T1-T6 + DSR + MC + verdict + per-fold sharpes. Trial автоматически persisted в `data/cross_trial_sharpes.json` (для DSR multi-testing penalty).
-
-**Strategy config:** hardcoded mean-reversion S17 (RSI 35/65 + BB 1.5σ). Для смены — edit `src/__main__.py:_default_wfa_config()` OR используй dashboard UI с preset selection.
-
-### 4. CLI: Live demo bot (Bybit testnet)
+### Walk-Forward Analysis (CLI)
 
 ```bash
-.venv/bin/python -m src run --symbol BTCUSDT
+.venv/bin/python -m src wfa \
+  --symbols BTCUSDT \
+  --interval 240 \
+  --strategy mean_reversion \
+  --rsi-oversold 35 --rsi-overbought 65 \
+  --bb-k 1.5 \
+  --wfa-train 2000 --wfa-test 500 --wfa-folds 5 --wfa-embargo 20
 ```
 
-**Что произойдёт (TESTNET=true):**
-- Подключение к `api-testnet.bybit.com`
-- WebSocket subscribe `spot.kline.60.BTCUSDT`
-- Каждый закрытый 1H бар → MeanReversionRsiBBStrategy.on_bar()
-- Если RSI<30 AND close<lower_BB(20, 2σ) → LONG entry (paper order)
-- HALT cascade на ошибках (FSM 16-state machine)
-- Fills записываются в SQLite `state/bot.db`
-
-⚠️ **Mainnet warning:** Если установишь `TESTNET=false` без MVP DONE — **РЕАЛЬНЫЕ ДЕНЬГИ под угрозой**. Acceptance criteria НЕ met (5 hypotheses tested, all FAIL conjoint). Live trading на Mainnet **НЕ рекомендуется** до достижения MVP DONE.
-
-### 5. CLI: Monitoring (read-only)
+### Monitoring (read-only)
 
 ```bash
-.venv/bin/python -m src monitor --symbol BTCUSDT
+.venv/bin/python -m src monitor
 ```
 
-Показывает: current FSM state / halt status / last 10 trades / last 5 halts. Read-only SQLite (mode=ro), безопасно с running bot (no WAL contention).
-
-### 6. CLI: Kill switch
+### Kill switch
 
 ```bash
-.venv/bin/python -m src kill
-# → пишет sentinel-file (atomic), бот останавливается с HALT_KILL_SWITCH
+.venv/bin/python -m src kill   # writes .kill_switch sentinel → bot exits cleanly
 ```
 
-### 7. CLI: Reconcile-only (bootstrap test)
+### Reconcile-only (bootstrap test)
 
 ```bash
-.venv/bin/python -m src reconcile-only --symbol BTCUSDT
-# → bootstrap + reconcile (без trading loop), exit 0/1
+.venv/bin/python -m src reconcile-only
 ```
-
-Полезно для проверки connectivity + state consistency без рисков.
 
 ---
 
@@ -174,109 +200,74 @@ Output: JSON в stdout с T1-T6 + DSR + MC + verdict + per-fold sharpes. Trial �
 
 ### Bounded contexts (DDD)
 
-```
-src/
-├── platform/      # Settings, DB, logging, deps
-├── marketdata/    # Bybit REST/WS, OHLCV models, BarSource
-├── signalgen/     # Strategies (EMA crossover, MeanReversion), indicators
-├── risk/          # Kelly sizing, circuit breakers, override store, FSM helpers
-├── execution/     # Coordinator (FSM 16/30/74), Reconciler, OCO emulation
-├── runtime/       # RuntimeManager (process lifecycle)
-├── backtest/      # WFA, DSR, MC, replay engine, strategy metrics
-├── analytics/     # CrossTrialLog (cross-trial sigma_SR persistence)
-└── dashboard/     # NEW (S25): FastAPI web UI (Presentation context)
-```
+- **MarketData** (`src/marketdata/`) — OHLCV ingest (Bybit V5 REST + WS)
+- **SignalGen** (`src/signalgen/`) — strategies (EMA crossover, mean-reversion, Donchian)
+- **Risk** (`src/risk/`) — Kelly sizing + circuit breakers + HaltGate (S35) + override store
+- **Execution** (`src/execution/`) — FSM coordinator + Bybit Spot adapter + reconciler
+- **Backtest** (`src/backtest/`) — replay engine + WFA runner + MC permutations + DSR
+- **Analytics** (`src/analytics/`) — DSR/Sortino/Sharpe + cross-trial log + live trade reporter
+- **Runtime** (`src/runtime/`) — process lifecycle (bootstrap → ws_consumer → main loop)
+- **Dashboard** (`src/dashboard/`) — FastAPI + vanilla JS UI (S25)
+- **Platform** (`src/platform/`) — Settings + SQLite + logging + DB migrations
 
-### Acceptance criteria (см. `llm-wiki/wiki/project/architecture/acceptance-criteria.md`)
+### FSM (canonical post-S38)
 
-**Strategy-level (T1-T6, OOS only):**
-- T1 Sharpe ≥ 1.0
-- T2 Sortino ≥ 1.5
-- T3 MaxDD < 25%
-- T4 win rate ≥ 45%@RR≥1.5 OR ≥ 35%@RR≥2.0
-- T5 mean expectancy > 0 + t-stat > 2.0 + n_trades ≥ 100
-- T6 OOS/IS Sharpe ratio ≥ 0.7
-- DSR > 0 (Bailey 2014 multi-testing penalty)
+- 16 states / 30 events / 74 transitions / **50 reason codes**
+- Single-writer per ADR 0023
+- HaltGate wired в RuntimeManager._tick (S36 + S37 + S38 fail-closed)
 
-**System-level (S1-S6, infrastructure):**
-- S1 Uptime ≥ 99.5% rolling 30d
-- S2 WS reconnect p99 < 5s
-- S3 P&L reconciliation ≥ 99.99%
-- S4 Dashboard p95 < 2s (S25 partial)
-- S5 Config hot-reload (deferred)
-- S6 Zero API key leaks (gitleaks/trufflehog в CI deferred)
+### Acceptance criteria (LOCKED per ADR 0052 amended)
 
-### FSM (execution state machine)
-
-16 states / 30 events / 74 transitions / 45 reason codes. Single-writer per symbol per ADR 0022. См. `src/execution/state_machine.py` + `wiki/project/components/execution-state-machine.md`.
+- T1 Sharpe ≥ 0.7 / T2 Sortino ≥ 1.5 / T3 Max DD ≤ 25% / T4 win+RR / T5 n ≥ 50 + t-stat ≥ 2.0 / T6 OOS/IS Sharpe ≥ 0.7
+- DSR ≥ 0.95 / MC p-value ≤ 0.05
+- N_eff ≥ 50 (Kish 1965 — single-symbol n_eff = n_raw)
 
 ---
 
 ## Тестирование
 
 ```bash
-# Unit tests (740 tests, ~5s)
-.venv/bin/pytest tests/unit -q
-
-# С coverage
-.venv/bin/pytest tests/unit --cov=src --cov-report=term-missing
-
-# Integration tests (Bybit testnet, env-gated)
-.venv/bin/pytest -m integration
-
-# Property-based tests (Hypothesis)
-.venv/bin/pytest tests/property -q
-
-# Type check
-.venv/bin/mypy --strict src/
-
-# Lint
-.venv/bin/ruff check src/ tests/
+.venv/bin/pytest tests/unit -q                    # 905 passed (post-S38)
+.venv/bin/pytest tests/integration -q             # 33 passed
+.venv/bin/pytest -m property                      # property tests (Hypothesis)
+.venv/bin/mypy --strict src/                      # 0 errors (79 source files)
 ```
 
 ---
 
 ## Важные ADR (Architecture Decision Records)
 
-| ADR | Topic |
-|-----|-------|
-| [0001-0015](llm-wiki/wiki/project/decisions/) | Foundational (S1) — DDD skeleton + platform + storage |
-| [0016](llm-wiki/wiki/project/decisions/0016-bybit-spot-supersedes-binance.md) | Bybit Spot venue (BTC-only MVP) |
-| [0017](llm-wiki/wiki/project/decisions/0017-review-agent-harness.md) | Review-agent harness (5 reviewers) |
-| [0022](llm-wiki/wiki/project/decisions/0022-sprint-8a-live-runtime.md) | Live runtime + FSM single-writer invariant |
-| [0030](llm-wiki/wiki/project/decisions/0030-sprint-15-mean-reversion-multi-symbol.md) | Mean-reversion strategy + multi-symbol infrastructure |
-| [0034](llm-wiki/wiki/project/decisions/0034-sprint-19-15m-architecture.md) | 15M timeframe architectural prep + 7 amendments |
-| [0038](llm-wiki/wiki/project/decisions/0038-sprint-23-honest-close-v05.md) | v0.5 honest close (5 hypotheses tested) |
-| [0039](llm-wiki/wiki/project/decisions/0039-sprint-25-dashboard.md) | Dashboard UI (FastAPI + vanilla JS) |
+| ADR | Тема |
+|-----|------|
+| 0052 | Acceptance criteria amendment LOCKED (T5 floor 50 + n_eff ≥ 50 + MC ≤ 0.05) |
+| 0053 | δ TESTNET pre-activation infrastructure (S35) |
+| 0055 | δ TESTNET activation (HaltGate wire-up) |
+| 0056 | DSR sigma_SR sourcing hierarchy + amendment 2 (Sharpe pnl_pct) |
+| 0057 | Carry-overs hardening (HALT_UNKNOWN_SYMBOL + HMAC integrity + clock injection) |
+| 0058 | δ Parallel hardening (F2 quant + bybit-api review + Item #7 Demeter) |
 
-Полный list: `ls llm-wiki/wiki/project/decisions/` (39 ADRs total).
+Полный список: [`llm-wiki/wiki/project/decisions/`](llm-wiki/wiki/project/decisions/) (58 ADRs).
 
 ---
 
 ## Проектная документация
 
-- [`llm-wiki/wiki/project/SPRINT_STATE.md`](llm-wiki/wiki/project/SPRINT_STATE.md) — current sprint state (≤2KB, читается первым в сессии)
-- [`llm-wiki/wiki/project/architecture/current-state.md`](llm-wiki/wiki/project/architecture/current-state.md) — canonical counts + sprint history
-- [`llm-wiki/wiki/project/architecture/acceptance-criteria.md`](llm-wiki/wiki/project/architecture/acceptance-criteria.md) — T1-T6 + S1-S6 thresholds
-- [`llm-wiki/wiki/project/sprints/`](llm-wiki/wiki/project/sprints/) — 26 sprint pages (S1-S25)
-- [`llm-wiki/wiki/log.md`](llm-wiki/wiki/log.md) — chronological journal
+| Файл | Описание |
+|------|----------|
+| [`current-state.md`](llm-wiki/wiki/project/architecture/current-state.md) | Live state + canonical counts + sprint history |
+| [`acceptance-criteria.md`](llm-wiki/wiki/project/architecture/acceptance-criteria.md) | T1-T6 + DSR + MC LOCKED thresholds |
+| [`delta-activation-playbook.md`](llm-wiki/wiki/project/components/delta-activation-playbook.md) | Operator procedure для δ TESTNET (S37+S38) |
+| [`development-workflow.md`](llm-wiki/wiki/project/architecture/development-workflow.md) | 9-phase sprint lifecycle |
+| [`SPRINT_STATE.md`](llm-wiki/wiki/project/SPRINT_STATE.md) | Living sprint state |
 
 ---
 
 ## Disclaimer
 
-**Этот бот — research project. Не предназначен для production trading с реальными деньгами без MVP DONE achievement.**
+**TESTNET ONLY.** No real capital risked. Не финансовая рекомендация. 7 strategy hypotheses tested — все FAIL conjoint per pre-registered acceptance criteria. Это research project, не production trading system.
 
-5 strategy hypotheses тестировались across 4.81y BTC Bybit Spot — все FAIL conjoint per acceptance-criteria.md spec. T5 floor 100 trades structurally unreachable на BTC-only mean-reversion (см. ADR 0038 institutional knowledge).
-
-**Не financial advice. Используй на свой риск.**
-
----
+MAINNET activation forbidden by code-level invariants (ADR 0055 SD-1) до 12mo TESTNET evidence + new ADR pre-registration.
 
 ## License
 
-(не specified — см. с автором проекта)
-
-## Contributing
-
-См. `CLAUDE.md` для project conventions (sprint workflow, review agent harness, ADR pattern).
+См. [`LICENSE`](LICENSE).

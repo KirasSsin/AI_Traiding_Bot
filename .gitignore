@@ -27,6 +27,7 @@ web/data.json
 /scripts/*
 !/scripts/*.py
 !/scripts/dashboard.sh
+!/scripts/start-bot.sh
 /package.json
 /gemini-extension.json
 /docs/README.codex.md
