@@ -65,10 +65,40 @@ FOR i in 1..N:
         - If FAIL with identifiable root cause → continue to 3c
         - If FAIL без identifiable cause → break loop, declare paradigm dead
 
-    [3c] ROOT CAUSE ANALYSIS
-        - dispatch trader-expert: "Why FAIL? What feature missing?"
-        - Concrete proposal: NEW variant with 1-2 distinct features
-        - Examples: add EMA200 filter / add ADX gate / change exit logic
+    [3c] ROOT CAUSE ANALYSIS via consilium (BINDING — operator directive)
+        STEP 3c-1: Pre-consult LLM-wiki cascade (per ADR 0043)
+            - Read wiki/trading/strategies/<name>.md если exists
+            - Read wiki/project/decisions/<latest-strategy-ADR>.md
+            - mem-search "iter X FAIL pattern" / "<strategy> known limitations"
+            - Grep src/backtest/ for related variants
+            → Build evidence packet (held-out numbers + train numbers + 8-honest-close pattern)
+
+        STEP 3c-2: Dispatch trader-expert ROUND 1 (BINDING)
+            Brief includes:
+              - Iter N FAIL evidence (train Sharpe → held-out delta)
+              - Pattern history (N honest closes accumulated)
+              - LLM-wiki references (strategies/ADRs already read)
+              - 3-5 candidate pivots с pros/cons (maintainer recommends best)
+            Trader returns: CONFIRM / REVISE / DEFER / EXPAND verdict per pivot
+
+        STEP 3c-3: If trader returns REVISE-disagreement OR DEFER OR multiple pivots EQUAL:
+            → invoke `brainstorm-init` skill (project)
+            → 3-agent consilium (trader-expert + quant-stats-reviewer + architecture-reviewer)
+            → ROUND 2 iterative justify if needed
+            → BINDING verdict locks pivot direction
+
+        STEP 3c-4: If consilium STILL stuck (3 agents disagree OR insufficient evidence):
+            → escalate к operator с structured evidence package (rare — only paradigm-dead signal)
+
+        Output: ONE pivot direction selected (e.g. "ADX regime gate" / "1H timeframe shift" / "MR after wick")
+
+    [3c-bis] CONTEXT GAP RECOVERY (mid-iteration)
+        IF stuck в implementation/test design — BEFORE asking operator:
+        1. wiki cascade: wiki/<topic>.md → mem-search → grep src/ → Read raw
+        2. Если wiki gap detected: dispatch trader-expert ИЛИ quant-stats-reviewer
+           для domain knowledge (they have full RAG access)
+        3. Если architecture concern: dispatch architecture-reviewer
+        4. Operator escalation = LAST resort, not first
 
     [3d] FORMAL KIT FIX (between iterations)
         - PHASE 2 brainstorm: 3-agent consilium на NEW variant
@@ -137,6 +167,9 @@ suggest different paradigm (HMM regime-switch / ML XGBoost / pairs arb)
 - ❌ Запускать N>10 без operator confirm (10+ часов work)
 - ❌ Игнорировать "paradigm dead" signal (когда 3+ iterations no improvement = stop)
 - ❌ Promote held-out PASS variant к main без formal kit cycle ROUND 7
+- ❌ **Спрашивать operator при context gap БЕЗ предварительного wiki cascade + trader-expert/quant/architect consult** (operator escalation = LAST resort per Step 3c-bis)
+- ❌ **Skip ROUND 2 iterative justify когда trader-expert REVISE-disagreement** (binding protocol per brainstorm-init)
+- ❌ Pivot direction выбран maintainer'ом без trader-expert ROUND 1 verdict (S8b violation pattern recurrence)
 
 ## Output to user
 
@@ -173,9 +206,13 @@ Final summary:
 
 ## Related kit references
 
-- `research/` — first instance of pattern (S35 Donchian iteration 1, FAIL held-out)
+- `research/` — instance pattern (S35 Donchian iter 1+2, FAIL held-out 8th honest close)
 - `research/program.md` — single autoresearch run instructions
 - `karpathy/autoresearch` upstream — `autoresearch/` cloned reference (LLM training original)
 - ADR 0052 (LOCKED acceptance gates — preserved across iterations)
 - ADR 0055 SD-8 (12mo MAINNET promotion — autoresearch results NOT counted)
+- ADR 0043 (LLM-wiki ↔ claude-mem cascade rule — Step 3c-1 + 3c-bis foundation)
 - Bailey & López de Prado 2014 (anti-snooping discipline — held-out test mandatory)
+- `brainstorm-init` (project skill) — invoked by Step 3c-3 на consilium escalation
+- L5 reviewer agents: trader-expert / quant-stats-reviewer / architecture-reviewer
+  (have RAG access к llm-wiki — invoke per Step 3c-bis on context gap)
