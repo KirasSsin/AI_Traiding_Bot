@@ -1,4 +1,4 @@
-"""autoresearch_donchian — held-out verification (final unbiased verdict).
+"""research — held-out verification (final unbiased verdict).
 
 Runs best PARAMS на held-out set (1455 bars 2025-08-26 → 2026-04-26)
 which was NEVER visible during search loop.
@@ -17,7 +17,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from autoresearch_donchian.prepare_donchian import evaluate_metric, load_split
+from research.prepare import evaluate_metric, load_split
 
 # BEST PARAMS from search loop (P5_5, train score=2.5766 Sharpe=1.27 n=33)
 BEST_PARAMS: dict[str, Any] = {

@@ -1,4 +1,4 @@
-# autoresearch_donchian
+# research
 
 Адаптация karpathy/autoresearch paradigm для торговой стратегии Donchian breakout.
 
@@ -8,14 +8,14 @@
 
 To set up a new experiment:
 
-1. **Run tag**: today's date (e.g. `may8`). Branch `autoresearch/donchian-may8` already created.
+1. **Run tag**: today's date (e.g. `may8`). Branch `research/donchian-may8` already created.
 2. **Read in-scope files**:
-   - `prepare_donchian.py` — data load + train/held-out 80/20 split + evaluate_metric helper. **DO NOT MODIFY.**
-   - `train_donchian.py` — single experiment runner. PARAMS dict on top. **AGENT MODIFIES THIS.**
+   - `prepare.py` — data load + train/held-out 80/20 split + evaluate_metric helper. **DO NOT MODIFY.**
+   - `train.py` — single experiment runner. PARAMS dict on top. **AGENT MODIFIES THIS.**
    - `README.md` — context.
 3. **Verify data**: `data/BTCUSDT_4h.parquet` must exist (7273 bars). Run setup check:
    ```bash
-   .venv/bin/python autoresearch_donchian/prepare_donchian.py
+   .venv/bin/python research/prepare.py
    ```
 4. **Initialize results.tsv**: Create header row:
    ```
@@ -29,10 +29,10 @@ Each experiment runs single backtest на train portion (~5818 bars). WFA K=5 / 
 
 **Time budget**: ~30-90 sec per experiment (depends on params + n_trades). NOT 5 min like LLM training.
 
-**Launch**: `.venv/bin/python autoresearch_donchian/train_donchian.py > run.log 2>&1`
+**Launch**: `.venv/bin/python research/train.py > run.log 2>&1`
 
 **What you CAN do:**
-- Modify `PARAMS` dict в `train_donchian.py`. ALL keys editable:
+- Modify `PARAMS` dict в `train.py`. ALL keys editable:
   - `lookback_n` — Donchian channel entry window (currently 20)
   - `exit_lookback_n` — Donchian channel exit window (currently 10)
   - `atr_period` — ATR smoothing period (currently 14)
@@ -40,7 +40,7 @@ Each experiment runs single backtest на train portion (~5818 bars). WFA K=5 / 
 - Add new param keys IF supported by `src/backtest/indicators.py` donchian branch.
 
 **What you CANNOT do:**
-- Modify `prepare_donchian.py` — fixed evaluation harness.
+- Modify `prepare.py` — fixed evaluation harness.
 - Touch `data/BTCUSDT_4h.parquet`.
 - Look at held-out portion (last 20% of data). NEVER referenced in search loop.
 - Modify acceptance gates (Sharpe / DSR / MC thresholds — those locked в bot ADR 0052).
@@ -102,9 +102,9 @@ DO NOT commit results.tsv (leave untracked per autoresearch convention).
 LOOP:
 
 1. Look at git state: current branch + commit
-2. Edit `PARAMS` в `train_donchian.py` с experimental idea
-3. `git add train_donchian.py && git commit -m "experiment: <description>"`
-4. Run: `.venv/bin/python autoresearch_donchian/train_donchian.py > run.log 2>&1`
+2. Edit `PARAMS` в `train.py` с experimental idea
+3. `git add train.py && git commit -m "experiment: <description>"`
+4. Run: `.venv/bin/python research/train.py > run.log 2>&1`
 5. Read result: `grep "^metric (sharpe):\|^n_trades:\|^status:" run.log`
 6. If empty → crash. Read `tail -50 run.log` для traceback.
 7. Append к `results.tsv`
@@ -126,8 +126,8 @@ After search loop completes (operator interrupts OR fixed budget reached):
 3. Run held-out evaluation:
    ```bash
    .venv/bin/python -c "
-   from autoresearch_donchian.prepare_donchian import load_split, evaluate_metric
-   from autoresearch_donchian.train_donchian import PARAMS
+   from research.prepare_donchian import load_split, evaluate_metric
+   from research.train_donchian import PARAMS
    split = load_split()
    result = evaluate_metric(df=split.heldout_df, params=PARAMS, use_wfa=False)
    print('HELD-OUT:', result)

@@ -1,10 +1,10 @@
-# autoresearch_donchian
+# research
 
 Adapted karpathy/autoresearch paradigm для Donchian breakout trading strategy on BTCUSDT 4H.
 
 ## What it is
 
-Autonomous experimentation loop. Agent edits `train_donchian.py` PARAMS dict, runs single backtest, logs result, keep/discard, repeat.
+Autonomous experimentation loop. Agent edits `train.py` PARAMS dict, runs single backtest, logs result, keep/discard, repeat.
 
 **Goal**: maximize aggregate OOS Sharpe (averaged across K=5 WFA folds на train portion).
 
@@ -14,9 +14,9 @@ Autonomous experimentation loop. Agent edits `train_donchian.py` PARAMS dict, ru
 
 | File | Editable? | Purpose |
 |------|-----------|---------|
-| `prepare_donchian.py` | NO | Data load + 80/20 train/held-out split + evaluate_metric helper |
-| `train_donchian.py` | YES (agent edits) | PARAMS dict + single-experiment runner |
-| `program_donchian.md` | NO | Agent instructions (loop semantics) |
+| `prepare.py` | NO | Data load + 80/20 train/held-out split + evaluate_metric helper |
+| `train.py` | YES (agent edits) | PARAMS dict + single-experiment runner |
+| `program.md` | NO | Agent instructions (loop semantics) |
 | `results.tsv` | YES (agent appends) | Experiment log (commit + metric + status + description) |
 | `README.md` | NO | This file |
 
@@ -30,10 +30,10 @@ Autonomous experimentation loop. Agent edits `train_donchian.py` PARAMS dict, ru
 
 ```bash
 # 1. Verify data
-.venv/bin/python autoresearch_donchian/prepare_donchian.py
+.venv/bin/python research/prepare.py
 
 # 2. Run baseline (ADR 0054 LOCKED Donchian S35)
-.venv/bin/python autoresearch_donchian/train_donchian.py > run.log 2>&1
+.venv/bin/python research/train.py > run.log 2>&1
 
 # 3. Read result
 grep "^metric (sharpe):\|^n_trades:\|^status:" run.log
@@ -43,7 +43,7 @@ grep "^metric (sharpe):\|^n_trades:\|^status:" run.log
 
 ## Branch convention
 
-Per autoresearch program.md: `autoresearch/donchian-<tag>` (e.g. `autoresearch/donchian-may8`).
+Per autoresearch program.md: `research/donchian-<tag>` (e.g. `research/donchian-may8`).
 
 ## Disclaimer
 

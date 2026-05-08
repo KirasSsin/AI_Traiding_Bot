@@ -1,4 +1,4 @@
-"""autoresearch_donchian — autonomous search runner (100-trial budget).
+"""research — autonomous search runner (100-trial budget).
 
 Implements trader-expert ROUND consilium recommendations:
   Q1 composite metric: score = agg_sharpe * log1p(n_trades / 5.0); hard floor n_trades<10 → -999
@@ -32,7 +32,7 @@ from typing import Any
 # Add bot project to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from autoresearch_donchian.prepare_donchian import evaluate_metric, load_split
+from research.prepare import evaluate_metric, load_split
 
 random.seed(42)  # Reproducibility
 
@@ -279,7 +279,7 @@ def phase5_random(
 
 def main() -> int:
     t0 = time.time()
-    print("=== autoresearch_donchian autonomous search ===")
+    print("=== research autonomous search ===")
     print(f"Trial budget: {TRIAL_BUDGET}")
     print("Composite metric: agg_sharpe * log1p(n_trades / 5.0)")
     print(f"Hard floor: n_trades < {N_TRADES_FLOOR} → score=-999")

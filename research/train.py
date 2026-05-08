@@ -1,4 +1,4 @@
-"""autoresearch_donchian — single experiment runner.
+"""research — single experiment runner.
 
 Адаптировано из karpathy/autoresearch train.py paradigm.
 
@@ -25,7 +25,7 @@ from pathlib import Path
 # Add bot project к sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from autoresearch_donchian.prepare_donchian import evaluate_metric, load_split
+from research.prepare import evaluate_metric, load_split
 
 # ============================================================
 # AGENT EDITS THIS BLOCK
@@ -50,7 +50,7 @@ def main() -> int:
     split = load_split()
     train_df = split.train_df
 
-    print("autoresearch_donchian experiment START")
+    print("research experiment START")
     print(f"  PARAMS: {PARAMS}")
     print(f"  train data: {len(train_df)} bars ({split.train_start} → {split.train_end})")
     print(f"  held-out: {len(split.heldout_df)} bars (NOT touched in search)")

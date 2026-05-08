@@ -1,4 +1,4 @@
-"""autoresearch_donchian — data preparation + runtime utilities.
+"""research — data preparation + runtime utilities.
 
 Адаптировано из karpathy/autoresearch prepare.py paradigm.
 
@@ -186,6 +186,6 @@ def summary() -> dict[str, Any]:
 
 if __name__ == "__main__":
     s = summary()
-    print("autoresearch_donchian — data split summary:")
+    print("research — data split summary:")
     for k, v in s.items():
         print(f"  {k}: {v}")
