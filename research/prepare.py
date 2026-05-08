@@ -21,25 +21,22 @@ from typing import Any
 
 import pandas as pd
 
-# Constants — 15M timeframe (iter 7 — ESC-1 OPERATOR OVERRIDE)
-# 1H tested iter 6 (commit da0396c). 15M previously closed by trader gate (497a4ab) —
-# operator explicit override invoked, 3-point acknowledgement logged:
-#   (a) pre-registered gate bypassed post-hoc (Bailey 2014 violation)
-#   (b) sweep counts N_trials=1 для iter 7 family в DSR cross-trial
-#   (c) held-out treated as used (contaminated для future out-of-sample work)
-DATA_PATH = Path(__file__).parent.parent / "data" / "BTCUSDT_15m.parquet"
+# Constants — 4H timeframe (iter 8 — operator directive: iterate until PnL > 1000 USDT)
+# Held-out previously used iter 3+ (4H, commit c2cd3a0) — re-use на 4H = anti-snooping
+# violation per Bailey 2014. Operator override invoked: continue iterations across
+# different random seeds + paradigm dimensions to find any PASS candidate.
+DATA_PATH = Path(__file__).parent.parent / "data" / "BTCUSDT_4h.parquet"
 TRAIN_RATIO = 0.80
-BARS_PER_YEAR = 35064  # 15M = 4 * 24 * 365.25 = 35064
+BARS_PER_YEAR = 2190  # 4H = 365.25 * 24 / 4 = 2190
 SYMBOL = "BTCUSDT"
-INTERVAL = "15"
+INTERVAL = "240"
 
-# Search-time WFA defaults (15M scale: ~125 days train / ~31 days test)
-WFA_TRAIN_BARS = 12000  # ~125 days @ 15M
-WFA_TEST_BARS = 3000  # ~31 days @ 15M
+WFA_TRAIN_BARS = 2000
+WFA_TEST_BARS = 500
 WFA_K_FOLDS = 5
-WFA_EMBARGO_BARS = 96  # 1 day gap @ 15M
+WFA_EMBARGO_BARS = 20
 
-HELDOUT_MIN_BARS = 4000  # ~42 days safety check (15M scale)
+HELDOUT_MIN_BARS = 200
 
 
 @dataclass(frozen=True)
