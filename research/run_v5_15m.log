@@ -1,0 +1,75 @@
+=== research search v5 — 1000 trials на 15M (ESC-1 override) ===
+3-point acknowledgement logged: gate bypassed / N_trials=1 iter7 / held-out used
+Train: 93097 / Held-out: 23275
+
+=== STRATEGY: donchian_raw ===
+  Phase A: grid 30
+  Phase B: random 70 around top-1
+  → BEST random #41: score=32.014 sharpe=+29.140 pnl=+4.8% n=10
+  → HELDOUT: sharpe=-13.546 pnl=-58.2% n=161
+  → VERDICT: held-out FAIL: sign-flip (train +29.14 → -13.55)
+
+=== STRATEGY: rsi_mean_reversion ===
+  Phase A: grid 27
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=+0.000 pnl=+0.0% n=0
+
+=== STRATEGY: bollinger_breakout ===
+  Phase A: grid 30
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=-22.470 pnl=-1.9% n=19
+
+=== STRATEGY: bollinger_mr ===
+  Phase A: grid 30
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=-22.537 pnl=-20.5% n=49
+
+=== STRATEGY: macd_momentum ===
+  Phase A: grid 20
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=+0.000 pnl=+0.0% n=0
+
+=== STRATEGY: atr_squeeze_breakout ===
+  Phase A: grid 24
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=+0.000 pnl=+0.0% n=0
+
+=== STRATEGY: momentum_n_consec ===
+  Phase A: grid 30
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=-38.917 pnl=-26.4% n=96
+
+=== STRATEGY: volume_breakout ===
+  Phase A: grid 16
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=-18.568 pnl=+3.3% n=6
+
+=== STRATEGY: ema_crossover ===
+  Phase A: grid 28
+  Phase B: random 70 around top-1
+  → BEST grid #1: score=-999.000 sharpe=-28.292 pnl=-4.6% n=7
+
+=== STRATEGY: price_channel_with_atr ===
+  Phase A: grid 16
+  Phase B: random 70 around top-1
+  → BEST random #93: score=10.475 sharpe=+7.556 pnl=+2.7% n=15
+  → HELDOUT: sharpe=-11.480 pnl=-54.3% n=190
+  → VERDICT: held-out FAIL: sign-flip (train +7.56 → -11.48)
+
+
+=== FINAL SUMMARY (3.4s, 1000 trials) ===
+
+Strategy                     |  Train Sharpe |  Train PnL |   Held-out |   Held PnL | Verdict
+----------------------------------------------------------------------------------------------------------------------------------
+donchian_raw                 |       +29.140 |      +4.8% |    -13.546 |     -58.2% | held-out FAIL: sign-flip (train +29.14 → -13.55)
+rsi_mean_reversion           |        +0.000 |      +0.0% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=0.00
+bollinger_breakout           |       -22.470 |      -1.9% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=-22.47
+bollinger_mr                 |       -22.537 |     -20.5% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=-22.54
+macd_momentum                |        +0.000 |      +0.0% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=0.00
+atr_squeeze_breakout         |        +0.000 |      +0.0% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=0.00
+momentum_n_consec            |       -38.917 |     -26.4% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=-38.92
+volume_breakout              |       -18.568 |      +3.3% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=-18.57
+ema_crossover                |       -28.292 |      -4.6% |       +nan |      +0.0% | train_fail score=-999.00 sharpe=-28.29
+price_channel_with_atr       |        +7.556 |      +2.7% |    -11.480 |     -54.3% | held-out FAIL: sign-flip (train +7.56 → -11.48)
+
+PASS candidates: 0
