@@ -18,12 +18,13 @@ def test_exit_flat_atr_stop_vb_exists():
     assert ReasonCode.EXIT_FLAT_ATR_STOP_VB.value == "EXIT_FLAT_ATR_STOP_VB"
 
 
-def test_reason_code_total_count_53():
-    """S39 ADR 0059 — adds 3 volume_breakout codes (50 → 53).
+def test_reason_code_total_count_56():
+    """S39 ADR 0059 — adds 3 volume_breakout codes (50 → 53); S40 ADR 0060 adds 3 (53 → 56).
 
     Accounting:
     - S37 ADR 0057 baseline: 50 (HALT_UNKNOWN_SYMBOL)
     - S39 ADR 0059 adds: +3 (ENTRY_LONG_VOLUME_BREAKOUT + EXIT_FLAT_VOLUME_CHANNEL + EXIT_FLAT_ATR_STOP_VB)
-    → 53 total
+    - S40 ADR 0060 adds: +3 (ENTRY_LONG_ATR_BREAKOUT + EXIT_FLAT_ATR_REVERSE + EXIT_FLAT_ATR_STOP_AB)
+    → 56 total
     """
-    assert len(list(ReasonCode)) == 53
+    assert len(list(ReasonCode)) == 56

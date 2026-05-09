@@ -1,20 +1,20 @@
 ---
-title: Reason Codes (53)
+title: Reason Codes (56)
 type: concept
-tags: [audit, reason-codes, v0.1, sprint-5, sprint-6, sprint-7, sprint-8a, sprint-36, sprint-37, sprint-39]
+tags: [audit, reason-codes, v0.1, sprint-5, sprint-6, sprint-7, sprint-8a, sprint-36, sprint-37, sprint-39, sprint-40]
 created: 2026-04-19
-updated: 2026-05-09
+updated: 2026-05-10
 status: stable
 sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4)]
 ---
 
 # Reason Codes
 
-**TL;DR:** 53 стандартизированных enum-кодов для audit-log. Каждая сделка/отказ/halt получает один код. Используется в event `RiskRejected.reason`, `OrderCancelled.reason`, `CircuitBreakerTriggered.reason` и `trade_audit.reason_code`. Канонический enum — `src/risk/reason_codes.py::ReasonCode` (StrEnum, immutable).
+**TL;DR:** 56 стандартизированных enum-кодов для audit-log. Каждая сделка/отказ/halt получает один код. Используется в event `RiskRejected.reason`, `OrderCancelled.reason`, `CircuitBreakerTriggered.reason` и `trade_audit.reason_code`. Канонический enum — `src/risk/reason_codes.py::ReasonCode` (StrEnum, immutable).
 
 ## Enum
 
-### Entry (7)
+### Entry (8)
 - `ENTRY_LONG_TREND_FOLLOWING` — EMA-crossover + ADX confirmed.
 - `ENTRY_SHORT_TREND_FOLLOWING` — reserved, не используется в v0.1 (spot only).
 - `ENTRY_LONG_PULLBACK` — reserved v0.2+.
@@ -22,8 +22,9 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `SCALE_IN_LONG` — reserved v0.2+ (pyramid).
 - `SCALE_IN_SHORT` — reserved v0.2+.
 - `ENTRY_LONG_VOLUME_BREAKOUT` — Volume breakout + volume surge confirmation (S39 VolumeBreakoutStrategy, ADR 0059 LOCKED).
+- `ENTRY_LONG_ATR_BREAKOUT` — ATR breakout выше band (S40 ATRBreakoutStrategy, ADR 0060 LOCKED).
 
-### Scale / exits (13)
+### Scale / exits (15)
 - `SCALE_OUT_PARTIAL` — частичное закрытие.
 - `EXIT_SL_HIT` — OCO stop-loss leg triggered.
 - `EXIT_TP_HIT` — OCO take-profit leg triggered.
@@ -37,6 +38,8 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `EXIT_RECONCILE_DETECTED` — reconciler обнаружил завершённый exit на бирже без эха через WS (ADR 0021 sub-decision 3, verdict `EXITED`).
 - `EXIT_FLAT_VOLUME_CHANNEL` — Volume breakout channel boundary пробит вниз (S39 VolumeBreakoutStrategy, ADR 0059 LOCKED).
 - `EXIT_FLAT_ATR_STOP_VB` — ATR stop triggered для volume breakout позиции (S39 VolumeBreakoutStrategy, ADR 0059 LOCKED).
+- `EXIT_FLAT_ATR_REVERSE` — обратный ATR breakdown (S40 ATRBreakoutStrategy, ADR 0060 LOCKED).
+- `EXIT_FLAT_ATR_STOP_AB` — ATR stop triggered для atr_breakout позиции (S40 ATRBreakoutStrategy, ADR 0060 LOCKED).
 
 ### Rejects (9)
 - `REJECT_RISK_EXCEEDED` — Kelly или max position fraction.
@@ -75,7 +78,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `HALT_S36_NO_TRADE_TIMEOUT` — no trades within timeout period (S36 HaltGate, ADR 0055).
 - `HALT_UNKNOWN_SYMBOL` — incoming signal for symbol NOT in whitelist; fail-closed (S37 ADR 0057 sub-decision 1).
 
-**Итого:** 7 + 13 + 9 + 24 = **53**.
+**Итого:** 8 + 15 + 9 + 24 = **56**.
 
 ## Таблица изменений по спринтам
 
@@ -88,7 +91,8 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 | S8a | +3 | `HALT_RUNTIME_CRASH`, `HALT_BAR_POLL_STALL`, `KILL_SWITCH_REQUESTED` | → 45 |
 | S36 | +4 | `HALT_S36_DD_INTRADAY`, `HALT_S36_DD_MULTIDAY`, `HALT_S36_CONSECUTIVE_LOSSES`, `HALT_S36_NO_TRADE_TIMEOUT` | → 49 |
 | S37 | +1 | `HALT_UNKNOWN_SYMBOL` | → 50 |
-| S39 | +3 | `ENTRY_LONG_VOLUME_BREAKOUT`, `EXIT_FLAT_VOLUME_CHANNEL`, `EXIT_FLAT_ATR_STOP_VB` | → **53** |
+| S39 | +3 | `ENTRY_LONG_VOLUME_BREAKOUT`, `EXIT_FLAT_VOLUME_CHANNEL`, `EXIT_FLAT_ATR_STOP_VB` | → 53 |
+| S40 | +3 | `ENTRY_LONG_ATR_BREAKOUT`, `EXIT_FLAT_ATR_REVERSE`, `EXIT_FLAT_ATR_STOP_AB` | → **56** |
 
 **Note (Sprint 4):** до S4 wiki header заявлял 28 (счёт sections был неверен: exits=7→8, halts=6→7). Code в `src/risk/reason_codes.py` всегда был source of truth. Исправлено в Sprint 4 wiki sync (см. ADR 0018).
 
@@ -104,7 +108,9 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 
 **Note (Sprint 37):** добавлен 1 код безопасности (`HALT_UNKNOWN_SYMBOL`) — fail-closed symbol whitelist. Total: 49 → 50. См. ADR 0057 sub-decision 1.
 
-**Note (Sprint 39):** добавлены 3 кода VolumeBreakoutStrategy (`ENTRY_LONG_VOLUME_BREAKOUT`, `EXIT_FLAT_VOLUME_CHANNEL`, `EXIT_FLAT_ATR_STOP_VB`). Total: 50 → **53**. См. ADR 0059. Реализация: [[../../project/components/volume-breakout-strategy]].
+**Note (Sprint 39):** добавлены 3 кода VolumeBreakoutStrategy (`ENTRY_LONG_VOLUME_BREAKOUT`, `EXIT_FLAT_VOLUME_CHANNEL`, `EXIT_FLAT_ATR_STOP_VB`). Total: 50 → 53. См. ADR 0059. Реализация: [[../../project/components/volume-breakout-strategy]].
+
+**Note (Sprint 40):** добавлены 3 кода ATRBreakoutStrategy (`ENTRY_LONG_ATR_BREAKOUT`, `EXIT_FLAT_ATR_REVERSE`, `EXIT_FLAT_ATR_STOP_AB`). Total: 53 → **56**. См. ADR 0060. Реализация: [[../../project/components/atr-breakout-strategy]].
 
 ## Использование
 

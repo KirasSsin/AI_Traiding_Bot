@@ -1,11 +1,30 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-09
-sprint: 39
+updated: 2026-05-10
+sprint: 40
 phase: between-sprints
 branch: main
-tag: v0.1.0-alpha.39
+tag: v0.1.0-alpha.40
+---
+
+## S40 COMPLETE ✅ — atr_breakout production integration
+
+**All 7 tasks DONE (T1-T7):**
+- T1: +3 ReasonCodes (53→56) per ADR 0060
+- T2: ATRBreakoutStrategy class (verbatim autoresearch port)
+- T3: Production runner + 8 integration HARD-GATE tests
+- T4: Dashboard preset `atr_breakout_iter_endless`
+- T5: Wiki docs (ADR 0060 + sprint-40 + component + sync)
+- T6: SPRINT_STATE updated
+- T7: git push + PR + merge + tag v0.1.0-alpha.40
+
+**Profit invariant:** 8.7y +819.81% / Sharpe 1.11 / 69 trades / 5/5 sub-periods positive (первый 5/5).
+
+**N_trials:** 9 cumulative.
+
+**Next action:** operator decision — S41+ direction (autoresearch iter2, Gate 2 paper-trade volume_breakout, или другое).
+
 ---
 
 ## S39 PHASE 8 — ready to ship
