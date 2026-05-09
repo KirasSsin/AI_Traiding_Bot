@@ -163,6 +163,7 @@ All previous + new from S15:
 - [[0028-sprint-13-strategy-validation]] — S13 ADR (-44.46 anchor)
 - [[../sprints/sprint-15-mean-reversion-multi-symbol]] — S15 measurement results
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, not amended)
+- [[../sprints/sprint-16-honest-close-v02]] — спринт delivery record
 
 ## Поправки
 

@@ -99,3 +99,8 @@ risk_override_path   = "data/risk_override.json"
 - [[risk-manager]] — orchestration + escalation logic
 - [[risk-override]] — manual resume mechanism
 - [[../runbooks/halt-recovery]] — operator runbook covering HALT_DRAWDOWN_L2/L3 + HALT_FLASH_CRASH (Drawdown class group)
+- [[halt-gate]] — orthogonal session-behavioral halt evaluator (loss streaks, no-trade timeout)
+- [[halt-gate-wireup]] — S36 production wiring, both detectors run in _tick sequence
+- [[../sprints/sprint-04-risk]] — sprint where circuit-breakers component was created
+- [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — governing ADR (already linked above)
+- [[../architecture/risk-register]] — качественная оценка drawdown/flash-crash рисков.

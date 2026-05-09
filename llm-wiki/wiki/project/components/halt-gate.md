@@ -64,3 +64,8 @@ HaltGate currently UNWIRED к RiskManager. T5 не wires в production execution
 - [[../decisions/0052-sprint-34-acceptance-criteria-amendment]] — gate thresholds source
 - [[../pre-s35-backlog]] — ROUND 3 binding consilium
 - [[circuit-breakers]] — orthogonal price-action halt detector
+- [[halt-gate-wireup]] — S36 production wiring of this evaluator into RuntimeManager._tick
+- [[coordinator]] — receives `request_halt(reason)` call when trigger fires
+- [[../architecture/state-machine]] — FSM переходы в HALTED при trigger.
+- [[../architecture/risk-register]] — качественная оценка halt-рисков.
+- [[../architecture/reason-codes-schema]] — HALT_S36_* reason codes (SD-4 mapping).

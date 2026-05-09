@@ -162,4 +162,5 @@ Per S34 T4 (парный коммит):
 - pre-s33-backlog.md раздел S34 Direction Consilium
 - Bailey & López de Prado 2014 (DSR + дисциплина предварительной регистрации + штраф N_trials)
 - Hudson & Urquhart 2021 (критика t-стат тяжёлых хвостов + крипто-реальность разреженных сигналов — обоснование поправки T5)
+- [[../sprints/sprint-34-honest-close-v06-hybrid]] — спринт delivery record (paired с ADR 0051)
 - Kish 1965 (эффект дизайна для кластеризованных выборок — порог n_eff)

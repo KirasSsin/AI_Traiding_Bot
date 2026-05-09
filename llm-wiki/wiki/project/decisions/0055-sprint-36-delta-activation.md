@@ -161,4 +161,8 @@ Per план S36 (`plans/2026-04-27-sprint-36-delta-activation.md`):
 - ADR 0056 (этот — поправка DSR sigma_SR, парный)
 - pre-s36-backlog.md ROUND 4 consilium trail
 - Bailey & López de Prado 2014 (DSR + дисциплина предварительной регистрации)
+- [[../sprints/sprint-36-delta-activation]] — спринт delivery record
 - Hudson & Urquhart 2021 (критика t-стат тяжёлых хвостов + крипто-реальность разреженных сигналов)
+- [[../components/halt-gate-wireup]] — wire-up component (RuntimeManager._tick integration)
+- [[../components/live-trade-reporter]] — adapted live monitoring per SD-6 (Sharpe + calibration + MC)
+- [[../components/delta-activation-playbook]] — operator step-by-step activation procedure

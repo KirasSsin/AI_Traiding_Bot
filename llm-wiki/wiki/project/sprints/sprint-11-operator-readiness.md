@@ -102,3 +102,4 @@ NONE.
 - [[../pre-s11-backlog]] — PHASE 2 verdicts trail
 - [[sprint-10-wfa-dsr-mc]] — predecessor sprint (WFA components consumed by T4)
 - [[../runbooks/halt-recovery]] + [[../runbooks/log-grep-templates]] + [[../runbooks/pre-flight]] — operator runbooks
+- Components: [[../components/risk-override]], [[../components/kill-switch-cli]], [[../components/runtime-manager]]

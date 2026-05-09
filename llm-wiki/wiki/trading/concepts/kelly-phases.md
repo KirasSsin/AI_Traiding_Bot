@@ -118,3 +118,9 @@ def position_fraction(trade_count: int, p_hat: float, b: float) -> float:
 - [[../strategies/ema-crossover-adx-rsi]] — где Kelly применяется.
 - [[circuit-breakers]] — drawdown-level halts.
 - [[../../project/decisions/0012-4-phase-kelly-sizing]] — ADR.
+
+## Реализация
+
+- [[../../project/components/sizing]] — `compute_qty`: ATR-based position sizing formula
+- [[../../project/components/kelly]] — `phase_adjusted_fraction` + Wilson lower bound computation
+- [[../../project/components/risk-manager]] — orchestrates phase selection + equity input + quantization

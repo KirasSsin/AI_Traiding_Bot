@@ -126,3 +126,9 @@ See ADR 0018 sub-decision 9 для полного rationale + threat model.
 - [[../decisions/0018-sprint-4-risk-decisions]] — Sprint 4 sub-decisions (R:R, reason codes mapping, Wilson lower bound contract, L0 naming, **sub-dec 9: post-merge security audit hardening — C1+H1+H2+H3+M1+M2+I1+L3**)
 - [[kelly]] [[circuit-breakers]] [[sizing]] [[risk-override]] — sub-components
 - [[../../trading/concepts/look-ahead-bias]] — invariant context
+- [[coordinator]] — downstream consumer of RiskAssessment; calls `request_halt` on CB trigger
+- [[sizing]] — `compute_qty` called from `assess` step 10
+- [[../sprints/sprint-04-risk]] — sprint where risk-manager was created
+- [[../decisions/0018-sprint-4-risk-decisions]] — governing ADR (already linked above)
+- [[../architecture/risk-register]] — операционные риски v0.1 (risk-manager = primary mitigator).
+- [[../architecture/bounded-contexts]] — Risk Management bounded context (Kelly + CB + sizing).

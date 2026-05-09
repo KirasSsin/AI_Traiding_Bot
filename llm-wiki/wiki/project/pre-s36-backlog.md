@@ -200,3 +200,6 @@ Variable rename: `aggregate_oos_sharpe` (donchian_runner.py:171) → `trial_mean
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique + crypto sparse-signal reality)
 - Kish 1965 (design effect)
+- [[decisions/0055-sprint-36-delta-activation]] — Sprint 36 ADR (δ activation)
+- [[decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — Sprint 36 ADR (DSR amendment)
+- [[sprints/sprint-36-delta-activation]] — Sprint 36 page

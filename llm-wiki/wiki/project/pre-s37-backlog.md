@@ -119,6 +119,8 @@ Recommended priority order per risk:
 - [[decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — ADR 0056 DSR thresholds
 - [[components/halt-gate-wireup]] — primary carry-over source
 - [[components/live-trade-reporter]] — quant carry-overs source
+- [[decisions/0057-sprint-37-carry-overs-hardening]] — Sprint 37 ADR
+- [[sprints/sprint-37-carry-overs-hardening]] — Sprint 37 page
 
 ---
 

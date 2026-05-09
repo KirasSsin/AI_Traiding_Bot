@@ -39,3 +39,9 @@ status: stable
 - 2026-04-23: `~/.claude/agents/Python Reviewer.md` → `python-reviewer.md`
 - 2026-04-23: caveman@v84cc3c14fa1e установлен (local scope) → Layer 4b active
 - 2026-04-24: "Path discipline" section добавлена в 5 агентов (binding policy после typo trader-expert)
+
+## Связанные документы
+
+- [[architecture/development-workflow]] — мастер-SOP: почему принятые инструменты интегрированы так, а не иначе
+- [[architecture/sprint-flow-ru]] — обязательный 9-фаз процесс (process layer — почему get-shit-done rejected)
+- [[methodology-decision-algorithms]] — алгоритмы принятия решений (accepted counterpart)

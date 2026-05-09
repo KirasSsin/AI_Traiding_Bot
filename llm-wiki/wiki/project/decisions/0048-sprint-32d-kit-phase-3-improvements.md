@@ -191,4 +191,5 @@ Tag: `v0.1.0-alpha.32d`.
 - ADR 0048 (this) — Kit Phase 3 final S32 series sprint
 - Sprint S32 / S32b / S32c / S32d (this) — S32 series Phase 0/1/2/3 COMPLETE
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32d-kit-phase-3-improvements]] — спринт delivery record
 - Bybit V5 API docs: https://bybit-exchange.github.io/docs/v5/

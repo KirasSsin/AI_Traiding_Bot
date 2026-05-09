@@ -166,12 +166,11 @@ S32b executed по proper kit flow per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0046-sprint-32b-kit-phase-1-improvements]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — L5 agent matrix
 - ADR 0041 (S28 process enforcement) — sprint-flow-check.sh predecessor для freshness hook
 - ADR 0043 (S30 tier-2 agents) — phase-advance.sh predecessor
 - ADR 0044 (S31 best practices revision) — kit baseline
 - ADR 0045 (S32 Phase 0) — direct predecessor (КУ analysis Phase 0 changes)
-- ADR 0046 (this) — Kit Phase 1 implementation
 - Sprint S32 (Phase 0) — direct predecessor
-- Sprint S32b (this) — Phase 1 implementation
 - Pre-S32 КУ analysis: chapter "Kit improvement plan — КУ analysis" в session 2026-04-26

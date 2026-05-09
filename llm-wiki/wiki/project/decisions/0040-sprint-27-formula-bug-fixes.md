@@ -161,4 +161,5 @@ Pre-fix vs post-fix delta:
 - Pre-fix audit: `data/runs.backup_pre_s27_fixes/`
 - Post-fix audit: `data/formulas_audit_v1_post_s27.json`
 - Sortino & Price (1994) "Performance measurement in a downside risk framework"
+- [[../sprints/sprint-27-formula-bug-fixes]] — спринт delivery record
 - Bailey & López de Prado (2018) "Backtesting Without Smoothness"

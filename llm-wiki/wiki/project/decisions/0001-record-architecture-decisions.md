@@ -42,3 +42,7 @@ Decision / Consequences / Alternatives / References. Статусы: `proposed`,
 ## References
 - Michael Nygard, "Documenting Architecture Decisions" (2011)
 - [Docs/MVP + ALL PROJECT/MVP.md](../../../Docs/MVP%20%2B%20ALL%20PROJECT/MVP.md) — §11
+
+## Связанные
+
+- [[../sprints/sprint-01-foundation]] — спринт основания (Foundation), когда ADR-процесс был запущен

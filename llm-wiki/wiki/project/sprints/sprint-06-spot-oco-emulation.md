@@ -116,3 +116,10 @@ Sprint 6 заменил мёртвый путь native-tpsl (ADR 0019/1, эмп�
 | 11 | OCO_ARMING TTL=60s reconcile rule | Task 21 |
 | 12 | Schema v2 migration (+6 колонок) | Task 1 |
 | 13 | Reason codes 31→39 | Tasks 2, 28 |
+
+## Related
+
+- ADR: [[../decisions/0020-sprint-6-execution-spot-oco-emulation]]
+- Components: [[../components/oco]], [[../components/reconciler]], [[../components/execution-state-machine]], [[../components/bybit-adapter]]
+- Prior sprint: [[sprint-05-execution]]
+- Next sprint: [[sprint-07-resilience]]

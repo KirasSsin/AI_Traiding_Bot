@@ -201,10 +201,27 @@ Skills заменяют hardcoded inline workflow logic в соответств�
 
 HARD-GATE ФАЗА 8 шаг 5/5a — следует также включать "если нужна новая доменная секция → обновить mental-map.md" (рекомендуется добавить в kit в следующей итерации).
 
+## Связанные документы
+
+- [[../index]] — полный каталог всех wiki-страниц (по разделам)
+- [[../architecture/current-state]] — живые счётчики (текущее число ADRs / спринтов / компонентов)
+
 ## Связанное
 
 - [[index|index.md]] — плоский каталог (этот файл — дерево решений, тот — перечисление)
 - [[components/README|components/ README]] — тематические кластеры (обратный поиск: "я читаю X — что связано?")
-- [[architecture/current-state|current-state.md]] — канонические счётчики + история спринтов
-- [[architecture/development-workflow|dev-workflow.md]] — мастер-SOP методологии
+- [[architecture/current-state]] — канонические счётчики + история спринтов
+- [[architecture/development-workflow]] — мастер-SOP методологии
+- [[architecture/sprint-flow-ru]] — 9-фазный kit cycle на русском с HARD-GATEs
+- [[architecture/kit-overview-ru]] — 1-page TL;DR всех kit settings (single source of truth S31)
+- [[architecture/acceptance-criteria]] — T1-T6 acceptance gate + поддерживающие метрики
+- [[components/execution-state-machine]] — 16-state FSM + 29 events + переходы
+- [[components/halt-gate]] — HaltGate: pre-committed halt criteria для δ TESTNET
+- [[components/coordinator]] — FSM dispatch + bootstrap + halt mechanics
+- [[components/risk-manager]] — RiskManager.assess() pipeline
+- [[components/dsr]] — Deflated Sharpe Ratio (Bailey & López de Prado)
+- [[components/mc-permutations]] — Monte Carlo permutations sign-flip + block bootstrap
+- [[components/walk-forward]] — WFA orchestrator K=5 rolling folds
+- [[components/delta-activation-playbook]] — δ TESTNET activation operator playbook
+- [[runbooks/halt-recovery]] — 19 halt-кодов, 5 групп, P0/P1/P2 escalation
 - [[SPRINT_STATE]] — живая рабочая память

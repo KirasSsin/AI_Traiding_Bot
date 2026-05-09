@@ -142,6 +142,8 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 8 (v2 expansion: +4 states, +8 events).
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decisions 1, 3, 5, 9 (bootstrap reconcile + 4-valued verdicts + halt persistence).
+- `[[../decisions/0023-halt-code-fsm-event-mapping]]` — halt-code → FSM event mapping invariant (ADR 0023)
+- `[[../sprints/sprint-07-resilience]]` — sprint where FSM was significantly expanded (16 states final)
 - `[[coordinator]]` — owns FSM dispatch (`_transition`) и halt mechanics (`request_halt` + ADR 0023 invariant); 8 RLock-protected methods (S8a).
 - `[[reconciler]]` — 4-valued verdict consumer (`AGREE`/`DIVERGENCE`/`HEAL_ENTRY_FILLED`/`EXITED`).
 - `[[oco]]` — builder SL/TP уровней, приводит к OCO_ARMING → OCO_ARMED.
@@ -164,6 +166,12 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 Reconciler-side: `Reconciler._lock` (`threading.Lock`, non-reentrant) — wraps `on_wallet_event` + `reconcile`.
 
 See [[runtime-manager]] — Lock policy reference table.
+
+## Архитектурные страницы
+
+- [[../architecture/state-machine]] — архитектурная спецификация FSM (16 состояний / 30 событий / 74 перехода).
+- [[../architecture/current-state]] — canonical counts table (актуальные счётчики FSM).
+- [[../architecture/reason-codes-schema]] — JSON Schema audit записи использующей reason codes.
 
 ## Источники
 

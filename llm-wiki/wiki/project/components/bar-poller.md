@@ -76,8 +76,12 @@ caller. YAGNI per trader-expert verdict 2026-04-24.
 
 - [[runtime-manager]] — owner of poll cadence + halt emission
 - [[bybit-adapter]] — REST kline endpoint wrapper
+- [[bybit-rest]] — underlying REST client used by adapter for kline calls
+- [[bar-builder]] — WS-based alternative that builds Bar from kline messages (venue-agnostic)
 - [[../decisions/0022-sprint-8a-live-runtime]] — sub-decisions 2 + 3
 - [[../runbooks/halt-recovery]] — operator runbook covering HALT_BAR_POLL_STALL (Operational class group)
+- [[../sprints/sprint-08a-live-runtime]] — sprint where bar-poller (BarSource) was created
+- [[../architecture/execution-timing]] — timing invariants (isClosed gate + bar-to-signal sequence).
 
 ## Sources
 

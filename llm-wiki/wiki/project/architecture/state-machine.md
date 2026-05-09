@@ -119,3 +119,6 @@ Per Binance docs, любой terminal state (включая `PARTIALLY_FILLED`) 
 - [[bounded-contexts]] — где state machine живёт.
 - [[domain-events]] — события-триггеры переходов.
 - [[edge-cases]] — полный каталог 24 edge-cases.
+- [[../components/execution-state-machine]] — реализация: TRANSITIONS table, ExecutionEvent enum, InvalidTransitionError
+- [[../components/coordinator]] — единственный writer FSM-состояний (single-writer invariant)
+- [[../components/halt-gate]] — gate для HALT-переходов (S36 δ activation гейтинг)

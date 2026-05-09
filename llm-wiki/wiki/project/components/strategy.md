@@ -87,3 +87,6 @@ Additional invariants (not CRITICAL):
 - [[../architecture/execution-timing]] — invariants.
 - [[./models]] — Bar (input), Signal (output).
 - [[../decisions/0011-wilder-ema-for-adx-rsi-classical-for-crossover]] — ADR.
+- [[./backtest-harness]] — backtest harness consumes on_bar contract (bar-by-bar replay)
+- [[./donchian-strategy]] — sister strategy (S35 α track, same FSM SignalSide invariant)
+- [[../sprints/sprint-03-strategy-port]] — sprint where strategy component was created

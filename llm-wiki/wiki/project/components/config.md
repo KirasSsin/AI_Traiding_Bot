@@ -25,6 +25,7 @@ status: stable
 
 ## Related
 
+- [[../sprints/sprint-01-foundation]] — sprint where Settings was created
 - [[../architecture/stack-v0.1]] — стек и версии.
 - [[../decisions/0006-pydantic-v2-for-domain-models]] — ADR за pydantic v2.
 - `.env.example` в корне — шаблон всех env-переменных.

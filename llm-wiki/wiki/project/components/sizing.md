@@ -75,3 +75,7 @@ risk_tp_atr_multiplier = "3.0"   # TP placement (R:R = 2:1)
 - [[kelly]] — источник `fraction`
 - [[risk-manager]] — caller, выполняет quantization + min-notional reject
 - [[../../trading/concepts/kelly-phases]] — формульная мотивация
+- [[../../trading/concepts/slippage-model]] — slippage cost context (sizing determines notional → affects slippage regime)
+- [[circuit-breakers]] — CB level affects fraction via L1 reduce-size-50% policy
+- [[../sprints/sprint-04-risk]] — sprint where sizing component was created
+- [[../decisions/0012-4-phase-kelly-sizing]] — governing ADR (Kelly + ATR sizing formula)

@@ -158,4 +158,5 @@ T2 commit (this commit):
 - pre-s33-backlog.md S34 Direction Consilium section
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique — 3rd validation S33)
+- [[../sprints/sprint-34-honest-close-v06-hybrid]] — спринт delivery record
 - Kish 1965 (design effect для clustered samples — n_eff S33)

@@ -128,9 +128,14 @@ Alias `load_data()` → `load_market_data()` для обратной совме�
 
 - [[indicators]] — live `src/signalgen/indicators.py` (TA-Lib Wilder ADX/RSI/ATR + classical EMA crossover)
 - [[strategy]] — live strategy on_bar контракт
+- [[walk-forward]] — WFA runner (K-fold rolling, WindowSplitter) — consumes backtest-harness replay
+- [[dsr]] — DSR module (consumes per-fold TradeRecord list from WFA)
+- [[mc-permutations]] — MC sign-flip + block bootstrap (consumes OOS returns from replay)
 - [[../decisions/0014-walk-forward-train2000-test500]] — train=2000, test=500, K=5, embargo=20
 - [[../decisions/0015-sign-flip-mc-permutations-n2000]] — sign-flip MC N=2000 как primary test
 - [[../decisions/0010-sqrt-slippage-model]] — sqrt-формула slippage (учтена в replay_engine, не в репортере напрямую)
+- [[../sprints/sprint-10-wfa-dsr-mc]] — sprint where backtest-harness was last significantly changed (WFA integration)
+- [[../decisions/0025-sprint-10-wfa-dsr-mc]] — WFA/DSR/MC ADR governing S10 additions
 - [[../../trading/concepts/walk-forward-validation]] — концептуальное описание WFA
 - [[../../trading/concepts/deflated-sharpe-ratio]] — DSR по Bailey–López de Prado
 - [[../../trading/concepts/monte-carlo-permutations]] — MC sign-flip + block-bootstrap

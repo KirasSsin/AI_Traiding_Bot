@@ -150,11 +150,10 @@ S30 executed по proper kit flow per S28 binding rules + S29 expanded skills:
 
 ## Related
 
+- [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — parent matrix policy
 - ADR 0041 (S28 process enforcement) — sprint-flow-check hook precedent
 - ADR 0042 (S29 superpowers integration) — full skills mapping
-- ADR 0043 (this) — tier-2 agents + phase-advance + cascade
 - Sprint S28 — established kit flow + Russian docs
 - Sprint S29 — full superpowers (13/13)
-- Sprint S30 (this) — tier-2 + cascade
 - obra/superpowers + thedotmack/claude-mem — source repos

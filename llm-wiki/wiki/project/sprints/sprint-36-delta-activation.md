@@ -172,16 +172,17 @@ Per S28+ binding:
 
 ## Related
 
+- [[../decisions/0055-sprint-36-delta-activation]] — ADR этого спринта (δ activation)
+- [[../decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — ADR этого спринта (DSR sigma_SR amendment)
 - ADR 0050 (S33 Trading Restart)
 - ADR 0051 (S34 6-th honest close v0.6)
 - ADR 0052 (S34 acceptance-criteria amendment LOCKED)
 - ADR 0053 (S35 δ TESTNET pre-activation infrastructure)
 - ADR 0054 (S35 α Donchian pre-registration — direction CLOSED)
-- ADR 0055 (S36 δ activation — этот sprint)
-- ADR 0056 (S36 DSR sigma_SR amendment — этот sprint)
-- pre-s35-backlog.md (ROUND 3 binding consilium)
-- pre-s36-backlog.md (ROUND 4 binding consilium)
-- pre-s37-backlog.md (S37 carry-overs persisted)
+- [[../pre-s35-backlog]] (ROUND 3 binding consilium)
+- [[../pre-s36-backlog]] (ROUND 4 binding consilium)
+- [[../pre-s37-backlog]] (S37 carry-overs persisted)
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique + crypto sparse-signal)
 - Kish 1965 (design effect для multi-symbol)
+- Components: [[../components/halt-gate-wireup]], [[../components/live-trade-reporter]], [[../components/delta-activation-playbook]]

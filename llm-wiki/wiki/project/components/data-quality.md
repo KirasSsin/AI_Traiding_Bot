@@ -74,10 +74,12 @@ Halt event logs structured warning `data_quality.deviation_exceeds_threshold` с
 
 ## Связанные
 
+- [[../sprints/sprint-09-data-quality-types-analytics]] — sprint where data-quality detector was created
 - [[../decisions/0024-sprint-9-data-quality-types-analytics]] — origin ADR (Q1)
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — `_REQUEST_HALT_CODES` invariant (HALT_DATA_QUALITY added к allow-list)
 - [[coordinator]] — `request_halt` halt entry-point + RISK_HALT event routing
 - [[circuit-breakers]] — sister halt detectors (drawdown / flash crash)
+- [[../architecture/edge-cases]] — edge case catalog: gap/stale/OHLC-inconsistent triggers.
 
 ## Sources
 

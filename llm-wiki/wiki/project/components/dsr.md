@@ -72,7 +72,8 @@ Uses `scipy.stats.skew`, `scipy.stats.kurtosis`, `scipy.stats.norm.cdf/ppf`. sci
 
 ## Referenced by
 
-- (S10 walk-forward sprint, future) — DSR consumed by walk-forward acceptance gate per ADR 0014
+- [[wfa-reporter]] — DSR aggregate computed in S10; sigma_sr from per-fold Sharpes fed here
+- [[backtest-harness]] — replay engine produces trade data consumed by DSR pipeline
 
 ## Related
 
@@ -81,6 +82,9 @@ Uses `scipy.stats.skew`, `scipy.stats.kurtosis`, `scipy.stats.norm.cdf/ppf`. sci
 - [[../decisions/0014-walk-forward-train2000-test500]] — walk-forward gate uses Sharpe (DSR foundation для S10)
 - [[../decisions/0015-sign-flip-mc-permutations-n2000]] — sign-flip MC permutations (companion statistical method)
 - [[../decisions/0024-sprint-9-data-quality-types-analytics]] — S9 aggregate ADR
+- [[../../trading/concepts/deflated-sharpe-ratio]] — concept page
+- [[../sprints/sprint-09-data-quality-types-analytics]] — sprint where dsr module was created
+- [[../architecture/acceptance-criteria]] — T2 DSR gate (≥0.95 threshold).
 
 ## Sources
 

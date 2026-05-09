@@ -48,9 +48,14 @@ status: stable
 ## Связанные
 
 - [[../architecture/edge-cases]] — источник invariant-списка.
+- [[../architecture/storage]] — Parquet writer, потребляющий Bar объекты.
+- [[../architecture/bounded-contexts]] — Market Data bounded context (BarBuilder = isClosed gate).
 - [[models]] — `Bar`, `DataQuality`.
 - [[../decisions/0007-utc-timestamps-ns-precision]] — UTC ns datetime.
 - [[bybit-ws]] — поставщик сообщений.
+- [[bar-poller]] — REST-based alternative tick source for live runtime (S8a)
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint where bar-builder was created
+- [[../decisions/0016-bybit-spot-supersedes-binance]] — venue ADR (Bybit V5 kline payload shape)
 
 ## Sources
 

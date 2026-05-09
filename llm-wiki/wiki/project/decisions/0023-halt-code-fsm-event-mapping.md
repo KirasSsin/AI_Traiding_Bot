@@ -66,3 +66,8 @@ else:
 
 **Implementation plan:** [[../plans/2026-04-24-sprint-8b-carryover]].
 **Sprint page:** [[../sprints/sprint-08b-carryover]] — delivery record (S8a carry-over fixes + ADR 0023, FSM 70→74, tag `v0.1.0-alpha.8b`).
+
+**Затронутые компоненты:**
+- [[../components/coordinator]] — `request_halt()` explicit dispatch (primary enforcement)
+- [[../components/execution-state-machine]] — `TRANSITIONS` table (all halt events must have rows from all non-terminal states)
+- [[../components/kill-switch-cli]] — `KILL_SWITCH_REQUESTED` dispatch target

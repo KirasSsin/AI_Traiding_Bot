@@ -51,3 +51,11 @@ f* пересчитывается по rolling-окну последних 200 �
 - Thorp E., "The Kelly Criterion in Blackjack, Sports Betting, and the Stock Market" (1997)
 - Wilson E.B., "Probable Inference, the Law of Succession, and Statistical Inference" (1927)
 - See [[0013-circuit-breakers-l1-l2-l3-flash]]
+
+## Связанные
+
+- [[../sprints/sprint-04-risk]] — спринт, где Kelly sizing был реализован
+- [[../components/kelly]] — `phase_from_trade_count`, `wilson_95_ci`, `kelly_fraction`, `phase_adjusted_fraction`
+- [[../components/sizing]] — `compute_qty(equity, fraction, atr, price, k)` consuming Kelly fraction
+- [[../components/risk-manager]] — orchestrates Kelly phase selection + sizing call
+- [[../components/trade-history]] — `count()` provides n_trades for phase determination

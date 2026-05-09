@@ -144,4 +144,5 @@ Tag: `v0.1.0-alpha.32b`.
 - ADR 0045 (S32 Phase 0) — direct predecessor (КУ analysis source)
 - ADR 0046 (this) — Kit Phase 1 implementation
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32b-kit-phase-1-improvements]] — спринт delivery record
 - MCP server registry: https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite (mcp-server-sqlite source)

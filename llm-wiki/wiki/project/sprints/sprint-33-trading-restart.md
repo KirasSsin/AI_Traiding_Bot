@@ -218,6 +218,7 @@ Per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0050-sprint-33-trading-restart]] — ADR этого спринта
 - ADR 0014 (WFA defaults — amended CC6 (b) для 4H)
 - ADR 0015 (MC permutation — CC-D fix restored compliance)
 - ADR 0029 (S14 honest close — pattern reference)
@@ -227,7 +228,6 @@ Per S28+ binding rules:
 - ADR 0038 (S23 v0.5 honest close — 5-th honest close)
 - ADR 0048 (S32d Kit Phase 3 — 8 candidates)
 - ADR 0049 (S32e Kit Audit)
-- **ADR 0050 (this S33 — F FAIL conjoint, 6-th honest close trigger pending)**
 - Sprint S22 (BTC 4H PASS partial — regime-independent edge)
 - Sprint S23 (T5=100 unreachable BINDING)
 - Sprint S27 (formula bug fixes — bars_per_year + Sortino + RSI/ATR)

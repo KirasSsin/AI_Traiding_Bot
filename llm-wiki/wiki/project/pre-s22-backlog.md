@@ -147,6 +147,8 @@ S22 = combined architectural + measurement sprint (4-map extension small surface
 - [[decisions/0035-sprint-20-15m-measurement]] — S20 FAIL + Hudson & Urquhart 2021
 - [[decisions/0034-sprint-19-15m-architecture]] — Conditions A1+A2+A3 reused для (C)
 - [[decisions/0032-sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal evidence
+- [[decisions/0037-sprint-22-4h-test]] — Sprint 22 ADR
+- [[sprints/sprint-22-4h-test]] — Sprint 22 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 
 ## Related

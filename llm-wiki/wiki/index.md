@@ -39,6 +39,7 @@ _(пусто — v0.2+)_
 
 ## Project — Architecture
 
+- [[project/mental-map]] — "где искать X" дерево решений для быстрой навигации; первый источник для открытых запросов агентов.
 - [[project/architecture/overview]] — MVP v0.1 target: стек, roadmap, риски, acceptance.
 - [[project/architecture/current-state]] — инвентаризация текущего кода (Bybit futures 1m, pandas .ewm(), in-memory).
 - [[project/architecture/gap-analysis]] — 24 расхождения current vs MVP v0.1 с приоритетами P0/P1/P2.
@@ -251,6 +252,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 
 ## Project — Methodology
 
+- [[project/mental-map]] — Дерево решений "где искать X" — первый источник для открытых запросов LLM-агентов.
 - [[project/methodology-decision-algorithms]] — Алгоритмы принятия решений (brainstorm flow, trader-expert round protocol, PHASE 2 binding).
 - [[project/methodology-rejected]] — Отклонённые методологические подходы с обоснованием.
 

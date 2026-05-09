@@ -249,6 +249,7 @@ Full history: [[../architecture/current-state#карта-спринтов-sprint
 
 - [[sprint-flow-ru]] — обязательный 9-фаз процесс с per-phase HARD-GATEs
 - [[tooling-inventory-ru]] — full catalog (9 agents + 26 skills + 6 MCP + 6 hooks + cascade)
+- [[development-workflow]] — MASTER SOP (English, complementary detail)
 - [[../decisions/0017-review-agent-harness]] — review agents matrix policy
 - [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR
 - [[../decisions/0042-sprint-29-superpowers-integration]] — full superpowers integration

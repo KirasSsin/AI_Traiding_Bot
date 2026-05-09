@@ -150,6 +150,8 @@ ADR 0022 sub-decision 5 evaluated both options:
 
 ## Связанные
 
+- [[../sprints/sprint-08a-live-runtime]] — sprint where kill-switch CLI entry-point was established (G6)
+- [[../sprints/sprint-08b-carryover]] — sprint where atomic write fix applied (S8b T3/T4)
 - [[runtime-manager]] — owns tick pipeline + `_maybe_kill_switch` step + lifecycle
 - [[coordinator]] — `request_halt` FSM dispatch (ADR 0023 invariant)
 - [[execution-state-machine]] — `KILL_SWITCH_REQUESTED` event + 11 transitions (FSM total: 74)

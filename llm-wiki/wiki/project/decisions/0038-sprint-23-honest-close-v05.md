@@ -163,6 +163,7 @@ echo '{"trials": []}' > data/cross_trial_sharpes.json  # v0.6 fresh baseline
 - [[../sprints/sprint-22-4h-test]] — S22 measurement
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal на 1H (similar к S22 pattern)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-23-honest-close-v05]] — спринт delivery record
 
 ## Поправки
 

@@ -49,3 +49,7 @@ breakers).
 - [Docs/MVP + ALL PROJECT/MVP.md](../../../Docs/MVP%20%2B%20ALL%20PROJECT/MVP.md) — §3, §11
 - Binance API docs: https://binance-docs.github.io/apidocs/spot/en/
 - See [[0010-sqrt-slippage-model]]
+
+## Связанные
+
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint где Binance superseded Bybit (ADR 0016)

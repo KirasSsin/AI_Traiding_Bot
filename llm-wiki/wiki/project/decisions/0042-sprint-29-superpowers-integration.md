@@ -132,5 +132,5 @@ Plus:
 - `wiki/project/decisions/0041-sprint-28-process-enforcement.md` — process enforcement (parent ADR)
 - `wiki/project/decisions/0017-review-agent-harness.md` — review agents matrix
 - `wiki/project/plans/2026-04-26-sprint-29-superpowers-integration.md` — S29 plan
-- `wiki/project/sprints/sprint-29-superpowers-integration.md` — S29 page
+- [[../sprints/sprint-29-superpowers-integration]] — спринт delivery record
 - https://github.com/obra/superpowers — superpowers skills source repo

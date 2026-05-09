@@ -83,6 +83,10 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 - [[../../trading/concepts/deflated-sharpe-ratio]]
 - [[../../trading/concepts/monte-carlo-permutations]]
 - [[risk-register]]
+- [[../components/dsr]] — `compute_dsr`, `compute_returns` — T4 DSR gate
+- [[../components/mc-permutations]] — `SignFlipTest`, `BlockBootstrapTest` — T3 MC gate
+- [[../components/walk-forward]] — `WalkForwardRunner`, `WFAAcceptanceGate` — T1/T2 gate
+- [[../components/wfa-reporter]] — `WFAReporter` — итоговый отчёт по всем гейтам
 
 ---
 

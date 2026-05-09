@@ -56,13 +56,16 @@ report dict
 ## Referenced by
 
 - [[walk-forward]] — produces input for reporter
-- [[dsr]] — aggregate DSR consumer
 
 ## Related
 
+- [[dsr]] — DSR aggregate computed here using sigma_sr from per-fold Sharpes
+- [[walk-forward]] — runner result (folds + aggregate) is primary input
+- [[backtest-harness]] — replay engine source of bar-returns Sharpe (series 1)
 - [[../decisions/0025-sprint-10-wfa-dsr-mc]] — origin ADR (Q4+Q6+Q7)
 - [[../decisions/0014-walk-forward-train2000-test500]] — Sharpe gate convention
-- [[backtest-harness]] — replay engine source of bar-returns Sharpe
+- [[../sprints/sprint-10-wfa-dsr-mc]] — sprint where wfa-reporter was created
+- [[../architecture/acceptance-criteria]] — T1-T6 gates consolidated report (сводный выход).
 
 ## Sources
 

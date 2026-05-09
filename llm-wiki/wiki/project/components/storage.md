@@ -56,6 +56,7 @@ status: stable
 - [[../architecture/storage]] — полные SQL-схемы и обоснование выбора.
 - [[../decisions/0003-sqlite-parquet-for-storage]] — ADR.
 - [[../decisions/0007-utc-timestamps-ns-precision]] — ns-precision UTC для временных полей.
+- [[../sprints/sprint-03-strategy-port]] — sprint where storage was significantly expanded
 
 ## Sources
 

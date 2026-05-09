@@ -197,3 +197,7 @@ Discovery story: T4 implementer (Q3 kill-switch-cli) попытался доба
 ## Closed (archive section)
 
 **Bucket A (5) + A+ (9) + DRIFT (5) = 19 items** — all DONE на ветке `feature/pre-s8c-wiki-backfill`, commit `72bfc97` (+ off-by-one fix follow-up). Trader-expert re-verification 2026-04-25: 11/11 + 5/5 bonus DRIFT items PASS. python-reviewer (A12 1-line src change): APPROVED.
+
+## Связанные документы
+
+- [[sprints/sprint-08c-wiki-backfill]] — Sprint 8c (wiki backfill + tooling debt)

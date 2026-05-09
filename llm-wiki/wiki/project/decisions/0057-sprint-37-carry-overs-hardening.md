@@ -142,6 +142,7 @@ Per план S37 (`plans/2026-04-27-sprint-37-carry-overs-hardening.md`):
 - ADR 0022 (жизненный цикл RuntimeManager — паттерн часов SD-5)
 - pre-s37-backlog.md ROUND 5 consilium trail
 - delta-activation-playbook.md (процедура оператора T7)
+- [[../sprints/sprint-37-carry-overs-hardening]] — спринт delivery record
 
 ---
 

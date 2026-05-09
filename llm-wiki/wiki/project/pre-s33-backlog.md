@@ -346,6 +346,11 @@ Operator delegated escalation decisions BACK к 3 agents. ROUND 2 vote + brainst
 12. **Pre-committed failure branch для F** (insurance) — S33 ADR MUST include "if F fails T5 OR MC p>0.10, S34 = honest close v0.6 OR operator-driven spec amendment с explicit statistical-framework override statement" ПЕРЕД measurement (mirror S17/S22/ADR 0032/0037 BINDING precedent).
 13. **CI baseline guard update** — `.github/workflows/ci.yml` baseline 773 passed needs update post-S33 test additions (~60-80 new tests). Otherwise CI guard becomes permanently non-binding.
 
+## Связанные документы
+
+- [[decisions/0050-sprint-33-trading-restart]] — Sprint 33 ADR
+- [[sprints/sprint-33-trading-restart]] — Sprint 33 page
+
 ### 2 OPTIONAL additions
 
 14. **Ruff baseline file-scoped clean-on-touch** — каждый touched file ruff-clean on exit, не just CI guard-compliant. Prevents gradual drift (compounds к S34+ baseline degradation). ~5 min/file.

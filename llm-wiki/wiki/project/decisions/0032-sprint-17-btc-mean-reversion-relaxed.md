@@ -141,6 +141,7 @@ All previous carry-overs preserved (S12+S13+S14+S15+S16, 12+ items): F live demo
 - [[0016-bybit-spot-supersedes-binance]] — venue + BTC-only original scope
 - [[0014-walk-forward-train2000-test500]] — WFA params unchanged
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — спринт delivery record
 
 ## Поправки
 

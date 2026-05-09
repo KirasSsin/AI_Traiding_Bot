@@ -56,6 +56,10 @@ Both tests use `|mean(returns)|` as proxy для Sharpe sign. Two-sided test:
 
 - [[../decisions/0015-sign-flip-mc-permutations-n2000]] — locked N=2000, p ≤ 0.05
 - [[../decisions/0025-sprint-10-wfa-dsr-mc]] — origin ADR
+- [[backtest-harness]] — replay engine provides OOS returns consumed by sign-flip test
+- [[../../trading/concepts/monte-carlo-permutations]] — concept page
+- [[../sprints/sprint-10-wfa-dsr-mc]] — sprint where mc-permutations was created
+- [[../architecture/acceptance-criteria]] — T4 MC p-value gate (≤0.05).
 
 ## Sources
 

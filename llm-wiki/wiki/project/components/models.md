@@ -93,6 +93,7 @@ bar = Bar(
 - [[../decisions/0006-pydantic-v2-for-domain-models]] — ADR за pydantic v2.
 - [[../decisions/0007-utc-timestamps-ns-precision]] — все datetime поля UTC ns.
 - [[storage]] — Parquet writer использует `Bar`, SQLite `orders`/`fills` таблицы соответствуют `Order`/`Fill`.
+- [[../sprints/sprint-01-foundation]] — sprint where models were created
 
 ## Sources
 

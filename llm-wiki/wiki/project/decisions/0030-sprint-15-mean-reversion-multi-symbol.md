@@ -157,6 +157,7 @@ T1-T6 thresholds preserved per `acceptance-criteria.md`. NO spec amendment. S15 
 - [[0014-walk-forward-train2000-test500]] — WFA params (unchanged)
 - [[0005-1h-timeframe-mvp]] — 1H baseline (no amendment в S15)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-15-mean-reversion-multi-symbol]] — спринт delivery record
 
 ## Поправки
 

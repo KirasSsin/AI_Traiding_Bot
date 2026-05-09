@@ -77,6 +77,11 @@ EMA-crossover даёт сырой сигнал направления, но по
 - [[./rsi]] — фильтр перекупленности/перепроданности
 - [[./atr]] — волатильность для стопов
 
+## Реализация
+
+- [[../../project/components/indicators]] — `ema(close, period, mode="classical"|"wilder")` — TA-Lib wrapper + Wilder fallback
+- [[../../project/components/strategy]] — EMA fast/slow crossover is primary entry signal
+
 ## Sources
 - Wilder, J. W. (1978). *New Concepts in Technical Trading Systems*. Trend Research.
 - Kaufman, P. (2013). *Trading Systems and Methods* (5th ed.). Ch. 7.

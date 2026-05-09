@@ -156,6 +156,7 @@ Python-симуляция выдала `VERDICT: BLOCK (exit 2)` для 0099 —
 
 ## Related
 
+- [[../sprints/sprint-08c-wiki-backfill]] — sprint where adr-index-sync hook was created (Bucket C6)
 - Mirror of: [[project/components/adr-agent-sync-hook]] — предшествующий hook (ADR ↔ agent prompts sync).
 - Config: `~/.claude/settings.json` (PreToolUse hook registration, второй entry в Bash-matcher).
 - Index: [[../../index]] — файл-цель, который проверяется.

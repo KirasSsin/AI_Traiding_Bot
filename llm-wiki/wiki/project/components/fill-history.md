@@ -106,6 +106,9 @@ Per [Bybit V5 docs](https://bybit-exchange.github.io/docs/v5/websocket/private/e
 - [[../decisions/0021-sprint-7-resilience]] — execution topic deferral source (S7→S9)
 - [[../decisions/0022-sprint-8a-live-runtime]] — analytics+per-fill deferred again в S8b→S9
 - [[../decisions/0024-sprint-9-data-quality-types-analytics]] — S9 aggregate ADR
+- [[../sprints/sprint-09-data-quality-types-analytics]] — sprint where fill-history was created
+- [[fill-recorder-adapter]] — S12 adapter that bridges WS execution events → FillHistoryRepository
+- [[../architecture/storage]] — SQLite schema для `fills` таблицы.
 
 ## Sources
 

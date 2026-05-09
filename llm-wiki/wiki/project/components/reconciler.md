@@ -129,6 +129,7 @@ Reconciler(
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 3 (Reconcile-as-truth).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 4 (wallet balance truth, no get_position).
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decisions 1 (bootstrap), 3 (4-valued + EXITED), 4 (heal_max_age=3600).
+- `[[../sprints/sprint-07-resilience]]` — sprint where reconciler was significantly evolved (4-valued verdicts)
 - `[[coordinator]]` — owner: вызывает `reconciler.reconcile()` из `bootstrap()` + `on_ws_reconnect()`; consumes 4-valued verdict; emits FSM transitions per verdict.
 - `[[execution-state-machine]]` — события `RECONCILE_OK` / `RECONCILE_DIVERGENCE` / `RECONCILE_ENTRY_FILLED` / `RECONCILE_EXITED`.
 - `[[oco]]` — builder SL/TP уровней, связан с reconcile bootstrap + entry_order_id capture.

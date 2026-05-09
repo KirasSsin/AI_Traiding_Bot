@@ -40,6 +40,8 @@ status: stable
 - [[bybit-ws]] — WS consumer (отдельный канал).
 - [[models]] — Bar domain model.
 - `BybitFilters` — defined в `src/marketdata/filters.py` (dedicated component page TBD S3+).
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint where bybit-rest was created
+- [[bar-poller]] — runtime consumer that calls REST kline via bybit-adapter wrapper
 
 ## Sources
 

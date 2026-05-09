@@ -150,4 +150,5 @@ Tag: `v0.1.0-alpha.32`.
 - ADR 0044 (S31 best practices revision) — direct predecessor + skill counts baseline (8 AS mapped)
 - ADR 0045 (this) — Phase 0 KU-driven additions (8 → 13 AS mapped)
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32-kit-phase-0-improvements]] — спринт delivery record
 - Pre-S32 КУ analysis: session 2026-04-26 chapter "Kit improvement plan — КУ analysis"

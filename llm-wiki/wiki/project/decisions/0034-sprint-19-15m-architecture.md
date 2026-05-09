@@ -165,6 +165,7 @@ All previous carry-overs preserved (S12-S18, 14+ items).
 - [[0014-walk-forward-train2000-test500]] — WFA params (preserved для 15M, re-evaluate post-S20)
 - [[0030-sprint-15-mean-reversion-multi-symbol]] — MeanReversionRsiBBStrategy + indicators.py mean_reversion branch (reused 100%)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, T5 floor 150 = S20 pre-registration)
+- [[../sprints/sprint-19-15m-architecture]] — спринт delivery record
 
 ## Поправки
 

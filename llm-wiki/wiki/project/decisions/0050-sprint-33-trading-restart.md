@@ -268,4 +268,5 @@ Tag: `v0.1.0-alpha.33`.
 - Bailey & López de Prado 2014 (DSR + cross-trial sigma_SR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique — CC-E ongoing concern)
 - Kish 1965 (design effect для clustered samples — Item #8 n_eff)
+- [[../sprints/sprint-33-trading-restart]] — спринт delivery record
 - Phipson & Smyth 2010 (MC p-value `(count+1)/(N+1)` — CC-D reference)

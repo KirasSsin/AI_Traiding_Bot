@@ -127,6 +127,7 @@ NO code changes. NO new infrastructure. Pure measurement + documentation.
 - [[../sprints/sprint-19-15m-architecture]] — S19 architectural prep
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal (1H, contradicted at 15M)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-20-15m-measurement]] — спринт delivery record
 
 ## Поправки
 

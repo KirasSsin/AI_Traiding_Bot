@@ -667,3 +667,8 @@ STEP 4: Read raw + offset          (full content, controlled)
 - `superpowers:using-git-worktrees` — cross-phase
 - `superpowers:writing-skills` — cross-phase
 - `superpowers:using-superpowers` — meta auto-loaded
+
+## Связанные документы
+
+- [[development-workflow]] — MASTER SOP (English, более подробный оригинал)
+- [[kit-overview-ru]] — 1-page TL;DR всех kit settings (single source of truth)

@@ -133,6 +133,7 @@ T5 floor: 100 trades (default per acceptance-criteria.md, NOT T-Amendment 1 150)
 - [[0030-sprint-15-mean-reversion-multi-symbol]] — MeanReversionRsiBBStrategy (reused)
 - [[0014-walk-forward-train2000-test500]] — WFA params (preserved для 4H)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-22-4h-test]] — спринт delivery record
 
 ## Поправки
 

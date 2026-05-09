@@ -116,6 +116,12 @@ file is observed (S8b T4 fix).
 
 **See also:** [[kill-switch-cli]] — full operator-facing CLI semantics + atomic write details + recovery workflow.
 
+## Архитектурные страницы
+
+- [[../architecture/domain-events]] — domain events, диспатчируемые в tick-loop.
+- [[../architecture/bounded-contexts]] — RuntimeManager = оркестратор всех 5 bounded contexts.
+
 ## Источники
 
 - [[../decisions/0022-sprint-8a-live-runtime]] — все 14 sub-decisions
+- [[../sprints/sprint-08a-live-runtime]] — sprint where RuntimeManager was created

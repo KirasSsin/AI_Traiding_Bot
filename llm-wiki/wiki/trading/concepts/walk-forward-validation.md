@@ -110,3 +110,9 @@ Parameter optimization на 5 trades → pure noise fitting
 - [[minimum-backtest-length]] — MinBTL bound.
 - [[../../project/decisions/0014-walk-forward-train2000-test500]] — ADR.
 - [[../../project/architecture/acceptance-criteria]] — gating.
+
+## Реализация
+
+- [[../../project/components/walk-forward]] — `WindowSplitter` + `WalkForwardRunner` + `evaluate_acceptance_gate`
+- [[../../project/components/wfa-reporter]] — 3-Sharpe routing + DSR aggregate report
+- [[../../project/components/backtest-harness]] — base `run_replay()` called per fold (IS + OOS)

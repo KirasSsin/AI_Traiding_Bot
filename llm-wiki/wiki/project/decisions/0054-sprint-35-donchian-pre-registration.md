@@ -92,4 +92,6 @@ PASS = ВСЕ ворота одновременно AND. FAIL conjoint = нап�
 
 - ADR 0052 (поправка S34 LOCKED — источник ворот)
 - ADR 0053 (S35 δ TESTNET — основной парный трек)
+- [[../sprints/sprint-35-testnet-donchian-risk]] — спринт delivery record (paired с ADR 0053)
 - pre-s35-backlog.md (ROUND 3 binding)
+- [[../components/donchian-strategy]] — `DonchianBreakoutStrategy` with LOCKED params (status: FAIL conjoint)

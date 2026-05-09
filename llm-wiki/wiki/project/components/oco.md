@@ -222,6 +222,7 @@ FSM v3 (`src/execution/state_machine.py`): **16 состояний, 29 собы�
 - [[../decisions/0021-sprint-7-resilience]]
 - [[../../trading/concepts/reason-codes]] — 42 reason-кода (S7: +3)
 - [[../runbooks/halt-recovery]] — операторские процедуры
+- [[../sprints/sprint-06-spot-oco-emulation]] — sprint where OCO emulation was created
 
 ## Sources
 

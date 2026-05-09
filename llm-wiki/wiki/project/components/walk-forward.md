@@ -67,6 +67,9 @@ evaluate_acceptance_gate(fold_oos_is_sharpe_ratios, mc_p_value)
 - [[../decisions/0014-walk-forward-train2000-test500]] — locked WFA params
 - [[../decisions/0025-sprint-10-wfa-dsr-mc]] — origin ADR
 - [[dsr]] — DSR consumer (sigma_sr from per-fold Sharpes)
+- [[../../trading/concepts/walk-forward-validation]] — concept page
+- [[../sprints/sprint-10-wfa-dsr-mc]] — sprint where walk-forward was created
+- [[../architecture/acceptance-criteria]] — T3 OOS/IS Sharpe gate (≥0.7).
 
 ## Sources
 

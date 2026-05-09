@@ -131,6 +131,7 @@ PHASE 2 brainstorming verdicts (`pre-s12-backlog.md`):
 - [[0016-bybit-spot-supersedes-binance]] — Bybit V5 endpoint family + demo trading mode
 - [[../runbooks/pre-flight]] — operator entry criteria (Gate 5 update post-T2)
 - [[../runbooks/halt-recovery]] — priority matrix (P0 wake criteria)
+- [[../sprints/sprint-12-live-demo-validation]] — спринт delivery record
 
 ## Поправки
 

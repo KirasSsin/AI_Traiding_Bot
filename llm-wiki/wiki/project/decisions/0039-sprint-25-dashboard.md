@@ -167,6 +167,7 @@ S25 dashboard does NOT preempt S24 ESC-1 — operator decides at any future poin
 - [[0038-sprint-23-honest-close-v05]] — v0.5 honest close (predecessor)
 - [[0026-sprint-11-operator-readiness]] — S11 `_cmd_monitor` pattern (read-only SQLite via `mode=ro` reused в dashboard)
 - [[../architecture/acceptance-criteria]] — T1-T6 + DSR + MC (dashboard displays per trader spec)
+- [[../sprints/sprint-25-dashboard]] — спринт delivery record
 
 ## Поправки
 

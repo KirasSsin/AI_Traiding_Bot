@@ -37,5 +37,11 @@ status: stable
 ## Связанные
 
 - [[../decisions/0011-wilder-ema-for-adx-rsi-classical-for-crossover]] — ADR: почему 2 режима.
-- [[./strategy]] — единственный consumer.
-- [[../../trading/indicators/ema]], [[../../trading/indicators/adx]], [[../../trading/indicators/rsi]], [[../../trading/indicators/atr]] — theory.
+- [[./strategy]] — основной live consumer.
+- [[./backtest-harness]] — backtest indicators module (`src/backtest/indicators.py`) — отдельный batch-вариант
+- [[../../trading/indicators/ema]] — EMA theory + classical vs Wilder variants
+- [[../sprints/sprint-03-strategy-port]] — sprint where indicators component was created
+- [[../decisions/0011-wilder-ema-for-adx-rsi-classical-for-crossover]] — governing ADR (already linked above)
+- [[../../trading/indicators/adx]] — ADX theory + Wilder double-smooth
+- [[../../trading/indicators/rsi]] — RSI theory + Wilder smoothing
+- [[../../trading/indicators/atr]] — ATR theory + Wilder EMA on TR

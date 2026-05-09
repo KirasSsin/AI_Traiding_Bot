@@ -43,3 +43,13 @@ status: stable
 
 - Unknown file → `wc -c` first
 - > 50KB → Grep + offset Read (никогда полный Read)
+
+## Связанные документы
+
+- [[0017-review-agent-harness]] — harness 3 доменных ревьюеров (trader-expert + trading-logic + quant-stats)
+- [[0041-sprint-28-process-enforcement]] — process enforcement + trader-expert ROUND 1 binding protocol
+- [[0042-sprint-29-superpowers-integration]] — 7 NEW skills + brainstorm flow integration
+- [[0043-sprint-30-tier-2-agents-mem-wiki-merge]] — tier-2 reviewer agents + LLMWiki↔Claude-mem cascade
+- [[0044-sprint-31-kit-revision-best-practices]] — ROUND 1/ROUND 2 trader protocol (best practices binding)
+- [[architecture/sprint-flow-ru]] — обязательный 9-фаз процесс (PHASE 2 binding protocol)
+- [[architecture/development-workflow]] — мастер-SOP со всеми фазами

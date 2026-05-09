@@ -105,4 +105,6 @@ S16 = v0.2 honest close (Option D). Documentation only — NO code changes. Patt
 - [[decisions/0030-sprint-15-mean-reversion-multi-symbol]] — S15 ADR (mean-reversion, multi-symbol)
 - [[sprints/sprint-15-mean-reversion-multi-symbol]] — S15 sprint page (verdict + per-symbol)
 - [[decisions/0029-sprint-14-honest-close]] — S14 honest close precedent
+- [[decisions/0031-sprint-16-honest-close-v02]] — Sprint 16 ADR
+- [[sprints/sprint-16-honest-close-v02]] — Sprint 16 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)

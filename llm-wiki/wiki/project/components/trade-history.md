@@ -173,6 +173,8 @@ Migrations runner (`src/platform/storage/`) применяет их в поря�
 
 ## Связанные
 
+- [[../sprints/sprint-04-risk]] — sprint where trade-history table and TradeRecord were created
+- [[../sprints/sprint-05-execution]] — sprint where idempotency (UNIQUE INDEX) was hardened
 - [[risk-manager]] — primary writer: вызывает `insert_closed_trade()` на каждое закрытие позиции; читает `count()` для Kelly phase
 - [[kelly]] — 4-phase sizing читает trade count из `count()` / `load_recent()` (ADR 0012)
 - [[storage]] — SQLite WAL persistence layer; migrations runner
@@ -181,6 +183,7 @@ Migrations runner (`src/platform/storage/`) применяет их в поря�
 - [[../decisions/0012-4-phase-kelly-sizing]] — Kelly phase thresholds (n<30/100/200/≥200)
 - [[../decisions/0018-sprint-4-risk-decisions]] — Wilson 95% CI lower bound для фаз 3/4
 - [[../decisions/0007-utc-timestamps-ns-precision]] — AwareDatetime + UTC ISO-8601 contract
+- [[../architecture/storage]] — SQLite schema для `trade_history` таблицы.
 
 ## Открытые вопросы
 

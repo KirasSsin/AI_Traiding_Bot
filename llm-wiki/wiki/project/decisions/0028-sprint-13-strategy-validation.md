@@ -148,6 +148,9 @@ Reconciles inconsistency между acceptance-criteria.md "5 лет" + migratio
 - [[0025-sprint-10-wfa-dsr-mc]] — WFA + DSR + MC implementation
 - [[../architecture/acceptance-criteria]] — 12 gating criteria (amended footnotes per CC4)
 - [[../architecture/migration-plan]] — original 10-sprint roadmap (deviated, S13-S20 corrected herein)
+- [[../sprints/sprint-13-backfill-wfa]] — спринт delivery record
+- [[../components/trade-extractor]] — NEW T5: bridge WFA DataFrames → `list[TradeRecord]`
+- [[../components/strategy-metrics]] — NEW T6: T1-T6 acceptance criteria computation
 
 ## Поправки
 

@@ -160,6 +160,7 @@ All previous + new from S17:
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 measurement results
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, not amended)
 - [[../architecture/migration-plan]] — original roadmap (closed final at S18)
+- [[../sprints/sprint-18-honest-close-v01]] — спринт delivery record
 
 ## Поправки
 

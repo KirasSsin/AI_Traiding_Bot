@@ -129,9 +129,9 @@ PHASE 5 verify: 762 pytest passed (S28 baseline preserved).
 
 ## Related
 
+- [[../decisions/0042-sprint-29-superpowers-integration]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — review agents foundational
 - ADR 0041 (S28 process enforcement) — parent ADR — kit flow mechanical hook
-- ADR 0042 (S29 — this) — full superpowers integration
 - Sprint S28 (process-enforcement) — established kit flow + Russian docs
 - obra/superpowers GitHub repo — skills source
 

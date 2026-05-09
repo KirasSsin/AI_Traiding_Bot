@@ -208,6 +208,11 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=50`
 - Domain reviewer agents
 - llm-wiki/
 
+## Связанные
+
+- [[../components/execution-state-machine]] — FSM TRANSITIONS table — canonical live count
+- [[acceptance-criteria]] — T1-T6 gates (amended S34 LOCKED)
+
 ## Источники
 
 - `src/` (живое дерево)

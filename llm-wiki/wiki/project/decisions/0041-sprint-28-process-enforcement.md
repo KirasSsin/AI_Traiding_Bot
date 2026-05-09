@@ -188,5 +188,5 @@ exit 0
 - `wiki/project/architecture/development-workflow.md` — English MASTER SOP (more detail, complementary)
 - `wiki/project/decisions/0017-review-agent-harness.md` — review agents matrix (parent policy)
 - `wiki/project/plans/2026-04-26-sprint-28-process-enforcement.md` — S28 plan
-- `wiki/project/sprints/sprint-28-process-enforcement.md` — S28 page
+- [[../sprints/sprint-28-process-enforcement]] — спринт delivery record
 - ADR 0017 amendment 2026-04-25 (review-agent harness) — pattern source для hook approach

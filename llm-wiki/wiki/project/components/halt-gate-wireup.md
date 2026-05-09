@@ -100,3 +100,5 @@ Property test (T5): all 4 HALT_S36_* codes correctly dispatch к FSM HALTED stat
 - [[../decisions/0053-sprint-35-testnet-live-demo]] — δ activation predecessor
 - [[halt-gate]] — pure HaltGate dataclass component (S35)
 - [[runtime-manager]] — owning lifecycle component
+- [[coordinator]] — receives `request_halt(reason)` calls dispatched from HaltTrigger mapping
+- [[circuit-breakers]] — orthogonal drawdown/flash halt detector (price-action based, not session-behavioral)

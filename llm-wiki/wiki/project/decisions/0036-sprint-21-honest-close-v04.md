@@ -160,6 +160,7 @@ All previous + new from S20:
 - [[../sprints/sprint-20-15m-measurement]] — S20 measurement results
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal на 1H (preserved для v0.5)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-21-honest-close-v04]] — спринт delivery record
 
 ## Поправки
 

@@ -51,3 +51,10 @@ We will implement четырёхуровневую систему circuit-breake
 - [Docs/MVP + ALL PROJECT/MVP.md](../../../Docs/MVP%20%2B%20ALL%20PROJECT/MVP.md) — §6
 - NYSE Rule 7.12 (Trading Halts Due to Extraordinary Market Volatility)
 - See [[0012-4-phase-kelly-sizing]]
+
+## Связанные
+
+- [[../sprints/sprint-04-risk]] — спринт, где circuit breakers L1/L2/L3 + flash были реализованы
+- [[../components/circuit-breakers]] — `CircuitBreakerDetector` (check_drawdown, check_flash)
+- [[../components/risk-manager]] — consumer: integrates CB state into `assess()` halt decision
+- [[../components/risk-override]] — manual resume gate для L2/L3/FLASH halts

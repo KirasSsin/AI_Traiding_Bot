@@ -86,9 +86,9 @@ Layer 1 (structlog audit) fires on every fill regardless — fill events are not
 - [[fill-history]] — `FillHistoryRepository` and `FillRecord` — DB-backed fill storage (S9 Q3 B1)
 - [[ws-private-consumer]] — Bybit V5 private WS (order + wallet execution topic source)
 - [[bybit-adapter]] — REST/WS Bybit V5 wiring
-- [[coordinator]] — `_NoopFillRecorder` stub replaced by this adapter in `_cmd_run`
+- [[coordinator]] — `_NoopFillRecorder` stub replaced by this adapter in `_cmd_run`; lookup chain uses `execution_state` row
 - [[../decisions/0027-sprint-12-live-demo-validation]] — Q5 verdict trail (REVISE-additive)
-- [[../sprints/sprint-12-live-demo-validation]] — S12 delivery context
+- [[../sprints/sprint-12-live-demo-validation]] — sprint where fill-recorder-adapter was created
 
 ## Sources
 

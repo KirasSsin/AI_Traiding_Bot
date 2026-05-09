@@ -205,13 +205,14 @@ Per S28+ binding:
 
 ## Related
 
+- [[../decisions/0053-sprint-35-testnet-live-demo]] — ADR этого спринта (δ TESTNET)
+- [[../decisions/0054-sprint-35-donchian-pre-registration]] — ADR этого спринта (α Donchian)
 - ADR 0050 (S33 Trading Restart)
 - ADR 0051 (S34 6-th honest close v0.6)
 - ADR 0052 (S34 acceptance-criteria amendment LOCKED)
-- ADR 0053 (S35 δ TESTNET — этот sprint)
-- ADR 0054 (S35 α Donchian pre-registration — этот sprint)
 - pre-s35-backlog.md ROUND 3 consilium trail
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique — applies hard к n=4-5/fold per quant-stats H1)
 - Faber 2007 / Turtle Trading (Donchian breakout reference)
 - Kish 1965 (design effect — single-symbol n_eff=n_raw confirmed S35)
+- Components: [[../components/donchian-strategy]], [[../components/halt-gate]], [[../components/halt-gate-wireup]]

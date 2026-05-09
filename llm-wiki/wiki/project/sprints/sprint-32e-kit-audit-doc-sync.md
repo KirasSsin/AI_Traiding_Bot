@@ -159,11 +159,11 @@ S32e executed по proper kit flow per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0049-sprint-32e-kit-audit-doc-sync]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — L5 agent matrix
 - ADR 0044 (S31 best practices) — kit baseline
 - ADR 0045/0046/0047/0048 (S32 series Phase 0/1/2/3) — direct predecessors
-- ADR 0049 (this) — Kit audit + doc sync
-- Sprint S32 / S32b / S32c / S32d / S32e (this) — S32 series + audit
+- Sprint S32 / S32b / S32c / S32d — S32 series predecessors
 - [[../architecture/kit-audit-2026-04-27]] — full audit findings
 - [[../architecture/tooling-inventory-ru]] — Part 1 (post-split)
 - [[../architecture/tooling-inventory-ru-part-2]] — Part 2 (NEW S32e)

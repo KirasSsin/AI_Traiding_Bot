@@ -93,6 +93,7 @@ PHASE 2 brainstorming verdicts (`pre-s10-backlog.md`):
 - [[../components/wfa-reporter]] — implementation (T8)
 - [[../components/dsr]] — sigma_sr extension (T4)
 - [[../plans/2026-04-25-sprint-10-wfa-dsr-mc]] — implementation plan + trace map
+- [[../sprints/sprint-10-wfa-dsr-mc]] — спринт delivery record
 
 ## Поправки
 

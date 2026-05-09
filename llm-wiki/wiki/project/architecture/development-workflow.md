@@ -580,3 +580,6 @@ Run: pytest tests/unit/test_X.py -x
 - [[../sprints/sprint-06-spot-oco-emulation]] — нарратив спринта S6
 - [[../SPRINT_STATE]] — живое состояние проекта (читай первым)
 - [[migration-plan]] — 10 спринтов v0.1
+- [[sprint-flow-ru]] — русская версия 9-фазового процесса с HARD-GATEs
+- [[kit-overview-ru]] — 1-page TL;DR всех kit settings (S31)
+- [[tooling-inventory-ru]] — каталог: 11 агентов + 36 skills + cascade rule

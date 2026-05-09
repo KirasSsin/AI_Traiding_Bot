@@ -126,3 +126,5 @@ Items deferred к S39+:
 - pre-s37-backlog.md (ROUND 5 binding)
 - delta-activation-playbook.md (operator procedure)
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
+- [[decisions/0058-sprint-38-delta-parallel-hardening]] — Sprint 38 ADR
+- [[sprints/sprint-38-delta-parallel-hardening]] — Sprint 38 page

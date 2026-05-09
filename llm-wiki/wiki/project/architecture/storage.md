@@ -166,3 +166,7 @@ OHLCV 1H = 8760 rows/год = <100 KB. QuestDB (4–11M rows/s) избыточе
 - [[domain-events]] — как event log используется.
 - [[reason-codes-schema]] — JSON Schema audit records.
 - [[0003-sqlite-parquet-for-storage]] — ADR.
+- [[../components/storage]] — `init_db`, `get_connection`, `ParquetBarWriter`
+- [[../components/fill-history]] — `FillHistoryRepository` (SQLite trade_fills table)
+- [[../components/trade-history]] — `TradeHistoryRepository` (SQLite risk trades table)
+- [[../components/bar-builder]] — `BarBuilder` производит `Bar` → `ParquetBarWriter`

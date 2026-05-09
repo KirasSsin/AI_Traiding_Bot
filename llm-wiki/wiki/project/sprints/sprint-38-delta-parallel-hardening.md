@@ -205,12 +205,15 @@ Per S28+ binding:
 
 ## Related
 
+- [[../decisions/0058-sprint-38-delta-parallel-hardening]] — ADR этого спринта
 - ADR 0050-0057 (S33-S37 lineage)
-- ADR 0058 (S38 — этот sprint)
 - ADR 0056 amendment 2 (Sharpe pnl_pct semantics)
 - ADR 0057 amendment (months_since truncation)
 - ADR 0018 (HMAC pattern reference)
-- pre-s35-backlog / pre-s36-backlog / pre-s37-backlog / pre-s38-backlog
+- [[../pre-s35-backlog]] (ROUND 3 binding consilium)
+- [[../pre-s36-backlog]] (ROUND 4 binding consilium)
+- [[../pre-s37-backlog]] (ROUND 5 binding consilium)
+- [[../pre-s38-backlog]] (ROUND 6 binding consilium)
 - delta-activation-playbook.md (operator procedure — extended T6)
 - bybit-api-reviewer query document (T3 finding source)
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)

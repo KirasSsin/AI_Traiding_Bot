@@ -152,6 +152,8 @@ Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, AD
 
 ## Связанные
 
+- [[../sprints/sprint-11-operator-readiness]] — sprint where risk-override CLI was hardened (HMAC + atomic write)
+- [[../decisions/0026-sprint-11-operator-readiness]] — sprint-11 operator readiness ADR
 - [[risk-manager]] — consumer: calls `read_active()` on every `assess()` call at L2+; calls `consume()` before sizing on match
 - [[circuit-breakers]] — L1/L2/L3/flash detector; override enables manual resume from L2/L3/FLASH
 - [[kill-switch-cli]] — same `os.open + os.replace` atomic write pattern (S8b T4 mirror); omits `fsync` per paper-trade scope

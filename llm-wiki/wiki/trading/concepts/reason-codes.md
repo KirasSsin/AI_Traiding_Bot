@@ -126,3 +126,9 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - [[../../project/architecture/domain-events]] — где коды используются.
 - [[circuit-breakers]] — HALT_* коды.
 - [[../../project/architecture/edge-cases]] — REJECT_* коды.
+
+## Реализация
+
+- [[../../project/components/execution-state-machine]] — FSM transitions emit HALT_* / EXIT_* reason codes; `halt_reason` persisted per ADR 0021
+- [[../../project/components/coordinator]] — `request_halt(reason)` dispatches HALT_* codes; `_set_halt` writes to audit log
+- [[../../project/components/halt-gate]] — emits HALT_S36_DD_INTRADAY / HALT_S36_DD_MULTIDAY / HALT_S36_CONSECUTIVE_LOSSES / HALT_S36_NO_TRADE_TIMEOUT

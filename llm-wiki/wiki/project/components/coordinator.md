@@ -208,12 +208,20 @@ Decimal stored as TEXT. Coordinator упсёртит row на каждом trans
 - [[runtime-manager]] — owner: calls `coordinator.bootstrap()`, `start_bracket()`, `request_halt()`
 - [[ws-private-consumer]] — sink: routes order/wallet events → `on_order_event`/`on_wallet_event` (через reconciler)
 - [[bybit-adapter]] — REST partner (entry/exit/cancel)
+- [[risk-manager]] — upstream: sends RiskAssessment → `start_bracket`; calls `request_halt` on CB trigger
+- [[halt-gate]] — halt evaluator wired via halt-gate-wireup → `request_halt`
+- [[fill-recorder-adapter]] — `_NoopFillRecorder` stub replaced by adapter in `_cmd_run`
+- [[../sprints/sprint-05-execution]] — sprint where coordinator was created
 - [[../decisions/0019-sprint-5-execution-decisions]] — Coordinator origin (one-writer invariant)
 - [[../decisions/0020-sprint-6-execution-spot-oco-emulation]] — 3-order OCO emulation (start_bracket + arm_oco + on_order_event)
 - [[../decisions/0021-sprint-7-resilience]] — bootstrap, on_ws_reconnect 4-valued, _set_halt γ
 - [[../decisions/0022-sprint-8a-live-runtime]] — RLock policy (Task 0), request_halt API
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — halt-code → FSM event invariant
 - [[../runbooks/halt-recovery]] — operator runbook для 19 halt codes (Coordinator owns `request_halt` API + `_set_halt` internal)
+- [[../architecture/state-machine]] — FSM спецификация (single-writer invariant).
+- [[../architecture/execution-timing]] — timing invariants (signal-on-close → order-at-open-T+1).
+- [[../architecture/domain-events]] — domain events, диспатчируемые Coordinator.
+- [[../architecture/bounded-contexts]] — Order Execution bounded context (Coordinator = ACL owner).
 
 ## Открытые вопросы / перенос к S8c
 

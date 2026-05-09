@@ -79,3 +79,4 @@ risk_kelly_phase4_cap = "0.05"
 - [[../../trading/concepts/kelly-phases]] — formula derivation
 - [[risk-manager]] — orchestration
 - [[sizing]] — `compute_qty(equity, fraction, atr, price, k)`
+- [[../sprints/sprint-04-risk]] — sprint where kelly component was created

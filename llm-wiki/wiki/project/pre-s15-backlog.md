@@ -226,4 +226,6 @@ Next: ADR 0030 → Plan → Execute via subagent-driven.
 - [[decisions/0002-python-only-for-mvp]] — Python-only stack (Q4 ML constraint)
 - [[decisions/0005-1h-timeframe-mvp]] — 1H baseline (Q3 amendment target)
 - [[decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot venue (Q2 multi-symbol policy)
+- [[decisions/0030-sprint-15-mean-reversion-multi-symbol]] — Sprint 15 ADR
+- [[sprints/sprint-15-mean-reversion-multi-symbol]] — Sprint 15 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)

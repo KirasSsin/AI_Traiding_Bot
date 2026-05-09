@@ -2543,3 +2543,11 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **index.md:** reason-codes count 42→50 исправлен; methodology pages добавлены; updated 2026-05-09
 - **Wiki gap найден (T4):** reason-codes.md body утверждает 42 codes — должно быть 50 (S36 +4, S37 +1 HALT_UNKNOWN_SYMBOL); страница нуждается в отдельном sync
 - **Files net changed:** ~35 wiki файлов (заголовки) + CLAUDE.md (4 строки) + BACKLOG.md (NEW) + index.md + log.md + TASKS.md
+
+## [2026-05-09] lint | Obsidian cross-linking sweep — граф связей wiki
+
+- **T1** (architecture-reviewer): 14 архитектурных страниц → компоненты (state-machine, storage, acceptance-criteria, execution-timing, domain-events, risk-register, development-workflow, current-state, reason-codes-schema, stack-v0.1, bounded-contexts, edge-cases, kit-overview-ru, sprint-flow-ru); 20+ обратных ссылок компоненты→архитектура
+- **T2** (doc-reviewer): 1 orphan найден и исправлен — `mental-map.md` добавлен в index.md; все остальные страницы имели входящие ссылки
+- **T3** (trader-expert): 18 pre-sprint backlog файлов → [[sprint-NN]] + [[ADR-NNNN]] ссылки; reverse links в sprint-08c/12; sprint-36/38 plain-text→[[wiki-links]]
+- **T4** (trading-logic-reviewer): 13 inter-component пар (coordinator↔risk-manager/halt-gate/fill-recorder, backtest↔walk/dsr/mc, strategy↔donchian, bar-builder↔bar-poller); 13 trading concept/indicator страниц → компоненты-реализаторы; 10+ компонент→sprint/ADR ссылок; reverse links ADRs 0011/12/13/16/21/22/23/28/53/54/55
+- **Итого:** ~200+ [[wiki-links]] добавлены; Obsidian граф теперь связный

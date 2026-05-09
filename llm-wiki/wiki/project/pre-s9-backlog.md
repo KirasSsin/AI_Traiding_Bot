@@ -136,6 +136,8 @@ PHASE 2 complete. SPRINT_STATE → phase=3-planning. Next: PHASE 3 plan write (`
 - [[decisions/0021-sprint-7-resilience]] — per-fill execution topic deferral source
 - [[decisions/0022-sprint-8a-live-runtime]] — wallet WS+REST epsilon-halt rejection (ADR 0020 sub-decision 4)
 - [[decisions/0023-halt-code-fsm-event-mapping]] — HALT_*+ RISK_HALT mapping invariant
+- [[decisions/0024-sprint-9-data-quality-types-analytics]] — Sprint 9 ADR
+- [[sprints/sprint-09-data-quality-types-analytics]] — Sprint 9 page
 - [[architecture/development-workflow]] — PHASE 2 binding protocol
 - [[../components/trade-history]] — B1 base repository pattern
 - [[../components/bar-poller]] — Q1 detector data source

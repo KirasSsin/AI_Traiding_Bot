@@ -126,6 +126,12 @@ Hudson & Urquhart (2021) показывают, что простые MA-прав
 - [[../concepts/walk-forward-validation]] — OOS validation.
 - [[../concepts/circuit-breakers]] — drawdown halts.
 
+## Реализация
+
+- [[../../project/components/strategy]] — `EmaCrossoverAdxRsiStrategy.on_bar()` — production live implementation
+- [[../../project/components/indicators]] — TA-Lib EMA/ADX/RSI/ATR wrappers consumed by strategy
+- [[../../project/components/backtest-harness]] — `src/backtest/indicators.py` + `replay_engine.run_replay()` — backtest variant
+
 ## Sources
 
 - Wilder (1978) *New Concepts in Technical Trading Systems*.

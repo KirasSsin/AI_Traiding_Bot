@@ -74,3 +74,6 @@ cross_trial_sharpes.json **NOT appended** per ADR 0052 Item #10 protocol (a) (fa
 - [[../decisions/0052-sprint-34-acceptance-criteria-amendment]] — gate thresholds source
 - [[../sprints/sprint-35-testnet-donchian-risk]] — sprint context
 - `src/signalgen/mean_reversion_strategy.py` — sister long-only strategy (S22 partial PASS evidence)
+- [[strategy]] — sister EMA-crossover strategy (same FSM SignalSide + on_bar contract)
+- [[indicators]] — ATR computation shared via `indicators.atr()` (Wilder, period=14)
+- [[sizing]] — ATR-based position sizing via `compute_qty` (same formula, atr_stop_mult=2.0)

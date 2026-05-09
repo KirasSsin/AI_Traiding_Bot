@@ -39,6 +39,7 @@ log.info("boot", component="marketdata", version="0.1.0-alpha.1")
 
 ## Related
 
+- [[../sprints/sprint-01-foundation]] — sprint where logging module was created
 - [[../architecture/stack-v0.1]] — structlog >=24.1 в deps.
 - [[../architecture/domain-events]] — все domain events логируются через этот же pipeline.
 

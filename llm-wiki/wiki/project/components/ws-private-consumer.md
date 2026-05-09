@@ -102,11 +102,13 @@ Endpoint URL содержит маркер площадки:
 ## Связанные
 
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decision 6 (WS-reconnect wiring).
+- `[[../sprints/sprint-08a-live-runtime]]` — sprint where ws-private-consumer driver loop was wired (S8a ADR 0022)
 - `[[coordinator]]` — sink: routes order events → `coordinator.on_order_event()`; WS-reconnect → `coordinator.on_ws_reconnect()` (S7 sub-decision 6).
 - `[[reconciler]]` — потребитель wallet events + post-reconnect диффер.
 - `[[execution-state-machine]]` — `WS_RECONNECT` event consumer.
 - `[[bybit-adapter]]` — REST partner (выставляет ордера, consumer слушает их события).
 - `[[oco]]` — bracket lifecycle, реагирует на order events.
+- [[../architecture/domain-events]] — domain events, публикуемые через WS execution stream.
 
 ## Driver loop (S8a closed)
 

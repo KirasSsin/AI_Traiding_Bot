@@ -93,6 +93,7 @@ Per Q3 trader REVISE accepted: integrate priority matrix INTO `halt-recovery.md`
 - [[../runbooks/log-grep-templates]] — NEW (T6)
 - [[../runbooks/pre-flight]] — NEW (T8)
 - [[../plans/2026-04-25-sprint-11-operator-readiness]] — implementation plan + trace map
+- [[../sprints/sprint-11-operator-readiness]] — спринт delivery record
 
 ## Поправки
 

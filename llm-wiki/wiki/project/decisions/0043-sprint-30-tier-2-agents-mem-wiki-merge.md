@@ -162,7 +162,7 @@ Out-of-repo (`~/.claude/`):
 - `wiki/project/decisions/0041-sprint-28-process-enforcement.md` — process enforcement ADR
 - `wiki/project/decisions/0042-sprint-29-superpowers-integration.md` — superpowers integration ADR
 - `wiki/project/plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md` — S30 plan
-- `wiki/project/sprints/sprint-30-tier-2-agents-mem-wiki-merge.md` — S30 page
+- [[../sprints/sprint-30-tier-2-agents-mem-wiki-merge]] — спринт delivery record
 - https://github.com/obra/superpowers — superpowers skills source
 - https://github.com/thedotmack/claude-mem — claude-mem source
 - https://code.claude.com/docs/sub-agents — Claude Code subagent documentation

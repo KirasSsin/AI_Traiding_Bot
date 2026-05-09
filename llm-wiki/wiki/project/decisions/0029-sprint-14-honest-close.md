@@ -145,6 +145,7 @@ All S12 + S13 carry-overs preserved:
 - [[../sprints/sprint-13-backfill-wfa]] — S13 measurement results
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, not amended)
 - [[../architecture/migration-plan]] — original 10-sprint roadmap (now closed at S14)
+- [[../sprints/sprint-14-honest-close]] — спринт delivery record
 
 ## Поправки
 

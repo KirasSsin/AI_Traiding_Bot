@@ -400,3 +400,10 @@ runtime.shutdown             {reason, in_flight_orders}
 **Approved:** 2026-04-24 by maintainer (user) after trader-expert verdict (rounds 1+2).
 **Implementation plan:** [[../plans/2026-04-24-sprint-8a-live-runtime]].
 **Sprint page:** [[../sprints/sprint-08a-live-runtime]] — delivery record (37 commits, +11 KILL_SWITCH_REQUESTED transitions 59→70, +4 S8b T7 fix-up transitions (FLAT, RISK_HALT) 70→74, reason codes 42→45, tag `v0.1.0-alpha.8a`).
+
+**Затронутые компоненты:**
+- [[../components/runtime-manager]] — `RuntimeManager` lifecycle owner (this ADR primary)
+- [[../components/bar-poller]] — `BarPoller` REST polling source for tick loop
+- [[../components/coordinator]] — bootstrap sequencing + lock policy (RLock)
+- [[../components/kill-switch-cli]] — `python -m src kill` sentinel write + argparse dispatch
+- [[../components/ws-private-consumer]] — pybit thread side integrated into lifecycle

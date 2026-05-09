@@ -157,4 +157,5 @@ Original Phase 3 items (per S32 Phase 0 plan):
 - ADR 0046 (S32b Kit Phase 1) — direct predecessor + CI infrastructure foundation
 - ADR 0047 (this) — Kit Phase 2 reduced scope implementation
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32c-kit-phase-2-improvements]] — спринт delivery record
 - MCP server registry: https://github.com/modelcontextprotocol/servers/tree/main/src/fetch

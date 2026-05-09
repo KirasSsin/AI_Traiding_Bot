@@ -125,8 +125,8 @@ S28 itself was executed по proper kit flow:
 
 ## Related
 
+- [[../decisions/0041-sprint-28-process-enforcement]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — parent pattern для hook-based enforcement
-- ADR 0041 (this sprint) — mechanical kit enforcement
 - Sprint S27 (last drift, no plan file) — context для S28 trigger
 - Sprint S15 (last sprint с plan file before drift)
 - Hook component pages (existing pattern):

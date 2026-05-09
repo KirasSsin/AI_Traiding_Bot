@@ -81,4 +81,7 @@ Activate δ TESTNET live demo с pre-committed gates + halt criteria LOCKED.
 - ADR 0051 (S34 6-th honest close v0.6)
 - ADR 0052 (S34 acceptance-criteria amendment LOCKED)
 - ADR 0054 (S35 Donchian pre-registration — paired α track)
+- [[../sprints/sprint-35-testnet-donchian-risk]] — спринт delivery record
 - pre-s35-backlog.md (ROUND 3 binding consilium trail)
+- [[../components/halt-gate]] — `HaltGate` implementation (frozen dataclass, per-tick evaluation)
+- [[../components/halt-gate-wireup]] — S36 wire-up component (RuntimeManager integration)

@@ -191,11 +191,11 @@ Per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0051-sprint-34-honest-close-v06]] — ADR этого спринта (6-th honest close)
+- [[../decisions/0052-sprint-34-acceptance-criteria-amendment]] — ADR этого спринта (acceptance criteria amendment)
 - ADR 0014 (WFA acceptance thresholds — amended via ADR 0052)
 - ADR 0029/0031/0033/0036/0038 (5 prior honest close ADRs)
 - ADR 0050 (S33 Trading Restart — pre-committed failure branch trigger)
-- ADR 0051 (S34 6-th honest close v0.6 — этот sprint A(a) component)
-- ADR 0052 (S34 acceptance-criteria amendment — этот sprint A(b) component)
 - pre-s33-backlog.md S34 Direction Consilium section
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique + crypto sparse-signal reality)

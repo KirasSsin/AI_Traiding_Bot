@@ -70,6 +70,6 @@ status: completed
 ## Related
 
 - Plan: [[../plans/2026-04-20-sprint-1-foundation]]
-- ADRs: [[../decisions/0002-python-only-for-mvp]], [[../decisions/0003-sqlite-parquet-for-storage]], [[../decisions/0006-pydantic-v2-for-domain-models]], [[../decisions/0007-utc-timestamps-ns-precision]]
+- ADRs: [[../decisions/0001-record-architecture-decisions]], [[../decisions/0002-python-only-for-mvp]], [[../decisions/0003-sqlite-parquet-for-storage]], [[../decisions/0006-pydantic-v2-for-domain-models]], [[../decisions/0007-utc-timestamps-ns-precision]]
 - Components: [[../components/config]], [[../components/logging]], [[../components/models]], [[../components/storage]]
 - Architecture: [[../architecture/stack-v0.1]], [[../architecture/storage]], [[../architecture/migration-plan]]
