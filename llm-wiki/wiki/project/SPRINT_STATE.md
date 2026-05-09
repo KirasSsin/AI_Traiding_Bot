@@ -1,12 +1,30 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-08
+updated: 2026-05-09
 sprint: 39
-phase: 0-prep
-branch: main
+phase: 3-planning
+branch: feature/sprint-39-volume-breakout-tech-debt
 tag: v0.1.0-alpha.38
 ---
+
+## S39 PHASE 3 — writing plan
+
+**Brainstorm RESOLVED:** 8 CONFIRM + 1 REVISE (Q6 8mo PRIMARY) + 1 EXPAND→Option A (baseline LOCK, ATR filter S40+)
+
+**Sprint scope:** Volume_breakout production integration (Track A) + critical tech debt (Track B/C/E)
+
+**Profit invariant (HARD):** post-S39 backtest PnL ≥ baseline (held-out +20.42%/3.3y +122.66%) — Phase 5 HARD-GATE через `tests/integration/test_volume_breakout_baseline_floor.py`
+
+**Track structure (~14 tasks):**
+- Track A — volume_breakout core (A0-A6: 7 tasks)
+- Track B — critical tech debt BEFORE TESTNET activation (B1-B3: 3 tasks)
+- Track C — cleanup (C1-C2: 2 tasks)
+- Track E — bybit-api M3+M4 (E1-E2: 2 tasks)
+
+**See:** `wiki/project/pre-s39-backlog.md` (verdicts) + `wiki/project/plans/2026-05-09-sprint-39-volume-breakout-tech-debt.md` (TDD plan)
+
+**Next action:** Write PHASE 3 plan file
 
 ## S39 BRAINSTORM PENDING — Autoresearch Metric Improvement Loop
 
