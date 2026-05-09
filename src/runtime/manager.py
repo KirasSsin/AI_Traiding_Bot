@@ -25,10 +25,7 @@ if TYPE_CHECKING:
     from src.execution.coordinator import Coordinator
     from src.execution.reconciler import Reconciler
     from src.platform.config import Settings
-    from src.risk.equity_tracker import EquityTracker
     from src.risk.manager import RiskManager, RiskSharedDeps
-    from src.risk.state_repo import StateRepository
-    from src.risk.trade_history import TradeHistoryRepository
     from src.runtime.bar_source import BarSource
     from src.signalgen.mean_reversion_strategy import MeanReversionRsiBBStrategy
     from src.signalgen.strategy import EmaCrossoverAdxRsiStrategy
@@ -64,12 +61,9 @@ class RuntimeManager:
         strategy: Strategy,
         risk_manager: RiskManager,
         settings: Settings,
-        # S38 T4 ADR 0058 SD-3: prefer shared_deps bundle (Demeter compliance).
-        # Backward-compat: individual kwargs still accepted (elif branch below).
-        shared_deps: RiskSharedDeps | None = None,
-        equity_tracker: EquityTracker | None = None,
-        trade_repo: TradeHistoryRepository | None = None,
-        state_repo: StateRepository | None = None,
+        # S39 T10 ADR 0058 SD-3: shared_deps bundle (Demeter compliance, per S38 T4).
+        # Backward-compat shim removed — all callers must use RiskSharedDeps NamedTuple.
+        shared_deps: RiskSharedDeps,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),  # S37 ADR 0057 SD-5
     ) -> None:
         self._coordinator = coordinator
@@ -79,20 +73,10 @@ class RuntimeManager:
         self._strategy = strategy
         self._risk_manager = risk_manager
         self._settings = settings
-        # S38 T4: resolve DI — shared_deps wins, else individual kwargs.
-        if shared_deps is not None:
-            self._equity_tracker = shared_deps.equity_tracker
-            self._trade_repo = shared_deps.trade_repo
-            self._state_repo = shared_deps.state_repo
-        elif equity_tracker is not None and trade_repo is not None and state_repo is not None:
-            self._equity_tracker = equity_tracker
-            self._trade_repo = trade_repo
-            self._state_repo = state_repo
-        else:
-            raise ValueError(
-                "RuntimeManager: must provide shared_deps OR all of "
-                "equity_tracker/trade_repo/state_repo"
-            )
+        # S39 T10: canonical DI path — shared_deps bundle unpacking.
+        self._equity_tracker = shared_deps.equity_tracker
+        self._trade_repo = shared_deps.trade_repo
+        self._state_repo = shared_deps.state_repo
         self._clock = clock
         # S36 T4 architecture-reviewer MEDIUM: instance-side cache avoids per-tick
         # state_repo.get() round-trip after first call. activation_ts immutable post-write.

@@ -40,6 +40,8 @@ def _settings(tmp_path: Path) -> Settings:
 
 
 def _runtime(tmp_path: Path, *, clock=None) -> tuple[RuntimeManager, MagicMock]:
+    from src.risk.manager import RiskSharedDeps
+
     settings = _settings(tmp_path)
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
@@ -53,9 +55,11 @@ def _runtime(tmp_path: Path, *, clock=None) -> tuple[RuntimeManager, MagicMock]:
         "strategy": MagicMock(),
         "risk_manager": MagicMock(),
         "settings": settings,
-        "equity_tracker": EquityTracker(conn),
-        "trade_repo": TradeHistoryRepository(conn),
-        "state_repo": StateRepository(conn),
+        "shared_deps": RiskSharedDeps(
+            equity_tracker=EquityTracker(conn),
+            trade_repo=TradeHistoryRepository(conn),
+            state_repo=StateRepository(conn),
+        ),
     }
     if clock is not None:
         kwargs["clock"] = clock

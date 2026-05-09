@@ -84,37 +84,15 @@ def test_runtime_manager_accepts_shared_deps_kwarg(tmp_path: Path) -> None:
     assert rm._state_repo is sr
 
 
-def test_runtime_manager_backward_compat_individual_kwargs_still_work(tmp_path: Path) -> None:
-    """Backward-compat: existing call sites pass equity_tracker= directly."""
+def test_runtime_manager_rejects_individual_kwargs(tmp_path: Path) -> None:
+    """S39 T10: backward-compat shim removed. Individual kwargs → TypeError."""
     settings = _settings(tmp_path)
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
     et = EquityTracker(conn)
     th = TradeHistoryRepository(conn)
     sr = StateRepository(conn)
-    rm = RuntimeManager(
-        coordinator=MagicMock(),
-        reconciler=MagicMock(),
-        ws_consumer=MagicMock(),
-        bar_source=MagicMock(),
-        strategy=MagicMock(),
-        risk_manager=MagicMock(),
-        settings=settings,
-        equity_tracker=et,
-        trade_repo=th,
-        state_repo=sr,
-    )
-    assert rm._equity_tracker is et
-    assert rm._trade_repo is th
-    assert rm._state_repo is sr
-
-
-def test_runtime_manager_raises_if_neither_shared_deps_nor_individual_kwargs(
-    tmp_path: Path,
-) -> None:
-    """Defensive: missing both paths → ValueError."""
-    settings = _settings(tmp_path)
-    with pytest.raises(ValueError, match="must provide shared_deps OR all of"):
+    with pytest.raises(TypeError, match="unexpected keyword argument 'equity_tracker'"):
         RuntimeManager(
             coordinator=MagicMock(),
             reconciler=MagicMock(),
@@ -123,5 +101,23 @@ def test_runtime_manager_raises_if_neither_shared_deps_nor_individual_kwargs(
             strategy=MagicMock(),
             risk_manager=MagicMock(),
             settings=settings,
-            # NEITHER shared_deps NOR individual kwargs
+            equity_tracker=et,
+            trade_repo=th,
+            state_repo=sr,
+        )
+
+
+def test_runtime_manager_requires_shared_deps(tmp_path: Path) -> None:
+    """S39 T10: shared_deps is required (not optional)."""
+    settings = _settings(tmp_path)
+    with pytest.raises(TypeError, match="missing.*required.*shared_deps"):
+        RuntimeManager(
+            coordinator=MagicMock(),
+            reconciler=MagicMock(),
+            ws_consumer=MagicMock(),
+            bar_source=MagicMock(),
+            strategy=MagicMock(),
+            risk_manager=MagicMock(),
+            settings=settings,
+            # shared_deps is now required — no default
         )

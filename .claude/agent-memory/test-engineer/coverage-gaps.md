@@ -49,16 +49,16 @@ type: project
 - **File:** `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/tests/unit/test_ws_private_consumer.py` (extend)
 - **Source:** bybit-api-reviewer M4, S38 T3
 
-### Item #10: DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios
-- **Gap:** `test_halt_gate.py` covers single-trigger scenarios but NOT multi-period accumulation:
-  - DD_MULTIDAY accumulation over multiple ticks (HWM calculation with daily reset)
-  - NO_TRADE_TIMEOUT with exact boundary (months_since = threshold vs threshold-1)
-  - Concurrent trigger priority ordering (intraday wins over multiday per current implementation)
-- **Tests needed:**
-  1. `test_halt_gate_multiday_hwm_resets_daily`: simulate two trading sessions with equity reset → multiday DD accumulates correctly
-  2. `test_halt_gate_no_trade_timeout_boundary_exact`: months_since=6 (threshold) → triggers, months_since=5 → does not
-  3. `test_halt_gate_priority_all_triggers_concurrent`: all 4 triggers breached → DD_INTRADAY wins (priority)
-- **File:** `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/tests/unit/test_halt_gate.py` (extend)
+### Item #10: DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios — PARTIAL CLOSED (S39 T9)
+- **S39 T9 DONE:** Boundary parametrized tests added to `tests/unit/test_halt_gate.py`:
+  - `test_dd_multiday_boundary_parametrized` — 4 cases: 0.14/0.15/0.16/0.00 vs DD_MULTIDAY threshold
+  - `test_no_trade_timeout_boundary_parametrized` — 4 cases: 5/6/7/0 months vs 6-month threshold
+  - Gate logic confirmed `>=` (inclusive) — no source fix needed
+  - 8 new cases, halt_gate tests total: 7 → 15, commit 5ce8aa1
+- **Remaining gaps (deferred):**
+  1. `test_halt_gate_multiday_hwm_resets_daily`: simulate two sessions with equity reset → multiday DD accumulates correctly (HWM logic, if exists in source)
+  2. `test_halt_gate_priority_all_triggers_concurrent`: all 4 triggers breached → DD_INTRADAY wins (already covered by existing `test_first_trigger_wins_intraday_priority` — low priority)
+- **File:** `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/tests/unit/test_halt_gate.py`
 - **Source:** S37+S38 carry-over Item #10
 
 ## HISTORICAL GAPS (pre-S37, context only)
