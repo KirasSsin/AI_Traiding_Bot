@@ -37,7 +37,9 @@ DELTA_N_TRIALS_LOCKED: int = 7
 # MC gating thresholds per ADR 0055 SD-6
 _MC_SIGN_FLIP_MIN_N: int = 20
 _MC_BLOCK_BOOTSTRAP_MIN_N: int = 40
-_MC_BLOCK_SIZE: int = 20
+# S39 T11 F8 — re-export canonical block size from mc_permutation (single source of truth)
+from src.backtest.mc_permutation import MC_BLOCK_SIZE as _MC_BLOCK_SIZE  # noqa: E402
+
 _MC_ITERATIONS: int = 2000
 _MC_SEED: int = 42
 

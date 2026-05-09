@@ -8,13 +8,21 @@ sign_flip_p_value: per-trade pnl_pct sign-flip null hypothesis test.
 - N=2000 default per ADR 0015
 
 block_bootstrap_p_value: secondary method preserves autocorrelation (T6).
+
+S39 T11 F8 — single source of truth for block_size: MC_BLOCK_SIZE = 20.
+ADR 0015 range 20-50; live_trade_reporter chose 20 (smaller blocks → more
+permutations → tighter p-value resolution для small n).
 """
+
 from __future__ import annotations
 
 import math
 
 import numpy as np
 import numpy.typing as npt
+
+# S39 T11 F8 — canonical MC block size (ADR 0015 range 20-50)
+MC_BLOCK_SIZE: int = 20
 
 
 def sign_flip_p_value(
@@ -63,7 +71,7 @@ def block_bootstrap_p_value(
     returns: npt.NDArray[np.float64],
     *,
     n_iterations: int = 2000,
-    block_size: int = 30,
+    block_size: int = MC_BLOCK_SIZE,
     seed: int | None = 42,
 ) -> float:
     """Block bootstrap permutation test (preserves autocorrelation).
@@ -75,7 +83,7 @@ def block_bootstrap_p_value(
     Args:
         returns: per-trade returns array.
         n_iterations: bootstrap iterations (ADR 0015 default 2000).
-        block_size: block length в bars (ADR 0015 range 20-50, default 30).
+        block_size: block length в bars (ADR 0015 range 20-50, default MC_BLOCK_SIZE=20).
         seed: RNG seed.
 
     Returns:
