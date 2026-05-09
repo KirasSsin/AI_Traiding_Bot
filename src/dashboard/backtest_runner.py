@@ -657,6 +657,45 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         )
     preset = STRATEGY_PRESETS[req.strategy_id]
 
+    # S39 T5b — volume_breakout uses dedicated runner (research execution model).
+    # Bypasses replay_engine which has 3 structural gaps for this strategy:
+    # sl_atr_mult wiring, long_only suppression of channel exit, WFA+Kelly sizing.
+    if preset.get("type") == "volume_breakout":
+        from datetime import date as _date
+
+        from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
+
+        vb_result = run_volume_breakout_backtest(
+            symbol=req.symbol,
+            interval=req.interval,
+            start_date=_date.fromisoformat(req.start),
+            end_date=_date.fromisoformat(req.end),
+        )
+        # Cache to disk (same cache key scheme as WFA path)
+        _RUNS_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path = _RUNS_DIR / f"{run_id}.json"
+        result_vb: dict[str, Any] = {
+            "run_id": run_id,
+            "request": {
+                "strategy_id": req.strategy_id,
+                "strategy_label": preset["label"],
+                "strategy_config": preset,
+                "symbol": req.symbol,
+                "interval": req.interval,
+                "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
+                "start": req.start,
+                "end": req.end,
+            },
+            "n_trades": vb_result["n_trades"],
+            "total_pnl_pct": vb_result["total_pnl_pct"],
+            "sharpe": vb_result["sharpe"],
+            "win_rate": vb_result["win_rate"],
+            "runner": "volume_breakout_runner",  # audit marker
+            "cached": False,
+        }
+        cache_path.write_text(json.dumps(result_vb, default=str, indent=2))
+        return result_vb
+
     with _lock:
         # Lazy import к keep dashboard module loadable без main module side effects
         from src.__main__ import _load_ohlcv, _run_wfa_single_symbol

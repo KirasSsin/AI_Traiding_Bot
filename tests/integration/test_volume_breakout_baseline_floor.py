@@ -29,6 +29,12 @@ run_backtest() (WFA pipeline) returns ~-0.77% / ~-0.32% for held-out/full period
 These are KNOWN divergences from research toy. The baseline floor test checks SIGNAL FIDELITY,
 not execution policy equivalence.
 
+## S39 T5b — production runner tests (added)
+
+run_volume_breakout_backtest() bypasses replay_engine entirely and ports the research
+execution kernel verbatim. These tests verify end-to-end production path replicates
+baseline within ±0.5%.
+
 Source baseline: research/FINAL_STRATEGY.md, autoresearch/donchian-may8 commit fff54ee.
 """
 
@@ -322,6 +328,56 @@ def test_volume_breakout_strategy_id_registered() -> None:
     assert abs(vb_params["vol_mult"] - SWEEP_1644_PARAMS["vol_mult"]) < 1e-6
     assert vb_params["atr_period"] == SWEEP_1644_PARAMS["atr_period"]
     assert abs(vb_params["atr_stop_mult"] - SWEEP_1644_PARAMS["atr_stop_mult"]) < 1e-6
+
+
+@pytest.mark.integration
+def test_volume_breakout_heldout_via_production_runner() -> None:
+    """S39 T5b — production runner MUST replicate research toy held-out result within ±0.5%.
+
+    run_volume_breakout_backtest() ports research/backtest_v2.py::_backtest_single verbatim.
+    This test validates end-to-end production path (NOT the inline research toy kernel above).
+    """
+    from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
+
+    result = run_volume_breakout_backtest(
+        symbol="BTCUSDT",
+        interval="240",
+        start_date=HELDOUT_START,
+        end_date=HELDOUT_END,
+    )
+    pnl = float(result["total_pnl_pct"])
+    n = int(result["n_trades"])
+    floor = HELDOUT_BASELINE_PNL_PCT - REPLICATION_TOLERANCE_PCT
+    assert pnl >= floor, (
+        f"FAIL Phase 5 HARD-GATE (T5b): production runner 8mo PnL={pnl:.2f}% < "
+        f"floor={floor:.2f}% (baseline={HELDOUT_BASELINE_PNL_PCT}%)."
+    )
+    assert HELDOUT_BASELINE_N_TRADES - 2 <= n <= HELDOUT_BASELINE_N_TRADES + 2, (
+        f"FAIL Phase 5 HARD-GATE (T5b): production runner n_trades={n}, "
+        f"expected ~{HELDOUT_BASELINE_N_TRADES} (±2)."
+    )
+
+
+@pytest.mark.integration
+def test_volume_breakout_full_period_via_production_runner() -> None:
+    """S39 T5b — production runner MUST replicate research toy full-period result within ±0.5%.
+
+    3.3y full period: 2023-01-01 → 2026-04-26. Baseline +122.66%.
+    """
+    from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
+
+    result = run_volume_breakout_backtest(
+        symbol="BTCUSDT",
+        interval="240",
+        start_date=FULL_START,
+        end_date=FULL_END,
+    )
+    pnl = float(result["total_pnl_pct"])
+    floor = FULL_BASELINE_PNL_PCT - REPLICATION_TOLERANCE_PCT
+    assert pnl >= floor, (
+        f"FAIL Phase 5 HARD-GATE (T5b): production runner 3.3y PnL={pnl:.2f}% < "
+        f"floor={floor:.2f}% (baseline={FULL_BASELINE_PNL_PCT}%)."
+    )
 
 
 @pytest.mark.integration
