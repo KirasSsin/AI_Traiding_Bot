@@ -2,15 +2,61 @@
 
 from __future__ import annotations
 
+import random
+import time
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pybit.unified_trading import HTTP
 
 if TYPE_CHECKING:
     from src.marketdata.filters import BybitFilters
     from src.marketdata.models import Bar
+
+
+# S39 T7 H1 — Rate-limit exponential backoff с jitter
+_BACKOFF_BASE_S = 0.5
+_BACKOFF_MAX_RETRIES = 5
+_BACKOFF_JITTER_FACTOR = 0.3
+_RATE_LIMIT_RET_CODE = 10006
+
+
+def _retry_with_backoff(
+    fn: Callable[[], dict[str, Any]],
+    *,
+    base: float = _BACKOFF_BASE_S,
+    max_retries: int = _BACKOFF_MAX_RETRIES,
+) -> dict[str, Any]:
+    """Retry pybit call с exponential backoff + jitter on retCode=10006.
+
+    Per Bybit V5 docs: 10006 = "too many visits" rate limit hit.
+    Backoff: delay = base × 2^attempt + jitter × U(0, base × 0.3).
+    Raises BybitAPIError(RATE_LIMIT_HIT) после max_retries failures.
+
+    Args:
+        fn: callable returning pybit response dict {retCode, retMsg, result, ...}
+        base: base delay seconds (default 0.5)
+        max_retries: max attempts (default 5)
+
+    Returns:
+        Successful response dict (retCode != 10006).
+
+    Raises:
+        BybitAPIError if max_retries exhausted.
+    """
+    for attempt in range(max_retries):
+        result = fn()
+        if not isinstance(result, dict) or result.get("retCode") != _RATE_LIMIT_RET_CODE:
+            return result
+        delay = base * (2**attempt) + random.uniform(0, base * _BACKOFF_JITTER_FACTOR)
+        time.sleep(delay)
+    # Max retries exhausted — raise
+    raise BybitAPIError(
+        ret_code=_RATE_LIMIT_RET_CODE,
+        ret_msg=f"Rate limit exhausted после {max_retries} retries",
+    )
 
 
 class BybitAPIError(RuntimeError):
@@ -30,7 +76,7 @@ class BybitRESTClient:
 
     def get_server_time(self) -> datetime:
         """Fetch Bybit server time as UTC datetime (seconds precision)."""
-        resp = self._http.get_server_time()
+        resp = _retry_with_backoff(lambda: self._http.get_server_time())
         if resp["retCode"] != 0:
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""))
         ts_s = int(resp["result"]["timeSecond"])
@@ -40,7 +86,9 @@ class BybitRESTClient:
         """Fetch `/v5/market/instruments-info?category=spot&symbol=X` → filters."""
         from src.marketdata.filters import BybitFilters
 
-        resp = self._http.get_instruments_info(category="spot", symbol=symbol)
+        resp = _retry_with_backoff(
+            lambda: self._http.get_instruments_info(category="spot", symbol=symbol)
+        )
         return BybitFilters.from_instruments_info(resp)
 
     def get_klines(
@@ -86,13 +134,19 @@ class BybitRESTClient:
         bars: list[Bar] = []
         cur_end = end_ms
         while cur_end > start_ms:
-            resp = self._http.get_kline(
-                category="spot",
-                symbol=symbol,
-                interval=interval,
-                start=start_ms,
-                end=cur_end,
-                limit=limit_per_call,
+            # Capture cur_end in closure via functools.partial to avoid B023 loop binding
+            from functools import partial
+
+            resp = _retry_with_backoff(
+                partial(
+                    self._http.get_kline,
+                    category="spot",
+                    symbol=symbol,
+                    interval=interval,
+                    start=start_ms,
+                    end=cur_end,
+                    limit=limit_per_call,
+                )
             )
             if resp["retCode"] != 0:
                 raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""))

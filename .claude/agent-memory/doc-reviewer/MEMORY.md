@@ -1,7 +1,12 @@
 ---
-name: S36 T1 ADR pre-registration + canonical count drift tracking (paired ADRs 0055 + 0056)
-description: S36 T1 commit ce38eab — pure docs, paired anti-snooping ADRs, canonical counts drift post-T1 (54→56), index.md missing 0055/0056 entries flagged for T8 wiki-update
-type: project
+name: Doc-reviewer memory index (persistent)
+description: Orphan linking / frontmatter consistency / link integrity / Block 1↔2 sync patterns
+type: reference
+---
+
+- [Orphan wiki-link resolution session](orphan_linking_session.md) — mental-map found + resolved 2026-05-09. Verified indicators/strategy/concepts already linked via full paths.
+- [S36 T1 ADR pre-registration + canonical count drift tracking](MEMORY.md#s36-t1-pattern) — paired ADRs 0055 + 0056 analysis.
+
 ---
 
 **S36 T1 pattern (paired ADRs 0055 + 0056, pure doc commit ce38eab):**

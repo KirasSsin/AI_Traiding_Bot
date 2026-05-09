@@ -60,3 +60,20 @@ type: project
 - `test_risk_models.py` maintains exhaustive list of all ReasonCode string values
 - Any new ReasonCode (e.g. HALT_UNKNOWN_SYMBOL in S37) must appear in this test
 - Pattern: `assert "HALT_UNKNOWN_SYMBOL" in {r.value for r in ReasonCode}`
+
+## Research toy vs production pipeline discrepancy (S39 T5)
+- Research toy `total_pnl_pct = sum(pnl_pct_per_trade) × 100` — additive, 100% notional
+- Production `run_backtest()` uses WFA pipeline + 10% position_size + sl_atr_mult=1.5 default
+- These are DIFFERENT metrics: research toy +20.42% ≠ production WFA -0.77% on same data
+- Key divergences: (1) WFA OOS fold partitioning, (2) sl_atr_mult unconnected from preset config,
+  (3) long_only=True suppresses -1 channel-exit signals in replay_engine.py line 170
+- Baseline floor test pattern: embed research toy execution kernel in test file directly
+  (not importing from research/) and verify signal fidelity, NOT execution policy
+- See `tests/integration/test_volume_breakout_baseline_floor.py` — 6 tests, 1.14s
+
+## atr_stop_mult config wiring gap (S39 — CONCERN for follow-up)
+- `volume_breakout` preset sets `indicators.volume_breakout.atr_stop_mult=2.9663`
+- `run_replay` reads SL from `indicators.atr.sl_atr_mult` (default 1.5) — DIFFERENT key
+- volume_breakout ATR stop NOT correctly wired into production replay_engine
+- File: `src/backtest/replay_engine.py:134` reads `atr_cfg.get("sl_atr_mult", 1.5)`
+- This is a T5b follow-up: reconcile or document as intentional policy difference
