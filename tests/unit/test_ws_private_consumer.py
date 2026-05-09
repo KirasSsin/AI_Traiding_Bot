@@ -307,3 +307,77 @@ def test_reconnect_triggers_check_alive_re_probe() -> None:
         assert (
             mock_check_alive.call_count >= 1
         ), "S39 T8 H2 gap: post-disconnect re-probe missing — silent dead-WS risk"
+
+
+def test_on_order_raw_drops_dict_data_with_log(caplog) -> None:
+    """S39 T12 M3 regression: if Bybit sends data=dict (V3 shape), must log + drop, NOT iterate."""
+    import logging
+
+    coord = MagicMock()
+    consumer = BybitPrivateWSConsumer(
+        api_key="test",
+        api_secret="test",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=coord,
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+
+    msg = {"topic": "order", "data": {"orderId": "12345"}}  # dict, not list
+
+    with caplog.at_level(logging.WARNING):
+        consumer._on_order_raw(msg)
+
+    # Verify structured log marker present (shape mismatch)
+    assert any(
+        "shape" in rec.message.lower()
+        or "isinstance" in rec.message.lower()
+        or "expected" in rec.message.lower()
+        for rec in caplog.records
+    ), "M3: must log shape mismatch warning"
+
+    # Verify coordinator NOT called (no fake order processed)
+    coord.on_order_event.assert_not_called()
+
+
+def test_on_execution_raw_drops_dict_data_with_log(caplog) -> None:
+    """S39 T12 M3 regression: execution handler must guard against V3 dict shape."""
+    import logging
+
+    fill_recorder = MagicMock()
+    consumer = BybitPrivateWSConsumer(
+        api_key="test",
+        api_secret="test",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
+        fill_recorder=fill_recorder,
+    )
+
+    msg = {"topic": "execution", "data": {"execId": "abc"}}  # dict, not list
+
+    with caplog.at_level(logging.WARNING):
+        consumer._on_execution_raw(msg)
+
+    # Verify structured log marker present
+    assert any(
+        "shape" in rec.message.lower() or "expected" in rec.message.lower()
+        for rec in caplog.records
+    ), "M3: execution handler must log shape mismatch"
+
+    fill_recorder.on_fill_event.assert_not_called()
+
+
+def test_ws_consumer_repr_does_not_contain_api_secret() -> None:
+    """S39 T13 M4 security: __repr__ MUST never expose api_key or api_secret."""
+    consumer = BybitPrivateWSConsumer(
+        api_key="visible_test_key_xxxxx",
+        api_secret="super_secret_value_must_not_appear",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+    r = repr(consumer)
+    assert "super_secret_value_must_not_appear" not in r
+    assert "visible_test_key_xxxxx" not in r
