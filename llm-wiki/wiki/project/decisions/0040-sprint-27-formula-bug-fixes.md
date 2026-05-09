@@ -17,7 +17,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S26 shipped (Dashboard UI redesign). Operator directive verbatim:
 
@@ -84,7 +84,7 @@ ESC items requiring operator decision before S28:
 - **ESC-2** — "in profit" vs "pass acceptance criteria" — different goals (live pilot ETH 4H pre-S28?)
 - **ESC-3** — operational implications 4H multi-symbol (3 simultaneous positions, 1-5 day holds)
 
-## Consequences
+## Последствия
 
 ### Code changes (5 commits)
 
@@ -154,7 +154,7 @@ Pre-fix vs post-fix delta:
 - Trader-expert sprint backlog (S28-S32) not yet planned (PHASE 3 после ESC resolution)
 - DSR cross-trial sigma_SR (S14 Q2) still unimplemented (defer к S31)
 
-## References
+## Ссылки
 
 - Trader-expert audit: `.claude/agent-memory/trader-expert/s27_brainstorm.md`
 - Trading-logic-reviewer audit: detailed bug table в этом ADR

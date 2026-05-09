@@ -17,7 +17,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S19 shipped (PR #27, tag `v0.1.0-alpha.19`). Architectural prep complete. 167,383 bars BTCUSDT 15M ready. 7 amendments pre-registered BINDING.
 
@@ -29,7 +29,7 @@ SPRINT_N=20 .venv/bin/python -m src wfa --symbol BTCUSDT --interval 15 \
 
 User confirm "T5 ≥ 150" before measurement → T-Amendment 1 binding accepted.
 
-## Decision
+## Решение
 
 ### S20 measurement results — VERDICT FAIL
 
@@ -100,7 +100,7 @@ NO code changes. NO new infrastructure. Pure measurement + documentation.
 - **CC6 (No spec amendment)**: acceptance-criteria.md preserved.
 - **CC7 (S17 partial signal contradicted at 15M)**: S17 BTC 1H MC p=0.01 was real signal, но fragile to timeframe shift. v0.5+ hypothesis must consider: 1H regime-specific edge (revisit option B hybrid ML на 1H signal? OR 4H higher-stability test?).
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Pre-registered binding criteria honored (T5 floor 150, fold concentration check applied)
@@ -121,13 +121,13 @@ NO code changes. NO new infrastructure. Pure measurement + documentation.
 - **(v0.5-C)** Regime-switch HMM + mean-reversion — context layer addresses fold #2 catastrophic regime. Cost: 3-5 sprints.
 - **(v0.5-D)** Project pause — 4 hypotheses tested, infrastructure preserved.
 
-## Related
+## Связанные документы
 
 - [[../decisions/0034-sprint-19-15m-architecture]] — S19 ADR (pre-registered amendments triggered)
 - [[../sprints/sprint-19-15m-architecture]] — S19 architectural prep
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal (1H, contradicted at 15M)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 
-## Amendments
+## Поправки
 
 - (none yet)

@@ -3,7 +3,7 @@ title: Wiki Index — каталог всех страниц
 type: summary
 tags: [index, navigation, catalog]
 created: 2026-04-19
-updated: 2026-04-25
+updated: 2026-05-09
 status: stable
 ---
 
@@ -34,7 +34,7 @@ _(пусто — v0.2+)_
 - [[trading/concepts/walk-forward-validation]] — train=2000, test=500, K=5, embargo=20 баров, OOS/IS≥0.7 gate.
 - [[trading/concepts/deflated-sharpe-ratio]] — DSR по Bailey–López de Prado, коррекция Sharpe на skew/kurt/N configs.
 - [[trading/concepts/monte-carlo-permutations]] — sign-flip N=2000 (primary) + block-bootstrap L=20-50 (secondary).
-- [[trading/concepts/reason-codes]] — 42 enum-кодов (6 entry + 11 scale/exit + 9 rejects + 16 halts); S7 +3 (HALT_BOOTSTRAP_AMBIGUOUS / HALT_EXIT_RECONCILE_DIVERGENCE / EXIT_RECONCILE_DETECTED).
+- [[trading/concepts/reason-codes]] — 50 enum-кодов (6 entry + 11 scale/exit + 9 rejects + 24 halts); S7 +3 / S36 +4 HALT_S36_* / S37 +1 HALT_UNKNOWN_SYMBOL. (⚠️ страница reason-codes.md устарела — показывает 42; актуальный счётчик 50 per execution-state-machine.md + current-state.md)
 - [[trading/concepts/look-ahead-bias]] — 5 канонических форм, 6 invariants, CI gate detector, property tests.
 
 ## Project — Architecture
@@ -248,6 +248,11 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0042-sprint-29-superpowers-integration]] — Sprint 29 ADR: Full Superpowers Skills Integration. Operator-driven kit upgrade ("максимально нужное количество скиллов"). Pre-S29 only 6/13 superpowers skills used. 7 NEW integrated: systematic-debugging / verification-before-completion / requesting-code-review / receiving-code-review / dispatching-parallel-agents / using-git-worktrees / writing-skills. Skills × Phase integration map (26 skills total) NEW в tooling-inventory-ru.md Section 12. NO code changes.
 - [[project/decisions/0041-sprint-28-process-enforcement]] — Sprint 28 ADR: Process enforcement (sprint-flow-check hook + Russian process docs). Mechanical enforcement of kit flow via pre-push hook blocking sprint branches без plan file. Russian process docs (sprint-flow-ru + tooling-inventory-ru) = single source of truth для operator. CLAUDE.md "BEFORE ANY SPRINT WORK" binding section. Per-task SPRINT_STATE update protocol. Triggered after operator complaint S27 ship — 12 sprints (S16-S27) drift verified. NO code changes.
 - [[project/decisions/0040-sprint-27-formula-bug-fixes]] — Sprint 27 ADR: Formula bug fixes (5 bugs). Trader+logic-reviewer parallel brainstorm verdict — trader EXPAND (formulas correct, failures structural — T5 unreachable single-symbol), logic-reviewer PARTIAL FAIL 4 bugs. T1 HIGH replay_engine bars_per_year parameterization (corrupted 27/30 experiments) / T2 MEDIUM Sortino canonical Sortino & Price 1994 / T3 MEDIUM RSI/ATR warm-up gating talib convention / T4 INFO/CC5 trade_extractor preserve actual reason_code / T5 LOW MC seed=42 default. Audit infrastructure: `scripts/audit_formulas.py` + `data/formulas_audit_v1.json` + dashboard auto-refresh hook. Sweep re-run post-fix preserved verdict counts (0/30 PASS) but reason codes diverse + ema_crossover SOL 4H pnl improved. ESC-1/2/3 для S28+ pending operator decision. Trader-expert backlog S28-S32 (multi-symbol → regime filter → SL calibration → Donchian → DSR cross-trial). 762 pytest passed (+18 new tests).
+
+## Project — Methodology
+
+- [[project/methodology-decision-algorithms]] — Алгоритмы принятия решений (brainstorm flow, trader-expert round protocol, PHASE 2 binding).
+- [[project/methodology-rejected]] — Отклонённые методологические подходы с обоснованием.
 
 ## Project — Backlogs
 

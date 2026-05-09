@@ -12,7 +12,7 @@ sources: [src/risk/sizing.py]
 
 **TL;DR:** Pure function. ATR-based stop-distance position sizing. `qty = (fraction · equity) / (k · ATR)`. Все inputs `Decimal`. `k` инжектится из Settings (default `1.5`).
 
-## Public API
+## Публичный API
 
 `src/risk/sizing.py`:
 
@@ -70,7 +70,7 @@ risk_tp_atr_multiplier = "3.0"   # TP placement (R:R = 2:1)
 
 `tests/unit/test_risk_sizing.py` — formula correctness, zero/edge cases, ValueError на negatives.
 
-## Related
+## Связанные
 
 - [[kelly]] — источник `fraction`
 - [[risk-manager]] — caller, выполняет quantization + min-notional reject

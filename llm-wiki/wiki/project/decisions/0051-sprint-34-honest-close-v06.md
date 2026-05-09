@@ -19,11 +19,11 @@ sources:
 
 # ADR 0051 — Sprint 34 6-th Honest Close v0.6
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented в S34 (`feature/sprint-34-honest-close-v06-hybrid` → tag `v0.1.0-alpha.34`). Hybrid pair с ADR 0052 (acceptance-criteria amendment LOCKED).
 
-## Context
+## Контекст
 
 Sixth honest close в проекте. Pre-committed failure branch (Item #12 ADR 0050) TRIGGERED post-S33 F BACKTEST FAIL conjoint.
 
@@ -84,7 +84,7 @@ Per `data/sprint_34_amended_gates_precheck.json`:
 - v0.5 closed Sprint 23 с CC1 T5=100 unreachable single-symbol BINDING + CC3 strategy edge regime-INDEPENDENT
 - Multi-symbol revival approved S15 (failed) → S33 (failed multi-symbol BTC+ETH+SOL 4H)
 
-## Decision
+## Решение
 
 **6-th honest close v0.6.** Mirror S14 ADR 0029 pattern + S16 ADR 0031 + S18 ADR 0033 + S21 ADR 0036 + S23 ADR 0038 BINDING precedent.
 
@@ -114,7 +114,7 @@ Future operator может choose:
 | **(d) Different timeframe** | 1D mean-reversion с volume gate. | NOT recommended per S34 consilium (T5 problem worse) |
 | **(e) Different asset class** | Uncorrelated instruments (commodity futures, FX). | Beyond v0.1 scope. Major refactor. |
 
-## Consequences
+## Последствия
 
 ### Positive
 
@@ -138,14 +138,14 @@ Future operator может choose:
 2. Pattern consistent с industry norm (most quant strategies fail empirical validation)
 3. Documented insights have value beyond v0.1 (regime-independence + Hudson&Urquhart 2021 validation + correlation deflation insight)
 
-## Implementation
+## Реализация
 
 T2 commit (this commit):
 - `data/cross_trial_sharpes.json` reset к `{"trials": []}`
 - `data/cross_trial_sharpes_v0.6.json` NEW (3 S33 entries archived)
 - ADR 0051 (this file)
 
-## Related
+## Связанные документы
 
 - ADR 0029 (S14 1-st honest close) — pattern reference
 - ADR 0031 (S16 2-nd honest close v0.2)

@@ -2528,3 +2528,18 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Track 2 AI-side: S38 sprint closed F2/F3/Item #7/playbook + 4 ROUND 6 carry-overs
 - 8 carry-overs persisted к S39+
 - SPRINT_STATE → between-sprints
+
+## [2026-05-09] audit | Pre-S39 wiki RU translation sweep + BACKLOG + structural audit
+
+- **Scope:** 247 wiki files, 8 parallel agents (T1-T7 + T2b)
+- **Architecture pages** (T1): 3 файла переведены (acceptance-criteria.md, kit-audit-2026-04-27.md, migration-plan.md); 9 уже RU; CLAUDE.md — 4 стейл-фикса (счётчики агентов/скиллов/хуков + current-state S8c→S38)
+- **Sprint pages** (T2/T2b): S01-S06 переведены; S07-S23 + runbooks + ADRs 0001-0014 уже RU; структура 38 страниц чистая (sprint-24/26 gaps ожидаемы)
+- **ADRs 0039-0054** (T3): заголовки переведены (0049 отсутствует); ADRs 0015-0038 уже RU; methodology-rejected + methodology-decision-algorithms — заголовки переведены
+- **Trading wiki** (T4): 13 страниц уже RU; 7 компонентных файлов — 52 заголовка переведены; S39 статус: FINAL_STRATEGY.md в ветке autoresearch/donchian-may8, не в main; рекомендация (K) Formal kit cycle S39
+- **Infra/analytics** (T5): indicators.md — 3 заголовка; 17/18 уже RU
+- **Data/Bybit/security** (T6): 20 файлов переведены; gap: FillRecorderAdapter Layer 2 (entry_signal_id, pre-S12); H1 rate-limit риск при REST catch-up
+- **Test gaps** (T7): S37-S38 тесты CLEAN; sprint-metrics.md + sprint-22/23 + components/README.md переведены; mental-map.md уже RU; 5 тест-гэпов для S39 (H2/H1/M3/M4/Item#10)
+- **BACKLOG.md** создан (T3) на repo root — S39 приоритеты в RU
+- **index.md:** reason-codes count 42→50 исправлен; methodology pages добавлены; updated 2026-05-09
+- **Wiki gap найден (T4):** reason-codes.md body утверждает 42 codes — должно быть 50 (S36 +4, S37 +1 HALT_UNKNOWN_SYMBOL); страница нуждается в отдельном sync
+- **Files net changed:** ~35 wiki файлов (заголовки) + CLAUDE.md (4 строки) + BACKLOG.md (NEW) + index.md + log.md + TASKS.md

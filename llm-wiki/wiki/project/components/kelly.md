@@ -12,7 +12,7 @@ sources: [src/risk/kelly.py, ADR 0012]
 
 **TL;DR:** Pure functions returning equity-fraction `f` per ADR 0012 phases. Phase 1/2 — fixed caps. Phase 3 — Quarter-Kelly capped. Phase 4 — Half-Kelly capped. Wilson 95% CI lower bound для `p` в phases 3/4 (conservative estimate). No I/O, no state — caller passes `KellyCaps` from `Settings`.
 
-## Public API
+## Публичный API
 
 `src/risk/kelly.py`:
 
@@ -73,7 +73,7 @@ risk_kelly_phase4_cap = "0.05"
 - Kelly formula (p=0.6 b=2 → f*=0.4)
 - ValueError для invalid inputs
 
-## Related
+## Связанные
 
 - [[../decisions/0012-4-phase-kelly-sizing]] — source of truth
 - [[../../trading/concepts/kelly-phases]] — formula derivation

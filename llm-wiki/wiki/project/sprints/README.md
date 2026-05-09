@@ -3,7 +3,7 @@ title: Sprints — per-sprint delivery records
 type: summary
 tags: [sprints, retrospective, workflow]
 created: 2026-04-22
-updated: 2026-04-22
+updated: 2026-05-09
 status: stable
 ---
 

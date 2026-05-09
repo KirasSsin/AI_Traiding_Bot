@@ -34,7 +34,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 | T5 | Math expectation per-trade | >0 с t-stat >2.0 | Guards против random-noise edge; требует n≥100 OOS trades |
 | T6 | OOS/IS Sharpe ratio | ≥0.7 | Primary overfit-detector; degradation >30% red flag |
 
-## Supporting metrics (не gating)
+## Вспомогательные метрики (не gating)
 
 - **Deflated Sharpe Ratio (DSR)** > 0 — учитывает multiple testing. См. [[../../trading/concepts/deflated-sharpe-ratio]].
 - **Probability of Backtest Overfit (PBO)** < 0.5 — PBO > 0.5 означает, что IS-winner проигрывает случайному в OOS.
@@ -46,7 +46,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 - Profit factor один — коррелирует с Sharpe, не даёт независимой информации.
 - Max consecutive losses — волатилен на малых n, легко overfit.
 
-## Gating flow
+## Последовательность проверок (Gating flow)
 
 ```
 1. Walk-Forward + K=5 CV на 5 лет BTC 1H¹
@@ -65,19 +65,19 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 
 ³ **PBO gate deferred S15+** — PBO requires MCS (Monte Carlo Strategy Selection) framework not implemented в v0.1 (~3 sprints scope expansion). S13 measurement uses **T1-T6 + DSR > 0 only** (PBO gate documented as deferred, not silently dropped).
 
-## Revalidation cadence
+## Периодичность ревалидации
 
 - **Monthly walk-forward re-optimization** на последние 5 лет + свежие 1 месяц live data.
 - **Regime shift monitor:** KS-test live returns distribution vs backtest; p<0.01 → revert к Kelly Phase 1.
 
-## Sources
+## Источники
 
 - Halls-Moore (2015) *Successful Algorithmic Trading* Ch. Performance Measurement.
 - López de Prado (2018) *Advances in Financial ML* Ch.14.
 - Bailey–López de Prado (2014) "The Deflated Sharpe Ratio" *JPM* 40(5):94–107.
 - Hudson & Urquhart (2021) "Technical trading and cryptocurrencies" *Annals of OR* 297:191–220.
 
-## Related
+## Связанные
 
 - [[../../trading/concepts/walk-forward-validation]]
 - [[../../trading/concepts/deflated-sharpe-ratio]]
@@ -86,7 +86,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 
 ---
 
-## S34 Amendment (LOCKED ADR 0052 — pending operator acknowledgment for v0.7+ resumption)
+## Поправка S34 (ЗАФИКСИРОВАНО ADR 0052 — требует operator acknowledgment для возобновления v0.7+)
 
 Per S34 consilium consensus + ADR 0052 LOCKED:
 

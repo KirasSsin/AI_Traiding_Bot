@@ -17,9 +17,9 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-25
 
-## Context
+## Контекст
 
-Sprint 11 closes pre-flight gaps blocking live execution + ships operator infrastructure:
+Sprint 11 закрывает pre-flight gaps, блокирующие живое исполнение, и поставляет операторскую инфраструктуру:
 - `_cmd_run` STUB since S8a T20 deferral — bot не runnable end-to-end через `python -m src run`
 - `_cmd_reconcile_only` STUB since same source
 - WFA shipped S10 но не exposed как CLI subcommand
@@ -36,7 +36,7 @@ PHASE 2 brainstorming verdicts (`pre-s11-backlog.md`):
 - Q6 CONFIRM: 1-test fix + audit для other S4-era drift
 - Q7 CONFIRM + addition: architecture-reviewer MANDATORY для _cmd_run
 
-## Decision
+## Решение
 
 ### P0 pre-flight (Q2)
 
@@ -65,7 +65,7 @@ Per Q3 trader REVISE accepted: integrate priority matrix INTO `halt-recovery.md`
 - **C2:** `_cmd_monitor` strictly read-only. Implementation uses SQLite `?mode=ro` URI. T7 test enforces no DB mtime change.
 - **C3:** WFA CLI bundled с P0 (T4) но не blocked A scope parallel.
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Bot runnable end-to-end через `python -m src run` (closes 8-month-old S8a T20 STUB)
@@ -83,7 +83,7 @@ Per Q3 trader REVISE accepted: integrate priority matrix INTO `halt-recovery.md`
   - **C1 (T2 review):** `endpoint = "demo.bybit.com" if testnet else "stream.bybit.com"` — pybit derives `testnet`/`demo` flags from substring match. Current string sets `demo=True, testnet=False` (correct для S11 demo trading intent но semantically wrong для Bybit testnet). Fix to use string containing "testnet" substring (e.g., `"stream-testnet.bybit.com"`) when actual testnet validation needed.
   - **C3 (T2 review):** `init_db` opens own internal connection separate from `connect()` returned conn. WAL mode safe but worth code comment.
 
-## Related
+## Связанные документы
 
 - [[../pre-s11-backlog]] — PHASE 2 verdicts trail
 - [[0016-bybit-spot-supersedes-binance]] — Bybit Spot venue (V5 Unified) supersedes Binance; demo trading endpoint family
@@ -94,6 +94,6 @@ Per Q3 trader REVISE accepted: integrate priority matrix INTO `halt-recovery.md`
 - [[../runbooks/pre-flight]] — NEW (T8)
 - [[../plans/2026-04-25-sprint-11-operator-readiness]] — implementation plan + trace map
 
-## Amendments
+## Поправки
 
 - (none yet)

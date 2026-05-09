@@ -17,7 +17,7 @@ status: stable
 
 Файл: `src/runtime/bar_source.py`. Заменяет absent driver loop: до S8a kline данные читали только batch-скрипты backfill'а. Live-runtime требует tick-source.
 
-## Public API
+## Публичный API
 
 ```python
 class BarSource:
@@ -72,7 +72,7 @@ the dict is the source of truth for any future call-site (S8b T2 fix).
 No `Settings.bar_interval` field — interval is passed at construction by the
 caller. YAGNI per trader-expert verdict 2026-04-24.
 
-## Related
+## Связанные
 
 - [[runtime-manager]] — owner of poll cadence + halt emission
 - [[bybit-adapter]] — REST kline endpoint wrapper

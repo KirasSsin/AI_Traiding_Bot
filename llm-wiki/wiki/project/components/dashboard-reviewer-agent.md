@@ -68,7 +68,7 @@ Severity: BLOCKER (security / look-ahead / TESTNET / live trading violation) / H
 | Memory | project (auto-creates `.claude/agent-memory/dashboard-reviewer/MEMORY.md` on first WRITE) |
 | Tools | Read, Grep, Glob, Bash (read-only access) |
 
-## Related
+## Связанные
 
 - [[../decisions/0017-review-agent-harness]] — L5 agent matrix policy
 - [[../decisions/0039-sprint-25-dashboard]] — S25 dashboard architecture (APPROVE_WITH_CONDITIONS)

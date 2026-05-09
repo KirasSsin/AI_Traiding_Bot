@@ -4,7 +4,13 @@ description: Canonical file paths for architecture pages + language translation 
 type: project
 ---
 
-Wiki language translation batch completed 2026-05-09.
+Wiki language translation batch completed 2026-05-09. Second pass completed 2026-05-09 (Task A architecture pages).
+
+**Second pass findings (2026-05-09):**
+- `acceptance-criteria.md` — mostly RU body, only 5 EN section headers needed translation (Supporting metrics, Gating flow, Revalidation cadence, Sources, Related, S34 Amendment)
+- `kit-audit-2026-04-27.md` — English section headers throughout needed translation (~15 headers)
+- `migration-plan.md` — English section headers throughout needed translation (~14 headers)
+- All other 9 files in architecture/ already fully Russian — NO edits needed
 
 **Why:** llm-wiki/CLAUDE.md Language rules (binding) require all wiki pages → Russian narrative + EN code/anchors.
 

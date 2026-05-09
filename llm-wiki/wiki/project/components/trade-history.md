@@ -25,7 +25,7 @@ sources:
 
 **Чем отличается от `halt_log`** (S7 γ-persistence): `halt_log` пишется при каждом переходе CB в halt-состояние. `trade_history` пишется при каждом закрытии сделки (EXIT_TP / EXIT_SL / EXIT_RECONCILE_DETECTED и пр. по reason_code). Разные события, разные таблицы, разные readers.
 
-## Public API
+## Публичный API
 
 ```python
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
@@ -75,7 +75,7 @@ class TradeHistoryRepository:
 
 Нет методов `get_by_signal_id` или `list_recent` с `limit` — публичный интерфейс репозитория ограничен тремя методами выше. `_row_to_record()` — приватный статический метод для десериализации строки SQLite → `TradeRecord`.
 
-## Schema (`trade_history` table)
+## Схема (`trade_history` table)
 
 ```sql
 -- migrations/002_risk.sql (Sprint 4 — Risk & Circuit Breakers schema)
@@ -157,7 +157,7 @@ SELECT * FROM trade_history ORDER BY exit_ts DESC LIMIT 100;
 
 Migrations runner (`src/platform/storage/`) применяет их в порядке filename prefix. `IF NOT EXISTS` в M003 безопасен при повторном прогоне (идемпотентен).
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -171,7 +171,7 @@ Migrations runner (`src/platform/storage/`) применяет их в поря�
 - [[kelly]] — phase selection reads trade count from `TradeHistoryRepository.count()`
 - [[../decisions/0012-4-phase-kelly-sizing]] — Kelly phases ADR defines count thresholds (n<30, n<100, n<200, n≥200) consumed from this table
 
-## Related
+## Связанные
 
 - [[risk-manager]] — primary writer: вызывает `insert_closed_trade()` на каждое закрытие позиции; читает `count()` для Kelly phase
 - [[kelly]] — 4-phase sizing читает trade count из `count()` / `load_recent()` (ADR 0012)
@@ -182,7 +182,7 @@ Migrations runner (`src/platform/storage/`) применяет их в поря�
 - [[../decisions/0018-sprint-4-risk-decisions]] — Wilson 95% CI lower bound для фаз 3/4
 - [[../decisions/0007-utc-timestamps-ns-precision]] — AwareDatetime + UTC ISO-8601 contract
 
-## Open questions
+## Открытые вопросы
 
 - **Trade closure caller** — RiskManager вызывает `insert_closed_trade()` напрямую, или через Coordinator при `EXIT_*` reason code? Надо верифицировать grep `TradeHistoryRepository.insert_closed_trade` по callers в `src/`.
 - **Retention policy** — TTL отсутствует. Таблица растёт бесконечно. v0.2 archival policy для old trades не запланирована (деферировано).

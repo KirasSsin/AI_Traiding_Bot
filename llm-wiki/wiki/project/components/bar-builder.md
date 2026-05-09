@@ -36,7 +36,7 @@ status: stable
 - **Stateful per instance** — хранит `last_confirmed_open_ms`. Один instance = один symbol+interval.
 - **No forward-fill в GAP** (per edge-cases #1) — GAP bar имеет OHLCV=0, downstream skip signal.
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -45,7 +45,7 @@ status: stable
 | 3 | Out-of-order: `open_ms < last_confirmed` → `OutOfOrderError` | `src/marketdata/bar_builder.py::BarBuilder._check_order` | `tests/unit/test_bar_builder.py::test_out_of_order_is_rejected` |
 | 4 | Stateful per instance — one instance per symbol+interval | `src/marketdata/bar_builder.py::BarBuilder.__init__` | (architecture rule) |
 
-## Related
+## Связанные
 
 - [[../architecture/edge-cases]] — источник invariant-списка.
 - [[models]] — `Bar`, `DataQuality`.

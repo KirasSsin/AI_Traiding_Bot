@@ -21,7 +21,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 Operator directive 2026-04-26 после S30 ship:
 
@@ -58,7 +58,7 @@ Per best practices: "Bloated CLAUDE.md files cause Claude to ignore your actual 
 - ❌ CLI tools (gh / git / pytest etc) не documented explicit
 - ❌ Single tools-overview file отсутствует
 
-## Decisions
+## Решения
 
 ### Decision 1: Create kit-overview-ru.md (single source of truth)
 
@@ -114,7 +114,7 @@ Per best practices: "Bloated CLAUDE.md files cause Claude to ignore your actual 
 
 Token-saver commands table (8 commands) — quick reference inline в CLAUDE.md.
 
-## Consequences
+## Последствия
 
 ### Code / config changes
 
@@ -171,7 +171,7 @@ S31 carry-overs:
 - Optional: enforce verification-before-completion checklist via hook (currently soft)
 - Optional: dispatch-pattern detection (warn если sequential where parallel possible)
 
-## References
+## Ссылки
 
 - [[../architecture/kit-overview-ru]] — single source of truth (S31 NEW)
 - [[../architecture/tooling-inventory-ru]] — full catalog (Sections 14-19 NEW S31)

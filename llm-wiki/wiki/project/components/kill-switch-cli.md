@@ -17,7 +17,7 @@ sources:
 
 **File:** `src/__main__.py` (117 LoC, S8a G6 + S8b T3/T4).
 
-## Commands
+## Команды
 
 | Command | Purpose | Status (S8b) |
 |---------|---------|---------------|
@@ -30,14 +30,14 @@ Argparse handler type: `Callable[[argparse.Namespace], int]` — typed dispatch 
 
 **Why `python -m src` not `bot`:** package is named `src` (per `pyproject.toml`). No `console_scripts` entry — avoids packaging complexity with zero v0.1 payoff (ADR 0022 sub-decision 9).
 
-## `python -m src kill` — sentinel-file write semantics
+## `python -m src kill` — семантика записи sentinel-file
 
-### Path resolution
+### Определение пути
 
 - Default: `Settings.runtime_kill_switch_path = ".kill_switch"` (ADR 0022 sub-decision 5)
 - Configurable via `RUNTIME_KILL_SWITCH_PATH` env var
 
-### Atomic write (S8b T4)
+### Атомарная запись (S8b T4)
 
 Uses POSIX atomic-rename pattern, mirrors `src/risk/override.py:82-95` minus `os.fsync`:
 
@@ -64,15 +64,15 @@ return 0
 
 **Why module-level `import os`:** needed for `monkeypatch.setattr("src.__main__.os.replace", ...)` resolution in S8b T4 atomicity test (`tests/unit/test_kill_switch_cli.py`).
 
-### File mode
+### Режим файла
 
 `0o600` (owner read/write only) — prevents accidental tamper by other users on shared host. Tmp file also gets `0o600` before rename.
 
-### Stale sentinel cleanup
+### Очистка устаревшего sentinel
 
 `RuntimeManager.run()` unlinks `.kill_switch` on startup if it exists (stale from prior session). Without this cleanup the process would immediately halt on first tick (ADR 0022 sub-decision 5, lifecycle note).
 
-## RuntimeManager polling
+## Опрос RuntimeManager
 
 Each tick, `_maybe_kill_switch` executes as step 1 of the tick pipeline:
 
@@ -92,7 +92,7 @@ Polling latency = 1 tick (5s by default, `Settings.runtime_bar_poll_cadence_seco
 
 См. [[runtime-manager]] tick pipeline для full step order.
 
-## FSM dispatch (ADR 0023 invariant)
+## Диспетчеризация FSM (инвариант ADR 0023)
 
 `Coordinator.request_halt(KILL_SWITCH_REQUESTED)` per ADR 0023:
 
@@ -107,7 +107,7 @@ canonical implementation: `src/execution/coordinator.py:600-625` (post-S8b T1).
 
 См. [[execution-state-machine]] + [[../decisions/0023-halt-code-fsm-event-mapping]] для invariant detail.
 
-## Recovery (operator workflow)
+## Восстановление (процедура оператора)
 
 After a kill-switch halt:
 
@@ -118,7 +118,7 @@ After a kill-switch halt:
 5. RuntimeManager startup unlinks any stale `.kill_switch`, then calls `coordinator.bootstrap()` → reconciler 4-valued verdict
 6. If HEAL applied → resume OK; if DIVERGENCE → HALTED state, requires manual_reset
 
-## Why sentinel-file (not SIGUSR1)
+## Почему sentinel-file (не SIGUSR1)
 
 ADR 0022 sub-decision 5 evaluated both options:
 
@@ -127,28 +127,28 @@ ADR 0022 sub-decision 5 evaluated both options:
 | SIGUSR1 | Conflict with systemd/launchd supervisor semantics; macOS launchd uses SIGUSR* for its own purposes | Rejected |
 | Sentinel-file | Cross-platform, no signal collision, deterministic under supervisor; 1-tick (5s) latency acceptable for manual action | Chosen |
 
-## Tests
+## Тесты
 
 - `tests/unit/test_kill_switch_cli.py` — `python -m src kill` writes file atomically; `os.replace` monkeypatched for atomicity assertion (S8b T4)
 - `tests/unit/test_main_module.py` — argparse subcommand routing, `_build_parser()` help text
 - `tests/unit/test_runtime_manager.py` — `_maybe_kill_switch` detection → graceful shutdown; stale file removed on startup
 - `tests/property/test_request_halt_mapping.py` — ADR 0023 exhaustive dispatch invariant (S8b T7)
 
-## Out of scope / deferred
+## Вне scope / отложено
 
 - **SIGUSR1 handler** — deferred per ADR 0022 (supervisor collision risk, sentinel chosen). v0.2 may add as secondary trigger.
 - **External REST endpoint** — risk-dashboard override hook → v0.2.
 - **Systemd/launchd service unit** — ops concern, separate artifact post-tag.
 - **`run` + `reconcile-only` full DI wiring** — TODO carry-over; T20 integration test reference will establish wiring pattern.
 
-## Referenced by
+## Ссылки из
 
 - [[coordinator]] — `request_halt(KILL_SWITCH_REQUESTED)` triggered by sentinel detection
 - [[runtime-manager]] — `_maybe_kill_switch` tick step polls sentinel; calls `request_halt` + sets `_stopping = True`
 - [[../decisions/0022-sprint-8a-live-runtime]] — ADR sub-decisions 5+6 (sentinel-file + entry-point)
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — KILL_SWITCH_REQUESTED dispatch invariant
 
-## Related
+## Связанные
 
 - [[runtime-manager]] — owns tick pipeline + `_maybe_kill_switch` step + lifecycle
 - [[coordinator]] — `request_halt` FSM dispatch (ADR 0023 invariant)
@@ -158,7 +158,7 @@ ADR 0022 sub-decision 5 evaluated both options:
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — halt-code → FSM event exhaustive mapping
 - [[../runbooks/halt-recovery]] — operator runbook covering KILL_SWITCH_REQUESTED + 18 другие halt codes (Operational class group)
 
-## Sources
+## Источники
 
 - `src/__main__.py` — full file (117 LoC, S8a G6 + S8b T3/T4)
 - ADR 0022 sub-decisions 5, 9, G3, G6

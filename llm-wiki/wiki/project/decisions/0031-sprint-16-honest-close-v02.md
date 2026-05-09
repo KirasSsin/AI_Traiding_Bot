@@ -18,7 +18,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S15 shipped (PR #23, tag `v0.1.0-alpha.15`). Verdict FAIL but T5 ≥100 trades floor REACHED for first time (108 trades aggregate via mean-reversion × 3 symbols BTC/ETH/SOL на 1H Bybit Spot). ADR 0030 multi-symbol aggregation hypothesis VALIDATED — strategy still no measurable edge (MC p=0.998 = random-equivalent).
 
@@ -35,7 +35,7 @@ Trader rationale (verified via grep + s15_wfa_result.json + cross_trial_sharpes.
 5. **Option D breaks DSR accumulation cleanly + preserves v0.3 optionality**: Bailey 2014 N_trials per hypothesis (не per framework instance) → v0.3 fresh-start resets cross_trial baseline.
 6. **Evidence base sufficient**: 2 strategy families × 5y data × proper WFA+DSR+MC pipeline.
 
-## Decision
+## Решение
 
 ### S16 scope: v0.2 honest close ship
 
@@ -118,7 +118,7 @@ Per trader ESC-1 (informational, not blocker):
 
 **Operator decides if/when. No commitment from S16.**
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Honest closure based on 2 empirical measurements (S13 -44.46 + S15 -12.38 OOS Sharpe)
@@ -155,7 +155,7 @@ All previous + new from S15:
 - Capital allocation cross-symbol exposure caps (S15 deferred — natural per-symbol Kelly was sufficient for measurement)
 - Strategy revision OR pivot decision (per v0.3 options A/B/C/D/E — operator-driven)
 
-## Related
+## Связанные документы
 
 - [[../pre-s16-backlog]] — PHASE 2 verdict (trader CONFIRM Option D)
 - [[0030-sprint-15-mean-reversion-multi-symbol]] — S15 ADR (mean-reversion + multi-symbol)
@@ -164,6 +164,6 @@ All previous + new from S15:
 - [[../sprints/sprint-15-mean-reversion-multi-symbol]] — S15 measurement results
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, not amended)
 
-## Amendments
+## Поправки
 
 - (none yet)

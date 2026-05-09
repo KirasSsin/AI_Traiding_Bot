@@ -18,7 +18,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 Operator complaint после S27 ship:
 
@@ -53,7 +53,7 @@ S27 specifically violated:
 - SPRINT_STATE updated only at end (not per-task)
 - TodoWrite ad-hoc, not phase tracker
 
-## Options
+## Варианты
 
 ### Option A — Polite reminder в CLAUDE.md (status quo, drift continues)
 - **Pros:** Zero infrastructure
@@ -67,7 +67,7 @@ S27 specifically violated:
 - **Pros:** Conceptually elegant
 - **Cons:** Still bypassable. Skill auto-trigger = description match — not deterministic enforcement.
 
-## Decision
+## Решение
 
 **Option B** — mechanical enforcement via hook (`sprint-flow-check.sh`) + Russian process docs (single source of truth для operator).
 
@@ -91,7 +91,7 @@ S27 specifically violated:
    - Per-task progress subtable under Phase 4
    - Per-task SPRINT_STATE update protocol (BINDING — не batch в конце)
 
-## Consequences
+## Последствия
 
 ### Code / config changes
 
@@ -181,7 +181,7 @@ exit 0
 - Optional future: pre-commit hook checking SPRINT_STATE updated within last hour
 - Optional future: project-level skill `/sprint-start` automates branch + SPRINT_STATE template + plan file scaffolding
 
-## References
+## Ссылки
 
 - `wiki/project/architecture/sprint-flow-ru.md` — обязательный процесс
 - `wiki/project/architecture/tooling-inventory-ru.md` — tooling catalog

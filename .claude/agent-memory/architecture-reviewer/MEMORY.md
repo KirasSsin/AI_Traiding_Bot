@@ -9,3 +9,4 @@
 - [Parallel interval maps — 4 drift sites](parallel-interval-maps.md) — rest.py intervals + __main__.py bars_per_year_map + interval_seconds_map + argparse choices must be extended ATOMICALLY per new timeframe; partial extension = silent wrong-Sharpe or crash
 - [Dashboard Presentation context — S25](dashboard-context-s25.md) — src/dashboard/ = new DDD Presentation context; FastAPI+uvicorn separate process from bot; optional deps group; background thread + Lock for backtest execution
 - [Wiki language rules — 2026-05-09](wiki-language-rules.md) — mental-map.md lives at project/ not architecture/; delta-activation-playbook.md lives at components/ not architecture/; translation in-place, filenames unchanged, [[links]] use EN filenames
+- [CLAUDE.md stale-count anti-pattern](claude-md-stale-counts.md) — repo CLAUDE.md Ключевые файлы table + Skills hierarchy L5 list go stale as agents are added; fix per review; verified stale in S39 gap audit 2026-05-09

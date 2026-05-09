@@ -34,7 +34,7 @@ status: stable
 - **Pagination прозрачна** для `get_klines` — вызываем пока не выберем `[start, end)` полностью.
 - **UTC everywhere** — timestamps конвертятся в UTC datetime на границе.
 
-## Related
+## Связанные
 
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — ADR выбора venue.
 - [[bybit-ws]] — WS consumer (отдельный канал).

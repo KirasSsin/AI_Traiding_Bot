@@ -202,7 +202,7 @@ FSM v3 (`src/execution/state_machine.py`): **16 состояний, 29 собы�
 
 Также передаётся `expected_oco_qty=entry_qty` для qty-cross-check в reconciler classifier'е.
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -211,7 +211,7 @@ FSM v3 (`src/execution/state_machine.py`): **16 состояний, 29 собы�
 | 3 | SL payload omits `timeInForce` (Bybit silent GTC→IOC) | `src/execution/bybit/adapter.py::BybitMarketAdapter.place_stop_market_order` + ADR 0020 sub-decision 6 | (probe-validated) |
 | 4 | `make_order_link_id` deterministic format `oco-{bracket_id}-{role}-{attempt}` (idempotent retry) | `src/execution/bracket.py::make_order_link_id` + ADR 0020 sub-decision 9 | `tests/unit/test_bracket_builder.py::test_make_order_link_id_pattern_and_length` |
 
-## Related
+## Связанные
 
 - [[coordinator]] — owns OCO arming lifecycle (`start_bracket` + `arm_oco` + `flatten`); 8 RLock-protected methods (S8a)
 - [[reconciler]] — walletBalance-as-truth партнёр + 4-valued verdicts (S7)

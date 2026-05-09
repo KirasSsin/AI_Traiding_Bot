@@ -17,7 +17,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 Operator directive 2026-04-26 после S28 ship:
 
@@ -47,7 +47,7 @@ Missing skills с concrete integration points:
 | `using-git-worktrees` | Sandbox audits (S27 audit re-run could've used worktree) | cross-phase |
 | `writing-skills` | New project skills создавались ad-hoc (S28 brainstorm-init/sprint-orient/wiki-update/sprint-finish) | cross-phase |
 
-## Options
+## Варианты
 
 ### Option A — Status quo (6 skills)
 - **Pros:** No work
@@ -61,7 +61,7 @@ Missing skills с concrete integration points:
 - **Pros:** Comprehensive quality coverage. Single source of truth для skill invocation. Aligns с operator "максимально нужное количество".
 - **Cons:** More documentation surface (3 files updated)
 
-## Decision
+## Решение
 
 **Option C** — full integration of 7 missing superpowers skills + Skills × Phase integration map (26 skills total).
 
@@ -86,7 +86,7 @@ Missing skills с concrete integration points:
    - Cross-phase optional skills subsection
    - Anti-patterns +6 для new skills
 
-## Consequences
+## Последствия
 
 ### Code changes
 
@@ -125,7 +125,7 @@ Plus:
 
 После S29 любой вопрос "какой skill в какой фазе invoked" → consult Section 12 в tooling-inventory-ru.md. Replaces scattered references в multiple docs.
 
-## References
+## Ссылки
 
 - `wiki/project/architecture/sprint-flow-ru.md` — обязательный процесс (updated S29)
 - `wiki/project/architecture/tooling-inventory-ru.md` — tooling catalog (updated S29 с integration map)

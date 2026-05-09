@@ -19,7 +19,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S16 closed v0.2 honest (PR #24, tag `v0.1.0-alpha.16`). User clarification 2026-04-26: "торговать будем в mvp только btc/usdt" — MVP scope = BTCUSDT only per ADR 0016 + ADR 0004 original.
 
@@ -31,7 +31,7 @@ S17 PHASE 2 brainstorm — single direction question delegated к trader-expert 
 
 **Q1 trader EXPAND verdict:** option (a) BTC-only mean-reversion с relaxed thresholds = least-bad surviving option, с 3 mandatory amendments.
 
-## Decision
+## Решение
 
 ### S17 scope: BTC-only mean-reversion relaxed (1 sprint)
 
@@ -103,7 +103,7 @@ Threshold relaxation multipliers:
 - **CC6 (No spec amendment):** acceptance-criteria.md T1-T6 thresholds preserved.
 - **CC7 (Multi-symbol infrastructure preserved):** S15 T1 load_recent symbol filter + T5 --symbols CLI = post-MVP scope, не used в S17 BTC-only measurement (single --symbol).
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Cheapest test (1 sprint, reuses S15 infrastructure 100%)
@@ -131,7 +131,7 @@ If S17 strategy criteria FAIL:
 
 All previous carry-overs preserved (S12+S13+S14+S15+S16, 12+ items): F live demo Mainnet, FillRecorderAdapter Layer 2, 3-way endpoint enum, halt_log INSERT order, find_by_order_id ORDER BY, component pages updates, quant-stats deferred concerns, 48h Bybit demo, Q3 15M architectural blockers, multi-symbol live runtime, capital allocation cross-symbol caps.
 
-## Related
+## Связанные документы
 
 - [[../pre-s17-backlog]] — PHASE 2 trader EXPAND verdict (option a с amendments)
 - [[0031-sprint-16-honest-close-v02]] — S16 v0.2 honest close + CC2 cross_trial archival policy + CC1 BTC institutional knowledge
@@ -142,6 +142,6 @@ All previous carry-overs preserved (S12+S13+S14+S15+S16, 12+ items): F live demo
 - [[0014-walk-forward-train2000-test500]] — WFA params unchanged
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 
-## Amendments
+## Поправки
 
 - (none yet)

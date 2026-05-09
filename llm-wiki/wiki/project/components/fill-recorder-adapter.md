@@ -19,7 +19,7 @@ sources:
 - Enables operator post-mortem fill audit during S12 demo validation window.
 - Satisfies `_FillRecorderProto` interface expected by `_cmd_run` without requiring `FillHistoryRepository` to be a drop-in (Q5 REVISE-additive — it is not).
 
-## Public API
+## Публичный API
 
 ```python
 class FillRecorderAdapter:
@@ -35,7 +35,7 @@ class FillRecorderAdapter:
         """Implements _FillRecorderProto. Called on every Bybit V5 WS execution event."""
 ```
 
-## Architecture — 2-layer pattern
+## Архитектура — 2-layer pattern
 
 ### Layer 1: always-on audit (structlog)
 
@@ -62,7 +62,7 @@ Layer 1 (structlog audit) fires on every fill regardless — fill events are not
 
 **Fix deferred to S13:** add `entry_signal_id` column to `execution_state` via new migration + wire `Coordinator.start_bracket` to persist `signal_id` at bracket creation time. Q7 zero-migration constraint (S12 plan-level commitment) deferred this to S13.
 
-## Invariants
+## Инварианты
 
 - **Never crashes on malformed WS event** — exception-swallowing per WS thread crash-prevention policy (a crash in the WS callback kills the consumer thread).
 - **Layer 1 fires ALWAYS** — structlog audit is unconditional.
@@ -81,7 +81,7 @@ Layer 1 (structlog audit) fires on every fill regardless — fill events are not
 - Idempotency (duplicate exec_id → no second insert attempt error)
 - `on_fill_event` return type is `None`
 
-## Related
+## Связанные
 
 - [[fill-history]] — `FillHistoryRepository` and `FillRecord` — DB-backed fill storage (S9 Q3 B1)
 - [[ws-private-consumer]] — Bybit V5 private WS (order + wallet execution topic source)

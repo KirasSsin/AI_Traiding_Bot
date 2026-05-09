@@ -12,7 +12,7 @@ sources: [src/risk/manager.py, src/risk/override.py, src/platform/config.py, ADR
 
 **TL;DR:** Точка входа Risk модуля. Композирует `EquityTracker`, `CircuitBreakerDetector`, `Kelly` (4-phase + Wilson lower bound), `compute_qty`, `OverrideStore`, `StateRepository`, `TradeHistoryRepository`. Возвращает `RiskAssessment` (frozen pydantic v2). Enforces look-ahead инвариант (`assessed_at >= signal.generated_at`).
 
-## Public API
+## Публичный API
 
 `src/risk/manager.py`:
 

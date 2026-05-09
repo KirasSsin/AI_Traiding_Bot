@@ -1,5 +1,5 @@
 ---
-title: Sprint 4 — Risk module (4-phase Kelly + L1/L2/L3/flash circuit breakers)
+title: Sprint 4 — Модуль управления риском (4-фазовый Kelly + L1/L2/L3/flash автоматы)
 type: sprint
 tags: [sprint, sprint-4, risk, kelly, circuit-breakers, override]
 created: 2026-04-23
@@ -8,20 +8,20 @@ sources: [project/plans/2026-04-23-sprint-4-risk.md]
 status: completed
 ---
 
-# Sprint 4 — Risk module
+# Sprint 4 — Модуль управления риском
 
 **Dates:** 2026-04-23
 **Plan:** [[../plans/2026-04-23-sprint-4-risk]] (split into [[../plans/2026-04-23-sprint-4-risk-tasks-1-8]] / [[../plans/2026-04-23-sprint-4-risk-tasks-9-13]] / [[../plans/2026-04-23-sprint-4-risk-tasks-14-17]])
 **Tag:** skipped — S4 merged into `v0.1.0-alpha.6` (consolidates S4+S5+S6 ship). Drift note: original plan tagged `v0.1.0-alpha.4 (pending PR merge)` 2026-04-23, но tag `alpha.4` never created. Reconciled 2026-04-25.
 **Commit range:** `a5d38a8..HEAD` (17 commits включая wiki delivery)
 
-## Goal
+## Цель
 
 Реализовать risk-управление per ADR 0012 (4-phase Kelly + Wilson 95% CI) и ADR 0013 (L1/L2/L3/flash CB). Обеспечить look-ahead-free decision pipeline через `RiskManager.assess(signal, mark_price) -> RiskAssessment`. Добавить override mechanism для manual CB resume с config_hash anti-replay.
 
-## Scope delivered
+## Доставленная функциональность
 
-### Code — risk module (`src/risk/`)
+### Код — модуль управления риском (`src/risk/`)
 
 - `reason_codes.py` — 29-code `StrEnum` (entry=6, scale/exits=8, rejects=8, halts=7). Wiki ранее заявлял 28 — typo исправлен в S4.
 - `models.py` — `HaltState` enum (`L0|L1|L2|L3|FLASH`) + `RiskAssessment` frozen pydantic v2 value object.
@@ -35,7 +35,7 @@ status: completed
 - `resume_cb.py` + `__main__.py` — CLI: `python -m src.risk.resume_cb --level L2 --reason "..." --duration-hours 24`.
 - `manager.py` — `RiskManager` orchestrator. См. [[../components/risk-manager]].
 
-### Code — config (`src/platform/config.py`)
+### Код — конфиг (`src/platform/config.py`)
 
 13 новых полей `risk_*`:
 - Kelly caps (`risk_kelly_phase{1,2,3,4}_cap`)
@@ -45,23 +45,23 @@ status: completed
 
 `Settings.config_hash()` — SHA-256 от `model_dump_json(...)` sort_keys для override anti-replay.
 
-### Migrations
+### Миграции БД
 
 - `migrations/002_risk.sql` — `trade_history` + `equity_snapshots` (TEXT для Decimal money + CHECK constraints + 3 indexes).
 - `migrations/003_trade_history_unique.sql` — UNIQUE INDEX `entry_signal_id` (forward-only fix Task 7 blocker).
 
-### Cleanup
+### Очистка
 
 - Removed legacy `src/risk/risk_manager.py` (старая stub) и `src/core/math_engine.py` (mock Kelly).
 - `src/risk/__init__.py` обновлён — экспортирует `RiskManager` из нового модуля.
 
-### Tests
+### Тесты
 
 - Unit (8 файлов): `test_risk_settings.py`, `test_risk_models.py`, `test_risk_migration.py`, `test_risk_sizing.py`, `test_risk_kelly.py`, `test_risk_equity_tracker.py`, `test_risk_circuit_breakers.py`, `test_risk_trade_history.py`, `test_risk_override.py`, `test_risk_state_repo.py`, `test_risk_manager.py`.
 - Integration: `tests/integration/test_risk_flow.py` — 50-bar synthetic price series, 8 сценариев (normal entry → L1 escalation → L2 halt → manual resume → flash detection → recovery → re-entry).
 - **Total:** 308 tests passing на момент integration задачи (Task 15).
 
-### Wiki
+### Вики
 
 - Components: [[../components/kelly]], [[../components/circuit-breakers]], [[../components/sizing]], [[../components/risk-manager]].
 - Concept fix: [[../../trading/concepts/reason-codes]] (28→29).
@@ -99,7 +99,7 @@ status: completed
 - `REJECT_INVALID_SIGNAL` отдельный код — рассмотреть в S5 если executor нужно различать.
 - VoltAgent `security-auditor` review для `override.py` (file IO, JSON deserialization, config_hash) — приоритет S5 при работе с API keys.
 
-## Verification
+## Проверка
 
 ```bash
 pytest -q                    # 308 passed
@@ -108,7 +108,7 @@ ruff check src/ tests/       # 0 errors
 python -m src.risk.resume_cb --help   # CLI works
 ```
 
-## Related
+## Связанные
 
 - [[../plans/2026-04-23-sprint-4-risk]]
 - [[../components/risk-manager]] [[../components/kelly]] [[../components/circuit-breakers]] [[../components/sizing]]

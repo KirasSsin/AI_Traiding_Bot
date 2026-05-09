@@ -20,7 +20,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 Operator directive 2026-04-26 после S29 ship:
 
@@ -28,7 +28,7 @@ Operator directive 2026-04-26 после S29 ship:
 >
 > "Проанализируй как можно смержить функционал llmwiki и её потенциал с плагином claude mem, т.к. они оба призваны чтобы обеспечить экономию токенов и передачи тебе полноты контекста самым оптимальным путём."
 
-## Decisions
+## Решения
 
 ### Decision 1: Add 3 tier-2 reviewer agents
 
@@ -96,7 +96,7 @@ STEP 4: Read raw + offset (full content, controlled)
 
 S30 deliverable = documentation enforcement only. NO new skill creation.
 
-## Consequences
+## Последствия
 
 ### Code / config changes
 
@@ -154,7 +154,7 @@ Out-of-repo (`~/.claude/`):
   - Optional: extract security-auditor MEMORY.md template для multi-trader migration
   - Optional: pre-commit hook checking SPRINT_STATE Phase 4 task table updated within last hour (per-task discipline aid)
 
-## References
+## Ссылки
 
 - `wiki/project/architecture/sprint-flow-ru.md` — обязательный процесс (updated S30)
 - `wiki/project/architecture/tooling-inventory-ru.md` — tooling catalog (updated S30 с Section 13)

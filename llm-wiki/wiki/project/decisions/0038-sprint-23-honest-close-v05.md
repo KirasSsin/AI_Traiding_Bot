@@ -17,13 +17,13 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S22 shipped (PR #30, tag `v0.1.0-alpha.22`). BTC 4H mean-reversion test verdict FAIL T5 count (62 trades < 100 floor) but 5/6+DSR=0.996+MC p=0.018 PASS — similar pattern к S17 1H. Per ADR 0037 BINDING: → S23 honest close v0.5.
 
 S23 = pre-committed honest close per ADR 0037. Pattern mirrors S14/S16/S18/S21 (5-th honest close в проекте, docs-only sprint).
 
-## Decision
+## Решение
 
 ### S23 scope: v0.5 honest close ship
 
@@ -129,7 +129,7 @@ echo '{"trials": []}' > data/cross_trial_sharpes.json  # v0.6 fresh baseline
 
 **Operator decides if/when. No commitment from S23.**
 
-## Consequences
+## Последствия
 
 **Plus:**
 - 5 empirical measurements documented (S13 + S15 + S17 + S20 + S22 across 4.81y BTC)
@@ -153,7 +153,7 @@ echo '{"trials": []}' > data/cross_trial_sharpes.json  # v0.6 fresh baseline
 - 4H Bybit backfill API hung issue (resample workaround used) — investigation deferred
 - 5th map missed by architecture review (S22) — review template improvement
 
-## Related
+## Связанные документы
 
 - [[../decisions/0037-sprint-22-4h-test]] — S22 ADR (FAIL trigger)
 - [[../decisions/0036-sprint-21-honest-close-v04]] — S21 v0.4 honest close (precedent)
@@ -164,6 +164,6 @@ echo '{"trials": []}' > data/cross_trial_sharpes.json  # v0.6 fresh baseline
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal на 1H (similar к S22 pattern)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 
-## Amendments
+## Поправки
 
 - (none yet)

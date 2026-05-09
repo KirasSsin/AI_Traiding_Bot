@@ -14,11 +14,11 @@ sources:
 
 # ADR 0047 — Sprint 32c Kit Improvement Phase 2
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented in S32c (`feature/sprint-32c-kit-phase-2-improvements` → tag `v0.1.0-alpha.32c`). Sub-sprint S32 series.
 
-## Context
+## Контекст
 
 Per ADR 0046 carry-overs, Kit Phase 2 = 7 changes total. Pre-plan analysis (this session) revealed:
 - 5 changes = clear wins (skill mappings + Fetch MCP)
@@ -35,7 +35,7 @@ Per ADR 0046 carry-overs, Kit Phase 2 = 7 changes total. Pre-plan analysis (this
 5. **No web docs lookup MCP** — Bybit API v5 docs / PyPI versions / GitHub releases require manual browser navigation
 6. **claude-mem corpus flat** — mem-search noisy when queries span multiple domains (trading + process + debug), будет компаундироваться через 5-10 спринтов
 
-## Options
+## Варианты
 
 **Option A: Full Phase 2 — все 7 deliverables в S32c**
 - Pros: Phase 2 closed completely
@@ -49,7 +49,7 @@ Per ADR 0046 carry-overs, Kit Phase 2 = 7 changes total. Pre-plan analysis (this
 - Pros: One sprint less
 - Cons: Lose 5 quick wins (4 skill mappings + Fetch MCP); operator productivity gap
 
-## Decision
+## Решение
 
 **Option B selected.** Sprint 32c = Kit Phase 2 reduced = 4 changes:
 
@@ -91,7 +91,7 @@ NOT для trading data fetch (use pybit V5 client с proper auth + rate limitin
 
 Tag mapping based on existing frontmatter conventions across 33 sprint pages + 47 ADRs. Implementation deferred к S32d — needs claude-mem internal API research.
 
-## Consequences
+## Последствия
 
 ### Positive
 
@@ -115,7 +115,7 @@ Tag mapping based on existing frontmatter conventions across 33 sprint pages + 4
 2. No FSM / reason codes / canonical state changes (16/30/74/45 unchanged)
 3. Pattern continues S28-S32b (7-th consecutive non-trading sprint)
 
-## Implementation
+## Реализация
 
 Per plan `2026-04-27-sprint-32c-kit-phase-2-improvements.md`:
 - T1 → 0761bad (.mcp.json + tooling-inventory Section 7.7/7.8)
@@ -125,7 +125,7 @@ Per plan `2026-04-27-sprint-32c-kit-phase-2-improvements.md`:
 
 Tag: `v0.1.0-alpha.32c`.
 
-## Follow-ups
+## Дальнейшие действия
 
 **S32d candidate (Kit Phase 3 = Phase 2 deferred research + Phase 3 originals):**
 
@@ -148,7 +148,7 @@ Original Phase 3 items (per S32 Phase 0 plan):
 **Trading carry-overs (BLOCKED — operator):**
 - ESC-1 / ESC-2 / ESC-3
 
-## Related
+## Связанные документы
 
 - ADR 0017 (review-agent harness) — L5 agent matrix policy
 - ADR 0043 (S30 tier-2 agents + cascade) — bridges 2-4 origin

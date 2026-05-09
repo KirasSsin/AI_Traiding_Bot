@@ -23,7 +23,7 @@ The override mechanism enforces three independent security invariants before all
 
 Override applies to levels **L2, L3, FLASH** only. L1 is a warn+size-reduction state, not a halt — no override needed.
 
-## Public API
+## Публичный API
 
 ```python
 OverrideLevel = Literal["L2", "L3", "FLASH"]
@@ -129,7 +129,7 @@ Duration format: `NNh` | `NNm` | `NNd` (default `1h`). CLI computes `settings.co
 
 Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, ADR 0018 sub-decision 9h, L3 audit finding).
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | CWE | Invariant | Enforcement | Test |
 |-----|-----------|-------------|------|
@@ -150,7 +150,7 @@ Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, AD
 - [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — CB hierarchy this override gates against
 - [[kill-switch-cli]] — atomic write pattern shared (kill-switch S8b T4 mirror without fsync)
 
-## Related
+## Связанные
 
 - [[risk-manager]] — consumer: calls `read_active()` on every `assess()` call at L2+; calls `consume()` before sizing on match
 - [[circuit-breakers]] — L1/L2/L3/flash detector; override enables manual resume from L2/L3/FLASH
@@ -158,7 +158,7 @@ Stdout prints `level` + `expires_at` only — **not** the file path (CWE-532, AD
 - [[config]] — `Settings.risk_override_path` + `Settings.risk_override_hmac_key` + `Settings.config_hash()` + `_HASH_ALLOWLIST`
 - [[../decisions/0018-sprint-4-risk-decisions]] — sub-decision 9 (full security audit: C1/H1/H2/H3/M1/M2/L3)
 
-## Open questions
+## Открытые вопросы
 
 - **Key rotation procedure** — rotating `risk_override_hmac_key` invalidates all active overrides; ops runbook not yet written (deferred v0.2, noted in ADR 0018 consequences).
 - **Multi-operator approval** — today single HMAC key = single trust anchor; quorum / dual-control override workflow deferred v0.2+.

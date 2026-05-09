@@ -20,7 +20,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-25
 
-## Context
+## Контекст
 
 Sprint 12 closes deferred carry-overs от S11 + delivers first live demo validation cycle:
 - `_NoopFillRecorder` stub в `_cmd_run` (closes S11 T2 deferral)
@@ -40,7 +40,7 @@ PHASE 2 brainstorming verdicts (`pre-s12-backlog.md`):
 
 **Critical correction (Q6):** SPRINT_STATE S11 C1 carry-over note "fix endpoint к testnet substring" was WRONG. Trader source-cited evidence (`__main__.py:138` + `ws_private.py:65-67`) verified by maintainer via grep (CC1 lesson). Truth table: current routing CORRECT for S12 demo intent.
 
-## Decision
+## Решение
 
 ### Production wiring (Q4 + Q5 REVISE-additive)
 
@@ -100,7 +100,7 @@ PHASE 2 brainstorming verdicts (`pre-s12-backlog.md`):
 - **T2 (Parquet shim):** python-reviewer (config dict translation correctness)
 - **T3-T5 (validation run + protocol):** maintainer + operator (live execution oversight)
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Bot validated end-to-end на Bybit demo (first live cycle since `_cmd_run` STUB closed S11)
@@ -122,7 +122,7 @@ PHASE 2 brainstorming verdicts (`pre-s12-backlog.md`):
 - DSR threshold calibration (S15+ per S11 Q5 verdict — needs ≥30 trades)
 - Per-fold DSR DataFrame→TradeRecord conversion (informational, deferred от S10)
 
-## Related
+## Связанные документы
 
 - [[../pre-s12-backlog]] — PHASE 2 verdicts trail с trader source claims verified
 - [[0026-sprint-11-operator-readiness]] — predecessor sprint (operator infrastructure consumed)
@@ -132,6 +132,6 @@ PHASE 2 brainstorming verdicts (`pre-s12-backlog.md`):
 - [[../runbooks/pre-flight]] — operator entry criteria (Gate 5 update post-T2)
 - [[../runbooks/halt-recovery]] — priority matrix (P0 wake criteria)
 
-## Amendments
+## Поправки
 
 - (none yet)

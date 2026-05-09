@@ -11,7 +11,7 @@ status: stable
 
 **TL;DR:** Что отклонили и почему; что отложили до v0.2+.
 
-## Rejected packages registry
+## Реестр отклонённых пакетов
 
 | Package | Repo | Reason |
 |---------|------|--------|
@@ -20,7 +20,7 @@ status: stable
 | VoltAgent (90+ subagents) | VoltAgent/awesome-claude-code-subagents | Нерелевантны домену (UI/mobile/wordpress/healthcare/blockchain). Кроме `security-auditor` + `architect-reviewer` — рекомендованы. |
 | claude-mem `make-plan`, `do`, `smart-explore`* | thedotmack/claude-mem | Overlap с Superpowers `writing-plans` / `subagent-driven-development` / Grep+Glob. |
 
-## Deferred items (вернуться позже)
+## Отложенные элементы (вернуться позже)
 
 | Item | Status | Trigger to revisit |
 |------|--------|--------------------|

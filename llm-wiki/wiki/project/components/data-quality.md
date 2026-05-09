@@ -14,7 +14,7 @@ sources:
 
 **TL;DR:** Single-instance in-memory baseline detector comparing current REST closed bar price vs previously observed REST closed bar (per-process). Threshold = 0.5% relative deviation (Settings tunable: `runtime_quality_threshold_pct`). Per-bar cadence. Triggers `HALT_DATA_QUALITY` via existing `RISK_HALT` event path (no new FSM event/state). Wired в `RuntimeManager._poll_bar_and_strategy` BEFORE strategy consumes bar (halt is terminal — `_stopping=True` set, main loop exits).
 
-## Public API
+## Публичный API
 
 | Symbol | Path | Role |
 |--------|------|------|
@@ -29,7 +29,7 @@ Per `pre-s9-backlog.md` Q1 verdict (REVISE accepted by maintainer):
 - WS partial-bar updates create false-positive risk при per-bar comparison.
 - REST-vs-REST consecutive bar deviation 0.5% on 1H BTCUSDT @ ~$100k = ~$500 instantaneous move — catches stuck/corrupted feed без new infrastructure.
 
-## Invariants (CRITICAL)
+## Инварианты (CRITICAL)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -58,7 +58,7 @@ RuntimeManager._poll_bar_and_strategy()
     # ... strategy.on_bar(bar) etc.
 ```
 
-## Configuration
+## Конфигурация
 
 `Settings.runtime_quality_threshold_pct: Decimal = Decimal("0.005")` — default 0.5%. Tunable per environment (e.g. lower threshold для prod, looser для testnet).
 
@@ -72,7 +72,7 @@ Halt event logs structured warning `data_quality.deviation_exceeds_threshold` с
 - [[bar-poller]] — provides input data (BarSource closed bars)
 - [[../runbooks/halt-recovery]] — operator runbook covers HALT_DATA_QUALITY (Operational class group — defer category mapping check к runbook update)
 
-## Related
+## Связанные
 
 - [[../decisions/0024-sprint-9-data-quality-types-analytics]] — origin ADR (Q1)
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — `_REQUEST_HALT_CODES` invariant (HALT_DATA_QUALITY added к allow-list)

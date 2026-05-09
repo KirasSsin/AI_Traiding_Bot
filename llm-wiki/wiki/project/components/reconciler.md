@@ -115,7 +115,7 @@ Reconciler(
 
 Адаптер возвращает `OrderSnapshot` с snake_case полями (`order_status`, `avg_price`, `cum_exec_fee`, `fee_currency`). Pre-S7 reconciler использовал camelCase (`status`, `avgPrice`) — путь HEAL_ENTRY_FILLED был сломан runtime'но; зафиксировано финальным domain-review S7.
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -124,7 +124,7 @@ Reconciler(
 | 3 | `walletBalance(coin=BTC)` = exchange-truth for Spot (no `get_position`) | `src/execution/reconciler.py::ExchangeQueryClient.get_wallet_balance` per ADR 0020 sub-decision 4 | `tests/unit/test_reconciler_wallet_protocol.py::test_query_protocol_satisfied_by_wallet_only` |
 | 4 | OrderSnapshot snake_case (`order_status`, `avg_price`, `cum_exec_fee`, `fee_currency`) — camelCase path is dead | `src/execution/reconciler.py::Reconciler._classify_entry_pending` consumer + ADR 0021 sub-decision 8 | (consumer convention) |
 
-## Related
+## Связанные
 
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 3 (Reconcile-as-truth).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 4 (wallet balance truth, no get_position).

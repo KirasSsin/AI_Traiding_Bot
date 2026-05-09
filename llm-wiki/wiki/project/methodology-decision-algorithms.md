@@ -39,7 +39,7 @@ status: stable
 - migration runner → tests reading DB (depends on schema)
 - task N+1 если N+1 imports N's code
 
-## Read-tool guard
+## Защита от переполнения Read tool
 
 - Unknown file → `wc -c` first
 - > 50KB → Grep + offset Read (никогда полный Read)

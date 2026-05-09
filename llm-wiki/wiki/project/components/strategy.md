@@ -17,7 +17,7 @@ status: stable
 
 **TL;DR:** `EmaCrossoverAdxRsiStrategy.on_bar(bar: Bar) -> Signal | None` — stateful стратегия с internal rolling buffer; эмитит LONG при cross-up + ADX/+DI/RSI gates; FLAT при signal-flip.
 
-## Contract
+## Контракт
 
 ```python
 strat = EmaCrossoverAdxRsiStrategy(
@@ -40,7 +40,7 @@ for bar in market_data_stream:
 - duplicate или out-of-order bar;
 - нет crossing/gate-conditions.
 
-## Entry rule (LONG)
+## Правило входа (LONG)
 
 Все условия одновременно на close(T):
 
@@ -52,7 +52,7 @@ for bar in market_data_stream:
 
 Reason code: `ENTRY_LONG_EMA_CROSS_UP`.
 
-## Exit rule (FLAT — signal flip)
+## Правило выхода (FLAT — signal flip)
 
 На close(T), если `current_side == LONG`:
 
@@ -62,7 +62,7 @@ Reason code: `EXIT_FLAT_SIGNAL_FLIP`.
 
 *SL/TP и time-stop — в S5 (execution), не здесь.*
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (КРИТИЧНЫЕ — проверены тестами + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -75,12 +75,12 @@ Additional invariants (not CRITICAL):
 - **Buffer size:** `max(ema_slow, 2·adx_period, atr_period, rsi_period) + 5`.
 - **Thread-safety:** НЕ thread-safe. Один producer thread.
 
-## Performance
+## Производительность
 
 - Indicator computation пересчитывается на full buffer каждый bar. Для 1H и buffer ≤ 100 баров это <5ms.
 - v0.2 refinement: incremental update (хранить последние EMA/ADX-state) — не требуется на 1H.
 
-## Related
+## Связанные
 
 - [[./indicators]] — consumer (EMA/ADX/RSI/ATR).
 - [[../../trading/strategies/ema-crossover-adx-rsi]] — reference rules.

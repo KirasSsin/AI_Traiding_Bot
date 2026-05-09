@@ -3,7 +3,7 @@ title: Sprint 22 — BTC 4H mean-reversion test (verdict FAIL T5 count, 5/6+DSR+
 type: sprint
 tags: [sprint-22, v0.5-direction-C, btc-4h, mean-reversion, hypothesis-5, combined-architectural-measurement, verdict-fail-t5-count, similar-pattern-к-s17]
 created: 2026-04-26
-updated: 2026-04-26
+updated: 2026-05-09
 status: completed
 sources:
   - project/decisions/0037-sprint-22-4h-test.md
@@ -13,15 +13,15 @@ sources:
 
 # Sprint 22 — BTC 4H mean-reversion test (v0.5-C)
 
-## Overview
+## Обзор
 
-S22 = combined architectural + measurement sprint per joint trader+architecture verdict on v0.5 direction. Both agents converged Option (C) 4H mean-reversion test после frequency probe pre-validation (439 raw triggers).
+S22 = совмещённый архитектурный + измерительный спринт по совместному вердикту trader+architecture по направлению v0.5. Оба агента сошлись на варианте (C) 4H mean-reversion после частотного пробного запуска (439 raw triggers).
 
-## Verdict
+## Вердикт
 
-**FAIL — T5 count only** (62 trades < 100 floor). Per ADR 0037 BINDING → S23 honest close v0.5 (5-th honest close в проекте).
+**FAIL — только T5 count** (62 сделки < порог 100). Per ADR 0037 BINDING → S23 honest close v0.5 (5-й честный закрытый в проекте).
 
-### Strategy criteria results (similar pattern к S17 1H)
+### Результаты критериев стратегии (паттерн аналогичен S17 1H)
 
 | Criterion | Threshold | S22 result | Status |
 |-----------|-----------|------------|--------|
@@ -36,7 +36,7 @@ S22 = combined architectural + measurement sprint per joint trader+architecture 
 | **MC p-value** | ≤0.05 | **0.018** | ✅ **PASS (stat-sig)** |
 | Acceptance gate (composite) | sharpe + MC | sharpe FAIL (fold 1 below 0.7) | ❌ FAIL |
 
-### Fold concentration check (per S19 T-Amendment 2 carry-over pattern)
+### Проверка концентрации по фолдам (per S19 T-Amendment 2 carry-over pattern)
 
 ```
 fold_sharpe_ratios: [1.93, -2.92, 1.32, 12.70, 1.78]
@@ -48,18 +48,18 @@ Removing fold #3: mean = (1.93 - 2.92 + 1.32 + 1.78)/4 = 0.53 (still PASS T6 0.7
 
 Less concentrated than S17 (4/5 positive vs S17 4/5 mixed) — но fold #3 outlier still drives mean.
 
-### Frequency math reconciliation
+### Сверка частотной математики
 
-S22 architecture frequency probe predicted 439 raw triggers → ~100-200 actual trades estimate.
-**S22 actual: 62 trades** (FLAT-only constraint heavily filters consecutive triggers).
+Архитектурный частотный зонд S22 предсказал 439 raw triggers → ~100-200 фактических сделок.
+**Фактически S22: 62 сделки** (FLAT-only ограничение сильно фильтрует последовательные триггеры).
 
-Pattern similar к:
-- S17 BTC 1H: 59 trades, 5/6+DSR+MC PASS, T5 count FAIL
-- S22 BTC 4H: 62 trades, 5/6+DSR+MC PASS, T5 count FAIL
+Паттерн аналогичен:
+- S17 BTC 1H: 59 сделок, 5/6+DSR+MC PASS, T5 count FAIL
+- S22 BTC 4H: 62 сделки, 5/6+DSR+MC PASS, T5 count FAIL
 
-**Critical insight:** T5 floor 100 STRUCTURALLY unreachable на BTC-only mean-reversion regardless of timeframe (1H/4H both ~60 trades, 15M degraded). FLAT-only constraint dominates trade count, not raw signal frequency.
+**Критический вывод:** T5 floor 100 СТРУКТУРНО недостижим для BTC-only mean-reversion независимо от таймфрейма (1H/4H оба ~60 сделок, 15M деградирован). FLAT-only ограничение доминирует над числом сделок, а не raw signal frequency.
 
-## Plan / ADR links
+## Ссылки на план / ADR
 
 - [[../decisions/0037-sprint-22-4h-test]] — Sprint 22 ADR
 - [[../pre-s22-backlog]] — PHASE 2 joint trader+architecture verdicts trail
@@ -67,7 +67,7 @@ Pattern similar к:
 - [[sprint-17-btc-mean-reversion-relaxed]] — S17 reference (similar T5 fail pattern)
 - [[sprint-19-15m-architecture]] — Conditions A1+A2+A3 reused
 
-## Deliverables
+## Результаты
 
 | Task | Status | Description |
 |------|--------|-------------|
@@ -79,23 +79,23 @@ Pattern similar к:
 | T5 | ✅ This commit | sprint-22 page + wiki sync |
 | T6 | pending | PHASE 8 ship (PR + tag v0.1.0-alpha.22) |
 
-## FSM growth
+## Рост FSM
 
-NONE. S22 = config + CLI changes + measurement. Counts unchanged: **16/30/74/45**.
+НЕТ. S22 = config + CLI changes + измерение. Счётчики не изменились: **16/30/74/45**.
 
-## Reason codes growth
+## Рост reason codes
 
-NONE.
+НЕТ.
 
-## Tests / quality
+## Тесты / качество
 
 - pytest unit: **732 passed** (S21 baseline preserved, no regressions)
 - mypy --strict src/: clean (72 source files)
 - Q7-S12 zero-migration: trivially preserved
 
-## Code changes
+## Изменения кода
 
-### Modified
+### Изменено
 
 - `src/marketdata/bybit/rest.py:68-72` — added `"240": ("4h", 14_400_000)` к single-dict intervals (Condition C1)
 - `src/__main__.py`:
@@ -106,11 +106,11 @@ NONE.
   - Lines 786, 813 (argparse choices): added `"240"` к both backfill + wfa
 - `data/BTCUSDT_4h.parquet` (runtime artifact, gitignored): 10,517 bars via 1H resample (Bybit backfill API hung — resample used as fallback)
 
-### NEW (NONE)
+### Новое (НЕТ)
 
-S22 = no new code modules. All infrastructure reused.
+S22 = нет новых кодовых модулей. Вся инфраструктура переиспользована.
 
-## Wiki updates
+## Обновления wiki
 
 - 1 NEW ADR (0037 — accepted)
 - 1 NEW sprint page (this — sprint-22-4h-test)

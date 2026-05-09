@@ -20,7 +20,7 @@ tags: [execution, runtime, orchestration, kill-switch, threading, bar-poller, sp
 **Extends:** [[0021-sprint-7-resilience]]
 **Closes deferral:** ADR 0021 line 364 (external kill-switch signal → KILL_SWITCH event).
 
-## Context
+## Контекст
 
 S7 (ADR 0021) закрыл три resilience gap'а (bootstrap reconcile, WS-reconnect, halt persistence) и оставил **passive WS consumer** (`BybitPrivateWSConsumer`) без driver loop. Bot НЕ запускается end-to-end после S7. Coordinator/Reconciler/FSM работают только в unit-test fixtures.
 
@@ -33,7 +33,7 @@ Split rationale: S8a — orchestration без новых analytical/observabilit
 
 **Trader-expert verdict applied:** brainstorm round 1 (10 CONFIRM / 7 REVISE / 1 DEFER) + round 2 single-item (U1 REVISE).
 
-## Goals & non-goals
+## Цели и не-цели
 
 **Goals (S8a scope):**
 
@@ -55,7 +55,7 @@ Split rationale: S8a — orchestration без новых analytical/observabilit
 - Risk-dashboard override hook (внешний REST endpoint) → v0.2.
 - Systemd/launchd service unit → ops concern, отдельный артефакт после tag.
 
-## Sub-decisions
+## Суб-решения
 
 ### 1. Concurrency model — sync + threading (Q1 CONFIRM, CC1 REVISE добавляет lock policy)
 
@@ -306,7 +306,7 @@ runtime.shutdown             {reason, in_flight_orders}
 
 **Property tests:** none new в S8a (S7 reconnect-idempotency покрывает FSM).
 
-## Consequences
+## Последствия
 
 **Положительные:**
 - Bot стартует end-to-end. `python -m src run` = working trading process.
@@ -314,7 +314,7 @@ runtime.shutdown             {reason, in_flight_orders}
 - Убраны legacy orphans → меньше confusion для следующего contributor'а.
 - Threading lock policy — основа для S9+ multi-bracket (RLock уже на месте).
 
-**Negative / cost:**
+**Отрицательные / стоимость:**
 - 2 thread workload (main + pybit) — небольшой operational footprint, нo нужен operator awareness.
 - Sentinel-file KILL_SWITCH добавляет 1-tick latency vs signal (5s). Acceptable for manual operator action.
 - Lock contention минимальный (10s tick + occasional WS event), но при S9+ multi-bracket надо будет re-evaluate.
@@ -349,7 +349,7 @@ runtime.shutdown             {reason, in_flight_orders}
 
 **Breaking changes:** none external. Internal: Coordinator/Reconciler methods теперь acquire lock — performance overhead negligible.
 
-## Alternatives considered
+## Рассмотренные альтернативы
 
 **Alt-1: asyncio event loop** (single-thread async). Reject: full rewrite Coordinator/Reconciler from sync to async + pybit integration awkward (pybit threading internal). Defer S9+ если throughput требует.
 
@@ -365,7 +365,7 @@ runtime.shutdown             {reason, in_flight_orders}
 
 **Alt-7: S8 как один спринт (runtime + Analytics).** Reject: B1 principle — одна подсистема per спринт. Analytics требует execution topic + per-fill schema migration — отдельный scope. S8a→S8b sequencing.
 
-## Open questions → deferred to S8b+
+## Открытые вопросы → отложено на S8b+
 
 - WS+REST wallet consistency check (epsilon-halt) — S8b если operational evidence показывает frequent divergence.
 - `execution` topic subscription + per-fill Analytics table — S8b.
@@ -375,11 +375,11 @@ runtime.shutdown             {reason, in_flight_orders}
 - Async/await migration — S9+ если throughput требует.
 - systemd/launchd service unit — ops artifact, post-tag.
 
-## Amendments
+## Поправки
 
 - **2026-04-25 (S8c):** Transition count narrative updated — S8a delivered 59→70 transitions (+11 KILL_SWITCH_REQUESTED); S8b T7 fix-up added (FLAT, RISK_HALT) row (70→74, +4 transitions — см. ADR 0023). Context section S8b scope description annotated — actual S8b delivered S8a carry-over fixes (ADR 0023 halt-code mapping), not original analytics/epsilon-halt scope (deferred to S9+).
 
-## Verification checklist (pre-merge)
+## Чеклист верификации (перед merge)
 
 - [ ] Task 0 lock wrappers acquired в Coordinator (6 methods) + Reconciler (2 methods) — verified by `grep "with self._lock"`.
 - [ ] Threading test (2-thread fixture) — `on_order_event` × `start_bracket` parallel → FSM consistent; ditto `on_wallet_event` × `reconcile`.
