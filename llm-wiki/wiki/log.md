@@ -2551,3 +2551,17 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **T3** (trader-expert): 18 pre-sprint backlog файлов → [[sprint-NN]] + [[ADR-NNNN]] ссылки; reverse links в sprint-08c/12; sprint-36/38 plain-text→[[wiki-links]]
 - **T4** (trading-logic-reviewer): 13 inter-component пар (coordinator↔risk-manager/halt-gate/fill-recorder, backtest↔walk/dsr/mc, strategy↔donchian, bar-builder↔bar-poller); 13 trading concept/indicator страниц → компоненты-реализаторы; 10+ компонент→sprint/ADR ссылок; reverse links ADRs 0011/12/13/16/21/22/23/28/53/54/55
 - **Итого:** ~200+ [[wiki-links]] добавлены; Obsidian граф теперь связный
+
+## [2026-05-09] sprint-end | S39 — volume_breakout production integration + tech debt
+
+- **Track A (volume_breakout core):** 7 задач — ADR-0059 LOCKED pre-commit (verbatim sweep#1644) + VolumeBreakoutStrategy + +3 ReasonCodes (50→53) + dashboard preset ENFORCE 4H+BTCUSDT + Phase 5 baseline floor test + T5b BLOCKER fix (production runner ±0.5% research baseline) + research-evidence cherry-pick
+- **Track B (критический tech debt):** 3 задачи — H1 rate-limit backoff (6 retCodes + idempotency safety) + H2 WS reconnect re-probe verification + Item#10 boundary parametrized tests (DD_MULTIDAY + NO_TRADE_TIMEOUT)
+- **Track C (cleanup):** 2 задачи — Item#7 shim removal (22 callers migrated к RiskSharedDeps NamedTuple) + F8 MC_BLOCK_SIZE unified=20
+- **Track E (bybit-api hardening):** 2 задачи — M3 isinstance shape guard (3 WS handlers) + M4 `__repr__` secret redaction
+- **Wiki (T14):** ADR-0059 + sprint-39 page + volume-breakout-strategy component page + reason-codes.md sync (50→53) + current-state.md canonical counts + S39 sprint history row + index.md (ADR + sprint + component entries + reason-codes note) + log.md sprint-end
+- **Tests:** 905 → 915+ pytest unit / baseline floor integration PASS / mypy --strict 0 errors
+- **Canonical counts:** 16/30/74/**53** (reason_codes +3 для volume_breakout)
+- **Tag:** v0.1.0-alpha.39 (PENDING ship — Phase 8)
+- **Profit invariant:** PASS — production runner реплицирует baseline ±0.5% (8mo held-out +20.42% n=17 / 3.3y +122.66%)
+- **Gate 2 forward paper-trade:** PENDING — оператор активирует на δ TESTNET, N≥10 signals required ДО real capital allocation
+- **N_trials:** 8 cumulative (S13/S15/S17/S20/S22/S33/S35/S39)
