@@ -13,6 +13,7 @@ Endpoints:
 
 Launch: scripts/dashboard.sh OR `python -m src.dashboard.app`.
 """
+
 from __future__ import annotations
 
 import webbrowser
@@ -26,16 +27,15 @@ from pydantic import BaseModel
 from starlette.requests import Request
 
 from src.dashboard.backtest_runner import (
-    BacktestRequest,
     INTERVAL_LABELS,
     STRATEGY_PRESETS,
+    BacktestRequest,
     get_documentation,
     get_run,
     list_data_availability,
     list_runs,
     run_backtest,
 )
-
 
 _DIR = Path(__file__).resolve().parent
 _TEMPLATES = Jinja2Templates(directory=str(_DIR / "templates"))
@@ -47,6 +47,7 @@ class BacktestPayload(BaseModel):
     NOTE: Если defined inside create_app() closure → FastAPI 0.136 treats как
     query parameter (422 "missing field"). Must be module-level.
     """
+
     strategy_id: str
     symbol: str
     interval: str
@@ -68,7 +69,9 @@ def create_app() -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
         return _TEMPLATES.TemplateResponse(
-            request=request, name="index.html", context={
+            request=request,
+            name="index.html",
+            context={
                 "strategies": STRATEGY_PRESETS,
                 "intervals": INTERVAL_LABELS,
             },
@@ -91,7 +94,27 @@ def create_app() -> FastAPI:
         return list_data_availability()
 
     @app.post("/api/backtest")
-    async def post_backtest(payload: BacktestPayload = Body(...)) -> dict[str, object]:
+    async def post_backtest(payload: BacktestPayload = Body(...)) -> dict[str, object]:  # noqa: B008
+        # S39 T4 — ENFORCE locked dimensions (ADR 0059 anti-snooping)
+        preset = STRATEGY_PRESETS.get(payload.strategy_id)
+        if preset is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unknown strategy_id: {payload.strategy_id}",
+            )
+        locked_symbol = preset.get("locked_symbol")
+        locked_interval = preset.get("locked_interval")
+        if locked_symbol and payload.symbol != locked_symbol:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Strategy {payload.strategy_id} LOCKED to symbol={locked_symbol}; got {payload.symbol}",
+            )
+        if locked_interval and payload.interval != locked_interval:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Strategy {payload.strategy_id} LOCKED to interval={locked_interval}; got {payload.interval}",
+            )
+
         try:
             req = BacktestRequest(
                 strategy_id=payload.strategy_id,
@@ -144,10 +167,12 @@ def main() -> None:
     # Open browser в отдельном thread chain (delayed чтобы uvicorn успел bind)
     def _open() -> None:
         import time
+
         time.sleep(1.5)
         webbrowser.open(url)
 
     import threading
+
     threading.Thread(target=_open, daemon=True).start()
 
     uvicorn.run(app, host=host, port=port, log_level="info")

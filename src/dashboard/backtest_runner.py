@@ -71,6 +71,24 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "atr": {"period": 14, "sl_atr_mult": 2.0, "tp_atr_mult": 1000000.0},
         },
     },
+    "volume_breakout_iter10": {
+        "label": "[S39 LATEST] Volume breakout 4H BTCUSDT (LOCKED — autoresearch sweep#1644)",
+        "sprint": "S39",
+        "verdict": "PASS held-out 8mo Sharpe=+9.96 PnL=+20.42% / 3.3y +122.66%; Gate 2 forward N≥10 PENDING",
+        "type": "volume_breakout",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "240",
+        "indicators": {
+            "volume_breakout": {
+                "lookback_n": 9,
+                "exit_lookback_n": 8,
+                "vol_window": 10,
+                "vol_mult": 1.4563,
+                "atr_period": 9,
+                "atr_stop_mult": 2.9663,
+            },
+        },
+    },
 }
 
 # Supported intervals (per src/marketdata/bybit/rest.py registry + Bar.interval Literal).

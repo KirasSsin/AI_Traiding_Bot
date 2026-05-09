@@ -21,11 +21,13 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
     Strategy dispatch via cfg["strategy"]["type"]:
       "ema_crossover" (default) — EMA cross up + RSI<overbought filter
       "mean_reversion"          — RSI<oversold AND close<lower_BB (S15 ADR 0030)
+      "donchian"                — Donchian channel breakout (S35 ADR 0054)
+      "volume_breakout"         — Volume-confirmed Donchian breakout (S39 T4)
 
     Signal encoding (replay_engine consumer):
       1 -> long entry candidate
       0 -> no signal
-      -1 -> short entry candidate (only ema_crossover may emit; mean-reversion never)
+      -1 -> short/channel exit candidate (volume_breakout emits; others may not)
     """
     if cfg is None:
         cfg = load_config()
@@ -107,6 +109,34 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
         logger.info(
             "Indicators ready (donchian): lookback_n=%s, ATR(%s) stop, long signals=%s",
             lookback_n,
+            atr_period,
+            int(signal.sum()),
+        )
+    elif strategy_type == "volume_breakout":
+        # S39 T4: Volume breakout long-only (autoresearch sweep#1644 LOCKED per ADR 0059).
+        # Entry: close > rolling_high AND volume > vol_mean * vol_mult (AND FLAT).
+        # Exit: channel (close < rolling_low) OR ATR intrabar stop (replay_engine SL handler).
+        vb_cfg = strategy_cfg.get("volume_breakout", {})
+        lookback_n = int(vb_cfg.get("lookback_n", 9))
+        exit_lookback_n = int(vb_cfg.get("exit_lookback_n", 8))
+        vol_window = int(vb_cfg.get("vol_window", 10))
+        vol_mult = float(vb_cfg.get("vol_mult", 1.4563))
+        signal = compute_volume_breakout_signals(
+            out,
+            lookback_n=lookback_n,
+            exit_lookback_n=exit_lookback_n,
+            vol_window=vol_window,
+            vol_mult=vol_mult,
+            atr_period=atr_period,
+        )
+        out["signal"] = signal
+        logger.info(
+            "Indicators ready (volume_breakout): lookback_n=%s, exit_lookback_n=%s, "
+            "vol_window=%s, vol_mult=%.4f, ATR(%s) stop, long signals=%s",
+            lookback_n,
+            exit_lookback_n,
+            vol_window,
+            vol_mult,
             atr_period,
             int(signal.sum()),
         )
