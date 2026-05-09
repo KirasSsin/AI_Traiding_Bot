@@ -20,7 +20,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 Operator directive 2026-04-26 после S29 ship:
 
@@ -28,7 +28,7 @@ Operator directive 2026-04-26 после S29 ship:
 >
 > "Проанализируй как можно смержить функционал llmwiki и её потенциал с плагином claude mem, т.к. они оба призваны чтобы обеспечить экономию токенов и передачи тебе полноты контекста самым оптимальным путём."
 
-## Decisions
+## Решения
 
 ### Decision 1: Add 3 tier-2 reviewer agents
 
@@ -96,7 +96,7 @@ STEP 4: Read raw + offset (full content, controlled)
 
 S30 deliverable = documentation enforcement only. NO new skill creation.
 
-## Consequences
+## Последствия
 
 ### Code / config changes
 
@@ -154,7 +154,7 @@ Out-of-repo (`~/.claude/`):
   - Optional: extract security-auditor MEMORY.md template для multi-trader migration
   - Optional: pre-commit hook checking SPRINT_STATE Phase 4 task table updated within last hour (per-task discipline aid)
 
-## References
+## Ссылки
 
 - `wiki/project/architecture/sprint-flow-ru.md` — обязательный процесс (updated S30)
 - `wiki/project/architecture/tooling-inventory-ru.md` — tooling catalog (updated S30 с Section 13)
@@ -162,7 +162,7 @@ Out-of-repo (`~/.claude/`):
 - `wiki/project/decisions/0041-sprint-28-process-enforcement.md` — process enforcement ADR
 - `wiki/project/decisions/0042-sprint-29-superpowers-integration.md` — superpowers integration ADR
 - `wiki/project/plans/2026-04-26-sprint-30-tier-2-agents-mem-wiki-merge.md` — S30 plan
-- `wiki/project/sprints/sprint-30-tier-2-agents-mem-wiki-merge.md` — S30 page
+- [[../sprints/sprint-30-tier-2-agents-mem-wiki-merge]] — спринт delivery record
 - https://github.com/obra/superpowers — superpowers skills source
 - https://github.com/thedotmack/claude-mem — claude-mem source
 - https://code.claude.com/docs/sub-agents — Claude Code subagent documentation

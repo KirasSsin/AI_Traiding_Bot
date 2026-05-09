@@ -16,12 +16,12 @@ def test_exit_oco_partial_timeout_in_enum():
 
 def test_total_reason_codes_count():
     assert (
-        len(ReasonCode) == 50
-    )  # 31 (S5) +8 (S6 ADR 0020) +3 (S7 ADR 0021) +3 (S8a ADR 0022) +4 (S36 ADR 0055) +1 (S37 ADR 0057)
+        len(ReasonCode) == 53
+    )  # 31 (S5) +8 (S6 ADR 0020) +3 (S7 ADR 0021) +3 (S8a ADR 0022) +4 (S36 ADR 0055) +1 (S37 ADR 0057) +3 (S39 ADR 0059)
 
 
-def test_v2_count_is_50() -> None:
-    assert len(list(ReasonCode)) == 50
+def test_v2_count_is_53() -> None:
+    assert len(list(ReasonCode)) == 53
 
 
 def test_s7_codes_present() -> None:

@@ -21,7 +21,7 @@ Per pre-s35-backlog.md ROUND 3 binding HALT критерии — anti-snooping �
 
 Ортогонален `CircuitBreakerDetector` (который оценивает session-level price-action drawdown). HaltGate оценивает session-behavioral метрики (loss streaks, signal frequency timeout).
 
-## Public API
+## Публичный API
 
 - `HaltGate.__init__(*, dd_intraday_threshold, dd_multiday_threshold, consecutive_losses_threshold, no_trade_months_threshold)` — frozen dataclass, валидирует все thresholds positive в `__post_init__`
 - `HaltGate.evaluate(*, intraday_dd, multiday_dd, consecutive_losses, months_since_last_trade) -> HaltTrigger | None` — возвращает первый триггер или None если все pass
@@ -53,14 +53,19 @@ Per pre-s35-backlog.md ROUND 3 binding HALT критерии — anti-snooping �
 - Возвращает `None` если все checks pass
 - Pure function — no I/O, no globals, frozen dataclass
 
-## Wiring (S35 T5 статус)
+## Подключение (S35 T5 статус)
 
 HaltGate currently UNWIRED к RiskManager. T5 не wires в production execution path — backtest verdict α FAIL conjoint = δ activation deferred к S36+ pending operator decision. When wired:
 - State source: `intraday_dd` от `EquityTracker.intraday_dd_pct()`, `consecutive_losses` от `TradeHistoryRepository.recent_streak()`, `months_since_last_trade` clock-derived от `TradeHistoryRepository.last_trade_ts()`.
 
-## Related
+## Связанные
 
 - [[../decisions/0053-sprint-35-testnet-live-demo]] — δ TESTNET activation ADR
 - [[../decisions/0052-sprint-34-acceptance-criteria-amendment]] — gate thresholds source
 - [[../pre-s35-backlog]] — ROUND 3 binding consilium
 - [[circuit-breakers]] — orthogonal price-action halt detector
+- [[halt-gate-wireup]] — S36 production wiring of this evaluator into RuntimeManager._tick
+- [[coordinator]] — receives `request_halt(reason)` call when trigger fires
+- [[../architecture/state-machine]] — FSM переходы в HALTED при trigger.
+- [[../architecture/risk-register]] — качественная оценка halt-рисков.
+- [[../architecture/reason-codes-schema]] — HALT_S36_* reason codes (SD-4 mapping).

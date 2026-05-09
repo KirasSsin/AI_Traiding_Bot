@@ -100,3 +100,6 @@ services:
 - [[0003-sqlite-parquet-for-storage]] — ADR.
 - [[0008-event-loop-uvloop]] — ADR.
 - [[storage]] — детали схемы БД.
+- [[../components/config]] — конфигурация бота (pydantic-settings).
+- [[../components/models]] — domain models (pydantic v2).
+- [[../components/logging]] — structlog настройка.

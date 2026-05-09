@@ -46,3 +46,7 @@ We will use Python-only stack (asyncio + uvloop + pandas/numpy + pydantic v2) д
 - Knuth D., "Structured Programming with go to Statements" (1974)
 - MagicStack uvloop benchmarks — 105K req/s, 1KiB payload, single core
 - See [[0008-event-loop-uvloop]]
+
+## Связанные
+
+- [[../sprints/sprint-01-foundation]] — спринт, где Python-стек был материализован

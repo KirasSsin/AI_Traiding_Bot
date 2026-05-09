@@ -149,6 +149,8 @@ Manual tests (прошли 2026-04-22):
 
 ## Related
 
+- [[../sprints/sprint-28-process-enforcement]] — sprint where ADR↔agent sync hook was established
+- [[../decisions/0041-sprint-28-process-enforcement]] — ADR for process enforcement (sprint-flow-check pattern)
 - ADR: [[../decisions/0017-review-agent-harness]] — политика, агенты.
 - Config: `~/.claude/settings.json` (PreToolUse hook registration).
 - Agents: `~/.claude/agents/{trading-logic-reviewer,quant-stats-reviewer,data-integrity-reviewer,Python Reviewer}.md`.

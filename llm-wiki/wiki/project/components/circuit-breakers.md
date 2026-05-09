@@ -12,7 +12,7 @@ sources: [src/risk/circuit_breakers.py, ADR 0013]
 
 **TL;DR:** Stateless detector над `(peak, current)` и `(bar_close, prev_close, atr)`. Возвращает `HaltState` enum. Thresholds инжектятся через `CircuitBreakerConfig` из `Settings` — никаких magic numbers в коде.
 
-## Public API
+## Публичный API
 
 `src/risk/circuit_breakers.py`:
 
@@ -83,7 +83,7 @@ risk_override_path   = "data/risk_override.json"
 
 `tests/unit/test_risk_circuit_breakers.py` — boundary tests на каждый порог + flash при разных ATR + defensive cases (`peak=0`, `current>peak`).
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -92,10 +92,15 @@ risk_override_path   = "data/risk_override.json"
 | 3 | Flash: `prev_close<=0` → False defensive | `src/risk/circuit_breakers.py::CircuitBreakerDetector.check_flash` | `tests/unit/test_risk_circuit_breakers.py::test_prev_close_zero` |
 | 4 | Stateless detector — no I/O, caller owns persistence | `src/risk/circuit_breakers.py::CircuitBreakerDetector` (no module-level state) | `tests/unit/test_risk_circuit_breakers.py::test_pure_no_state_mutation` |
 
-## Related
+## Связанные
 
 - [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — source of truth
 - [[../../trading/concepts/circuit-breakers]] — концепции и тестовые сценарии
 - [[risk-manager]] — orchestration + escalation logic
 - [[risk-override]] — manual resume mechanism
 - [[../runbooks/halt-recovery]] — operator runbook covering HALT_DRAWDOWN_L2/L3 + HALT_FLASH_CRASH (Drawdown class group)
+- [[halt-gate]] — orthogonal session-behavioral halt evaluator (loss streaks, no-trade timeout)
+- [[halt-gate-wireup]] — S36 production wiring, both detectors run in _tick sequence
+- [[../sprints/sprint-04-risk]] — sprint where circuit-breakers component was created
+- [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — governing ADR (already linked above)
+- [[../architecture/risk-register]] — качественная оценка drawdown/flash-crash рисков.

@@ -20,7 +20,7 @@ sources:
 
 S35 T2 created HaltGate (pure function evaluator). S36 T4 wired к live runtime. _tick() now: kill_switch → check_alive → halt_gate (NEW) → poll_bar_and_strategy. Halt fires BEFORE strategy on_bar — no new positions opened.
 
-## Wire-up architecture
+## Архитектура подключения
 
 ```
 RuntimeManager._tick()
@@ -37,7 +37,7 @@ RuntimeManager._tick()
       +-- self._stopping = True (no auto-resume per ADR 0055 SD-5)
 ```
 
-## State persistence
+## Персистентность состояния
 
 Activation timestamp persisted в SQLite via `StateRepository`:
 - Key: `runtime:halt_gate:activation_ts` (per architecture-reviewer namespace convention)
@@ -45,7 +45,7 @@ Activation timestamp persisted в SQLite via `StateRepository`:
 - Written ONCE on first call, instance-cached afterward (per architecture-reviewer MEDIUM fix)
 - Read on bot restart → multiday HWM window preserved across sessions
 
-## HaltTrigger → ReasonCode mapping (ADR 0055 SD-4)
+## Маппинг HaltTrigger → ReasonCode (ADR 0055 SD-4)
 
 | HaltTrigger | ReasonCode | Numeric |
 |-------------|------------|---------|
@@ -56,7 +56,7 @@ Activation timestamp persisted в SQLite via `StateRepository`:
 
 Distinct codes preserve audit-log attribution (NOT reused HALT_DRAWDOWN_L*).
 
-## DI surface (S36)
+## DI-поверхность (S36)
 
 RuntimeManager constructor extended +3 required kwargs:
 - `equity_tracker: EquityTracker`
@@ -65,7 +65,7 @@ RuntimeManager constructor extended +3 required kwargs:
 
 Sourced from RiskManager properties (`risk_manager.equity_tracker / trade_repo / state_repo`) для shared SQLite connection.
 
-## Halt resume protocol (ADR 0055 SD-5)
+## Протокол возобновления после halt (ADR 0055 SD-5)
 
 HaltGate-triggered halt = NO automatic resume. `_stopping=True` exits bot cleanly. Operator must:
 1. Review halt_log audit trail (reason + DD/streak/timeout values)
@@ -73,7 +73,7 @@ HaltGate-triggered halt = NO automatic resume. `_stopping=True` exits bot cleanl
 3. Manual FSM reset через `--reconcile-only` CLI subcommand OR new ADR
 4. Restart с adjusted Settings (operator decision)
 
-## Tests
+## Тесты
 
 7 integration tests в `tests/integration/test_halt_gate_wireup.py`:
 - DD_INTRADAY trigger fires HALT_S36_DD_INTRADAY
@@ -86,7 +86,7 @@ HaltGate-triggered halt = NO automatic resume. `_stopping=True` exits bot cleanl
 
 Property test (T5): all 4 HALT_S36_* codes correctly dispatch к FSM HALTED state.
 
-## Carry-overs к S37+
+## Перенос к S37+
 
 - security HIGH: symbol fail-closed semantic (currently warning + skip)
 - security HIGH: activation_ts integrity hardening (SQLite tamper-detection)
@@ -94,9 +94,11 @@ Property test (T5): all 4 HALT_S36_* codes correctly dispatch к FSM HALTED stat
 - trading-logic C3: coordinator.symbol public property (replace _symbol private access)
 - architecture MEDIUM: RiskSharedDeps refactor (Demeter violation)
 
-## Related
+## Связанные
 
 - [[../decisions/0055-sprint-36-delta-activation]] — primary ADR
 - [[../decisions/0053-sprint-35-testnet-live-demo]] — δ activation predecessor
 - [[halt-gate]] — pure HaltGate dataclass component (S35)
 - [[runtime-manager]] — owning lifecycle component
+- [[coordinator]] — receives `request_halt(reason)` calls dispatched from HaltTrigger mapping
+- [[circuit-breakers]] — orthogonal drawdown/flash halt detector (price-action based, not session-behavioral)

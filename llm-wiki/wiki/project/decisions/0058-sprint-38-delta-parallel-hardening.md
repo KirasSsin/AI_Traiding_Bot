@@ -144,3 +144,4 @@ Per S38 plan (`plans/2026-04-27-sprint-38-delta-parallel-hardening.md`):
 - delta-activation-playbook.md (operator procedure — extended T6)
 - Bailey & López de Prado 2014 (DSR + pre-registration discipline)
 - Hudson & Urquhart 2021 (small-n statistical reality)
+- [[../sprints/sprint-38-delta-parallel-hardening]] — спринт delivery record

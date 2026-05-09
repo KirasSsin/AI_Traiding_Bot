@@ -76,6 +76,11 @@ RSI — **фильтр перекупленности/перепроданнос
 - [[./adx]] — фильтр силы тренда
 - [[./atr]] — волатильность для стопов
 
+## Реализация
+
+- [[../../project/components/indicators]] — `rsi(close, period=14)` — TA-Lib Wilder delegate
+- [[../../project/components/strategy]] — RSI < overbought gate (default 70) blocks LONG entry
+
 ## Sources
 - Wilder, J. W. (1978). *New Concepts in Technical Trading Systems*. Ch. 3 (RSI).
 - Kaufman, P. (2013). *Trading Systems and Methods* (5th ed.). Ch. 9.

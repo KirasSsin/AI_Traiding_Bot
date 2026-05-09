@@ -107,6 +107,12 @@ Parameter optimization на 5 trades → pure noise fitting
 
 - [[monte-carlo-permutations]] — sign-flip detail.
 - [[deflated-sharpe-ratio]] — DSR formula.
-- [[minimum-backtest-length]] — MinBTL bound.
+- minimum-backtest-length — MinBTL bound (concept stub, page deferred).
 - [[../../project/decisions/0014-walk-forward-train2000-test500]] — ADR.
 - [[../../project/architecture/acceptance-criteria]] — gating.
+
+## Реализация
+
+- [[../../project/components/walk-forward]] — `WindowSplitter` + `WalkForwardRunner` + `evaluate_acceptance_gate`
+- [[../../project/components/wfa-reporter]] — 3-Sharpe routing + DSR aggregate report
+- [[../../project/components/backtest-harness]] — base `run_replay()` called per fold (IS + OOS)

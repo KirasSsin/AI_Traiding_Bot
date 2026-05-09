@@ -59,3 +59,6 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §9]
 - [[state-machine]] — как edge-cases триггерят transitions.
 - [[risk-register]] — качественная оценка impact/likelihood.
 - [[../../trading/concepts/circuit-breakers]] — drawdown-based halts.
+- [[../components/halt-gate]] — HaltGate: halt-логика при edge-case триггерах.
+- [[../components/data-quality]] — DataQuality: валидация и обнаружение gap/stale bars.
+- [[../components/bar-builder]] — BarBuilder: isClosed gate и sanity checks OHLCV.

@@ -17,7 +17,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 Sprint 14 follows S13 verdict=FAIL on 4.81y BTCUSDT 1H Bybit Spot data (42098 bars). Per S13 ADR 0028 ESC-1=c (defer pattern preserved): operator decides next sprint scope case-by-case. User chose Option A (pre-registered tuning) initially.
 
@@ -40,7 +40,7 @@ PHASE 2 brainstorming (5 questions, trader-expert ROUND 1) surfaced 2 critical i
 
 User verdict (verbatim): "Продолжаем тогда (B) Honest close immediately."
 
-## Decision
+## Решение
 
 ### S14 scope: Honest close ship
 
@@ -104,7 +104,7 @@ Documented in sprint-14 page "Open issues for v0.2+":
 - **CC3 (No spec amendment):** acceptance-criteria.md NOT modified. T1-T6 thresholds stand. Honest close acknowledges threshold не met для chosen strategy + timeframe.
 - **CC4 (Documentation completeness):** Sprint page documents trader's Q1 frequency math (verifiable via existing data) + Q2 DSR gap (verifiable via dsr.py source) для future reviewers.
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Honest closure based on empirical data (2 WFA measurements: 2.2y + 4.81y both FAIL T5 structurally)
@@ -138,14 +138,15 @@ All S12 + S13 carry-overs preserved:
 - 48h Bybit demo validation (operator-driven, not run since 33min S12 attempt)
 - Strategy revision OR pivot decision (per Option A/B/C/D in sprint-14 page Future Direction)
 
-## Related
+## Связанные документы
 
 - [[../pre-s14-backlog]] — PHASE 2 verdicts trail с trader Q1+Q2 source claims verified
 - [[0028-sprint-13-strategy-validation]] — predecessor sprint (verdict FAIL trigger)
 - [[../sprints/sprint-13-backfill-wfa]] — S13 measurement results
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, not amended)
 - [[../architecture/migration-plan]] — original 10-sprint roadmap (now closed at S14)
+- [[../sprints/sprint-14-honest-close]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

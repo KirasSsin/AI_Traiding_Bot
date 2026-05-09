@@ -109,3 +109,9 @@ Reaction:
 - [[../../project/architecture/state-machine]] — HALT state.
 - [[../../project/architecture/risk-register]] — drawdown риски.
 - [[../../project/decisions/0013-circuit-breakers-l1-l2-l3-flash]] — ADR.
+
+## Реализация
+
+- [[../../project/components/circuit-breakers]] — `CircuitBreakerDetector`: stateless detector (check_drawdown + check_flash)
+- [[../../project/components/halt-gate]] — orthogonal session-behavioral halt evaluator (loss streaks, no-trade timeout)
+- [[../../project/components/risk-manager]] — orchestrates CB evaluation + CB state persistence + override logic

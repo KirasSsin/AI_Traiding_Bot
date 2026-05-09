@@ -18,7 +18,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S20 shipped (PR #28, tag `v0.1.0-alpha.20`). BTC 15M WFA measurement verdict FAIL — T5 count failthrough triggered (73 trades < 150 floor). Per ADR 0034 amendment 3 BINDING:
 
@@ -26,7 +26,7 @@ S20 shipped (PR #28, tag `v0.1.0-alpha.20`). BTC 15M WFA measurement verdict FAI
 
 S21 = pre-committed honest close, no new brainstorm. Pattern mirrors S14 ADR 0029 / S16 ADR 0031 / S18 ADR 0033 (4-th honest close в проекте).
 
-## Decision
+## Решение
 
 ### S21 scope: v0.4 honest close ship
 
@@ -111,7 +111,7 @@ Per S20 evidence accumulation + S17 institutional knowledge:
 
 **Operator decides if/when. No commitment from S21.**
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Honest closure based on 4 empirical measurements (S13 + S15 + S17 + S20 across 4.81y BTC Bybit Spot)
@@ -150,7 +150,7 @@ All previous + new from S20:
 - S17 partial signal preserved (mean-reversion 1H institutional knowledge для v0.5-A)
 - Hudson & Urquhart 2021 empirical validation (15M degradation на BTC)
 
-## Related
+## Связанные документы
 
 - [[../decisions/0035-sprint-20-15m-measurement]] — S20 ADR (verdict FAIL trigger)
 - [[../decisions/0034-sprint-19-15m-architecture]] — S19 ADR (binding criteria triggered)
@@ -160,7 +160,8 @@ All previous + new from S20:
 - [[../sprints/sprint-20-15m-measurement]] — S20 measurement results
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal на 1H (preserved для v0.5)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-21-honest-close-v04]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

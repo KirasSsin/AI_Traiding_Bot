@@ -138,10 +138,10 @@ S32c executed по proper kit flow per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0047-sprint-32c-kit-phase-2-improvements]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — L5 agent matrix policy
 - ADR 0043 (S30 tier-2 agents + cascade) — bridges 2-4 origin
 - ADR 0044 (S31 best practices revision) — kit baseline
 - ADR 0045 (S32 Phase 0) — initial КУ analysis source
 - ADR 0046 (S32b Kit Phase 1) — CI infrastructure foundation
-- ADR 0047 (this) — Kit Phase 2 reduced scope implementation
 - Sprint S32 / S32b / S32c (this) — S32 series Phase 0/1/2

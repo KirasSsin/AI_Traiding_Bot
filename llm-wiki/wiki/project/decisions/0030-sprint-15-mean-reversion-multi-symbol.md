@@ -19,7 +19,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S14 closed v0.1 honest (verdict NEGATIVE, T5 ≥100 trades structurally unreachable for EMA crossover на 1H BTC). Per S14 ADR 0029: future direction options A/B/C/D deferred к operator. Operator chose v0.2 retry path.
 
@@ -33,7 +33,7 @@ S15 PHASE 2 brainstorming (4 questions, see `pre-s15-backlog.md`):
 
 **ESC-2 resolution (RSI threshold pre-registration):** Conservative AND-gated trigger pre-registered binding для S15.
 
-## Decision
+## Решение
 
 ### S15 scope: Mean-reversion (RSI + Bollinger Bands) на 1H × 3 symbols
 
@@ -121,7 +121,7 @@ WFA params: K=5, train=2000, test=500, embargo=20 (per ADR 0014, unchanged)
 
 T1-T6 thresholds preserved per `acceptance-criteria.md`. NO spec amendment. S15 = empirical measurement with new strategy hypothesis.
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Empirical retry с new strategy hypothesis (mean-reversion, theoretically supported для crypto 1H per Hudson & Urquhart 2021)
@@ -146,7 +146,7 @@ T1-T6 thresholds preserved per `acceptance-criteria.md`. NO spec amendment. S15 
 - FillRecorderAdapter Layer 2 schema link
 - 3-way endpoint enum (DEMO/TESTNET/MAINNET)
 
-## Related
+## Связанные документы
 
 - [[../pre-s15-backlog]] — PHASE 2 verdicts trail
 - [[0029-sprint-14-honest-close]] — S14 honest close (T5 unreachability constraint inherited)
@@ -157,7 +157,8 @@ T1-T6 thresholds preserved per `acceptance-criteria.md`. NO spec amendment. S15 
 - [[0014-walk-forward-train2000-test500]] — WFA params (unchanged)
 - [[0005-1h-timeframe-mvp]] — 1H baseline (no amendment в S15)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-15-mean-reversion-multi-symbol]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

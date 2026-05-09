@@ -21,11 +21,13 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
     Strategy dispatch via cfg["strategy"]["type"]:
       "ema_crossover" (default) — EMA cross up + RSI<overbought filter
       "mean_reversion"          — RSI<oversold AND close<lower_BB (S15 ADR 0030)
+      "donchian"                — Donchian channel breakout (S35 ADR 0054)
+      "volume_breakout"         — Volume-confirmed Donchian breakout (S39 T4)
 
     Signal encoding (replay_engine consumer):
       1 -> long entry candidate
       0 -> no signal
-      -1 -> short entry candidate (only ema_crossover may emit; mean-reversion never)
+      -1 -> short/channel exit candidate (volume_breakout emits; others may not)
     """
     if cfg is None:
         cfg = load_config()
@@ -110,6 +112,34 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
             atr_period,
             int(signal.sum()),
         )
+    elif strategy_type == "volume_breakout":
+        # S39 T4: Volume breakout long-only (autoresearch sweep#1644 LOCKED per ADR 0059).
+        # Entry: close > rolling_high AND volume > vol_mean * vol_mult (AND FLAT).
+        # Exit: channel (close < rolling_low) OR ATR intrabar stop (replay_engine SL handler).
+        vb_cfg = strategy_cfg.get("volume_breakout", {})
+        lookback_n = int(vb_cfg.get("lookback_n", 9))
+        exit_lookback_n = int(vb_cfg.get("exit_lookback_n", 8))
+        vol_window = int(vb_cfg.get("vol_window", 10))
+        vol_mult = float(vb_cfg.get("vol_mult", 1.4563))
+        signal = compute_volume_breakout_signals(
+            out,
+            lookback_n=lookback_n,
+            exit_lookback_n=exit_lookback_n,
+            vol_window=vol_window,
+            vol_mult=vol_mult,
+            atr_period=atr_period,
+        )
+        out["signal"] = signal
+        logger.info(
+            "Indicators ready (volume_breakout): lookback_n=%s, exit_lookback_n=%s, "
+            "vol_window=%s, vol_mult=%.4f, ATR(%s) stop, long signals=%s",
+            lookback_n,
+            exit_lookback_n,
+            vol_window,
+            vol_mult,
+            atr_period,
+            int(signal.sum()),
+        )
     else:
         # ema_crossover (legacy default)
         cross_up = (out["ema_fast"].shift(1) <= out["ema_slow"].shift(1)) & (
@@ -129,3 +159,68 @@ def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None)
         )
 
     return out
+
+
+def compute_volume_breakout_signals(
+    df: pd.DataFrame,
+    *,
+    lookback_n: int,
+    exit_lookback_n: int,
+    vol_window: int,
+    vol_mult: float,
+    atr_period: int,
+) -> np.ndarray:
+    """Vectorized volume_breakout signal generator (long-only entry/channel-exit).
+
+    Returns int8 array of length len(df):
+      - 0 = no action (FLAT or HOLD)
+      - 1 = entry signal (close[i-1] > rolling_high AND volume[i-1] > vol_mean * vol_mult)
+      - -1 = channel exit signal (close[i-1] < rolling_low)
+
+    NOTE: ATR intrabar stop signal is NOT computed here — strategy class (T3)
+    handles ATR stop using its own state (entry_price + ATR value).
+
+    Convention: signal on bar i derived from data through bar i-1 (no look-ahead).
+    Reference windows EXCLUDE current bar (use [i-2] index per research toy).
+
+    Source: research/strategies.py::strat_volume_breakout (autoresearch sweep#1644
+    LOCKED per ADR 0059, branch autoresearch/donchian-may8 commit fff54ee).
+
+    Args:
+        df: DataFrame with columns open/high/low/close/volume.
+        lookback_n: Donchian channel entry lookback (LOCKED=9).
+        exit_lookback_n: Donchian channel exit lookback (LOCKED=8).
+        vol_window: Volume rolling mean window (LOCKED=10).
+        vol_mult: Volume must exceed mean * this (LOCKED=1.4563).
+        atr_period: Wilder ATR period (LOCKED=9) — used only for warmup gating.
+
+    Returns:
+        np.ndarray[int8] of length len(df).
+    """
+    n = len(df)
+    if "volume" not in df.columns:
+        return np.zeros(n, dtype=np.int8)
+    high = df["high"].to_numpy(dtype=np.float64)
+    low = df["low"].to_numpy(dtype=np.float64)
+    close = df["close"].to_numpy(dtype=np.float64)
+    volume = df["volume"].to_numpy(dtype=np.float64)
+
+    roll_high = pd.Series(high).rolling(lookback_n, min_periods=lookback_n).max().to_numpy()
+    roll_low = pd.Series(low).rolling(exit_lookback_n, min_periods=exit_lookback_n).min().to_numpy()
+    vol_mean = pd.Series(volume).rolling(vol_window, min_periods=vol_window).mean().to_numpy()
+
+    signals = np.zeros(n, dtype=np.int8)
+    warmup = max(lookback_n, exit_lookback_n, atr_period, vol_window) + 2
+    for i in range(warmup, n):
+        ref_h = roll_high[i - 2]
+        ref_l = roll_low[i - 2]
+        if (
+            not np.isnan(ref_h)
+            and not np.isnan(vol_mean[i - 1])
+            and close[i - 1] > ref_h
+            and volume[i - 1] > vol_mean[i - 1] * vol_mult
+        ):
+            signals[i] = 1
+        elif not np.isnan(ref_l) and close[i - 1] < ref_l:
+            signals[i] = -1
+    return signals

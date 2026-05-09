@@ -34,12 +34,14 @@ status: stable
 - **Pagination прозрачна** для `get_klines` — вызываем пока не выберем `[start, end)` полностью.
 - **UTC everywhere** — timestamps конвертятся в UTC datetime на границе.
 
-## Related
+## Связанные
 
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — ADR выбора venue.
 - [[bybit-ws]] — WS consumer (отдельный канал).
 - [[models]] — Bar domain model.
 - `BybitFilters` — defined в `src/marketdata/filters.py` (dedicated component page TBD S3+).
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint where bybit-rest was created
+- [[bar-poller]] — runtime consumer that calls REST kline via bybit-adapter wrapper
 
 ## Sources
 

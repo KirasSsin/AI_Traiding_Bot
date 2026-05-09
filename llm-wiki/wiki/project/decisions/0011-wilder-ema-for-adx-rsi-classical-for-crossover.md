@@ -48,3 +48,9 @@ default для семейства Wilder-индикаторов — `wilder`, и
 - [Docs/MVP + ALL PROJECT/MVP.md](../../../Docs/MVP%20%2B%20ALL%20PROJECT/MVP.md) — §2 item 10
 - Wilder J. Welles, "New Concepts in Technical Trading Systems" (1978)
 - TA-Lib bug #87 (SourceForge): https://sourceforge.net/p/ta-lib/bugs/87/
+
+## Связанные
+
+- [[../sprints/sprint-03-strategy-port]] — sprint where indicators with Wilder/Classical modes were implemented
+- [[../components/indicators]] — implementation: `ema(mode="wilder"|"classical")`, `rsi`, `adx`, `atr`
+- [[../components/strategy]] — consumer: EMA-crossover uses classical, ADX/RSI/ATR use Wilder

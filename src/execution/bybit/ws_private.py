@@ -2,6 +2,7 @@
 
 ADR 0021 sub-decision 6. Execution topic added in S9 Q3 B1.
 """
+
 from __future__ import annotations
 
 import logging
@@ -52,6 +53,15 @@ class BybitPrivateWSConsumer:
         self._fill_recorder = fill_recorder  # NEW
         self._ws: Any | None = None  # pybit WebSocket handle (lazy, untyped)
 
+    def __repr__(self) -> str:
+        """S39 T13 M4 — redact secrets from repr (security hardening)."""
+        key_redacted = f"{self._api_key[:4]}***" if self._api_key else "none"
+        return (
+            f"BybitPrivateWSConsumer(api_key={key_redacted}, "
+            f"endpoint={self._endpoint!r}, "
+            f"ws_connected={self._ws is not None})"
+        )
+
     def start(self) -> None:
         """Connect + subscribe (pybit handles async threading internally).
 
@@ -62,6 +72,7 @@ class BybitPrivateWSConsumer:
         layout change), the heartbeat watchdog (`check_alive`) is the backstop.
         """
         from pybit.unified_trading import WebSocket  # deferred import
+
         self._ws = WebSocket(
             testnet="testnet" in self._endpoint,
             demo="demo" in self._endpoint,
@@ -85,15 +96,19 @@ class BybitPrivateWSConsumer:
         try:
             inner = getattr(self._ws, "ws", None)
             if inner is None:
-                logger.warning("ws_private: pybit inner ws missing; relying on check_alive watchdog")
+                logger.warning(
+                    "ws_private: pybit inner ws missing; relying on check_alive watchdog"
+                )
                 return
             prev = getattr(inner, "on_close", None)
+
             def wrapped(ws_app: Any, status_code: int, msg: str) -> None:
                 try:
                     self.on_disconnect()
                 finally:
                     if callable(prev):
                         prev(ws_app, status_code, msg)
+
             inner.on_close = wrapped
         except Exception:
             logger.exception("ws_private: failed to install close hook; check_alive only")
@@ -111,8 +126,9 @@ class BybitPrivateWSConsumer:
         if last is None:
             return True  # not yet established a baseline; assume alive
         import time
+
         if time.time() - float(last) > max_silence_seconds:
-            self.on_disconnect()
+            self.on_disconnect(_from_check_alive=True)
             return False
         return True
 
@@ -121,16 +137,47 @@ class BybitPrivateWSConsumer:
             self._ws.exit()
             self._ws = None
 
-    def on_disconnect(self) -> None:
-        """Callback triggered by close-hook OR check_alive — routes reconcile."""
+    def on_disconnect(self, *, _from_check_alive: bool = False) -> None:
+        """Callback triggered by close-hook OR check_alive — routes reconcile.
+
+        S39 T8 H2 — After triggering coordinator reconnect, re-probe via check_alive
+        to verify WS subscription was successfully re-attached. Prevents silent
+        dead-WS scenario where reconcile delivers AGREE on stale state.
+
+        Args:
+            _from_check_alive: Internal flag to prevent recursion when called
+                from check_alive() watchdog. Re-probe only happens when called
+                from close-hook (external disconnect event).
+        """
         try:
             self._coordinator.on_ws_reconnect()
         except Exception:
             logger.exception("on_ws_reconnect hook failed")
 
+        # S39 T8 H2 — verify subscription re-attached after reconnect
+        # Only re-probe when disconnect came from close-hook (not from check_alive watchdog)
+        # to avoid recursion: check_alive → on_disconnect → check_alive → ...
+        if not _from_check_alive and not self.check_alive():
+            logger.warning(
+                "ws_private.reconnect.subscription_lost",
+                extra={"ws_state": "dead_after_reconnect"},
+            )
+
     def _on_order_raw(self, msg: dict[str, Any]) -> None:
         try:
-            for item in msg.get("data", []):
+            data = msg.get("data")
+            # S39 T12 M3 — defensive isinstance guard (V5 shape = list, drop V3 dict shape)
+            if not isinstance(data, list):
+                logger.warning(
+                    "ws.order.shape_mismatch",
+                    extra={
+                        "expected": "list",
+                        "got": type(data).__name__,
+                        "topic": msg.get("topic"),
+                    },
+                )
+                return
+            for item in data:
                 evt = self._parse_order(item)
                 if evt is None:
                     continue  # dropped (logged in parser)
@@ -140,7 +187,19 @@ class BybitPrivateWSConsumer:
 
     def _on_wallet_raw(self, msg: dict[str, Any]) -> None:
         try:
-            for item in msg.get("data", []):
+            data = msg.get("data")
+            # S39 T12 M3 — defensive isinstance guard (V5 shape = list)
+            if not isinstance(data, list):
+                logger.warning(
+                    "ws.wallet.shape_mismatch",
+                    extra={
+                        "expected": "list",
+                        "got": type(data).__name__,
+                        "topic": msg.get("topic"),
+                    },
+                )
+                return
+            for item in data:
                 for coin_row in item.get("coin", []):
                     evt = {"coin": coin_row["coin"], "walletBalance": coin_row["walletBalance"]}
                     self._reconciler.on_wallet_event(evt)
@@ -154,7 +213,19 @@ class BybitPrivateWSConsumer:
         Raw fill dict passed verbatim to recorder; recorder owns parsing to FillRecord.
         """
         try:
-            for item in msg.get("data", []):
+            data = msg.get("data")
+            # S39 T12 M3 — defensive isinstance guard (V5 shape = list)
+            if not isinstance(data, list):
+                logger.warning(
+                    "ws.execution.shape_mismatch",
+                    extra={
+                        "expected": "list",
+                        "got": type(data).__name__,
+                        "topic": msg.get("topic"),
+                    },
+                )
+                return
+            for item in data:
                 self._fill_recorder.on_fill_event(item)
         except Exception:
             logger.exception("execution event dispatch failed; dropping msg=%r", msg)
@@ -166,7 +237,9 @@ class BybitPrivateWSConsumer:
             if missing:
                 logger.error(
                     "order event %s missing required fee fields %s; dropping item=%r",
-                    status, missing, item,
+                    status,
+                    missing,
+                    item,
                 )
                 return None
         return dict(item)

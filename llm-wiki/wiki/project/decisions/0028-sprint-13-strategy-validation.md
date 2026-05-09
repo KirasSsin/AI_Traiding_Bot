@@ -21,7 +21,7 @@ status: accepted
 **Status:** proposed
 **Date:** 2026-04-25
 
-## Context
+## Контекст
 
 Sprint 13 = first empirical strategy validation на 5y BTCUSDT 1H Bybit Spot data. Pre-S13 attempt aborted (feature branch deleted, see SPRINT_STATE history). User pivoted к "old flow" per migration-plan.md gating sequence.
 
@@ -43,7 +43,7 @@ User binding decisions (ESCs):
 - **ESC-1 (Q7):** Defer pattern preserved (REJECT trader pre-commit framework). Per user verbatim: "subagent трейдер сориентирует если что". Risk acknowledged: unbounded N_trials degrades DSR over iterations.
 - **ESC-2 (Q4):** Tiered 5y accepted. Target 5y, fallback к max-available-floor-3.5y. PHASE 3 step 1 = REST API probe earliest Bybit Spot 1H BTCUSDT timestamp.
 
-## Decision
+## Решение
 
 ### S13 scope (single-deliverable per kit "1 sprint = 1 ADR")
 
@@ -116,7 +116,7 @@ Reconciles inconsistency между acceptance-criteria.md "5 лет" + migratio
 - T7 (verdict report): inline + maintainer
 - T8 (PHASE 8 wiki sync): sprint-finish skill
 
-## Consequences
+## Последствия
 
 **Plus:**
 - First empirical T1-T6 measurement on statistically adequate sample (≥3.5y, target 5y)
@@ -138,7 +138,7 @@ Reconciles inconsistency между acceptance-criteria.md "5 лет" + migratio
 - Per-fold trade extraction follow-ups (если S13 measurement surfaces edge cases)
 - 48h validation report processing (if operator runs in S13 timeframe)
 
-## Related
+## Связанные документы
 
 - [[../pre-s13-backlog]] — PHASE 2 verdicts trail с trader source claims verified (CC1)
 - [[0027-sprint-12-live-demo-validation]] — predecessor sprint (operator infrastructure consumed)
@@ -148,7 +148,10 @@ Reconciles inconsistency между acceptance-criteria.md "5 лет" + migratio
 - [[0025-sprint-10-wfa-dsr-mc]] — WFA + DSR + MC implementation
 - [[../architecture/acceptance-criteria]] — 12 gating criteria (amended footnotes per CC4)
 - [[../architecture/migration-plan]] — original 10-sprint roadmap (deviated, S13-S20 corrected herein)
+- [[../sprints/sprint-13-backfill-wfa]] — спринт delivery record
+- [[../components/trade-extractor]] — NEW T5: bridge WFA DataFrames → `list[TradeRecord]`
+- [[../components/strategy-metrics]] — NEW T6: T1-T6 acceptance criteria computation
 
-## Amendments
+## Поправки
 
 - (none yet)

@@ -26,6 +26,8 @@ ADR 0021 (Sprint 7) adds 3 more → True count:
 6 entry + 11 scale/exits + 9 rejects + 16 halts = 42.
 ADR 0022 (Sprint 8a) adds 3 more → True count:
 6 entry + 11 scale/exits + 9 rejects + 19 halts = 45.
+S37 ADR 0057 +1 (HALT_UNKNOWN_SYMBOL) → 50.
+S39 ADR 0059 +3 (ENTRY_LONG_VOLUME_BREAKOUT + EXIT_FLAT_VOLUME_CHANNEL + EXIT_FLAT_ATR_STOP_VB) → 53.
 """
 
 from enum import StrEnum
@@ -106,3 +108,10 @@ class ReasonCode(StrEnum):
 
     # S37 — δ TESTNET symbol-resolution fail-closed (ADR 0057 SD-1 + SD-2)
     HALT_UNKNOWN_SYMBOL = "HALT_UNKNOWN_SYMBOL"  # 50
+
+    # --- ADR 0059 — Sprint 39 volume_breakout strategy ---
+    ENTRY_LONG_VOLUME_BREAKOUT = "ENTRY_LONG_VOLUME_BREAKOUT"  # 51
+    EXIT_FLAT_VOLUME_CHANNEL = "EXIT_FLAT_VOLUME_CHANNEL"  # 52: Donchian channel exit
+    EXIT_FLAT_ATR_STOP_VB = (
+        "EXIT_FLAT_ATR_STOP_VB"  # 53: ATR stop intrabar (volume_breakout-specific)
+    )

@@ -90,4 +90,5 @@ Sprint 8c закрывает накопленный wiki debt + tooling gaps д�
 - [[../decisions/0017-review-agent-harness]] — agent set referenced (architecture-reviewer added later в PR-β)
 - [[../decisions/0019-sprint-5-execution-decisions]] — oco.py supersession source
 - [[sprint-08b-carryover]] — predecessor sprint
+- [[../pre-s8c-backlog]] — PHASE 2 verdicts trail
 - [[../architecture/development-workflow]] — PHASE 8 HARD-GATEs source

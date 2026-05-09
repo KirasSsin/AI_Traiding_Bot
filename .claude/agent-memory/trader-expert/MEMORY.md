@@ -16,3 +16,5 @@
 - [S25 brainstorm decisions](s25_brainstorm.md) — Round 1 verdicts for Q1-Q3 (dashboard metrics: TIER 1/2/3 spec, 4 mandatory warnings, comparison view columns, CC4 Sortino anomaly guard)
 - [S27 brainstorm decisions](s27_brainstorm.md) — Q1-Q4 formula audit: NO formula bugs found; T5/MC power structural blockers; multi-symbol 4H = only viable path; CC5 EXIT_TP_HIT anomaly; sprint plan S27-S31
 - [autoresearch_donchian](autoresearch_donchian.md) — Research toy recommendations: composite metric, search space, profit direction, stop criterion, safeguards (May 2026)
+- [ADR translation log](adr_translation_log.md) — TASK A/B completed 2026-05-09: ADRs 0039-0054 headers translated RU; methodology pages translated; BACKLOG.md created
+- [S39 brainstorm decisions](s39_brainstorm.md) — Round 1 verdicts for Q1-Q9 (volume_breakout integration, Q6 REVISE evidence ordering, Q9 EXPAND augmentation candidates)

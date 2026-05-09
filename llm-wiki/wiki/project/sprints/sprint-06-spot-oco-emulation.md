@@ -1,5 +1,5 @@
 ---
-title: Sprint 6 — Spot OCO emulation
+title: Sprint 6 — Эмуляция Spot OCO
 type: sprint
 tags: [sprint-6, execution, oco, spot]
 created: 2026-04-23
@@ -10,9 +10,9 @@ sources:
   - project/plans/2026-04-23-sprint-6-spot-oco-emulation
 ---
 
-# Sprint 6 — Spot OCO emulation
+# Sprint 6 — Эмуляция Spot OCO
 
-## Overview
+## Обзор
 
 Sprint 6 заменил мёртвый путь native-tpsl (ADR 0019/1, эмпирически отвергнут: Bybit retCode 170130) трёхордерной эмуляцией Spot OCO. FSM вырос с 12 до 16 состояний (план предполагал 21 — переоценка). Reason codes расширены с 31 до 39. `walletBalance(coin=BTC)` стал каноническим источником истины о позиции (no `get_position` на Spot V5). Весь bracket идентифицируется через `bracket_id` UUID-префикс в `orderLinkId`; детерминированный шаблон `oco-{bracket_id}-{role}-{attempt}` позволяет bootstrap'у обнаруживать предыдущие попытки через `get_open_orders` + `get_order_history`.
 
@@ -116,3 +116,10 @@ Sprint 6 заменил мёртвый путь native-tpsl (ADR 0019/1, эмп�
 | 11 | OCO_ARMING TTL=60s reconcile rule | Task 21 |
 | 12 | Schema v2 migration (+6 колонок) | Task 1 |
 | 13 | Reason codes 31→39 | Tasks 2, 28 |
+
+## Related
+
+- ADR: [[../decisions/0020-sprint-6-execution-spot-oco-emulation]]
+- Components: [[../components/oco]], [[../components/reconciler]], [[../components/execution-state-machine]], [[../components/bybit-adapter]]
+- Prior sprint: [[sprint-05-execution]]
+- Next sprint: [[sprint-07-resilience]]

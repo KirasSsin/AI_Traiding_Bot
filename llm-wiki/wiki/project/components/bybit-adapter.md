@@ -115,7 +115,7 @@ V5 GET `/v5/order/history` — терминальные ордера за ~7 д�
 
 Bybit Spot Stop молча переписывает `timeInForce=GTC` → `IOC` (probe v3-D). Адаптер полностью опускает `timeInForce` в `place_stop_market_order`; IOC partial-fills обрабатываются на уровне состояния `EXIT_SL_RESIDUAL` в FSM.
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -124,17 +124,20 @@ Bybit Spot Stop молча переписывает `timeInForce=GTC` → `IOC` 
 | 3 | SL `timeInForce` omitted — Bybit Spot Stop silently rewrites GTC→IOC | `src/execution/bybit/adapter.py::BybitMarketAdapter.place_stop_market_order` + ADR 0020 sub-decision 6 | (probe-validated) |
 | 4 | retCode=110001 on cancel = non-fatal (race with Filled) | `src/execution/bybit/adapter.py::BybitMarketAdapter.cancel_order` + `src/execution/bybit/errors.py` | `tests/unit/test_bybit_adapter_cancel.py::test_cancel_order_already_terminal_returns_reason_code` |
 
-## Related
+## Связанные
 
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — error-map таблица.
 - [[../decisions/0020-sprint-6-execution-spot-oco-emulation]] — sub-decisions 1, 2, 3, 4, 6, 9.
 - [[../decisions/0021-sprint-7-resilience]] — `OrderSnapshot` snake_case fields (S7 reconciler consumer).
 - [[../architecture/bounded-contexts]] — Execution ACL.
+- [[../architecture/execution-timing]] — timing invariants (order placement at open T+1).
 - [[execution-state-machine]] — `OCO_ARMING`, `EXIT_SL_RESIDUAL`, `EXIT_SIBLING_CANCELLING`.
 - [[oco]] — builder SL/TP уровней, использует новые методы адаптера.
 - [[ws-private-consumer]] — WS-counterpart (REST adapter + WS consumer пара).
 - [[models]] — `Order`, `OrderSide`, `OrderType`, `OrderStatus`.
 - [[../../trading/concepts/reason-codes]] — 42 codes, subset покрыт v0.1.
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint where bybit-adapter was created
+- [[coordinator]] — primary caller of place_market_order / place_limit_order / cancel_order
 
 ## Sources
 

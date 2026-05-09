@@ -1,5 +1,5 @@
 ---
-title: Sprint 2 — Bybit venue migration + MarketData ingest
+title: Sprint 2 — Миграция на Bybit + инжест MarketData
 type: sprint
 tags: [sprint, sprint-2, bybit, marketdata, ingest, venue-migration]
 created: 2026-04-22
@@ -8,7 +8,7 @@ sources: [project/plans/2026-04-21-sprint-2-bybit-venue-migration.md]
 status: completed
 ---
 
-# Sprint 2 — Bybit venue migration + MarketData ingest
+# Sprint 2 — Миграция на Bybit + инжест MarketData
 
 **Dates:** 2026-04-21 → 2026-04-22
 **Plan:** [[../plans/2026-04-21-sprint-2-bybit-venue-migration]]
@@ -16,13 +16,13 @@ status: completed
 **Merge PR:** #1
 **Commit range:** `ca1b436..99c1e75` (18 коммитов)
 
-## Goal
+## Цель
 
 Сменить venue с Binance на Bybit Spot (ADR 0016) и реализовать MarketData ingest (REST backfill + WS live + BarBuilder + Parquet writer) плюс минимальный Execution ACL (MARKET order). Source: `migration-plan.md §S2`.
 
-## Scope delivered
+## Доставленная функциональность
 
-### Code — MarketData
+### Код — MarketData
 - `src/marketdata/bybit/rest.py` — `BybitRESTClient`: `get_server_time()`, `get_filters()`, `get_klines()` (paginated, max 1000/call, enforces `[start_ms, end_ms)`).
 - `src/marketdata/bybit/ws.py` — `BybitWSConsumer`: мост pybit-callback → asyncio.Queue → `async for msg in stream()`, через `call_soon_threadsafe`.
 - `src/marketdata/clock.py` — `ClockDriftMonitor`: сравнение `time.time_ns()` с Bybit server time, threshold для `CLOCK_DRIFT` детекции.
@@ -31,7 +31,7 @@ status: completed
 - `src/marketdata/gaps.py` — `find_gaps(parquet_dir, interval_ms) → list[(start, end)]`: сканирует Parquet-архив, находит пропуски для REST-backfill.
 - `src/marketdata/pipeline.py` — `MarketDataPipeline`: orchestrator seed-gaps (REST) → WS stream → BarBuilder → Parquet writer.
 
-### Code — Execution
+### Код — Execution
 - `src/execution/bybit/errors.py` — `ReasonCode` (StrEnum) + `_MAP: dict[int, ReasonCode]` + `map_error(ret_code, ret_msg) → ReasonCode`. Покрыты retCode: 10002, 10003, 10006, 10016, 110007, 110017, 170131, 170140, 170213.
 - `src/execution/bybit/adapter.py` — `BybitMarketAdapter.place_market_order(client_order_id, side, qty, reference_price) → Order`: pre-trade validate через `BybitFilters` → `pybit.HTTP.place_order(category="spot", orderType="Market", ...)` → retCode mapping → `Order(status=NEW)` или `BybitAPIError(reason)`.
 
@@ -44,12 +44,12 @@ status: completed
 - `.env.example`: `BINANCE_*` → `BYBIT_*` с testnet defaults.
 - `Makefile`: добавлен target `test-integration`.
 
-### Wiki
+### Вики
 - ADR: [[../decisions/0016-bybit-spot-supersedes-binance]] с V5 endpoint map + UTA account type.
 - Components: [[../components/bybit-rest]], [[../components/bybit-ws]], [[../components/bar-builder]], [[../components/bybit-adapter]].
 - Modified: ADR 0004 (status → superseded), `architecture/{migration-plan,stack-v0.1,bounded-contexts,edge-cases,overview}.md`, `components/config.md`.
 
-## Decisions & deviations
+## Решения и отклонения
 
 - **New ADR 0016** — Bybit Spot supersedes Binance. **Rationale:** политические/регуляторные причины + unified V5 API (одна библиотека pybit покрывает spot + futures + options, что уменьшает долг v0.2).
 - **`Settings` rename Binance→Bybit с testnet-defaults.** **Rationale:** user-directive — безопасное умолчание для тестов.
@@ -60,21 +60,21 @@ status: completed
 - **`type: ignore[call-overload]`** в `BarBuilder` (не `[arg-type]` как в плане). **Rationale:** mypy фактически репортит `call-overload` для pydantic `Literal`-параметра.
 - **`BybitMarketAdapter` использует `self._rest._http.place_order(...)`** (private-attribute coupling) — flagged reviewer, deferred to Sprint 2 follow-up.
 
-## Verification
+## Проверка
 
 - `make check`: **green** — ruff clean, mypy --strict clean, pytest 63/63 unit passed.
 - Tests: 63 unit (20 из S1 + 43 новых) + 1 env-gated integration.
 - Manual: integration smoke requires `PYTEST_RUN_INTEGRATION=1 + testnet API-keys`.
 - PR #1 merged into `main` at 2026-04-22.
 
-## Impact on downstream
+## Влияние на следующие спринты
 
 - **S3 (Strategy port)** получает: `Bar` stream из `MarketDataPipeline`, готовые `OHLC` данные в Parquet для warm-up индикаторов, `Signal` модель из S1 — можно напрямую писать `on_bar(Bar) → Signal | None`.
 - **S4 (Risk)** получает: `BybitFilters.validate_order()` для pre-trade checks, `ReasonCode` enum для FILTER_VIOLATION/RATE_LIMIT_HIT/INSUFFICIENT_BALANCE halt-reasons.
 - **S5 (OCO/Reconciler)** получает: `BybitMarketAdapter` как baseline для LIMIT/OCO расширения + `BybitRESTClient` для query-order/cancel-order.
 - **S7 (Backtest)** получает: Parquet-архив с ascending `close_time`, `data_quality=OK|GAP`, gap-detection для целостности серии.
 
-## Follow-ups carried forward
+## Перенесённые задачи
 
 - [ ] **`BybitRESTClient.place_order(...)` passthrough** — adapter сейчас дёргает приватный `rest._http`. Вынести как public-метод. **Scope:** 1 test + 5 строк кода. **Target:** S3 или начало S4.
 - [ ] **Residual Binance refs** в `architecture/migration-plan.md` (lines 90, 116, 341) и `edge-cases.md` (rows #22, #23). **Target:** при любом следующем wiki-ingest.

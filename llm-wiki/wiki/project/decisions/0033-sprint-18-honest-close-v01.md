@@ -20,7 +20,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S17 shipped (PR #25, tag `v0.1.0-alpha.17`). Verdict FAIL — T5 count only (59 trades < 100 floor). 5/6 strategy criteria PASS + DSR=1.0 + MC p=0.01 statistically significant = **first time positive direction observed по most criteria одновременно**.
 
@@ -29,7 +29,7 @@ Per ADR 0032 amendment 3 BINDING (pre-registered before S17 measurement):
 
 S18 = pre-committed honest close, no new brainstorm needed. Pattern mirrors S14 ADR 0029 + S16 ADR 0031 (docs-only sprints).
 
-## Decision
+## Решение
 
 ### S18 scope: v0.1 honest close ship
 
@@ -109,7 +109,7 @@ Per S17 institutional knowledge — partial signal evidence shifts probability l
 
 **Operator decides if/when. No commitment from S18.**
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Honest closure based on 3 empirical measurements (S13 + S15 + S17 across 4.81y BTC Bybit Spot 1H)
@@ -149,7 +149,7 @@ All previous + new from S17:
 - **NEW S17 carry-over:** S17 fold #5 sharpe 3.50 outlier — strategy edge concentrated в few periods, concerning для production stability
 - **NEW S18 carry-over:** S17 partial signal evidence (MC p=0.01) — institutional knowledge для v0.4 hypothesis selection: mean-reversion variant, NOT trend-following
 
-## Related
+## Связанные документы
 
 - [[../pre-s17-backlog]] — S17 PHASE 2 trader EXPAND verdict (option a с amendments)
 - [[0032-sprint-17-btc-mean-reversion-relaxed]] — S17 ADR (T5 failthrough clause triggered)
@@ -160,7 +160,8 @@ All previous + new from S17:
 - [[../sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 measurement results
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, not amended)
 - [[../architecture/migration-plan]] — original roadmap (closed final at S18)
+- [[../sprints/sprint-18-honest-close-v01]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

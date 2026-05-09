@@ -13,11 +13,11 @@ sources:
 
 # ADR 0053 — Sprint 35 δ TESTNET Live Demo Activation
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented в S35 (`feature/sprint-35-testnet-donchian-risk` → tag `v0.1.0-alpha.35`).
 
-## Context
+## Контекст
 
 Post-S34 hybrid (ADR 0051 honest close v0.6 + ADR 0052 amendment LOCKED). Data audit projection: n_eff = 37-41 < 50 amended threshold даже с full Bybit history extension (4.81y). Option (b) backtest-based new measurement = STRUCTURAL IMPOSSIBILITY.
 
@@ -31,7 +31,7 @@ ROUND 3 consilium (3 agents CONSENSUS) → δ (TESTNET live demo) primary. Forwa
 > mean-reversion strategy with halt criteria pre-committed. No real capital.
 > n_trials counter remains frozen per Item #10.
 
-## Decision
+## Решение
 
 Activate δ TESTNET live demo с pre-committed gates + halt criteria LOCKED.
 
@@ -68,7 +68,7 @@ Activate δ TESTNET live demo с pre-committed gates + halt criteria LOCKED.
 - ❌ Multi-symbol (single-symbol BTCUSDT LOCKED — correlation deflation falsified)
 - ❌ Lower halt thresholds without S36+ ADR с explicit override
 
-## Consequences
+## Последствия
 
 **Positive:** Forward real-time accumulation bypasses T5 structural backtest problem. Halt criteria pre-committed (anti-snooping). 12-month review window allows accumulating ≥ 50 trades natural rate.
 
@@ -76,9 +76,12 @@ Activate δ TESTNET live demo с pre-committed gates + halt criteria LOCKED.
 
 **Neutral:** No code regression — all existing tests preserved. HaltGate gated по `s35_demo_active=False` default.
 
-## Related
+## Связанные документы
 
 - ADR 0051 (S34 6-th honest close v0.6)
 - ADR 0052 (S34 acceptance-criteria amendment LOCKED)
 - ADR 0054 (S35 Donchian pre-registration — paired α track)
+- [[../sprints/sprint-35-testnet-donchian-risk]] — спринт delivery record
 - pre-s35-backlog.md (ROUND 3 binding consilium trail)
+- [[../components/halt-gate]] — `HaltGate` implementation (frozen dataclass, per-tick evaluation)
+- [[../components/halt-gate-wireup]] — S36 wire-up component (RuntimeManager integration)

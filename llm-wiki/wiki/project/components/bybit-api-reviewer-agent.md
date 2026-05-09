@@ -91,7 +91,7 @@ Splitting:
 
 Both can run parallel via `superpowers:dispatching-parallel-agents`.
 
-## Related
+## Связанные
 
 - [[../decisions/0017-review-agent-harness]] — L5 agent matrix policy
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — Bybit V5 chosen (S2)

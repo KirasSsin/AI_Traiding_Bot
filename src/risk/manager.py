@@ -288,6 +288,14 @@ class RiskManager:
         sl = mark_price - self._settings.risk_sl_atr_multiplier * signal.atr_14
         tp = mark_price + self._settings.risk_tp_atr_multiplier * signal.atr_14
 
+        # S39 R3 C4 fix — propagate signal.reason для strategy attribution в audit log.
+        # Pre-S39: hardcoded ENTRY_LONG_TREND_FOLLOWING — все strategies теряли attribution.
+        # Post-S39: signal.reason is canonical ReasonCode value (per Signal model contract).
+        # Fallback к ENTRY_LONG_TREND_FOLLOWING если signal.reason не валидный ReasonCode.
+        try:
+            reason_code = ReasonCode(signal.reason)
+        except ValueError:
+            reason_code = ReasonCode.ENTRY_LONG_TREND_FOLLOWING
         return RiskAssessment(
             signal_id=signal.signal_id,
             approved=True,
@@ -297,7 +305,7 @@ class RiskManager:
             kelly_phase=phase,
             kelly_fraction=f,
             halt_state=self._current_halt,
-            reason_code=ReasonCode.ENTRY_LONG_TREND_FOLLOWING,
+            reason_code=reason_code,
             assessed_at=assessed_at,
         )
 

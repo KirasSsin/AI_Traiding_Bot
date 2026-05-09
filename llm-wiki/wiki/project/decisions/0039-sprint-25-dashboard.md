@@ -16,7 +16,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S23 closed v0.5 honest. S24 brainstorm: trader+architecture both REVISE → (E) project pause OR (b) multi-symbol revival (operator decision). User chose к build dashboard FIRST (S25), defer S24 ESC-1 decision.
 
@@ -131,7 +131,7 @@ Columns ordered by decision-relevance: Strategy / Symbol / TF / VERDICT / Failed
 - **CC10 Result caching:** WFA results saved к `data/runs/<run_id>.json` (run_id = hash of strategy+symbol+interval+dates). Reuse cached если same params re-requested. Disk-based, no DB schema change.
 - **CC11 Tag semantics:** `v0.1.0-alpha.25` = dashboard sprint marker (UI capability, not MVP DONE).
 
-## Consequences
+## Последствия
 
 **Plus:**
 - User-friendly UI для strategy comparison (vs CLI JSON parsing)
@@ -161,13 +161,14 @@ If dashboard reveals new strategy hypothesis worth testing → operator decides 
 
 S25 dashboard does NOT preempt S24 ESC-1 — operator decides at any future point.
 
-## Related
+## Связанные документы
 
 - [[../pre-s25-backlog]] — PHASE 2 joint verdicts (trader metrics spec + architecture scope verdict)
 - [[0038-sprint-23-honest-close-v05]] — v0.5 honest close (predecessor)
 - [[0026-sprint-11-operator-readiness]] — S11 `_cmd_monitor` pattern (read-only SQLite via `mode=ro` reused в dashboard)
 - [[../architecture/acceptance-criteria]] — T1-T6 + DSR + MC (dashboard displays per trader spec)
+- [[../sprints/sprint-25-dashboard]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

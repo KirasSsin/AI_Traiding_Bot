@@ -17,7 +17,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-25
 
-## Context
+## Контекст
 
 Sprint 10 builds на S9 B2 DSR foundation + locked ADR 0014 (walk-forward train=2000/test=500/K=5/embargo=20/Sharpe ≥ 0.7) + ADR 0015 (sign-flip MC N=2000, p ≤ 0.05). Statistical validation layer для strategy validation pre-prod.
 
@@ -30,7 +30,7 @@ PHASE 2 brainstorming verdicts (`pre-s10-backlog.md`):
 - Q6 REVISE — fixed sqrt(8760) annualization (NOT derived — circular)
 - Q7 CONFIRM sigma_sr external param (closes S9 NotImplementedError)
 
-## Decision
+## Решение
 
 ### Q1+Q4 — WFA architecture
 - `WindowSplitter` (frozen dataclass) generates rolling fold tuples per ADR 0014
@@ -67,7 +67,7 @@ PHASE 2 brainstorming verdicts (`pre-s10-backlog.md`):
 
 `wfa_reporter.format_wfa_report` routes correctly. Tests enforce separation.
 
-## Consequences
+## Последствия
 
 **Plus:**
 - Production-grade WFA pipeline (rolling K=5, dual-gate, MC + DSR informational)
@@ -82,7 +82,7 @@ PHASE 2 brainstorming verdicts (`pre-s10-backlog.md`):
 - MC sign-flip default N=2000 на large datasets = ~few seconds per WFA run (acceptable)
 - T6 spec test correction: block bootstrap on constant returns yields p=1.0 (resampling preserves values, only orders) — implementer correctly identified spec error
 
-## Related
+## Связанные документы
 
 - [[../pre-s10-backlog]] — PHASE 2 verdicts trail
 - [[0014-walk-forward-train2000-test500]] — WFA window + Sharpe gate locked
@@ -93,7 +93,8 @@ PHASE 2 brainstorming verdicts (`pre-s10-backlog.md`):
 - [[../components/wfa-reporter]] — implementation (T8)
 - [[../components/dsr]] — sigma_sr extension (T4)
 - [[../plans/2026-04-25-sprint-10-wfa-dsr-mc]] — implementation plan + trace map
+- [[../sprints/sprint-10-wfa-dsr-mc]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

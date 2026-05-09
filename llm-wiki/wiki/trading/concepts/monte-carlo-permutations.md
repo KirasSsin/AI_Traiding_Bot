@@ -121,3 +121,8 @@ def sign_flip_p_value(strategy_fn, returns_oos, N=2000):
 - [[walk-forward-validation]] — framework.
 - [[deflated-sharpe-ratio]] — multiple-testing correction.
 - [[../../project/decisions/0015-sign-flip-mc-permutations-n2000]] — ADR.
+
+## Реализация
+
+- [[../../project/components/mc-permutations]] — `sign_flip_p_value` (N=2000) + `block_bootstrap_p_value` (L=20-50)
+- [[../../project/components/backtest-harness]] — replay engine produces OOS returns used as input to sign-flip test

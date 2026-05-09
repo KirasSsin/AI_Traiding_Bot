@@ -150,6 +150,8 @@ S19 = architectural sprint per Option (A) с 7 combined amendments + ADR 0034.
 - [[decisions/0032-sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal evidence (MC p=0.01)
 - [[sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 measurement details
 - [[sprints/sprint-15-mean-reversion-multi-symbol]] — S15 multi-symbol baseline (Q3 architectural blockers identified)
+- [[decisions/0034-sprint-19-15m-architecture]] — Sprint 19 ADR
+- [[sprints/sprint-19-15m-architecture]] — Sprint 19 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 
 ## Related
@@ -158,4 +160,6 @@ S19 = architectural sprint per Option (A) с 7 combined amendments + ADR 0034.
 - [[decisions/0032-sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal evidence (MC p=0.01)
 - [[sprints/sprint-17-btc-mean-reversion-relaxed]] — S17 measurement details
 - [[sprints/sprint-15-mean-reversion-multi-symbol]] — S15 multi-symbol baseline (Q3 architectural blockers identified)
+- [[decisions/0034-sprint-19-15m-architecture]] — Sprint 19 ADR
+- [[sprints/sprint-19-15m-architecture]] — Sprint 19 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)

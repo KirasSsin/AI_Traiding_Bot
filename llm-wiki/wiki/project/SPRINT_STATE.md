@@ -1,12 +1,52 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-08
+updated: 2026-05-09
 sprint: 39
-phase: 0-prep
-branch: main
+phase: 8-ship
+branch: feature/sprint-39-volume-breakout-tech-debt
 tag: v0.1.0-alpha.38
 ---
+
+## S39 PHASE 8 — ready to ship
+
+**Phases 1-7 ALL DONE:**
+- Phase 6 review: 8 reviewers (2 APPROVE / 6 APPROVE_WITH_CONCERNS / 1 REQUEST_CHANGES → fixed B1 commit + R3 C4 RiskManager fix + R2 C2 ADR Sharpe CI correction)
+- ADR-0059 G1-G6 documented gaps section + pre-s40-backlog.md created
+- pytest 915 unit + 41 integration / mypy clean / canonical 16/30/74/53
+- Profit invariant HARD-GATE: VERIFIED PASS
+
+**Next action:** git push + gh pr create + squash-merge + tag v0.1.0-alpha.39
+
+**Post-ship operator action:** Gate 2 forward paper-trade на δ TESTNET (N≥10 BLOCKER к real capital).
+
+---
+
+## S39 PHASE 7 COMPLETE — wiki sync done (T14)
+
+**Brainstorm RESOLVED:** 8 CONFIRM + 1 REVISE (Q6 8mo PRIMARY) + 1 EXPAND→Option A (baseline LOCK, ATR filter S40+)
+
+**Sprint scope:** Volume_breakout production integration (Track A) + critical tech debt (Track B/C/E)
+
+**Profit invariant (HARD):** VERIFIED PASS — production runner ±0.5% baseline (8mo held-out +20.42% n=17 / 3.3y +122.66%)
+
+**T14 Wiki sync DONE:**
+- ADR-0059 created (`wiki/project/decisions/0059-sprint-39-volume-breakout-pre-registration.md`)
+- Sprint-39 page created (`wiki/project/sprints/sprint-39-volume-breakout-tech-debt.md`)
+- Component page created (`wiki/project/components/volume-breakout-strategy.md`)
+- reason-codes.md updated (50→53)
+- current-state.md updated (reason_codes 50→53, ADRs 58→59, sprints 42→43, components 46→47, S39 sprint row)
+- index.md updated (ADR + sprint + component + reason-codes entries)
+- log.md sprint-end appended
+
+**Next action:** Phase 8 SHIP — PR create → merge → tag v0.1.0-alpha.39
+
+**Track tasks COMPLETE (T1-T13 + T5b):**
+- Track A — volume_breakout core (A0-A6 + T5b: 7 задач) ✓
+- Track B — critical tech debt (B1-B3: 3 задачи) ✓
+- Track C — cleanup (C1-C2: 2 задачи) ✓
+- Track E — bybit-api M3+M4 (E1-E2: 2 задачи) ✓
+- T14 — wiki sync ✓
 
 ## S39 BRAINSTORM PENDING — Autoresearch Metric Improvement Loop
 

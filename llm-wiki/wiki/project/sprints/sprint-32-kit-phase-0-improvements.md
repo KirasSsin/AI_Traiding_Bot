@@ -144,13 +144,12 @@ S32 executed по proper kit flow per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0045-sprint-32-kit-phase-0-improvements]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — parent matrix
 - ADR 0041 (S28 process enforcement) — sprint-flow-check hook precedent
 - ADR 0042 (S29 superpowers integration) — full skills mapping
 - ADR 0043 (S30 tier-2 agents) — cascade rule original (4-step) + tier-2 agents
 - ADR 0044 (S31 best practices revision) — kit-overview-ru.md + skill counts baseline
-- ADR 0045 (this) — Phase 0 КУ-driven additions (8 → 13 AS / 26 → 32 skills total)
 - Sprint S31 — direct predecessor (best practices alignment)
-- Sprint S32 (this) — Phase 0 kit improvements
 - Pre-S32 КУ analysis: session 2026-04-26 chapter "Kit improvement plan — КУ analysis"
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices

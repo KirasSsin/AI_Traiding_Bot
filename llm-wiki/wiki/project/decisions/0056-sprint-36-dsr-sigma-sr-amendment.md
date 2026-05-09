@@ -99,6 +99,7 @@ sources:
 - pre-s36-backlog.md (ROUND 4 binding consilium trail)
 - Bailey & López de Prado 2014 (формула DSR + pooling sigma_SR)
 - Ревью quant-stats-reviewer S35 T4 (источник переносов)
+- [[../sprints/sprint-36-delta-activation]] — спринт delivery record (paired с ADR 0055)
 
 ---
 

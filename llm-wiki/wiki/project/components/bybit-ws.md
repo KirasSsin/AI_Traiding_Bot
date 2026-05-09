@@ -28,10 +28,11 @@ status: stable
 - **Single symbol/interval** — один consumer = один stream. Мульти-symbol потребует расширения.
 - **Reconnect** делегирован pybit (внутренняя логика SDK).
 
-## Related
+## Связанные
 
 - [[../decisions/0016-bybit-spot-supersedes-binance]] — endpoint `spot.kline.60.BTCUSDT`.
 - [[bar-builder]] — принимает сообщения из WS.
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint where bybit-ws was created
 
 ## Sources
 

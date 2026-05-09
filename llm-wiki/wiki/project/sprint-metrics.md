@@ -1,9 +1,9 @@
 ---
-title: Sprint Metrics — velocity / revision rate / KU / time tracking
+title: Sprint Metrics — скорость / процент ревизий / КУ / трекинг времени
 type: metrics
 tags: [metrics, velocity, revision-rate, ku, sprint-tracking, kit-improvement]
 created: 2026-04-27
-updated: 2026-04-27
+updated: 2026-05-09
 status: active
 sources:
   - project/decisions/0048-sprint-32d-kit-phase-3-improvements.md
@@ -12,17 +12,23 @@ sources:
 
 # Sprint Metrics
 
-**TL;DR:** Manual per-sprint update at PHASE 9 Close. Tracks velocity (tasks/sprint), bugs found, review iterations, КУ achieved, time invested.
+**TL;DR:** Ручное обновление в конце каждого спринта (ФАЗА 9). Отслеживает скорость (задачи/спринт), найденные баги, итерации ревью, достигнутый КУ, затраченное время.
 
-**Update protocol:** PHASE 9 Close skill (`sprint-finish`) extension — see "Update protocol" section bottom.
+**Протокол обновления:** расширение skill `sprint-finish` (ФАЗА 9 Close) — см. секцию "Протокол обновления" внизу.
 
-## Per-sprint table
+## Таблица по спринтам
 
-Newer sprints добавляются вверху (reverse chronological).
+Новые спринты добавляются сверху (обратная хронология).
 
-| Sprint | Tasks | Bugs found | Review iterations | Pytest count | КУ avg | Time | КУ/час | Notes |
-|--------|-------|-----------|-------------------|--------------|--------|------|--------|-------|
-| S32d | 5 | 0 | 0 | 773 (TBD) | TBD | TBD | TBD | Kit Phase 3 final S32 series |
+| Спринт | Задачи | Багов найдено | Итераций ревью | Pytest count | КУ avg | Время | КУ/час | Примечания |
+|--------|-------|---------------|----------------|--------------|--------|-------|--------|------------|
+| S38 | 7 | 0 | 1 | 905 | 48% | ~7h | 69 | δ Parallel Hardening — F2 pnl_pct fix + bybit-api-reviewer + Item #7 Demeter + playbook |
+| S37 | 8 | 2 | 2 | 897 | 48% | ~10h | 48 | Carry-overs Hardening — security HIGH × 2 + HMAC + clock injection + DSR boundary |
+| S36 | 8 | 1 | 8 | 871 | — | — | — | δ TESTNET Activation — HaltGate wire-up + B1 critical fix + DSR amendment |
+| S35 | 5 | 0 | 7 | 802 | — | — | — | δ TESTNET ready + α Donchian FAIL conjoint + ζ risk refactor |
+| S34 | 5 | 0 | 0 | 808 | — | — | — | Hybrid 6-th honest close v0.6 + Amendment LOCKED |
+| S33 | 6 | 1 | 15 | 803 | — | — | — | Trading Restart, F BACKTEST FAIL conjoint — 5 bugs (formula + replay + mypy) |
+| S32d | 5 | 0 | 0 | 773 | 41% | ~2.5h | 56 | Kit Phase 3 final — S32 series complete |
 | S32c | 4 | 0 | 0 | 773 | 51% | 1.5h | 75 | Kit Phase 2 reduced — 4 skill mappings + Fetch MCP + corpus scheme docs |
 | S32b | 6 | 0 | 0 | 773 | 60.5% | 3h | 120 | Kit Phase 1 — CI + pre-commit + SQLite MCP + freshness hook + dashboard-reviewer (CI 3 fix iterations) |
 | S32 | 6 | 0 | 0 | 773 | 60% | 45 min | 80 | Kit Phase 0 — P0 staleness fix + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory |
@@ -35,51 +41,50 @@ Newer sprints добавляются вверху (reverse chronological).
 | S23 | — | — | — | 712 | — | — | — | v0.5 honest close |
 | S22 | — | — | — | 712 | — | — | — | BTC 4H test (62 trades, FAIL T5) |
 
-**Note:** КУ tracking introduced S32 (kit improvement series). Pre-S32 sprints — КУ/time не measured retrospectively (would require effort estimate from logs).
+**Примечание:** Трекинг КУ введён с S32 (серия kit improvement). Для спринтов до S32 — КУ/время ретроспективно не измерялись.
 
-## Trends (rolling 5 sprints, S32-S32d)
+## Тренды (скользящие 5 спринтов, S37-S38 включены)
 
-- **Velocity:** avg 5.4 tasks/sprint (S32 series 5/6/4/5/?)
-- **Bug detection:** 0 bugs/sprint (process/wiki/config sprints — expected)
-- **КУ trend:** 60% → 60.5% → 51% → ? (declining slightly per phase due reduced scope)
-- **Time trend:** 45min → 3h → 1.5h → ? (Phase 1 outlier due CI 3 fix iterations)
-- **КУ/час trend:** 80 → 120 → 75 → ? (Phase 1 best ROI due pre-installed deps)
+- **Скорость:** avg 7.5 задач/спринт (S37=8, S38=7 — рабочие спринты выше S32 серии)
+- **Обнаружение багов:** 1-2 бага/спринт (review-intensive рабочие спринты — норма)
+- **Тренд КУ:** 48%/48% (S37+S38) — стабильный, немного ниже S32b-пика
+- **Тренд времени:** ~10h/~7h (S37 тяжелее из-за security fixes + review-iterations)
+- **Тренд КУ/час:** 48/69 — S38 эффективнее за счёт короче спринта и точного scope
 
-## Definitions
+## Определения
 
-- **Tasks** = Per-sprint plan T1-TN count completed
-- **Bugs found** = Phase 5/6 reviewer outputs (BLOCKER/HIGH severity)
-- **Review iterations** = Phase 6 reviewer dispatch count (1 if first-pass approved, 2+ if blocker→fix→re-review)
-- **Pytest count** = Final passed count from Phase 5 verify output
-- **КУ avg** = Mean КУ % across all tasks (per ADR 0045 methodology)
-- **Time** = Total session duration (estimate)
-- **КУ/час** = КУ avg / hours = ROI
+- **Задачи** = количество завершённых задач T1-TN в плане спринта
+- **Багов найдено** = выходы фаз 5/6 ревью (severity BLOCKER/HIGH)
+- **Итераций ревью** = количество dispatch'ов ревьюеров в фазе 6 (1 если с первого прохода, 2+ если blocker → fix → re-review)
+- **Pytest count** = итоговое количество пройденных тестов из вывода Phase 5 verify
+- **КУ avg** = среднее КУ % по всем задачам (методология ADR 0045)
+- **Время** = общая длительность сессии (оценка)
+- **КУ/час** = КУ avg / часы = ROI
 
-## Update protocol (PHASE 9 Close — `sprint-finish` skill extension)
+## Протокол обновления (ФАЗА 9 Close — расширение skill `sprint-finish`)
 
-After SPRINT_STATE → between-sprints commit:
+После SPRINT_STATE → коммита between-sprints:
 
-1. Count tasks completed (from sprint page Deliverables table)
-2. Count bugs found (from Phase 5/6 reviewer outputs OR pre-existing baseline preserved = 0)
-3. Count review iterations (Phase 6 reviewer dispatch count, includes fix→re-review cycles)
-4. Read pytest passed count from Phase 5 verify Bash output
-5. Compute КУ avg from sprint page (per-task table)
-6. Time = total session duration estimate (от first commit к final tag push)
-7. КУ/час = КУ avg / hours
-8. Append row к table выше (newest at top)
-9. Update Trends section если 5+ sprints accumulated в same series
+1. Подсчитать завершённые задачи (из таблицы Deliverables спринт-страницы)
+2. Подсчитать найденные баги (из выходов фаз 5/6 или pre-existing baseline preserved = 0)
+3. Подсчитать итерации ревью (количество dispatch'ов в фазе 6, включая циклы fix→re-review)
+4. Прочитать pytest passed count из Bash-вывода Phase 5 verify
+5. Вычислить КУ avg из спринт-страницы (по-задачная таблица)
+6. Время = оценка общей длительности сессии (от первого коммита до финального тега)
+7. КУ/час = КУ avg / часы
+8. Добавить строку в таблицу выше (новые — сверху)
+9. Обновить секцию Тренды если накопилось 5+ спринтов одной серии
 
-## Insights (S32 series retrospective — to be filled at S32d Close)
+## Ретроспектива S37-S38
 
-- **Pattern:** Sub-sprint S32 series (a/b/c/d) — operator directive "пусть все фазы будут в 32 спринте"
-- **КУ degradation per phase** — Phase 0 (60%) → Phase 1 (60.5%) → Phase 2 (51%) → Phase 3 (?). Expected: easier wins shipped first.
-- **Time variance** — Phase 1 outlier (3h vs avg 1-1.5h) due 3 CI fix iterations
-- **Pre-installed deps boost** — uvx, pre-commit, mcp-server-sqlite, mcp-server-fetch уже installed → faster ship
+- **Паттерн "hardening sprint":** S37 = 8 задач security+quant, S38 = 7 задач correctness+review. Оба ~48% КУ — плотнее, чем S32 kit series (60%), из-за code review iterations и reviewer findings requiring fixes.
+- **bybit-api-reviewer первый вызов (S38 T3):** dormant с S30 (создан в S32d). 20 findings (0 BLOCKER, 3 HIGH), все HIGH → pre-s39-backlog. Паттерн: review-создание в kit sprint → первый вызов через 6 спринтов.
+- **Test count growth:** S36=871 → S37=897 (+26) → S38=905 (+8). S37 тест-интенсивнее из-за security fixes (8 + 6 + 3 + 2 + 5 тестов по задачам T2-T6).
 
-## Related
+## Связанное
 
-- [[decisions/0045-sprint-32-kit-phase-0-improvements]] — КУ methodology established
+- [[decisions/0045-sprint-32-kit-phase-0-improvements]] — методология КУ
 - [[decisions/0046-sprint-32b-kit-phase-1-improvements]] — CI infrastructure
-- [[decisions/0047-sprint-32c-kit-phase-2-improvements]] — Reduced scope decision pattern
-- [[decisions/0048-sprint-32d-kit-phase-3-improvements]] — Sprint metrics tracking introduced
+- [[decisions/0047-sprint-32c-kit-phase-2-improvements]] — паттерн reduced scope
+- [[decisions/0048-sprint-32d-kit-phase-3-improvements]] — введён трекинг sprint metrics
 - [[architecture/tooling-inventory-ru#23-anthropic-skillsschedule-wire-к-audit_formulaspy-s32d]] — schedule wire automation

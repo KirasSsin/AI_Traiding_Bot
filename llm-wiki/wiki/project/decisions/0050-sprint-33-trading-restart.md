@@ -17,11 +17,11 @@ sources:
 
 # ADR 0050 — Sprint 33 Trading Restart
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented в S33 (`feature/sprint-33-trading-restart` → tag `v0.1.0-alpha.33`). First trading sprint после 8-sprint S32 series kit improvements. **Verdict FAIL conjoint — pre-committed failure branch (Item #12) TRIGGERED → S34 = 6-th honest close v0.6.**
 
-## Context
+## Контекст
 
 Per pre-S33 brainstorm consilium (3 agents × 2 rounds, persisted в `pre-s33-backlog.md`):
 - 6 escalation items APPROVED unanimously
@@ -36,7 +36,7 @@ Per pre-S33 brainstorm consilium (3 agents × 2 rounds, persisted в `pre-s33-ba
 
 **S33 hypothesis (per consilium synthesis):** Multi-symbol BTC+ETH+SOL 4H mean-reversion с S17-relaxed params reaches T5 ≥ 100 mathematically (n≈135-180 raw aggregate).
 
-## Options
+## Варианты
 
 **Option A: Single-symbol BTC continuation**
 - Pros: simple, no new infra
@@ -50,7 +50,7 @@ Per pre-S33 brainstorm consilium (3 agents × 2 rounds, persisted в `pre-s33-ba
 - Pros: no measurement effort
 - Cons: leaves T5 hypothesis untested, project state ambiguous
 
-## Decision
+## Решение
 
 **Option B selected per consilium ROUND 2 unanimous CONSENSUS.** S33 = backtest measurement sprint + 5 prerequisite changes. Live deployment infra → S34 separate sprint (если F passes).
 
@@ -178,7 +178,7 @@ S33 = formula/stats/process sprint, no production trading code modifications в 
 
 Anti-pattern avoided: 5-agent parallel dispatch для pure-stats sprint = wasted ~30 min (per Item #15).
 
-## Implementation Refs
+## Ссылки на реализацию
 
 Per plan `2026-04-27-sprint-33-trading-restart.md`:
 - T1 → 88b3670 (test debt fix + bars_per_year 4H integration test)
@@ -198,7 +198,7 @@ Tag: `v0.1.0-alpha.33`.
 - canonical counts: 16/30/74/45 (unchanged через S33)
 - CI: passed (5th PR validation S32b infrastructure)
 
-## Consequences
+## Последствия
 
 ### Positive
 
@@ -223,7 +223,7 @@ Tag: `v0.1.0-alpha.33`.
 2. CI infrastructure validated 5th PR
 3. Pattern continues: S33 = sprint #6 testing same conjoint failure mode (5 honest closes prior)
 
-## Follow-ups
+## Дальнейшие действия
 
 ### S34 candidate (per pre-committed failure branch)
 
@@ -251,7 +251,7 @@ Tag: `v0.1.0-alpha.33`.
 - ❌ Pool aggregate Sharpe (n_trials=1) к "improve" DSR — protocol (a) BINDING per S33 ADR
 - ❌ Continue к Bridge 4 / live infra без operator authorization S34 direction
 
-## Related
+## Связанные документы
 
 - ADR 0014 (WFA defaults — train=2000/test=500 amended via CC6 (b) для 4H S33: train=1000/test=250)
 - ADR 0015 (MC permutation test — CC-D fix restores compliance)
@@ -268,4 +268,5 @@ Tag: `v0.1.0-alpha.33`.
 - Bailey & López de Prado 2014 (DSR + cross-trial sigma_SR + pre-registration discipline)
 - Hudson & Urquhart 2021 (heavy-tail t-stat critique — CC-E ongoing concern)
 - Kish 1965 (design effect для clustered samples — Item #8 n_eff)
+- [[../sprints/sprint-33-trading-restart]] — спринт delivery record
 - Phipson & Smyth 2010 (MC p-value `(count+1)/(N+1)` — CC-D reference)

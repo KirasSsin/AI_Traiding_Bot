@@ -15,7 +15,7 @@ sources:
 
 **TL;DR:** Per-fill granular audit log. `FillRecord` (pydantic v2 frozen) + `FillHistoryRepository` (SQLite-backed). FK к `trade_history.trade_id` (one trade → N fills). Idempotent insert на `exec_id` UNIQUE INDEX. Source = Bybit V5 WS `execution` topic (added в S9). Used by analytics (slippage measurement, fee breakdown, partial-fill audit). Production wiring of concrete recorder pending (`__main__.py::_cmd_run` STUB since S8a — defer к operator-readiness sprint).
 
-## Public API
+## Публичный API
 
 | Symbol | Path | Role |
 |--------|------|------|
@@ -24,7 +24,7 @@ sources:
 | `FillHistoryRepository.load_by_trade` | `src/risk/fill_history.py::FillHistoryRepository.load_by_trade` | ordered by fill_ts ASC |
 | `FillHistoryRepository.count` | `src/risk/fill_history.py::FillHistoryRepository.count` | row count |
 
-## Schema (migrations/0006_trade_fills.sql)
+## Схема (migrations/0006_trade_fills.sql)
 
 | Column | Type | Constraint |
 |--------|------|-----------|
@@ -43,7 +43,7 @@ Indexes:
 - `uq_trade_fills_exec_id` (UNIQUE на exec_id) — idempotency на at-least-once WS delivery
 - `idx_trade_fills_parent_ts` (parent_trade_id, fill_ts) — `load_by_trade` ORDER BY fill_ts ASC query plan
 
-## Invariants (CRITICAL)
+## Инварианты (CRITICAL)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -101,11 +101,14 @@ Per [Bybit V5 docs](https://bybit-exchange.github.io/docs/v5/websocket/private/e
 - [[ws-private-consumer]] — source of execution events (now subscribes 3 topics: order + wallet + execution)
 - [[dsr]] — future analytics consumer (DSR currently per-trade, may consume per-fill в S10+ if granularity needed)
 
-## Related
+## Связанные
 
 - [[../decisions/0021-sprint-7-resilience]] — execution topic deferral source (S7→S9)
 - [[../decisions/0022-sprint-8a-live-runtime]] — analytics+per-fill deferred again в S8b→S9
 - [[../decisions/0024-sprint-9-data-quality-types-analytics]] — S9 aggregate ADR
+- [[../sprints/sprint-09-data-quality-types-analytics]] — sprint where fill-history was created
+- [[fill-recorder-adapter]] — S12 adapter that bridges WS execution events → FillHistoryRepository
+- [[../architecture/storage]] — SQLite schema для `fills` таблицы.
 
 ## Sources
 

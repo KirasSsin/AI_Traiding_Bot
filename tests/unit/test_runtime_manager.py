@@ -26,16 +26,19 @@ def _settings(tmp_path: Path):
 
 
 def _halt_gate_deps():
-    """S36 T4 — MagicMock placeholders для new DI args (equity_tracker, trade_repo, state_repo).
+    """S39 T10 — RiskSharedDeps bundle with MagicMock placeholders.
 
-    Standard RuntimeManager unit tests have s35_demo_active=False — these deps
-    остаются untouched (HaltGate path early-returns).
+    S36 T4 backward-compat shim removed in S39 T10. All callers must use
+    RiskSharedDeps NamedTuple. Standard RuntimeManager unit tests have
+    s35_demo_active=False — these deps remain untouched (HaltGate early-returns).
     """
-    return {
-        "equity_tracker": MagicMock(),
-        "trade_repo": MagicMock(),
-        "state_repo": MagicMock(),
-    }
+    from src.risk.manager import RiskSharedDeps
+
+    return RiskSharedDeps(
+        equity_tracker=MagicMock(),
+        trade_repo=MagicMock(),
+        state_repo=MagicMock(),
+    )
 
 
 def test_runtime_manager_ctor_stores_deps(tmp_path):
@@ -57,7 +60,7 @@ def test_runtime_manager_ctor_stores_deps(tmp_path):
         strategy=strat,
         risk_manager=risk,
         settings=s,
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
 
     assert rm._coordinator is coord
@@ -88,7 +91,7 @@ def test_run_bootstraps_then_starts_ws_then_loops(tmp_path, monkeypatch):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
 
     # Patch _main_loop so run() exits immediately after bootstrap+ws.start
@@ -117,7 +120,7 @@ def test_run_cleans_stale_kill_switch_before_bootstrap(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._main_loop = lambda: None
     rm._shutdown = lambda *, reason: None
@@ -141,7 +144,7 @@ def test_bootstrap_failure_blocks_ws_start(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._main_loop = lambda: None
     rm._shutdown = lambda *, reason: None
@@ -216,7 +219,7 @@ def test_tick_sequence_kill_then_alive_then_poll_then_strategy(tmp_path):
         strategy=strat,
         risk_manager=risk,
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
 
@@ -249,7 +252,7 @@ def test_tick_no_new_bar_skips_strategy(tmp_path):
         strategy=strat,
         risk_manager=risk,
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
     strat.on_bar.assert_not_called()
@@ -273,7 +276,7 @@ def test_tick_kill_switch_detected_sets_stopping(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
     coord.request_halt.assert_called_with("KILL_SWITCH_REQUESTED")
@@ -293,7 +296,7 @@ def test_shutdown_stops_ws_consumer(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._shutdown(reason="TEST")
     ws.stop.assert_called_once()
@@ -313,7 +316,7 @@ def test_shutdown_idempotent(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._shutdown(reason="ONCE")
     rm._shutdown(reason="TWICE")
@@ -335,7 +338,7 @@ def test_shutdown_ws_stop_failure_logged_not_raised(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     # Should NOT raise — best-effort drain per ADR 0022 sub-decision 17
     rm._shutdown(reason="TEST")
@@ -355,7 +358,7 @@ def test_public_shutdown_delegates(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm.shutdown(reason="OPERATOR_REQUEST")
     ws.stop.assert_called_once()
@@ -378,7 +381,7 @@ def test_tick_stall_threshold_triggers_halt(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
     coord.request_halt.assert_called_with("HALT_BAR_POLL_STALL")
@@ -410,7 +413,7 @@ def test_tick_risk_rejects_skips_bracket(tmp_path):
         strategy=strat,
         risk_manager=risk,
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
     coord.start_bracket.assert_not_called()
@@ -436,7 +439,7 @@ def test_tick_flat_signal_skips_bracket(tmp_path):
         strategy=strat,
         risk_manager=risk,
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
     risk.assess.assert_not_called()
@@ -470,7 +473,7 @@ def test_tick_non_flat_state_skips_start_bracket(tmp_path):
         strategy=strat,
         risk_manager=risk,
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._tick()
 
@@ -492,7 +495,7 @@ def test_main_loop_exception_persists_halt_then_reraises(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     coord.bootstrap.return_value = None
     rm._main_loop = MagicMock(side_effect=RuntimeError("boom"))
@@ -524,7 +527,7 @@ def test_keyboard_interrupt_clean_shutdown(tmp_path):
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     coord.bootstrap.return_value = None
     rm._main_loop = MagicMock(side_effect=KeyboardInterrupt())
@@ -591,7 +594,7 @@ def test_quality_detector_halts_on_consecutive_bar_deviation(tmp_path: Path) -> 
         strategy=strat,
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._poll_bar_and_strategy()  # bar1 → establishes baseline
     rm._poll_bar_and_strategy()  # bar2 → triggers halt
@@ -631,7 +634,7 @@ def test_quality_detector_within_threshold_continues_strategy(tmp_path: Path) ->
         strategy=strat,
         risk_manager=MagicMock(),
         settings=_settings(tmp_path),
-        **_halt_gate_deps(),
+        shared_deps=_halt_gate_deps(),
     )
     rm._poll_bar_and_strategy()
     rm._poll_bar_and_strategy()

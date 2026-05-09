@@ -137,11 +137,13 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 | 4 | `halt_log` write-ahead — написано ДО обновления `execution_state.halt_reason` | `migrations/0005_halt_persistence.sql` schema; `src/execution/state_repo.py::_set_halt` order | `tests/unit/test_halt_persistence.py::test_set_halt_first_call_writes_column_and_log` |
 | 5 | `PARTIAL_FILL` состояние недостижимо в v2 (сохранено только для SQLite warm-start back-compat) | `src/execution/state_machine.py::ExecutionState.PARTIAL_FILL` — no inbound transitions in v2 | `tests/unit/test_execution_fsm_v2.py::test_transitions_count_exact_v2` |
 
-## Related
+## Связанные
 
 - `[[../decisions/0019-sprint-5-execution-decisions]]` — sub-decision 2 (12-state) + sub-decision 3 (persistence).
 - `[[../decisions/0020-sprint-6-execution-spot-oco-emulation]]` — sub-decision 8 (v2 expansion: +4 states, +8 events).
 - `[[../decisions/0021-sprint-7-resilience]]` — sub-decisions 1, 3, 5, 9 (bootstrap reconcile + 4-valued verdicts + halt persistence).
+- `[[../decisions/0023-halt-code-fsm-event-mapping]]` — halt-code → FSM event mapping invariant (ADR 0023)
+- `[[../sprints/sprint-07-resilience]]` — sprint where FSM was significantly expanded (16 states final)
 - `[[coordinator]]` — owns FSM dispatch (`_transition`) и halt mechanics (`request_halt` + ADR 0023 invariant); 8 RLock-protected methods (S8a).
 - `[[reconciler]]` — 4-valued verdict consumer (`AGREE`/`DIVERGENCE`/`HEAL_ENTRY_FILLED`/`EXITED`).
 - `[[oco]]` — builder SL/TP уровней, приводит к OCO_ARMING → OCO_ARMED.
@@ -155,7 +157,7 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 |---|---|---|---|
 | FLAT / ENTRY_PENDING / LONG_OPEN / OCO_ARMING / OCO_ARMED / EXIT_PENDING / EXIT_SIBLING_CANCELLING / EXIT_SIBLING_CANCEL_FAILED / EXIT_SL_RESIDUAL / RECONCILING | `KILL_SWITCH_REQUESTED` | HALTED | ADR 0022 sub-decision 5. Operator-инициированный HALT (NOT terminal kill — KILL_SWITCH остаётся для KILLED). |
 
-## Concurrency / Lock policy (S8a)
+## Параллельность / политика блокировок (S8a)
 
 Все мутации FSM row проходят через `Coordinator._lock` (`threading.RLock`, ADR 0022 sub-decision 1). Это защищает от race между:
 - main thread (`start_bracket`, `flatten`, `bootstrap`)
@@ -164,6 +166,12 @@ S6 OVERRIDE-блок переопределял два legacy S5-ключа (`(O
 Reconciler-side: `Reconciler._lock` (`threading.Lock`, non-reentrant) — wraps `on_wallet_event` + `reconcile`.
 
 See [[runtime-manager]] — Lock policy reference table.
+
+## Архитектурные страницы
+
+- [[../architecture/state-machine]] — архитектурная спецификация FSM (16 состояний / 30 событий / 74 перехода).
+- [[../architecture/current-state]] — canonical counts table (актуальные счётчики FSM).
+- [[../architecture/reason-codes-schema]] — JSON Schema audit записи использующей reason codes.
 
 ## Источники
 

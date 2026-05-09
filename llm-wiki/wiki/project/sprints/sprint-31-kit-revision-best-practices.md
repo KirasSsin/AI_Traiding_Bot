@@ -156,11 +156,10 @@ S31 executed по proper kit flow per S28 binding rules + S29 expanded skills + 
 
 ## Related
 
+- [[../decisions/0044-sprint-31-kit-revision-best-practices]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — parent matrix
 - ADR 0041 (S28 process enforcement) — sprint-flow-check hook precedent
 - ADR 0042 (S29 superpowers integration) — full skills mapping
 - ADR 0043 (S30 tier-2 agents) — security/test/doc + phase-advance + cascade
-- ADR 0044 (this) — best practices revision + kit-overview + prune
 - Sprints S28-S30 — established kit flow + Russian docs + tier-2 agents
-- Sprint S31 (this) — kit overview consolidation + best practices revision
 - Anthropic Claude Code best practices — source: https://docs.claude.com/en/code/best-practices

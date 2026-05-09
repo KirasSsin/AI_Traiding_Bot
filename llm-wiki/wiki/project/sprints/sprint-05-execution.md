@@ -1,5 +1,5 @@
 ---
-title: Sprint 5 — Execution layer (OCO + FSM + Reconciler)
+title: Sprint 5 — Слой исполнения (OCO + FSM + Reconciler)
 type: sprint
 tags: [sprint, sprint-5, execution, oco, fsm, reconciler]
 created: 2026-04-23
@@ -8,7 +8,7 @@ sources: [project/plans/2026-04-23-sprint-5-execution.md]
 status: completed
 ---
 
-# Sprint 5 — Execution layer (OCO + FSM + Reconciler)
+# Sprint 5 — Слой исполнения
 
 **Dates:** 2026-04-23
 **Plan:** [[../plans/2026-04-23-sprint-5-execution]]
@@ -16,7 +16,7 @@ status: completed
 **Merge PR:** consolidated в S6 PR
 **Commit range:** `7fa328f..HEAD`
 
-## Goal
+## Цель
 
 Реализовать advanced execution layer на Bybit Spot V5: native OCO bracket (`tpslMode=Full`), формальный 12-state FSM с table-driven transitions, post-reconnect reconciler с reconcile-as-truth, plus opt-in testnet happy-path test.
 

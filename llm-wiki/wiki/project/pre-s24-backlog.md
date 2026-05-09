@@ -165,6 +165,8 @@ Per user directive "пусть выберут" — agents converged Option (E) p
 - [[decisions/0037-sprint-22-4h-test]] — S22 4H regime-independent
 - [[decisions/0032-sprint-17-btc-mean-reversion-relaxed]] — S17 partial signal
 - [[sprints/sprint-23-honest-close-v05]] — S23 v0.5 honest close
+- [[decisions/0039-sprint-25-dashboard]] — Sprint 25 ADR (S24 direction decided here)
+- [[sprints/sprint-25-dashboard]] — Sprint 25 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable per current ADR pattern; option F-i would amend)
 - [[decisions/0016-bybit-spot-supersedes-binance]] — BTC-only constraint (option F-ii would amend)
 

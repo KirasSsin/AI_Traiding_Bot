@@ -16,7 +16,7 @@ status: accepted
 **Amends:** [[0019-sprint-5-execution-decisions]] sub-decisions 2 (FSM extends 12→21), 3 (schema migration 0004), 4 (reason codes 31→39)
 **Related:** [[../architecture/migration-plan]] §S6, [[../components/oco]], [[../components/reconciler]], [[../components/execution-state-machine]], [[../components/bybit-adapter]]
 
-## Context
+## Контекст
 
 Перед стартом S6 эмпирически проверены 14 предположений (B1-B5 + G1-G14) на Bybit Demo
 trading (`api-demo.bybit.com`, virtual money, mainnet matching engine). Три probe скрипта
@@ -278,16 +278,16 @@ ValueError). Probe v2 показал, что quoteCoin entry возвращае�
 | v3-E phantom SL get_open_orders filter | pybit `orderId` filter не сработал в probe | adapter sanity-assertion (`sl_trigger < entry - tick`) + post-place GET по orderLinkId |
 | Stop trigger event sequence на flash-crash thin book | not stress-tested | sub-decision 4 EXIT_SL_RESIDUAL обрабатывает |
 
-## Consequences
+## Последствия
 
-### Positive
+### Положительные
 - ADR 0019 sub-decision 1 dead path удалён → больше нет hidden regression vector.
 - 14/14 предположений эмпирически проверены или явно accepted с mitigation.
 - FSM v2 покрывает реальные failure modes (orphan TP, IOC residual, repo-crash idempotency,
   phantom SL).
 - G5 формула эмпирически доказана на clean wallet (170131 reproduced + safe qty success).
 
-### Negative / Risks
+### Отрицательные / Риски
 - **Vendor lock-in deeper:** все 9 новых FSM состояний и flatten cascade специфичны для
   Bybit Spot V5. Миграция на другую биржу = переписывание FSM.
 - **Code complexity ×2:** 12 → 21 states, 28 → 50+ transitions, 6 → 14 adapter methods.
@@ -297,7 +297,7 @@ ValueError). Probe v2 показал, что quoteCoin entry возвращае�
 - **Naked-position window** при HALT_FLATTEN_FAILED requires manual ops procedure.
   Документируется в [[../runbooks/halt-recovery]] (создаётся в S6 Stage E).
 
-### Wiki touches (Stage E plan)
+### Обновления wiki (Stage E plan)
 - [[../components/oco]] — переписать full (3-order pattern, не tpslMode)
 - [[../components/reconciler]] — wallet truth + entry_price split
 - [[../components/execution-state-machine]] — FSM v2 table
@@ -306,7 +306,7 @@ ValueError). Probe v2 показал, что quoteCoin entry возвращае�
 - [[../runbooks/halt-recovery]] — NEW: manual flatten procedure
 - [[../sprints/sprint-06-spot-oco-emulation]] — после merge
 
-## Empirical evidence registry
+## Реестр эмпирических данных
 
 Все probe outputs commit'нуты:
 - `scripts/spot_oco_probe.py` + `scripts/spot_oco_probe_output.json` (B1-B5 + observations 1-8)
@@ -316,7 +316,7 @@ ValueError). Probe v2 показал, что quoteCoin entry возвращае�
 Каждый JSON содержит полные REST responses + WS event captures с timestamps. Для аудита
 будущих регрессий: при изменении API behavior на Bybit стороне — re-run probes, diff JSONs.
 
-## Related
+## Связанные документы
 
 - Plan: [[../plans/2026-04-23-sprint-6-spot-oco-emulation]]
 - Migration: [[../architecture/migration-plan]] §S6

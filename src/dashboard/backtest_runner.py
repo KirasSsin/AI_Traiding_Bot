@@ -71,6 +71,24 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "atr": {"period": 14, "sl_atr_mult": 2.0, "tp_atr_mult": 1000000.0},
         },
     },
+    "volume_breakout_iter10": {
+        "label": "[S39 LATEST] Volume breakout 4H BTCUSDT (LOCKED — autoresearch sweep#1644)",
+        "sprint": "S39",
+        "verdict": "PASS held-out 8mo Sharpe=+9.96 PnL=+20.42% / 3.3y +122.66%; Gate 2 forward N≥10 PENDING",
+        "type": "volume_breakout",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "240",
+        "indicators": {
+            "volume_breakout": {
+                "lookback_n": 9,
+                "exit_lookback_n": 8,
+                "vol_window": 10,
+                "vol_mult": 1.4563,
+                "atr_period": 9,
+                "atr_stop_mult": 2.9663,
+            },
+        },
+    },
 }
 
 # Supported intervals (per src/marketdata/bybit/rest.py registry + Bar.interval Literal).
@@ -638,6 +656,45 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
             f"Unknown interval '{req.interval}'. " f"Supported: {sorted(BARS_PER_YEAR.keys())}"
         )
     preset = STRATEGY_PRESETS[req.strategy_id]
+
+    # S39 T5b — volume_breakout uses dedicated runner (research execution model).
+    # Bypasses replay_engine which has 3 structural gaps for this strategy:
+    # sl_atr_mult wiring, long_only suppression of channel exit, WFA+Kelly sizing.
+    if preset.get("type") == "volume_breakout":
+        from datetime import date as _date
+
+        from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
+
+        vb_result = run_volume_breakout_backtest(
+            symbol=req.symbol,
+            interval=req.interval,
+            start_date=_date.fromisoformat(req.start),
+            end_date=_date.fromisoformat(req.end),
+        )
+        # Cache to disk (same cache key scheme as WFA path)
+        _RUNS_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path = _RUNS_DIR / f"{run_id}.json"
+        result_vb: dict[str, Any] = {
+            "run_id": run_id,
+            "request": {
+                "strategy_id": req.strategy_id,
+                "strategy_label": preset["label"],
+                "strategy_config": preset,
+                "symbol": req.symbol,
+                "interval": req.interval,
+                "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
+                "start": req.start,
+                "end": req.end,
+            },
+            "n_trades": vb_result["n_trades"],
+            "total_pnl_pct": vb_result["total_pnl_pct"],
+            "sharpe": vb_result["sharpe"],
+            "win_rate": vb_result["win_rate"],
+            "runner": "volume_breakout_runner",  # audit marker
+            "cached": False,
+        }
+        cache_path.write_text(json.dumps(result_vb, default=str, indent=2))
+        return result_vb
 
     with _lock:
         # Lazy import к keep dashboard module loadable без main module side effects

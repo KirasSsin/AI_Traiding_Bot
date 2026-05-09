@@ -17,11 +17,11 @@ sources:
 
 # ADR 0045 — Sprint 32 Kit Improvement Phase 0
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented in S32 (`feature/sprint-32-kit-phase-0-improvements` → tag `v0.1.0-alpha.32`).
 
-## Context
+## Контекст
 
 Post-S31 ship operator-driven review session (2026-04-26) выявил:
 
@@ -42,7 +42,7 @@ Post-S31 ship operator-driven review session (2026-04-26) выявил:
 
 **Trading work blocked:** ESC-1/2/3 pending operator → S32 trading slot занимаем kit work.
 
-## Options
+## Варианты
 
 **Option A: Single big sprint covering Phase 0+1+2 (CI + SQLite MCP + skill additions)**
 - Pros: всё сразу
@@ -56,7 +56,7 @@ Post-S31 ship operator-driven review session (2026-04-26) выявил:
 - Pros: unblocks trading work
 - Cons: ignores P0 staleness (compounds each session); operator decision pre-mature без kit Phase 0 in place
 
-## Decision
+## Решение
 
 **Option B selected.** Sprint 32 = Kit Phase 0 = doc-only sprint covering 6 changes:
 
@@ -86,7 +86,7 @@ After S32 update: **32 skills mapped** к kit flow (was 26). Distribution:
 - 13 agent-skills (was 8, +5 from this ADR)
 - 1 anthropic-skills (consolidate-memory, NEW)
 
-## Consequences
+## Последствия
 
 ### Positive
 
@@ -109,7 +109,7 @@ After S32 update: **32 skills mapped** к kit flow (was 26). Distribution:
 2. No HARD-GATE changes — existing hooks (sprint-flow-check / phase-advance / adr-agent-sync / adr-index-sync / wiki-broken-link / caveman) unchanged
 3. No new agents added (Phase 1 deferred к S33 — dashboard-reviewer comes тогда)
 
-## Implementation
+## Реализация
 
 Per plan `2026-04-26-sprint-32-kit-phase-0-improvements.md`:
 - T1 → c095bd3
@@ -121,7 +121,7 @@ Per plan `2026-04-26-sprint-32-kit-phase-0-improvements.md`:
 
 Tag: `v0.1.0-alpha.32`.
 
-## Follow-ups
+## Дальнейшие действия
 
 **S33 candidate (Kit Phase 1):**
 - GitHub Actions CI setup (`AS:ci-cd-and-automation` + `.github/workflows/ci.yml`)
@@ -141,7 +141,7 @@ Tag: `v0.1.0-alpha.32`.
 - ESC-2 "In profit" vs "pass acceptance criteria" semantics
 - ESC-3 4H multi-symbol operational implications
 
-## Related
+## Связанные документы
 
 - ADR 0017 (review-agent harness) — parent matrix
 - ADR 0041 (S28 process enforcement) — sprint-flow-check hook precedent
@@ -150,4 +150,5 @@ Tag: `v0.1.0-alpha.32`.
 - ADR 0044 (S31 best practices revision) — direct predecessor + skill counts baseline (8 AS mapped)
 - ADR 0045 (this) — Phase 0 KU-driven additions (8 → 13 AS mapped)
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32-kit-phase-0-improvements]] — спринт delivery record
 - Pre-S32 КУ analysis: session 2026-04-26 chapter "Kit improvement plan — КУ analysis"

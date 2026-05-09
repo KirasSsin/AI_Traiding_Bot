@@ -42,7 +42,7 @@ status: stable
 - **Idempotent migrations** — повторный `init_db` не ломается и не дублирует applied migrations.
 - **Parquet snappy** — быстрый compression, хорошо читается pandas/pyarrow/DuckDB.
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -51,11 +51,12 @@ status: stable
 | 3 | `journal_mode=WAL` + `synchronous=NORMAL` + `foreign_keys=ON` on every connection | `src/platform/db.py::connect` | `tests/unit/test_db.py::test_wal_mode_enabled` |
 | 4 | Parquet schema fixed — `open_time/close_time` timestamp[ns, UTC], OHLCV float64 | `src/marketdata/storage.py::ParquetBarWriter.append` + ADR 0007 | `tests/unit/test_parquet_storage.py::test_writer_creates_file_and_persists_bars` |
 
-## Related
+## Связанные
 
 - [[../architecture/storage]] — полные SQL-схемы и обоснование выбора.
 - [[../decisions/0003-sqlite-parquet-for-storage]] — ADR.
 - [[../decisions/0007-utc-timestamps-ns-precision]] — ns-precision UTC для временных полей.
+- [[../sprints/sprint-03-strategy-port]] — sprint where storage was significantly expanded
 
 ## Sources
 

@@ -19,7 +19,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S18 closed v0.1 FINAL honest (PR #26, tag `v0.1.0-alpha.18`). 3 hypotheses tested. S17 partial signal evidence preserved (MC p=0.01 on 59 BTC trades — first genuine signal в проекте).
 
@@ -34,7 +34,7 @@ ESC resolutions (autonomous mode per "пусть они выберут"):
 - ESC-1 (continue vs pause): CONTINUE Option (A) — 2 sprints cheap, S17 evidence justifies test
 - ESC-2 (T5 floor 15M): RAISE к 150 trades — simpler than autocorrelation-corrected t-stat, scales appropriately
 
-## Decision
+## Решение
 
 ### S19 scope: BTC 15M architectural sprint (preparation для S20 measurement)
 
@@ -125,7 +125,7 @@ T5 floor: 150 trades (T-Amendment 1 BINDING)
 - **CC6 (No spec amendment)**: acceptance-criteria.md T1-T6 thresholds preserved. T5 floor 150 = S20-specific pre-registration per Bailey 2014 multi-testing discipline (T5 spec says "n≥100 OOS trades" — 150 is stricter, не violates).
 - **CC7 (Hudson & Urquhart 2021 noise risk)**: 15M mean-reversion may degrade per academic prior. S20 measurement is empirical test — direction может invalidate. Honest acknowledgment.
 
-## Consequences
+## Последствия
 
 **Plus:**
 - 4 critical bugs/anti-patterns fixed in single architectural sprint (interval_map + heal_max_age + annualization × 3 files)
@@ -156,7 +156,7 @@ If S20 FAIL:
 
 All previous carry-overs preserved (S12-S18, 14+ items).
 
-## Related
+## Связанные документы
 
 - [[../pre-s19-backlog]] — PHASE 2 joint trader+architecture verdicts trail
 - [[0033-sprint-18-honest-close-v01]] — S18 v0.1 FINAL honest close (predecessor)
@@ -165,7 +165,8 @@ All previous carry-overs preserved (S12-S18, 14+ items).
 - [[0014-walk-forward-train2000-test500]] — WFA params (preserved для 15M, re-evaluate post-S20)
 - [[0030-sprint-15-mean-reversion-multi-symbol]] — MeanReversionRsiBBStrategy + indicators.py mean_reversion branch (reused 100%)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable, T5 floor 150 = S20 pre-registration)
+- [[../sprints/sprint-19-15m-architecture]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

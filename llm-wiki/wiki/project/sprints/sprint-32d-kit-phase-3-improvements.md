@@ -188,10 +188,10 @@ S32d executed по proper kit flow per S28+ binding rules:
 
 ## Related
 
+- [[../decisions/0048-sprint-32d-kit-phase-3-improvements]] — ADR этого спринта
 - ADR 0017 (review-agent harness) — L5 agent matrix (bybit-api-reviewer = 11-th)
 - ADR 0044 (S31 best practices) — kit baseline + context discipline reference
 - ADR 0045/0046/0047 (S32/S32b/S32c) — direct predecessors
-- ADR 0048 (this) — Kit Phase 3 final + S32 series complete
 - Sprint S32 / S32b / S32c / S32d (this) — S32 series Phase 0/1/2/3
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
 - Bybit V5 API docs: https://bybit-exchange.github.io/docs/v5/

@@ -82,7 +82,13 @@ ATR — **основа риск-менеджмента** в стратегии `
 - [[./ema]] — сигнал направления
 - [[./adx]] — фильтр силы тренда (использует TR внутри)
 - [[./rsi]] — фильтр перекупленности
-- [[../risk/position-sizing]] — детали sizing по ATR (если есть)
+- position-sizing — детали sizing по ATR (concept stub, page deferred).
+
+## Реализация
+
+- [[../../project/components/indicators]] — `atr(high, low, close, period=14)` — TA-Lib Wilder delegate
+- [[../../project/components/donchian-strategy]] — ATR stop: `entry - atr_stop_mult × ATR` (mult=2.0)
+- [[../../project/components/sizing]] — `compute_qty` uses ATR as stop-distance denominator: `qty = (fraction × equity) / (k × ATR)`
 
 ## Sources
 - Wilder, J. W. (1978). *New Concepts in Technical Trading Systems*. Ch. 4 (Volatility & ATR).

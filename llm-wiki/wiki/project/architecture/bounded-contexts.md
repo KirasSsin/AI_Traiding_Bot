@@ -119,3 +119,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md]
 - [[overview]] — общий обзор MVP.
 - [[domain-events]] — полный каталог 20 событий.
 - [[state-machine]] — 12-состоятельный state machine.
+- [[../components/coordinator]] — единственный writer FSM (single-writer invariant).
+- [[../components/runtime-manager]] — оркестратор tick-loop всех контекстов.
+- [[../components/bar-builder]] — Market Data Context: построение баров.
+- [[../components/risk-manager]] — Risk Management Context: Kelly + circuit breakers.

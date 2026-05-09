@@ -108,3 +108,6 @@ CREATE INDEX idx_events_occurred ON events(occurred_at);
 - [[bounded-contexts]] — кто кому что публикует.
 - [[state-machine]] — как события триггерят переходы.
 - [[reason-codes-schema]] — JSON Schema для audit-записей.
+- [[../components/coordinator]] — главный emitter ExecutionEvent'ов (FSM transitions)
+- [[../components/runtime-manager]] — lifecycle events (START/STOP/RESTART)
+- [[../components/ws-private-consumer]] — источник execution events (fill reports с биржи)

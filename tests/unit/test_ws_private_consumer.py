@@ -1,7 +1,6 @@
 """BybitPrivateWSConsumer tests (ADR 0021 sub-decision 6)."""
-from unittest.mock import MagicMock
 
-import pytest
+from unittest.mock import MagicMock
 
 from src.execution.bybit.ws_private import BybitPrivateWSConsumer
 
@@ -25,9 +24,11 @@ def test_consumer_on_disconnect_triggers_reconnect_event():
     coord = MagicMock()
     reco = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=coord, reconciler=reco,
+        coordinator=coord,
+        reconciler=reco,
         fill_recorder=MagicMock(),
     )
     c.on_disconnect()
@@ -40,9 +41,11 @@ def test_check_alive_triggers_disconnect_when_silent_too_long():
     coord = MagicMock()
     reco = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=coord, reconciler=reco,
+        coordinator=coord,
+        reconciler=reco,
         fill_recorder=MagicMock(),
     )
     fake_ws = MagicMock()
@@ -56,9 +59,11 @@ def test_check_alive_triggers_disconnect_when_silent_too_long():
 def test_check_alive_returns_true_when_no_ws():
     """No WS handle → returns False (callable doesn't crash)."""
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=MagicMock(), reconciler=MagicMock(),
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
         fill_recorder=MagicMock(),
     )
     assert c.check_alive() is False
@@ -68,20 +73,26 @@ def test_parser_forwards_filled_event_with_fees():
     coord = MagicMock()
     reco = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=coord, reconciler=reco,
+        coordinator=coord,
+        reconciler=reco,
         fill_recorder=MagicMock(),
     )
-    msg = {"data": [{
-        "orderLinkId": "oco-abc-TP-1",
-        "orderId": "bybit-oid-1",
-        "orderStatus": "Filled",
-        "cumExecQty": "0.001",
-        "cumExecFee": "0.0000012",
-        "feeCurrency": "BTC",
-        "avgPrice": "62500",
-    }]}
+    msg = {
+        "data": [
+            {
+                "orderLinkId": "oco-abc-TP-1",
+                "orderId": "bybit-oid-1",
+                "orderStatus": "Filled",
+                "cumExecQty": "0.001",
+                "cumExecFee": "0.0000012",
+                "feeCurrency": "BTC",
+                "avgPrice": "62500",
+            }
+        ]
+    }
     c._on_order_raw(msg)
     coord.on_order_event.assert_called_once()
     evt = coord.on_order_event.call_args.args[0]
@@ -89,22 +100,28 @@ def test_parser_forwards_filled_event_with_fees():
     assert evt["feeCurrency"] == "BTC"
 
 
-def test_parser_drops_filled_event_missing_cumExecFee(caplog):
+def test_parser_drops_filled_event_missing_cum_exec_fee(caplog):
     """ADR 0021 sub-decision 6: Filled w/o fees → ERROR log + drop (never forward None fees)."""
     coord = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=coord, reconciler=MagicMock(),
+        coordinator=coord,
+        reconciler=MagicMock(),
         fill_recorder=MagicMock(),
     )
-    msg = {"data": [{
-        "orderLinkId": "oco-abc-TP-1",
-        "orderStatus": "Filled",
-        "cumExecQty": "0.001",
-        # cumExecFee MISSING
-        "avgPrice": "62500",
-    }]}
+    msg = {
+        "data": [
+            {
+                "orderLinkId": "oco-abc-TP-1",
+                "orderStatus": "Filled",
+                "cumExecQty": "0.001",
+                # cumExecFee MISSING
+                "avgPrice": "62500",
+            }
+        ]
+    }
     with caplog.at_level("ERROR"):
         c._on_order_raw(msg)
     coord.on_order_event.assert_not_called()
@@ -115,16 +132,22 @@ def test_parser_forwards_new_unfilled_event_without_fees():
     """New/Cancelled/Rejected → fees not expected, forward."""
     coord = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=coord, reconciler=MagicMock(),
+        coordinator=coord,
+        reconciler=MagicMock(),
         fill_recorder=MagicMock(),
     )
-    msg = {"data": [{
-        "orderLinkId": "oco-abc-SL-1",
-        "orderStatus": "New",
-        "cumExecQty": "0",
-    }]}
+    msg = {
+        "data": [
+            {
+                "orderLinkId": "oco-abc-SL-1",
+                "orderStatus": "New",
+                "cumExecQty": "0",
+            }
+        ]
+    }
     c._on_order_raw(msg)
     coord.on_order_event.assert_called_once()
 
@@ -132,15 +155,21 @@ def test_parser_forwards_new_unfilled_event_without_fees():
 def test_wallet_event_routed_to_reconciler():
     reco = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=MagicMock(), reconciler=reco,
+        coordinator=MagicMock(),
+        reconciler=reco,
         fill_recorder=MagicMock(),
     )
-    msg = {"data": [{
-        "accountType": "UNIFIED",
-        "coin": [{"coin": "BTC", "walletBalance": "0.001234"}],
-    }]}
+    msg = {
+        "data": [
+            {
+                "accountType": "UNIFIED",
+                "coin": [{"coin": "BTC", "walletBalance": "0.001234"}],
+            }
+        ]
+    }
     c._on_wallet_raw(msg)
     reco.on_wallet_event.assert_called_once_with({"coin": "BTC", "walletBalance": "0.001234"})
 
@@ -148,17 +177,23 @@ def test_wallet_event_routed_to_reconciler():
 def test_wallet_event_multi_coin_dispatched_individually():
     reco = MagicMock()
     c = BybitPrivateWSConsumer(
-        api_key="k", api_secret="s",
+        api_key="k",
+        api_secret="s",
         endpoint="wss://stream-demo.bybit.com/v5/private",
-        coordinator=MagicMock(), reconciler=reco,
+        coordinator=MagicMock(),
+        reconciler=reco,
         fill_recorder=MagicMock(),
     )
-    msg = {"data": [{
-        "coin": [
-            {"coin": "BTC", "walletBalance": "0.001"},
-            {"coin": "USDT", "walletBalance": "1000.0"},
-        ],
-    }]}
+    msg = {
+        "data": [
+            {
+                "coin": [
+                    {"coin": "BTC", "walletBalance": "0.001"},
+                    {"coin": "USDT", "walletBalance": "1000.0"},
+                ],
+            }
+        ]
+    }
     c._on_wallet_raw(msg)
     assert reco.on_wallet_event.call_count == 2
 
@@ -209,8 +244,11 @@ def test_execution_event_handles_multiple_fills() -> None:
     """S9 Q3 B1: One WS message с multiple fills dispatches each separately."""
     fill_recorder = MagicMock()
     consumer = BybitPrivateWSConsumer(
-        api_key="t", api_secret="t", endpoint="testnet.bybit.com",
-        coordinator=MagicMock(), reconciler=MagicMock(),
+        api_key="t",
+        api_secret="t",
+        endpoint="testnet.bybit.com",
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
         fill_recorder=fill_recorder,
     )
     msg = {
@@ -229,9 +267,117 @@ def test_execution_event_swallows_handler_exception() -> None:
     fill_recorder = MagicMock()
     fill_recorder.on_fill_event.side_effect = RuntimeError("boom")
     consumer = BybitPrivateWSConsumer(
-        api_key="t", api_secret="t", endpoint="testnet.bybit.com",
-        coordinator=MagicMock(), reconciler=MagicMock(),
+        api_key="t",
+        api_secret="t",
+        endpoint="testnet.bybit.com",
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
         fill_recorder=fill_recorder,
     )
     # Should not raise — exception swallowed + logged
     consumer._on_execution_raw({"topic": "execution", "data": [{"execId": "x"}]})
+
+
+def test_reconnect_triggers_check_alive_re_probe() -> None:
+    """S39 T8 H2 regression: after disconnect → reconnect → check_alive must be called
+    to verify WS subscription was re-attached.
+
+    Prevents silent dead-WS scenario where reconcile delivers AGREE on stale state.
+    Per S38 T3 bybit-api-reviewer finding.
+    """
+    from unittest.mock import patch
+
+    coord = MagicMock()
+    consumer = BybitPrivateWSConsumer(
+        api_key="test_key",
+        api_secret="test_secret",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=coord,
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+
+    # Mock check_alive to track calls
+    with patch.object(consumer, "check_alive", return_value=True) as mock_check_alive:
+        # Simulate disconnect — should trigger reconnect handler + re-probe
+        consumer.on_disconnect()
+
+        # check_alive must be called at least once after on_disconnect
+        # to verify subscription re-attached
+        assert (
+            mock_check_alive.call_count >= 1
+        ), "S39 T8 H2 gap: post-disconnect re-probe missing — silent dead-WS risk"
+
+
+def test_on_order_raw_drops_dict_data_with_log(caplog) -> None:
+    """S39 T12 M3 regression: if Bybit sends data=dict (V3 shape), must log + drop, NOT iterate."""
+    import logging
+
+    coord = MagicMock()
+    consumer = BybitPrivateWSConsumer(
+        api_key="test",
+        api_secret="test",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=coord,
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+
+    msg = {"topic": "order", "data": {"orderId": "12345"}}  # dict, not list
+
+    with caplog.at_level(logging.WARNING):
+        consumer._on_order_raw(msg)
+
+    # Verify structured log marker present (shape mismatch)
+    assert any(
+        "shape" in rec.message.lower()
+        or "isinstance" in rec.message.lower()
+        or "expected" in rec.message.lower()
+        for rec in caplog.records
+    ), "M3: must log shape mismatch warning"
+
+    # Verify coordinator NOT called (no fake order processed)
+    coord.on_order_event.assert_not_called()
+
+
+def test_on_execution_raw_drops_dict_data_with_log(caplog) -> None:
+    """S39 T12 M3 regression: execution handler must guard against V3 dict shape."""
+    import logging
+
+    fill_recorder = MagicMock()
+    consumer = BybitPrivateWSConsumer(
+        api_key="test",
+        api_secret="test",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
+        fill_recorder=fill_recorder,
+    )
+
+    msg = {"topic": "execution", "data": {"execId": "abc"}}  # dict, not list
+
+    with caplog.at_level(logging.WARNING):
+        consumer._on_execution_raw(msg)
+
+    # Verify structured log marker present
+    assert any(
+        "shape" in rec.message.lower() or "expected" in rec.message.lower()
+        for rec in caplog.records
+    ), "M3: execution handler must log shape mismatch"
+
+    fill_recorder.on_fill_event.assert_not_called()
+
+
+def test_ws_consumer_repr_does_not_contain_api_secret() -> None:
+    """S39 T13 M4 security: __repr__ MUST never expose api_key or api_secret."""
+    consumer = BybitPrivateWSConsumer(
+        api_key="visible_test_key_xxxxx",
+        api_secret="super_secret_value_must_not_appear",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=MagicMock(),
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+    r = repr(consumer)
+    assert "super_secret_value_must_not_appear" not in r
+    assert "visible_test_key_xxxxx" not in r

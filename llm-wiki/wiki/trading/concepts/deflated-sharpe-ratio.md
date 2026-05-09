@@ -123,3 +123,9 @@ BTC returns имеют **fat tails** (kurtosis ≈ 5–8 для 1H, vs 3 для 
 - [[walk-forward-validation]] — gating flow.
 - [[monte-carlo-permutations]] — complementary test.
 - [[../../project/architecture/acceptance-criteria]] — gating.
+
+## Реализация
+
+- [[../../project/components/dsr]] — `compute_dsr`: Bailey & López de Prado (2014) formula (Pearson kurtosis, log returns)
+- [[../../project/components/backtest-harness]] — replay engine produces per-trade records consumed by DSR pipeline
+- [[../../project/components/wfa-reporter]] — DSR aggregate informational output in WFA report

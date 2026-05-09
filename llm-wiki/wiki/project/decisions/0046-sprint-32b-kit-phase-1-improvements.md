@@ -14,11 +14,11 @@ sources:
 
 # ADR 0046 — Sprint 32b Kit Improvement Phase 1
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented in S32b (`feature/sprint-32b-kit-phase-1-improvements` → tag `v0.1.0-alpha.32b`). Sub-sprint S32 series (mirror S8a/S8b/S8c pattern).
 
-## Context
+## Контекст
 
 Per ADR 0045 carry-overs, Kit Phase 1 = 5 changes с КУ avg 63%, time 4-6 hours (forecast 10.5 КУ/час). Operator directive (session 2026-04-27): continue с Phase 1 в S32 series, не open S33. Trading work blocked via ESC-1/2/3 → S32 series занимает sprint slots без conflict.
 
@@ -30,7 +30,7 @@ Per ADR 0045 carry-overs, Kit Phase 1 = 5 changes с КУ avg 63%, time 4-6 hour
 4. **SPRINT_STATE staleness recurrence risk** — S32 Phase 0 fixed P0 staleness, но nothing prevents recurrence в next sprints
 5. **Dashboard module не имеет specialist reviewer** — python-reviewer (haiku) generic, не знает S25 ADR 0039 conditions / FastAPI patterns
 
-## Options
+## Варианты
 
 **Option A: Single big sprint covering Phase 1 + Phase 2 (memory corpus org + remaining mappings)**
 - Pros: всё сразу
@@ -44,7 +44,7 @@ Per ADR 0045 carry-overs, Kit Phase 1 = 5 changes с КУ avg 63%, time 4-6 hour
 - Pros: zero infrastructure risk
 - Cons: ignores 74% КУ items (CI + pre-commit), continues silent regression risk
 
-## Decision
+## Решение
 
 **Option B selected.** Sprint 32b = Kit Phase 1 = 6 changes:
 
@@ -75,7 +75,7 @@ This avoids false positives для legitimate historical references.
 
 CI пропускает на baseline failures (3 pytest pre-existing + 1 mypy pre-existing) — informational gates. Strict guards trip ONLY на regression (count > baseline). This unblocks S32b ship despite test debt carry-over.
 
-## Consequences
+## Последствия
 
 ### Positive
 
@@ -100,7 +100,7 @@ CI пропускает на baseline failures (3 pytest pre-existing + 1 mypy p
 2. No FSM / reason codes / canonical state changes (16/30/74/45 unchanged)
 3. Pattern continues S28-S32 (6-th consecutive non-trading sprint)
 
-## Implementation
+## Реализация
 
 Per plan `2026-04-27-sprint-32b-kit-phase-1-improvements.md`:
 - T1 → 6c2ea66 (dashboard-reviewer wiki page; agent file out-of-repo)
@@ -112,7 +112,7 @@ Per plan `2026-04-27-sprint-32b-kit-phase-1-improvements.md`:
 
 Tag: `v0.1.0-alpha.32b`.
 
-## Follow-ups
+## Дальнейшие действия
 
 **S32c candidate (Kit Phase 2, КУ avg 42%):**
 - Memory corpus organization (bridges 2-4 deferred from S30 + S31)
@@ -135,7 +135,7 @@ Tag: `v0.1.0-alpha.32b`.
 **Trading carry-overs (BLOCKED — operator):**
 - ESC-1 / ESC-2 / ESC-3
 
-## Related
+## Связанные документы
 
 - ADR 0017 (review-agent harness) — L5 dashboard-reviewer pattern
 - ADR 0041 (S28 process enforcement) — sprint-flow-check.sh predecessor pattern для freshness hook
@@ -144,4 +144,5 @@ Tag: `v0.1.0-alpha.32b`.
 - ADR 0045 (S32 Phase 0) — direct predecessor (КУ analysis source)
 - ADR 0046 (this) — Kit Phase 1 implementation
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32b-kit-phase-1-improvements]] — спринт delivery record
 - MCP server registry: https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite (mcp-server-sqlite source)

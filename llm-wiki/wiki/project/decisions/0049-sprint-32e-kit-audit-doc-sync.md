@@ -152,6 +152,7 @@ Tag: `v0.1.0-alpha.32e`.
 - ADR 0045/0046/0047/0048 (S32 Phase 0/1/2/3) — direct predecessors
 - ADR 0049 (this) — Kit audit + doc sync
 - Sprint S32 / S32b / S32c / S32d / S32e (this) — S32 series Phase 0/1/2/3 + audit
+- [[../sprints/sprint-32e-kit-audit-doc-sync]] — спринт delivery record
 - [[../architecture/kit-audit-2026-04-27]] — full audit findings (этот sprint deliverable)
 - [[../architecture/tooling-inventory-ru]] — Part 1 (post-split)
 - [[../architecture/tooling-inventory-ru-part-2]] — Part 2 (NEW S32e)

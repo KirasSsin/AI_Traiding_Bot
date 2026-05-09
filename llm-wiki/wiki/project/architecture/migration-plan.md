@@ -12,7 +12,7 @@ sources: [wiki/project/architecture/gap-analysis.md, wiki/project/architecture/o
 
 **TL;DR:** 10 спринтов (3-4 месяца) переводят Bybit linear 1m → Binance Spot 1H с DDD, SQLite+Parquet, Kelly 4 фазы, CB L1/L2/L3/flash. MVP **работает локально на ноутбуке**; Docker/SSH-deploy/cold-storage — в v0.2 Deploy release.
 
-## Principles
+## Принципы
 
 - **TDD.** Тесты до кода; DoD спринта включает green suite.
 - **Minimal changes.** Не рефакторим то, что не меняем (CLAUDE.md).
@@ -21,7 +21,7 @@ sources: [wiki/project/architecture/gap-analysis.md, wiki/project/architecture/o
 - **Wiki-first.** Каждый спринт заканчивается обновлением `wiki/project/components/<name>.md` + `wiki/log.md` + ADR если решение нетривиально.
 - **Local-first.** MVP запускается на одном ноутбуке (macOS/Linux); Docker и VPS — v0.2+.
 
-## Dependency Graph
+## График зависимостей
 
 ```
                 S1 (Foundation)
@@ -50,9 +50,9 @@ sources: [wiki/project/architecture/gap-analysis.md, wiki/project/architecture/o
   S10 (Paper trade mainnet)
 ```
 
-## Before / After: структура `src/`
+## До / После: структура `src/`
 
-### Before (current, 8 папок без явных границ)
+### До (текущее, 8 папок без явных границ)
 
 ```
 src/
@@ -68,7 +68,7 @@ src/
 └── main.py
 ```
 
-### After (MVP v0.1, 5 DDD bounded contexts)
+### После (MVP v0.1, 5 DDD bounded contexts)
 
 ```
 src/
@@ -106,7 +106,7 @@ src/
 └── main.py         # entry point: asyncio.run(app.run())
 ```
 
-### Mapping: старый путь → новый
+### Соответствие: старый путь → новый
 
 | Current | → | v0.1 | Action |
 |---------|---|------|--------|
@@ -127,7 +127,7 @@ src/
 | `web/dashboard.html`, `web/data.json` | → | сохраняются as-is | Локальный UI для мониторинга. |
 | `tests/test_math.py` | → | `tests/unit/test_math_engine.py` | Keep + extend. |
 
-## Legacy freeze plan
+## План заморозки legacy
 
 **Sprint 1, шаг 1:**
 ```bash
@@ -147,7 +147,7 @@ git checkout main
 
 ---
 
-## Sprints
+## Спринты
 
 ### S1 — Foundation (2 недели)
 
@@ -282,7 +282,7 @@ git checkout main
 
 ---
 
-## Out of scope (v0.2 Deploy release)
+## Вне scope (v0.2 Deploy release)
 
 - **Dockerfile + docker-compose** (local stack: bot + SQLite volume + Grafana + Prometheus).
 - **GitHub Actions CI/CD** (6 jobs: lint, mypy, test, backtest regression, lookahead CI gate, Docker build).
@@ -293,7 +293,7 @@ git checkout main
 - **Remote healthcheck** (healthchecks.io integration).
 - **Multi-region failover** (active-standby на втором VPS).
 
-## Out of scope (v0.3+)
+## Вне scope (v0.3+)
 
 - Multi-symbol (ETHUSDT, SOLUSDT).
 - Multi-timeframe (15m / 4H confirmation).
@@ -304,7 +304,7 @@ git checkout main
 
 ---
 
-## Local ops playbook
+## Операционный плейбук (локальный)
 
 **Requirements:** macOS 14+ или Linux (Ubuntu 22+); Python 3.12; TA-Lib native (`brew install ta-lib` / `apt-get install libta-lib0-dev`); ноутбук с постоянным питанием во время paper-trade.
 
@@ -331,7 +331,7 @@ tail -f logs/bot.log | jq .
 
 ---
 
-## Risks of the migration itself
+## Риски самой миграции
 
 | # | Риск | P | Impact | Mitigation |
 |---|------|---|--------|------------|
@@ -346,7 +346,7 @@ tail -f logs/bot.log | jq .
 
 ---
 
-## Rollback strategy
+## Стратегия отката
 
 - **Per-sprint:** main branch всегда green; failed sprint → `git revert <merge-commit>`, а не reset.
 - **Per-feature:** env-flag (e.g. `TRADING_ENABLED=false`) отключает live-placement без code rollback.
@@ -355,7 +355,7 @@ tail -f logs/bot.log | jq .
 
 ---
 
-## Related
+## Связанные
 
 - [[gap-analysis]] — почему миграция нужна (24 расхождения).
 - [[overview]] — target v0.1 архитектура.

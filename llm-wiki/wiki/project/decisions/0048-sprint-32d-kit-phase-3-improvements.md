@@ -15,11 +15,11 @@ sources:
 
 # ADR 0048 — Sprint 32d Kit Improvement Phase 3 (S32 series FINAL)
 
-## Status
+## Статус
 
 Accepted (2026-04-27) — implemented in S32d (`feature/sprint-32d-kit-phase-3-improvements` → tag `v0.1.0-alpha.32d`). Sub-sprint S32 series **FINAL**. After ship → S33 trading work begins.
 
-## Context
+## Контекст
 
 Per ADR 0047 carry-overs, Kit Phase 3 = 7 items total (Phase 2 deferred research + Phase 3 originals). Pre-plan analysis revealed:
 - 4 implementations = clear wins
@@ -35,7 +35,7 @@ Per ADR 0047 carry-overs, Kit Phase 3 = 7 items total (Phase 2 deferred research
 4. **No sprint metrics tracking** — velocity / revision rate / КУ blind, can't measure kit improvement effectiveness
 5. **Memory corpus bridges 2-4 vague status** — deferred S30+S31, no honest feasibility assessment
 
-## Options
+## Варианты
 
 **Option A: Full Phase 3 — все 7 items implemented**
 - Pros: всё ship'd, no carry-overs
@@ -49,7 +49,7 @@ Per ADR 0047 carry-overs, Kit Phase 3 = 7 items total (Phase 2 deferred research
 - Pros: One sprint less, faster к trading work
 - Cons: Lose 4 quick wins (bybit-reviewer / context hook / schedule wire / metrics tracking) + corpus bridges status remains vague
 
-## Decision
+## Решение
 
 **Option B selected.** Sprint 32d = Kit Phase 3 = 5 changes:
 
@@ -123,7 +123,7 @@ Honest feasibility assessment vs more sprint cycles wasted on attempted implemen
 
 S32c scheme docs (Section 22) provide stable design ready для future implementation если priorities change.
 
-## Consequences
+## Последствия
 
 ### Positive
 
@@ -149,7 +149,7 @@ S32c scheme docs (Section 22) provide stable design ready для future implemen
 3. Pattern continues S28-S32c (8-th consecutive non-trading sprint) — series ends here
 4. CI infrastructure (S32b) validated 3rd PR (S32d) — confirms ongoing reliability
 
-## Implementation
+## Реализация
 
 Per plan `2026-04-27-sprint-32d-kit-phase-3-improvements.md`:
 - T1 → a15ff4c (bybit-api-reviewer wiki page; agent file out-of-repo)
@@ -159,7 +159,7 @@ Per plan `2026-04-27-sprint-32d-kit-phase-3-improvements.md`:
 
 Tag: `v0.1.0-alpha.32d`.
 
-## Follow-ups
+## Дальнейшие действия
 
 **S33 trading sprint preparation (operator action):**
 1. Resolve ESC-1/2/3 (multi-symbol authorization / "in profit" semantics / 4H operational)
@@ -183,7 +183,7 @@ Tag: `v0.1.0-alpha.32d`.
 - Context budget hook exact token counter (вместо file size proxy)
 - bybit-api-reviewer first real-world validation (at S33+ Bybit-touching sprint)
 
-## Related
+## Связанные документы
 
 - ADR 0017 (review-agent harness) — L5 agent matrix policy (bybit-api-reviewer = 11-th agent)
 - ADR 0044 (S31 best practices) — kit baseline + context discipline references
@@ -191,4 +191,5 @@ Tag: `v0.1.0-alpha.32d`.
 - ADR 0048 (this) — Kit Phase 3 final S32 series sprint
 - Sprint S32 / S32b / S32c / S32d (this) — S32 series Phase 0/1/2/3 COMPLETE
 - Anthropic Claude Code best practices: https://docs.claude.com/en/code/best-practices
+- [[../sprints/sprint-32d-kit-phase-3-improvements]] — спринт delivery record
 - Bybit V5 API docs: https://bybit-exchange.github.io/docs/v5/

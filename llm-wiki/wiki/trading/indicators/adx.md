@@ -83,6 +83,11 @@ ADX — **фильтр силы тренда** в стратегии `ema-crosso
 - [[./rsi]] — фильтр перекупленности
 - [[./atr]] — использует тот же TR, что и ADX
 
+## Реализация
+
+- [[../../project/components/indicators]] — `adx`, `plus_di`, `minus_di` — TA-Lib Wilder double-smooth delegates
+- [[../../project/components/strategy]] — ADX > 25 gate + +DI > -DI direction confirmation gate
+
 ## Sources
 - Wilder, J. W. (1978). *New Concepts in Technical Trading Systems*. Ch. 6 (Directional Movement).
 - Kaufman, P. (2013). *Trading Systems and Methods* (5th ed.). Ch. 9.

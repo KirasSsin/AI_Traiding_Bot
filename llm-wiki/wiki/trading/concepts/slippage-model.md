@@ -106,3 +106,8 @@ Total cost v0.1: `2 × 10 bps (fees) + 5 bps (slippage) = 25 bps per round-trip`
 
 - [[../../project/architecture/execution-timing]] — slippage применяется в fill simulation.
 - [[../../project/decisions/0010-sqrt-slippage-model]] — ADR.
+
+## Реализация
+
+- [[../../project/components/sizing]] — notional от `compute_qty` определяет режим slippage (fixed 5bps vs sqrt)
+- [[../../project/components/strategy]] — signal timing (close T → fill open T+1) задаёт точку применения slippage

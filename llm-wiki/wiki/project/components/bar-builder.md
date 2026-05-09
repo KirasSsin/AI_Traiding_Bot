@@ -36,7 +36,7 @@ status: stable
 - **Stateful per instance** — хранит `last_confirmed_open_ms`. Один instance = один symbol+interval.
 - **No forward-fill в GAP** (per edge-cases #1) — GAP bar имеет OHLCV=0, downstream skip signal.
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (CRITICAL — verified by tests + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -45,12 +45,17 @@ status: stable
 | 3 | Out-of-order: `open_ms < last_confirmed` → `OutOfOrderError` | `src/marketdata/bar_builder.py::BarBuilder._check_order` | `tests/unit/test_bar_builder.py::test_out_of_order_is_rejected` |
 | 4 | Stateful per instance — one instance per symbol+interval | `src/marketdata/bar_builder.py::BarBuilder.__init__` | (architecture rule) |
 
-## Related
+## Связанные
 
 - [[../architecture/edge-cases]] — источник invariant-списка.
+- [[../architecture/storage]] — Parquet writer, потребляющий Bar объекты.
+- [[../architecture/bounded-contexts]] — Market Data bounded context (BarBuilder = isClosed gate).
 - [[models]] — `Bar`, `DataQuality`.
 - [[../decisions/0007-utc-timestamps-ns-precision]] — UTC ns datetime.
 - [[bybit-ws]] — поставщик сообщений.
+- [[bar-poller]] — REST-based alternative tick source for live runtime (S8a)
+- [[../sprints/sprint-02-bybit-venue-migration]] — sprint where bar-builder was created
+- [[../decisions/0016-bybit-spot-supersedes-binance]] — venue ADR (Bybit V5 kline payload shape)
 
 ## Sources
 

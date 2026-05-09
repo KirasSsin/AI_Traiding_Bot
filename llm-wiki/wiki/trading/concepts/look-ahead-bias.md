@@ -102,3 +102,9 @@ Look-ahead даёт **catastrophically inflated Sharpe** (2×–10×), но ег
 - [[../../project/architecture/execution-timing]] — production discipline.
 - [[walk-forward-validation]] — embargo для CV.
 - [[monte-carlo-permutations]] — sanity check.
+
+## Реализация
+
+- [[../../project/components/backtest-harness]] — bar-by-bar replay enforces signal at close(T), fill at open(T+1)
+- [[../../project/components/walk-forward]] — embargo h=20 bars prevents label leakage at fold boundaries
+- [[../../project/components/indicators]] — TA-Lib Wilder indicators computed on closed bars only (is_closed gate in strategy.on_bar)

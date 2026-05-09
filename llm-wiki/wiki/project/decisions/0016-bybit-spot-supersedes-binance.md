@@ -158,3 +158,8 @@ testnet (USDC contracts, Unified, Spot). Расширение scope наруша
 - [[0010-sqrt-slippage-model]] — применимость к Bybit Spot ликвидности.
 - [[../architecture/bounded-contexts]] — Execution ACL.
 - [[../architecture/migration-plan]] §S2 — Venue migration sprint.
+- [[../sprints/sprint-02-bybit-venue-migration]] — спринт реализации Bybit venue migration
+- [[../components/bybit-rest]] — REST client (`get_klines`, `get_filters`, `get_server_time`)
+- [[../components/bybit-ws]] — WebSocket consumer (pybit → asyncio queue bridge)
+- [[../components/bybit-adapter]] — `BybitMarketAdapter.place_market_order` + OCO bracket
+- [[../components/bar-builder]] — venue-agnostic aggregator consuming Bybit klines

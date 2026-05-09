@@ -47,6 +47,8 @@ def _runtime(
     symbol: str | None = "BTCUSDT",
     **settings_overrides: object,
 ) -> tuple[RuntimeManager, MagicMock]:
+    from src.risk.manager import RiskSharedDeps
+
     settings = _settings(tmp_path, **settings_overrides)
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
@@ -60,9 +62,11 @@ def _runtime(
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=settings,
-        equity_tracker=EquityTracker(conn),
-        trade_repo=TradeHistoryRepository(conn),
-        state_repo=StateRepository(conn),
+        shared_deps=RiskSharedDeps(
+            equity_tracker=EquityTracker(conn),
+            trade_repo=TradeHistoryRepository(conn),
+            state_repo=StateRepository(conn),
+        ),
     )
     return rm, coord
 

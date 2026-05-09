@@ -192,4 +192,6 @@ NONE — user already authorized Option B per pre-commit framework S13 ESC-1=c "
 
 - [[decisions/0028-sprint-13-strategy-validation]] — S13 ADR (verdict FAIL trigger)
 - [[sprints/sprint-13-backfill-wfa]] — S13 measurement results
+- [[decisions/0029-sprint-14-honest-close]] — Sprint 14 ADR
+- [[sprints/sprint-14-honest-close]] — Sprint 14 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)

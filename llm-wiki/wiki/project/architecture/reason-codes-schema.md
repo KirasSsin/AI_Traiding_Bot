@@ -203,3 +203,5 @@ def verify_chain(jsonl_path):
 - [[storage]] — SQLite `audit_index`.
 - [[domain-events]] — события, генерирующие audit-записи.
 - [[../components/halt-gate-wireup]] — wire-up S36 с использованием кодов HALT_S36_*.
+- [[../components/execution-state-machine]] — FSM, генерирующий reason codes при переходах.
+- [[../components/halt-gate]] — HaltGate, использующий HALT_S36_* коды.

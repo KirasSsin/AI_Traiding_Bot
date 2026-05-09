@@ -169,6 +169,7 @@ Pure bash regex для `[[wiki-link]]` parsing fragile (escape hell, нет norm
 
 ## Related
 
+- [[../sprints/sprint-09-data-quality-types-analytics]] — sprint where wiki-broken-link hook was created (Bucket C7)
 - [[adr-agent-sync-hook]] — sister hook (ADR ↔ agent prompt mtime sync, ADR 0017)
 - [[adr-index-sync-hook]] — sister hook (ADR ↔ index.md ref sync, Bucket C6)
 - [[../architecture/development-workflow]] — PHASE 8 finishing

@@ -334,6 +334,8 @@ Per user's roadmap "S13 = pick ONE" + maintainer recommendation in earlier messa
 - [[decisions/0014-walk-forward-train2000-test500]] — WFA params
 - [[decisions/0016-bybit-spot-supersedes-binance]] — venue policy (Q3 conflict point)
 - [[decisions/0027-sprint-12-live-demo-validation]] — predecessor sprint
+- [[decisions/0028-sprint-13-strategy-validation]] — Sprint 13 ADR
+- [[sprints/sprint-13-backfill-wfa]] — Sprint 13 page
 - [[architecture/acceptance-criteria]] — 12 gating criteria
 - [[architecture/migration-plan]] — original 10-sprint roadmap
 - [[runbooks/live-demo-validation]] — 48h validation playbook (Q6)

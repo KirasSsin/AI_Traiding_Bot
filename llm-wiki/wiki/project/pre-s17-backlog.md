@@ -137,5 +137,7 @@ S17 = BTC-only mean-reversion relaxed (RSI 35/65 + BB(20, 1.5σ) AND-gated, NO v
 - [[decisions/0031-sprint-16-honest-close-v02]] — S16 v0.2 honest close + CC1 BTC institutional knowledge + CC2 cross_trial archival policy
 - [[sprints/sprint-15-mean-reversion-multi-symbol]] — S15 BTC alone signal observed
 - [[sprints/sprint-16-honest-close-v02]] — S16 final v0.2 close + v0.3 options
+- [[decisions/0032-sprint-17-btc-mean-reversion-relaxed]] — Sprint 17 ADR
+- [[sprints/sprint-17-btc-mean-reversion-relaxed]] — Sprint 17 page
 - [[architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
 - [[decisions/0016-bybit-spot-supersedes-binance]] — venue + BTC-only original scope

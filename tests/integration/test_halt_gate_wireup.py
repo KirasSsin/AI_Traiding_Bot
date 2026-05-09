@@ -54,6 +54,8 @@ def _settings(tmp_path: Path, **overrides: object) -> Settings:
 def runtime_with_demo_active(
     tmp_path: Path,
 ) -> tuple[RuntimeManager, MagicMock, EquityTracker, TradeHistoryRepository]:
+    from src.risk.manager import RiskSharedDeps
+
     settings = _settings(tmp_path)
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
@@ -73,9 +75,11 @@ def runtime_with_demo_active(
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=settings,
-        equity_tracker=et,
-        trade_repo=th,
-        state_repo=sr,
+        shared_deps=RiskSharedDeps(
+            equity_tracker=et,
+            trade_repo=th,
+            state_repo=sr,
+        ),
     )
     return rm, coord, et, th
 
@@ -156,6 +160,8 @@ def test_halt_gate_no_trigger_returns_false(
 
 
 def test_halt_gate_inactive_when_demo_disabled(tmp_path: Path) -> None:
+    from src.risk.manager import RiskSharedDeps
+
     settings = _settings(tmp_path, s35_demo_active=False)
     init_db(settings.db_path, _MIGRATIONS)
     conn = connect(settings.db_path)
@@ -169,9 +175,11 @@ def test_halt_gate_inactive_when_demo_disabled(tmp_path: Path) -> None:
         strategy=MagicMock(),
         risk_manager=MagicMock(),
         settings=settings,
-        equity_tracker=EquityTracker(conn),
-        trade_repo=TradeHistoryRepository(conn),
-        state_repo=StateRepository(conn),
+        shared_deps=RiskSharedDeps(
+            equity_tracker=EquityTracker(conn),
+            trade_repo=TradeHistoryRepository(conn),
+            state_repo=StateRepository(conn),
+        ),
     )
     halted = rm._check_halt_gate()
     assert halted is False

@@ -163,10 +163,10 @@ Per S28+ binding:
 
 ## Related
 
+- [[../decisions/0057-sprint-37-carry-overs-hardening]] — ADR этого спринта
 - ADR 0050-0054 (S33-S35 lineage)
 - ADR 0055 (S36 δ activation — paired predecessor)
 - ADR 0056 (S36 DSR amendment + S37 amendment paired)
-- ADR 0057 (S37 carry-overs hardening — этот sprint)
 - ADR 0018 (HMAC pattern — SD-4 source)
 - ADR 0019 (coordinator design — SD-6 source)
 - ADR 0022 (RuntimeManager lifecycle — SD-5 clock pattern)

@@ -16,7 +16,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-25
 
-## Context
+## Контекст
 
 Sprint 9 закрывает 3 deferred carry-overs:
 
@@ -29,7 +29,7 @@ PHASE 2 brainstorming verdicts (`pre-s9-backlog.md`):
 - Q2: REVISE accepted — order src.core → src.risk → src.backtest. Empirical follow-up в plan: ALL 3 modules pass `mypy --strict` clean per-module check. But `mypy src/` full-tree exposed 18 cross-module errors after override removal — fixed in T4 follow-up commit.
 - Q3: CONFIRM — split B1 (per-fill table + WS execution topic) + B2 (DSR module on TradeRecord).
 
-## Decision
+## Решение
 
 ### Q1 (C — Data quality)
 
@@ -85,7 +85,7 @@ Result: `mypy src/` → Success in 62 source files. Zero behavioral changes.
 - Annualization NOT applied — per-trade Sharpe internally consistent для DSR (Φ output unit-free, annualization cancels)
 - quant-stats-reviewer T9: APPROVED post-fix
 
-## Consequences
+## Последствия
 
 **Plus:**
 - HALT_DATA_QUALITY now active (was placeholder enum-only since S4)
@@ -101,7 +101,7 @@ Result: `mypy src/` → Success in 62 source files. Zero behavioral changes.
 - DSR без real backtest data = academic until first live trades (S11+)
 - mypy strict revealed 18 cross-module errors that per-module check missed — pattern lesson for future override removals (always full-tree verify)
 
-## Related
+## Связанные документы
 
 - [[../pre-s9-backlog]] — PHASE 2 brainstorming verdicts trail
 - [[0021-sprint-7-resilience]] — per-fill execution topic deferral source
@@ -113,6 +113,6 @@ Result: `mypy src/` → Success in 62 source files. Zero behavioral changes.
 - [[../plans/2026-04-25-sprint-9-quality-types-analytics]] — implementation plan + trace map
 - [[../sprints/sprint-09-data-quality-types-analytics]] — sprint delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

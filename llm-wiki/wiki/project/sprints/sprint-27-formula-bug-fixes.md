@@ -122,6 +122,7 @@ No new reason codes. T4 fix surfaces existing canonical codes (EXIT_SL_HIT, EXIT
 
 ## Related
 
+- [[../decisions/0040-sprint-27-formula-bug-fixes]] — ADR этого спринта
 - ADR 0011 (TA-Lib EMA + Wilder) — RSI/ATR warm-up convention
 - ADR 0014 (WFA K=5 immutable) — bars_per_year derivation per fold
 - ADR 0015 (MC sign-flip ADR) — seed default reproducibility

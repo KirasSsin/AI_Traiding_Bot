@@ -24,11 +24,11 @@ status: stable
 
 **TL;DR:** Central FSM owner и bracket-lifecycle orchestrator. Файл: `src/execution/coordinator.py` (628 LoC). Owns: `_lock` (threading.RLock, ADR 0022 Task 0), `_bootstrap_done` invariant, `_repo` (`ExecutionStateRepo`), `_reconciler`, `_adapter` (Bybit). Public surface: **8 methods** (bootstrap, on_ws_reconnect, on_order_event, start_bracket, arm_oco, flatten, request_halt, reconcile_arming_ttl). Все mutation paths go через `_transition(event)` → `apply(state, event)` → `_repo.upsert()`. Halt path отдельный: `_set_halt()` (γ persistence S7) + `_transition()` dispatch (ADR 0023 invariant).
 
-## Definition / Purpose
+## Назначение
 
 До S5 execution был набор unit-test fixtures без owner'а. ADR 0019 (S5) ввёл `Coordinator` как single FSM mutator (one-writer invariant). S6 (ADR 0020) расширил на 3-order Spot OCO emulation. S7 (ADR 0021) добавил bootstrap reconcile + 4-valued verdicts + γ halt persistence. S8a (ADR 0022) добавил `RLock` (concurrency защита от pybit thread × main thread) + `request_halt` public API. S8b (ADR 0023) зафиксировал halt-code → FSM event mapping invariant.
 
-## Public API
+## Публичный API
 
 ```python
 class Coordinator:
@@ -61,7 +61,7 @@ class Coordinator:
     def reconcile_arming_ttl(self, ...) -> None: ...
 ```
 
-## Threading lock policy (ADR 0022 Task 0 — MANDATORY)
+## Политика блокировок (ADR 0022 Task 0 — ОБЯЗАТЕЛЬНО)
 
 Все 8 публичных методов wrapped в `with self._lock:` block. `_lock = threading.RLock()` (reentrant — нужен потому что `bootstrap()` вызывает `on_ws_reconnect()` внутри собственного lock'а).
 
@@ -78,7 +78,7 @@ class Coordinator:
 
 Защищает от race: pybit thread (`on_order_event`) ↔ main thread (RuntimeManager tick → `start_bracket` / `request_halt`).
 
-## FSM dispatch invariant (ADR 0023)
+## Инвариант диспетчеризации FSM (ADR 0023)
 
 Всё mutation = `_transition(event)`:
 
@@ -120,7 +120,7 @@ _REQUEST_HALT_CODES = frozenset({
 
 Future halt code → MUST добавить explicit branch в `request_halt` ИЛИ существующий "RISK_HALT bucket" + TRANSITIONS row(s) для всех source states + property test parameter. Reviewer enforcement: trading-logic-reviewer.md CRITICAL section "Halt-code → FSM event mapping".
 
-## Bootstrap sequencing (ADR 0021 sub-decision 1, ADR 0022 sub-decision 7)
+## Последовательность bootstrap (ADR 0021 sub-decision 1, ADR 0022 sub-decision 7)
 
 ```
 bootstrap()
@@ -136,7 +136,7 @@ bootstrap()
 
 **Sequencing invariant:** `_bootstrap_done` MUST be True перед любым `start_bracket` / `on_order_event`. Enforced ассертами (S7).
 
-## Reconcile path (4-valued verdicts, ADR 0021 sub-decision 3)
+## Путь reconcile (4 вердикта, ADR 0021 sub-decision 3)
 
 `on_ws_reconnect()` routes через RECONCILING state:
 
@@ -149,7 +149,7 @@ bootstrap()
 
 `_RECONCILABLE_STATES` frozenset (9 active states) гейт — non-reconcilable states (KILLED, INIT, ERROR) → noop.
 
-## γ Halt persistence (S7 ADR 0021 sub-decisions 5+9)
+## γ Персистентность halt (S7 ADR 0021 sub-decisions 5+9)
 
 `_set_halt(reason, last_event, extra)`:
 1. Capture row state BEFORE transition (state_at_halt, position_qty, oco_tp_id, oco_sl_id, expected_qty, last_event, last_attempt_num, arming_started_at) → ctx dict.
@@ -158,7 +158,7 @@ bootstrap()
 
 Note: `_set_halt(reason: str)` internal wrapper signature всё ещё `str` (не ReasonCode) — carry-over для S8c cleanup (см. `wiki/project/pre-s8c-backlog.md`).
 
-## OCO bracket lifecycle (S6 ADR 0020)
+## Жизненный цикл OCO bracket (S6 ADR 0020)
 
 `start_bracket(qty, entry_price, tp_price, sl_price, ...)`:
 1. Submit Entry Market order via adapter.
@@ -181,7 +181,7 @@ Note: `_set_halt(reason: str)` internal wrapper signature всё ещё `str` (�
 `flatten(reason)`:
 - Emergency exit. Cancel TP+SL siblings, place market sell, transition through EXIT_PENDING → FLAT (or HALTED on failure).
 
-## State persistence
+## Персистентность состояния
 
 Schema `execution_state` (PK = `symbol`):
 - migration `0003_execution_state.sql` — base S5
@@ -190,7 +190,7 @@ Schema `execution_state` (PK = `symbol`):
 
 Decimal stored as TEXT. Coordinator упсёртит row на каждом transition end. Exchange wins per ADR 0019 sub-decision 3 (reconcile-as-truth).
 
-## Invariants (CRITICAL — verified by tests + code review)
+## Инварианты (КРИТИЧНЫЕ — проверены тестами + code review)
 
 | # | Invariant | Enforcement | Test |
 |---|-----------|-------------|------|
@@ -200,7 +200,7 @@ Decimal stored as TEXT. Coordinator упсёртит row на каждом trans
 | 4 | Halt allow-list: every `ReasonCode` in `request_halt` has explicit dispatch branch + TRANSITIONS row(s) | `src/execution/coordinator.py::request_halt` + ADR 0023 invariant | `tests/property/test_request_halt_mapping.py::test_request_halt_dispatches_every_allow_listed_code` |
 | 5 | γ halt persistence — first non-null `halt_reason` sticks, subsequent halts append to `halt_log` but MUST NOT overwrite primary | `src/execution/coordinator.py::_set_halt` + ADR 0021 sub-decisions 5+9 | `tests/unit/test_halt_persistence.py::test_set_halt_secondary_call_log_appends_primary_preserved` |
 
-## Related
+## Связанные
 
 - [[execution-state-machine]] — FSM (16 states / 30 events / 74 transitions live)
 - [[reconciler]] — 4-valued verdict producer; called from `on_ws_reconnect` and `bootstrap`
@@ -208,20 +208,28 @@ Decimal stored as TEXT. Coordinator упсёртит row на каждом trans
 - [[runtime-manager]] — owner: calls `coordinator.bootstrap()`, `start_bracket()`, `request_halt()`
 - [[ws-private-consumer]] — sink: routes order/wallet events → `on_order_event`/`on_wallet_event` (через reconciler)
 - [[bybit-adapter]] — REST partner (entry/exit/cancel)
+- [[risk-manager]] — upstream: sends RiskAssessment → `start_bracket`; calls `request_halt` on CB trigger
+- [[halt-gate]] — halt evaluator wired via halt-gate-wireup → `request_halt`
+- [[fill-recorder-adapter]] — `_NoopFillRecorder` stub replaced by adapter in `_cmd_run`
+- [[../sprints/sprint-05-execution]] — sprint where coordinator was created
 - [[../decisions/0019-sprint-5-execution-decisions]] — Coordinator origin (one-writer invariant)
 - [[../decisions/0020-sprint-6-execution-spot-oco-emulation]] — 3-order OCO emulation (start_bracket + arm_oco + on_order_event)
 - [[../decisions/0021-sprint-7-resilience]] — bootstrap, on_ws_reconnect 4-valued, _set_halt γ
 - [[../decisions/0022-sprint-8a-live-runtime]] — RLock policy (Task 0), request_halt API
 - [[../decisions/0023-halt-code-fsm-event-mapping]] — halt-code → FSM event invariant
 - [[../runbooks/halt-recovery]] — operator runbook для 19 halt codes (Coordinator owns `request_halt` API + `_set_halt` internal)
+- [[../architecture/state-machine]] — FSM спецификация (single-writer invariant).
+- [[../architecture/execution-timing]] — timing invariants (signal-on-close → order-at-open-T+1).
+- [[../architecture/domain-events]] — domain events, диспатчируемые Coordinator.
+- [[../architecture/bounded-contexts]] — Order Execution bounded context (Coordinator = ACL owner).
 
-## Open questions / S8c carry-over
+## Открытые вопросы / перенос к S8c
 
 - `_set_halt(reason: str)` internal wrapper signature → narrow to `ReasonCode` (parity с public `request_halt`).
 - ADR 0022 narrative transition count = 73; live = 74 после S8b T7. Amend at next ADR touch.
 - mypy --strict: 4 pre-existing errors в coordinator.py (LocalState undef + `dict[Any, Any]`).
 
-## Sources
+## Источники
 
 - `src/execution/coordinator.py:59-628`
 - `src/execution/state_machine.py` (TRANSITIONS table, ExecutionEvent enum)

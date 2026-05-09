@@ -169,6 +169,8 @@ PHASE 2 complete. SPRINT_STATE → phase=3-planning. Next: PHASE 3 plan write (`
 - [[decisions/0014-walk-forward-train2000-test500]] — WFA window + Sharpe gate locked decisions
 - [[decisions/0015-sign-flip-mc-permutations-n2000]] — MC permutation N=2000 + p ≤ 0.05 locked
 - [[decisions/0024-sprint-9-data-quality-types-analytics]] — DSR foundation (S9)
+- [[decisions/0025-sprint-10-wfa-dsr-mc]] — Sprint 10 ADR
+- [[sprints/sprint-10-wfa-dsr-mc]] — Sprint 10 page
 - [[components/dsr]] — `compute_dsr` API (extend с sigma_sr)
 - [[components/backtest-harness]] — S2 backtest engine (revive)
 - [[architecture/development-workflow]] — PHASE 2 binding protocol

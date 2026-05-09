@@ -1,26 +1,26 @@
 ---
-title: Components — domain cluster index
+title: Components — индекс доменных кластеров
 type: navigation
 tags: [navigation, components, clusters, llm-friendly]
 created: 2026-04-25
-updated: 2026-04-25
+updated: 2026-05-09
 status: stable
 sources:
   - project/mental-map.md
   - index.md
 ---
 
-# Components — domain cluster index
+# Components — индекс доменных кластеров
 
-> **For LLM agents:** этот файл = topic-grouped reverse lookup ("I'm reading X — what's related?"). Complementary к flat `index.md` alphabetic list. Use если читаешь one component и need related context.
+> **Для LLM-агентов:** этот файл = тематический reverse lookup ("я читаю X — что связано?"). Дополняет плоский алфавитный список `index.md`. Используй, когда читаешь один компонент и нужен связанный контекст.
 
-**TL;DR:** 31 component pages grouped по 10 domain clusters (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics). Each cluster has anchor (primary component) + supporting components. Cross-cluster relationships в "Bridge components" section.
+**TL;DR:** 31 страница компонентов, сгруппированных по 10 доменным кластерам (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics). Каждый кластер имеет anchor (основной компонент) + поддерживающие компоненты. Кросс-кластерные связи — в секции "Bridge components".
 
-## Cluster 1 — Market Data ingest
+## Кластер 1 — Приём рыночных данных (Market Data ingest)
 
-**Theme:** OHLCV pipeline (REST seed + WS live + bar building + storage). Sprint origin: S2 (ADR 0016).
+**Тема:** OHLCV pipeline (REST seed + WS live + bar building + storage). Начало: S2 (ADR 0016).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[bybit-rest]]** | pybit V5 HTTP wrapper — server_time, instruments_info, paginated klines |
 | [[bybit-ws]] | pybit WebSocket callback → asyncio iteration мост (S2 legacy, replaced by ws-private-consumer for execution) |
@@ -28,25 +28,25 @@ sources:
 | [[bar-poller]] | REST kline 5s cadence + stall detection (S8a) |
 | [[data-quality]] | REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1) |
 
-**Bridge to:** Storage (writes Parquet) → Strategy (consumer)
+**Мост к:** Storage (writes Parquet) → Strategy (consumer)
 
-## Cluster 2 — Signal generation
+## Кластер 2 — Генерация сигналов (Signal generation)
 
-**Theme:** Strategy + indicators (look-ahead-free, signal on close(T) → fill open(T+1)). Sprint origin: S3 (ADR 0011, 0017).
+**Тема:** Strategy + indicators (look-ahead-free, signal on close(T) → fill open(T+1)). Начало: S3 (ADR 0011, 0017).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[strategy]]** | EmaCrossoverAdxRsiStrategy — `on_bar(Bar) → Signal \| None`, FLAT/LONG FSM |
 | [[indicators]] | TA-Lib wrappers — EMA classical/Wilder + ADX/±DI/RSI/ATR Wilder |
 | [[models]] | pydantic v2 domain models — Bar/Signal/Order/Fill с look-ahead invariants |
 
-**Bridge to:** Risk (Signal → assess) → Execution (start_bracket)
+**Мост к:** Risk (Signal → assess) → Execution (start_bracket)
 
-## Cluster 3 — Risk + sizing
+## Кластер 3 — Risk + sizing
 
-**Theme:** 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash CB + manual override. Sprint origin: S4 (ADR 0012, 0013, 0018).
+**Тема:** 4-phase Kelly + Wilson 95% CI + L1/L2/L3/flash CB + manual override. Начало: S4 (ADR 0012, 0013, 0018).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[risk-manager]]** | orchestrator — `assess(signal, mark_price) → RiskAssessment` с look-ahead invariant |
 | [[kelly]] | 4-phase Kelly + Wilson 95% CI; pure functions, KellyCaps from Settings |
@@ -56,93 +56,93 @@ sources:
 | [[trade-history]] | Per-trade audit log — TradeRecord + TradeHistoryRepository + UNIQUE INDEX entry_signal_id (Kelly trade-count source) |
 | [[fill-history]] | Per-fill audit log — FillRecord + FillHistoryRepository (FK trade_history) + WS execution topic source (S9 Q3 B1) |
 
-**Bridge to:** Execution (approved Signal → Coordinator.start_bracket)
+**Мост к:** Execution (approved Signal → Coordinator.start_bracket)
 
-## Cluster 4 — Execution + OCO
+## Кластер 4 — Исполнение + OCO (Execution + OCO)
 
-**Theme:** 3-order Spot OCO emulation + 16-state Harel FSM + bracket lifecycle. Sprint origin: S5/S6 (ADR 0019, 0020).
+**Тема:** 3-order Spot OCO emulation + 16-state Harel FSM + bracket lifecycle. Начало: S5/S6 (ADR 0019, 0020).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[coordinator]]** | Central orchestrator — FSM dispatch (`_transition`) + bracket lifecycle (`start_bracket`/`arm_oco`/`flatten`) + halt mechanics (`request_halt`) + reconcile delegation. 8 RLock-protected methods. |
 | [[execution-state-machine]] | 16 states / 30 events / 74 transitions table-driven `TRANSITIONS` + `IllegalTransitionError` |
 | [[oco]] | 3-order bracket (Entry Market + TP Limit + SL StopMarket IOC) + builder (`compute_oco_qty`, `make_order_link_id`) |
 | [[bybit-adapter]] | MARKET/Limit/StopMarket spot execution + 6 methods + filter-validate + retCode→ReasonCode + banned-field guard |
 
-**Bridge to:** Resilience (Reconciler ↔ Coordinator), Runtime (RuntimeManager owns Coordinator lifecycle)
+**Мост к:** Resilience (Reconciler ↔ Coordinator), Runtime (RuntimeManager owns Coordinator lifecycle)
 
-## Cluster 5 — Resilience (S7)
+## Кластер 5 — Устойчивость (Resilience, S7)
 
-**Theme:** Bootstrap reconcile + 4-valued verdicts + γ halt persistence + WS reconnect. Sprint origin: S7 (ADR 0021).
+**Тема:** Bootstrap reconcile + 4-valued verdicts + γ halt persistence + WS reconnect. Начало: S7 (ADR 0021).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[reconciler]]** | 4-valued verdict producer (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED). walletBalance-as-truth для Spot. |
 | [[ws-private-consumer]] | pybit WebSocket close-hook + check_alive watchdog. Routes order/wallet events → Coordinator/Reconciler. |
 
-**Bridge to:** Execution (Reconciler called from Coordinator.bootstrap + on_ws_reconnect), Runtime (WS consumer started by RuntimeManager)
+**Мост к:** Execution (Reconciler called from Coordinator.bootstrap + on_ws_reconnect), Runtime (WS consumer started by RuntimeManager)
 
-## Cluster 6 — Runtime (S8a) — live process
+## Кластер 6 — Runtime (S8a) — живой процесс
 
-**Theme:** Process lifecycle owner (bootstrap → tick loop → graceful shutdown). Sprint origin: S8a (ADR 0022).
+**Тема:** Владелец жизненного цикла процесса (bootstrap → tick loop → graceful shutdown). Начало: S8a (ADR 0022).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[runtime-manager]]** | Owns process lifecycle. Tick pipeline: `_maybe_kill_switch` → `_check_alive_inline` → `_poll_bar_and_strategy` → `_poll_or_arm_oco`. |
-| [[bar-poller]] | REST kline 5s cadence + stall detection (cross-listed with Cluster 1) |
+| [[bar-poller]] | REST kline 5s cadence + stall detection (cross-listed с Кластером 1) |
 | [[kill-switch-cli]] | Operator-facing CLI (`python -m src run/backfill/reconcile-only/kill`) + sentinel-file atomic write semantics |
 
-**Bridge to:** Execution (RuntimeManager → Coordinator), Resilience (RuntimeManager → WS consumer)
+**Мост к:** Execution (RuntimeManager → Coordinator), Resilience (RuntimeManager → WS consumer)
 
-## Cluster 7 — Infrastructure
+## Кластер 7 — Инфраструктура (Infrastructure)
 
-**Theme:** Cross-cutting platform — config, logging, storage. Sprint origin: S1.
+**Тема:** Cross-cutting platform — config, logging, storage. Начало: S1.
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[config]]** | Settings (pydantic-settings v2) — env/.env, Bybit creds, trading_enabled/live_trading invariant, paths |
 | [[logging]] | structlog JSON pipeline → stdout, обязательные ключи event/level/timestamp, contextvars |
 | [[storage]] | SQLite WAL (OLTP, 8 tables + migrations runner) + Parquet snappy writer (OLAP) |
 
-**Bridge to:** ALL clusters (everyone uses Settings + structlog + storage)
+**Мост к:** ALL clusters (everything uses Settings + structlog + storage)
 
-## Cluster 8 — Backtest + WFA (S2-era + S10 production WFA)
+## Кластер 8 — Backtest + WFA (S2-era + S10 production WFA)
 
-**Theme:** Backtest pipeline — replay engine + vector backtest + reporter + WFA orchestrator + MC permutations. **S10 revived S2 backtest engine + extended с production WFA layer per ADR 0025.**
+**Тема:** Backtest pipeline — replay engine + vector backtest + reporter + WFA orchestrator + MC permutations. **S10 возродил S2 backtest engine + расширил production WFA layer per ADR 0025.**
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
-| **[[backtest-harness]]** | Single page covering 6 src/backtest files (replay_engine + vector_backtest + reporter + indicators + data_collector + replay-stub) |
+| **[[backtest-harness]]** | Одна страница охватывает 6 src/backtest файлов (replay_engine + vector_backtest + reporter + indicators + data_collector + replay-stub) |
 | [[walk-forward]] | WindowSplitter + WalkForwardRunner + acceptance gate (S10 Q1+Q4, ADR 0014+0025) |
 | [[mc-permutations]] | sign-flip primary + block bootstrap secondary (S10 Q3, ADR 0015) |
 | [[wfa-reporter]] | 3-Sharpe series routing + DSR aggregate informational (S10 Q4+Q6+Q7) |
 
-## Cluster 9 — Tooling / hooks
+## Кластер 9 — Tooling / хуки
 
-**Theme:** PreToolUse `git push` hooks enforcing wiki invariants. Sprint origin: S7 (adr-agent-sync) + S8c T11 (adr-index-sync) + Bucket C7 pre-S9 (wiki-broken-link).
+**Тема:** PreToolUse `git push` хуки для обеспечения инвариантов wiki. Начало: S7 (adr-agent-sync) + S8c T11 (adr-index-sync) + Bucket C7 pre-S9 (wiki-broken-link).
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
-| [[adr-agent-sync-hook]] | Block push если ADR changed но `~/.claude/agents/*.md` mtime not advanced (per ADR 0017) |
-| [[adr-index-sync-hook]] | Block push если new ADR не referenced в `wiki/index.md` |
-| [[wiki-broken-link-hook]] | Block push если changed wiki files содержат broken `[[link]]` refs (Bucket C7) |
+| [[adr-agent-sync-hook]] | Блокирует push если ADR изменён, но `~/.claude/agents/*.md` mtime не обновлён (per ADR 0017) |
+| [[adr-index-sync-hook]] | Блокирует push если новый ADR не прописан в `wiki/index.md` |
+| [[wiki-broken-link-hook]] | Блокирует push если изменённые wiki-файлы содержат broken `[[link]]` refs (Bucket C7) |
 
-## Cluster 10 — Analytics (S9+ foundation)
+## Кластер 10 — Аналитика (Analytics, S9+ foundation)
 
-**Theme:** Statistical post-process modules. Sprint origin: S9 Q3 B2 (foundation).
+**Тема:** Статистические post-process модули. Начало: S9 Q3 B2.
 
-| Component | Role |
+| Компонент | Роль |
 |-----------|------|
 | **[[dsr]]** | Bailey & López de Prado Deflated Sharpe Ratio — pure-function on TradeRecord array. Pearson kurtosis. **S10: sigma_sr extension closes S9 NYI (n_trials > 1, Bailey eq. 12).** |
 
-**Bridge to:** Risk (consumes trade_history TradeRecord), [[walk-forward]] + [[wfa-reporter]] (S10 aggregate DSR consumer)
+**Мост к:** Risk (consumes trade_history TradeRecord), [[walk-forward]] + [[wfa-reporter]] (S10 aggregate DSR consumer)
 
-## Bridge components (multi-cluster owners)
+## Bridge components (мультикластерные)
 
-These components span clusters — keep aware of cross-cluster impacts:
+Эти компоненты охватывают несколько кластеров — учитывать при кросс-кластерных изменениях:
 
-| Component | Clusters bridged | Why |
-|-----------|------------------|-----|
+| Компонент | Кластеры | Почему |
+|-----------|----------|--------|
 | **coordinator** | Execution + Resilience + Runtime | FSM owner + reconcile delegate + halt API consumed by RuntimeManager |
 | **reconciler** | Resilience + Execution | 4-valued verdict producer; called from Coordinator |
 | **bar-poller** | Market Data + Runtime | REST kline source + RuntimeManager tick consumer |
@@ -153,34 +153,34 @@ These components span clusters — keep aware of cross-cluster impacts:
 | **kill-switch-cli** | Runtime + Tooling | Operator entry-point (sentinel-file pattern identical к hooks); RuntimeManager polls sentinel each tick |
 | **models** | Signal + Execution | pydantic Bar/Signal/Order/Fill — defined в C2, consumed by C4 (Order/Fill in execution path) |
 
-## Operator runbooks
+## Операторские runbooks
 
-Runbooks are not components — they are operator-facing incident response procedures. Listed here for discoverability.
+Runbooks — не компоненты, а процедуры реагирования на инциденты. Перечислены здесь для обнаруживаемости.
 
-| Runbook | What it covers |
-|---------|---------------|
-| [[../runbooks/halt-recovery]] | 19 halt codes (5 class groups, 2 severity tiers). CRITICAL = full diagnosis (SQL + REST cross-check + recovery). RECOVERABLE = abbreviated (symptoms + actions + escalation). First-hit для production incident response. |
+| Runbook | Что покрывает |
+|---------|--------------|
+| [[../runbooks/halt-recovery]] | 19 halt-кодов (5 групп, 2 уровня severity). CRITICAL = полная диагностика (SQL + REST cross-check + recovery). RECOVERABLE = сокращённая (симптомы + действия + эскалация). Первый источник для production-инцидентов. |
 
-**Halt recovery cluster:** `halt-recovery.md` spans Cluster 3 (Risk/circuit-breakers), Cluster 4 (Execution/OCO/coordinator), Cluster 5 (Resilience/reconciler), Cluster 6 (Runtime/RuntimeManager). No single cluster owns it — use the runbook directly.
+**Кластер halt recovery:** `halt-recovery.md` охватывает Кластер 3 (Risk/circuit-breakers), Кластер 4 (Execution/OCO/coordinator), Кластер 5 (Resilience/reconciler), Кластер 6 (Runtime/RuntimeManager). Ни один кластер не является единственным владельцем — использовать runbook напрямую.
 
-## Cluster cohesion warnings (anti-patterns)
+## Предупреждения о когезии кластеров (анти-паттерны)
 
-- **Don't ask Coordinator about Strategy logic.** Coordinator orchestrates FSM/bracket; Strategy lives в Cluster 2 (signal computation).
-- **Don't grep "halt" в Strategy cluster.** Halt mechanics = Cluster 4 (Coordinator) + Cluster 3 (risk-override). Strategy doesn't halt — RiskManager rejects signals при halt.
-- **Don't read backtest cluster для live runtime questions.** Backtest = S2-era reference, не active dev pipeline.
-- **Don't look for Order/Fill model definitions в Cluster 4.** Domain models live в Cluster 2 (`models.md` — pydantic Bar/Signal/Order/Fill). Cluster 4 imports them.
-- **Don't search "REST" exclusively в Cluster 1.** `bybit-rest` is Bridge (C1 Market Data + C4 Execution). BybitAdapter в C4 wraps it for orders.
+- **Не спрашивать Coordinator о Strategy logic.** Coordinator orchestrates FSM/bracket; Strategy живёт в Кластере 2 (signal computation).
+- **Не grep'ать "halt" в Strategy cluster.** Halt mechanics = Кластер 4 (Coordinator) + Кластер 3 (risk-override). Strategy не halts — RiskManager отклоняет сигналы при halt.
+- **Не читать backtest cluster для вопросов live runtime.** Backtest = S2-era reference, не active dev pipeline.
+- **Не искать определения моделей Order/Fill в Кластере 4.** Domain models живут в Кластере 2 (`models.md` — pydantic Bar/Signal/Order/Fill). Кластер 4 импортирует их.
+- **Не искать "REST" только в Кластере 1.** `bybit-rest` — Bridge (C1 Market Data + C4 Execution). BybitAdapter в C4 оборачивает его для ордеров.
 
-## Maintenance rule
+## Правило поддержки
 
-**Update этой странице when:**
-- New component page created → assign к cluster (or create new cluster если новый домен)
-- Component scope expands cross-cluster → add к "Bridge components"
-- Cluster gets > 6 components → consider splitting
+**Обновлять эту страницу когда:**
+- Создана новая страница компонента → назначить кластер (или создать новый кластер при новом домене)
+- Scope компонента расширяется на несколько кластеров → добавить в "Bridge components"
+- Кластер имеет > 6 компонентов → рассмотреть разделение
 
-## Related
+## Связанное
 
-- [[../mental-map|mental-map.md]] — query → canonical-path lookup (forward direction)
-- [[../../index|index.md]] — flat alphabetic catalog
-- [[../architecture/current-state|current-state.md]] — canonical counts + sprint history
+- [[../mental-map|mental-map.md]] — query → canonical-path lookup (прямое направление)
+- [[../../index|index.md]] — плоский алфавитный каталог
+- [[../architecture/current-state|current-state.md]] — канонические счётчики + история спринтов
 - [[../architecture/bounded-contexts|bounded-contexts.md]] — DDD bounded contexts (5 contexts: MarketData/SignalGen/Risk/Execution/Analytics)

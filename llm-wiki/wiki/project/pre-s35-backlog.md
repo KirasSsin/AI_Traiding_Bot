@@ -133,3 +133,6 @@ If both:
 - ADR 0052 (S34 acceptance-criteria amendment LOCKED)
 - pre-s33-backlog.md S34 Direction Consilium section
 - `.claude/agent-memory/trader-expert/v07_direction_consilium.md` (trader binding ROUND 3 trail)
+- [[decisions/0053-sprint-35-testnet-live-demo]] — Sprint 35 ADR (TESTNET live demo)
+- [[decisions/0054-sprint-35-donchian-pre-registration]] — Sprint 35 ADR (Donchian pre-registration)
+- [[sprints/sprint-35-testnet-donchian-risk]] — Sprint 35 page

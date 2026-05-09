@@ -18,7 +18,7 @@ status: accepted
 **Status:** accepted
 **Date:** 2026-04-26
 
-## Context
+## Контекст
 
 S21 closed v0.4 honest (PR #29, tag `v0.1.0-alpha.21`). 4 hypotheses tested across 4.81y BTC Bybit Spot — all FAIL conjoint. cross_trial_sharpes archived → fresh `[]` для v0.5.
 
@@ -34,7 +34,7 @@ ESC resolutions (autonomous mode per "пусть выберут"):
 - ESC-2: T5 floor 100 default (frequency probe shows ≥439 raw triggers — не need T-Amendment 1 raise к 150 which was 15M-specific)
 - ESC-3: WFA params keep ADR 0014 defaults (calendar coverage 4.81y allows K=5×(2000+500+20) bars × 4h = ~1.16y per fold — fits)
 
-## Decision
+## Решение
 
 ### S22 scope: BTC 4H combined architectural + measurement (single sprint)
 
@@ -102,7 +102,7 @@ T5 floor: 100 trades (default per acceptance-criteria.md, NOT T-Amendment 1 150)
 - **CC8 (No spec amendment)**: acceptance-criteria.md preserved
 - **CC9 (Multi-symbol + 15M infrastructure preserved post-MVP)**: S15+S19 work не trash — available для v0.6+ revival
 
-## Consequences
+## Последствия
 
 **Plus:**
 - 100% S15+S19 infrastructure reuse (MeanReversionRsiBBStrategy + interval_map + heal_max_bars + annualization parameterization)
@@ -124,7 +124,7 @@ T5 floor: 100 trades (default per acceptance-criteria.md, NOT T-Amendment 1 150)
 - (v0.6-C) Different strategy class (donchian breakout, regime-detection, mean-reversion с ATR-bands)
 - (v0.6-D) Project pause — 5 hypotheses tested
 
-## Related
+## Связанные документы
 
 - [[../pre-s22-backlog]] — PHASE 2 joint trader+architecture verdicts trail
 - [[0036-sprint-21-honest-close-v04]] — v0.4 honest close (predecessor)
@@ -133,7 +133,8 @@ T5 floor: 100 trades (default per acceptance-criteria.md, NOT T-Amendment 1 150)
 - [[0030-sprint-15-mean-reversion-multi-symbol]] — MeanReversionRsiBBStrategy (reused)
 - [[0014-walk-forward-train2000-test500]] — WFA params (preserved для 4H)
 - [[../architecture/acceptance-criteria]] — T1-T6 thresholds (immutable)
+- [[../sprints/sprint-22-4h-test]] — спринт delivery record
 
-## Amendments
+## Поправки
 
 - (none yet)

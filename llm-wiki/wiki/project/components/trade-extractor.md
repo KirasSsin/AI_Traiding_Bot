@@ -49,6 +49,7 @@ Returns empty list if `df.empty`.
 - [[walk-forward]] — produces fold trade DataFrames
 - [[dsr]] — consumes list[TradeRecord]
 - [[strategy-metrics]] — also consumes list[TradeRecord] (T1-T6 extraction)
+- [[backtest-harness]] — replay engine produces the per-fold trade DataFrames fed to this extractor
 - [[../decisions/0028-sprint-13-strategy-validation]] — Q5 verdict (DSR active S13)
 
 ## Sources

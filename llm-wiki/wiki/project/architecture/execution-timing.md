@@ -100,3 +100,6 @@ Custom `scripts/lookahead_detector.py --strict`:
 - [[bounded-contexts]] — где timing enforced (Signal Gen + Execution boundary).
 - [[../../trading/concepts/look-ahead-bias]] — теория.
 - [[../../trading/concepts/slippage-model]] — slippage bps применяется к `entry_px`.
+- [[../components/coordinator]] — enforces bar-close-only order submission
+- [[../components/bar-poller]] — `BarPoller` поставляет confirmed bars в координатор
+- [[../components/bybit-adapter]] — place_order вызывается только после bar close confirm

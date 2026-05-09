@@ -91,6 +91,7 @@ S12 = orchestration layer + adapters + documentation. FSM/counts unchanged:
 ## Related
 
 - [[../decisions/0027-sprint-12-live-demo-validation]] — aggregate ADR + Q-verdicts trail
+- [[../pre-s12-backlog]] — PHASE 2 verdicts trail
 - [[sprint-11-operator-readiness]] — predecessor sprint (operator infrastructure consumed by S12)
 - [[../runbooks/live-demo-validation]] — 48h validation playbook (T4)
 - [[../runbooks/halt-response-protocol]] — P0 rollback procedure (T5)

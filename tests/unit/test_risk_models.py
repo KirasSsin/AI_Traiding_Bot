@@ -51,9 +51,10 @@ EXPECTED_CODES = {
     "REJECT_FILTER_PRICE",
     "REJECT_DUPLICATE_SIGNAL",
     "REJECT_ORDER_ALREADY_TERMINAL",
-    # Halts (19 — S5 added HALT_RECONCILE_DIVERGENCE; S6 added 6 OCO/bracket halts per ADR 0020;
+    # Halts (22 — S5 added HALT_RECONCILE_DIVERGENCE; S6 added 6 OCO/bracket halts per ADR 0020;
     #         S7 added HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE per ADR 0021;
-    #         S8a added HALT_RUNTIME_CRASH + HALT_BAR_POLL_STALL per ADR 0022)
+    #         S8a added HALT_RUNTIME_CRASH + HALT_BAR_POLL_STALL per ADR 0022;
+    #         S36 added 4 HaltGate triggers per ADR 0055; S37 added HALT_UNKNOWN_SYMBOL per ADR 0057)
     "HALT_DRAWDOWN_L1",
     "HALT_DRAWDOWN_L2",
     "HALT_DRAWDOWN_L3",
@@ -83,6 +84,10 @@ EXPECTED_CODES = {
     "HALT_S36_NO_TRADE_TIMEOUT",
     # S37 ADR 0057 SD-1+SD-2 — symbol fail-closed
     "HALT_UNKNOWN_SYMBOL",
+    # S39 ADR 0059 — volume_breakout strategy entry/exit codes
+    "ENTRY_LONG_VOLUME_BREAKOUT",
+    "EXIT_FLAT_VOLUME_CHANNEL",
+    "EXIT_FLAT_ATR_STOP_VB",
 }
 
 
@@ -100,9 +105,9 @@ def test_all_codes_exact_set() -> None:
 
 
 def test_reason_code_count() -> None:
-    # 6 entry + 11 exits + 9 rejects + 24 halts = 50
-    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50)
-    assert len(ReasonCode) == 50
+    # 7 entry + 12 exits + 9 rejects + 25 halts = 53
+    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50, S39 ADR 0059 +3 → 53)
+    assert len(ReasonCode) == 53
 
 
 def test_reason_code_is_str() -> None:

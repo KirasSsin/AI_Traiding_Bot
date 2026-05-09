@@ -271,6 +271,8 @@ Per dev-workflow.md PHASE 2 step 5 letter spirit: ROUND 2 designed для "REVIS
 - [[decisions/0026-sprint-11-operator-readiness]] — predecessor ADR (S11 ship)
 - [[decisions/0022-sprint-8a-live-runtime]] — RuntimeManager origin
 - [[decisions/0016-bybit-spot-supersedes-binance]] — Bybit Spot venue + demo endpoint family
+- [[decisions/0027-sprint-12-live-demo-validation]] — Sprint 12 ADR
+- [[sprints/sprint-12-live-demo-validation]] — Sprint 12 page
 - [[runbooks/pre-flight]] — operator pre-flight gates (S12 entry criteria)
 - [[runbooks/halt-recovery]] — priority matrix (P0/P1/P2 escalation chain)
 - [[architecture/development-workflow]] — PHASE 2 binding protocol

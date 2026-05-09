@@ -46,3 +46,8 @@ partitioning by symbol/year) для OHLCV-истории и backtest-артеф�
 - [Docs/MVP + ALL PROJECT/MVP.md](../../../Docs/MVP%20%2B%20ALL%20PROJECT/MVP.md) — §3 (Storage)
 - Kleppmann M., "Designing Data-Intensive Applications" (2017), Ch. 3
 - SQLite WAL mode documentation
+
+## Связанные
+
+- [[../sprints/sprint-01-foundation]] — спринт, где SQLite + Parquet были реализованы (config/storage компоненты)
+- [[../sprints/sprint-02-bybit-venue-migration]] — миграция на Bybit; persistence не менялась

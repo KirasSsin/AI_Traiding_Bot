@@ -18,7 +18,7 @@ tags: [execution, resilience, fsm, reconcile, ws-reconnect, halt, persistence, b
 **Date:** 2026-04-24
 **Supersedes:** — (extends [[0020-sprint-6-execution-spot-oco-emulation]])
 
-## Context
+## Контекст
 
 S6 (ADR 0020) реализовал 3-order Spot OCO emulation: 16-state FSM, `Coordinator.start_bracket/arm_oco/on_order_event/flatten`, Reconciler R4 walletBalance truth, schema v2, 39 reason codes. Закрыт Phase F (Demo Mainnet probes B2+v3-D). Остались нерешёнными три interconnected gap'а, задокументированные в S6 review follow-ups:
 
@@ -32,7 +32,7 @@ S7 закрывает все три gap'а одним спринтом, с пр�
 
 **Сopeplement по scope:** trading-logic-reviewer (opus, design-phase review на brainstorm answers) флагнул 7 hidden invariants — в частности несовместимость текущих `RECONCILE_OK → OCO_ARMED` transition и бинарного `Reconciler.ReconcileResult.verdict` с HEAL-narrow posture. Каждый invariant либо резолвится одним из sub-decisions ниже, либо документируется в runbook как known limitation.
 
-## Goals & non-goals
+## Цели и не-цели
 
 **Goals (S7 scope):**
 
@@ -51,7 +51,7 @@ S7 закрывает все три gap'а одним спринтом, с пр�
 - Analytics post-mortem engine поверх halt_log. Table создаётся, отчёты — v0.2.
 - Kill-switch external signal (SIGTERM → KILL_SWITCH). Present FSM handles KILL_SWITCH event, но внешний trigger — отдельный модуль.
 
-## Sub-decisions
+## Суб-решения
 
 ### 1. Bootstrap делегирует reconcile для всех persisted states
 
@@ -305,7 +305,7 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 - `last_signal_at`, `last_bar_at` — computable из signal worker logs, не нужны в hot table.
 - `bracket_start_at` — уже `arming_started_at` существует для OCO_ARMING; entry start = `updated_at` на `ENTRY_PLACED` transition.
 
-## Reason codes (delta)
+## Коды причин (delta)
 
 **Нет новых кодов.** S7 использует existing S6 set (39 codes):
 - HALT_BOOTSTRAP_AMBIGUOUS (already в enum) — ambiguous classification на bootstrap/reconcile.
@@ -314,7 +314,7 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 
 **Potential новый (reviewed, rejected):** `HALT_BOOTSTRAP_STALE` (crash > heal_max_age_seconds). Решение: reuse `HALT_BOOTSTRAP_AMBIGUOUS` с `context_json.sub_reason = "stale_age"`. Один новый enum = один новый test, ADR, doc — overhead не оправдан.
 
-## Consequences
+## Последствия
 
 **Что меняется в code:**
 - `src/execution/state_machine.py` — +2 events, +4 transitions.
@@ -347,7 +347,7 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 
 **Breaking changes:** none. Pre-S7 DB rows получают NULL в новых columns (no-op). ReconcileResult signature change — internal, не public API.
 
-## Alternatives considered
+## Рассмотренные альтернативы
 
 **Alt-1: HALT-always посture** (reject HEAL entirely). Safer, runbook-driven. Reject: каждый normal restart → HALT → manual unhalt — operationally unsustainable для даже v0.1 low-frequency trading.
 
@@ -359,14 +359,14 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 
 **Alt-5: split S7 на S7 (C1+C2) + S7.5 (halt persistence + gate)**. Reject: взаимосвязанные изменения. halt_reason persist нужен на момент когда bootstrap классифицирует DIVERGENCE → HALT (sub-decision 5 вызывается изнутри sub-decision 1 flow). Разделение → double schema migration cost.
 
-## Open questions → deferred to S8+
+## Открытые вопросы → отложено на S8+
 
 - External kill-switch signal (SIGTERM, lint process, risk-dashboard override) → emit KILL_SWITCH event. S8 when manager.py orchestration exists.
 - `execution` topic subscription + per-fill Analytics table — S8 (Analytics sprint).
 - Multi-symbol / multi-bracket concurrency — FSM currently single-symbol. S9+.
 - HALT_BOOTSTRAP_STALE как отдельный enum code (decision: no, reuse HALT_BOOTSTRAP_AMBIGUOUS).
 
-## Verification checklist (pre-merge)
+## Чеклист верификации (перед merge)
 
 - [ ] Все 4 new FSM transitions имеют unit tests (positive + illegal).
 - [ ] `Reconciler.reconcile` matrix test покрывает 4 verdicts × 3 expected_state hints.
@@ -385,3 +385,9 @@ CREATE INDEX halt_log_symbol_ts ON halt_log(symbol, ts);
 **Approved:** pending user review.
 **Implementation plan:** [[../plans/2026-04-24-sprint-7-resilience]].
 **Sprint page:** [[../sprints/sprint-07-resilience]] — delivery record (33+ commits, 16/29/59 FSM, reason codes 39→42).
+
+**Затронутые компоненты:**
+- [[../components/reconciler]] — 4-valued verdict (AGREE/DIVERGENCE/HEAL_ENTRY_FILLED/EXITED)
+- [[../components/coordinator]] — bootstrap + WS_RECONNECT path + halt persistence (γ primary-wins)
+- [[../components/execution-state-machine]] — transitions 59→74 (S7 reconcile/timeout events)
+- [[../components/ws-private-consumer]] — close-hook + check_alive heartbeat watchdog

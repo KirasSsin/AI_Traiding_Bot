@@ -122,7 +122,7 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | `llm-wiki/CLAUDE.md` | Wiki maintainer rules + 5-layer skills hierarchy + trigger cascade |
 | `llm-wiki/wiki/project/architecture/development-workflow.md` | MASTER SOP — 9-phase sprint lifecycle |
 | `llm-wiki/wiki/project/architecture/sprint-flow-ru.md` | Russian обязательный 9-фаз процесс с per-phase HARD-GATEs (S28 BINDING) |
-| `llm-wiki/wiki/project/architecture/tooling-inventory-ru.md` | Catalog: 9 reviewer agents + 26 skills + 6 MCP + 6 hooks + cascade rule + 19 sections |
+| `llm-wiki/wiki/project/architecture/tooling-inventory-ru.md` | Catalog: 11 reviewer agents + 36 skills + 8 MCP + 7+2+1 hooks + cascade rule (Sections 1-13 + part-2 Sections 14-24) |
 | `llm-wiki/wiki/index.md` | Wiki catalog (all pages) |
 | `llm-wiki/wiki/log.md` | Chronological sprint journal |
 | `llm-wiki/wiki/project/decisions/` | ADRs (0001-0023) |
@@ -132,14 +132,14 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | `llm-wiki/wiki/project/mental-map.md` | "Where to look for X" decision tree — first-hit для open-ended queries. Заменяет blind grep. |
 | `llm-wiki/wiki/project/components/README.md` | 27 components grouped в 9 domain clusters. Reverse lookup ("I'm reading X — what's related?"). |
 | `.claude/skills/<name>/SKILL.md` | **Project-level workflow skills** (5 total: sprint-orient, sprint-finish, wiki-update, brainstorm-init, hook-test). Auto-trigger по description match — заменяют hardcoded inline workflow logic. См. `llm-wiki/wiki/index.md` "Workflow Skills" section. |
-| `~/.claude/agents/<name>.md` | **L5 reviewer agents** (6: trading-logic, quant-stats, data-integrity, python, trader-expert, architecture-reviewer) — user-level, outside repo. ADR 0017 review-agent harness. |
+| `~/.claude/agents/<name>.md` | **L5 reviewer agents** (11: trading-logic, quant-stats, data-integrity, python, trader-expert, architecture-reviewer, security-auditor, test-engineer, doc-reviewer, dashboard-reviewer, bybit-api-reviewer) — user-level, outside repo. ADR 0017 review-agent harness. |
 
 ## Project constraints (short form)
 
 - **Python**: 3.12 (pyproject.toml). Venv: `.venv/` at repo root.
 - **Test cmd**: `pytest -x -q` (unit), `pytest -m integration` (opt-in), `pytest -m property`.
 - **Branch**: feature/<sprint-N-slug>. PR to main. Conventional commits.
-- **Current state**: Sprint 8c COMPLETE (tag `v0.1.0-alpha.8c`). Between sprints. Next = S9 brainstorm.
+- **Current state**: Sprint 38 COMPLETE (tag `v0.1.0-alpha.38`). S39 between sprints / autoresearch mode.
 
 ## Workflow skills (project-level, `.claude/skills/`)
 
@@ -211,7 +211,7 @@ System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' fro
 ## Skills hierarchy (5 layers — detail в `llm-wiki/CLAUDE.md`)
 
 ```
-L5: Domain reviewers     (trading-logic / quant-stats / data-integrity / python-reviewer / trader-expert / architecture-reviewer)
+L5: Domain reviewers     (trading-logic / quant-stats / data-integrity / python-reviewer / trader-expert / architecture-reviewer / security-auditor / test-engineer / doc-reviewer / dashboard-reviewer / bybit-api-reviewer)
 L4: Agent Skills + Caveman (depth checklists, compression)
 L3: Superpowers          (brainstorm → plan → subagent-driven → TDD → finishing)
 L2: llm-wiki             (source of truth — read THIS BEFORE raw files)

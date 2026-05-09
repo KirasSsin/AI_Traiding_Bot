@@ -94,3 +94,6 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §13]
 - [[edge-cases]] — operational responses.
 - [[acceptance-criteria]] — gating на overfit risks.
 - [[../../trading/concepts/deflated-sharpe-ratio]]
+- [[../components/halt-gate]] — gate для S36 δ activation halt criteria
+- [[../components/circuit-breakers]] — `CircuitBreakerDetector` L1/L2/L3/Flash implementation
+- [[../components/risk-manager]] — `RiskManager.assess()` — оркестратор всех risk checks
