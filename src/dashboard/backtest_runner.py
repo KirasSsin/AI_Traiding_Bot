@@ -89,6 +89,22 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             },
         },
     },
+    "atr_breakout_iter_endless": {
+        "label": "[S40 LATEST] ATR breakout 4H BTCUSDT (LOCKED — autoresearch iter1 best)",
+        "sprint": "S40",
+        "verdict": "PASS 8.7y +819.81%/Sharpe=1.11/5/5 sub-periods positive (ADR 0060)",
+        "type": "atr_breakout",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "240",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 9,
+                "atr_breakout_mult": 2.5,
+                "atr_stop_period": 21,
+                "atr_stop_mult": 1.5,
+            },
+        },
+    },
 }
 
 # Supported intervals (per src/marketdata/bybit/rest.py registry + Bar.interval Literal).
@@ -695,6 +711,44 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         }
         cache_path.write_text(json.dumps(result_vb, default=str, indent=2))
         return result_vb
+
+    # S40 T4 — atr_breakout uses dedicated runner (research execution model).
+    # Bypasses replay_engine — same structural gaps as volume_breakout:
+    # sl_atr_mult wiring, long_only reverse-signal suppression, WFA+Kelly sizing.
+    if preset.get("type") == "atr_breakout":
+        from datetime import date as _date
+
+        from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
+
+        ab_result = run_atr_breakout_backtest(
+            symbol=req.symbol,
+            interval=req.interval,
+            start_date=_date.fromisoformat(req.start),
+            end_date=_date.fromisoformat(req.end),
+        )
+        _RUNS_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path = _RUNS_DIR / f"{run_id}.json"
+        result_ab: dict[str, Any] = {
+            "run_id": run_id,
+            "request": {
+                "strategy_id": req.strategy_id,
+                "strategy_label": preset["label"],
+                "strategy_config": preset,
+                "symbol": req.symbol,
+                "interval": req.interval,
+                "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
+                "start": req.start,
+                "end": req.end,
+            },
+            "n_trades": ab_result["n_trades"],
+            "total_pnl_pct": ab_result["total_pnl_pct"],
+            "sharpe": ab_result["sharpe"],
+            "win_rate": ab_result["win_rate"],
+            "runner": "atr_breakout_runner",  # audit marker
+            "cached": False,
+        }
+        cache_path.write_text(json.dumps(result_ab, default=str, indent=2))
+        return result_ab
 
     with _lock:
         # Lazy import к keep dashboard module loadable без main module side effects

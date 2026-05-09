@@ -88,6 +88,10 @@ EXPECTED_CODES = {
     "ENTRY_LONG_VOLUME_BREAKOUT",
     "EXIT_FLAT_VOLUME_CHANNEL",
     "EXIT_FLAT_ATR_STOP_VB",
+    # S40 ADR 0060 — atr_breakout strategy entry/exit codes
+    "ENTRY_LONG_ATR_BREAKOUT",
+    "EXIT_FLAT_ATR_REVERSE",
+    "EXIT_FLAT_ATR_STOP_AB",
 }
 
 
@@ -105,9 +109,8 @@ def test_all_codes_exact_set() -> None:
 
 
 def test_reason_code_count() -> None:
-    # 7 entry + 12 exits + 9 rejects + 25 halts = 53
-    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50, S39 ADR 0059 +3 → 53)
-    assert len(ReasonCode) == 53
+    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50, S39 ADR 0059 +3 → 53, S40 ADR 0060 +3 → 56)
+    assert len(ReasonCode) == 56
 
 
 def test_reason_code_is_str() -> None:
