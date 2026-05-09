@@ -28,18 +28,22 @@ Autoresearch iter 10 (branch `autoresearch/donchian-may8`) завершил по
 ### LOCKED параметры verbatim sweep#1644
 
 ```python
-VOLUME_BREAKOUT_PARAMS = {
-    "breakout_period": 20,
-    "volume_mult": 1.5,
-    "atr_period": 14,
-    "atr_stop_mult": 2.0,
+VOLUME_BREAKOUT_LOCKED_PARAMS: dict[str, object] = {
+    "lookback_n": 9,                       # Donchian channel entry lookback
+    "exit_lookback_n": 8,                  # Donchian channel exit lookback
+    "vol_window": 10,                      # Volume rolling mean window
+    "vol_mult": Decimal("1.4563"),         # Volume must exceed mean × this
+    "atr_period": 9,                       # Wilder ATR period
+    "atr_stop_mult": Decimal("2.9663"),    # Stop = entry - ATR × this
     "signal_side_mode": "long_only",
 }
 ```
 
 Символ: BTCUSDT. Таймфрейм: 4H. **НЕ ИЗМЕНЯТЬ без нового ADR (anti-snooping правило).**
 
-Параметры зафиксированы VERBATIM из sweep#1644 per Q1 CONFIRM — без округления до 2 значащих цифр (post-observation tuning REJECTED, см. альтернативы).
+Параметры зафиксированы VERBATIM из autoresearch sweep#1644 (commit `fff54ee` ветка `autoresearch/donchian-may8`) per Q1 CONFIRM — без округления до 2 значащих цифр (post-observation tuning REJECTED, см. альтернативы). Decimal precision required для `vol_mult` и `atr_stop_mult` — 4 знака после запятой = empirical artifact из 4.51M trial sweep search, NOT theoretical round numbers.
+
+**Source of truth:** `src/signalgen/volume_breakout_strategy.py::VOLUME_BREAKOUT_LOCKED_PARAMS` (single canonical location). Production runner и dashboard preset подтягивают параметры отсюда — расхождения с этим ADR = production bug.
 
 ### Dashboard preset ENFORCE
 
@@ -58,7 +62,7 @@ Per Q6 REVISE (8mo PRIMARY, trader-expert ROUND 2 binding):
 | Метрика | Значение | Интерпретация |
 |---------|----------|---------------|
 | Период | 8 месяцев (2025-08-26 → 2026-04-26) | BTCUSDT медвежий рынок |
-| Sharpe ratio | **+9.96** | 95% CI ±1.5-2.0 (широкий — малая выборка n=17) |
+| Sharpe ratio | **+9.96** | 95% CI ±1.14 (Lo 2002 formula: SE(SR) = sqrt((1 + SR²/2)/n) = 0.539 → t-CI df=16 ≈ ±1.14). Per R2 quant-stats correction. |
 | PnL | **+20.42%** | Quote return за период |
 | n_trades | 17 | Малая выборка — необходим Gate 2 накопления |
 | Win rate | 47.06% | |
@@ -158,6 +162,34 @@ Cumulative N_trials post-S39: **8**. DSR penalty pooled растёт с кажд
 - Gate 2 forward paper-trade BLOCKING к реальному капиталу
 - Kelly 0.25× cap обязателен до n=10 live trades
 - N_trials=8 учитывается в DSR computation (будущие backtests)
+
+## Известные расхождения / документированные gaps (PHASE 6 review)
+
+Per S39 PHASE 6 reviewer findings — документируются для transparency и операторского контекста.
+
+### G1 — Dual execution kernel (R8 architecture)
+
+`src/backtest/volume_breakout_runner.py` bypasses production `replay_engine.py` (Variant 3 per T5b BLOCKER fix). Rationale: replay_engine had 3 структурных gaps (sl_atr_mult wiring, long_only suppresses channel exit, WFA+10% sizing mismatch) — fix tех в shared engine = риск регрессировать donchian/mean_reversion/ema. Унификация defer к S40+ когда volume_breakout будет первый production strategy. Без unification dual-path divergence risk acknowledged — research execution model verbatim ported, deviations не накапливаются если оба пути не модифицируются.
+
+### G2 — Dashboard schema разница (R8 architecture)
+
+`run_volume_breakout_backtest()` returns simpler dict (n_trades, total_pnl_pct, sharpe, win_rate, trades) vs `run_backtest()` WFA result (T1-T6 + folds + DSR). Dashboard UI должна разветвляться по `runner` discriminator key. Этот discriminator пока не fully wired в frontend — defer операторскому уведомлению (Phase 8 ship note + S40 follow-up).
+
+### G3 — ATR timing gap (R3 trading-logic C1)
+
+Production `VolumeBreakoutStrategy.on_bar()` использует ATR(T) для intrabar stop check (включает текущий bar в Wilder smoothing). Research backtest_v2 использует ATR(T-1) (atr at signal bar, не fill bar). Numerical разница маленькая (Wilder alpha=1/9: ATR(T) = 8/9 ATR(T-1) + 1/9 TR(T)) но non-zero. Production stop threshold не identical baseline. NOT look-ahead violation (bar T closed). Acknowledged для operator awareness.
+
+### G4 — ATR stop fill price tracking error (R3 trading-logic C2)
+
+ATR intrabar stop signal fires after bar T closes; production FSM fills at open(T+1). Backtest fills at stop_price intrabar. Material для 4H overnight gaps — стратегия может slip существенно ниже stop level. Этo limitation existing FSM contract (signal на close → fill next-open), не S39-specific. Operator должен expect tracking error vs backtest на crash gaps.
+
+### G5 — N_trials runtime gap (R2 quant-stats C1)
+
+ADR-0059 cumulative N_trials=8 — это logical claim о sequential pre-registration history. Volume_breakout bypasses CrossTrialLog.append_trial() (per Variant 3 dedicated runner). При future Gate 2 DSR computation runtime will see n_trials=1 (no penalty). Если Gate 2 DSR требует cumulative penalty — нужен manual append OR unification per G1. Defer к S40 — Gate 2 design decision.
+
+### G6 — donchian_runner N_TRIALS_LOCKED stale (R2 quant-stats C3)
+
+`src/backtest/donchian_runner.py:52 N_TRIALS_LOCKED=5` (stale post-S39, должно быть 8). Не affects volume_breakout (separate runner) — affects ТОЛЬКО future Donchian WFA re-run. Defer к S40 cleanup batch.
 
 ## Связанные документы
 
