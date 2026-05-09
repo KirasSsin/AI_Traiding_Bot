@@ -11,85 +11,85 @@ sources:
   - project/pre-s35-backlog.md
 ---
 
-# ADR 0054 — Sprint 35 α Donchian Breakout Pre-Registration LOCKED
+# ADR 0054 — Sprint 35 Предварительная регистрация α Donchian Breakout LOCKED
 
-## Status
+## Статус
 
-Accepted (2026-04-27) **BEFORE** any backtest data inspection — anti-snooping discipline per Bailey & López de Prado 2014.
+Принято (2026-04-27) **ДО** любого просмотра данных бэктеста — дисциплина anti-snooping per Bailey & López de Prado 2014.
 
-## Context
+## Контекст
 
-ROUND 3 consilium voted α (Donchian breakout) as parallel synthetic track:
-- 7th hypothesis tested across project lifetime (N_trials counter pooled = 5)
-- Orthogonal paradigm к mean-reversion (trend-following breakout)
-- Long-only FSM-compatible (no SHORT signals — `long_only=True` invariant per ADR 0009)
-- ~280 LoC scope estimate
+Consilium ROUND 3 проголосовал за α (пробой Donchian) как параллельный синтетический трек:
+- 7-я гипотеза, тестируемая за всё время проекта (счётчик N_trials pooled = 5)
+- Ортогональная парадигма к возврату к среднему (пробой следованием тренду)
+- Совместим с FSM long-only (без SHORT сигналов — инвариант `long_only=True` per ADR 0009)
+- Оценка объёма ~280 строк кода
 
-DSR penalty при N_trials=5 calculated per Bailey 2014 sigma_SR pooling protocol (a) — significant но not prohibitive.
+Штраф DSR при N_trials=5 рассчитан по протоколу pooling sigma_SR Bailey 2014 (a) — значительный, но не запретительный.
 
-## Decision
+## Решение
 
-Implement Donchian breakout long-only strategy с LOCKED parameters BEFORE backtest run.
+Реализовать long-only стратегию пробоя Donchian с LOCKED параметрами ДО запуска бэктеста.
 
-### LOCKED Parameters (`DONCHIAN_LONG_ONLY_PARAMS`)
+### LOCKED параметры (`DONCHIAN_LONG_ONLY_PARAMS`)
 
-| Param | Value | Justification |
-|-------|-------|---------------|
-| `lookback_n` | 20 | Classical Donchian (Faber 2007) standard period |
-| `exit_lookback_n` | 10 | Half-period exit (Turtle Trading variant) |
-| `atr_period` | 14 | Standard Wilder ATR consistent с indicators.atr() |
-| `atr_stop_mult` | 2.0 | 2× ATR trailing stop (volatility-adjusted) |
-| `signal_side_mode` | "long_only" | FSM SignalSide invariant (no SHORT) |
-| `min_atr_filter` | None | No volatility floor — accept all breakouts |
+| Параметр | Значение | Обоснование |
+|----------|----------|-------------|
+| `lookback_n` | 20 | Классический Donchian (Faber 2007) стандартный период |
+| `exit_lookback_n` | 10 | Выход по половинному периоду (вариант Turtle Trading) |
+| `atr_period` | 14 | Стандартный Wilder ATR, согласованный с indicators.atr() |
+| `atr_stop_mult` | 2.0 | Трейлинг-стоп 2× ATR (скорректированный по волатильности) |
+| `signal_side_mode` | "long_only" | Инвариант FSM SignalSide (без SHORT) |
+| `min_atr_filter` | None | Нет нижнего порога волатильности — принимать все пробои |
 
-### Symbol + Timeframe LOCKED
+### Символ + таймфрейм LOCKED
 
-- Symbol: BTCUSDT (single-symbol — bypasses correlation deflation per S33 lesson)
-- Timeframe: 4H (consistent с δ track для apples-to-apples comparison)
+- Символ: BTCUSDT (один символ — обходит корреляционное сдутие согласно уроку S33)
+- Таймфрейм: 4H (согласовано с треком δ для сравнения в равных условиях)
 
-### N_trials Counter
+### Счётчик N_trials
 
-| Sprint | Trials accumulated | Strategy |
-|--------|-------------------|----------|
+| Спринт | Накоплено испытаний | Стратегия |
+|--------|---------------------|-----------|
 | S13 | 1 | EMA crossover |
-| S15 | 2 | Mean-reversion strict |
-| S17 | 3 | Mean-reversion relaxed |
-| S22 | 4 | Mean-reversion 4H |
-| **S35 α** | **5** | **Donchian breakout** |
+| S15 | 2 | Возврат к среднему строгий |
+| S17 | 3 | Возврат к среднему ослабленный |
+| S22 | 4 | Возврат к среднему 4H |
+| **S35 α** | **5** | **Пробой Donchian** |
 
-DSR penalty при N_trials=5: `sigma_SR_pooled = sqrt((1/N) * sum(sharpe_i²))`. Bonferroni alpha-adjusted threshold per Bailey 2014.
+Штраф DSR при N_trials=5: `sigma_SR_pooled = sqrt((1/N) * sum(sharpe_i²))`. Скорректированный порог Bonferroni alpha per Bailey 2014.
 
-### 6 Pre-Committed Acceptance Gates (verbatim per ADR 0052 amended LOCKED)
+### 6 Предзафиксированных ворот приёмки (дословно per ADR 0052 amended LOCKED)
 
-| Gate | Threshold | Block? |
-|------|-----------|--------|
-| T5 n_trades raw | >= 50 | YES |
-| T5 n_eff (single-symbol → n_eff = n_raw) | >= 50 | YES |
-| T6 OOS/IS Sharpe | >= 0.7 | YES |
-| MC p-value | <= 0.05 | YES |
-| DSR (N_trials=5) | >= 0.95 | YES |
-| acceptance_gate.sharpe_gate_passed | per-fold >= 0.7 | YES |
+| Ворота | Порог | Блокирует? |
+|--------|-------|-----------|
+| T5 n_trades raw | >= 50 | ДА |
+| T5 n_eff (один символ → n_eff = n_raw) | >= 50 | ДА |
+| T6 OOS/IS Sharpe | >= 0.7 | ДА |
+| MC p-value | <= 0.05 | ДА |
+| DSR (N_trials=5) | >= 0.95 | ДА |
+| acceptance_gate.sharpe_gate_passed | per-fold >= 0.7 | ДА |
 
-PASS = ALL gates conjoint AND. FAIL conjoint = α direction CLOSED, β fallback (pause) per pre-commit #8.
+PASS = ВСЕ ворота одновременно AND. FAIL conjoint = направление α ЗАКРЫТО, запасной вариант β (пауза) per pre-commit #8.
 
-### NOT permitted без new ADR
+### Запрещено без нового ADR
 
-- ❌ Post-hoc parameter tuning (snooping)
-- ❌ SHORT signals (FSM long_only invariant)
-- ❌ Multi-symbol (single-symbol BTCUSDT LOCKED)
-- ❌ Different timeframe (4H LOCKED)
-- ❌ Reuse OHLCV data вне pre-registered range
+- ❌ Постфактум подбор параметров (snooping)
+- ❌ SHORT сигналы (инвариант FSM long_only)
+- ❌ Мультисимвол (один символ BTCUSDT LOCKED)
+- ❌ Другой таймфрейм (4H LOCKED)
+- ❌ Повторное использование данных OHLCV вне предварительно зарегистрированного диапазона
 
-## Consequences
+## Последствия
 
-**Positive:** Anti-snooping LOCKED before data touch. N_trials properly counted (=5). Long-only FSM-compatible — no engineering blocker.
+**Положительные:** Anti-snooping LOCKED до обращения к данным. N_trials корректно подсчитан (=5). Совместимость с FSM long-only — инженерных блокеров нет.
 
-**Negative:** DSR penalty при N=5 raises threshold harder than N=4. If FAIL → α direction PERMANENTLY CLOSED.
+**Отрицательные:** Штраф DSR при N=5 делает порог более строгим, чем при N=4. При FAIL → направление α PERMANENTLY CLOSED.
 
-**Neutral:** No production trading impact (synthetic backtest only).
+**Нейтральные:** Влияния на производственную торговлю нет (только синтетический бэктест).
 
-## Related
+## Связанные
 
-- ADR 0052 (S34 amendment LOCKED — gates source)
-- ADR 0053 (S35 δ TESTNET — paired primary track)
+- ADR 0052 (поправка S34 LOCKED — источник ворот)
+- ADR 0053 (S35 δ TESTNET — основной парный трек)
 - pre-s35-backlog.md (ROUND 3 binding)

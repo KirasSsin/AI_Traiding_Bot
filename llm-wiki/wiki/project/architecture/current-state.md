@@ -3,7 +3,7 @@ title: Current State — post-S31 inventory + canonical counts (Kit infrastructu
 type: architecture
 tags: [current-state, inventory, baseline, canonical-counts, sprint-31, kit-revision-best-practices, kit-infrastructure-complete, sprint-32-pending, t5-100-structurally-unreachable, regime-independent-edge, esc-1-2-3-pending]
 created: 2026-04-19
-updated: 2026-04-27
+updated: 2026-05-09
 status: stable
 sources:
   - src/
@@ -34,13 +34,13 @@ sources:
 
 ## Canonical counts (live, MUST be kept current per dev-workflow.md PHASE 8 step 5a HARD-GATE)
 
-| Metric | Value | Source of truth | Last update |
-|--------|-------|-----------------|-------------|
+| Метрика | Значение | Источник истины | Последнее обновление |
+|---------|----------|-----------------|-------------|
 | FSM states | **16** | `src/execution/state_machine.py` `ExecutionState` enum | S6 (ADR 0020) |
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
 | Reason codes | **50** | `src/risk/reason_codes.py` `ReasonCode` enum | S37 T2 (+1 HALT_UNKNOWN_SYMBOL per ADR 0057 SD-1) |
-| Component pages | **48** | `wiki/project/components/*.md` (incl. README.md cluster index) | S37 (+delta-activation-playbook) |
+| Component pages | **46** | `wiki/project/components/*.md` (excl. README.md cluster index) | S37 (+delta-activation-playbook) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
 | ADRs | **58** | `wiki/project/decisions/*.md` (0001-0058) | S38 (ADR 0058 δ parallel hardening) |
 | Sprint pages | **42** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-38 + sprint-08a/b/c + sprint-32b/c/d/e, minus S24+S26) | S38 (sprint-38-delta-parallel-hardening) |
@@ -67,8 +67,8 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=50`
 
 ## Структура `src/` (post-S8b)
 
-| Module | Files | LoC | Wiki page | Sprint origin |
-|--------|-------|-----|-----------|---------------|
+| Модуль | Файлы | LoC | Wiki-страница | Спринт происхождения |
+|--------|-------|-----|-------------|------------------|
 | `__main__.py` | entry | 117 | [[../components/kill-switch-cli]] | S8a (ADR 0022 G6) |
 | `analytics/` | __init__ stub | <50 | — | (S8c+ scope) |
 | `backtest/` | replay_engine, vector_backtest, reporter, indicators, data_collector, replay | ~700 | [[../components/backtest-harness]] | S2 |
@@ -85,8 +85,8 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=50`
 
 ## Стек реально используется (post-S8b)
 
-| Layer | Tech | Sprint introduced |
-|-------|------|-------------------|
+| Слой | Технология | Введён в спринте |
+|------|-----------|-----------------|
 | Language | Python 3.12 (StrEnum, PEP 604) | S1 (ADR 0002) |
 | Models | pydantic v2 | S1 (ADR 0006) |
 | Storage | SQLite WAL (state) + Parquet snappy (OHLCV) | S1 (ADR 0003) |
@@ -98,17 +98,17 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=50`
 | Lint/Type | ruff + mypy --strict | S1 |
 | Concurrency | sync + threading.RLock (Coordinator) + threading.Lock (Reconciler) | S8a (ADR 0022 sub-decision 1) |
 
-**NOT used (rejected/deferred):**
+**НЕ используется (отклонено/отложено):**
 - gRPC (`src/gateway/` skeleton удалён в S2)
 - HMM regime detection (`src/strategy/hmm_regime.py` legacy — удалён в S2)
-- XGBPredictor / `src/ml/` (deferred → v0.2)
-- asyncio/uvloop (deferred → S9+)
-- TimescaleDB / DuckDB (rejected по ADR 0003)
+- XGBPredictor / `src/ml/` (отложено → v0.2)
+- asyncio/uvloop (отложено → S9+)
+- TimescaleDB / DuckDB (отклонено по ADR 0003)
 
 ## Карта спринтов
 
-| Sprint | ADR | Tag | Date | Theme |
-|--------|-----|-----|------|-------|
+| Спринт | ADR | Тег | Дата | Тема |
+|--------|-----|-----|------|------|
 | S1 | 0001-0015 (foundational) | v0.1.0-alpha.1 | 2026-04-20 | DDD skeleton + platform + models + storage |
 | S2 | 0016 | v0.1.0-alpha.2 | 2026-04-21 | Bybit venue migration + MarketData + adapter |
 | S3 | 0017 | v0.1.0-alpha.3 | 2026-04-22 | EMA/ADX/RSI/ATR strategy port (Wilder + classical) |
@@ -156,26 +156,26 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=50`
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section + `wiki/project/pre-s8c-backlog.md` Bucket A5.
 
-## Test/quality state (live, post-S31 baseline preserved через S32)
+## Состояние тестов/качества (живое, базовый уровень S31 сохранён через S32)
 
-- pytest unit: **762 passed** (S27-S31 baseline; +18 vs S26 pre-formula-fixes)
+- pytest unit: **762 passed** (базовый уровень S27-S31; +18 vs S26 до исправления формул)
 - pytest property: 8/8
 - pytest integration: opt-in `RUN_DEMO=1` (Demo Mainnet)
-- mypy --strict src/: ≤ 44 errors (S8c baseline preserved через S31)
-- ruff: clean on S8+ src + tests; legacy `src/core/`, `src/backtest/*` excluded в pyproject.toml pending retirement
+- mypy --strict src/: ≤ 44 ошибок (базовый уровень S8c сохранён через S31)
+- ruff: чистый на src + tests S8+; legacy `src/core/`, `src/backtest/*` исключены в pyproject.toml (pending retirement)
 
 ---
 
-## Pre-S1 Legacy (archived, для исторического контекста)
+## Наследие до S1 (архив, для исторического контекста)
 
-> Этот раздел описывает codebase ДО Sprint 1 (2026-04-19 baseline). Зафиксирован для исторической трассируемости; **не отражает текущее состояние**. Большая часть legacy modules удалена в S2-S5 (см. `git log --oneline -- src/controller.py main.py`).
+> Этот раздел описывает кодовую базу ДО Sprint 1 (базовый уровень 2026-04-19). Зафиксирован для исторической трассируемости; **не отражает текущее состояние**. Большинство legacy-модулей удалено в S2-S5 (см. `git log --oneline -- src/controller.py main.py`).
 
 **Pre-S1 TL;DR (2026-04-19):** Existing code = Phase 1 MVP на Bybit (perpetual futures, linear, 1m bars, EMA+RSI+ATR). НЕ Binance Spot 1H. Math stack (Hurst, Kelly, CVaR, HMM) заложен, но XGBPredictor + HMM не задействованы в live signal. Нет TA-Lib, pydantic, SQLite/Parquet, DDD-структурирования.
 
 **Pre-S1 src/ structure (REMOVED/REPLACED):**
 
-| Pre-S1 module | Status post-S8b |
-|---------------|------------------|
+| Модуль до S1 | Статус после S8b |
+|-------------|-----------------|
 | `src/core/{models, math_engine}.py` | math_engine удалён в S4; models ужал stub |
 | `src/data/consumer.py` | удалён в S2, заменён `src/marketdata/` + pybit |
 | `src/strategy/{strategy, hmm_regime, order_flow}.py` | удалены в S3, заменены `src/signalgen/` |
@@ -187,30 +187,30 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=50`
 | `src/controller.py` | удалён в S8a (broken since S2) |
 | `main.py` (top-level) | удалён в S8a |
 
-**Pre-S1 stack notes:**
+**Примечания по стеку до S1:**
 
-- pybit (V5) — kept, upgraded in S2
-- `pandas==2.x`, `numpy==1.x` — без pinning. **Сейчас:** pinned `>=` floor in pyproject.toml.
+- pybit (V5) — сохранён, обновлён в S2
+- `pandas==2.x`, `numpy==1.x` — без pinning. **Сейчас:** pinned `>=` floor в pyproject.toml.
 - structlog — добавлен в S1.
 - pydantic — добавлен в S1.
-- `python-dotenv` — kept.
-- `xgboost`, `hmmlearn`, `joblib` — deferred / removed.
+- `python-dotenv` — сохранён.
+- `xgboost`, `hmmlearn`, `joblib` — отложено / удалено.
 - TA-Lib — добавлен в S3.
-- Нет DDD bounded contexts — добавлены в S1.
+- DDD bounded contexts отсутствовали — добавлены в S1.
 
-**Pre-S1 не было:**
+**До S1 не было:**
 - DDD bounded contexts
 - Pydantic schemas
 - SQLite WAL persist
 - Parquet OHLCV storage
-- ADR repository
+- Репозиторий ADR
 - Test suite (unit/property/integration)
 - Domain reviewer agents
 - llm-wiki/
 
-## Sources
+## Источники
 
-- `src/` (live tree)
-- `project/sprints/sprint-08b-carryover.md` (latest sprint)
-- `project/decisions/0023-halt-code-fsm-event-mapping.md` (latest ADR)
-- `Docs/current_bot/README_RU.md` + `IMPLEMENTATION_NOTES.md` (pre-S1 baseline reference)
+- `src/` (живое дерево)
+- `project/sprints/sprint-08b-carryover.md` (последний спринт)
+- `project/decisions/0023-halt-code-fsm-event-mapping.md` (последний ADR)
+- `Docs/current_bot/README_RU.md` + `IMPLEMENTATION_NOTES.md` (базовый уровень до S1)

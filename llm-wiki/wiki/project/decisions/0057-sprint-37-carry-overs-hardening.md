@@ -12,164 +12,164 @@ sources:
   - project/pre-s37-backlog.md
 ---
 
-# ADR 0057 — Sprint 37 Carry-overs Hardening
+# ADR 0057 — Sprint 37 Hardening переносов
 
-## Status
+## Статус
 
-Accepted (2026-04-27) — implemented в S37 (`feature/sprint-37-carry-overs-hardening` → tag `v0.1.0-alpha.37`). Paired ADR 0056 amendment (calibration baseline + Sharpe semantics, same sprint).
+Принято (2026-04-27) — реализовано в S37 (`feature/sprint-37-carry-overs-hardening` → тег `v0.1.0-alpha.37`). Парная поправка ADR 0056 (базовый показатель калибровки + семантика Sharpe, тот же спринт).
 
-## Context
+## Контекст
 
-Post-S36 ROUND 5 consilium (3 agents — trader-expert + trading-logic-reviewer + quant-stats-reviewer) CONSENSUS on (c) S37 carry-overs sprint first, then (a) δ TESTNET activate в S38. δ infrastructure WIRED LIVE в S36 но 10 carry-overs persisted в pre-s37-backlog.md. 6 critical items selected для S37, 4 deferred к S38+.
+Consilium ROUND 5 после S36 (3 агента — trader-expert + trading-logic-reviewer + quant-stats-reviewer) — КОНСЕНСУС на (c) сначала спринт переносов S37, затем (a) активация δ TESTNET в S38. Инфраструктура δ ПОДКЛЮЧЕНА LIVE в S36, но 10 переносов остались в pre-s37-backlog.md. Для S37 отобраны 6 критических пунктов, 4 отложены до S38+.
 
-ROUND 5 EXPANDED maintainer's original 6-item subset:
-- HALT_UNKNOWN_SYMBOL distinct ReasonCode mandatory (NOT reuse existing) per audit-log attribution rule
-- Calibration baseline amendment (S22 6.17 → 2.96 mean fold conservative)
-- ADR 0056 amendment для Sharpe computation semantics
+ROUND 5 РАСШИРИЛ исходный подмножество мейнтейнера из 6 пунктов:
+- Уникальный ReasonCode HALT_UNKNOWN_SYMBOL обязателен (НЕ переиспользовать существующий) согласно правилу атрибуции audit-log
+- Поправка базового показателя калибровки (S22 6.17 → 2.96 среднее по фолдам, консервативно)
+- Поправка ADR 0056 для семантики вычисления Sharpe
 
-## Decision (6 sub-decisions)
+## Решение (6 под-решений)
 
-### SD-1 — HALT_UNKNOWN_SYMBOL distinct ReasonCode
+### SD-1 — Уникальный ReasonCode HALT_UNKNOWN_SYMBOL
 
-NEW ReasonCode `HALT_UNKNOWN_SYMBOL` (canonical 49 → **50**). Distinct from existing HALT_S36_* codes preserves halt_log audit attribution per γ primary-wins rule.
+НОВЫЙ ReasonCode `HALT_UNKNOWN_SYMBOL` (канонический 49 → **50**). Отличается от существующих кодов HALT_S36_*, сохраняет атрибуцию аудита halt_log per правило γ primary-wins.
 
-Rationale (trading-logic-reviewer ROUND 5): reusing HALT_S36_CONSECUTIVE_LOSSES для symbol-resolution failure would mean halt_log permanently records "consecutive losses" when actual root cause was "unknown symbol." Destroys post-mortem attribution.
+Обоснование (trading-logic-reviewer ROUND 5): переиспользование HALT_S36_CONSECUTIVE_LOSSES для сбоя разрешения символа означало бы, что halt_log навсегда записывает «consecutive losses» когда фактическая причина — «unknown symbol». Уничтожает атрибуцию post-mortem.
 
-Property test allowlist (`tests/property/test_request_halt_mapping.py`) extended +1 entry. Canonical count sync 49 → 50 в `current-state.md` + `reason-codes-schema.md` + `execution-state-machine.md` footer + `.github/workflows/ci.yml`.
+Список допустимых значений property-теста (`tests/property/test_request_halt_mapping.py`) расширен на +1 запись. Синхронизация канонического счётчика 49 → 50 в `current-state.md` + `reason-codes-schema.md` + подвале `execution-state-machine.md` + `.github/workflows/ci.yml`.
 
-### SD-2 — Symbol fail-closed semantic
+### SD-2 — Семантика fail-closed для символа
 
-`RuntimeManager._check_halt_gate()` semantic change:
+Семантическое изменение `RuntimeManager._check_halt_gate()`:
 
-**Pre-S37**: unknown/missing symbol → `logger.warning("runtime.halt_gate_skipped_no_symbol")` + return False (HaltGate inactive — silent bypass).
+**До S37**: неизвестный/отсутствующий символ → `logger.warning("runtime.halt_gate_skipped_no_symbol")` + return False (HaltGate неактивен — молчаливый обход).
 
-**Post-S37**: unknown/missing symbol → `logger.error("runtime.halt_gate_unknown_symbol")` + `coordinator.request_halt(HALT_UNKNOWN_SYMBOL)` + `_stopping=True` + return True (fail-closed halt).
+**После S37**: неизвестный/отсутствующий символ → `logger.error("runtime.halt_gate_unknown_symbol")` + `coordinator.request_halt(HALT_UNKNOWN_SYMBOL)` + `_stopping=True` + return True (остановка fail-closed).
 
-Rationale: operator typo в env var → silent skip = HaltGate inactive = bot trades без safety net. Fail-closed prevents production bot running без HaltGate enforcement.
+Обоснование: опечатка оператора в переменной окружения → молчаливый пропуск = HaltGate неактивен = бот торгует без защитной сети. Fail-closed предотвращает работу production бота без принудительного применения HaltGate.
 
-### SD-3 — Symbol whitelist Setting + startup banner
+### SD-3 — Setting белого списка символов + стартовый баннер
 
-NEW Setting `s35_demo_approved_symbols: list[str]` (default `["BTCUSDT"]` per pre-s35-backlog single-symbol LOCKED).
+НОВЫЙ Setting `s35_demo_approved_symbols: list[str]` (по умолчанию `["BTCUSDT"]` per заблокированный один символ pre-s35-backlog).
 
-`_check_halt_gate()` validates: `if symbol not in self._settings.s35_demo_approved_symbols → HALT_UNKNOWN_SYMBOL`.
+`_check_halt_gate()` проверяет: `if symbol not in self._settings.s35_demo_approved_symbols → HALT_UNKNOWN_SYMBOL`.
 
-Startup banner на `RuntimeManager.run()` после `coordinator.bootstrap()` displays (когда `s35_demo_active=True`):
-- approved_symbols list
-- halt thresholds (4 triggers + values)
-- fail_closed=True flag
+Стартовый баннер в `RuntimeManager.run()` после `coordinator.bootstrap()` отображает (когда `s35_demo_active=True`):
+- список approved_symbols
+- пороги остановки (4 триггера + значения)
+- флаг fail_closed=True
 
-Operator-visible audit at boot.
+Аудит, видимый оператору при старте.
 
-### SD-4 — activation_ts HMAC integrity
+### SD-4 — HMAC-целостность activation_ts
 
-`StateRepository` extended с `set_signed()` + `get_signed()` methods per ADR 0018 HMAC pattern. Reuses `risk_override_hmac_key` (separate от API secret per ADR 0018 H2).
+`StateRepository` расширен методами `set_signed()` + `get_signed()` по паттерну HMAC ADR 0018. Переиспользует `risk_override_hmac_key` (отдельно от API-секрета per ADR 0018 H2).
 
-Envelope format: `{"payload": <value>, "sig": <HMAC-SHA256 hex>}`.
+Формат конверта: `{"payload": <value>, "sig": <HMAC-SHA256 hex>}`.
 
-`_check_halt_gate()` reads activation_ts через `get_signed()` — raises ValueError на signature mismatch. Halt path: tampered value → HALT_UNKNOWN_SYMBOL halt + bot exit (operator review required).
+`_check_halt_gate()` читает activation_ts через `get_signed()` — вызывает ValueError при несовпадении подписи. Путь остановки: подделанное значение → остановка HALT_UNKNOWN_SYMBOL + выход бота (требуется проверка оператором).
 
-### SD-5 — Clock injection в `_check_halt_gate`
+### SD-5 — Инъекция часов в `_check_halt_gate`
 
-`RuntimeManager.__init__` constructor kwarg: `clock: Callable[[], datetime] = lambda: datetime.now(UTC)`.
+Аргумент конструктора `RuntimeManager.__init__`: `clock: Callable[[], datetime] = lambda: datetime.now(UTC)`.
 
-Replace direct `datetime.now(UTC)` calls в `_check_halt_gate()` с `self._clock()`. Enables deterministic property tests + future replay scenarios.
+Заменить прямые вызовы `datetime.now(UTC)` в `_check_halt_gate()` на `self._clock()`. Обеспечивает детерминированные property-тесты + будущие сценарии воспроизведения.
 
-Pattern matches S8a `RiskManager.__init__(clock=...)` precedent.
+Паттерн соответствует прецеденту S8a `RiskManager.__init__(clock=...)`.
 
-### SD-6 — coordinator.symbol public property
+### SD-6 — Публичное свойство coordinator.symbol
 
-`Coordinator` exposes:
+`Coordinator` предоставляет:
 ```python
 @property
 def symbol(self) -> str:
     return self._symbol
 ```
 
-`RuntimeManager._check_halt_gate()` replaces `getattr(self._coordinator, "_symbol", None)` private leak с `self._coordinator.symbol`.
+`RuntimeManager._check_halt_gate()` заменяет приватную утечку `getattr(self._coordinator, "_symbol", None)` на `self._coordinator.symbol`.
 
-Cleans Demeter violation. Public API stable contract per ADR 0019.
+Устраняет нарушение Деметры. Стабильный контракт публичного API per ADR 0019.
 
-## Consequences
+## Последствия
 
-### Positive
-- Symbol fail-closed = production-ready halt path (no silent bypass)
-- HMAC integrity = activation_ts tamper-detection (no rollback attack)
-- Clock injection = deterministic property tests (testability unlock)
-- coordinator.symbol property = clean public API (no private access)
-- HALT_UNKNOWN_SYMBOL audit attribution preserved
-- δ activate post-S37 = production-readiness discipline + operator confidence
+### Положительные
+- Symbol fail-closed = production-ready путь остановки (нет молчаливого обхода)
+- HMAC целостность = обнаружение подделки activation_ts (нет атаки отката)
+- Инъекция часов = детерминированные property-тесты (разблокировка тестируемости)
+- Свойство coordinator.symbol = чистый публичный API (нет приватного доступа)
+- Атрибуция аудита HALT_UNKNOWN_SYMBOL сохранена
+- Активация δ после S37 = дисциплина production-готовности + уверенность оператора
 
-### Negative
-- Time cost ~8-10h (delays δ data accumulation by ~2-4 weeks)
-- HMAC verification overhead per `_check_halt_gate` call (negligible — sub-millisecond)
-- ReasonCode count growth (49 → 50) = future canonical sync overhead
+### Отрицательные
+- Временные затраты ~8-10ч (задерживает накопление данных δ на ~2-4 недели)
+- Накладные расходы верификации HMAC per вызов `_check_halt_gate` (пренебрежимо мало — меньше миллисекунды)
+- Рост счётчика ReasonCode (49 → 50) = будущие накладные расходы канонической синхронизации
 
-### Neutral
-- No FSM state/event/transition changes (canonical 16/30/74 unchanged, only reason codes 49→50)
-- ADR 0055 SD-* preserved unchanged
-- δ activation operator action unchanged (set env var + restart) per playbook T7
+### Нейтральные
+- Нет изменений состояний/событий/переходов FSM (канонические 16/30/74 без изменений, только reason codes 49→50)
+- SD-* ADR 0055 без изменений
+- Действие оператора по активации δ без изменений (установить переменную окружения + перезапустить) per playbook T7
 
-## Implementation
+## Реализация
 
-Per S37 plan (`plans/2026-04-27-sprint-37-carry-overs-hardening.md`):
-- T1 (this commit): ADR 0057 + ADR 0056 amendment paired
-- T2: Security #1+#2 — symbol whitelist + fail-closed + HALT_UNKNOWN_SYMBOL
-- T3: Security #3 — activation_ts HMAC integrity
-- T4: Trading-logic #4 — clock injection
-- T5: Trading-logic #5 — coordinator.symbol property
-- T6: Quant #8 — DSR boundary tests + S22 baseline 6.17→2.96
-- T7: Operator playbook page
-- T8: Wiki sync + counts + ship
+Per план S37 (`plans/2026-04-27-sprint-37-carry-overs-hardening.md`):
+- T1 (этот коммит): ADR 0057 + поправка ADR 0056 парные
+- T2: Безопасность #1+#2 — белый список символов + fail-closed + HALT_UNKNOWN_SYMBOL
+- T3: Безопасность #3 — HMAC-целостность activation_ts
+- T4: Логика торговли #4 — инъекция часов
+- T5: Логика торговли #5 — свойство coordinator.symbol
+- T6: Quant #8 — граничные тесты DSR + базовый показатель S22 6.17→2.96
+- T7: Страница playbook оператора
+- T8: Синхронизация wiki + счётчики + отправка
 
-## Follow-ups
+## Дальнейшие шаги
 
-**Operator action когда S37 ships:**
-1. Review ADR 0057 + ADR 0056 amendment + delta-activation-playbook.md
-2. Set `S35_DEMO_ACTIVE=true` в production .env (per playbook step 1)
-3. Restart bot — first tick records activation_ts (HMAC-signed)
-4. Monitor halt_log + trade_history per playbook procedure
+**Действия оператора после отправки S37:**
+1. Изучить ADR 0057 + поправку ADR 0056 + delta-activation-playbook.md
+2. Установить `S35_DEMO_ACTIVE=true` в production .env (per playbook шаг 1)
+3. Перезапустить бота — первый тик записывает activation_ts (подписанный HMAC)
+4. Контролировать halt_log + trade_history per процедура playbook
 
-## Related
+## Связанные
 
 - ADR 0050 (S33 Trading Restart)
-- ADR 0051 (S34 6-th honest close v0.6)
-- ADR 0052 (S34 acceptance-criteria amendment LOCKED)
-- ADR 0053 (S35 δ TESTNET pre-activation infrastructure)
-- ADR 0055 (S36 δ activation — predecessor)
-- ADR 0056 (S36 DSR sigma_SR amendment + S37 amendment paired)
-- ADR 0018 (config_hash + HMAC override pattern — SD-4 source)
-- ADR 0019 (coordinator design — SD-6 source)
-- ADR 0022 (RuntimeManager lifecycle — SD-5 clock pattern)
+- ADR 0051 (S34 6-й честный выход v0.6)
+- ADR 0052 (S34 поправка к критериям приёмки LOCKED)
+- ADR 0053 (S35 инфраструктура δ TESTNET до активации)
+- ADR 0055 (S36 активация δ — предшественник)
+- ADR 0056 (поправка S36 DSR sigma_SR + парная поправка S37)
+- ADR 0018 (config_hash + паттерн HMAC override — источник SD-4)
+- ADR 0019 (дизайн coordinator — источник SD-6)
+- ADR 0022 (жизненный цикл RuntimeManager — паттерн часов SD-5)
 - pre-s37-backlog.md ROUND 5 consilium trail
-- delta-activation-playbook.md (T7 operator procedure)
+- delta-activation-playbook.md (процедура оператора T7)
 
 ---
 
-## S38 Item #6 Amendment — `months_since` truncation semantics
+## Поправка S38 пункт #6 — семантика усечения `months_since`
 
-`RuntimeManager._check_halt_gate()` computes:
+`RuntimeManager._check_halt_gate()` вычисляет:
 
 ```python
 months_since = (self._clock() - last_ts).days // 30
 ```
 
-**Truncation** (Python integer division `//`):
+**Усечение** (целочисленное деление Python `//`):
 
-| Days elapsed | months_since |
+| Прошло дней | months_since |
 |---|---|
 | 29 | 0 |
 | 30 | 1 |
 | 59 | 1 |
 | 60 | 2 |
 | 179 | 5 |
-| 180 | 6 (HALT_S36_NO_TRADE_TIMEOUT trigger) |
+| 180 | 6 (триггер HALT_S36_NO_TRADE_TIMEOUT) |
 
-Implication: HALT_S36_NO_TRADE_TIMEOUT fires only after FULL 6 × 30 = 180 days without trade. NOT after 5 months 29 days. Conservative bias (under-fires by ≤30 days).
+Следствие: HALT_S36_NO_TRADE_TIMEOUT срабатывает только после ПОЛНЫХ 6 × 30 = 180 дней без сделки. НЕ после 5 месяцев 29 дней. Консервативный сдвиг (недострел до 30 дней).
 
-Operator interpretation (legitimate halt vs boundary artifact):
-- True halt: bot active >180 days, n=0 trades — strategy degraded OR market regime shift OR config error
-- Boundary artifact: NONE — truncation is one-directional under-fire, never spurious fire
+Интерпретация оператором (законная остановка vs граничный артефакт):
+- Истинная остановка: бот активен >180 дней, n=0 сделок — деградация стратегии ИЛИ смена рыночного режима ИЛИ ошибка конфигурации
+- Граничный артефакт: ОТСУТСТВУЕТ — усечение односторонне занижает, никогда не срабатывает ложно
 
-Per ROUND 6 trading-logic-reviewer C4 (S37 T4 carry-over): "truncation is intentional, conservative under-fire by up to 30 days. Document explicitly."
+Per ROUND 6 trading-logic-reviewer C4 (перенос S37 T4): «усечение намеренное, консервативный недострел до 30 дней. Задокументировать явно.»
 
-**Item #9 (Sharpe semantics extended ADR doc)** closed via ADR 0056 amendment 2 (S38 T1) — see paired ADR for `trial_mean_fold_oos_sharpe` vs `pooled_trade_oos_sharpe` vs `live_sharpe` semantic 3-row table.
+**Пункт #9 (расширенная документация семантики Sharpe в ADR)** закрыт через поправку 2 ADR 0056 (S38 T1) — см. парный ADR для семантической таблицы из 3 строк `trial_mean_fold_oos_sharpe` vs `pooled_trade_oos_sharpe` vs `live_sharpe`.

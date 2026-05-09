@@ -8,9 +8,9 @@ status: stable
 sources: [src/risk/manager.py, src/risk/override.py, src/platform/config.py, ADR 0012, ADR 0013, ADR 0018]
 ---
 
-# RiskManager — risk module orchestrator
+# RiskManager — оркестратор risk модуля
 
-**TL;DR:** Точка входа Risk модуля. Композирует `EquityTracker`, `CircuitBreakerDetector`, `Kelly` (4-phase + Wilson lower bound), `compute_qty`, `OverrideStore`, `StateRepository`, `TradeHistoryRepository`. Возвращает `RiskAssessment` (frozen pydantic v2). Enforces look-ahead invariant (`assessed_at >= signal.generated_at`).
+**TL;DR:** Точка входа Risk модуля. Композирует `EquityTracker`, `CircuitBreakerDetector`, `Kelly` (4-phase + Wilson lower bound), `compute_qty`, `OverrideStore`, `StateRepository`, `TradeHistoryRepository`. Возвращает `RiskAssessment` (frozen pydantic v2). Enforces look-ahead инвариант (`assessed_at >= signal.generated_at`).
 
 ## Public API
 
@@ -37,7 +37,7 @@ class RiskManager:
 
 `Signal` — `src/signalgen/models.py`. `RiskAssessment` — `src/risk/models.py` (frozen pydantic v2).
 
-## Decision pipeline (assess)
+## Pipeline решений (assess)
 
 ```
                        ┌────────────────────────┐
@@ -59,17 +59,17 @@ signal + mark_price → │  1. clock() → assessed_at │
                        └────────────────────────┘
 ```
 
-## Invariants (CRITICAL)
+## Инварианты (КРИТИЧНЫЕ)
 
-| # | Invariant | Enforcement |
+| # | Инвариант | Enforcement |
 |---|---|---|
 | 1 | **Look-ahead:** `assessed_at >= signal.generated_at` | `ValueError` raised in `assess` step 2 |
 | 2 | **Halt severity ordering:** L3 > L2 > L1 > L0; FLASH > L3 | `_halt_severity` table + `if new > current: escalate` |
-| 3 | **Wilson lower bound for phases 3/4** | `_compute_p_b` returns `wilson_95_ci(...)[0]`, not `wins/total` |
+| 3 | **Wilson lower bound для phases 3/4** | `_compute_p_b` returns `wilson_95_ci(...)[0]`, not `wins/total` |
 | 4 | **Override match required:** override применяется ТОЛЬКО если `override.level == current_halt` | step 5 check |
 | 5 | **Atomic equity flush:** equity snapshot + state update в одной транзакции | `update_equity` оборачивает `EquityTracker.record_no_commit` + `StateRepository.update_many_no_commit` в один `with conn:` блок (test: `test_update_equity_atomic_rollback_on_state_failure`) |
-| 6 | **Decimal everywhere monetary:** `qty`, `sl`, `tp`, `equity`, `fraction` — Decimal; `p, b` — float (statistical) | type signatures + tests; `phase_adjusted_fraction` использует Decimal multiply (no float×float contamination, ADR 0007) |
-| 7 | **LONG-only contract:** `assess()` принимает только `side==LONG`, иначе ValueError | v0.1 FSM (FLAT signals — exit semantics, обрабатываются вне Risk) |
+| 6 | **Decimal везде для денежных значений:** `qty`, `sl`, `tp`, `equity`, `fraction` — Decimal; `p, b` — float (statistical) | type signatures + tests; `phase_adjusted_fraction` использует Decimal multiply (no float×float contamination, ADR 0007) |
+| 7 | **LONG-only контракт:** `assess()` принимает только `side==LONG`, иначе ValueError | v0.1 FSM (FLAT signals — exit semantics, обрабатываются вне Risk) |
 | 8 | **qty step-floor:** quantize(8dp) с `ROUND_DOWN` — Bybit Spot BUY rounding direction | `Decimal.quantize(..., rounding=ROUND_DOWN)` |
 | 9 | **Flash CB continuity across restart:** `_prev_close` персистится в `state` table (`risk:cb:prev_close`), восстанавливается в `load_state` | `on_bar_close` → `state.set`; `load_state` → restore |
 | 10 | **Override HMAC envelope** (ADR 0018 sub-dec 9 / H2): override file = `{"payload":..,"sig":..}`; verify через `hmac.compare_digest` с `Settings.risk_override_hmac_key` (≥32 chars). Tampered/wrong-key/missing-sig → `read_active` returns `None` + WARNING | `OverrideStore.read_active` fail-closed; `test_read_with_tampered_*` |
@@ -78,18 +78,18 @@ signal + mark_price → │  1. clock() → assessed_at │
 | 13 | **`config_hash` allowlist** (ADR 0018 sub-dec 9 / H1): hash покрывает только 12 risk-threshold полей. Rotate API secret/HMAC key, поменять пути/log_level → hash invariant | `Settings._HASH_ALLOWLIST`; `test_config_hash_excludes_*` |
 | 14 | **`peak_equity_24h` Decimal-strict** (ADR 0018 sub-dec 9 / I1): ranking через Python `max([Decimal(...)])`, не SQL `CAST AS REAL` (collapse в IEEE-754 для значений > 15 sig digits — wrong peak) | `EquityTracker.peak_equity_24h`; `test_peak_equity_24h_decimal_precision_beyond_double` |
 
-## Reason code mapping
+## Маппинг кодов причин
 
 | Outcome | `RiskAssessment.reason_code` | `approved` |
 |---|---|---|
-| Entry approved | `ENTRY_LONG_TREND_FOLLOWING` | True |
-| L1/L2/L3 active, no override | `HALT_DRAWDOWN_L1\|L2\|L3` | False |
+| Entry одобрен | `ENTRY_LONG_TREND_FOLLOWING` | True |
+| L1/L2/L3 активен, no override | `HALT_DRAWDOWN_L1\|L2\|L3` | False |
 | Flash detected, no override | `HALT_FLASH_CRASH` | False |
 | `qty == 0` after quantize | `REJECT_MIN_NOTIONAL` | False |
 
-См. [[../../trading/concepts/reason-codes]] (29 enum). v0.1 не маппит `REJECT_INVALID_SIGNAL` / `REJECT_ZERO_QTY` отдельно — см. ADR 0018 для rationale.
+See [[../../trading/concepts/reason-codes]] (29 enum). v0.1 не маппит `REJECT_INVALID_SIGNAL` / `REJECT_ZERO_QTY` отдельно — см. ADR 0018 для rationale.
 
-## State persistence schema
+## Схема персистентности состояния
 
 `migrations/002_risk.sql` + `003_trade_history_unique.sql`:
 
@@ -101,7 +101,7 @@ signal + mark_price → │  1. clock() → assessed_at │
 
 CB level + prev_close survive restart через `RiskManager.load_state()`.
 
-## Settings (config_hash anti-replay + HMAC envelope)
+## Параметры (config_hash anti-replay + HMAC envelope)
 
 **`Settings.config_hash()`** возвращает SHA-256 от **whitelisted** 12 risk-threshold полей (allowlist `_HASH_ALLOWLIST` в `src/platform/config.py`). Канонизация через `json.dumps(..., sort_keys=True, separators=(",",":"), default=str)`. `OverrideStore.read_active` отвергает override с `config_hash` не совпадающим с текущим — защита от подмены config при активном override.
 
@@ -112,14 +112,14 @@ CB level + prev_close survive restart через `RiskManager.load_state()`.
 
 **`Settings.risk_override_hmac_key`** — required `Field(..., min_length=32)`, separate from API secret. Используется для HMAC-SHA256 envelope подписи override file (см. invariant #10).
 
-См. ADR 0018 sub-decision 9 для полного rationale + threat model.
+See ADR 0018 sub-decision 9 для полного rationale + threat model.
 
-## Tests
+## Тесты
 
 - Unit: 8 файлов (`test_risk_*`) — каждый компонент изолированно
 - Integration: `tests/integration/test_risk_flow.py` — 50-bar synthetic price series, 8 сценариев (normal entry → L1 escalation → L2 halt → manual resume → flash → recovery)
 
-## Related
+## Связанное
 
 - [[../decisions/0012-4-phase-kelly-sizing]] — Kelly source of truth
 - [[../decisions/0013-circuit-breakers-l1-l2-l3-flash]] — CB source of truth

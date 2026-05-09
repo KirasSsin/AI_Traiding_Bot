@@ -3,7 +3,7 @@ title: δ TESTNET Activation Playbook (S37+ Operator Procedure)
 type: component
 tags: [component, testnet-demo, operator-playbook, halt-gate, monitoring, sprint-37, ru]
 created: 2026-04-27
-updated: 2026-04-27
+updated: 2026-05-09
 status: stable
 sources:
   - project/decisions/0055-sprint-36-delta-activation.md
@@ -17,31 +17,31 @@ sources:
 
 **TL;DR:** Step-by-step operator procedure для activation δ TESTNET demo. Pre-checklist + 5 activation steps + monitoring procedure + halt response procedure + DSR status guide + 12mo MAINNET-promotion review checklist. Per ADR 0055 + ADR 0057 binding.
 
-## Pre-activation checklist
+## Чеклист перед активацией
 
-Все items MUST be true перед activation:
+Все пункты ОБЯЗАНЫ быть выполнены перед активацией:
 
-- [ ] S37 shipped (tag v0.1.0-alpha.37 OR later)
-- [ ] All 6 critical carry-overs closed (security 1-3 + trading-logic 4-5 + quant 8)
-- [ ] ADR 0055 acknowledgment template understood (12mo MAINNET-promotion gate, NOT shutdown)
-- [ ] ADR 0057 SD-1 understood (HALT_UNKNOWN_SYMBOL distinct ReasonCode = audit attribution preserved)
-- [ ] ADR 0057 SD-3 understood (whitelist Setting + startup banner)
-- [ ] ADR 0057 SD-4 understood (activation_ts HMAC integrity — tamper raises halt)
-- [ ] `MEAN_REVERSION_S17_RELAXED_PARAMS` LOCKED constants reviewed (RSI 35/65, BB 1.5σ)
-- [ ] Bybit TESTNET API credentials ready в production .env
-- [ ] `risk_override_hmac_key` (32+ chars) configured
+- [ ] S37 shipped (тег v0.1.0-alpha.37 или новее)
+- [ ] Все 6 критических carry-overs закрыты (security 1-3 + trading-logic 4-5 + quant 8)
+- [ ] Понят шаблон подтверждения ADR 0055 (шлюз 12mo MAINNET-promotion, НЕ завершение)
+- [ ] Понят ADR 0057 SD-1 (HALT_UNKNOWN_SYMBOL отдельный ReasonCode = сохраняется атрибуция в audit)
+- [ ] Понят ADR 0057 SD-3 (Setting whitelist + startup banner)
+- [ ] Понят ADR 0057 SD-4 (HMAC-целостность activation_ts — фальсификация вызывает halt)
+- [ ] Просмотрены LOCKED-константы `MEAN_REVERSION_S17_RELAXED_PARAMS` (RSI 35/65, BB 1.5σ)
+- [ ] Bybit TESTNET API credentials готовы в production .env
+- [ ] Настроен `risk_override_hmac_key` (32+ символов)
 
-### S38 ADR 0058 SD-4 NEW gates (post-ROUND 6 consilium):
+### S38 ADR 0058 SD-4 — НОВЫЕ шлюзы (после ROUND 6 consilium):
 
-- [ ] **F4 — Bybit TESTNET API key scope verification**: confirm key has Order (read+write) AND Position permissions enabled. Pre-flight: `GET /v5/account/info` + verify `POST /v5/order/create` reachable. Read-only key → `retCode=10003` permission denied на first signal (unhandled error path).
-- [ ] **F5 — No stale `runtime:halt_gate:activation_ts` row check**: query `sqlite3 data/bot.db "SELECT * FROM state WHERE key='runtime:halt_gate:activation_ts';"` — must be empty OR signed с current `risk_override_hmac_key`. Different HMAC key version → tamper halt on first tick (HALT_UNKNOWN_SYMBOL).
-- [ ] **F7 (Gate 2) — SQLite WAL mode + disk space**: confirm > 1GB free disk space. halt_log accumulates rows over 12mo TESTNET window.
-- [ ] **F7 (Gate 3) — Bootstrap ordering invariant**: `coordinator.bootstrap()` MUST complete before `ws_consumer.start()`. Current code at `src/runtime/manager.py:104-105` correct order. DO NOT reorder без verifying assertion paths.
-- [ ] **T3 H3 — Bybit account type verification**: confirm TESTNET account is **UNIFIED** account type. Code hardcodes `accountType="UNIFIED"` в Bybit V5 API calls. If account is **CLASSIC** (non-UNIFIED) → orders rejected с retCode=10001 OR misclassified. Pre-flight: `GET /v5/account/info` returns `unifiedMarginStatus`. If non-UNIFIED → escalate к maintainer для config-knob refactor (S38a hotfix OR pre-s39-backlog).
+- [ ] **F4 — Верификация scope API ключа Bybit TESTNET**: убедиться, что ключ имеет разрешения Order (read+write) И Position. Pre-flight: `GET /v5/account/info` + проверить доступность `POST /v5/order/create`. Read-only ключ → `retCode=10003` permission denied на первом сигнале (необработанный путь ошибки).
+- [ ] **F5 — Проверка отсутствия устаревшей строки `runtime:halt_gate:activation_ts`**: запрос `sqlite3 data/bot.db "SELECT * FROM state WHERE key='runtime:halt_gate:activation_ts';"` — должна быть пустой ИЛИ подписанной текущим `risk_override_hmac_key`. Другая версия HMAC-ключа → tamper halt на первом тике (HALT_UNKNOWN_SYMBOL).
+- [ ] **F7 (Шлюз 2) — SQLite WAL mode + дисковое пространство**: убедиться, что свободно > 1GB. halt_log накапливает строки за 12mo TESTNET-окно.
+- [ ] **F7 (Шлюз 3) — Инвариант порядка bootstrap**: `coordinator.bootstrap()` ОБЯЗАН завершиться до `ws_consumer.start()`. Текущий код в `src/runtime/manager.py:104-105` имеет корректный порядок. НЕ менять порядок без проверки assertion paths.
+- [ ] **T3 H3 — Верификация типа Bybit-аккаунта**: убедиться, что TESTNET-аккаунт типа **UNIFIED**. Код хардкодит `accountType="UNIFIED"` в вызовах Bybit V5 API. Если аккаунт типа **CLASSIC** (non-UNIFIED) → ордера отклоняются с retCode=10001 ИЛИ неверно классифицируются. Pre-flight: `GET /v5/account/info` возвращает `unifiedMarginStatus`. Если non-UNIFIED → эскалировать к мейнтейнеру для config-knob refactor (S38a hotfix ИЛИ pre-s39-backlog).
 
-## Activation steps
+## Шаги активации
 
-### Step 1 — Set environment variable
+### Шаг 1 — Установить переменную окружения
 
 В production `.env` file:
 
@@ -51,9 +51,9 @@ S35_DEMO_ACTIVE=true
 # S35_DEMO_APPROVED_SYMBOLS=["BTCUSDT","ETHUSDT"]  # JSON list format
 ```
 
-Default whitelist `["BTCUSDT"]` per ADR 0057 SD-3 — single-symbol δ pre-commit.
+Whitelist по умолчанию `["BTCUSDT"]` per ADR 0057 SD-3 — δ pre-commit единственного символа.
 
-### Step 2 — Verify Settings invariants
+### Шаг 2 — Проверить инварианты Settings
 
 ```bash
 .venv/bin/python -c "
@@ -70,65 +70,65 @@ print('halt_no_trade_months:', s.s35_halt_no_trade_months)
 "
 ```
 
-Expected output:
+Ожидаемый вывод:
 - `s35_demo_active: True`
-- `testnet: True` (MAINNET-exclusion invariant per ADR 0055)
+- `testnet: True` (инвариант MAINNET-exclusion per ADR 0055)
 - `live_trading: False` (MAINNET-exclusion)
-- `whitelist: ['BTCUSDT']` (case-normalized к uppercase per S37 T2)
+- `whitelist: ['BTCUSDT']` (нормализован к uppercase per S37 T2)
 - Halt thresholds: 0.20 / 0.15 / 5 / 6
 
-Если invariant violation → ValueError raised at Settings construction. Fix .env перед restart.
+При нарушении инварианта → ValueError при конструировании Settings. Исправить .env перед перезапуском.
 
-### Step 3 — Restart bot
+### Шаг 3 — Перезапустить бот
 
 ```bash
 # Via systemd / docker / script:
 .venv/bin/python -m src run
 ```
 
-Bot startup sequence:
+Последовательность запуска бота:
 1. Coordinator bootstrap
-2. **S37 startup banner** — log entry `runtime.s35_demo_startup_banner` displays:
-   - approved_symbols list
-   - halt_thresholds (4 triggers)
-   - fail_closed=True flag
-3. WS consumer start
-4. Main tick loop begins
+2. **S37 startup banner** — запись в лог `runtime.s35_demo_startup_banner` отображает:
+   - список approved_symbols
+   - halt_thresholds (4 триггера)
+   - флаг fail_closed=True
+3. Запуск WS consumer
+4. Начало основного tick loop
 
-**Verify banner в log output** (operator-visible audit at boot).
+**Убедиться в наличии banner в выводе лога** (видимый оператору audit при запуске).
 
-### Step 4 — Verify activation_ts persisted (signed)
+### Шаг 4 — Проверить сохранение activation_ts (подписанного)
 
-После first tick (~5 seconds):
+После первого тика (~5 секунд):
 
 ```bash
 sqlite3 data/bot.db "SELECT key, value_json FROM state WHERE key='runtime:halt_gate:activation_ts';"
 ```
 
-Expected:
+Ожидается:
 ```
 runtime:halt_gate:activation_ts | {"payload":{"value":"2026-04-27T..."},"sig":"<64-char hex>"}
 ```
 
-If unsigned (no `payload`/`sig` envelope) → S37 T3 not deployed. Verify branch + restart.
+Если без подписи (нет envelope `payload`/`sig`) → S37 T3 не задеплоен. Проверить ветку + перезапустить.
 
-**DO NOT manually mutate this row** — HMAC verification fails on next tick → bot halts с `HALT_UNKNOWN_SYMBOL` (tamper-detection per ADR 0057 SD-4).
+**НЕ изменять эту строку вручную** — HMAC-верификация упадёт на следующем тике → бот остановится с `HALT_UNKNOWN_SYMBOL` (tamper-detection per ADR 0057 SD-4).
 
-### Step 5 — Monitor first 24h
+### Шаг 5 — Мониторинг первых 24ч
 
-Verify bot не halts spuriously:
+Убедиться, что бот не останавливается без причины:
 
 ```bash
 sqlite3 data/bot.db "SELECT halt_ts, halt_reason FROM halt_log ORDER BY halt_ts DESC LIMIT 5;"
 ```
 
-Expected: empty OR existing halts unrelated к S37 (e.g. KILL_SWITCH_REQUESTED).
+Ожидается: пусто ИЛИ существующие halt'ы не связаны с S37 (например, KILL_SWITCH_REQUESTED).
 
-If `HALT_S36_*` OR `HALT_UNKNOWN_SYMBOL` fires immediately → investigate per "Halt response procedure" below.
+Если `HALT_S36_*` ИЛИ `HALT_UNKNOWN_SYMBOL` срабатывает немедленно → расследовать по процедуре "Процедура реагирования на halt" ниже.
 
-## Monitoring procedure (weekly)
+## Процедура мониторинга (еженедельно)
 
-Recommended weekly checks during 12mo TESTNET window:
+Рекомендуемые еженедельные проверки в течение 12mo TESTNET-окна:
 
 ```bash
 # 1. Halt log activity
@@ -144,60 +144,60 @@ sqlite3 data/bot.db "SELECT ts, total_equity FROM equity_snapshots ORDER BY ts D
 cat data/cross_trial_sharpes.json
 ```
 
-Expected baseline (S22 reference): ~13 trades/year на BTCUSDT 4H mean-reversion.
+Ожидаемый базовый уровень (S22 reference): ~13 трейдов/год на BTCUSDT 4H mean-reversion.
 
-### Important — DSR UNDERPOWERED is EXPECTED for entire 12mo window
+### Важно — DSR UNDERPOWERED является ОЖИДАЕМЫМ на всё 12mo-окно
 
-Per quant-stats-reviewer ROUND 6:
-> At S22 baseline 13 trades/year: expected n=13 после 12mo TESTNET.
-> ADR 0056 thresholds: 10 ≤ n < 30 → DSR_UNDERPOWERED status.
-> This is NOT failure signal — это expected small-n regime.
+По результатам quant-stats-reviewer ROUND 6:
+> При базовом уровне S22 в 13 трейдов/год: ожидается n=13 после 12mo TESTNET.
+> Пороги ADR 0056: 10 ≤ n < 30 → статус DSR_UNDERPOWERED.
+> Это НЕ сигнал отказа — это ожидаемый режим малой выборки.
 
-DO NOT abort δ TESTNET because of UNDERPOWERED DSR alone. Halt только если HaltGate triggers (DD/streak/timeout) OR operator decides honest close per separate criteria.
+НЕ прерывать δ TESTNET только из-за UNDERPOWERED DSR. Halt только если срабатывает HaltGate (DD/streak/timeout) ИЛИ оператор принимает решение об honest close по отдельным критериям.
 
-GATE_ELIGIBLE (n≥30) expected at ~28 months at baseline rate — outside 12mo MAINNET-promotion review window. 12mo review = "continue TESTNET" recommendation likely (per quant-stats expected outcome).
+GATE_ELIGIBLE (n≥30) ожидается примерно через ~28 месяцев при базовом темпе — за пределами 12mo-окна review MAINNET-promotion. 12mo review = вероятно рекомендация "продолжить TESTNET" (per ожидаемый исход quant-stats).
 
-### Halt-triggered immediate review (S38 trading-logic-reviewer addition)
+### Немедленный review при halt (добавление trading-logic-reviewer S38)
 
-Weekly cadence catches operational health BUT может miss weekend halt (3-day blind spot).
+Еженедельный каданс отслеживает операционное здоровье, НО может пропустить halt в выходные (слепое пятно 3 дня).
 
-**Additional trigger:** if `halt_log` has any entry within last 24H → immediate review (don't wait для weekly slot).
+**Дополнительный триггер:** если `halt_log` содержит любую запись за последние 24ч → немедленный review (не ждать еженедельного слота).
 
-Quick check command:
+Команда быстрой проверки:
 
 ```bash
 sqlite3 data/bot.db "SELECT halt_ts, halt_reason FROM halt_log WHERE halt_ts > datetime('now', '-24 hours');"
 ```
 
-If non-empty → execute halt response procedure immediately (see Halt response procedure section below).
+Если не пусто → немедленно выполнить процедуру реагирования на halt (см. секцию ниже).
 
-## Halt response procedure
+## Процедура реагирования на halt
 
-When HaltGate fires (any of 4 triggers):
+При срабатывании HaltGate (любой из 4 триггеров):
 
-| ReasonCode | Trigger | Operator action |
-|-----------|---------|-----------------|
-| `HALT_S36_DD_INTRADAY` | 24h DD ≥ 20% | Immediate review — flash crash OR strategy collapse |
-| `HALT_S36_DD_MULTIDAY` | HWM-since-activation DD ≥ 15% | Cumulative loss review — consider honest close |
-| `HALT_S36_CONSECUTIVE_LOSSES` | 5 sequential losing trades | Strategy degradation review |
-| `HALT_S36_NO_TRADE_TIMEOUT` | 6mo without n≥30 trades | Signal-frequency starvation — consider regime/timeframe change |
-| `HALT_UNKNOWN_SYMBOL` | Whitelist mismatch OR activation_ts tampered | **Critical** — config audit OR security incident |
+| ReasonCode | Триггер | Действие оператора |
+|-----------|---------|-------------------|
+| `HALT_S36_DD_INTRADAY` | 24ч DD ≥ 20% | Немедленный review — flash crash ИЛИ коллапс стратегии |
+| `HALT_S36_DD_MULTIDAY` | DD от HWM-since-activation ≥ 15% | Review накопленных убытков — рассмотреть honest close |
+| `HALT_S36_CONSECUTIVE_LOSSES` | 5 последовательных убыточных трейдов | Review деградации стратегии |
+| `HALT_S36_NO_TRADE_TIMEOUT` | 6mo без n≥30 трейдов | Истощение частоты сигналов — рассмотреть смену режима/таймфрейма |
+| `HALT_UNKNOWN_SYMBOL` | Несоответствие whitelist ИЛИ фальсификация activation_ts | **Критично** — аудит конфигурации ИЛИ инцидент безопасности |
 
-Procedure (any halt):
+Процедура (при любом halt):
 
-1. **Bot already exited** (HaltGate sets `_stopping=True`)
-2. Review `halt_log` entry для context
-3. Review related logs (halt_ts ± 1 hour)
-4. Decision tree:
-   - Spurious / config issue → fix .env + manual FSM reset через `--reconcile-only`
-   - Strategy collapse / HALT_S36_DD_* → S38+ honest close ADR
-   - HALT_UNKNOWN_SYMBOL after stable operation → security incident, audit halt_log + state table
-5. Document review findings (operator notes file OR commit message в repo)
-6. Restart bot ONLY после documented review
+1. **Бот уже завершил работу** (HaltGate устанавливает `_stopping=True`)
+2. Изучить запись в `halt_log` для получения контекста
+3. Изучить связанные логи (halt_ts ± 1 час)
+4. Дерево решений:
+   - Ложный / проблема конфигурации → исправить .env + ручной сброс FSM через `--reconcile-only`
+   - Коллапс стратегии / HALT_S36_DD_* → ADR honest close S38+
+   - HALT_UNKNOWN_SYMBOL после стабильной работы → инцидент безопасности, аудит halt_log + таблицы state
+5. Задокументировать результаты review (файл заметок оператора ИЛИ commit message в репозитории)
+6. Перезапустить бот ТОЛЬКО после документированного review
 
-## DSR status interpretation guide (per ADR 0056)
+## Руководство по интерпретации статуса DSR (per ADR 0056)
 
-When 12mo MAINNET-promotion review per ADR 0055 SD-8:
+При 12mo review MAINNET-promotion per ADR 0055 SD-8:
 
 ```bash
 .venv/bin/python -c "
@@ -212,65 +212,65 @@ print(report)
 "
 ```
 
-Interpretation:
+Интерпретация:
 
-| dsr_status | Meaning | Action |
-|------------|---------|--------|
-| `INSUFFICIENT_TRADES` (n<10) | DSR=NaN | NOT eligible для MAINNET discussion. Continue TESTNET OR honest close. |
-| `UNDERPOWERED` (10≤n<30) | DSR computed но statistically weak | Informational only. NOT gate-eligible. |
-| `GATE_ELIGIBLE` (n≥30) | DSR valid evaluation | Apply ADR 0055 SD-1 PASS gates (n≥50, Sharpe≥0.7, MC p≤0.05, DSR≥0.95) |
+| dsr_status | Значение | Действие |
+|------------|---------|---------|
+| `INSUFFICIENT_TRADES` (n<10) | DSR=NaN | НЕ является кандидатом для обсуждения MAINNET. Продолжить TESTNET ИЛИ honest close. |
+| `UNDERPOWERED` (10≤n<30) | DSR вычислен, но статистически слаб | Только информационно. НЕ является gate-eligible. |
+| `GATE_ELIGIBLE` (n≥30) | DSR валиден для оценки | Применить шлюзы ADR 0055 SD-1 PASS (n≥50, Sharpe≥0.7, MC p≤0.05, DSR≥0.95) |
 
 calibration_ratio_to_s22 (live_Sharpe / 2.96):
 - ≥ 0.70 → PASS calibration
-- < 0.70 → FAIL calibration (live underperforms S22 baseline beyond tolerance)
+- < 0.70 → FAIL calibration (live уступает базовому уровню S22 сверх допуска)
 
-## 12mo MAINNET-promotion review checklist
+## Чеклист review 12mo MAINNET-promotion
 
-Per ADR 0055 SD-8 (MAINNET criteria DEFERRED к S37+ post-12mo data):
+Per ADR 0055 SD-8 (критерии MAINNET ОТЛОЖЕНЫ к S37+ после получения 12mo данных):
 
-After 12 months TESTNET operation:
+После 12 месяцев работы в TESTNET:
 
 - [ ] n_trades ≥ 50 (per ADR 0055 SD-1 PASS gate)
-- [ ] live_Sharpe / 2.96 calibration ratio ≥ 0.70
-- [ ] MC sign_flip p-value ≤ 0.05 (n≥20 required)
-- [ ] DSR ≥ 0.95 + status GATE_ELIGIBLE
-- [ ] Max DD ≤ 30% (sustained equity preservation)
-- [ ] No active HaltGate trigger в trailing 30 days
-- [ ] Operator acknowledgment template verbatim per ADR 0052
+- [ ] calibration ratio live_Sharpe / 2.96 ≥ 0.70
+- [ ] MC sign_flip p-value ≤ 0.05 (требуется n≥20)
+- [ ] DSR ≥ 0.95 + статус GATE_ELIGIBLE
+- [ ] Max DD ≤ 30% (устойчивое сохранение эквити)
+- [ ] Нет активных триггеров HaltGate за последние 30 дней
+- [ ] Шаблон подтверждения оператора verbatim per ADR 0052
 
-If ALL boxes checked → S38+ ADR pre-registers MAINNET promotion (Bailey 2014 anti-snooping).
-If ANY fail → continue TESTNET OR honest close (S38+ ADR documents rationale).
+Если ВСЕ пункты выполнены → ADR S38+ предварительно регистрирует MAINNET promotion (Bailey 2014 anti-snooping).
+Если ЛЮБОЙ пункт не выполнен → продолжить TESTNET ИЛИ honest close (ADR S38+ документирует обоснование).
 
-## Halt criteria summary (LOCKED per ADR 0055 + ADR 0057)
+## Сводка критериев halt (LOCKED per ADR 0055 + ADR 0057)
 
-| Trigger | Threshold | Source |
-|---------|-----------|--------|
-| Intraday DD | ≥ 20% (24h rolling) | ADR 0055 SD-3 |
-| Multiday DD | ≥ 15% (since activation_ts HWM, signed) | ADR 0055 SD-3 + ADR 0057 SD-4 |
+| Триггер | Порог | Источник |
+|---------|-------|---------|
+| Intraday DD | ≥ 20% (rolling 24ч) | ADR 0055 SD-3 |
+| Multiday DD | ≥ 15% (с HWM activation_ts, подписанного) | ADR 0055 SD-3 + ADR 0057 SD-4 |
 | Consecutive losses | ≥ 5 | ADR 0055 SD-3 |
-| No-trade timeout | ≥ 6 months without n≥30 trades | ADR 0055 SD-3 |
-| Unknown symbol (NEW S37) | symbol NOT in whitelist OR None | ADR 0057 SD-2+SD-3 |
-| activation_ts tamper (NEW S37) | HMAC verification fail | ADR 0057 SD-4 |
+| No-trade timeout | ≥ 6 месяцев без n≥30 трейдов | ADR 0055 SD-3 |
+| Unknown symbol (НОВЫЙ S37) | symbol NOT in whitelist ИЛИ None | ADR 0057 SD-2+SD-3 |
+| activation_ts tamper (НОВЫЙ S37) | ошибка HMAC-верификации | ADR 0057 SD-4 |
 
-## Carry-overs к S38+ (NOT in S37)
+## Переносы к S38+ (не включены в S37)
 
-Per pre-s37-backlog Items deferred:
-- #6 months_since truncation documentation
-- #7 RiskSharedDeps refactor (Demeter)
-- #9 Sharpe semantics extended ADR doc
-- #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended scenarios
+Per pre-s37-backlog items deferred:
+- #6 документация семантики усечения months_since
+- #7 рефакторинг RiskSharedDeps (Demeter)
+- #9 расширенный ADR doc семантики Sharpe
+- #10 расширенные сценарии DD_MULTIDAY/NO_TRADE_TIMEOUT
 
-S38+ operational items:
-- 12mo MAINNET-promotion ADR (per ADR 0055 SD-8)
-- Architecture refactor (Item #7)
+Операционные пункты S38+:
+- ADR 12mo MAINNET-promotion (per ADR 0055 SD-8)
+- Архитектурный рефакторинг (Item #7)
 
-## Related
+## Связанное
 
-- [[../decisions/0055-sprint-36-delta-activation]] — δ activation primary ADR
-- [[../decisions/0057-sprint-37-carry-overs-hardening]] — security hardening + symbol whitelist
-- [[../decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — DSR thresholds + calibration baseline
-- [[halt-gate-wireup]] — HaltGate runtime wire-up
-- [[live-trade-reporter]] — live data adapted reporter
-- [[../sprints/sprint-36-delta-activation]] — S36 ship
-- [[../sprints/sprint-37-carry-overs-hardening]] — S37 ship
-- [[../pre-s37-backlog]] — carry-overs context
+- [[../decisions/0055-sprint-36-delta-activation]] — основной ADR δ activation
+- [[../decisions/0057-sprint-37-carry-overs-hardening]] — security hardening + whitelist символов
+- [[../decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — пороги DSR + calibration baseline
+- [[halt-gate-wireup]] — runtime wire-up HaltGate
+- [[live-trade-reporter]] — репортер адаптированных live-данных
+- [[../sprints/sprint-36-delta-activation]] — ship S36
+- [[../sprints/sprint-37-carry-overs-hardening]] — ship S37
+- [[../pre-s37-backlog]] — контекст carry-overs

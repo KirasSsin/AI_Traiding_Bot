@@ -11,9 +11,9 @@ status: stable
 
 # RuntimeManager
 
-**TL;DR:** Owns process lifecycle: bootstrap → start WS consumer → tick loop (kill→alive→poll→strategy→bracket) → graceful shutdown. Single thread + pybit thread; lock policy on Coordinator/Reconciler protects shared FSM row.
+**TL;DR:** Владеет процессом lifecycle: bootstrap → start WS consumer → tick loop (kill→alive→poll→strategy→bracket) → graceful shutdown. Single thread + pybit thread; lock policy на Coordinator/Reconciler защищает shared FSM row.
 
-## Definition / Purpose
+## Definition / Назначение
 
 Файл: `src/runtime/manager.py`. Class `RuntimeManager` — единая точка входа для live-runtime'а v0.1. До S8a Coordinator/Reconciler/FSM работали только в unit-test fixtures (см. ADR 0022 Context).
 
@@ -37,12 +37,12 @@ class RuntimeManager:
     def shutdown(self, *, reason: str) -> None: ... # graceful drain (idempotent)
 ```
 
-## Lifecycle
+## Lifecycle (жизненный цикл)
 
 ```
 run()
   ├─ unlink stale .kill_switch (if present)
-  ├─ coordinator.bootstrap()        ← sequencing invariant (S7 sub-decision 1)
+  ├─ coordinator.bootstrap()        ← sequencing инвариант (S7 sub-decision 1)
   ├─ ws_consumer.start()
   ├─ try:
   │     _main_loop()                ← while not _stopping: _tick(); sleep(cadence)
@@ -56,7 +56,7 @@ run()
   │     _shutdown(reason=NORMAL_EXIT)
 ```
 
-## Tick pipeline (sequential, single-thread)
+## Tick pipeline (sequentially, single-thread)
 
 ```
 _tick()
@@ -64,12 +64,12 @@ _tick()
   2. _check_alive_inline       → ws.check_alive(max_silence=settings.runtime_ws_check_alive_max_silence)
   3. _poll_bar_and_strategy    → bar = bar_source.poll(); if should_halt: request_halt(HALT_BAR_POLL_STALL)
                                  if bar: signal = strategy.on_bar(bar)
-                                 FSM=FLAT pre-check: skip if state ≠ FLAT (one-open-order invariant)
+                                 FSM=FLAT pre-check: skip if state ≠ FLAT (one-open-order инвариант)
                                  assessment = risk_manager.assess(signal, mark_price=bar.close)
                                  if approved: coord.start_bracket(...)
 ```
 
-## Lock policy reference
+## Lock policy reference (таблица-справка)
 
 Все публичные методы Coordinator (8 шт.) и Reconciler (2 шт.) обёрнуты thread-safe locks (RLock на Coordinator, Lock на Reconciler) — см. ADR 0022 sub-decision 1. Это защищает от race между pybit thread (`on_order_event` / `on_wallet_event`) и main thread (`start_bracket` / `flatten` / `bootstrap`).
 
@@ -78,7 +78,7 @@ _tick()
 | Coordinator | `threading.RLock` (reentrant) | bootstrap, start_bracket, on_order_event, on_ws_reconnect, arm_oco, flatten, request_halt |
 | Reconciler | `threading.Lock` (non-reentrant) | on_wallet_event, reconcile |
 
-## Structlog event vocabulary (v0.1)
+## Structlog event словарь (v0.1)
 
 | Event | Fields |
 |---|---|
@@ -91,16 +91,16 @@ _tick()
 | `runtime.crash` | exc_type, exc_msg |
 | `runtime.shutdown` | reason, in_flight_orders |
 
-## Related
+## Связанное
 
-- [[coordinator]] — central orchestrator: RuntimeManager calls `coordinator.bootstrap()` + `start_bracket()` + `request_halt()` + `flatten()`; lock policy on Coordinator's 8 RLock-protected methods
+- [[coordinator]] — central orchestrator: RuntimeManager calls `coordinator.bootstrap()` + `start_bracket()` + `request_halt()` + `flatten()`; lock policy на Coordinator's 8 RLock-protected methods
 - [[bar-poller]] — REST kline source feeds tick loop
 - [[ws-private-consumer]] — pybit thread side; check_alive called inline from tick
 - [[execution-state-machine]] — KILL_SWITCH_REQUESTED transitions
 - [[reconciler]] — wallet events via on_wallet_event
 - [[../runbooks/halt-recovery]] — HALT_RUNTIME_CRASH / HALT_BAR_POLL_STALL / KILL_SWITCH_REQUESTED post-mortem
 
-## Open questions
+## Открытые вопросы
 
 - WS consumer dedicated health check threshold (separate from bar poller) — S8b/S9.
 - Multi-symbol / multi-bracket — lock granularity re-evaluation.
@@ -114,8 +114,8 @@ Writes the sentinel file (`Settings.runtime_kill_switch_path`, default
 `sentinel.exists()` each tick — atomic write guarantees no half-created
 file is observed (S8b T4 fix).
 
-**См. также:** [[kill-switch-cli]] — full operator-facing CLI semantics + atomic write details + recovery workflow.
+**See also:** [[kill-switch-cli]] — full operator-facing CLI semantics + atomic write details + recovery workflow.
 
-## Sources
+## Источники
 
 - [[../decisions/0022-sprint-8a-live-runtime]] — все 14 sub-decisions

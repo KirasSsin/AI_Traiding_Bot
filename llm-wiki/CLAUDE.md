@@ -165,8 +165,31 @@ Append-only. Парсится через `grep "^## \[" log.md`.
 - Минимальные изменения — не переписывай страницу целиком.
 - YAGNI для страниц — без 2–3 предложений содержательного знания не создавай.
 - Ссылайся, а не дублируй.
-- **Язык:** wiki — русский. File names / tags / type — английский.
 - Источники обязательны.
+
+## Language rules (BINDING per repo CLAUDE.md — пересмотрено 2026-05-09)
+
+**Wiki content → русский язык** (full Russian — headers, body, sections):
+- Все ADR в `wiki/project/decisions/*.md` — RU narrative + EN code blocks/anchors/identifiers
+- Все component pages `wiki/project/components/*.md` — RU
+- Все sprint pages `wiki/project/sprints/*.md` — RU
+- Все architecture pages `wiki/project/architecture/*.md` — RU
+- Trading strategies / indicators / patterns — RU
+- index.md / log.md — RU
+
+**EN-only:**
+- File names (kebab-case latin)
+- Frontmatter `tags` / `type` / `status` values
+- Code blocks (Python / SQL / shell)
+- Function/class names в Public API anchors
+- File paths
+- Library names / API endpoints
+- Error string literals (логированы в src/)
+
+**Workflow:**
+- Новые wiki pages создавай сразу на русском (с момента 2026-05-09)
+- Старые EN/bilingual pages — переводи incremental по мере touch (не bulk migration)
+- При создании ADR — section headings на русском (`## Контекст`, `## Решение`, `## Последствия`)
 
 ## Что LLM НЕ делает
 

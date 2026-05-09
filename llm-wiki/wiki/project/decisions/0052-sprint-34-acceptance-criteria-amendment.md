@@ -13,91 +13,91 @@ sources:
   - project/pre-s33-backlog.md (S34 Direction Consilium section)
 ---
 
-# ADR 0052 — Sprint 34 Acceptance-Criteria Amendment LOCKED
+# ADR 0052 — Sprint 34 Поправка к критериям приёмки LOCKED
 
-## Status
+## Статус
 
-Accepted (2026-04-27) — implemented в S34 (`feature/sprint-34-honest-close-v06-hybrid` → tag `v0.1.0-alpha.34`). **LOCKED для future resumption** (anti-data-snooping per Bailey & López de Prado 2014).
+Принято (2026-04-27) — реализовано в S34 (`feature/sprint-34-honest-close-v06-hybrid` → тег `v0.1.0-alpha.34`). **LOCKED для будущего возобновления** (anti-data-snooping per Bailey & López de Prado 2014).
 
-Hybrid pair с ADR 0051 (6-th honest close v0.6 — A(a) component). This ADR (0052) handles A(b) acceptance-criteria amendment component.
+Гибридная пара с ADR 0051 (6-й честный выход v0.6 — компонент A(a)). Данный ADR (0052) охватывает компонент A(b) — поправку к критериям приёмки.
 
-**No measurement run в S34** — amendment locked для future v0.7+ resumption only. Operator written acknowledgment required перед running new measurement.
+**Измерения в S34 не проводились** — поправка заблокирована только для возобновления v0.7+. Перед проведением нового измерения требуется письменное подтверждение оператора.
 
-## Context
+## Контекст
 
-Per S34 Direction Consilium (3 agents trader-expert + trading-logic-reviewer + quant-stats-reviewer ROUND 1+2 documented в `pre-s33-backlog.md` S34 section):
+Согласно S34 Direction Consilium (3 агента trader-expert + trading-logic-reviewer + quant-stats-reviewer, ROUND 1+2 задокументированы в `pre-s33-backlog.md` раздел S34):
 
-**CONSENSUS A(b) primary:** acceptance-criteria amendment с 10-item mandatory pre-commit list. Operator chose hybrid (merge с A(a) honest close per ADR 0051).
+**КОНСЕНСУС A(b) первичный:** поправка к критериям приёмки с обязательным списком из 10 пунктов перед коммитом. Оператор выбрал гибридный вариант (объединение с A(a) — честным выходом per ADR 0051).
 
-### Statistical justification для amendment
+### Статистическое обоснование поправки
 
-S33 demonstrated structural insights:
+S33 продемонстрировал структурные инсайты:
 
-1. **T5=100 floor от Bailey 2014 generic** — calibrated для traditional academic equity research, не crypto small-sample reality
-2. **Hudson & Urquhart 2021 documented crypto sparse-signal reality** — 30-100 trades typical sample size 4H mean-reversion, не deficient by asset-class standard
-3. **Multi-symbol expansion empirically falsified S33** — correlation deflation rho≈0.75 BTC/ETH/SOL gives n_eff=26 от n_raw=66. Cannot buy way к T5=100 через correlated-asset expansion.
-4. **n_eff (Kish 1965 design effect) NEW threshold mandatory** — raw n insufficient measure для multi-symbol
-5. **MC threshold tighten partial compensation** — relaxing T5 floor offset by tightening MC ≤ 0.05 (from 0.10) preserves overall rigor
+1. **Порог T5=100 взят из универсального Bailey 2014** — откалиброван для традиционных академических исследований акций, не для крипто-реальности малых выборок
+2. **Hudson & Urquhart 2021 задокументировали крипто-реальность разреженных сигналов** — 30-100 сделок — типичный размер выборки для возврата к среднему на 4H, не ниже стандарта класса активов
+3. **Мультисимвольная экспансия эмпирически опровергнута в S33** — корреляционное сдутие rho≈0.75 BTC/ETH/SOL даёт n_eff=26 из n_raw=66. Нельзя достичь T5=100 через расширение за счёт коррелированных активов.
+4. **n_eff (эффект дизайна Kish 1965) — НОВЫЙ обязательный порог** — сырое n недостаточная мера для мультисимвольного режима
+5. **Ужесточение порога MC как частичная компенсация** — ослабление порога T5 компенсируется ужесточением MC ≤ 0.05 (с 0.10), общая строгость сохранена
 
-### Pre-check outcome (S34 T1 per ADR 0051)
+### Результат предварительной проверки (S34 T1 per ADR 0051)
 
-S33 data на amended gates **STILL FAILS 4/5** (T5 raw passes, n_eff/MC/T6/DSR fail). Amendment alone insufficient — confirms 6-th honest close justified. Future resumption requires NEW measurement.
+Данные S33 на поправленных воротах **ПО-ПРЕЖНЕМУ НЕ ПРОХОДЯТ 4/5** (T5 raw проходит, n_eff/MC/T6/DSR — нет). Поправки недостаточно — подтверждает необходимость 6-го честного выхода. Возобновление требует НОВОГО измерения.
 
-## Decision
+## Решение
 
-**Amend acceptance-criteria.md per consilium 10-item pre-commit list.** LOCKED — no further modifications without new ADR + operator written acknowledgment.
+**Изменить acceptance-criteria.md согласно consilium — список 10 обязательных пунктов перед коммитом.** LOCKED — дальнейшие изменения без нового ADR + письменного подтверждения оператора запрещены.
 
-### 10-item Pre-Commit List (LOCKED — verbatim per consilium ROUND 2 trader-expert)
+### 10 обязательных пунктов перед коммитом (LOCKED — дословно per consilium ROUND 2 trader-expert)
 
-1. **T5 floor: 100 → 50** (cite Hudson & Urquhart 2021 crypto sparse-signal reality)
-2. **n_eff threshold: ≥ 50** — n_eff applies Kish 1965 design effect correction; raw n does NOT substitute (S33 lesson)
-3. **MC threshold: ≤ 0.05** (tightened от 0.10 — partial compensation для T5 floor relaxation)
-4. **T6 OOS/IS: ≥ 0.7 UNCHANGED** — independently blocking, not relaxed
-5. **acceptance_gate.sharpe_gate_passed: UNCHANGED** — fold-level gates remain at existing thresholds
-6. **Operator written acknowledgment:** "Statistical evidence as of v0.6 DOES NOT support live deployment; this amendment reflects crypto-specific sample-size reality (Hudson & Urquhart 2021), not evidence of positive edge"
-7. **Strategy params: `MEAN_REVERSION_S17_RELAXED_PARAMS` LOCKED** (no new param search — anti-snooping per Bailey 2014)
-8. **Backtest data period:** must extend through full available OHLCV history beyond S33 measurement date
-9. **Multi-symbol: n_eff correction mandatory** — rho и Kish factor pre-registered в new measurement ADR
-10. **N_trials counter starts ≥ 4** (accumulating prior trials в sigma_SR pooling protocol (a))
+1. **Порог T5: 100 → 50** (ссылка: Hudson & Urquhart 2021 — крипто-реальность разреженных сигналов)
+2. **Порог n_eff: ≥ 50** — n_eff применяет коррекцию эффекта дизайна Kish 1965; сырое n НЕ заменяет (урок S33)
+3. **Порог MC: ≤ 0.05** (ужесточен с 0.10 — частичная компенсация за ослабление порога T5)
+4. **T6 OOS/IS: ≥ 0.7 БЕЗ ИЗМЕНЕНИЙ** — независимо блокирующий, не ослаблен
+5. **acceptance_gate.sharpe_gate_passed: БЕЗ ИЗМЕНЕНИЙ** — пороги на уровне фолдов остаются прежними
+6. **Письменное подтверждение оператора:** «Статистические данные по состоянию на v0.6 НЕ поддерживают live-деплой; данная поправка отражает специфику крипто-рынка (Hudson & Urquhart 2021), не является свидетельством положительного перевеса»
+7. **Параметры стратегии: `MEAN_REVERSION_S17_RELAXED_PARAMS` LOCKED** (поиск новых параметров запрещён — anti-snooping per Bailey 2014)
+8. **Период данных для бэктеста:** должен охватывать всю доступную историю OHLCV за пределами даты измерения S33
+9. **Мультисимвол: коррекция n_eff обязательна** — rho и коэффициент Kish предварительно зарегистрированы в ADR нового измерения
+10. **Счётчик N_trials начинается с ≥ 4** (накопление предыдущих испытаний в протоколе pooling sigma_SR (a))
 
-### Operator written acknowledgment template
+### Шаблон письменного подтверждения оператора
 
-S35+ resumption ADR MUST include verbatim:
+ADR возобновления S35+ ДОЛЖЕН включать дословно:
 
-> **Operator acknowledgment per ADR 0052 (S34 amendment):**
+> **Подтверждение оператора per ADR 0052 (поправка S34):**
 > 
-> Statistical evidence as of v0.6 DOES NOT support live deployment. This amendment reflects crypto-specific sample-size reality (Hudson & Urquhart 2021), not evidence of positive edge. I authorize new measurement sprint с amended acceptance gates (T5 floor 50, n_eff ≥ 50, MC ≤ 0.05, T6 ≥ 0.7 unchanged, DSR ≥ 0.95 unchanged) с full awareness that:
+> Статистические данные по состоянию на v0.6 НЕ поддерживают live-деплой. Данная поправка отражает специфику размера выборки крипто-рынка (Hudson & Urquhart 2021), не является свидетельством положительного перевеса. Я авторизую новый спринт измерения с поправленными воротами приёмки (порог T5 = 50, n_eff ≥ 50, MC ≤ 0.05, T6 ≥ 0.7 без изменений, DSR ≥ 0.95 без изменений) с полным пониманием того, что:
 > 
-> - 6 prior strategy hypotheses tested across 4.81y BTCUSDT + S15+S33 multi-symbol — все FAIL conjoint
-> - Multi-symbol expansion empirically falsified due correlation deflation
-> - Hudson & Urquhart 2021 small-sample reality validated 3 times
-> - Amendment NOT permission for live deployment without new measurement clearing amended gates
+> - 6 предыдущих гипотез стратегий протестированы на 4.81y BTCUSDT + мультисимвол S15+S33 — все FAIL conjoint
+> - Мультисимвольная экспансия эмпирически опровергнута из-за корреляционного сдутия
+> - Реальность малых выборок Hudson & Urquhart 2021 подтверждена 3 раза
+> - Поправка НЕ является разрешением на live-деплой без нового измерения, прошедшего поправленные ворота
 
-### NOT permitted без new ADR
+### Запрещено без нового ADR
 
-- ❌ Lower T5 below 50
-- ❌ Drop n_eff threshold
-- ❌ Loosen MC threshold above 0.05
-- ❌ Lower T6 below 0.7
-- ❌ Lower DSR below 0.95
-- ❌ New strategy params без new ADR с pre-registration
-- ❌ Reuse S17/S22/S33 results as "PASS" под amended spec (anti-snooping — new measurement mandatory)
+- ❌ Снизить T5 ниже 50
+- ❌ Убрать порог n_eff
+- ❌ Ослабить порог MC выше 0.05
+- ❌ Снизить T6 ниже 0.7
+- ❌ Снизить DSR ниже 0.95
+- ❌ Новые параметры стратегии без нового ADR с предварительной регистрацией
+- ❌ Использовать результаты S17/S22/S33 как «PASS» по поправленным критериям (anti-snooping — новое измерение обязательно)
 
-## Engineering Implementation
+## Инженерная реализация
 
-Per S34 T4 (paired commit):
-- `src/backtest/walk_forward.py` `evaluate_acceptance_gate()` extended с optional kwargs:
+Per S34 T4 (парный коммит):
+- `src/backtest/walk_forward.py` `evaluate_acceptance_gate()` расширена опциональными kwargs:
   - `n_trades_raw: int | None`
   - `n_trades_n_eff: int | None`
   - `n_eff_threshold: int | None`
   - `t5_floor: int | None`
-  - `mc_threshold: float = 0.10` (default v0.5 — overridable к 0.05 per S34)
-- Backward-compat: existing callers без new args continue working (defaults к v0.5 behavior)
-- New tests: `tests/unit/test_acceptance_gate_amendment.py` (5 tests verifying amended thresholds)
+  - `mc_threshold: float = 0.10` (по умолчанию v0.5 — можно переопределить на 0.05 per S34)
+- Обратная совместимость: существующие вызывающие без новых аргументов продолжают работать (по умолчанию поведение v0.5)
+- Новые тесты: `tests/unit/test_acceptance_gate_amendment.py` (5 тестов, проверяющих поправленные пороги)
 
-## acceptance-criteria.md Update
+## Обновление acceptance-criteria.md
 
-Add amendment section (paired commit):
+Добавить секцию поправки (парный коммит):
 
 ```markdown
 ## S34 Amendment (LOCKED ADR 0052 — pending operator acknowledgment for v0.7+ resumption)
@@ -112,54 +112,54 @@ Add amendment section (paired commit):
 | acceptance_gate.sharpe_gate_passed | per-fold strict | UNCHANGED |
 ```
 
-## Consequences
+## Последствия
 
-### Positive
+### Положительные
 
-1. **Forward path locked** — operator может resume v0.7+ без brainstorm-init repeat (amendment pre-registered)
-2. **Anti-snooping discipline preserved** — amendment LOCKED ДО measurement, не post-hoc
-3. **Hudson & Urquhart 2021 cited explicitly** — academic justification documented
-4. **n_eff threshold NEW** — closes correlation-deflation loophole (S33 insight)
-5. **MC tightened** — overall rigor preserved despite T5 relaxation
-6. **Operator acknowledgment template** — writes statistical reality в record на resumption time
+1. **Путь вперёд заблокирован** — оператор может возобновить v0.7+ без повторного brainstorm-init (поправка предварительно зарегистрирована)
+2. **Дисциплина anti-snooping сохранена** — поправка LOCKED ДО измерения, не постфактум
+3. **Hudson & Urquhart 2021 явно процитированы** — академическое обоснование задокументировано
+4. **Новый порог n_eff** — закрывает лазейку корреляционного сдутия (инсайт S33)
+5. **MC ужесточён** — общая строгость сохранена несмотря на ослабление T5
+6. **Шаблон подтверждения оператора** — фиксирует статистическую реальность в записи на момент возобновления
 
-### Negative
+### Отрицательные
 
-1. **Amendment может never be used** — operator может choose pause indefinitely (ADR 0051 Option (a))
-2. **Pre-check показал S33 fails amended** — even amended spec не unlock S33 data. Resumption requires new measurement.
-3. **n_trials counter ≥ 4** — future DSR penalty severely raised (Bailey 2014). Future PASS будет statistically harder.
+1. **Поправка может никогда не быть использована** — оператор может выбрать паузу бессрочно (ADR 0051 Вариант (a))
+2. **Предварительная проверка показала: S33 не проходит поправленные критерии** — даже поправленная спецификация не разблокирует данные S33. Возобновление требует нового измерения.
+3. **Счётчик n_trials ≥ 4** — штраф DSR в будущем резко возрастёт (Bailey 2014). Будущий PASS будет статистически сложнее.
 
-### Neutral
+### Нейтральные
 
-1. No code regression — `evaluate_acceptance_gate()` backward-compat
-2. No production behavior change — amendment LOCKED, не active until operator acknowledges + new measurement
-3. Pattern continues precedent: pre-registered ADR ДО measurement (S33 ADR 0050 pre-committed failure branch worked correctly)
+1. Нет регрессий кода — `evaluate_acceptance_gate()` сохраняет обратную совместимость
+2. Нет изменений производственного поведения — поправка LOCKED, не активна до подтверждения оператора + нового измерения
+3. Паттерн продолжает прецедент: предварительно зарегистрированный ADR ДО измерения (ветка предзафиксированного провала S33 ADR 0050 отработала корректно)
 
-## Implementation
+## Реализация
 
-Paired commits per S34 T3 + T4:
-- T3 (this commit): ADR 0052 + acceptance-criteria.md amendment section
-- T4 (next): `src/backtest/walk_forward.py` `evaluate_acceptance_gate()` extended + tests
+Парные коммиты per S34 T3 + T4:
+- T3 (этот коммит): ADR 0052 + секция поправки acceptance-criteria.md
+- T4 (следующий): `src/backtest/walk_forward.py` `evaluate_acceptance_gate()` расширена + тесты
 
-## Follow-ups
+## Дальнейшие шаги
 
-**Operator action когда resuming (S35+):**
-1. Decide direction (per ADR 0051 v0.7+ options)
-2. Если choose (b) new measurement с amended spec:
-   - Write operator acknowledgment template verbatim в S35+ ADR
-   - Extend OHLCV data beyond S33 measurement date
-   - Pre-register multi-symbol rho + Kish factor (если multi-symbol)
-   - Run new measurement sprint с amended gates LOCKED here
-   - n_trials counter starts ≥ 4 (per Item #10)
-3. Если choose other path: новый ADR с pre-registered hypothesis (anti-snooping)
+**Действия оператора при возобновлении (S35+):**
+1. Выбрать направление (per ADR 0051 варианты v0.7+)
+2. Если выбор (b) — новое измерение с поправленной спецификацией:
+   - Включить шаблон подтверждения оператора дословно в ADR S35+
+   - Расширить данные OHLCV за пределы даты измерения S33
+   - Предварительно зарегистрировать мультисимвольные rho + коэффициент Kish (если мультисимвол)
+   - Провести новый спринт измерения с воротами, зафиксированными здесь
+   - Счётчик n_trials начинается с ≥ 4 (per пункт #10)
+3. Если выбран другой путь: новый ADR с предварительно зарегистрированной гипотезой (anti-snooping)
 
-## Related
+## Связанные
 
-- ADR 0014 (WFA acceptance thresholds — ORIGINAL spec amended here)
-- ADR 0050 (S33 Trading Restart — pre-committed failure branch trigger source)
-- ADR 0051 (S34 6-th honest close v0.6 — paired hybrid)
-- ADR 0052 (this — acceptance-criteria amendment LOCKED)
-- pre-s33-backlog.md S34 Direction Consilium section
-- Bailey & López de Prado 2014 (DSR + pre-registration discipline + N_trials penalty)
-- Hudson & Urquhart 2021 (heavy-tail t-stat critique + crypto sparse-signal reality — T5 amendment justification)
-- Kish 1965 (design effect для clustered samples — n_eff threshold)
+- ADR 0014 (пороги приёмки WFA — ОРИГИНАЛЬНАЯ спецификация, изменённая здесь)
+- ADR 0050 (S33 Trading Restart — источник триггера ветки предзафиксированного провала)
+- ADR 0051 (S34 6-й честный выход v0.6 — гибридная пара)
+- ADR 0052 (этот — поправка к критериям приёмки LOCKED)
+- pre-s33-backlog.md раздел S34 Direction Consilium
+- Bailey & López de Prado 2014 (DSR + дисциплина предварительной регистрации + штраф N_trials)
+- Hudson & Urquhart 2021 (критика t-стат тяжёлых хвостов + крипто-реальность разреженных сигналов — обоснование поправки T5)
+- Kish 1965 (эффект дизайна для кластеризованных выборок — порог n_eff)

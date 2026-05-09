@@ -3,16 +3,16 @@ title: Reason Codes JSON Schema — audit log
 type: architecture
 tags: [audit, json-schema, storage, v0.1]
 created: 2026-04-19
-updated: 2026-04-19
+updated: 2026-05-09
 status: stable
 sources: [Docs/MVP + ALL PROJECT/MVP.md §14]
 ---
 
-# Reason Codes JSON Schema
+# JSON Schema reason codes — журнал аудита
 
-**TL;DR:** JSON Schema Draft 2020-12 для audit-record. Append-only JSONL с tamper-evident SHA-256 chain. Secondary SQLite index для O(log n) lookups.
+**TL;DR:** JSON Schema Draft 2020-12 для audit-записи. Append-only JSONL с tamper-evident SHA-256 цепочкой. Вторичный SQLite-индекс для O(log n) поиска.
 
-## Schema (v1.0.0)
+## Схема (v1.0.0)
 
 ```json
 {
@@ -131,28 +131,28 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14]
 }
 ```
 
-## Storage
+## Хранение
 
-- **Primary:** JSONL append-only в `data/audit/audit-YYYY-MM-DD.jsonl.gz` (daily-rotated, gzip).
-- **Chain:** `record_hash = SHA-256(prev_record_hash || canonical_json(record))`. Tamper-evident.
-- **Index:** SQLite `audit_index` table с `(trade_id, timestamp, symbol, reason_code, file_path, file_offset)`.
-- **Cold:** daily gzip в S3/Glacier с ObjectLock WORM (опционально, v0.3+).
+- **Основное:** JSONL append-only в `data/audit/audit-YYYY-MM-DD.jsonl.gz` (ежедневная ротация, gzip).
+- **Цепочка:** `record_hash = SHA-256(prev_record_hash || canonical_json(record))`. Защита от фальсификации.
+- **Индекс:** таблица SQLite `audit_index` с `(trade_id, timestamp, symbol, reason_code, file_path, file_offset)`.
+- **Холодное хранение:** ежедневный gzip в S3/Glacier с ObjectLock WORM (опционально, v0.3+).
 
-## Retention
+## Срок хранения
 
-7 лет (consistent с MiFID II RTS 24 / SEC 17a-4 / CFTC 1.31). ~1 KB × ~500 трейдов/год = ~500 KB/год → хранение бесконечно бесплатно.
+7 лет (соответствует MiFID II RTS 24 / SEC 17a-4 / CFTC 1.31). ~1 KB × ~500 трейдов/год = ~500 KB/год → хранение практически бесплатно.
 
-## Canonical JSON для hash
+## Canonical JSON для хэша
 
-Для reproducible hashing используется **canonical JSON**:
-- Keys отсортированы lexicographically.
-- No whitespace, no trailing newlines.
-- Unicode NFC normalization.
-- Float `0.1` сериализуется одинаково всегда (use decimal or str).
+Для воспроизводимого хэширования используется **canonical JSON**:
+- Ключи отсортированы лексикографически.
+- Без пробелов, без trailing newlines.
+- Unicode NFC-нормализация.
+- Float `0.1` сериализуется всегда одинаково (use decimal or str).
 
 Python: `json.dumps(obj, sort_keys=True, separators=(',', ':'), ensure_ascii=False)`.
 
-## Chain verification
+## Верификация цепочки
 
 ```python
 def verify_chain(jsonl_path):
@@ -171,35 +171,35 @@ def verify_chain(jsonl_path):
             prev_hash = actual_hash
 ```
 
-## Schema evolution
+## Эволюция схемы
 
-- **Additive changes** (new optional field) → bump patch version `1.0.1`.
-- **Required new field** → bump minor version `1.1.0`, provide migration script.
-- **Breaking removal / rename** → bump major version `2.0.0`, dual-write during migration period.
+- **Аддитивные изменения** (новое необязательное поле) → bump patch version `1.0.1`.
+- **Новое обязательное поле** → bump minor version `1.1.0`, предоставить миграционный скрипт.
+- **Разрушающее удаление / переименование** → bump major version `2.0.0`, dual-write в период миграции.
 
-Old records остаются immutable; chain NOT regenerated.
+Старые записи остаются неизменными; цепочка НЕ перегенерируется.
 
-## Sources
+## Источники
 
 - Docs/MVP + ALL PROJECT/MVP.md §14.
 - JSON Schema Draft 2020-12.
-- MiFID II RTS 24, SEC 17a-4, CFTC 1.31 (retention requirements).
+- MiFID II RTS 24, SEC 17a-4, CFTC 1.31 (требования к сроку хранения).
 
-## Reason codes count
+## Счётчик reason codes
 
-**Current total: 50** (45 baseline + 4 HALT_S36_* added S36 T5 per ADR 0055 SD-4 + 1 HALT_UNKNOWN_SYMBOL S37 T2 per ADR 0057 SD-1).
+**Текущий итог: 50** (45 базовых + 4 HALT_S36_* добавлены S36 T5 per ADR 0055 SD-4 + 1 HALT_UNKNOWN_SYMBOL S37 T2 per ADR 0057 SD-1).
 
-| Sprint | Added | Count | Description |
-|--------|-------|-------|-------------|
-| S1-S6 | +39 | 39 | Foundation codes |
+| Спринт | Добавлено | Итог | Описание |
+|--------|-----------|------|----------|
+| S1-S6 | +39 | 39 | Базовые коды |
 | S7 | +3 | 42 | HALT_BOOTSTRAP_AMBIGUOUS + HALT_EXIT_RECONCILE_DIVERGENCE + EXIT_RECONCILE_DETECTED |
 | S8a | +3 | 45 | HALT_RUNTIME_CRASH + HALT_BAR_POLL_STALL + KILL_SWITCH_REQUESTED |
 | S36 T5 | +4 | 49 | HALT_S36_DD_INTRADAY(46) + HALT_S36_DD_MULTIDAY(47) + HALT_S36_CONSECUTIVE_LOSSES(48) + HALT_S36_NO_TRADE_TIMEOUT(49) |
-| S37 T2 | +1 | **50** | HALT_UNKNOWN_SYMBOL(50) — fail-closed symbol whitelist per ADR 0057 SD-1+SD-2 |
+| S37 T2 | +1 | **50** | HALT_UNKNOWN_SYMBOL(50) — fail-closed whitelist символов per ADR 0057 SD-1+SD-2 |
 
-## Related
+## Связанное
 
-- [[../../trading/concepts/reason-codes]] — enum enumeration.
+- [[../../trading/concepts/reason-codes]] — перечисление enum.
 - [[storage]] — SQLite `audit_index`.
-- [[domain-events]] — events that produce audit records.
-- [[../components/halt-gate-wireup]] — S36 wire-up using HALT_S36_* codes.
+- [[domain-events]] — события, генерирующие audit-записи.
+- [[../components/halt-gate-wireup]] — wire-up S36 с использованием кодов HALT_S36_*.

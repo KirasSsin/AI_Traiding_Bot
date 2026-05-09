@@ -13,20 +13,20 @@ sources:
 
 # HaltGate
 
-**TL;DR:** Pre-committed halt criteria evaluator для S35 δ TESTNET live demo. 4 priority-ordered triggers (intraday DD, multi-day DD, consecutive losses, no-trade timeout). Frozen dataclass, pure function — no I/O, no globals.
+**TL;DR:** Pre-committed halt criteria evaluator для S35 δ TESTNET live demo. 4 приоритета-упорядоченных триггера (intraday DD, multi-day DD, consecutive losses, no-trade timeout). Frozen dataclass, pure function — no I/O, no globals.
 
 ## Назначение
 
-Per pre-s35-backlog.md ROUND 3 binding HALT criteria — anti-snooping discipline LOCKED before live activation. Evaluates whether a δ TESTNET session должен halt и trigger S36 honest close.
+Per pre-s35-backlog.md ROUND 3 binding HALT критерии — anti-snooping дисциплина LOCKED перед live activation. Оценивает, должна ли δ TESTNET сессия halt и trigger S36 honest close.
 
-Orthogonal к `CircuitBreakerDetector` (which evaluates session-level price-action drawdown). HaltGate evaluates session-behavioral metrics (loss streaks, signal frequency timeout).
+Ортогонален `CircuitBreakerDetector` (который оценивает session-level price-action drawdown). HaltGate оценивает session-behavioral метрики (loss streaks, signal frequency timeout).
 
 ## Public API
 
-- `HaltGate.__init__(*, dd_intraday_threshold, dd_multiday_threshold, consecutive_losses_threshold, no_trade_months_threshold)` — frozen dataclass, validates все thresholds positive в `__post_init__`
-- `HaltGate.evaluate(*, intraday_dd, multiday_dd, consecutive_losses, months_since_last_trade) -> HaltTrigger | None` — returns first triggered category или None если все pass
+- `HaltGate.__init__(*, dd_intraday_threshold, dd_multiday_threshold, consecutive_losses_threshold, no_trade_months_threshold)` — frozen dataclass, валидирует все thresholds positive в `__post_init__`
+- `HaltGate.evaluate(*, intraday_dd, multiday_dd, consecutive_losses, months_since_last_trade) -> HaltTrigger | None` — возвращает первый триггер или None если все pass
 
-## Settings (через src/platform/config.py)
+## Параметры (через src/platform/config.py)
 
 | Setting | Default | Range | Source |
 |---------|---------|-------|--------|
@@ -37,23 +37,23 @@ Orthogonal к `CircuitBreakerDetector` (which evaluates session-level price-acti
 
 Все 4 в `_HASH_ALLOWLIST` (ADR 0018 H1 — risk-decision fields invalidate CB override on change).
 
-## Triggers (priority order)
+## Триггеры (приоритет)
 
-1. `HaltTrigger.DD_INTRADAY` — most urgent (flash drawdown)
+1. `HaltTrigger.DD_INTRADAY` — самый срочный (flash drawdown)
 2. `HaltTrigger.DD_MULTIDAY` — cumulative loss
 3. `HaltTrigger.CONSECUTIVE_LOSSES` — degenerate-edge signal
 4. `HaltTrigger.NO_TRADE_TIMEOUT` — signal-frequency starvation
 
-Stored как StrEnum values (`S35_DD_INTRADAY` etc.) — written к halt_log.context_json.
+Хранятся как StrEnum values (`S35_DD_INTRADAY` etc.) — написано к halt_log.context_json.
 
-## Invariants
+## Инварианты
 
-- Все thresholds positive (validated в `__post_init__`, raises ValueError)
+- Все thresholds positive (валидирование в `__post_init__`, raises ValueError)
 - First trigger wins (no AND-combination — most urgent fires immediately)
-- Returns `None` если все checks pass
+- Возвращает `None` если все checks pass
 - Pure function — no I/O, no globals, frozen dataclass
 
-## Wiring (S35 T5 status)
+## Wiring (S35 T5 статус)
 
 HaltGate currently UNWIRED к RiskManager. T5 не wires в production execution path — backtest verdict α FAIL conjoint = δ activation deferred к S36+ pending operator decision. When wired:
 - State source: `intraday_dd` от `EquityTracker.intraday_dd_pct()`, `consecutive_losses` от `TradeHistoryRepository.recent_streak()`, `months_since_last_trade` clock-derived от `TradeHistoryRepository.last_trade_ts()`.

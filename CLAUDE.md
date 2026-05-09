@@ -173,11 +173,37 @@ System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' fro
 - NEVER bare `python` / `python3` — fails or returns wrong-Python results.
 - When dispatching subagent that may run Python — explicitly include venv path in brief.
 
-## Minimum behavior (overrides по запросу)
+## Language rules (BINDING — пересмотрено 2026-05-09)
 
-- **Все ответы пользователю → русский язык.** Технические термины, file paths, code blocks, error strings, commit messages — оставлять как есть (без перевода).
-- Code/identifiers/files → **English**.
-- Comments/discussion → **Russian**.
+| Канал | Язык | Rationale |
+|-------|------|-----------|
+| **Чат с operator** (responses, questions, sprint reports) | **Русский** | User-facing |
+| **ADR** в `llm-wiki/wiki/project/decisions/*.md` | **Русский** | User reads directly |
+| **Wiki pages** в `llm-wiki/wiki/` (components, sprints, architecture, strategies) | **Русский** | User-facing knowledge base |
+| **Sprint summaries / brainstorm verdicts / plan files** | **Русский** | User reviews |
+| **Subagent inter-communication** (briefs to agents, agent prompts/responses) | **English** | Productivity boost — agents trained на English; внутренний канал |
+| **Code / identifiers / file paths** | **English** | Tooling convention |
+| **Code comments в `src/`** | **English** | Production standard |
+| **Code comments в `research/`** | **Russian OK** | Research toy paradigm |
+| **Commit messages** | **English** | Conventional Commits standard |
+| **Error messages в коде** | **English** | Logging standard |
+
+Технические термины (file paths, code blocks, error strings, command names, library names) — оставлять как есть (без перевода) внутри русского текста.
+
+## Kit cycle MANDATORY (BINDING per ADR 0041 — пересмотрено 2026-05-09)
+
+ВСЕГДА следовать 9-фазовому kit cycle (PHASE 1-9 per `dev-workflow.md`), КРОМЕ:
+- Operator explicitly says "**autoresearch**" / "**запусти autoresearch**" / "**autoresearch N итераций**"
+- В этом случае — **bypass kit**, follow `research/program.md` autoresearch toy rules
+- После autoresearch завершения — **return к kit cycle** для production integration (если PASS found)
+
+**Anti-patterns:**
+- ❌ Skip kit потому что "очевидно" / "тривиально" / "быстро"
+- ❌ Code на feature/sprint-* branch без plan file (hook `sprint-flow-check.sh` БЛОКИРУЕТ push)
+- ❌ Merge sprint без Phase 5 status="done" (hook `phase-advance.sh` БЛОКИРУЕТ)
+
+## Minimum behavior
+
 - Read before edit. TDD strict (RED→GREEN→COMMIT).
 - YAGNI, DRY, KISS. No "улучшения" сверх scope.
 - Token economy: wiki-first (components/ before raw ADR), mem-search first (`mcp__plugin_claude-mem_mcp-search__smart_search`), parallel reviewers, model dispatch (sonnet default, opus for judgment-heavy, haiku for mechanical).

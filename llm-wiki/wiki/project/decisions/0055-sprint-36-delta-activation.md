@@ -11,50 +11,50 @@ sources:
   - project/pre-s36-backlog.md
 ---
 
-## Status
+## Статус
 
-Accepted (2026-04-27) — implemented в S36 (`feature/sprint-36-delta-activation` → tag `v0.1.0-alpha.36`). Paired ADR 0056 (DSR sigma_SR amendment, same sprint).
+Принято (2026-04-27) — реализовано в S36 (`feature/sprint-36-delta-activation` → тег `v0.1.0-alpha.36`). Парный ADR 0056 (поправка DSR sigma_SR, тот же спринт).
 
-## Context
+## Контекст
 
-Post-S35 ROUND 4 consilium (3 agents — trader-expert + trading-logic-reviewer + quant-stats-reviewer + ROUND 2 trader-expert binding на Q4) CONSENSUS on (b) δ TESTNET activate. α Donchian FAIL conjoint (S35), direction CLOSED. δ infrastructure ready (HaltGate + 5 settings + MAINNET-exclusion DOUBLE-LOCKED) но UNWIRED.
+Consilium ROUND 4 после S35 (3 агента — trader-expert + trading-logic-reviewer + quant-stats-reviewer + ROUND 2 trader-expert binding на Q4) — КОНСЕНСУС на (b) δ TESTNET activate. α Donchian FAIL conjoint (S35), направление ЗАКРЫТО. Инфраструктура δ готова (HaltGate + 5 настроек + MAINNET-exclusion DOUBLE-LOCKED), но НЕ ПОДКЛЮЧЕНА.
 
-7 strategy hypotheses tested cumulative — все FAIL conjoint. S22 best evidence (DSR=0.996, MC p=0.018 post-S33 fix) — supports forward path despite small-n reality.
+7 гипотез стратегий протестированы суммарно — все FAIL conjoint. Лучшее свидетельство S22 (DSR=0.996, MC p=0.018 после правки S33) — поддерживает путь вперёд несмотря на реальность малых выборок.
 
-Pre-s36-backlog.md ROUND 1+2 trail documents 5 questions Q1-Q5 + 7 binding pre-commitments + critical findings (B1 + B2 + B3 + N_trials freeze).
+pre-s36-backlog.md ROUND 1+2 документирует 5 вопросов Q1-Q5 + 7 обязательных предварительных обязательств + критические находки (B1 + B2 + B3 + заморозка N_trials).
 
-## Decision (8 sub-decisions)
+## Решение (8 под-решений)
 
-### SD-1 — Hybrid duration option (H) verbatim per ROUND 2 trader-expert BINDING
+### SD-1 — Гибридный вариант продолжительности (H) дословно per ROUND 2 trader-expert BINDING
 
-> δ TESTNET runs indefinitely until ONE event fires:
-> (a) HaltGate trigger (DD/loss streak/no-trade timeout — ADR 0053 unchanged)
-> (b) PASS gates achieved (n≥50 + ADR 0052/0053 conjoint)
-> (c) 12mo calendar = **MAINNET-promotion gate, NOT shutdown.** Если n<50 на review → "underpowered informational" + TESTNET continues unless operator halts. MAINNET locked.
-> No 6mo interim checkpoint (conflicts с ADR 0053 line 62 6mo no-trade halt).
+> δ TESTNET работает бессрочно до наступления ОДНОГО из событий:
+> (a) Срабатывание HaltGate (просадка/серия убытков/таймаут без сделок — ADR 0053 без изменений)
+> (b) Достижение ворот PASS (n≥50 + ADR 0052/0053 conjoint)
+> (c) 12 месяцев по календарю = **ворота продвижения на MAINNET, НЕ остановка.** Если n<50 на момент проверки → «информационно, недостаточно данных» + TESTNET продолжается если оператор не остановит. MAINNET заблокирован.
+> Промежуточная контрольная точка в 6 месяцев не предусмотрена (конфликт с ADR 0053 строка 62 — таймаут без сделок 6 мес.).
 
-Rationale: ROUND 1 had 3-way split (12mo+6mo / single event / n-gate 36mo). ROUND 2 trader-expert CHANGED → hybrid (H). Critical finding: ADR 0053 line 62 already commits "≥ 6 months без n ≥ 30 closed trades → halt". 6mo interim checkpoint redundant + conflicting authority + snooping vector.
+Обоснование: в ROUND 1 было три позиции (12мес+6мес / одиночное событие / n-ворота 36мес). ROUND 2 trader-expert CHANGED → гибридный (H). Критическая находка: ADR 0053 строка 62 уже обязывает «≥ 6 месяцев без n ≥ 30 закрытых сделок → остановка». Промежуточная точка в 6 мес. избыточна + конфликт полномочий + вектор snooping.
 
-### SD-2 — B1 CRITICAL fix mandate
+### SD-2 — Обязательное исправление критического бага B1
 
-`MEAN_REVERSION_S17_RELAXED_PARAMS` LOCKED params MUST be wired к live path BEFORE day-1 trade. Currently:
-- `MeanReversionRsiBBStrategy.__init__` uses `bb_k=2.0` default (LOCKED dict spec `bb_std_mult=1.5`)
-- `Settings.strategy_rsi_oversold=30/overbought=70` defaults (LOCKED 35/65)
-- `src/__main__.py:124-131` passes Settings defaults, ignores LOCKED constant
+Параметры `MEAN_REVERSION_S17_RELAXED_PARAMS` LOCKED ДОЛЖНЫ быть подключены к live-пути ДО первой сделки дня-1. Текущее состояние:
+- `MeanReversionRsiBBStrategy.__init__` использует дефолт `bb_k=2.0` (в LOCKED dict spec `bb_std_mult=1.5`)
+- `Settings.strategy_rsi_oversold=30/overbought=70` по умолчанию (LOCKED: 35/65)
+- `src/__main__.py:124-131` передаёт дефолты Settings, игнорирует LOCKED константу
 
-Pre-commit #7 from pre-s35-backlog.md silently violated. Must fix в S36 T2.
+Pre-commit #7 из pre-s35-backlog.md нарушен молча. Должен быть исправлен в S36 T2.
 
-Implementation: rename `bb_k` → `bb_std_mult` constructor param, add `and_gate_required` constructor param, add `from_locked_s17_params()` classmethod factory, conditional wire-up в `__main__.py` когда `s35_demo_active=True`.
+Реализация: переименовать `bb_k` → `bb_std_mult` параметр конструктора, добавить `and_gate_required` параметр конструктора, добавить фабрику classmethod `from_locked_s17_params()`, условное подключение в `__main__.py` когда `s35_demo_active=True`.
 
-### SD-3 — Multiday DD definition
+### SD-3 — Определение многодневной просадки
 
-multiday_dd = HWM since `s35_demo_active=True` activation timestamp. Persistence: SQLite `equity_snapshots` table extended OR new `s35_activation_log` row.
+multiday_dd = HWM с момента временной метки активации `s35_demo_active=True`. Персистентность: таблица SQLite `equity_snapshots` расширена OR новая строка `s35_activation_log`.
 
-Activation timestamp persisted на first run with `s35_demo_active=True`. Restart safety: read on subsequent runs from SQLite, не Settings (env vars могут change без code change).
+Временная метка активации сохраняется при первом запуске с `s35_demo_active=True`. Безопасность перезапуска: читать при последующих запусках из SQLite, не из Settings (переменные окружения могут изменяться без изменения кода).
 
-multiday_dd computation: `(hwm_since_activation - current_total) / hwm_since_activation`. Returns 0 если current >= hwm.
+Расчёт multiday_dd: `(hwm_since_activation - current_total) / hwm_since_activation`. Возвращает 0 если current >= hwm.
 
-### SD-4 — HaltTrigger → ReasonCode mapping table
+### SD-4 — Таблица маппинга HaltTrigger → ReasonCode
 
 | HaltTrigger | ReasonCode |
 |-------------|------------|
@@ -63,33 +63,33 @@ multiday_dd computation: `(hwm_since_activation - current_total) / hwm_since_act
 | `CONSECUTIVE_LOSSES` | `HALT_S36_CONSECUTIVE_LOSSES` |
 | `NO_TRADE_TIMEOUT` | `HALT_S36_NO_TRADE_TIMEOUT` |
 
-Distinct codes (NOT reused HALT_DRAWDOWN_L*/HALT_FLASH_CRASH) preserve audit-log attribution per trading-logic-reviewer ROUND 1 verdict. Canonical reason codes count: 45→49.
+Уникальные коды (НЕ переиспользованы HALT_DRAWDOWN_L*/HALT_FLASH_CRASH) сохраняют атрибуцию в audit-log согласно вердикту trading-logic-reviewer ROUND 1. Канонический счётчик reason codes: 45→49.
 
-### SD-5 — HaltGate halt resume protocol
+### SD-5 — Протокол возобновления после остановки HaltGate
 
-HaltGate-triggered halt requires operator review. NO HMAC override path (OverrideStore не applies к HaltGate halts — see trading-logic C5 from ROUND 1).
+Остановка, вызванная HaltGate, требует проверки оператором. Путь переопределения HMAC НЕ применим (OverrideStore не относится к остановкам HaltGate — см. trading-logic C5 из ROUND 1).
 
-Resume mechanism: manual FSM reset через `--reconcile-only` CLI subcommand OR SPRINT_STATE update (operator decision). Operator MUST document review findings в halt_log audit trail entry.
+Механизм возобновления: ручной сброс FSM через подкоманду `--reconcile-only` CLI ИЛИ обновление SPRINT_STATE (решение оператора). Оператор ДОЛЖЕН задокументировать выводы проверки в записи audit trail halt_log.
 
-Rationale: HaltGate triggers are pre-committed gates (DD/streaks/timeout) — automated resume would violate anti-snooping discipline. Operator review = honest acknowledgment.
+Обоснование: триггеры HaltGate — предзафиксированные ворота (просадка/серии/таймаут) — автоматическое возобновление нарушило бы дисциплину anti-snooping. Проверка оператором = честное признание.
 
-### SD-6 — Adapted gates methodology для live data
+### SD-6 — Адаптированная методология ворот для live данных
 
-Per quant-stats-reviewer ROUND 1 verbatim:
+Per quant-stats-reviewer ROUND 1 дословно:
 
-1. **Live Sharpe estimator** — computed on per-TradeRecord returns (NOT bar-level WFA equity). Annualized via `sqrt(bars_per_year / avg_bars_per_trade)`.
-2. **T6 OOS/IS replacement** — live/synthetic calibration ratio = `live_Sharpe / S22_synthetic_Sharpe`. Pre-registered S22 benchmark (constant in code, NOT runtime-mutable).
-3. **MC gating** — sign-flip iff n≥20 trades; block-bootstrap iff n≥40 trades. Below threshold → MC reported as `"MC_INSUFFICIENT_N"` flag.
-4. **DSR thresholds** per ADR 0056:
+1. **Оценщик live Sharpe** — вычисляется по returns per-TradeRecord (НЕ по equity на уровне баров WFA). Аннуализируется через `sqrt(bars_per_year / avg_bars_per_trade)`.
+2. **Замена T6 OOS/IS** — коэффициент калибровки live/синтетический = `live_Sharpe / S22_synthetic_Sharpe`. Базовый показатель S22 предварительно зарегистрирован (константа в коде, НЕ изменяемая в runtime).
+3. **Ворота MC** — sign-flip если n≥20 сделок; block-bootstrap если n≥40 сделок. Ниже порога → MC отображается как флаг `"MC_INSUFFICIENT_N"`.
+4. **Пороги DSR** per ADR 0056:
    - n_trades < 10 → DSR=NaN, status=`INSUFFICIENT_TRADES`
-   - 10 ≤ n_trades < 30 → DSR computed, status=`UNDERPOWERED`
-   - n_trades ≥ 30 → DSR computed, status=`GATE_ELIGIBLE`
+   - 10 ≤ n_trades < 30 → DSR вычислен, status=`UNDERPOWERED`
+   - n_trades ≥ 30 → DSR вычислен, status=`GATE_ELIGIBLE`
 
-### SD-7 — N_trials FREEZE at 7 для δ live demo
+### SD-7 — Заморозка N_trials на уровне 7 для δ live demo
 
-δ uses `MeanReversionRsiBBStrategy` с `MEAN_REVERSION_S17_RELAXED_PARAMS` = same hypothesis as S22 (re-evaluation, not new strategy search). Bailey 2014 multi-testing penalty applies к hypothesis search, NOT к forward evaluation of pre-registered strategy.
+δ использует `MeanReversionRsiBBStrategy` с `MEAN_REVERSION_S17_RELAXED_PARAMS` = та же гипотеза, что и в S22 (повторная оценка, не новый поиск стратегии). Штраф Bailey 2014 за множественное тестирование применяется к поиску гипотез, НЕ к форвардной оценке предварительно зарегистрированной стратегии.
 
-`DELTA_N_TRIALS_LOCKED = 7` constant в `src/analytics/live_trade_reporter.py` с verbatim enumeration comment:
+Константа `DELTA_N_TRIALS_LOCKED = 7` в `src/analytics/live_trade_reporter.py` с дословным комментарием-перечислением:
 
 ```python
 # Cumulative mean-reversion family hypothesis count (ADR 0055 SD-7):
@@ -99,66 +99,66 @@ Per quant-stats-reviewer ROUND 1 verbatim:
 DELTA_N_TRIALS_LOCKED: int = 7
 ```
 
-### SD-8 — MAINNET promotion criteria DEFERRED к S37+
+### SD-8 — Критерии продвижения на MAINNET ОТЛОЖЕНЫ до S37+
 
-Pre-commit MAINNET thresholds сейчас = premature без TESTNET data context. After 12mo TESTNET review (per SD-1 option (c)), operator decides:
+Предзафиксированные пороги MAINNET сейчас преждевременны без контекста данных TESTNET. После 12-месячной проверки TESTNET (per SD-1 вариант (c)) оператор решает:
 
-- (i) S37+ ADR pre-registers MAINNET promotion criteria (n≥X / Sharpe≥Y / etc) verbatim
-- (ii) MAINNET deferred indefinitely (TESTNET continues OR β pause)
+- (i) ADR S37+ предварительно регистрирует критерии продвижения на MAINNET (n≥X / Sharpe≥Y / и т.д.) дословно
+- (ii) MAINNET откладывается бессрочно (TESTNET продолжается ИЛИ пауза β)
 
-MAINNET-exclusion invariant remains DOUBLE-LOCKED (live_trading + testnet flag + validate_assignment) — no MAINNET path until S37+ ADR explicitly opens it.
+Инвариант MAINNET-exclusion остаётся DOUBLE-LOCKED (live_trading + флаг testnet + validate_assignment) — путь к MAINNET закрыт до тех пор, пока ADR S37+ явно его не откроет.
 
-Operator acknowledgment template для S37+ ADR (verbatim per ADR 0052):
+Шаблон подтверждения оператора для ADR S37+ (дословно per ADR 0052):
 
-> "Statistical evidence as of v0.7 [TESTNET data results]; this MAINNET promotion reflects [evidence summary]. I authorize MAINNET activation с pre-committed acceptance gates [criteria]. No fresh hypothesis search."
+> «Статистические данные по состоянию на v0.7 [результаты данных TESTNET]; данное продвижение на MAINNET отражает [сводку свидетельств]. Я авторизую активацию MAINNET с предзафиксированными воротами приёмки [критерии]. Нового поиска гипотез нет.»
 
-## Consequences
+## Последствия
 
-### Positive
-- Forward path locked (anti-snooping) — operator has clear next step
-- B1 critical fix prevents silent S15-noise params под δ activation
-- 4 NEW ReasonCodes preserve audit-log attribution
-- Hybrid duration option (H) honors all 3 reviewer concerns без введения 36mo abandonment risk
-- N_trials freeze correct per Bailey 2014 (no spurious DSR penalty for re-evaluation)
+### Положительные
+- Путь вперёд заблокирован (anti-snooping) — у оператора есть чёткий следующий шаг
+- Исправление критического бага B1 предотвращает молчаливое использование шумовых параметров S15 при активации δ
+- 4 НОВЫХ ReasonCode сохраняют атрибуцию в audit-log
+- Гибридный вариант продолжительности (H) учитывает все 3 замечания ревьюеров без введения риска отказа от 36 месяцев
+- Заморозка N_trials корректна per Bailey 2014 (нет ложного штрафа DSR за повторную оценку)
 
-### Negative
-- 12mo TESTNET review may be statistically inconclusive (n≈13 expected at S22 baseline rate ~13/year). MAINNET-promotion conversation deferred indefinitely possible.
-- HaltGate-triggered halt = manual operator review (no automated resume) — operational overhead
-- N_trials=7 freeze may be challenged in future audits if rigorous reviewer counts re-evaluation as new trial
+### Отрицательные
+- 12-месячная проверка TESTNET может быть статистически неопределённой (ожидается n≈13 при базовом показателе S22 ~13/год). Разговор о продвижении на MAINNET может откладываться бессрочно.
+- Остановка по HaltGate = ручная проверка оператором (нет автоматического возобновления) — операционные издержки
+- Заморозка N_trials=7 может быть оспорена в будущих аудитах, если строгий ревьюер засчитает повторную оценку как новое испытание
 
-### Neutral
-- No code regression — all ADR 0053 commitments preserved
-- canonical FSM counts unchanged (16/30/74) — only reason codes 45→49
+### Нейтральные
+- Нет регрессий кода — все обязательства ADR 0053 сохранены
+- Канонические счётчики FSM без изменений (16/30/74) — только reason codes 45→49
 
-## Implementation
+## Реализация
 
-Per S36 plan (`plans/2026-04-27-sprint-36-delta-activation.md`):
-- T1 (this commit): ADR 0055 + ADR 0056 paired
-- T2: B1 fix + factory + conditional wire-up
-- T3: 4 state-source methods
-- T4: HaltGate wire-up в RuntimeManager._tick
+Per план S36 (`plans/2026-04-27-sprint-36-delta-activation.md`):
+- T1 (этот коммит): ADR 0055 + ADR 0056 парные
+- T2: исправление B1 + фабрика + условное подключение
+- T3: 4 метода источников состояния
+- T4: подключение HaltGate в RuntimeManager._tick
 - T5: ReasonCode +4 HALT_S36_*
-- T6: DSR sigma_SR refactor (ADR 0056 implementation)
+- T6: рефакторинг DSR sigma_SR (реализация ADR 0056)
 - T7: Live trade reporter
-- T8: Wiki sync
+- T8: синхронизация wiki
 
-## Follow-ups
+## Дальнейшие шаги
 
-**Operator action когда δ activates:**
-1. Write `s35_demo_active=True` env var в production .env
-2. Restart bot — first run records activation timestamp в SQLite
-3. Monitor halt_log + SQLite trade_history weekly
-4. At 12mo + n<50: choose continue OR halt OR S37+ ADR for MAINNET discussion
-5. At halt trigger: operator review halt_log, decide manual FSM reset OR honest close S37+
+**Действия оператора при активации δ:**
+1. Записать переменную `s35_demo_active=True` в production .env
+2. Перезапустить бота — первый запуск записывает временную метку активации в SQLite
+3. Еженедельно контролировать halt_log + trade_history в SQLite
+4. При 12 мес. + n<50: выбрать — продолжить ИЛИ остановить ИЛИ ADR S37+ для обсуждения MAINNET
+5. При срабатывании триггера остановки: проверить halt_log оператором, решить — ручной сброс FSM ИЛИ честный выход S37+
 
-## Related
+## Связанные
 
 - ADR 0050 (S33 Trading Restart)
-- ADR 0051 (S34 6-th honest close v0.6)
-- ADR 0052 (S34 acceptance-criteria amendment LOCKED)
-- ADR 0053 (S35 δ TESTNET activation — paired predecessor)
-- ADR 0054 (S35 α Donchian pre-registration — direction CLOSED)
-- ADR 0056 (this — DSR sigma_SR amendment, paired)
+- ADR 0051 (S34 6-й честный выход v0.6)
+- ADR 0052 (S34 поправка к критериям приёмки LOCKED)
+- ADR 0053 (S35 активация δ TESTNET — предшественник парный)
+- ADR 0054 (S35 предварительная регистрация α Donchian — направление ЗАКРЫТО)
+- ADR 0056 (этот — поправка DSR sigma_SR, парный)
 - pre-s36-backlog.md ROUND 4 consilium trail
-- Bailey & López de Prado 2014 (DSR + pre-registration discipline)
-- Hudson & Urquhart 2021 (heavy-tail t-stat critique + crypto sparse-signal reality)
+- Bailey & López de Prado 2014 (DSR + дисциплина предварительной регистрации)
+- Hudson & Urquhart 2021 (критика t-стат тяжёлых хвостов + крипто-реальность разреженных сигналов)
