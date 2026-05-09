@@ -3,9 +3,23 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-05-09
 sprint: 39
-phase: 7-sync-done
+phase: 8-ship
 branch: feature/sprint-39-volume-breakout-tech-debt
 tag: v0.1.0-alpha.38
+---
+
+## S39 PHASE 8 — ready to ship
+
+**Phases 1-7 ALL DONE:**
+- Phase 6 review: 8 reviewers (2 APPROVE / 6 APPROVE_WITH_CONCERNS / 1 REQUEST_CHANGES → fixed B1 commit + R3 C4 RiskManager fix + R2 C2 ADR Sharpe CI correction)
+- ADR-0059 G1-G6 documented gaps section + pre-s40-backlog.md created
+- pytest 915 unit + 41 integration / mypy clean / canonical 16/30/74/53
+- Profit invariant HARD-GATE: VERIFIED PASS
+
+**Next action:** git push + gh pr create + squash-merge + tag v0.1.0-alpha.39
+
+**Post-ship operator action:** Gate 2 forward paper-trade на δ TESTNET (N≥10 BLOCKER к real capital).
+
 ---
 
 ## S39 PHASE 7 COMPLETE — wiki sync done (T14)
