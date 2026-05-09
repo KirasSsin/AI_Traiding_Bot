@@ -2565,3 +2565,18 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Profit invariant:** PASS — production runner реплицирует baseline ±0.5% (8mo held-out +20.42% n=17 / 3.3y +122.66%)
 - **Gate 2 forward paper-trade:** PENDING — оператор активирует на δ TESTNET, N≥10 signals required ДО real capital allocation
 - **N_trials:** 8 cumulative (S13/S15/S17/S20/S22/S33/S35/S39)
+
+## [2026-05-10] sprint-end | S40 — atr_breakout production integration
+
+- **T1:** +3 ReasonCodes (53→56): ENTRY_LONG_ATR_BREAKOUT / EXIT_FLAT_ATR_REVERSE / EXIT_FLAT_ATR_STOP_AB per ADR 0060
+- **T2:** ATRBreakoutStrategy — verbatim порт autoresearch iter1 (Wilder ATR + entry/exit logic + warmup gate 24 bars)
+- **T3:** Production runner `atr_breakout_runner.py` + 8 integration HARD-GATE tests (Phase 5 baseline floor); (BTCUSDT,240)→Binance parquet 8.7y
+- **T4:** Dashboard preset `atr_breakout_iter_endless` — ENFORCED 4H+BTCUSDT; early-return dispatch → atr_breakout_runner
+- **T5:** Wiki — ADR-0060 + sprint-40 page + atr-breakout-strategy component page + reason-codes.md (53→56) + current-state.md canonical counts + S40 sprint history row + index.md updates + log.md
+- **T6:** SPRINT_STATE update (between-sprints, tag v0.1.0-alpha.40)
+- **T7:** git push + PR + merge + tag
+- **Tests:** ~934 → ~952 pytest / mypy --strict 0 / ruff pass
+- **Canonical counts:** 16/30/74/**56** (reason_codes +3 для atr_breakout)
+- **Tag:** v0.1.0-alpha.40
+- **Profit invariant:** 8.7y +819.81% / Sharpe 1.11 / 69 trades / 5/5 sub-periods positive — первый 5/5 в истории проекта
+- **N_trials:** 9 cumulative (S13/S15/S17/S20/S22/S33/S35/S39/S40)
