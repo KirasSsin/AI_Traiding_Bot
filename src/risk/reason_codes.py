@@ -28,6 +28,7 @@ ADR 0022 (Sprint 8a) adds 3 more → True count:
 6 entry + 11 scale/exits + 9 rejects + 19 halts = 45.
 S37 ADR 0057 +1 (HALT_UNKNOWN_SYMBOL) → 50.
 S39 ADR 0059 +3 (ENTRY_LONG_VOLUME_BREAKOUT + EXIT_FLAT_VOLUME_CHANNEL + EXIT_FLAT_ATR_STOP_VB) → 53.
+S40 ADR 0060 +3 (ENTRY_LONG_ATR_BREAKOUT + EXIT_FLAT_ATR_REVERSE + EXIT_FLAT_ATR_STOP_AB) → 56.
 """
 
 from enum import StrEnum
@@ -115,3 +116,8 @@ class ReasonCode(StrEnum):
     EXIT_FLAT_ATR_STOP_VB = (
         "EXIT_FLAT_ATR_STOP_VB"  # 53: ATR stop intrabar (volume_breakout-specific)
     )
+
+    # --- ADR 0060 — Sprint 40 atr_breakout strategy ---
+    ENTRY_LONG_ATR_BREAKOUT = "ENTRY_LONG_ATR_BREAKOUT"  # 54
+    EXIT_FLAT_ATR_REVERSE = "EXIT_FLAT_ATR_REVERSE"  # 55: opposite ATR breakout
+    EXIT_FLAT_ATR_STOP_AB = "EXIT_FLAT_ATR_STOP_AB"  # 56: ATR stop intrabar (atr_breakout-specific)
