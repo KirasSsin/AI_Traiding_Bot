@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import random
 import time
 from collections.abc import Callable
@@ -15,12 +16,24 @@ if TYPE_CHECKING:
     from src.marketdata.filters import BybitFilters
     from src.marketdata.models import Bar
 
+logger = logging.getLogger(__name__)
 
 # S39 T7 H1 — Rate-limit exponential backoff с jitter
 _BACKOFF_BASE_S = 0.5
 _BACKOFF_MAX_RETRIES = 5
 _BACKOFF_JITTER_FACTOR = 0.3
-_RATE_LIMIT_RET_CODE = 10006
+
+# Bybit V5 retryable rate-limit codes (per https://bybit-exchange.github.io/docs/v5/error)
+_RETRYABLE_RATE_LIMIT_CODES: frozenset[int] = frozenset(
+    {
+        10006,  # too many visits (per-key limit)
+        10018,  # IP rate limit
+        20003,  # too frequent same session
+        10429,  # system-level rate limit
+        170005,  # order frequency limit (orders per second)
+        170222,  # order count limit (orders per minute)
+    }
+)
 
 
 def _retry_with_backoff(
@@ -29,11 +42,15 @@ def _retry_with_backoff(
     base: float = _BACKOFF_BASE_S,
     max_retries: int = _BACKOFF_MAX_RETRIES,
 ) -> dict[str, Any]:
-    """Retry pybit call с exponential backoff + jitter on retCode=10006.
+    """Retry pybit call с exponential backoff + jitter on retryable rate-limit codes.
 
-    Per Bybit V5 docs: 10006 = "too many visits" rate limit hit.
-    Backoff: delay = base × 2^attempt + jitter × U(0, base × 0.3).
-    Raises BybitAPIError(RATE_LIMIT_HIT) после max_retries failures.
+    Per Bybit V5 docs: 6 retCodes signal rate limiting. Backoff:
+    delay = base × 2^attempt + jitter × U(0, base × 0.3).
+
+    Network exceptions (ConnectionError, Timeout, etc.) are NOT retried —
+    they propagate к caller для FSM-level handling (avoids double-order risk).
+
+    Non-dict returns are NOT retried — passed through к caller для defensive handling.
 
     Args:
         fn: callable returning pybit response dict {retCode, retMsg, result, ...}
@@ -41,21 +58,35 @@ def _retry_with_backoff(
         max_retries: max attempts (default 5)
 
     Returns:
-        Successful response dict (retCode != 10006).
+        Response dict (retCode NOT в retryable set, OR last response after exhaustion).
 
     Raises:
-        BybitAPIError if max_retries exhausted.
+        BybitAPIError(RATE_LIMIT_HIT) если max_retries exhausted on rate-limit codes.
+        Any exception from fn() propagates unchanged (no retry on network errors).
     """
     for attempt in range(max_retries):
-        result = fn()
-        if not isinstance(result, dict) or result.get("retCode") != _RATE_LIMIT_RET_CODE:
+        result = fn()  # exceptions propagate — no retry on network errors
+        # Defensive: non-dict response = malformed — pass-through, do NOT retry
+        if not isinstance(result, dict):
             return result
+        ret_code = result.get("retCode")
+        if ret_code not in _RETRYABLE_RATE_LIMIT_CODES:
+            return result
+        # Rate limited — backoff + retry
         delay = base * (2**attempt) + random.uniform(0, base * _BACKOFF_JITTER_FACTOR)
+        logger.info(
+            "bybit.rate_limit.retry",
+            extra={
+                "ret_code": ret_code,
+                "attempt": attempt + 1,
+                "max_retries": max_retries,
+                "delay_s": round(delay, 3),
+            },
+        )
         time.sleep(delay)
-    # Max retries exhausted — raise
     raise BybitAPIError(
-        ret_code=_RATE_LIMIT_RET_CODE,
-        ret_msg=f"Rate limit exhausted после {max_retries} retries",
+        ret_code=ret_code if isinstance(ret_code, int) else 10006,
+        ret_msg=f"Rate limit exhausted после {max_retries} retries (last code: {ret_code})",
     )
 
 
