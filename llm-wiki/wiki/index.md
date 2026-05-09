@@ -250,6 +250,12 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 - [[project/decisions/0041-sprint-28-process-enforcement]] — Sprint 28 ADR: Process enforcement (sprint-flow-check hook + Russian process docs). Mechanical enforcement of kit flow via pre-push hook blocking sprint branches без plan file. Russian process docs (sprint-flow-ru + tooling-inventory-ru) = single source of truth для operator. CLAUDE.md "BEFORE ANY SPRINT WORK" binding section. Per-task SPRINT_STATE update protocol. Triggered after operator complaint S27 ship — 12 sprints (S16-S27) drift verified. NO code changes.
 - [[project/decisions/0040-sprint-27-formula-bug-fixes]] — Sprint 27 ADR: Formula bug fixes (5 bugs). Trader+logic-reviewer parallel brainstorm verdict — trader EXPAND (formulas correct, failures structural — T5 unreachable single-symbol), logic-reviewer PARTIAL FAIL 4 bugs. T1 HIGH replay_engine bars_per_year parameterization (corrupted 27/30 experiments) / T2 MEDIUM Sortino canonical Sortino & Price 1994 / T3 MEDIUM RSI/ATR warm-up gating talib convention / T4 INFO/CC5 trade_extractor preserve actual reason_code / T5 LOW MC seed=42 default. Audit infrastructure: `scripts/audit_formulas.py` + `data/formulas_audit_v1.json` + dashboard auto-refresh hook. Sweep re-run post-fix preserved verdict counts (0/30 PASS) but reason codes diverse + ema_crossover SOL 4H pnl improved. ESC-1/2/3 для S28+ pending operator decision. Trader-expert backlog S28-S32 (multi-symbol → regime filter → SL calibration → Donchian → DSR cross-trial). 762 pytest passed (+18 new tests).
 
+## Project — Research Evidence
+
+- [[project/research-evidence/README|Research Evidence index]] — cherry-picked autoresearch audit trail
+- [[project/research-evidence/FINAL_STRATEGY]] — volume_breakout sweep#1644 spec (S39 ADR 0059 evidence)
+- [[project/research-evidence/CLOSE]] — autoresearch iter 1-7 falsification record (9-th honest close)
+
 ## Project — Methodology
 
 - [[project/mental-map]] — Дерево решений "где искать X" — первый источник для открытых запросов LLM-агентов.
