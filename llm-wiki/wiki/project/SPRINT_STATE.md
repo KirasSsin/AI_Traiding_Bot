@@ -3,9 +3,9 @@ title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-05-09
 sprint: 39
-phase: 8-ship
-branch: feature/sprint-39-volume-breakout-tech-debt
-tag: v0.1.0-alpha.38
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.39
 ---
 
 ## S39 PHASE 8 — ready to ship
