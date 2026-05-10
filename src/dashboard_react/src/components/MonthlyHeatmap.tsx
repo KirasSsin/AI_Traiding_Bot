@@ -92,23 +92,16 @@ function formatReturn(value: number): string {
 export function MonthlyHeatmap({ equityCurve }: MonthlyHeatmapProps) {
   const { timestamps, equity_pct } = equityCurve
 
-  // Guard: need at least 2 samples
-  if (timestamps.length < 2 || equity_pct.length < 2) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.title}>▸ MONTHLY RETURNS</div>
-        <div className={styles.placeholder}>Insufficient data for monthly heatmap</div>
-      </div>
-    )
-  }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // PHASE 6 frontend-developer BLOCKER fix: hooks BEFORE any early-return guard.
+  // Previous version called useMemo after guard → Rules of Hooks violation that
+  // would crash if equityCurve switched from ≥2 timestamps to <2 на subsequent render.
   const monthlyData = useMemo(
     () => computeMonthlyData(timestamps, equity_pct),
     [timestamps, equity_pct],
   )
 
-  if (monthlyData.years.length === 0) {
+  // Guard: need at least 2 samples OR computed data must yield at least one year.
+  if (timestamps.length < 2 || equity_pct.length < 2 || monthlyData.years.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.title}>▸ MONTHLY RETURNS</div>

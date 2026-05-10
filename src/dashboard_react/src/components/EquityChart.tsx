@@ -132,8 +132,11 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<uPlot | null>(null)
 
-  const isEmpty =
-    equityCurve.timestamps.length === 0 || equityCurve.equity_pct.length === 0
+  // PHASE 6 frontend-developer HIGH fix: split equityCurve to granular deps so
+  // unrelated parent re-renders (with new response object reference but same data)
+  // don't tear down + rebuild the chart. Match DrawdownSubchart pattern.
+  const { timestamps, equity_pct, trade_markers } = equityCurve
+  const isEmpty = timestamps.length === 0 || equity_pct.length === 0
 
   useEffect(() => {
     if (isEmpty) return
@@ -143,21 +146,17 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
     const width = container.clientWidth || 800
 
     // T11 — detect and build trade marker aligned arrays
-    const markers = equityCurve.trade_markers ?? null
+    const markers = trade_markers ?? null
     const hasMarkers = markers !== null && markers.exit_timestamps.length > 0
 
     let data: uPlot.AlignedData
     if (hasMarkers && markers !== null) {
-      const { wins, losses } = buildMarkerSeries(
-        equityCurve.timestamps,
-        equityCurve.equity_pct,
-        markers,
-      )
+      const { wins, losses } = buildMarkerSeries(timestamps, equity_pct, markers)
       // AlignedData: [timestamps, equity_pct, win_markers, loss_markers]
-      data = [equityCurve.timestamps, equityCurve.equity_pct, wins, losses]
+      data = [timestamps, equity_pct, wins, losses]
     } else {
       // uPlot AlignedData: [xs, ...ys]
-      data = [equityCurve.timestamps, equityCurve.equity_pct]
+      data = [timestamps, equity_pct]
     }
 
     const chart = new uPlot(buildOpts(width, height, hasMarkers, syncKey), data, container)
@@ -181,7 +180,7 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
       chart.destroy()
       chartRef.current = null
     }
-  }, [equityCurve, height, isEmpty, syncKey, onChartReady])
+  }, [timestamps, equity_pct, trade_markers, height, isEmpty, syncKey, onChartReady])
 
   if (isEmpty) {
     return (

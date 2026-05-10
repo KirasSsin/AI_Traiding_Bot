@@ -2,13 +2,22 @@
 // Three modes: full banner (unacknowledged) → chip (after 3 distinct days) → null (never).
 // All user-facing strings in Russian per repo language rules.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWfaFailAck } from '@/hooks/useWfaFailAck'
 import styles from './WfaFailBanner.module.css'
 
 export function WfaFailBanner() {
   const { showFullBanner, showChip, ackedTotal, distinctDays, ack } = useWfaFailAck()
   const [ackJustDone, setAckJustDone] = useState(false)
+
+  // PHASE 6 frontend-developer HIGH fix: setTimeout cleanup на unmount + StrictMode safety.
+  // Previous version called setTimeout inline with no cleanup — risk of "set state on
+  // unmounted component" warning + double-fire under React StrictMode dev double-mount.
+  useEffect(() => {
+    if (!ackJustDone) return undefined
+    const id = setTimeout(() => setAckJustDone(false), 1500)
+    return () => clearTimeout(id)
+  }, [ackJustDone])
 
   // Neither mode active — safety guard (should not happen with current hook semantics)
   if (!showFullBanner && !showChip) return null
@@ -26,8 +35,6 @@ export function WfaFailBanner() {
   const handleAck = () => {
     ack()
     setAckJustDone(true)
-    // Brief "confirmed" state — button disabled, then hook state transitions naturally
-    setTimeout(() => setAckJustDone(false), 1500)
   }
 
   return (
