@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T1 done — preset metadata rename + description + optgroup
+updated: 2026-05-10  # S43 T2 done — /api/strategies + /api/strategy/{id}/info expose description + optgroup
 sprint: 43
 phase: 4-execution
 branch: feature/sprint-43-ui-polish
@@ -16,9 +16,10 @@ branch: feature/sprint-43-ui-polish
 | Task | Status | Commit |
 |------|--------|--------|
 | T1: Rename preset labels + add description + optgroup to STRATEGY_PRESETS | DONE | def07e4 |
-| T2: Frontend optgroup `<select>` grouping | pending | — |
+| T2: Expose description + optgroup via /api/strategies + /api/strategy/{id}/info | DONE | 27d57af |
+| T3: Frontend optgroup `<select>` grouping | pending | — |
 
-**Текущий статус:** T1 done. Следующее действие: T2 — frontend optgroup grouping в dashboard HTML/JS.
+**Текущий статус:** T2 done. Следующее действие: T3 — frontend optgroup grouping в dashboard HTML/JS.
 
 ---
 
