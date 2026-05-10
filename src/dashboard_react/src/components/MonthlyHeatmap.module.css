@@ -1,0 +1,98 @@
+/* MonthlyHeatmap — calendar grid of monthly PnL returns */
+/* Aesthetic: glass-morphism panel, Anthropic orange title, cyberpunk dark cells */
+
+.container {
+  margin-top: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-premium);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Section title — Anthropic orange small caps mono */
+.title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-anthropic-orange);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant: small-caps;
+  margin-bottom: var(--space-3);
+}
+
+/* CSS grid: year-label col (60px) + 12 equal month cols */
+.grid {
+  display: grid;
+  grid-template-columns: 60px repeat(12, 1fr);
+  gap: 2px;
+  overflow-x: auto;
+}
+
+/* Year label column — mono, muted */
+.yearLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  height: 32px;
+  letter-spacing: 0.04em;
+}
+
+/* Month abbreviation header cells */
+.monthHeader {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 2px;
+  opacity: 0.65;
+}
+
+/* Data cells: fixed height, rounded corners, backgroundColor set via inline style */
+.cell {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  padding: 6px 4px;
+  box-sizing: border-box;
+  cursor: default;
+  transition: filter 0.15s ease;
+}
+
+.cell:hover {
+  filter: brightness(1.25);
+}
+
+/* Cell return value text */
+.cellText {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.90);
+}
+
+/* Empty data placeholder */
+.placeholder {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: var(--space-4) 0;
+}

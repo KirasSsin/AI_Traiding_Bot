@@ -3,6 +3,7 @@ import { ConfigureBacktest } from './components/ConfigureBacktest'
 import { VerdictPanel } from './components/VerdictPanel'
 import { EquityChart } from './components/EquityChart'
 import { DrawdownSubchart } from './components/DrawdownSubchart'
+import { MonthlyHeatmap } from './components/MonthlyHeatmap'
 import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
@@ -64,6 +65,7 @@ export function App() {
               <>
                 <EquityChart equityCurve={result.equity_curve} syncKey="equity-dd-sync" />
                 <DrawdownSubchart equityCurve={result.equity_curve} syncKey="equity-dd-sync" />
+                <MonthlyHeatmap equityCurve={result.equity_curve} />
               </>
             )}
           </>
