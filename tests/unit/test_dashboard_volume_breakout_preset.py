@@ -38,11 +38,16 @@ def test_volume_breakout_preset_locked_params_in_indicators() -> None:
 
 
 def test_volume_breakout_preset_label_indicates_locked() -> None:
-    """Label clarifies LOCKED + sprint + sweep ID."""
+    """S43 — label semantic Russian; LOCKED info verified via description field."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
     preset = STRATEGY_PRESETS["volume_breakout_iter10"]
     label = preset["label"]
-    assert "S39" in label
-    assert "LOCKED" in label or "locked" in label
-    assert "BTCUSDT" in label or "BTC" in label
+    # Semantic Russian label (S43 rename)
+    assert "Прорыв" in label
+    assert "объём" in label.lower() or "объем" in label.lower()
+    # LOCKED info now in description (semantic contract preserved)
+    description = preset["description"]
+    assert "LOCKED" in description
+    assert "BTCUSDT" in description or "BTC" in description
+    assert "S39" in description
