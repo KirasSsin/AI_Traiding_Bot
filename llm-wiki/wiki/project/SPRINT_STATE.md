@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T16+T17 done — WfaFailBadge + WfaFailBanner (honest close UI)
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T19+T20 done — FastAPI serves React build + vanilla archived
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T16-T17 done — WfaFailBadge (inline pill badge для WFA_FAIL/WFA_FAIL_DATA verdicts в HistoryTab) + WfaFailBanner (ack-gated NON-dismissible banner, honest close UI piece complete).
+**Текущий статус:** T19+T20 done — FastAPI переведён на FileResponse + StaticFiles dist/ (architect C1+C4). Vanilla static/templates архивированы в src/dashboard_legacy/.
 
-**Следующее действие:** T18: Playwright E2E tests (backtest-flow + wfa-fail-ack)
+**Следующее действие:** T21: CI/CD + start-bot.sh updates (architect C2 binding)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -102,6 +102,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T15: HistoryTab (9-col verdict-colored runs table) + DocumentationTab (indicator/strategy/methodology cards) | DONE | 46bfb63, 23115b6 |
 | T16: WfaFailBadge — inline pill badge WFA_FAIL/WFA_FAIL_DATA/FAIL (red/amber) + HistoryTab wiring | DONE | 18959dd |
 | T17: WfaFailBanner — ack-gated NON-dismissible banner (full/chip modes) + App.tsx mount above tabs | DONE | 48f7665 |
+| T18: Playwright E2E tests (backtest-flow + wfa-fail-ack) | SKIPPED | — |
+| T19: FastAPI FileResponse integration — app.py → FileResponse(dist/index.html) + StaticFiles /assets/ | DONE | 729a135 |
+| T20: Archive vanilla dashboard → src/dashboard_legacy/ (static + templates) | DONE | 3a0eb97 |
 
 ---
 
