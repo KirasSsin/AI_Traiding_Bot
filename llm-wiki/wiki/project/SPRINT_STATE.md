@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T7+T8 done — StrategyDescription + VerdictPanel
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T9 done — EquityChart (uPlot wrapper)
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T7+T8 done — StrategyDescription (collapsible + useStrategyInfo hook) + VerdictPanel (three-valued WFA verdict, Anthropic+cyberpunk palette, warnings panel, wired into App.tsx)
+**Текущий статус:** T9 done — EquityChart (uPlot wrapper, Anthropic orange palette, ResizeObserver, onChartReady forward-compat hook, wired into App.tsx)
 
-**Следующее действие:** T9: EquityChart component (uPlot wrapper)
+**Следующее действие:** T10: DrawdownSubchart (architect CC2 — share x-axis с EquityChart)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -93,6 +93,7 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T6: ConfigureBacktest form — optgroup grouping + supported_combos gating + App.tsx wired | DONE | fa30413 |
 | T7: StrategyDescription component — collapsible block с useStrategyInfo hook + aria-expanded | DONE | 9588f48 |
 | T8: VerdictPanel component — three-valued WFA verdict + warnings panel + App.tsx wired | DONE | f91997d |
+| T9: EquityChart component — uPlot wrapper + Anthropic orange palette + ResizeObserver | DONE | 8b64be9 |
 
 ---
 
