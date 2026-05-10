@@ -1,11 +1,11 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION COMPLETE (22/22 done, T22 wiki sync committed) → transition к PHASE 5-VERIFY
+updated: 2026-05-10  # S46 PHASE 5+6 COMPLETE (verify GREEN + 5 reviewers DONE; BLOCKER+HIGH fixes commit 36d6302; test-engineer test added 51760d4) → PHASE 8-SHIP
 sprint: 46
-phase: 5-verify
+phase: 8-ship
 branch: feature/sprint-46-react-migration
-tag: v0.1.0-alpha.45
+tag: v0.1.0-alpha.46
 ---
 
 ## S46-S48 ROADMAP (operator decision 2026-05-10)
@@ -68,13 +68,18 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 ---
 
-## S46 PHASE 4-EXECUTION ✅ COMPLETE (22/22) → PHASE 5-VERIFY 🟡
+## S46 PHASE 5+6 ✅ COMPLETE → PHASE 8-SHIP 🟡
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** Execution complete (22/22 tasks done). T22 wiki sync committed `24bc36c` — ADR 0066 NEW + ADR 0039 amendment (terminal → Anthropic/cyberpunk + React stack; pre-S46 backlog/plan referenced "ADR 0040 sprint-26-dashboard-frontend-design.md" — that ADR doesn't exist, actual canonical dashboard ADR is 0039) + sprint-46-react-migration.md NEW + index.md/log.md/current-state.md sync (counts 65→66 ADRs / 49→50 sprint pages).
+**Текущий статус:** PHASE 5 verify GREEN (pytest 1004p / mypy 0 issues / lint+tsc+build clean / Playwright 3p+1s). PHASE 6 ALL 5 reviewers complete: python-reviewer APPROVE, doc-reviewer APPROVE, architecture-reviewer APPROVE_WITH_CONDITIONS (C1+C2+C4+CC2+CC3 all MET; SPA catch-all → S47), test-engineer APPROVE_WITH_CONCERNS (trade_markers test added commit `51760d4`), frontend-developer APPROVE_WITH_CONCERNS — 1 BLOCKER + 2 HIGH addressed commit `36d6302`:
+- BLOCKER MonthlyHeatmap.tsx Rules of Hooks violation fixed (useMemo before guards, eslint-disable removed)
+- HIGH WfaFailBanner.tsx setTimeout wrapped в useEffect cleanup
+- HIGH EquityChart.tsx useEffect deps split к granular (timestamps + equity_pct + trade_markers)
 
-**Следующее действие:** PHASE 5: verify (pytest + mypy + Playwright + canonical counts) — `superpowers:verification-before-completion` checklist. После GREEN → PHASE 6 reviewers (frontend-developer + architecture-reviewer C1+C2+C4 verify + python-reviewer + test-engineer + doc-reviewer).
+Total commits: 47. PHASE 5 re-verified post-fixes: lint 0 / tsc 0 / build 235.11 kB / Playwright 3p+1s.
+
+**Следующее действие:** PHASE 8 ship — `superpowers:finishing-a-development-branch` skill → `git push -u origin feature/sprint-46-react-migration` + `gh pr create` + squash-merge after CI green + tag `v0.1.0-alpha.46`.
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
