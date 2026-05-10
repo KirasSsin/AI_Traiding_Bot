@@ -177,3 +177,25 @@ ATR breakout = pre-registered hypothesis #9 проекта.
 - [[../sprints/sprint-40-atr-breakout-production]] — детали реализации S40
 - [[0059-sprint-39-volume-breakout-pre-registration]] — предыдущая pre-registration LOCKED (модель)
 - [[0054-sprint-35-donchian-pre-registration]] — первая pre-registration LOCKED (образец)
+
+## Поправка S45 (2026-05-10): uniform 3.3y baseline
+
+Per S45 operator decision — uniform 3.3y data для всех combos. `BTCUSDT_4h_binance.parquet` (8.7y, origin unknown — downloaded externally до S40, не git-tracked) removed from `PARQUET_BY_COMBO` registry. Archived в `data/_archive/` для audit (восстановим если operator решит вернуть).
+
+**Recomputed BTC 4H baseline на 3.3y window (2023-01-01 → 2026-04-26):**
+
+| Метрика | 8.7y (исходный) | 3.3y (S45 актуальный) | Дельта |
+|---------|-----------------|------------------------|--------|
+| Full-period PnL | +819.81% | **+174.29%** | -645.52pp |
+| Sharpe | 1.11 | **1.94** | +0.83 |
+| n_trades | 69 | **28** | -41 |
+| Sub-period robustness | 5/5 positive | (TBD post-S45 WFA) | — |
+
+LOCKED params (`atr_period=9, atr_breakout_mult=2.5, atr_stop_period=21, atr_stop_mult=1.5`) UNCHANGED. Только data window изменён.
+
+**Anti-snooping note:** params LOCKED pre-S40 на 8.7y autoresearch sweep. 3.3y recomputation не fitting events — это honest disclosure что operator standard window даёт different magnitude. 8.7y baseline preserved в archive для historical reference.
+
+**Implications для S45 WFA recalibration (T6+T7):**
+- 28 trades full-period 3.3y → ~5-6 trades per 500-bar OOS fold (under default ADR 0014)
+- ~10-12 trades per 250-bar fold (under S45 low-freq tier amendment)
+- T5 floor (n≥50) likely STILL fails even с recalibration. Honest expected outcome.
