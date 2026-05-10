@@ -1,10 +1,28 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T10+T11+T12 done — wiki sync complete, phase=8-ship
-sprint: 44
-phase: 8-ship
-branch: feature/sprint-44-wfa-retrofit
+updated: 2026-05-10  # S45 T1 done — uniform 3.3y data, phase=4-execution
+sprint: 45
+phase: 4-execution
+branch: feature/sprint-45-wfa-recalibration
+---
+
+## S45 PHASE 4-EXECUTION — WFA recalibration (uniform 3.3y data)
+
+**Branch:** feature/sprint-45-wfa-recalibration
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: Uniform 3.3y data — PARQUET_BY_COMBO BTC 4H → 3.3y file, archive 8.7y binance | DONE | d2612cc |
+| T2: ADR 0060/0061 amendments — update locked baselines to 3.3y | TODO | — |
+| T3: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
+
+**Текущий статус:** T1 done. BTC 4H PnL: +819.81% (8.7y) → +174.29% (3.3y). Tests GREEN (35 passed). T2 next.
+
+**Следующее действие:** T2 — amend ADR 0060 + ADR 0061 с новыми 3.3y baselines.
+
 ---
 
 ## S44 PHASE 4-EXECUTION — WFA retrofit для research presets (atr_breakout + volume_breakout)
