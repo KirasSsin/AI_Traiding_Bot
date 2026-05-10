@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T14+T15 done — TradesTable + HistoryTab + DocumentationTab
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T16+T17 done — WfaFailBadge + WfaFailBanner (honest close UI)
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T13-T15 done — MetricsTable + TradesTable (RAW/WFA quote-currency stats) + HistoryTab (9-col history table) + DocumentationTab (indicators/multipliers/strategies/methodology cards).
+**Текущий статус:** T16-T17 done — WfaFailBadge (inline pill badge для WFA_FAIL/WFA_FAIL_DATA verdicts в HistoryTab) + WfaFailBanner (ack-gated NON-dismissible banner, honest close UI piece complete).
 
-**Следующее действие:** T16: WfaFailBadge component (per preset card)
+**Следующее действие:** T18: Playwright E2E tests (backtest-flow + wfa-fail-ack)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -100,6 +100,8 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T13: MetricsTable — TIER 1-6 + DSR + MC + per-fold Sharpe subtable (RAW + WFA paths) | DONE | 96b8dac |
 | T14: TradesTable — RAW 5-row + WFA 8-row quote-currency stats (n_winners/pnl/commissions/avg) | DONE | 62ade5b |
 | T15: HistoryTab (9-col verdict-colored runs table) + DocumentationTab (indicator/strategy/methodology cards) | DONE | 46bfb63, 23115b6 |
+| T16: WfaFailBadge — inline pill badge WFA_FAIL/WFA_FAIL_DATA/FAIL (red/amber) + HistoryTab wiring | DONE | 18959dd |
+| T17: WfaFailBanner — ack-gated NON-dismissible banner (full/chip modes) + App.tsx mount above tabs | DONE | 48f7665 |
 
 ---
 
