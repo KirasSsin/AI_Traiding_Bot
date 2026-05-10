@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T6 done — ADR 0014 low-freq tier amendment + tier helper wiring
+updated: 2026-05-10  # S45 T7 done — 11 combos re-run, all WFA_FAIL, ESC-1(a) trigger
 sprint: 45
 phase: 4-execution
 branch: feature/sprint-45-wfa-recalibration
@@ -21,11 +21,43 @@ branch: feature/sprint-45-wfa-recalibration
 | T4: n_trials per-strategy fix (C1) — default=1, atr=10, vb=1 | DONE | 553e040 |
 | T5: B2 train slice documentation (inline + docstring) | DONE | 553e040 |
 | T6: ADR 0014 low-freq tier amendment (4H/D test_bars=250) + tier helper wiring | DONE | cafb6a6 |
-| T7: WFA recalibration run — 10 combos с uniform 3.3y window using new tier params | TODO | — |
+| T7: WFA recalibration run — 11 combos с uniform 3.3y window using new tier params | DONE | — |
+| T8: ADR 0065 — S45 honest verdict + ESC-1 (a) trigger decision | TODO | — |
 
-**Текущий статус:** T6 done. ADR 0014 amendment с trade-frequency derivation table committed BEFORE recalibration (anti-snooping). `get_wfa_tier_params()` helper в research_wfa.py routes 4H/D → low-freq tier (train=1500/test=250/k=5/embargo=20, min_required=2770), 5M/15M/1H → high-freq default. atr_breakout + volume_breakout runners auto-select tier. 4 unit + 2 integration tier tests GREEN, mypy clean.
+**Текущий статус:** T7 done. All 11 combos re-run under recalibrated ADR 0014 low-freq tier params. Result: 10 WFA_FAIL + 1 WFA_FAIL_DATA. 0 WFA_PASS. ESC-1 (a) triggered — honest portfolio close для S46.
 
-**Следующее действие:** T7 — WFA recalibration run — 10 combos с uniform 3.3y window using new tier params. Maximum 1 iteration (this ADR per ESC-1 (a)).
+**Следующее действие:** T8 — ADR 0065 — document S45 honest verdict, ESC-1 (a) honest close, cross_trial_log entries, comparison vs S44 baseline.
+
+### S45 T7 actual verdicts (post-recalibration — input for T8 ADR 0065)
+
+```
+combo                                  verdict        DSR        MC_p     n_oos  failed_criteria
+-------------------------------------------------------------------------------------------------
+atr_breakout_BTCUSDT_15                WFA_FAIL       nan        0.9885   9      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_BTCUSDT_60                WFA_FAIL       0.1274     0.0220   16     n_eff_threshold,t5_floor,sharpe_gate,dsr_threshold
+atr_breakout_BTCUSDT_240               WFA_FAIL       nan        0.6422   7      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_BTCUSDT_D                 WFA_FAIL_DATA  nan        nan      0      data_volume
+atr_breakout_ETHUSDT_15                WFA_FAIL       nan        0.4188   7      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_ETHUSDT_60                WFA_FAIL       0.0000     0.4088   14     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_ETHUSDT_240               WFA_FAIL       nan        1.0000   4      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_SOLUSDT_15                WFA_FAIL       nan        0.9630   7      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_SOLUSDT_60                WFA_FAIL       0.0000     0.5597   15     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_SOLUSDT_240               WFA_FAIL       0.0000     0.0605   10     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+volume_breakout_iter10_BTCUSDT_240     WFA_FAIL       0.8508     0.3298   22     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+```
+
+**Summary:** WFA_PASS=0 / WFA_FAIL=10 / WFA_FAIL_DATA=1 (unchanged vs S44 baseline).
+
+**Delta vs S44 baseline:**
+- BTCUSDT_240: n_oos 10→7 (fewer trades under new tier params), MC_p 0.6687→0.6422 (similar)
+- ETHUSDT_240: n_oos 6→4, MC_p 0.3498→1.0000 (worsened — fewer fold trades)
+- SOLUSDT_240: n_oos 20→10, MC_p 0.0525→0.0605 (similar, worse n_oos)
+- volume_breakout_iter10 BTCUSDT_240: n_oos 38→22, DSR 0.0000→0.8508 (DSR improved but n_eff/t5 still FAIL)
+- All n_eff_threshold + t5_floor + sharpe_gate failures preserved across all 10 combos.
+
+**Cross-trial log (post-S45):** 8 trials (sprint=44 legacy entries from S44 session).
+
+**ESC-1 (a) triggered:** 0/11 PASS. Low-freq tier amendment (ADR 0014) did NOT improve outcomes — n_oos counts dropped further for 4H combos (structural: fewer bars → fewer trades per fold). Honest close for S46 required.
 
 ### S45 T6 trade-frequency derivation (anti-snooping pre-commit, для T8 ADR 0065 reference)
 

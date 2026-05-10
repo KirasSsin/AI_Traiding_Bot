@@ -1,3 +1,44 @@
 {
-  "trials": []
+  "trials": [
+    {
+      "sprint": 44,
+      "symbol": "BTCUSDT_9_3.0",
+      "oos_sharpe": -14.41253726868822
+    },
+    {
+      "sprint": 44,
+      "symbol": "BTCUSDT_9_2.5",
+      "oos_sharpe": 0.36895730022406126
+    },
+    {
+      "sprint": 44,
+      "symbol": "ETHUSDT_9_3.0",
+      "oos_sharpe": -89.49208472607177
+    },
+    {
+      "sprint": 44,
+      "symbol": "ETHUSDT_14_2.5",
+      "oos_sharpe": -36.665608229806125
+    },
+    {
+      "sprint": 44,
+      "symbol": "SOLUSDT_21_2.5",
+      "oos_sharpe": 0.27227602230064835
+    },
+    {
+      "sprint": 44,
+      "symbol": "SOLUSDT_9_2.0",
+      "oos_sharpe": -42.36435927412671
+    },
+    {
+      "sprint": 44,
+      "symbol": "SOLUSDT_21_1.5",
+      "oos_sharpe": -46.75712938031192
+    },
+    {
+      "sprint": 44,
+      "symbol": "BTCUSDT_9_?",
+      "oos_sharpe": -0.27553551433587015
+    }
+  ]
 }
