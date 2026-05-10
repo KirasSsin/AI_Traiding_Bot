@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/api/client'
 import type { RunSummary, Verdict } from '@/api/types'
+import { WfaFailBadge } from './WfaFailBadge'
 import styles from './HistoryTab.module.css'
 
 // ─── helpers ─────────────────────────────────────────────────────────────
@@ -60,7 +61,10 @@ function HistoryRow({ run }: { run: RunSummary }) {
       <td>{symbol}</td>
       <td>{tf}</td>
       <td className={styles.rangeCell}>{range}</td>
-      <td className={verdictCellClass(run.verdict)}>{run.verdict || '—'}</td>
+      <td className={verdictCellClass(run.verdict)}>
+        {run.verdict || '—'}{' '}
+        <WfaFailBadge verdict={run.verdict} size="sm" />
+      </td>
       <td>{sharpeCell}</td>
       <td>{nTradesVal != null ? nTradesVal : '—'}</td>
       <td>{pnlCell}</td>
