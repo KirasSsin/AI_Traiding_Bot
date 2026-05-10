@@ -12,7 +12,7 @@ sources: [data/autoresearch_endless/best_per_combo.json]
 
 **Статус:** принято  
 **Дата:** 2026-05-10  
-**Ссылки:** [[0060-sprint-40-atr-breakout-locked-params]] (ADR-0060 — исходный BTCUSDT 4H)
+**Ссылки:** [[0060-sprint-40-atr-breakout-pre-registration]] (ADR-0060 — исходный BTCUSDT 4H)
 
 ## Контекст
 
@@ -104,9 +104,9 @@ ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO = {
 
 ## Связанные ADR
 
-- [[0060-sprint-40-atr-breakout-locked-params]] — первичные locked params BTCUSDT 4H
-- [[0014-walk-forward-analysis]] — WFA methodology (не применяется к atr_breakout runner)
-- [[0039-dashboard-backtest-runner]] — dashboard architecture
+- [[0060-sprint-40-atr-breakout-pre-registration]] — первичные locked params BTCUSDT 4H
+- [[0014-walk-forward-train2000-test500]] — WFA methodology (не применяется к atr_breakout runner)
+- [[0039-sprint-25-dashboard]] — dashboard architecture
 
 ## Тесты
 
