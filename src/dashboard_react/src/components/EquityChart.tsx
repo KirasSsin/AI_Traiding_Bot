@@ -1,10 +1,11 @@
 // S46 T9 — EquityChart: uPlot wrapper с Anthropic orange palette + ResizeObserver
 // T10: syncKey prop для uPlot cursor sync с DrawdownSubchart
+// T11: trade markers overlay — scatter series (wins green, losses red)
 
 import { useEffect, useRef } from 'react'
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
-import type { EquityCurve } from '@/api/types'
+import type { EquityCurve, TradeMarkers } from '@/api/types'
 import styles from './EquityChart.module.css'
 
 export interface EquityChartProps {
@@ -16,12 +17,44 @@ export interface EquityChartProps {
   onChartReady?: (chart: uPlot) => void
 }
 
-// Build uPlot series array — not hard-coded count so T11 can extend
-function buildSeries(): uPlot.Series[] {
-  return [
+/**
+ * T11 — Build aligned win/loss marker arrays sized to timestamps.
+ * Each marker's x = exit_timestamp, y = equity_pct at that index.
+ * O(N+M) via Map lookup: M = trades, N = equity bars.
+ */
+function buildMarkerSeries(
+  timestamps: number[],
+  equityPct: number[],
+  markers: TradeMarkers,
+): { wins: (number | null)[]; losses: (number | null)[] } {
+  // Map exit timestamp → pnl_pct for O(1) lookup
+  const exitToPnl = new Map<number, number>()
+  markers.exit_timestamps.forEach((ts, i) => {
+    exitToPnl.set(ts, markers.pnl_pcts[i] ?? 0)
+  })
+
+  const wins = new Array<number | null>(timestamps.length).fill(null)
+  const losses = new Array<number | null>(timestamps.length).fill(null)
+
+  timestamps.forEach((ts, i) => {
+    const pnl = exitToPnl.get(ts)
+    if (pnl === undefined) return
+    const y = equityPct[i] ?? null
+    if (pnl > 0) {
+      wins[i] = y
+    } else {
+      losses[i] = y
+    }
+  })
+
+  return { wins, losses }
+}
+
+// Build uPlot series array — extends с trade-marker scatter series when markers present
+function buildSeries(hasMarkers: boolean): uPlot.Series[] {
+  const base: uPlot.Series[] = [
     // x-axis series (required placeholder by uPlot)
     {},
-    // T11: extend with trade-marker series here
     {
       label: 'Equity %',
       stroke: '#cc785c',                     // Anthropic orange
@@ -30,9 +63,33 @@ function buildSeries(): uPlot.Series[] {
       points: { show: false },
     },
   ]
+
+  if (!hasMarkers) return base
+
+  // T11 — scatter series for trade exit markers (no line, only points)
+  return [
+    ...base,
+    {
+      label: 'Win exit',
+      stroke: '#00ff88',
+      fill: '#00ff88',
+      width: 0,
+      // paths: null disables line rendering — scatter pattern per uPlot docs
+      paths: (() => null) as unknown as uPlot.Series.PathBuilder,
+      points: { show: true, size: 6, fill: '#00ff88', stroke: '#00ff88' },
+    },
+    {
+      label: 'Loss exit',
+      stroke: '#ff3366',
+      fill: '#ff3366',
+      width: 0,
+      paths: (() => null) as unknown as uPlot.Series.PathBuilder,
+      points: { show: true, size: 6, fill: '#ff3366', stroke: '#ff3366' },
+    },
+  ]
 }
 
-function buildOpts(width: number, height: number, syncKey?: string): uPlot.Options {
+function buildOpts(width: number, height: number, hasMarkers: boolean, syncKey?: string): uPlot.Options {
   const axisFont = "11px 'JetBrains Mono', monospace"
 
   return {
@@ -46,7 +103,7 @@ function buildOpts(width: number, height: number, syncKey?: string): uPlot.Optio
         : {}),
     },
     legend: { show: false },
-    series: buildSeries(),
+    series: buildSeries(hasMarkers),
     axes: [
       // x-axis (time)
       {
@@ -85,13 +142,25 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
 
     const width = container.clientWidth || 800
 
-    // uPlot AlignedData: [xs, ...ys]
-    const data: uPlot.AlignedData = [
-      equityCurve.timestamps,
-      equityCurve.equity_pct,
-    ]
+    // T11 — detect and build trade marker aligned arrays
+    const markers = equityCurve.trade_markers ?? null
+    const hasMarkers = markers !== null && markers.exit_timestamps.length > 0
 
-    const chart = new uPlot(buildOpts(width, height, syncKey), data, container)
+    let data: uPlot.AlignedData
+    if (hasMarkers && markers !== null) {
+      const { wins, losses } = buildMarkerSeries(
+        equityCurve.timestamps,
+        equityCurve.equity_pct,
+        markers,
+      )
+      // AlignedData: [timestamps, equity_pct, win_markers, loss_markers]
+      data = [equityCurve.timestamps, equityCurve.equity_pct, wins, losses]
+    } else {
+      // uPlot AlignedData: [xs, ...ys]
+      data = [equityCurve.timestamps, equityCurve.equity_pct]
+    }
+
+    const chart = new uPlot(buildOpts(width, height, hasMarkers, syncKey), data, container)
     chartRef.current = chart
 
     onChartReady?.(chart)

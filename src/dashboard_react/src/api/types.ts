@@ -44,9 +44,19 @@ export interface Warning {
   message: string
 }
 
+// T11 — per-trade entry/exit markers для EquityChart scatter overlay
+export interface TradeMarkers {
+  entry_timestamps: number[]
+  exit_timestamps: number[]
+  entry_prices: number[]
+  exit_prices: number[]
+  pnl_pcts: number[]
+}
+
 export interface EquityCurve {
   timestamps: number[]
   equity_pct: number[]
+  trade_markers?: TradeMarkers | null  // T11 — absent/null when no trades
 }
 
 export interface WfaParams {
