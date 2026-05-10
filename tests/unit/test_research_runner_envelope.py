@@ -187,7 +187,10 @@ def test_envelope_equity_curve_empty_when_no_trades() -> None:
         equity_timestamps=[],
         runner_label="x",
     )
-    assert payload["equity_curve"] == {"timestamps": [], "equity_pct": []}
+    ec = payload["equity_curve"]
+    assert ec["timestamps"] == []
+    assert ec["equity_pct"] == []
+    assert ec["trade_markers"] is None  # T11 — no markers when no trades
 
 
 def test_envelope_equity_timestamps_optional_keyword() -> None:
