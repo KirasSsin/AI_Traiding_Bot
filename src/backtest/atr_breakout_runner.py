@@ -423,3 +423,54 @@ def run_atr_breakout_backtest(
         start=start_date.isoformat(),
         end=end_date.isoformat(),
     )
+
+
+def _run_atr_breakout_wfa(
+    *,
+    symbol: str,
+    interval: str,
+    start_date: date,
+    end_date: date,
+    train_bars: int = 2000,
+    test_bars: int = 500,
+    k_folds: int = 5,
+    embargo_bars: int = 20,
+) -> dict[str, Any]:
+    """S44 T2 — WFA для atr_breakout с per-combo LOCKED params.
+
+    Pattern: donchian_runner._run_donchian_wfa adapted к research kernel
+    (_backtest_single signature). PnL accounting sequential-additive preserved
+    (per ADR 0064 + S42 trader-expert verdict — replay_engine architecturally
+    blocked per docstring lines 5-12).
+    """
+    from src.backtest.research_wfa import run_research_wfa
+
+    locked = ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO.get((symbol, interval))
+    if locked is None:
+        raise ValueError(
+            f"No LOCKED params for ({symbol}, {interval}). "
+            f"Supported combos: {sorted(ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO.keys())}"
+        )
+    params: dict[str, Any] = {
+        "atr_period": int(locked["atr_period"]),
+        "atr_breakout_mult": float(locked["atr_breakout_mult"]),
+        "atr_stop_period": int(locked["atr_stop_period"]),
+        "atr_stop_mult": float(locked["atr_stop_mult"]),
+    }
+    bars_per_year = _BARS_PER_YEAR_BY_INTERVAL.get(interval, 2190)
+    df = _load_parquet_df(symbol, interval, start_date, end_date)
+    if df.empty:
+        raise ValueError(f"No OHLCV для {symbol} {interval} в [{start_date}, {end_date}]")
+
+    return run_research_wfa(
+        df=df,
+        params=params,
+        backtest_fn=_backtest_single,  # research kernel
+        bars_per_year=bars_per_year,
+        symbol=symbol,
+        train_bars=train_bars,
+        test_bars=test_bars,
+        k_folds=k_folds,
+        embargo_bars=embargo_bars,
+        sprint_tag="S44",
+    )
