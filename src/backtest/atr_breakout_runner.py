@@ -387,4 +387,32 @@ def run_atr_breakout_backtest(
     if df.empty:
         raise ValueError(f"No OHLCV data for {symbol} {interval} in {start_date}..{end_date}")
 
-    return _backtest_single(df, resolved_params, bars_per_year)
+    # Run inner backtest — minimal dict
+    inner = _backtest_single(df, resolved_params, bars_per_year)
+
+    # Build equity_curve from trades list for sub-period robustness chip
+    trades_list = inner.get("trades", [])
+    equity_curve: list[float] = [0.0]
+    for tr in trades_list:
+        equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
+
+    # Wrap in dashboard contract envelope
+    from src.backtest.research_runner_envelope import build_research_runner_envelope
+
+    sharpe_raw = float(inner["sharpe"])
+    return build_research_runner_envelope(
+        runner_name="atr_breakout_runner",
+        symbol=symbol,
+        interval=interval,
+        n_trades=int(inner["n_trades"]),
+        sharpe=sharpe_raw if sharpe_raw == sharpe_raw else 0.0,  # NaN guard
+        win_rate=float(inner["win_rate"])
+        if float(inner["win_rate"]) == float(inner["win_rate"])
+        else 0.0,
+        total_pnl_pct=float(inner["total_pnl_pct"]),
+        bars_per_year=bars_per_year,
+        equity_curve=equity_curve,
+        runner_label=f"ATR breakout {interval} {symbol} (LOCKED)",
+        start=start_date.isoformat(),
+        end=end_date.isoformat(),
+    )

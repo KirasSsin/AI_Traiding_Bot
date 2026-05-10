@@ -1,11 +1,56 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10
-sprint: 41
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.41
+updated: 2026-05-10  # T9+T10 done — wiki sync complete
+sprint: 42
+phase: 7-sync
+branch: feature/sprint-42-atr-breakout-hardening
+tag: v0.1.0-alpha.42
+---
+
+## S42 PHASE 7-SYNC — ATR breakout hardening (dashboard contract envelope)
+
+**Phase:** 7-sync  
+**Branch:** feature/sprint-42-atr-breakout-hardening  
+**in_progress:** PHASE 6 reviewers next, then PHASE 8 ship
+
+**T7 status:** verified-no-change — `.warn-high/.warn-mid/.warn-info` CSS classes уже exist в `dashboard.css` lines 466-471. Envelope chips render автоматически через existing warnings-panel JS loop. No code edits required.
+
+**T8 status:** done — full pytest sweep:
+- Unit: 946 passed (+41 vs pre-S42 baseline 905)
+- Integration: 52 passed (+19 vs pre-S42 baseline 33)
+- mypy --strict src/: 0 errors на 84 source files (+5 modified/new)
+- Stale preset_id refs in tests/integration/test_atr_breakout_dashboard_contract.py — correct usage (verifies removal в `test_old_atr_breakout_preset_ids_removed`).
+
+**Completed tasks:**
+- T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
+  - 5/6 tests pass. 1 test (`test_envelope_subperiod_robustness_3_of_5_emits_warn_chip`) has data inconsistency:
+    equity_curve `[0,50,30,60,50,45]` gives 2/5 positives (not 3/5) under delta-from-previous algorithm.
+    Needs operator decision: fix test curve OR adjust algorithm.
+- T2: `src/backtest/atr_breakout_runner.py` wired to envelope + `tests/integration/test_atr_breakout_dashboard_contract.py` — DONE (commit 383e67b)
+  - 5/5 new contract tests PASS. 8/8 baseline floor tests PASS (PnL unchanged). mypy 0 errors.
+- T3: `src/backtest/volume_breakout_runner.py` wired to envelope + `tests/integration/test_volume_breakout_dashboard_contract.py` — DONE (commit 0ade871)
+  - 4/4 new contract tests PASS. 29/29 total volume_breakout tests PASS. mypy 0 errors.
+- T4: `src/dashboard/backtest_runner.py` — 10 atr_breakout_* presets → 1 unified `atr_breakout` preset — DONE (commit 5046d10)
+  - STRATEGY_PRESETS: 10 old preset_ids removed; unified `atr_breakout` с `supported_combos` (10 combos) registered.
+  - Dispatch atr_breakout: envelope merge (17-key base dict) not 4-key cherry-pick.
+  - Dispatch volume_breakout: same envelope merge fix.
+  - 23/23 new contract tests PASS. 24/24 baseline/multi-combo/unit tests PASS. mypy 0 errors.
+- T5: `src/dashboard/app.py` — `GET /api/strategy/{id}/info` endpoint + `supported_combos` enforcement в `POST /api/backtest` — DONE (commit efd4201)
+  - 6/6 new tests PASS. 16/16 existing dashboard tests PASS (no regressions). mypy 0 errors.
+  - Invalid combos (e.g. BTCUSDT/5m) rejected 422. Valid combos (BTCUSDT/240) pass gate.
+  - Legacy presets without `supported_combos` return empty list — backward-compatible.
+- T6: `src/dashboard/static/dashboard.js` + `dashboard.css` — JS defensive guards + applyComboGates — DONE (commit 9be78fe)
+  - API constant `strategyInfo` added. `applyComboGates()` greys out invalid sym/TF combos for atr_breakout.
+  - Defensive `??` / `?.` guards in `renderResult` — prevents crash on missing `r.request`, `r.bars_per_year`, `r.failed_criteria`.
+  - `.verdict-raw` CSS class added (amber #f0a000 for RAW verdict).
+  - Smoke test: `/api/strategy/atr_breakout/info` returns 10 `supported_combos`. Backtest returns `verdict: RAW` with all envelope keys present.
+
+**T9 status:** done — ADR 0062 created, 0060+0061 marked superseded.
+**T10 status:** done — sprint-42 page + current-state.md + index.md + log.md + atr-breakout-strategy component updated.
+
+**Next action:** PHASE 6 — domain reviewer dispatch (trading-logic / quant-stats / doc-reviewer), then PHASE 8 ship (tag v0.1.0-alpha.42 + PR merge).
+
 ---
 
 ## S41 COMPLETE ✅ — ATR breakout multi-combo dashboard presets

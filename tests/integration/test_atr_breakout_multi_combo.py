@@ -1,8 +1,7 @@
-"""Phase 5 HARD-GATE — atr_breakout multi-combo baselines (S41 ADR 0061).
+"""Phase 5 HARD-GATE — atr_breakout multi-combo baselines (S42 T4 — unified preset per ADR 0062).
 
-Verifies that all 9 new (symbol, interval) combos from autoresearch endless
-produce the expected PnL within ±2% tolerance (wider than S40 ±0.5% since
-these are not the primary BTCUSDT 4H baseline).
+Verifies that all 10 (symbol, interval) combos via unified 'atr_breakout' preset
+produce the expected PnL within ±2% tolerance.
 
 Source: data/autoresearch_endless/best_per_combo.json
 """
@@ -14,7 +13,7 @@ from datetime import date
 import pytest
 
 # ---------------------------------------------------------------------------
-# Multi-combo baselines (LOCKED per ADR 0061 — autoresearch endless best_per_combo)
+# Multi-combo baselines (LOCKED per ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO — server-side lookup)
 # Full period for Bybit data: 2023-01-01 → 2026-04-26 (3.3y)
 # ---------------------------------------------------------------------------
 BYBIT_START = date(2023, 1, 1)
@@ -23,63 +22,46 @@ BYBIT_END = date(2026, 4, 26)
 # Tolerance wider than S40 (±2%) since these are new combos not yet production-verified
 REPLICATION_TOLERANCE_PCT = 2.0
 
-# (preset_id, symbol, interval, expected_pnl_pct, expected_n_trades)
+# (symbol, interval, expected_pnl_pct, expected_n_trades)
 MULTI_COMBO_BASELINES = [
-    ("atr_breakout_sol_4h_s41", "SOLUSDT", "240", 264.29, 71),
-    ("atr_breakout_eth_1h_s41", "ETHUSDT", "60", 181.74, 109),
-    ("atr_breakout_btc_15m_s41", "BTCUSDT", "15", 107.35, 245),
-    ("atr_breakout_btc_1h_s41", "BTCUSDT", "60", 146.36, 106),
-    ("atr_breakout_sol_1h_s41", "SOLUSDT", "60", 214.08, 124),
-    ("atr_breakout_eth_4h_s41", "ETHUSDT", "240", 152.30, 28),
-    ("atr_breakout_sol_15m_s41", "SOLUSDT", "15", 150.51, 230),
-    ("atr_breakout_btc_1d_s41", "BTCUSDT", "D", 167.54, 32),
-    ("atr_breakout_eth_15m_s41", "ETHUSDT", "15", 35.53, 240),
+    ("SOLUSDT", "240", 264.29, 71),
+    ("ETHUSDT", "60", 181.74, 109),
+    ("BTCUSDT", "15", 107.35, 245),
+    ("BTCUSDT", "60", 146.36, 106),
+    ("SOLUSDT", "60", 214.08, 124),
+    ("ETHUSDT", "240", 152.30, 28),
+    ("SOLUSDT", "15", 150.51, 230),
+    ("BTCUSDT", "D", 167.54, 32),
+    ("ETHUSDT", "15", 35.53, 240),
 ]
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    "preset_id,symbol,interval,expected_pnl,expected_n",
-    MULTI_COMBO_BASELINES,
-)
-def test_multi_combo_preset_registered(
-    preset_id: str,
-    symbol: str,
-    interval: str,
-    expected_pnl: float,  # noqa: ARG001
-    expected_n: int,  # noqa: ARG001
-) -> None:
-    """Each S41 preset MUST be registered in STRATEGY_PRESETS."""
+def test_unified_atr_breakout_preset_registered() -> None:
+    """Unified 'atr_breakout' preset MUST be in STRATEGY_PRESETS with 10 supported_combos."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
-    assert preset_id in STRATEGY_PRESETS, (
-        f"{preset_id} not in STRATEGY_PRESETS. " f"S41 preset registration incomplete."
-    )
-    preset = STRATEGY_PRESETS[preset_id]
     assert (
-        preset.get("locked_symbol") == symbol
-    ), f"{preset_id}: locked_symbol={preset.get('locked_symbol')} != {symbol}"
-    assert (
-        preset.get("locked_interval") == interval
-    ), f"{preset_id}: locked_interval={preset.get('locked_interval')} != {interval}"
-    assert (
-        preset.get("type") == "atr_breakout"
-    ), f"{preset_id}: type={preset.get('type')} != atr_breakout"
+        "atr_breakout" in STRATEGY_PRESETS
+    ), "atr_breakout not in STRATEGY_PRESETS. S42 T4 consolidation incomplete."
+    preset = STRATEGY_PRESETS["atr_breakout"]
+    assert preset.get("type") == "atr_breakout"
+    sc = preset.get("supported_combos", [])
+    assert len(sc) == 10, f"Expected 10 supported_combos, got {len(sc)}"
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "preset_id,symbol,interval,expected_pnl,expected_n",
+    "symbol,interval,expected_pnl,expected_n",
     MULTI_COMBO_BASELINES,
 )
 def test_multi_combo_runner_pnl_floor(
-    preset_id: str,  # noqa: ARG001
     symbol: str,
     interval: str,
     expected_pnl: float,
     expected_n: int,
 ) -> None:
-    """S41 runner MUST produce PnL within ±2% of autoresearch baseline."""
+    """S42 T4 runner MUST produce PnL within ±2% of autoresearch baseline via unified preset."""
     from src.backtest.atr_breakout_runner import (
         ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO,
         run_atr_breakout_backtest,

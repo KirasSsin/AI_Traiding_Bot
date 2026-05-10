@@ -9,6 +9,7 @@ const API = {
   backtest: "/api/backtest",
   runs: "/api/runs",
   docs: "/api/docs",
+  strategyInfo: (id) => `/api/strategy/${id}/info`,  // S42 T6 — supported_combos lookup
 };
 
 const $ = (id) => document.getElementById(id);
@@ -81,9 +82,17 @@ async function init() {
       ivSel.appendChild(opt);
     }
 
-    symSel.addEventListener("change", updateDataInfo);
+    symSel.addEventListener("change", () => {
+      updateDataInfo();
+      applyComboGates(stratSel.value);
+    });
     ivSel.addEventListener("change", updateDataInfo);
+    stratSel.addEventListener("change", () => {
+      applyComboGates(stratSel.value);
+    });
     updateDataInfo();
+    // Initial gating apply for default selected strategy
+    applyComboGates(stratSel.value);
 
     $("backtest-form").addEventListener("submit", handleSubmit);
     $("refresh-history").addEventListener("click", loadHistory);
@@ -108,6 +117,57 @@ function updateDataInfo() {
     return;
   }
   el.innerHTML = `<span class="ok">▸ DATA OK</span> · ${ivData.bars.toLocaleString()} bars · ${ivData.start.slice(0, 10)} → ${ivData.end.slice(0, 10)}`;
+}
+
+// ──────────────────────────────────────────────
+//  S42 T6 — COMBO GATES (atr_breakout-style multi-combo presets)
+// ──────────────────────────────────────────────
+let _strategyInfoCache = {};
+
+async function fetchStrategyInfo(strategyId) {
+  if (_strategyInfoCache[strategyId]) return _strategyInfoCache[strategyId];
+  try {
+    const r = await fetch(API.strategyInfo(strategyId));
+    if (!r.ok) return null;
+    const data = await r.json();
+    _strategyInfoCache[strategyId] = data;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+async function applyComboGates(strategyId) {
+  const symSel = $("symbol-select");
+  const tfSel = $("interval-select");
+  // Reset: enable all options first
+  for (const sel of [symSel, tfSel]) {
+    Array.from(sel.options).forEach((opt) => { opt.disabled = false; });
+  }
+  const info = await fetchStrategyInfo(strategyId);
+  if (!info) return;
+  const supported = info.supported_combos || [];
+  if (supported.length === 0) return;  // legacy preset — no gating
+  const validSymbols = new Set(supported.map((c) => c[0]));
+  // Disable symbols not in supported list
+  Array.from(symSel.options).forEach((opt) => {
+    if (!validSymbols.has(opt.value)) opt.disabled = true;
+  });
+  // If currently selected symbol is now disabled — switch to first valid
+  if (symSel.options[symSel.selectedIndex] && symSel.options[symSel.selectedIndex].disabled) {
+    const firstValid = Array.from(symSel.options).find((o) => !o.disabled);
+    if (firstValid) symSel.value = firstValid.value;
+  }
+  // Disable TFs not valid for current symbol
+  const tfsForSym = new Set(supported.filter((c) => c[0] === symSel.value).map((c) => c[1]));
+  Array.from(tfSel.options).forEach((opt) => {
+    if (!tfsForSym.has(opt.value)) opt.disabled = true;
+  });
+  if (tfSel.options[tfSel.selectedIndex] && tfSel.options[tfSel.selectedIndex].disabled) {
+    const firstValidTf = Array.from(tfSel.options).find((o) => !o.disabled);
+    if (firstValidTf) tfSel.value = firstValidTf.value;
+  }
+  updateDataInfo();
 }
 
 // ──────────────────────────────────────────────
@@ -183,20 +243,24 @@ function renderResult(r) {
   $("results-section").style.display = "block";
 
   const cachedTag = r.cached ? `<span class="cached-tag">CACHED</span>` : "";
+  const req = r.request || {};
+  const barsPerYear = r.bars_per_year ?? 0;
   $("run-meta").innerHTML = `
-    <div class="meta-key">RUN_ID</div><div class="meta-val">${r.run_id}${cachedTag}</div>
-    <div class="meta-key">STRATEGY</div><div class="meta-val">${r.request.strategy_label}</div>
-    <div class="meta-key">SYMBOL · TF</div><div class="meta-val">${r.request.symbol} · ${r.request.interval_label}</div>
-    <div class="meta-key">RANGE</div><div class="meta-val">${r.request.start} → ${r.request.end} · ${r.bars_per_year.toLocaleString()} bars/year</div>
+    <div class="meta-key">RUN_ID</div><div class="meta-val">${r.run_id ?? "—"}${cachedTag}</div>
+    <div class="meta-key">STRATEGY</div><div class="meta-val">${req.strategy_label ?? req.strategy_id ?? "?"}</div>
+    <div class="meta-key">SYMBOL · TF</div><div class="meta-val">${req.symbol ?? "?"} · ${req.interval_label ?? req.interval ?? "?"}</div>
+    <div class="meta-key">RANGE</div><div class="meta-val">${req.start ?? "?"} → ${req.end ?? "?"} · ${barsPerYear.toLocaleString()} bars/year</div>
   `;
 
-  const verdictCls = r.verdict === "PASS" ? "verdict-pass" : "verdict-fail";
-  const failedHtml = r.failed_criteria.length
-    ? `<div class="verdict-failed-list">FAILED CRITERIA: ${r.failed_criteria.map((c) => `<span class="chip">${c.toUpperCase()}</span>`).join(" ")}</div>`
+  const verdict = r.verdict ?? "—";
+  const verdictCls = verdict === "PASS" ? "verdict-pass" : (verdict === "RAW" ? "verdict-raw" : "verdict-fail");
+  const failedCriteria = r.failed_criteria ?? [];
+  const failedHtml = failedCriteria.length
+    ? `<div class="verdict-failed-list">FAILED CRITERIA: ${failedCriteria.map((c) => `<span class="chip">${c.toUpperCase()}</span>`).join(" ")}</div>`
     : "";
   $("verdict").innerHTML = `
     <div class="verdict-label">▸ FINAL VERDICT</div>
-    <div class="verdict-value ${verdictCls}">${r.verdict}</div>
+    <div class="verdict-value ${verdictCls}">${verdict}</div>
     ${failedHtml}
   `;
 

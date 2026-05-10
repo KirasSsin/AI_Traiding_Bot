@@ -267,4 +267,33 @@ def run_volume_breakout_backtest(
         "atr_stop_mult": float(VOLUME_BREAKOUT_LOCKED_PARAMS["atr_stop_mult"]),  # type: ignore[arg-type]
     }
 
-    return _backtest_single(df, params)
+    # Run inner backtest — minimal dict
+    inner = _backtest_single(df, params)
+
+    # Build equity_curve from trades list для sub-period robustness chip
+    trades_list = inner.get("trades", [])
+    equity_curve: list[float] = [0.0]
+    for tr in trades_list:
+        equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
+
+    # bars_per_year по interval (volume_breakout supports only 4H = 2191; future-proof lookup)
+    bars_per_year_lookup = {"5": 105192, "15": 35064, "60": 8766, "240": 2191, "D": 365}
+    bars_per_year = bars_per_year_lookup.get(interval, 2191)
+
+    # Wrap в dashboard contract envelope
+    from src.backtest.research_runner_envelope import build_research_runner_envelope
+
+    return build_research_runner_envelope(
+        runner_name="volume_breakout_runner",
+        symbol=symbol,
+        interval=interval,
+        n_trades=int(inner["n_trades"]),
+        sharpe=float(inner["sharpe"]) if inner["sharpe"] == inner["sharpe"] else 0.0,
+        win_rate=float(inner["win_rate"]) if inner["win_rate"] == inner["win_rate"] else 0.0,
+        total_pnl_pct=float(inner["total_pnl_pct"]),
+        bars_per_year=bars_per_year,
+        equity_curve=equity_curve,
+        runner_label=f"Volume breakout {interval} {symbol} (LOCKED — S39)",
+        start=start_date.isoformat(),
+        end=end_date.isoformat(),
+    )

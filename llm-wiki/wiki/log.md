@@ -2597,3 +2597,17 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Canonical counts:** 16/30/74/**56** (reason codes unchanged — реиспользуются S40 коды)
 - **ADRs:** 60 → **61** / **Sprint pages:** 44 → **45**
 - **Tag:** v0.1.0-alpha.41
+
+## [2026-05-10] sprint-end | S42 — atr_breakout production hardening (kit retrofit)
+
+- **Sprint:** S42 — feature/sprint-42-atr-breakout-hardening → main
+- **ADR:** ADR 0062 (supersedes 0060 + 0061)
+- **Tasks done (10):** T1 envelope helper / T2 wire atr_breakout / T3 wire volume_breakout / T4 consolidate 10→1 + dispatch fix / T5 /api/strategy/{id}/info endpoint / T6 JS defensive guards + applyComboGates / T7 CSS chip levels (verified existing) / T8 full pytest sweep / T9 ADR 0062 / T10 wiki sync
+- **Bug fix:** Dashboard JS crash `Cannot read properties of undefined (reading 'toLocaleString')` для atr_breakout/volume_breakout — runner returns 17-key envelope (was 8/5), dispatch merges envelope (was cherry-pick 4 keys).
+- **UX fix:** 10 atr_breakout_* presets → 1 unified `atr_breakout` (server-side params lookup от `ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)]`). Frontend greys out invalid combos via `applyComboGates()`.
+- **Honest label:** `verdict: "RAW"` + `RAW_FULL_PERIOD` warning chip — operator видит что acceptance gate skipped (WFA retrofit pending S43).
+- **Tests:** 946 unit (+41) / 52 integration (+19) / mypy 0 / ruff 0
+- **Canonical counts:** 16/30/74/56 (UNCHANGED)
+- **ADRs:** 61 → **62** / **Sprint pages:** 45 → **46**
+- **Tag:** v0.1.0-alpha.42
+- **Carry к S43:** WFA retrofit (resolve PnL accounting gap), DSR + MC per combo, N_trials counter, restore acceptance discipline
