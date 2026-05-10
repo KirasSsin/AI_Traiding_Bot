@@ -1,10 +1,42 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T12 done — wiki sync complete, phase=8-ship
-sprint: 43
-phase: 8-ship
-branch: feature/sprint-43-ui-polish
+updated: 2026-05-10  # S44 T1 done — research_wfa helper landed, phase=4-execution
+sprint: 44
+phase: 4-execution
+branch: feature/sprint-44-wfa-retrofit
+---
+
+## S44 PHASE 4-EXECUTION — WFA retrofit для research presets (atr_breakout + volume_breakout)
+
+**Branch:** feature/sprint-44-wfa-retrofit
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: `src/backtest/research_wfa.py` shared helper — WindowSplitter + per-fold backtest_fn + DSR + MC + acceptance gate | DONE | d1f20b6 |
+| T2: Wire `atr_breakout_runner` к research_wfa (10 combos) | TODO | — |
+| T3: Wire `volume_breakout_runner` к research_wfa (1 combo) | TODO | — |
+
+**Текущий статус:** T1 done. 4/4 unit tests PASS (`tests/unit/test_research_wfa.py`), mypy --strict 0 errors. Helper готов для T2+T3 wiring. Returns verdict dict с keys: verdict (`WFA_PASS`/`WFA_FAIL`/`WFA_FAIL_DATA`), failed_criteria, fold_sharpe_ratios, trial_mean_fold_oos_sharpe, trial_oos_sharpe, mc_p_value, dsr, dsr_pass, dsr_status, sigma_sr_cross_trial, n_trades_raw, n_trials, wfa_params, metrics, trades.
+
+**Следующее действие:** T2 — adapt `atr_breakout_runner.run_atr_breakout_backtest` к call `run_research_wfa` instead of single contiguous backtest path. Pattern: replace per-symbol contiguous run с WFA verdict envelope (preserve sequential-additive PnL accounting per ADR 0064).
+
+### Phase tracking
+
+| Phase | Status |
+|-------|--------|
+| 1-orient | done |
+| 2-brainstorm | done |
+| 3-plan | done |
+| 4-execution | in_progress (T1/3) |
+| 5-verify | pending |
+| 6-review | pending |
+| 7-sync | pending |
+| 8-ship | pending |
+| 9-close | pending |
+
 ---
 
 ## S43 PHASE 8-SHIP — UI polish (preset rename + descriptions + equity chart)
