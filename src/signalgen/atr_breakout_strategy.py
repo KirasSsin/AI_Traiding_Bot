@@ -52,6 +52,73 @@ ATR_BREAKOUT_LOCKED_PARAMS: dict[str, object] = {
     "signal_side_mode": "long_only",
 }
 
+# ADR 0061 LOCKED — per-combo params from autoresearch endless best_per_combo.json.
+# Each combo's params locked independently (anti-snooping audit trail).
+# DO NOT modify without a new ADR amendment.
+# Source: data/autoresearch_endless/best_per_combo.json (endless autoresearch run).
+ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO: dict[tuple[str, str], dict[str, object]] = {
+    ("BTCUSDT", "240"): {
+        "atr_period": 9,
+        "atr_breakout_mult": Decimal("2.5"),
+        "atr_stop_period": 21,
+        "atr_stop_mult": Decimal("1.5"),
+    },
+    ("BTCUSDT", "60"): {
+        "atr_period": 9,
+        "atr_breakout_mult": Decimal("2.5"),
+        "atr_stop_period": 21,
+        "atr_stop_mult": Decimal("3.0"),
+    },
+    ("BTCUSDT", "15"): {
+        "atr_period": 9,
+        "atr_breakout_mult": Decimal("3.0"),
+        "atr_stop_period": 14,
+        "atr_stop_mult": Decimal("3.0"),
+    },
+    ("BTCUSDT", "D"): {
+        "atr_period": 9,
+        "atr_breakout_mult": Decimal("1.0"),
+        "atr_stop_period": 9,
+        "atr_stop_mult": Decimal("3.0"),
+    },
+    ("ETHUSDT", "240"): {
+        "atr_period": 14,
+        "atr_breakout_mult": Decimal("2.5"),
+        "atr_stop_period": 14,
+        "atr_stop_mult": Decimal("1.5"),
+    },
+    ("ETHUSDT", "60"): {
+        "atr_period": 14,
+        "atr_breakout_mult": Decimal("2.5"),
+        "atr_stop_period": 21,
+        "atr_stop_mult": Decimal("1.5"),
+    },
+    ("ETHUSDT", "15"): {
+        "atr_period": 9,
+        "atr_breakout_mult": Decimal("3.0"),
+        "atr_stop_period": 14,
+        "atr_stop_mult": Decimal("2.0"),
+    },
+    ("SOLUSDT", "240"): {
+        "atr_period": 21,
+        "atr_breakout_mult": Decimal("1.5"),
+        "atr_stop_period": 9,
+        "atr_stop_mult": Decimal("2.0"),
+    },
+    ("SOLUSDT", "60"): {
+        "atr_period": 9,
+        "atr_breakout_mult": Decimal("2.0"),
+        "atr_stop_period": 21,
+        "atr_stop_mult": Decimal("3.0"),
+    },
+    ("SOLUSDT", "15"): {
+        "atr_period": 21,
+        "atr_breakout_mult": Decimal("2.5"),
+        "atr_stop_period": 9,
+        "atr_stop_mult": Decimal("3.0"),
+    },
+}
+
 _ZERO = Decimal("0")
 
 

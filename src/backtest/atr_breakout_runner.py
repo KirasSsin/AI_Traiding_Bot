@@ -1,4 +1,4 @@
-"""ATR breakout backtest runner — S40 T3 (ADR 0060).
+"""ATR breakout backtest runner — S40 T3 + S41 multi-combo (ADR 0060, ADR 0061).
 
 Exact port of scripts/autoresearch_endless.py::strat_atr_breakout + _backtest
 for the atr_breakout strategy.
@@ -18,7 +18,8 @@ Execution semantics preserved verbatim from research:
   - Sequential additive PnL (sum, NOT compounded, NOT Kelly-sized)
   - Open position closed on last bar mark-to-market
 
-Locked params: per ADR 0060. MUST NOT change without new ADR.
+S40 locked params (BTCUSDT 4H): per ADR 0060. MUST NOT change without new ADR.
+S41 multi-combo params: per ADR 0061. Each combo locked independently.
 """
 
 from __future__ import annotations
@@ -32,9 +33,100 @@ import numpy as np
 import pandas as pd
 
 # Mirror constants from scripts/autoresearch_endless.py exactly.
-_BARS_PER_YEAR = 2190  # 4H bars per year
 _COMMISSION_TAKER = 0.001  # 0.1% taker
 _SLIPPAGE = 0.0005  # 0.05% adverse
+
+# BARS_PER_YEAR per interval — mirrors autoresearch_endless.py::BARS_PER_YEAR_BY_INTERVAL
+_BARS_PER_YEAR_BY_INTERVAL: dict[str, int] = {
+    "5": int(365.25 * 24 * 12),
+    "15": int(365.25 * 24 * 4),
+    "60": int(365.25 * 24),
+    "240": int(365.25 * 6),
+    "D": int(365.25),
+}
+
+# Parquet file mapping per (symbol, interval) combo.
+# Mirrors scripts/autoresearch_endless.py::COMBOS.
+# BTCUSDT 4H uses Binance data (8.7y) — all others use Bybit data (3.3y from 2023-01-01).
+PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
+    ("BTCUSDT", "240"): "data/BTCUSDT_4h_binance.parquet",
+    ("BTCUSDT", "60"): "data/BTCUSDT_1h.parquet",
+    ("BTCUSDT", "15"): "data/BTCUSDT_15m.parquet",
+    ("BTCUSDT", "D"): "data/BTCUSDT_1d.parquet",
+    ("ETHUSDT", "240"): "data/ETHUSDT_4h.parquet",
+    ("ETHUSDT", "60"): "data/ETHUSDT_1h.parquet",
+    ("ETHUSDT", "15"): "data/ETHUSDT_15m.parquet",
+    ("SOLUSDT", "240"): "data/SOLUSDT_4h.parquet",
+    ("SOLUSDT", "60"): "data/SOLUSDT_1h.parquet",
+    ("SOLUSDT", "15"): "data/SOLUSDT_15m.parquet",
+}
+
+# ADR 0061 LOCKED — per-combo params from autoresearch endless best_per_combo.json.
+# Each combo's params LOCKED independently (anti-snooping audit trail per ADR 0061).
+# DO NOT modify without a new ADR amendment.
+# Source: data/autoresearch_endless/best_per_combo.json
+ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO: dict[tuple[str, str], dict[str, Any]] = {
+    ("BTCUSDT", "240"): {  # BTCUSDT 4H — original S40 params (ADR 0060)
+        "atr_period": 9,
+        "atr_breakout_mult": 2.5,
+        "atr_stop_period": 21,
+        "atr_stop_mult": 1.5,
+    },
+    ("BTCUSDT", "60"): {  # BTCUSDT 1H — autoresearch endless best
+        "atr_period": 9,
+        "atr_breakout_mult": 2.5,
+        "atr_stop_period": 21,
+        "atr_stop_mult": 3.0,
+    },
+    ("BTCUSDT", "15"): {  # BTCUSDT 15M — autoresearch endless best
+        "atr_period": 9,
+        "atr_breakout_mult": 3.0,
+        "atr_stop_period": 14,
+        "atr_stop_mult": 3.0,
+    },
+    ("BTCUSDT", "D"): {  # BTCUSDT 1D — autoresearch endless best
+        "atr_period": 9,
+        "atr_breakout_mult": 1.0,
+        "atr_stop_period": 9,
+        "atr_stop_mult": 3.0,
+    },
+    ("ETHUSDT", "240"): {  # ETHUSDT 4H — autoresearch endless best
+        "atr_period": 14,
+        "atr_breakout_mult": 2.5,
+        "atr_stop_period": 14,
+        "atr_stop_mult": 1.5,
+    },
+    ("ETHUSDT", "60"): {  # ETHUSDT 1H — autoresearch endless best
+        "atr_period": 14,
+        "atr_breakout_mult": 2.5,
+        "atr_stop_period": 21,
+        "atr_stop_mult": 1.5,
+    },
+    ("ETHUSDT", "15"): {  # ETHUSDT 15M — autoresearch endless best
+        "atr_period": 9,
+        "atr_breakout_mult": 3.0,
+        "atr_stop_period": 14,
+        "atr_stop_mult": 2.0,
+    },
+    ("SOLUSDT", "240"): {  # SOLUSDT 4H — autoresearch endless best
+        "atr_period": 21,
+        "atr_breakout_mult": 1.5,
+        "atr_stop_period": 9,
+        "atr_stop_mult": 2.0,
+    },
+    ("SOLUSDT", "60"): {  # SOLUSDT 1H — autoresearch endless best
+        "atr_period": 9,
+        "atr_breakout_mult": 2.0,
+        "atr_stop_period": 21,
+        "atr_stop_mult": 3.0,
+    },
+    ("SOLUSDT", "15"): {  # SOLUSDT 15M — autoresearch endless best
+        "atr_period": 21,
+        "atr_breakout_mult": 2.5,
+        "atr_stop_period": 9,
+        "atr_stop_mult": 3.0,
+    },
+}
 
 
 @dataclass
@@ -74,7 +166,9 @@ def _atr(df: pd.DataFrame, period: int) -> np.ndarray:
     return atr_out
 
 
-def _backtest_single(df: pd.DataFrame, params: dict[str, Any]) -> dict[str, Any]:
+def _backtest_single(
+    df: pd.DataFrame, params: dict[str, Any], bars_per_year: int
+) -> dict[str, Any]:
     """Single contiguous atr_breakout backtest.
 
     Ports scripts/autoresearch_endless.py::strat_atr_breakout + _backtest verbatim.
@@ -89,6 +183,7 @@ def _backtest_single(df: pd.DataFrame, params: dict[str, Any]) -> dict[str, Any]
     Args:
         df: OHLCV DataFrame with columns [open, high, low, close, volume] (or similar).
         params: dict with keys atr_period, atr_breakout_mult, atr_stop_period, atr_stop_mult.
+        bars_per_year: annualization constant for the interval (e.g. 2190 for 4H).
 
     Returns:
         dict with n_trades, total_pnl_pct, sharpe, win_rate, trades (list of _TradeRecord).
@@ -172,7 +267,7 @@ def _backtest_single(df: pd.DataFrame, params: dict[str, Any]) -> dict[str, Any]
     pnl_std = float(pnls.std(ddof=1))
 
     if pnl_std > 0 and mean_holding > 0:
-        trades_per_year = _BARS_PER_YEAR / mean_holding
+        trades_per_year = bars_per_year / mean_holding
         sharpe = float((pnls.mean() / pnl_std) * sqrt(trades_per_year))
     else:
         sharpe = float("nan") if pnl_std == 0 else 0.0
@@ -186,91 +281,110 @@ def _backtest_single(df: pd.DataFrame, params: dict[str, Any]) -> dict[str, Any]
     }
 
 
+def _load_parquet_df(
+    symbol: str,
+    interval: str,
+    start_date: date,
+    end_date: date,
+) -> pd.DataFrame:
+    """Load and normalize OHLCV DataFrame from parquet for (symbol, interval).
+
+    Handles both 'ts' (Binance) and 'time' (Bybit) column schemas.
+    Filters to [start_date, end_date] inclusive.
+
+    Raises:
+        FileNotFoundError: if parquet path not in PARQUET_BY_COMBO
+    """
+    data_path = PARQUET_BY_COMBO.get((symbol, interval))
+    if data_path is None:
+        raise FileNotFoundError(
+            f"No parquet data path registered for ({symbol}, {interval}). "
+            f"Supported combos: {sorted(PARQUET_BY_COMBO.keys())}"
+        )
+
+    raw = pd.read_parquet(data_path)
+
+    # Normalize timestamp column — handles 'ts' (Binance) and 'time' (Bybit) schemas
+    if "ts" in raw.columns:
+        raw["_ts"] = pd.to_datetime(raw["ts"], utc=True)
+    elif "time" in raw.columns:
+        raw["_ts"] = pd.to_datetime(raw["time"], utc=True)
+    else:
+        raw = raw.reset_index()
+        raw["_ts"] = pd.to_datetime(raw.iloc[:, 0], utc=True)
+
+    raw = raw.sort_values("_ts").reset_index(drop=True)
+    mask = raw["_ts"].dt.date >= start_date
+    mask &= raw["_ts"].dt.date <= end_date
+    df = raw[mask].copy().reset_index(drop=True)
+
+    return df
+
+
 def run_atr_breakout_backtest(
     *,
     symbol: str,
     interval: str,
     start_date: date,
     end_date: date,
+    params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run atr_breakout single contiguous backtest using LOCKED params (ADR 0060).
+    """Run atr_breakout single contiguous backtest.
+
+    S40: uses LOCKED params from ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO for BTCUSDT 4H.
+    S41: extended to all 10 (symbol, interval) combos — each with independently locked params.
 
     Execution model is exact port of scripts/autoresearch_endless.py::strat_atr_breakout
-    + _backtest for BTCUSDT 4H. This is the EXACT pipeline that produced
-    research baseline +819.81% (8.7y) / Sharpe 1.11 / 5/5 sub-periods positive.
-
-    NOT WFA. NOT Kelly-sized. Sequential additive PnL.
+    + _backtest. NOT WFA. NOT Kelly-sized. Sequential additive PnL.
 
     Args:
-        symbol: e.g. "BTCUSDT"
-        interval: e.g. "240" (4H)
+        symbol: e.g. "BTCUSDT", "ETHUSDT", "SOLUSDT"
+        interval: e.g. "240" (4H), "60" (1H), "15" (15M), "D" (1D)
         start_date: inclusive start
         end_date: inclusive end
+        params: explicit params dict (atr_period, atr_breakout_mult, atr_stop_period,
+                atr_stop_mult). If None, uses ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO lookup.
 
     Returns:
         {
             "n_trades": int,
             "total_pnl_pct": float,  # sum(pnl_net) * 100
-            "sharpe": float,         # (mean/std) * sqrt(BARS_PER_YEAR / mean_holding)
+            "sharpe": float,         # (mean/std) * sqrt(bars_per_year / mean_holding)
             "win_rate": float,
             "trades": list[_TradeRecord],
         }
 
     Raises:
-        FileNotFoundError: if parquet data missing for (symbol, interval)
-        ValueError: if data is empty for given date range
+        FileNotFoundError: if parquet data not found for (symbol, interval)
+        ValueError: if data is empty for given date range, or combo not in locked params
     """
-    import pandas as pd
-
-    # ATR breakout strategy validated on Binance 4H data (autoresearch used BTCUSDT_4h_binance.parquet).
-    # Bybit data (BTCUSDT_4h.parquet) starts 2023-01-01 — insufficient for full 8.7y backtest.
-    # Production runner uses Binance data to match research baseline exactly.
-    # Derive parquet path from autoresearch COMBOS mapping:
-    #   ("BTCUSDT", "240") → "data/BTCUSDT_4h_binance.parquet"
-    _BINANCE_DATA: dict[tuple[str, str], str] = {
-        ("BTCUSDT", "240"): "data/BTCUSDT_4h_binance.parquet",
-    }
-    data_path = _BINANCE_DATA.get((symbol, interval))
-    if data_path is None:
-        # Fallback to standard _load_ohlcv for other symbol/interval combos
-        from src.__main__ import _load_ohlcv
-
-        df = _load_ohlcv(
-            symbol=symbol,
-            start=start_date.isoformat(),
-            end=end_date.isoformat(),
-            interval=interval,
-        )
+    # Resolve params: explicit override OR locked combo params
+    if params is None:
+        locked = ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO.get((symbol, interval))
+        if locked is None:
+            raise ValueError(
+                f"No locked params for ({symbol}, {interval}). "
+                f"Pass explicit params= or add to ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO."
+            )
+        resolved_params: dict[str, Any] = {
+            "atr_period": int(locked["atr_period"]),
+            "atr_breakout_mult": float(locked["atr_breakout_mult"]),
+            "atr_stop_period": int(locked["atr_stop_period"]),
+            "atr_stop_mult": float(locked["atr_stop_mult"]),
+        }
     else:
-        # Load Binance parquet directly (mirrors autoresearch_endless.py::_normalize_df)
-        raw = pd.read_parquet(data_path)
-        if "ts" in raw.columns:
-            raw["ts"] = pd.to_datetime(raw["ts"], utc=True)
-        elif "time" in raw.columns:
-            raw = raw.rename(columns={"time": "ts"})
-            raw["ts"] = pd.to_datetime(raw["ts"], utc=True)
-        else:
-            raw = raw.reset_index()
-            raw["ts"] = pd.to_datetime(raw["ts"], utc=True)
-        raw = raw.sort_values("ts").reset_index(drop=True)
-        mask = raw["ts"].dt.date >= start_date
-        mask &= raw["ts"].dt.date <= end_date
-        df = raw[mask].copy().reset_index(drop=True)
-        # Rename to standard columns expected by _backtest_single
-        if "ts" in df.columns:
-            df = df.rename(columns={"ts": "timestamp"})
+        resolved_params = {
+            "atr_period": int(params["atr_period"]),
+            "atr_breakout_mult": float(params["atr_breakout_mult"]),
+            "atr_stop_period": int(params["atr_stop_period"]),
+            "atr_stop_mult": float(params["atr_stop_mult"]),
+        }
+
+    bars_per_year = _BARS_PER_YEAR_BY_INTERVAL.get(interval, 2190)
+
+    df = _load_parquet_df(symbol, interval, start_date, end_date)
 
     if df.empty:
         raise ValueError(f"No OHLCV data for {symbol} {interval} in {start_date}..{end_date}")
 
-    # Pull locked params from the canonical source (atr_breakout_strategy.py)
-    from src.signalgen.atr_breakout_strategy import ATR_BREAKOUT_LOCKED_PARAMS
-
-    params: dict[str, Any] = {
-        "atr_period": int(ATR_BREAKOUT_LOCKED_PARAMS["atr_period"]),  # type: ignore[call-overload]
-        "atr_breakout_mult": float(ATR_BREAKOUT_LOCKED_PARAMS["atr_breakout_mult"]),  # type: ignore[arg-type]
-        "atr_stop_period": int(ATR_BREAKOUT_LOCKED_PARAMS["atr_stop_period"]),  # type: ignore[call-overload]
-        "atr_stop_mult": float(ATR_BREAKOUT_LOCKED_PARAMS["atr_stop_mult"]),  # type: ignore[arg-type]
-    }
-
-    return _backtest_single(df, params)
+    return _backtest_single(df, resolved_params, bars_per_year)
