@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T6 done
+updated: 2026-05-10  # T8 done — full pytest sweep GREEN
 sprint: 42
 phase: 4-execution
 branch: feature/sprint-42-atr-breakout-hardening
@@ -12,7 +12,15 @@ tag: v0.1.0-alpha.41
 
 **Phase:** 4-execution  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T7 next
+**in_progress:** T9+T10 bundled (ADR 0062 + wiki sync) next
+
+**T7 status:** verified-no-change — `.warn-high/.warn-mid/.warn-info` CSS classes уже exist в `dashboard.css` lines 466-471. Envelope chips render автоматически через existing warnings-panel JS loop. No code edits required.
+
+**T8 status:** done — full pytest sweep:
+- Unit: 946 passed (+41 vs pre-S42 baseline 905)
+- Integration: 52 passed (+19 vs pre-S42 baseline 33)
+- mypy --strict src/: 0 errors на 84 source files (+5 modified/new)
+- Stale preset_id refs in tests/integration/test_atr_breakout_dashboard_contract.py — correct usage (verifies removal в `test_old_atr_breakout_preset_ids_removed`).
 
 **Completed tasks:**
 - T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
