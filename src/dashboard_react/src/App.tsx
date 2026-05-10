@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { ConfigureBacktest } from './components/ConfigureBacktest'
+import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
 type Tab = 'backtest' | 'documentation' | 'history'
@@ -11,6 +13,7 @@ const TABS: { id: Tab; num: string; label: string }[] = [
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('backtest')
+  const [result, setResult] = useState<BacktestResponse | null>(null)
 
   return (
     <div className={styles.app}>
@@ -51,10 +54,18 @@ export function App() {
 
       <main className={styles.main}>
         {activeTab === 'backtest' && (
-          <div className={styles.placeholder}>
-            <h2>Backtest tab</h2>
-            <p>ConfigureBacktest + VerdictPanel + EquityChart + tables coming in T6-T15</p>
-          </div>
+          <>
+            <ConfigureBacktest onResult={setResult} />
+            {result && (
+              <div className={styles.placeholder} style={{ marginTop: '1.5rem' }}>
+                <h2>Result placeholder</h2>
+                <p>VerdictPanel + EquityChart + tables coming in T7-T15</p>
+                <pre style={{ textAlign: 'left', marginTop: '1rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                  {JSON.stringify({ verdict: result.verdict, n_trades: result.n_trades, sharpe: result.sharpe }, null, 2)}
+                </pre>
+              </div>
+            )}
+          </>
         )}
         {activeTab === 'documentation' && (
           <div className={styles.placeholder}>

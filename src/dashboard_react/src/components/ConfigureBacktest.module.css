@@ -1,0 +1,149 @@
+.panel {
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-premium);
+}
+
+.panelLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.select,
+.input {
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.select:focus,
+.input:focus {
+  outline: none;
+  border-color: var(--color-anthropic-orange);
+  box-shadow: var(--shadow-neon-soft);
+}
+
+.select option:disabled {
+  color: var(--color-text-disabled);
+}
+
+.fieldCheckbox {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+  align-self: end;
+  padding-bottom: var(--space-3);
+}
+
+.fieldAction {
+  display: flex;
+  align-items: end;
+}
+
+.btnPrimary {
+  background: var(--gradient-anthropic);
+  border: none;
+  color: var(--color-bg-base);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  width: 100%;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  box-shadow: var(--shadow-neon);
+  transform: translateY(-1px);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnText {
+  font-size: var(--text-sm);
+}
+
+.btnMeta {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+.dataInfo {
+  margin-top: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.05em;
+}
+
+.ok {
+  color: var(--color-success);
+}
+
+.warn {
+  color: var(--color-warn);
+}
+
+.error {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(255, 51, 102, 0.08);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fieldAction {
+    grid-column: 1 / -1;
+  }
+}
