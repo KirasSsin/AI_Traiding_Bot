@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T7 done — 11 combos re-run, all WFA_FAIL, ESC-1(a) trigger
+updated: 2026-05-10  # S45 T8 done — ADR 0065 + wiki sync, phase=8-ship
 sprint: 45
-phase: 4-execution
+phase: 8-ship
 branch: feature/sprint-45-wfa-recalibration
 ---
 
@@ -22,11 +22,11 @@ branch: feature/sprint-45-wfa-recalibration
 | T5: B2 train slice documentation (inline + docstring) | DONE | 553e040 |
 | T6: ADR 0014 low-freq tier amendment (4H/D test_bars=250) + tier helper wiring | DONE | cafb6a6 |
 | T7: WFA recalibration run — 11 combos с uniform 3.3y window using new tier params | DONE | — |
-| T8: ADR 0065 — S45 honest verdict + ESC-1 (a) trigger decision | TODO | — |
+| T8: ADR 0065 — S45 honest verdict + ESC-1 (a) trigger decision | DONE | — |
 
-**Текущий статус:** T7 done. All 11 combos re-run under recalibrated ADR 0014 low-freq tier params. Result: 10 WFA_FAIL + 1 WFA_FAIL_DATA. 0 WFA_PASS. ESC-1 (a) triggered — honest portfolio close для S46.
+**Текущий статус:** T8 DONE. ADR 0065 создан, wiki sync завершён (sprint-45 page + current-state + index + log). Phase=8-ship. Все задачи S45 завершены.
 
-**Следующее действие:** T8 — ADR 0065 — document S45 honest verdict, ESC-1 (a) honest close, cross_trial_log entries, comparison vs S44 baseline.
+**Следующее действие:** sprint-finish skill → tag v0.1.0-alpha.45 + merge feature/sprint-45-wfa-recalibration → main. Затем S46 brainstorm (honest portfolio close).
 
 ### S45 T7 actual verdicts (post-recalibration — input for T8 ADR 0065)
 
