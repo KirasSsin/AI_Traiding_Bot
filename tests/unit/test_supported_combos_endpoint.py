@@ -77,5 +77,5 @@ def test_strategy_info_response_includes_id_label_type(client: TestClient) -> No
     r = client.get("/api/strategy/atr_breakout/info")
     data = r.json()
     assert data["id"] == "atr_breakout"
-    assert "ATR breakout" in data["label"]
+    assert "ATR" in data["label"]  # S43 T1: label renamed to semantic Russian
     assert data["type"] == "atr_breakout"
