@@ -399,21 +399,28 @@ async function loadHistory() {
     $("history-table").innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">NO RUNS · execute first backtest above</td></tr>`;
     return;
   }
-  let html = `<thead><tr><th>STRATEGY</th><th>SYMBOL</th><th>TF</th><th>RANGE</th><th>VERDICT</th><th>T1</th><th>T5 N</th><th>DSR</th><th>MC P</th></tr></thead><tbody>`;
+  let html = `<thead><tr><th>STRATEGY</th><th>SYMBOL</th><th>TF</th><th>RANGE</th><th>VERDICT</th><th>SHARPE / T1</th><th>N TRADES / T5</th><th>PnL % / DSR</th><th>MC P</th></tr></thead><tbody>`;
   runs.forEach((r) => {
     const req = r.request || {};
     const m = r.metrics || {};
-    const verdictCls = r.verdict === "PASS" ? "metric-pass" : "metric-fail";
+    const isRaw = r.verdict === "RAW";
+    const verdictCls = r.verdict === "PASS" ? "metric-pass" : (isRaw ? "verdict-raw" : "metric-fail");
+    // S42.3 — RAW mode: show envelope's actual sharpe/n_trades/total_pnl_pct (envelope keys)
+    // Legacy WFA: show t1_sharpe_oos/t5_n_trades/dsr/mc_p_value
+    const sharpeCell = isRaw ? fmt(m.sharpe ?? r.sharpe, 2) : fmt(m.t1_sharpe_oos, 2);
+    const nTradesVal = isRaw ? (m.n_trades ?? r.n_trades) : m.t5_n_trades;
+    const pnlCell = isRaw ? `${fmt(m.total_pnl_pct ?? r.total_pnl_pct, 1)}%` : fmt(r.dsr, 3);
+    const mcCell = isRaw ? "—" : fmt(r.mc_p_value, 3);
     html += `<tr>
       <td>${(req.strategy_label || req.strategy_id || "").substring(0, 50)}</td>
       <td>${req.symbol || "—"}</td>
       <td>${req.interval_label || req.interval || "—"}</td>
       <td>${(req.start || "—").slice(0, 10)}…${(req.end || "—").slice(-5)}</td>
       <td class="${verdictCls}">${r.verdict || "—"}</td>
-      <td>${fmt(m.t1_sharpe_oos, 2)}</td>
-      <td class="${m.t5_n_trades < 100 ? "metric-fail" : "metric-pass"}">${m.t5_n_trades || "—"}</td>
-      <td>${fmt(r.dsr, 3)}</td>
-      <td>${fmt(r.mc_p_value, 3)}</td>
+      <td>${sharpeCell}</td>
+      <td>${nTradesVal != null ? nTradesVal : "—"}</td>
+      <td>${pnlCell}</td>
+      <td>${mcCell}</td>
     </tr>`;
   });
   html += "</tbody>";
