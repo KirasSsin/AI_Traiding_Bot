@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T19+T20 done — FastAPI serves React build + vanilla archived
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T21 done — CI Node.js step + React build in start-bot.sh (architect C2)
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T19+T20 done — FastAPI переведён на FileResponse + StaticFiles dist/ (architect C1+C4). Vanilla static/templates архивированы в src/dashboard_legacy/.
+**Текущий статус:** T21 done — CI Node.js/npm/TypeScript build/Playwright steps добавлены в ci.yml; React build step добавлен в start-bot.sh; .gitignore обновлён; index.html title исправлен. Architect C2 binding condition выполнен.
 
-**Следующее действие:** T21: CI/CD + start-bot.sh updates (architect C2 binding)
+**Следующее действие:** T18: Playwright E2E tests (re-ordered после T21 — requires running stack + test specs)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -102,9 +102,10 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T15: HistoryTab (9-col verdict-colored runs table) + DocumentationTab (indicator/strategy/methodology cards) | DONE | 46bfb63, 23115b6 |
 | T16: WfaFailBadge — inline pill badge WFA_FAIL/WFA_FAIL_DATA/FAIL (red/amber) + HistoryTab wiring | DONE | 18959dd |
 | T17: WfaFailBanner — ack-gated NON-dismissible banner (full/chip modes) + App.tsx mount above tabs | DONE | 48f7665 |
-| T18: Playwright E2E tests (backtest-flow + wfa-fail-ack) | SKIPPED | — |
+| T18: Playwright E2E tests (backtest-flow + wfa-fail-ack) | PENDING | — |
 | T19: FastAPI FileResponse integration — app.py → FileResponse(dist/index.html) + StaticFiles /assets/ | DONE | 729a135 |
 | T20: Archive vanilla dashboard → src/dashboard_legacy/ (static + templates) | DONE | 3a0eb97 |
+| T21: CI/CD + start-bot.sh — Node.js setup + React build step + Playwright (architect C2) | DONE | 1992662 |
 
 ---
 
