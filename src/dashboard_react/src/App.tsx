@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ConfigureBacktest } from './components/ConfigureBacktest'
+import { VerdictPanel } from './components/VerdictPanel'
 import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
@@ -56,15 +57,7 @@ export function App() {
         {activeTab === 'backtest' && (
           <>
             <ConfigureBacktest onResult={setResult} />
-            {result && (
-              <div className={styles.placeholder} style={{ marginTop: '1.5rem' }}>
-                <h2>Result placeholder</h2>
-                <p>VerdictPanel + EquityChart + tables coming in T7-T15</p>
-                <pre style={{ textAlign: 'left', marginTop: '1rem', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                  {JSON.stringify({ verdict: result.verdict, n_trades: result.n_trades, sharpe: result.sharpe }, null, 2)}
-                </pre>
-              </div>
-            )}
+            {result && <VerdictPanel result={result} />}
           </>
         )}
         {activeTab === 'documentation' && (

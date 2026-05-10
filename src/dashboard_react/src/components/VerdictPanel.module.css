@@ -1,0 +1,180 @@
+/* VerdictPanel — three-valued WFA verdict with Anthropic + cyberpunk palette */
+/* ADR 0040 amendment: no terminal-green; use cyberpunk neon palette */
+
+.container {
+  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Verdict block ── */
+
+.verdictBlock {
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-premium);
+}
+
+.verdictLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-anthropic-orange);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.verdictValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  margin-bottom: var(--space-4);
+}
+
+/* Verdict color variants — cyberpunk neon palette */
+
+.verdictPass {
+  color: var(--color-success);
+  text-shadow:
+    0 0 12px rgba(0, 255, 136, 0.70),
+    0 0 30px rgba(0, 255, 136, 0.35);
+}
+
+.verdictRaw {
+  color: var(--color-anthropic-orange);
+  text-shadow:
+    0 0 12px rgba(204, 120, 92, 0.65),
+    0 0 30px rgba(204, 120, 92, 0.30);
+}
+
+.verdictFailData {
+  color: var(--color-warn);
+  text-shadow:
+    0 0 12px rgba(204, 120, 92, 0.65),
+    0 0 30px rgba(204, 120, 92, 0.30);
+}
+
+.verdictFail {
+  color: var(--color-danger);
+  text-shadow:
+    0 0 12px rgba(255, 51, 102, 0.70),
+    0 0 30px rgba(255, 51, 102, 0.35);
+}
+
+/* ── Failed criteria chips ── */
+
+.failedRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.failedLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  border: 1px solid rgba(255, 51, 102, 0.55);
+  border-radius: var(--radius-sm);
+  padding: 0.15em 0.5em;
+  letter-spacing: 0.06em;
+  background: rgba(255, 51, 102, 0.06);
+}
+
+/* ── Warnings panel ── */
+
+.warningsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.warningsTitle {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.warningRow {
+  display: grid;
+  grid-template-columns: 1.5rem 9rem 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-glass);
+  border: 1px solid transparent;
+  backdrop-filter: blur(8px);
+  font-size: var(--text-sm);
+}
+
+/* Warning level color variants */
+
+.warnHigh {
+  border-color: rgba(255, 51, 102, 0.35);
+  background: rgba(255, 51, 102, 0.06);
+}
+
+.warnHigh .warnIcon,
+.warnHigh .warnCode {
+  color: var(--color-danger);
+}
+
+.warnMid {
+  border-color: rgba(204, 120, 92, 0.35);
+  background: rgba(204, 120, 92, 0.06);
+}
+
+.warnMid .warnIcon,
+.warnMid .warnCode {
+  color: var(--color-warn);
+}
+
+.warnInfo {
+  border-color: rgba(0, 212, 255, 0.25);
+  background: rgba(0, 212, 255, 0.04);
+}
+
+.warnInfo .warnIcon,
+.warnInfo .warnCode {
+  color: var(--color-info);
+}
+
+.warnIcon {
+  font-size: var(--text-base);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.warnCode {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.warnMessage {
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
