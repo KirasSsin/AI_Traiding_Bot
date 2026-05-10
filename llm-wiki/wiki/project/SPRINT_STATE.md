@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T7 done — template: strategy description block + equity chart panel + uPlot
+updated: 2026-05-10  # S43 T8+T9+T10 done — JS optgroup dropdown + description block + uPlot equity chart
 sprint: 43
 phase: 4-execution
 branch: feature/sprint-43-ui-polish
@@ -18,13 +18,14 @@ branch: feature/sprint-43-ui-polish
 | T1: Rename preset labels + add description + optgroup to STRATEGY_PRESETS | DONE | def07e4 |
 | T2: Expose description + optgroup via /api/strategies + /api/strategy/{id}/info | DONE | 27d57af |
 | T3: Frontend optgroup `<select>` grouping | pending | — |
+| T8: JS T8+T9+T10 — optgroup dropdown + description block + uPlot equity chart | DONE | 5f5bc79 |
 | T3 (equity_curve): envelope adds equity_curve parallel arrays для uPlot | DONE | 6baba47 |
 | T4 (equity_timestamps): atr_breakout_runner passes df timestamps to envelope | DONE | d926cd8 |
 | T5 (equity_timestamps): volume_breakout_runner passes df timestamps to envelope | DONE | 0dceae0 |
 | T6: Vendor uPlot (uPlot.iife.min.js + uPlot.min.css) в static/vendor/ | DONE | — |
 | T7: Template — strategy description block + equity chart panel + uPlot script | DONE | dfd8500 |
 
-**Текущий статус:** T7 done. Следующее действие: T8 — JS wiring (strategy description display + uPlot equity chart render).
+**Текущий статус:** T8+T9+T10 done. Следующее действие: T11.
 
 ---
 
