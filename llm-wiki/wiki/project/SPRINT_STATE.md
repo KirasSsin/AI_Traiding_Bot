@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T1 done — uniform 3.3y data, phase=4-execution
+updated: 2026-05-10  # S45 T2 done — ADR 0060 amendment 3.3y baseline, phase=4-execution
 sprint: 45
 phase: 4-execution
 branch: feature/sprint-45-wfa-recalibration
@@ -16,12 +16,12 @@ branch: feature/sprint-45-wfa-recalibration
 | Task | Status | Commit |
 |------|--------|--------|
 | T1: Uniform 3.3y data — PARQUET_BY_COMBO BTC 4H → 3.3y file, archive 8.7y binance | DONE | d2612cc |
-| T2: ADR 0060/0061 amendments — update locked baselines to 3.3y | TODO | — |
+| T2: ADR 0060/0061 amendments — update locked baselines to 3.3y | DONE | 91b9b2d |
 | T3: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
 
-**Текущий статус:** T1 done. BTC 4H PnL: +819.81% (8.7y) → +174.29% (3.3y). Tests GREEN (35 passed). T2 next.
+**Текущий статус:** T2 done. ADR 0060 amended с 3.3y baseline (+174.29%, Sharpe 1.94, 28 trades). T3 next.
 
-**Следующее действие:** T2 — amend ADR 0060 + ADR 0061 с новыми 3.3y baselines.
+**Следующее действие:** T3 — WFA recalibration run — 10 combos с uniform 3.3y window.
 
 ---
 
