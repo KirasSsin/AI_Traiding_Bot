@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// Storage key matches useWfaFailAck hook constant
-const STORAGE_KEY = 'wfa_fail_ack_v1';
-
 test.describe('WFA fail ack-gate', () => {
   test('banner shows on first visit, persists through reload, downgrades after ack', async ({ page, context }) => {
     // Clear localStorage to simulate first-visit state
