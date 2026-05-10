@@ -199,6 +199,19 @@ def run_research_wfa(
         cross_trial_log_path = Path("data/cross_trial_sharpes.json")
     trial_log = CrossTrialLog(path=cross_trial_log_path)
     pre_existing = trial_log.get_oos_sharpes()
+
+    # S44 T9 — append к cross-trial log (skip if no valid sharpe)
+    if not math.isnan(trial_mean_fold_oos_sharpe):
+        try:
+            sprint_int = int("".join(filter(str.isdigit, sprint_tag)) or "0")
+            trial_log.append_trial(
+                sprint=sprint_int,
+                symbol=f"{symbol}_{params.get('atr_period', '?')}_{params.get('atr_breakout_mult', '?')}",
+                oos_sharpe=trial_mean_fold_oos_sharpe,
+            )
+        except Exception:
+            # Don't break dashboard if log write fails
+            pass
     cross_trial_sharpes = pre_existing + [trial_mean_fold_oos_sharpe]
     if len(cross_trial_sharpes) >= 3 and not math.isnan(trial_mean_fold_oos_sharpe):
         sigma_sr: float | None = statistics.stdev(cross_trial_sharpes)
