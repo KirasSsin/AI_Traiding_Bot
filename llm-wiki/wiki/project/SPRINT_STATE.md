@@ -1,10 +1,70 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T12 done — wiki sync complete, phase=8-ship
-sprint: 43
+updated: 2026-05-10  # S44 T10+T11+T12 done — wiki sync complete, phase=8-ship
+sprint: 44
 phase: 8-ship
-branch: feature/sprint-43-ui-polish
+branch: feature/sprint-44-wfa-retrofit
+---
+
+## S44 PHASE 4-EXECUTION — WFA retrofit для research presets (atr_breakout + volume_breakout)
+
+**Branch:** feature/sprint-44-wfa-retrofit
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: `src/backtest/research_wfa.py` shared helper — WindowSplitter + per-fold backtest_fn + DSR + MC + acceptance gate | DONE | d1f20b6 |
+| T2: Wire `atr_breakout_runner` к research_wfa (10 combos) | DONE | 3e8532b |
+| T3: Wire `volume_breakout_runner` к research_wfa (1 combo) | DONE | e6d25c9 |
+| T4: `build_research_runner_envelope()` accepts `wfa_result: dict | None` kwarg — populates WFA fields when present, RAW sentinels when None | DONE | 59095c7 |
+| T5: `backtest_runner.py` dispatch — atr_breakout + volume_breakout call `_run_*_wfa()` first, fall back to RAW on ValueError/FileNotFoundError, rebuild envelope with wfa_result | DONE | 6d051a5 |
+| T6: Dashboard contract tests verify WFA verdict (not RAW) — BTC 4H returns WFA_PASS/WFA_FAIL/WFA_FAIL_DATA; BTC 1D → WFA_FAIL_DATA | DONE | 6d051a5 |
+| T7+T8: JS verdict class mapping WFA_PASS/WFA_FAIL/WFA_FAIL_DATA + amber `.verdict-fail-data` CSS | DONE | f14870b |
+| T9: CrossTrialLog wired к research_wfa + 11 combos run + verdict table captured | DONE | d468854 |
+| T10: Preset descriptions updated с S44 WFA verdicts (atr_breakout + volume_breakout_iter10) | DONE | — |
+| T11: ADR 0064 created | DONE | — |
+| T12: Wiki sync — sprint-44 page + current-state + index + log + SPRINT_STATE phase=8-ship | DONE | — |
+
+**Текущий статус:** T10+T11+T12 done. Wiki sync complete. Phase=8-ship. Next: tag v0.1.0-alpha.44 + PR merge.
+
+**Следующее действие:** PHASE 8 ship — tag v0.1.0-alpha.44 + PR + merge.
+
+### S44 actual verdicts (T9 run — input for T11 ADR 0064)
+
+```
+strategy                  sym      tf   verdict        DSR        MC_p     n_trades failed
+----------------------------------------------------------------------------------------------------
+atr_breakout              BTCUSDT  15   WFA_FAIL       nan        0.9885   9        n_eff_threshold,t5_floor,sharp
+atr_breakout              BTCUSDT  60   WFA_FAIL       0.1274     0.0220   16       n_eff_threshold,t5_floor,sharp
+atr_breakout              BTCUSDT  240  WFA_FAIL       0.0000     0.6687   10       n_eff_threshold,t5_floor,sharp
+atr_breakout              BTCUSDT  D    WFA_FAIL_DATA  nan        nan      0        data_volume
+atr_breakout              ETHUSDT  15   WFA_FAIL       nan        0.4188   7        n_eff_threshold,t5_floor,sharp
+atr_breakout              ETHUSDT  60   WFA_FAIL       0.0000     0.4088   14       n_eff_threshold,t5_floor,sharp
+atr_breakout              ETHUSDT  240  WFA_FAIL       nan        0.3498   6        n_eff_threshold,t5_floor,sharp
+atr_breakout              SOLUSDT  15   WFA_FAIL       nan        0.9630   7        n_eff_threshold,t5_floor,sharp
+atr_breakout              SOLUSDT  60   WFA_FAIL       0.0000     0.5597   15       n_eff_threshold,t5_floor,sharp
+atr_breakout              SOLUSDT  240  WFA_FAIL       0.0000     0.0525   20       n_eff_threshold,t5_floor,sharp
+volume_breakout_iter10    BTCUSDT  240  WFA_FAIL       0.0000     0.1994   38       n_eff_threshold,t5_floor,sharp
+```
+
+Cross-trial log: 10 trials appended (sprint=44). All combos WFA_FAIL (trade count too low for n_eff/t5 thresholds). BTCUSDT 1D → WFA_FAIL_DATA (data_volume insufficient). Note: dashboard presets use best autoresearch params per combo — params vary (atr_period 9/14/21, atr_breakout_mult 1.5/2.0/2.5/3.0).
+
+### Phase tracking
+
+| Phase | Status |
+|-------|--------|
+| 1-orient | done |
+| 2-brainstorm | done |
+| 3-plan | done |
+| 4-execution | done (T1-T12 all done) |
+| 5-verify | done |
+| 6-review | done |
+| 7-sync | done |
+| 8-ship | in_progress |
+| 9-close | pending |
+
 ---
 
 ## S43 PHASE 8-SHIP — UI polish (preset rename + descriptions + equity chart)

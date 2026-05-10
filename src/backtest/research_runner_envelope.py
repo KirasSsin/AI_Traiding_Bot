@@ -47,6 +47,7 @@ def build_research_runner_envelope(
     end: str = "",
     extra_warnings: list[dict[str, str]] | None = None,
     equity_timestamps: list[int] | None = None,
+    wfa_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build dashboard-contract envelope от research runner outputs.
 
@@ -95,6 +96,43 @@ def build_research_runner_envelope(
     if extra_warnings:
         warnings.extend(extra_warnings)
 
+    # S44 T4 — strip raw_full_period warning if WFA was actually run
+    if wfa_result is not None:
+        warnings = [w for w in warnings if w.get("code") != "raw_full_period"]
+
+    # S44 T4 — populate from wfa_result when present, else null sentinels (S42 RAW behavior)
+    if wfa_result is not None:
+        verdict_val = wfa_result.get("verdict", "RAW")
+        failed_criteria_val = wfa_result.get("failed_criteria", [])
+        acceptance_gate_val = wfa_result.get("verdict")
+        dsr_val = wfa_result.get("dsr")
+        dsr_pass_val = wfa_result.get("dsr_pass")
+        mc_p_val = wfa_result.get("mc_p_value")
+        metrics_val = wfa_result.get("metrics", {})
+        wfa_params_val = wfa_result.get("wfa_params")
+        wfa_total_bars_val = (
+            wfa_result.get("wfa_params", {}).get("actual", 0) if wfa_result.get("wfa_params") else 0
+        )
+        fold_sharpes_val = wfa_result.get("fold_sharpe_ratios", [])
+        n_trades_val = wfa_result.get("n_trades_raw", n_trades)
+    else:
+        verdict_val = "RAW"
+        failed_criteria_val = []
+        acceptance_gate_val = None
+        dsr_val = None
+        dsr_pass_val = None
+        mc_p_val = None
+        metrics_val = {
+            "sharpe": sharpe,
+            "win_rate": win_rate,
+            "total_pnl_pct": total_pnl_pct,
+            "n_trades": n_trades,
+        }
+        wfa_params_val = None
+        wfa_total_bars_val = 0
+        fold_sharpes_val = []
+        n_trades_val = n_trades
+
     return {
         # S43 T3 — equity_curve parallel arrays для uPlot native API
         "equity_curve": {
@@ -103,25 +141,20 @@ def build_research_runner_envelope(
         },
         "bars_per_year": bars_per_year,
         "warnings": warnings,
-        "failed_criteria": [],
-        "verdict": "RAW",
-        "acceptance_gate": None,
-        "dsr": None,
-        "dsr_pass": None,
-        "mc_p_value": None,
-        "metrics": {
-            "sharpe": sharpe,
-            "win_rate": win_rate,
-            "total_pnl_pct": total_pnl_pct,
-            "n_trades": n_trades,
-        },
+        "failed_criteria": failed_criteria_val,
+        "verdict": verdict_val,
+        "acceptance_gate": acceptance_gate_val,
+        "dsr": dsr_val,
+        "dsr_pass": dsr_pass_val,
+        "mc_p_value": mc_p_val,
+        "metrics": metrics_val,
         "trade_stats": {
             "n_trades": n_trades,
             "win_rate": win_rate,
         },
-        "wfa_params": None,
-        "wfa_total_bars": 0,
-        "fold_sharpe_ratios": [],
+        "wfa_params": wfa_params_val,
+        "wfa_total_bars": wfa_total_bars_val,
+        "fold_sharpe_ratios": fold_sharpes_val,
         "failed_folds": [],
         "trades_dump": [],
         "request": {
@@ -133,7 +166,7 @@ def build_research_runner_envelope(
             "start": start,
             "end": end,
         },
-        "n_trades": n_trades,
+        "n_trades": n_trades_val,
         "sharpe": sharpe,
         "win_rate": win_rate,
         "total_pnl_pct": total_pnl_pct,

@@ -317,3 +317,66 @@ def run_volume_breakout_backtest(
         start=start_date.isoformat(),
         end=end_date.isoformat(),
     )
+
+
+def _run_volume_breakout_wfa(
+    *,
+    symbol: str,
+    interval: str,
+    start_date: date,
+    end_date: date,
+    train_bars: int = 2000,
+    test_bars: int = 500,
+    k_folds: int = 5,
+    embargo_bars: int = 20,
+) -> dict[str, Any]:
+    """S44 T3 — WFA for volume_breakout with LOCKED params (S39 sweep #1644).
+
+    Adapter wraps _backtest_single (df, params) signature to match
+    BacktestFn (df, params, bars_per_year) for shared research_wfa helper.
+    """
+    from src.__main__ import _load_ohlcv
+    from src.backtest.research_wfa import run_research_wfa
+    from src.signalgen.volume_breakout_strategy import VOLUME_BREAKOUT_LOCKED_PARAMS
+
+    df = _load_ohlcv(
+        symbol=symbol,
+        start=start_date.isoformat(),
+        end=end_date.isoformat(),
+        interval=interval,
+    )
+    if df.empty:
+        raise ValueError(f"No OHLCV for {symbol} {interval}")
+
+    params: dict[str, Any] = {
+        "lookback_n": int(VOLUME_BREAKOUT_LOCKED_PARAMS["lookback_n"]),  # type: ignore[call-overload]
+        "exit_lookback_n": int(VOLUME_BREAKOUT_LOCKED_PARAMS["exit_lookback_n"]),  # type: ignore[call-overload]
+        "vol_window": int(VOLUME_BREAKOUT_LOCKED_PARAMS["vol_window"]),  # type: ignore[call-overload]
+        "vol_mult": float(VOLUME_BREAKOUT_LOCKED_PARAMS["vol_mult"]),  # type: ignore[arg-type]
+        "atr_period": int(VOLUME_BREAKOUT_LOCKED_PARAMS["atr_period"]),  # type: ignore[call-overload]
+        "atr_stop_mult": float(VOLUME_BREAKOUT_LOCKED_PARAMS["atr_stop_mult"]),  # type: ignore[arg-type]
+    }
+    bars_per_year = {"5": 105192, "15": 35064, "60": 8766, "240": 2191, "D": 365}.get(
+        interval, 2191
+    )
+
+    # Adapter: _backtest_single(df, params) -> BacktestFn(df, params, bars_per_year)
+    def _backtest_adapter(
+        fold_df: pd.DataFrame,
+        p: dict[str, Any],
+        _bpy: int,
+    ) -> dict[str, Any]:
+        return _backtest_single(fold_df, p)
+
+    return run_research_wfa(
+        df=df,
+        params=params,
+        backtest_fn=_backtest_adapter,
+        bars_per_year=bars_per_year,
+        symbol=symbol,
+        train_bars=train_bars,
+        test_bars=test_bars,
+        k_folds=k_folds,
+        embargo_bars=embargo_bars,
+        sprint_tag="S44",
+    )

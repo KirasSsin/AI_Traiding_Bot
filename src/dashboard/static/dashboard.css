@@ -946,3 +946,10 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .uplot .u-legend {
   display: none;
 }
+
+/* ─────────────────────────────────────────────────
+   S44 T8 — WFA_FAIL_DATA distinct color
+   ───────────────────────────────────────────────── */
+.verdict-fail-data {
+  color: #f0a000;  /* amber, distinct от red FAIL */
+}

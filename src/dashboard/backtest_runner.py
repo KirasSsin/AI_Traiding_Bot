@@ -124,7 +124,10 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "<p><strong>Выход:</strong> close < min(low, exit_lookback=8) либо ATR(9) × 2.97 stop.</p>"
             "<p><strong>Подходит для:</strong> BTCUSDT 4H, начала тренда с институциональным объёмом. "
             "LOCKED params (autoresearch sweep #1644). Только эта пара/TF.</p>"
-            "<p><strong>Вердикт S39:</strong> 3.3y +122.66% / 8mo held-out +20.42%. RAW (WFA pending S44).</p>"
+            "<p><strong>Вердикт S44 (WFA retrofit):</strong> "
+            "WFA_FAIL под default gates (n=38 trades в OOS < 50 floor; DSR=0.00; MC p=0.20). "
+            "Pre-S44 +122.66% RAW headline не survives WFA OOS validation. "
+            "См. ADR 0064.</p>"
         ),
         "sprint": "S39",
         "verdict": "PASS held-out 8mo Sharpe=+9.96 PnL=+20.42% / 3.3y +122.66%; Gate 2 forward N≥10 PENDING",
@@ -156,7 +159,11 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "<p><strong>Подходит для:</strong> 10 (symbol, timeframe) комбинаций — каждая с независимыми LOCKED "
             "параметрами от autoresearch endless. Лучший: BTCUSDT 4H +819.81% за 8.7 года, 5/5 "
             "положительных под-периодов.</p>"
-            "<p><strong>Вердикт S40+S41:</strong> RAW per combo (WFA pending S44). Pre-registered LOCKED params.</p>"
+            "<p><strong>Вердикт S44 (WFA retrofit):</strong> "
+            "ВСЕ 10 комбинаций WFA_FAIL под default WFA gates (n≥50 floor по T5). "
+            "Корень: low trade frequency в OOS windows (5-20 trades vs 50 floor). "
+            "Pre-S44 RAW verdict (+819% headline) hid OOS validation failure. "
+            "См. ADR 0064 для full per-combo table. BTCUSDT 1D = WFA_FAIL_DATA (1212 bars < 4520 default min).</p>"
         ),
         "sprint": "S42",
         "verdict": "RAW (acceptance gate skipped — WFA retrofit pending S43)",
@@ -749,14 +756,50 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
     if preset.get("type") == "volume_breakout":
         from datetime import date as _date
 
-        from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
+        from src.backtest.research_runner_envelope import build_research_runner_envelope
+        from src.backtest.volume_breakout_runner import (
+            _run_volume_breakout_wfa,
+            run_volume_breakout_backtest,
+        )
 
-        vb_envelope = run_volume_breakout_backtest(
+        # S44 T5 — try WFA first; fall back to RAW envelope on data limit OR ValueError
+        wfa_result: dict[str, Any] | None = None
+        try:
+            wfa_result = _run_volume_breakout_wfa(
+                symbol=req.symbol,
+                interval=req.interval,
+                start_date=_date.fromisoformat(req.start),
+                end_date=_date.fromisoformat(req.end),
+            )
+        except (ValueError, FileNotFoundError):
+            wfa_result = None
+
+        # Always also run full-period replay for equity_curve + headline metrics
+        vb_raw = run_volume_breakout_backtest(
             symbol=req.symbol,
             interval=req.interval,
             start_date=_date.fromisoformat(req.start),
             end_date=_date.fromisoformat(req.end),
         )
+
+        # Build envelope with wfa_result merged
+        vb_envelope = build_research_runner_envelope(
+            runner_name="volume_breakout_runner",
+            symbol=req.symbol,
+            interval=req.interval,
+            n_trades=int(vb_raw.get("n_trades", 0)),
+            sharpe=float(vb_raw.get("sharpe", 0.0)),
+            win_rate=float(vb_raw.get("win_rate", 0.0)),
+            total_pnl_pct=float(vb_raw.get("total_pnl_pct", 0.0)),
+            bars_per_year=int(vb_raw.get("bars_per_year", 2191)),
+            equity_curve=vb_raw.get("equity_curve", {}).get("equity_pct", []),
+            equity_timestamps=vb_raw.get("equity_curve", {}).get("timestamps", []),
+            runner_label=f"Volume breakout {req.interval} {req.symbol} (LOCKED — S39)",
+            start=req.start,
+            end=req.end,
+            wfa_result=wfa_result,
+        )
+
         _RUNS_DIR.mkdir(parents=True, exist_ok=True)
         cache_path = _RUNS_DIR / f"{run_id}.json"
 
@@ -777,23 +820,58 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         return result_vb
 
     # S42 T4 — atr_breakout dispatch: envelope merge from runner.
-    # Runner returns 17-key envelope (per T2). Dispatch overlays run_id + cached + request.
+    # S44 T5 — WFA retrofit: try WFA first; fall back to RAW envelope on data limit OR ValueError.
     # Per-combo params resolved server-side от ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)].
     if preset.get("type") == "atr_breakout":
         from datetime import date as _date
 
-        from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
+        from src.backtest.atr_breakout_runner import (
+            _run_atr_breakout_wfa,
+            run_atr_breakout_backtest,
+        )
+        from src.backtest.research_runner_envelope import build_research_runner_envelope
 
-        # Server-side params lookup (consolidated preset has no per-preset indicators).
+        # S44 T5 — try WFA first; fall back to RAW envelope on data limit OR ValueError
+        wfa_result_ab: dict[str, Any] | None = None
+        try:
+            wfa_result_ab = _run_atr_breakout_wfa(
+                symbol=req.symbol,
+                interval=req.interval,
+                start_date=_date.fromisoformat(req.start),
+                end_date=_date.fromisoformat(req.end),
+            )
+        except (ValueError, FileNotFoundError):
+            wfa_result_ab = None
+
+        # Always also run full-period replay for equity_curve + headline metrics.
         # Pass params=None — runner falls back к ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)].
         # If combo not in locked dict, runner raises ValueError (caught by run_backtest caller).
-        ab_envelope = run_atr_breakout_backtest(
+        ab_raw = run_atr_breakout_backtest(
             symbol=req.symbol,
             interval=req.interval,
             start_date=_date.fromisoformat(req.start),
             end_date=_date.fromisoformat(req.end),
             params=None,
         )
+
+        # Build envelope with wfa_result merged
+        ab_envelope = build_research_runner_envelope(
+            runner_name="atr_breakout_runner",
+            symbol=req.symbol,
+            interval=req.interval,
+            n_trades=int(ab_raw.get("n_trades", 0)),
+            sharpe=float(ab_raw.get("sharpe", 0.0)),
+            win_rate=float(ab_raw.get("win_rate", 0.0)),
+            total_pnl_pct=float(ab_raw.get("total_pnl_pct", 0.0)),
+            bars_per_year=int(ab_raw.get("bars_per_year", 2191)),
+            equity_curve=ab_raw.get("equity_curve", {}).get("equity_pct", []),
+            equity_timestamps=ab_raw.get("equity_curve", {}).get("timestamps", []),
+            runner_label=f"ATR breakout {req.interval} {req.symbol} (LOCKED)",
+            start=req.start,
+            end=req.end,
+            wfa_result=wfa_result_ab,
+        )
+
         _RUNS_DIR.mkdir(parents=True, exist_ok=True)
         cache_path = _RUNS_DIR / f"{run_id}.json"
 

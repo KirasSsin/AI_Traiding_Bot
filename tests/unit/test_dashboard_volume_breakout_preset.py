@@ -50,4 +50,5 @@ def test_volume_breakout_preset_label_indicates_locked() -> None:
     description = preset["description"]
     assert "LOCKED" in description
     assert "BTCUSDT" in description or "BTC" in description
-    assert "S39" in description
+    # S44 — verdict updated к WFA retrofit; sprint sourcing in preset.sprint field, not description
+    assert "S44" in description or "1644" in description

@@ -207,3 +207,109 @@ def test_envelope_equity_timestamps_optional_keyword() -> None:
     )
     assert payload["equity_curve"]["equity_pct"] == [0.0, 5.0, 10.0]
     assert payload["equity_curve"]["timestamps"] == []
+
+
+def test_envelope_with_wfa_result_populates_fields() -> None:
+    """S44 T4 — when wfa_result passed, envelope uses WFA values, not null sentinels."""
+    wfa = {
+        "verdict": "WFA_PASS",
+        "failed_criteria": [],
+        "fold_sharpe_ratios": [1.2, 1.5, 0.9, 1.1, 1.4],
+        "trial_mean_fold_oos_sharpe": 1.22,
+        "mc_p_value": 0.02,
+        "dsr": 0.97,
+        "dsr_pass": True,
+        "n_trades_raw": 80,
+        "wfa_params": {
+            "train_bars": 2000,
+            "test_bars": 500,
+            "k_folds": 5,
+            "embargo_bars": 20,
+            "min_required": 4520,
+            "actual": 5000,
+        },
+        "metrics": {"t1_sharpe_oos": 1.22, "t5_n_trades": 80},
+        "trades": [],
+    }
+    payload = build_research_runner_envelope(
+        runner_name="x",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=80,
+        sharpe=1.22,
+        win_rate=0.55,
+        total_pnl_pct=200.0,
+        bars_per_year=2191,
+        equity_curve=[0.0, 200.0],
+        runner_label="x",
+        wfa_result=wfa,
+    )
+    assert payload["verdict"] == "WFA_PASS"
+    assert payload["dsr"] == 0.97
+    assert payload["dsr_pass"] is True
+    assert payload["mc_p_value"] == 0.02
+    assert payload["fold_sharpe_ratios"] == [1.2, 1.5, 0.9, 1.1, 1.4]
+    assert payload["wfa_params"]["k_folds"] == 5
+    assert payload["wfa_total_bars"] == 5000
+    assert payload["acceptance_gate"] == "WFA_PASS"
+    assert payload["failed_criteria"] == []
+
+
+def test_envelope_without_wfa_result_returns_raw_sentinels() -> None:
+    """Backward compat: when wfa_result=None, envelope returns RAW sentinels (S42 behavior)."""
+    payload = build_research_runner_envelope(
+        runner_name="x",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=10,
+        sharpe=1.0,
+        win_rate=0.5,
+        total_pnl_pct=100.0,
+        bars_per_year=2191,
+        equity_curve=[0.0, 100.0],
+        runner_label="x",
+    )
+    assert payload["verdict"] == "RAW"
+    assert payload["dsr"] is None
+    assert payload["acceptance_gate"] is None
+    # raw_full_period warning still present (no WFA was run)
+    assert any(w["code"] == "raw_full_period" for w in payload["warnings"])
+
+
+def test_envelope_with_wfa_result_strips_raw_full_period_warning() -> None:
+    """When WFA was actually run, raw_full_period warning is dropped (acceptance discipline applied)."""
+    wfa = {
+        "verdict": "WFA_FAIL",
+        "failed_criteria": ["t5_floor"],
+        "fold_sharpe_ratios": [0.0, 0.5],
+        "trial_mean_fold_oos_sharpe": 0.25,
+        "mc_p_value": 0.5,
+        "dsr": 0.0,
+        "dsr_pass": False,
+        "n_trades_raw": 5,
+        "wfa_params": {
+            "train_bars": 2000,
+            "test_bars": 500,
+            "k_folds": 5,
+            "embargo_bars": 20,
+            "min_required": 4520,
+            "actual": 5000,
+        },
+        "metrics": {},
+        "trades": [],
+    }
+    payload = build_research_runner_envelope(
+        runner_name="x",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=5,
+        sharpe=0.5,
+        win_rate=0.4,
+        total_pnl_pct=10.0,
+        bars_per_year=2191,
+        equity_curve=[0.0, 10.0],
+        runner_label="x",
+        wfa_result=wfa,
+    )
+    # raw_full_period warning dropped — WFA discipline applied
+    assert not any(w["code"] == "raw_full_period" for w in payload["warnings"])

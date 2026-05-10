@@ -393,7 +393,13 @@ function renderResult(r) {
   `;
 
   const verdict = r.verdict ?? "—";
-  const verdictCls = verdict === "PASS" ? "verdict-pass" : (verdict === "RAW" ? "verdict-raw" : "verdict-fail");
+  // S44 T8 — three-valued WFA verdicts + WFA_FAIL_DATA distinct amber color
+  const verdictCls = (
+    verdict === "PASS" || verdict === "WFA_PASS" ? "verdict-pass"
+    : verdict === "RAW" ? "verdict-raw"
+    : verdict === "WFA_FAIL_DATA" ? "verdict-fail-data"
+    : "verdict-fail"
+  );
   const failedCriteria = r.failed_criteria ?? [];
   const failedHtml = failedCriteria.length
     ? `<div class="verdict-failed-list">FAILED CRITERIA: ${failedCriteria.map((c) => `<span class="chip">${c.toUpperCase()}</span>`).join(" ")}</div>`
@@ -526,7 +532,13 @@ async function loadHistory() {
     const req = r.request || {};
     const m = r.metrics || {};
     const isRaw = r.verdict === "RAW";
-    const verdictCls = r.verdict === "PASS" ? "metric-pass" : (isRaw ? "verdict-raw" : "metric-fail");
+    // S44 T8 — WFA verdicts mapping for dashboard table
+    const verdictCls = (
+      r.verdict === "PASS" || r.verdict === "WFA_PASS" ? "metric-pass"
+      : isRaw ? "verdict-raw"
+      : r.verdict === "WFA_FAIL_DATA" ? "verdict-fail-data"
+      : "metric-fail"
+    );
     // S42.3 — RAW mode: show envelope's actual sharpe/n_trades/total_pnl_pct (envelope keys)
     // Legacy WFA: show t1_sharpe_oos/t5_n_trades/dsr/mc_p_value
     const sharpeCell = isRaw ? fmt(m.sharpe ?? r.sharpe, 2) : fmt(m.t1_sharpe_oos, 2);

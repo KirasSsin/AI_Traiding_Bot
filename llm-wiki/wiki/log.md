@@ -2623,3 +2623,15 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **ADRs:** 62 → **63** / **Sprint pages:** 46 → **47**
 - **Tag:** v0.1.0-alpha.43
 - **Carry к S44:** WFA retrofit (atr_breakout + volume_breakout PnL accounting fix + DSR + MC + T1-T6 acceptance gate). Drawdown chart + per-trade markers + monthly heatmap deferred.
+
+## [2026-05-10] sprint-end | S44 — WFA retrofit (research presets acceptance gate restoration)
+
+- **Sprint:** S44 — feature/sprint-44-wfa-retrofit → main
+- **ADR:** ADR 0064
+- **Tasks done (12):** T1 research_wfa helper / T2 _run_atr_breakout_wfa / T3 _run_volume_breakout_wfa / T4 envelope wfa_result keyword / T5 dispatch WFA path / T6 contract tests / T7 JS verdict mapping / T8 WFA_FAIL_DATA color / T9 CrossTrialLog wiring + 11 trials run / T10 preset descriptions update / T11 ADR 0064 / T12 wiki sync
+- **Honest verdict:** ALL 11 combos WFA_FAIL (10 statistical + 1 data-limited). Pre-S44 RAW (+819% headline) hid OOS validation failure.
+- **Tests:** ~970 unit (+14) / ~58 integration (+4) / mypy 0
+- **Canonical counts:** 16/30/74/56 (UNCHANGED)
+- **ADRs:** 63 → **64** / **Sprint pages:** 47 → **48**
+- **Tag:** v0.1.0-alpha.44
+- **Carry к S45:** UI deferrals (drawdown/markers/heatmap), WFA params recalibration для low-frequency strategies, new strategy hypothesis development
