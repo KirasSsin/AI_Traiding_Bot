@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T2 done — /api/strategies + /api/strategy/{id}/info expose description + optgroup
+updated: 2026-05-10  # S43 equity_curve T3 done — envelope adds equity_curve parallel arrays для uPlot
 sprint: 43
 phase: 4-execution
 branch: feature/sprint-43-ui-polish
@@ -18,8 +18,9 @@ branch: feature/sprint-43-ui-polish
 | T1: Rename preset labels + add description + optgroup to STRATEGY_PRESETS | DONE | def07e4 |
 | T2: Expose description + optgroup via /api/strategies + /api/strategy/{id}/info | DONE | 27d57af |
 | T3: Frontend optgroup `<select>` grouping | pending | — |
+| T3 (equity_curve): envelope adds equity_curve parallel arrays для uPlot | DONE | 6baba47 |
 
-**Текущий статус:** T2 done. Следующее действие: T3 — frontend optgroup grouping в dashboard HTML/JS.
+**Текущий статус:** equity_curve T3 done. Следующее действие: T4 — populate timestamps from runners; frontend optgroup T3 pending.
 
 ---
 
