@@ -378,5 +378,6 @@ def _run_volume_breakout_wfa(
         test_bars=test_bars,
         k_folds=k_folds,
         embargo_bars=embargo_bars,
+        n_trials=1,  # S45 C1 — volume_breakout single hypothesis
         sprint_tag="S44",
     )

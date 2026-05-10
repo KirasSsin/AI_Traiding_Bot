@@ -73,7 +73,7 @@ def run_research_wfa(
     test_bars: int,
     k_folds: int,
     embargo_bars: int,
-    n_trials: int = 11,
+    n_trials: int = 1,  # S45 C1 — fail-safe default. Multi-hypothesis callers must explicit pass.
     cross_trial_log_path: Path | None = None,
     sprint_tag: str = "S44",
 ) -> dict[str, Any]:
@@ -87,7 +87,17 @@ def run_research_wfa(
         bars_per_year: annualization constant (e.g. 8766 for 1H, 2190 for 4H).
         symbol: trading symbol (для error messages).
         train_bars/test_bars/k_folds/embargo_bars: WindowSplitter params (ADR 0014).
-        n_trials: для DSR multiple-testing penalty (default 11 = autoresearch panel).
+        n_trials: для DSR multiple-testing penalty (default 1 = fail-safe; explicit callers must pass).
+
+    NOTE on train slice (S45 B2 documentation gap fix):
+    For LOCKED-params research strategies (atr_breakout, volume_breakout), the
+    training slice from WindowSplitter is intentionally NOT passed к backtest_fn.
+    Reason: parameters are pre-registered (LOCKED), so no in-sample fitting occurs
+    per fold — train slice is vestigial для parameter-frozen strategies.
+
+    The `wfa_params["train_bars"]` returned reflects WHERE test windows are positioned
+    (offset from data start), не actual IS isolation. For autoresearch strategies
+    that DO fit per fold (future), wrap backtest_fn that uses train_slice.
         cross_trial_log_path: cross-trial Sharpe log path (для DSR sigma_SR).
         sprint_tag: tag для potential CrossTrialLog append (currently unused).
 
@@ -140,6 +150,8 @@ def run_research_wfa(
     all_oos_trades: list[Any] = []
     all_pnls: list[float] = []
 
+    # S45 B2 — train slice (tr_start:tr_end) intentionally NOT passed к backtest_fn для
+    # LOCKED-params strategies (no per-fold fitting). See docstring NOTE above for rationale.
     for fold_idx, (tr_start, tr_end, te_start, te_end) in enumerate(
         splitter.split(total_bars=len(df))
     ):

@@ -160,3 +160,15 @@ def test_run_research_wfa_aggregated_trades_preserve_pnls(tmp_path) -> None:
     )
     # 5 folds × 500 test_bars = 2500 OOS bars / 100 bars per trade = 25 trades total
     assert result["n_trades_raw"] >= 20  # tolerance for fold boundaries
+
+
+def test_run_research_wfa_default_n_trials_is_1() -> None:
+    """S45 C1 — default n_trials=1 (fail-safe). Multi-hypothesis callers must explicit."""
+    import inspect
+
+    from src.backtest.research_wfa import run_research_wfa
+
+    sig = inspect.signature(run_research_wfa)
+    assert (
+        sig.parameters["n_trials"].default == 1
+    ), f"Default n_trials must be 1 (fail-safe), got {sig.parameters['n_trials'].default}"

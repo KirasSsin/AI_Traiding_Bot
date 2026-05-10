@@ -473,5 +473,6 @@ def _run_atr_breakout_wfa(
         test_bars=test_bars,
         k_folds=k_folds,
         embargo_bars=embargo_bars,
+        n_trials=10,  # S45 C1 — atr_breakout family = 10 hypotheses
         sprint_tag="S44",
     )

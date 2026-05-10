@@ -67,3 +67,32 @@ def test_atr_breakout_wfa_unknown_combo_raises() -> None:
             start_date=date(2024, 1, 1),
             end_date=date(2024, 6, 1),
         )
+
+
+@pytest.mark.integration
+def test_atr_breakout_wfa_uses_n_trials_10() -> None:
+    """S45 C1 — atr_breakout family = 10 hypotheses, n_trials=10 explicit."""
+    from datetime import date
+
+    import src.backtest.research_wfa as wfa_module
+
+    captured = {}
+    orig = wfa_module.run_research_wfa
+
+    def spy(*args, **kwargs):
+        captured["n_trials"] = kwargs.get("n_trials")
+        return orig(*args, **kwargs)
+
+    wfa_module.run_research_wfa = spy
+    try:
+        from src.backtest.atr_breakout_runner import _run_atr_breakout_wfa
+
+        _run_atr_breakout_wfa(
+            symbol="BTCUSDT",
+            interval="240",
+            start_date=date(2023, 1, 1),
+            end_date=date(2026, 4, 26),
+        )
+    finally:
+        wfa_module.run_research_wfa = orig
+    assert captured["n_trials"] == 10, f"Expected n_trials=10, got {captured['n_trials']}"
