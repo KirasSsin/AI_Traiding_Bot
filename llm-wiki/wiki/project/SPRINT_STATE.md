@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T4 done — atr_breakout_runner passes df timestamps to envelope
+updated: 2026-05-10  # S43 T5 done — volume_breakout_runner passes df timestamps to envelope
 sprint: 43
 phase: 4-execution
 branch: feature/sprint-43-ui-polish
@@ -20,8 +20,9 @@ branch: feature/sprint-43-ui-polish
 | T3: Frontend optgroup `<select>` grouping | pending | — |
 | T3 (equity_curve): envelope adds equity_curve parallel arrays для uPlot | DONE | 6baba47 |
 | T4 (equity_timestamps): atr_breakout_runner passes df timestamps to envelope | DONE | d926cd8 |
+| T5 (equity_timestamps): volume_breakout_runner passes df timestamps to envelope | DONE | 0dceae0 |
 
-**Текущий статус:** T4 done. Следующее действие: frontend optgroup T3 pending; wire timestamps in other runners if needed.
+**Текущий статус:** T5 done. Следующее действие: T6 — wire timestamps in remaining runners if needed, OR frontend optgroup T3.
 
 ---
 
