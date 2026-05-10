@@ -303,6 +303,7 @@ L5 reviewers (9 после S30) вызываются после `DONE` subagent'
 | `brainstorming` "Clarifying questions" | OVERRIDDEN by `brainstorm-init` skill — auto-routes через trader-expert ROUND 1+2. |
 | `using-agent-skills` "Surface Assumptions" | Skip если assumptions в active ADR/plan/sprint page. |
 | `writing-plans` "Execution Handoff" question | **OVERRIDDEN — auto-invoke `superpowers:subagent-driven-development` БЕЗ asking operator** (per operator decision 2026-05-10 — always team of agents default). НЕ показывай "Subagent-Driven OR Inline Execution" choice. Если operator EXPLICITLY says "execute inline" перед PHASE 3 — skip override only тот раз. |
+| **Pre-plan validation gate (NEW S46)** | **MANDATORY architecture-reviewer dispatch ДО plan lock** для major stack/language/framework migrations (vanilla→React, Python→Rust, REST→GraphQL, monolith→microservices, sync→async, etc.). Verdict APPROVE_WITH_CONDITIONS/REQUEST_CHANGES = binding conditions встраиваются в ADR. Skip = anti-pattern (architectural blockers caught post-implementation = expensive rework). |
 
 ---
 

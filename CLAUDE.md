@@ -72,6 +72,7 @@ STEP 4: Read raw + offset (full content)
 - ❌ 🆕 (S31) Correcting same issue 3+ times — context cluttered с failed approaches. Use `/clear` + better prompt
 - ❌ 🆕 (S31) CLAUDE.md > 250 lines per file — bloated файл = ignored rules per best practices
 - ❌ 🆕 (S45 operator decision 2026-05-10) Asking "Subagent-Driven OR Inline Execution?" после `writing-plans` — operator всегда выбирает team. **Auto-invoke `superpowers:subagent-driven-development` БЕЗ asking** (override per `llm-wiki/CLAUDE.md` Autonomous mode overrides table). Skip только если operator EXPLICITLY says "execute inline" перед PHASE 3.
+- ❌ 🆕 (S46 operator decision 2026-05-10) Major stack/language/framework migration (e.g. vanilla→React, Python→Rust, REST→GraphQL) БЕЗ `architecture-reviewer` PRE-PLAN validation. **MANDATORY:** dispatch architecture-reviewer ДО plan lock — verdict APPROVE_WITH_CONDITIONS / REQUEST_CHANGES = binding conditions в ADR. Detail: `llm-wiki/CLAUDE.md` Pre-plan validation gates section.
 
 ### Token-saver commands (per Anthropic best practices)
 
