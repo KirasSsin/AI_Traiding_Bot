@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10
+updated: 2026-05-10  # T3 done
 sprint: 42
 phase: 4-execution
 branch: feature/sprint-42-atr-breakout-hardening
@@ -12,7 +12,7 @@ tag: v0.1.0-alpha.41
 
 **Phase:** 4-execution  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T3 next (wire envelope into volume_breakout_runner)
+**in_progress:** T4 next
 
 **Completed tasks:**
 - T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
@@ -21,8 +21,10 @@ tag: v0.1.0-alpha.41
     Needs operator decision: fix test curve OR adjust algorithm.
 - T2: `src/backtest/atr_breakout_runner.py` wired to envelope + `tests/integration/test_atr_breakout_dashboard_contract.py` — DONE (commit 383e67b)
   - 5/5 new contract tests PASS. 8/8 baseline floor tests PASS (PnL unchanged). mypy 0 errors.
+- T3: `src/backtest/volume_breakout_runner.py` wired to envelope + `tests/integration/test_volume_breakout_dashboard_contract.py` — DONE (commit 0ade871)
+  - 4/4 new contract tests PASS. 29/29 total volume_breakout tests PASS. mypy 0 errors.
 
-**Next action:** T3 — wire envelope into volume_breakout_runner.
+**Next action:** T4 — next task in S42.
 
 ---
 
