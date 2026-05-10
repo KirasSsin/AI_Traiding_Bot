@@ -8,6 +8,7 @@ import { MetricsTable } from './components/MetricsTable'
 import { TradesTable } from './components/TradesTable'
 import { HistoryTab } from './components/HistoryTab'
 import { DocumentationTab } from './components/DocumentationTab'
+import { WfaFailBanner } from './components/WfaFailBanner'
 import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
@@ -44,6 +45,8 @@ export function App() {
           <div className={styles.statusMuted}>DEMO MODE · LOCALHOST · NO MAINNET</div>
         </div>
       </header>
+
+      <WfaFailBanner />
 
       <nav className={styles.tabNav} role="tablist">
         {TABS.map((tab) => (
