@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T5+T6 done — dispatch routes research presets through WFA, 27/27 tests GREEN
+updated: 2026-05-10  # S44 T7+T8 done — JS verdict mapping + amber CSS for WFA_FAIL_DATA
 sprint: 44
 phase: 4-execution
 branch: feature/sprint-44-wfa-retrofit
@@ -21,10 +21,11 @@ branch: feature/sprint-44-wfa-retrofit
 | T4: `build_research_runner_envelope()` accepts `wfa_result: dict | None` kwarg — populates WFA fields when present, RAW sentinels when None | DONE | 59095c7 |
 | T5: `backtest_runner.py` dispatch — atr_breakout + volume_breakout call `_run_*_wfa()` first, fall back to RAW on ValueError/FileNotFoundError, rebuild envelope with wfa_result | DONE | 6d051a5 |
 | T6: Dashboard contract tests verify WFA verdict (not RAW) — BTC 4H returns WFA_PASS/WFA_FAIL/WFA_FAIL_DATA; BTC 1D → WFA_FAIL_DATA | DONE | 6d051a5 |
+| T7+T8: JS verdict class mapping WFA_PASS/WFA_FAIL/WFA_FAIL_DATA + amber `.verdict-fail-data` CSS | DONE | f14870b |
 
-**Текущий статус:** T5+T6 done. Dispatch for `atr_breakout` + `volume_breakout` now calls WFA first (try/except fallback). Envelope rebuilt with `wfa_result` merged — verdict transitions from RAW → WFA_*. 27/27 integration tests PASS. mypy --strict 0 errors. BTC 4H observed WFA_FAIL (per test). BTC 1D confirmed WFA_FAIL_DATA.
+**Текущий статус:** T7+T8 done. `verdictCls` updated in both main verdict panel (line 396) and dashboard table (line 529). `.verdict-fail-data { color: #f0a000 }` appended to CSS. Metrics keys verified match JS expectations (9 keys, exact match). No JS key changes needed.
 
-**Следующее действие:** T7 — PHASE 5 verify (mypy full + pytest full + acceptance gate review). Then PHASE 6 reviewers.
+**Следующее действие:** T9 — PHASE 5 verify (mypy full + pytest full + acceptance gate review). Then PHASE 6 reviewers.
 
 ### Phase tracking
 
@@ -33,7 +34,7 @@ branch: feature/sprint-44-wfa-retrofit
 | 1-orient | done |
 | 2-brainstorm | done |
 | 3-plan | done |
-| 4-execution | in_progress (T1-T6 done, T7 verify next) |
+| 4-execution | in_progress (T1-T8 done, T9 verify next) |
 | 5-verify | pending |
 | 6-review | pending |
 | 7-sync | pending |
