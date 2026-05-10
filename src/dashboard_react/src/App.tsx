@@ -4,6 +4,7 @@ import { VerdictPanel } from './components/VerdictPanel'
 import { EquityChart } from './components/EquityChart'
 import { DrawdownSubchart } from './components/DrawdownSubchart'
 import { MonthlyHeatmap } from './components/MonthlyHeatmap'
+import { MetricsTable } from './components/MetricsTable'
 import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
@@ -68,6 +69,7 @@ export function App() {
                 <MonthlyHeatmap equityCurve={result.equity_curve} />
               </>
             )}
+            {result && <MetricsTable result={result} />}
           </>
         )}
         {activeTab === 'documentation' && (
