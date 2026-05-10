@@ -1,10 +1,83 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T10+T11+T12 done — wiki sync complete, phase=8-ship
-sprint: 44
+updated: 2026-05-10  # S45 T8 done — ADR 0065 + wiki sync, phase=8-ship
+sprint: 45
 phase: 8-ship
-branch: feature/sprint-44-wfa-retrofit
+branch: feature/sprint-45-wfa-recalibration
+---
+
+## S45 PHASE 4-EXECUTION — WFA recalibration (uniform 3.3y data)
+
+**Branch:** feature/sprint-45-wfa-recalibration
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: Uniform 3.3y data — PARQUET_BY_COMBO BTC 4H → 3.3y file, archive 8.7y binance | DONE | d2612cc |
+| T2: ADR 0060/0061 amendments — update locked baselines to 3.3y | DONE | 91b9b2d |
+| T3: CrossTrialLog idempotency guard (B1) — upsert on (sprint, symbol) + reset log | DONE | 5efddee |
+| T4: n_trials per-strategy fix (C1) — default=1, atr=10, vb=1 | DONE | 553e040 |
+| T5: B2 train slice documentation (inline + docstring) | DONE | 553e040 |
+| T6: ADR 0014 low-freq tier amendment (4H/D test_bars=250) + tier helper wiring | DONE | cafb6a6 |
+| T7: WFA recalibration run — 11 combos с uniform 3.3y window using new tier params | DONE | — |
+| T8: ADR 0065 — S45 honest verdict + ESC-1 (a) trigger decision | DONE | — |
+
+**Текущий статус:** T8 DONE. ADR 0065 создан, wiki sync завершён (sprint-45 page + current-state + index + log). Phase=8-ship. Все задачи S45 завершены.
+
+**Следующее действие:** sprint-finish skill → tag v0.1.0-alpha.45 + merge feature/sprint-45-wfa-recalibration → main. Затем S46 brainstorm (honest portfolio close).
+
+### S45 T7 actual verdicts (post-recalibration — input for T8 ADR 0065)
+
+```
+combo                                  verdict        DSR        MC_p     n_oos  failed_criteria
+-------------------------------------------------------------------------------------------------
+atr_breakout_BTCUSDT_15                WFA_FAIL       nan        0.9885   9      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_BTCUSDT_60                WFA_FAIL       0.1274     0.0220   16     n_eff_threshold,t5_floor,sharpe_gate,dsr_threshold
+atr_breakout_BTCUSDT_240               WFA_FAIL       nan        0.6422   7      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_BTCUSDT_D                 WFA_FAIL_DATA  nan        nan      0      data_volume
+atr_breakout_ETHUSDT_15                WFA_FAIL       nan        0.4188   7      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_ETHUSDT_60                WFA_FAIL       0.0000     0.4088   14     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_ETHUSDT_240               WFA_FAIL       nan        1.0000   4      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_SOLUSDT_15                WFA_FAIL       nan        0.9630   7      n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_SOLUSDT_60                WFA_FAIL       0.0000     0.5597   15     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+atr_breakout_SOLUSDT_240               WFA_FAIL       0.0000     0.0605   10     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+volume_breakout_iter10_BTCUSDT_240     WFA_FAIL       0.8508     0.3298   22     n_eff_threshold,t5_floor,sharpe_gate,mc_gate
+```
+
+**Summary:** WFA_PASS=0 / WFA_FAIL=10 / WFA_FAIL_DATA=1 (unchanged vs S44 baseline).
+
+**Delta vs S44 baseline:**
+- BTCUSDT_240: n_oos 10→7 (fewer trades under new tier params), MC_p 0.6687→0.6422 (similar)
+- ETHUSDT_240: n_oos 6→4, MC_p 0.3498→1.0000 (worsened — fewer fold trades)
+- SOLUSDT_240: n_oos 20→10, MC_p 0.0525→0.0605 (similar, worse n_oos)
+- volume_breakout_iter10 BTCUSDT_240: n_oos 38→22, DSR 0.0000→0.8508 (DSR improved but n_eff/t5 still FAIL)
+- All n_eff_threshold + t5_floor + sharpe_gate failures preserved across all 10 combos.
+
+**Cross-trial log (post-S45):** 8 trials (sprint=44 legacy entries from S44 session).
+
+**ESC-1 (a) triggered:** 0/11 PASS. Low-freq tier amendment (ADR 0014) did NOT improve outcomes — n_oos counts dropped further for 4H combos (structural: fewer bars → fewer trades per fold). Honest close for S46 required.
+
+### S45 T6 trade-frequency derivation (anti-snooping pre-commit, для T8 ADR 0065 reference)
+
+Computed на 3.3y window (2023-01-01 → 2026-04-26), uniform per S45 ADR 0065:
+
+| Combo | bars/year | 3.3y trades | trades/500bar | trades/250bar |
+|-------|-----------|-------------|---------------|---------------|
+| BTCUSDT_15  | 35064 | 245 | 1.06  | 0.53 |
+| BTCUSDT_60  |  8766 | 106 | 1.83  | 0.92 |
+| BTCUSDT_240 |  2191 |  28 | 1.94  | 0.97 |
+| BTCUSDT_D   |   365 |  32 | 13.28 | 6.64 |
+| ETHUSDT_15  | 35064 | 240 | 1.04  | 0.52 |
+| ETHUSDT_60  |  8766 | 109 | 1.88  | 0.94 |
+| ETHUSDT_240 |  2191 |  28 | 1.94  | 0.97 |
+| SOLUSDT_15  | 35064 | 230 | 0.99  | 0.50 |
+| SOLUSDT_60  |  8766 | 124 | 2.14  | 1.07 |
+| SOLUSDT_240 |  2191 |  71 | 4.91  | 2.45 |
+
+**Conclusion:** 4H/D combos fire 1-3 trades per 500-bar OOS fold = structural T5 floor failure. test_bars=250 doubles density к 0.5-1.5/fold ≈ 5-15 trades pooled across 5 folds. Honest second look — но likely T5 fail для ВСЕХ low-freq.
+
 ---
 
 ## S44 PHASE 4-EXECUTION — WFA retrofit для research presets (atr_breakout + volume_breakout)

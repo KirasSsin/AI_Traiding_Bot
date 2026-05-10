@@ -8,12 +8,7 @@
     {
       "sprint": 44,
       "symbol": "BTCUSDT_9_2.5",
-      "oos_sharpe": -56.962414390956
-    },
-    {
-      "sprint": 44,
-      "symbol": "BTCUSDT_9_2.5",
-      "oos_sharpe": -15.718012792002762
+      "oos_sharpe": 0.36895730022406126
     },
     {
       "sprint": 44,
@@ -23,12 +18,7 @@
     {
       "sprint": 44,
       "symbol": "ETHUSDT_14_2.5",
-      "oos_sharpe": -275.76582874130213
-    },
-    {
-      "sprint": 44,
-      "symbol": "ETHUSDT_14_2.5",
-      "oos_sharpe": 0.3599568051214741
+      "oos_sharpe": -36.665608229806125
     },
     {
       "sprint": 44,
@@ -43,12 +33,12 @@
     {
       "sprint": 44,
       "symbol": "SOLUSDT_21_1.5",
-      "oos_sharpe": 3.085995685447177
+      "oos_sharpe": -46.75712938031192
     },
     {
       "sprint": 44,
       "symbol": "BTCUSDT_9_?",
-      "oos_sharpe": 1.1154963168050898
+      "oos_sharpe": -0.27553551433587015
     }
   ]
 }

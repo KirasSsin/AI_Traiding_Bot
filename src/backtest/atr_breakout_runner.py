@@ -47,9 +47,10 @@ _BARS_PER_YEAR_BY_INTERVAL: dict[str, int] = {
 
 # Parquet file mapping per (symbol, interval) combo.
 # Mirrors scripts/autoresearch_endless.py::COMBOS.
-# BTCUSDT 4H uses Binance data (8.7y) — all others use Bybit data (3.3y from 2023-01-01).
+# S45 T1: all combos use uniform 3.3y data (2023-01-01 → 2026-04-26).
+# BTCUSDT_4h_binance.parquet (8.7y exception) archived to data/_archive/.
 PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
-    ("BTCUSDT", "240"): "data/BTCUSDT_4h_binance.parquet",
+    ("BTCUSDT", "240"): "data/BTCUSDT_4h.parquet",
     ("BTCUSDT", "60"): "data/BTCUSDT_1h.parquet",
     ("BTCUSDT", "15"): "data/BTCUSDT_15m.parquet",
     ("BTCUSDT", "D"): "data/BTCUSDT_1d.parquet",
@@ -431,19 +432,27 @@ def _run_atr_breakout_wfa(
     interval: str,
     start_date: date,
     end_date: date,
-    train_bars: int = 2000,
-    test_bars: int = 500,
-    k_folds: int = 5,
-    embargo_bars: int = 20,
+    train_bars: int | None = None,
+    test_bars: int | None = None,
+    k_folds: int | None = None,
+    embargo_bars: int | None = None,
 ) -> dict[str, Any]:
     """S44 T2 — WFA для atr_breakout с per-combo LOCKED params.
+
+    S45 — Tier-aware defaults per ADR 0014 amendment (low-freq 4H/D test_bars=250).
 
     Pattern: donchian_runner._run_donchian_wfa adapted к research kernel
     (_backtest_single signature). PnL accounting sequential-additive preserved
     (per ADR 0064 + S42 trader-expert verdict — replay_engine architecturally
     blocked per docstring lines 5-12).
     """
-    from src.backtest.research_wfa import run_research_wfa
+    from src.backtest.research_wfa import get_wfa_tier_params, run_research_wfa
+
+    tier = get_wfa_tier_params(interval)
+    train_bars = train_bars if train_bars is not None else tier["train_bars"]
+    test_bars = test_bars if test_bars is not None else tier["test_bars"]
+    k_folds = k_folds if k_folds is not None else tier["k_folds"]
+    embargo_bars = embargo_bars if embargo_bars is not None else tier["embargo_bars"]
 
     locked = ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO.get((symbol, interval))
     if locked is None:
@@ -472,5 +481,6 @@ def _run_atr_breakout_wfa(
         test_bars=test_bars,
         k_folds=k_folds,
         embargo_bars=embargo_bars,
+        n_trials=10,  # S45 C1 — atr_breakout family = 10 hypotheses
         sprint_tag="S44",
     )

@@ -38,8 +38,8 @@ def test_atr_breakout_returns_envelope_keys() -> None:
     r = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=date(2017, 8, 17),
-        end_date=date(2026, 4, 30),
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
     for key in REQUIRED_DASHBOARD_KEYS:
         assert key in r, f"S42 contract missing key: {key}"
@@ -53,8 +53,8 @@ def test_atr_breakout_envelope_verdict_is_raw() -> None:
     r = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=date(2017, 8, 17),
-        end_date=date(2026, 4, 30),
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
     assert r["verdict"] == "RAW"
     assert r["failed_criteria"] == []
@@ -66,8 +66,8 @@ def test_atr_breakout_envelope_warnings_includes_raw_full_period() -> None:
     r = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=date(2017, 8, 17),
-        end_date=date(2026, 4, 30),
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
     high = [w for w in r["warnings"] if w["level"] == "high" and w["code"] == "raw_full_period"]
     assert len(high) == 1
@@ -90,23 +90,23 @@ def test_atr_breakout_envelope_request_carries_symbol_interval() -> None:
 @pytest.mark.integration
 def test_atr_breakout_envelope_preserves_pnl_replication_btc_4h() -> None:
     """REGRESSION: envelope wrap must NOT change PnL math.
-    BTCUSDT 4H expected 819.81 ± 2.0 from S40 baseline.
+    S45 T1: BTCUSDT 4H expected 174.29 ± 2.0 (3.3y uniform data).
     """
     r = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=date(2017, 8, 17),
-        end_date=date(2026, 4, 30),
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
-    assert abs(r["total_pnl_pct"] - 819.81) < 2.0
-    assert r["n_trades"] == 69
+    assert abs(r["total_pnl_pct"] - 174.29) < 2.0
+    assert r["n_trades"] == 28
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
     "symbol,interval,expected_pnl,start,end",
     [
-        ("BTCUSDT", "240", 819.81, "2017-08-17", "2026-04-30"),
+        ("BTCUSDT", "240", 174.29, "2023-01-01", "2026-04-26"),  # S45 T1: uniform 3.3y
         ("SOLUSDT", "240", 264.29, "2023-01-01", "2026-04-26"),
         ("ETHUSDT", "60", 181.74, "2023-01-01", "2026-04-26"),
         ("BTCUSDT", "15", 107.35, "2023-01-01", "2026-04-26"),
@@ -188,8 +188,8 @@ def test_atr_breakout_dispatch_preserves_envelope_keys() -> None:
         strategy_id="atr_breakout",
         symbol="BTCUSDT",
         interval="240",
-        start="2017-08-17",
-        end="2026-04-30",
+        start="2023-01-01",
+        end="2026-04-26",
     )
     r = run_backtest(req, force=True)
     for key in (
@@ -210,7 +210,7 @@ def test_atr_breakout_dispatch_preserves_envelope_keys() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_envelope_includes_equity_curve_timestamps() -> None:
-    """S43 T4 — atr_breakout runner passes df timestamps к envelope."""
+    """S43 T4 — atr_breakout runner passes df timestamps к envelope. S45 T1: 3.3y data."""
     from datetime import date
 
     from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
@@ -218,17 +218,17 @@ def test_atr_breakout_envelope_includes_equity_curve_timestamps() -> None:
     r = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=date(2017, 8, 17),
-        end_date=date(2026, 4, 30),
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
     ec = r["equity_curve"]
     assert isinstance(ec, dict)
     assert len(ec["timestamps"]) == len(ec["equity_pct"])
-    assert len(ec["timestamps"]) >= 70  # 69 trades + 1 starting zero
-    assert ec["timestamps"][0] >= 1502928000  # 2017-08-17 unix
+    assert len(ec["timestamps"]) >= 29  # 28 trades + 1 starting zero
+    assert ec["timestamps"][0] >= 1672531200  # 2023-01-01 unix
     assert all(isinstance(t, int) for t in ec["timestamps"])
     assert ec["equity_pct"][0] == 0.0
-    assert abs(ec["equity_pct"][-1] - 819.81) < 2.0
+    assert abs(ec["equity_pct"][-1] - 174.29) < 2.0
 
 
 @pytest.mark.integration
@@ -263,8 +263,8 @@ def test_atr_breakout_dashboard_returns_wfa_verdict_btc_4h() -> None:
         strategy_id="atr_breakout",
         symbol="BTCUSDT",
         interval="240",
-        start="2017-08-17",
-        end="2026-04-30",
+        start="2023-01-01",
+        end="2026-04-26",
     )
     r = run_backtest(req, force=True)
     assert r["verdict"] in ("WFA_PASS", "WFA_FAIL", "WFA_FAIL_DATA"), f"Got {r['verdict']}"

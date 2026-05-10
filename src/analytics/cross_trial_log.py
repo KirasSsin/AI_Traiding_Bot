@@ -101,7 +101,10 @@ class CrossTrialLog:
         oos_sharpe: float,
         symbol: str = _DEFAULT_SYMBOL_BACKFILL,
     ) -> None:
-        """Atomically append new trial entry. Creates parent dir if missing.
+        """Atomically append OR update trial entry. Idempotent on (sprint, symbol).
+
+        S45 B1 — same (sprint, symbol) tuple replaces existing entry's oos_sharpe.
+        Prevents log poisoning from dashboard reruns where each render appended duplicate.
 
         Args:
             sprint: sprint number (S13, S15, S33, ...)
@@ -109,9 +112,20 @@ class CrossTrialLog:
             symbol: trading pair symbol (default "BTCUSDT" preserves legacy callers)
         """
         trials = self._load()
-        trials.append(
-            TrialEntry(sprint=int(sprint), symbol=str(symbol), oos_sharpe=float(oos_sharpe))
+        new_entry = TrialEntry(sprint=int(sprint), symbol=str(symbol), oos_sharpe=float(oos_sharpe))
+        # S45 B1 idempotency guard — find existing matching (sprint, symbol)
+        existing_idx = next(
+            (
+                i
+                for i, t in enumerate(trials)
+                if t["sprint"] == new_entry["sprint"] and t["symbol"] == new_entry["symbol"]
+            ),
+            None,
         )
+        if existing_idx is not None:
+            trials[existing_idx] = new_entry
+        else:
+            trials.append(new_entry)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self._path.with_suffix(self._path.suffix + ".tmp")
         tmp.write_text(json.dumps({"trials": trials}, indent=2))

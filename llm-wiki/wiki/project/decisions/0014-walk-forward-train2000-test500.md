@@ -3,7 +3,7 @@ title: 0014. Walk-forward train=2000, test=500, K=5
 type: decision
 tags: [adr, v0.1, backtest, walk-forward, validation]
 created: 2026-04-19
-updated: 2026-04-19
+updated: 2026-05-10
 status: accepted
 sources: [Docs/MVP + ALL PROJECT/MVP.md]
 ---
@@ -54,3 +54,49 @@ We will use walk-forward со следующими параметрами для
 - Pardo R., "The Evaluation and Optimization of Trading Strategies" (2008)
 - López de Prado M., "Advances in Financial Machine Learning" (2018), Ch. 7
 - See [[0015-sign-flip-mc-permutations-n2000]]
+
+## Поправка S45 (2026-05-10): Low-frequency tier (4H/D crypto)
+
+### Контекст amendment
+
+S44 WFA retrofit раскрыл что default ADR 0014 params (train=2000/test=500/k=5/embargo=20) calibrated для FX 1H — структурно враждебны к 4H/D crypto strategies. Empirical (S44 verdict table): atr_breakout 4H fires 5-10 trades в 500-bar OOS folds vs T5_FLOOR=50 minimum.
+
+### Trade-frequency derivation (anti-snooping pre-commit S45 T6)
+
+Computed на 3.3y window (2023-01-01 → 2026-04-26) per uniform data per S45 ADR 0065:
+
+| Combo | bars/year | 3.3y trades | trades/500bar | trades/250bar |
+|-------|-----------|-------------|---------------|---------------|
+| BTCUSDT_15 | 35064 | 245 | 1.06 | 0.53 |
+| BTCUSDT_60 | 8766 | 106 | 1.83 | 0.92 |
+| BTCUSDT_240 | 2191 | 28 | 1.94 | 0.97 |
+| BTCUSDT_D | 365 | 32 | 13.28 | 6.64 |
+| ETHUSDT_15 | 35064 | 240 | 1.04 | 0.52 |
+| ETHUSDT_60 | 8766 | 109 | 1.88 | 0.94 |
+| ETHUSDT_240 | 2191 | 28 | 1.94 | 0.97 |
+| SOLUSDT_15 | 35064 | 230 | 0.99 | 0.50 |
+| SOLUSDT_60 | 8766 | 124 | 2.14 | 1.07 |
+| SOLUSDT_240 | 2191 | 71 | 4.91 | 2.45 |
+
+**Conclusion:** 4H/D combos fire 1-3 trades per 500-bar OOS fold = structural T5 floor failure. test_bars=250 doubles density к 0.5-1.5/fold ≈ 5-15 trades pooled across 5 folds. Still likely T5 fail, но honest second look.
+
+### Tier definition
+
+| Tier | Timeframes | train_bars | test_bars | k_folds | embargo | min_required |
+|------|------------|------------|-----------|---------|---------|--------------|
+| **High-freq (default ADR 0014)** | 5M, 15M, 1H | 2000 | 500 | 5 | 20 | 4520 |
+| **Low-freq (S45 amendment)** | 4H, D | 1500 | 250 | 5 | 20 | 2770 |
+
+### Rationale
+
+- test_bars=250 doubles OOS trade density для low-freq strategies (без relaxing T5 floor)
+- train_bars=1500 derived from min_required formula: `train + embargo + k*test = 1500 + 20 + 5*250 = 2770`. Train:test ratio = **6:1** (low-freq) vs **4:1** (high-freq 2000:500). Train slice intentionally larger relative к short OOS test windows, но vestigial для LOCKED-params strategies (no per-fold IS fitting per S45 B2 docs).
+- k_folds=5 unchanged (cross-fold variance signal preserved)
+- embargo=20 unchanged (López de Prado lookback isolation)
+- T5_FLOOR=50 LOCKED (Bailey 2014 small-sample T-stat unreliability — не negotiable)
+
+### Anti-snooping clauses
+
+1. **This amendment committed BEFORE S45 recalibration run** (T7). Values derived from trade-frequency analysis above, NOT fitted к pass any combo.
+2. **Maximum 1 recalibration iteration** (this ADR). Если post-S45 WFA still FAIL ВСЕ 11 combos → S46 = honest portfolio close per operator ESC-1 (a). НЕ further parameter shopping.
+3. **Если хотя бы 1 combo NEW WFA_PASS** post-recalibration → cross_trial_log reset (treats new WFA config as fresh testing event per Bailey 2014).
