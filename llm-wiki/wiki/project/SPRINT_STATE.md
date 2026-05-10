@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S43 T5 done — volume_breakout_runner passes df timestamps to envelope
+updated: 2026-05-10  # S43 T7 done — template: strategy description block + equity chart panel + uPlot
 sprint: 43
 phase: 4-execution
 branch: feature/sprint-43-ui-polish
@@ -21,8 +21,10 @@ branch: feature/sprint-43-ui-polish
 | T3 (equity_curve): envelope adds equity_curve parallel arrays для uPlot | DONE | 6baba47 |
 | T4 (equity_timestamps): atr_breakout_runner passes df timestamps to envelope | DONE | d926cd8 |
 | T5 (equity_timestamps): volume_breakout_runner passes df timestamps to envelope | DONE | 0dceae0 |
+| T6: Vendor uPlot (uPlot.iife.min.js + uPlot.min.css) в static/vendor/ | DONE | — |
+| T7: Template — strategy description block + equity chart panel + uPlot script | DONE | dfd8500 |
 
-**Текущий статус:** T5 done. Следующее действие: T6 — wire timestamps in remaining runners if needed, OR frontend optgroup T3.
+**Текущий статус:** T7 done. Следующее действие: T8 — JS wiring (strategy description display + uPlot equity chart render).
 
 ---
 
