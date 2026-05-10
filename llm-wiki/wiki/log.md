@@ -2580,3 +2580,20 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Tag:** v0.1.0-alpha.40
 - **Profit invariant:** 8.7y +819.81% / Sharpe 1.11 / 69 trades / 5/5 sub-periods positive — первый 5/5 в истории проекта
 - **N_trials:** 9 cumulative (S13/S15/S17/S20/S22/S33/S35/S39/S40)
+
+## [2026-05-10] sprint-end | S41 — ATR breakout multi-combo dashboard presets
+
+- **Sprint:** S41 — feature/sprint-41-multi-combo-presets → main
+- **ADR:** ADR 0061 (9 новых (symbol, interval) комбо из endless autoresearch)
+- **Tasks done:** T1 runner generalization / T2 per-combo locked params / T3-T9 9 dashboard presets / T10 wiki sync
+- **New presets (9):** SOLUSDT 4H +264
+## [2026-05-10] sprint-end | S41 — ATR breakout multi-combo dashboard presets
+
+- **Sprint:** S41 — feature/sprint-41-multi-combo-presets → main
+- **ADR:** ADR 0061 (9 новых (symbol, interval) комбо из endless autoresearch)
+- **Tasks done:** T1 runner generalization / T2 per-combo locked params / T3-T9 9 dashboard presets / T10 wiki sync
+- **New presets (9):** SOLUSDT 4H +264% / ETHUSDT 1H +182% / BTCUSDT 15M +107% / BTCUSDT 1H +146% / SOLUSDT 1H +214% / ETHUSDT 4H +152% / SOLUSDT 15M +151% / BTCUSDT 1D +168% / ETHUSDT 15M +36%
+- **Tests:** 934 unit / +20 integration / mypy 0 / ruff 0
+- **Canonical counts:** 16/30/74/**56** (reason codes unchanged — реиспользуются S40 коды)
+- **ADRs:** 60 → **61** / **Sprint pages:** 44 → **45**
+- **Tag:** v0.1.0-alpha.41
