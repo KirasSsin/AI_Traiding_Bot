@@ -9,14 +9,14 @@ import pytest
 
 @pytest.mark.integration
 def test_atr_breakout_wfa_btc_4h_returns_wfa_pass_or_fail() -> None:
-    """BTCUSDT 4H = 19056 bars >> 4520 default min. Must NOT WFA_FAIL_DATA."""
+    """S45 T1: BTCUSDT 4H = 7273 bars (3.3y) >> 4520 default min. Must NOT WFA_FAIL_DATA."""
     from src.backtest.atr_breakout_runner import _run_atr_breakout_wfa
 
     r = _run_atr_breakout_wfa(
         symbol="BTCUSDT",
         interval="240",
-        start_date=date(2017, 8, 17),
-        end_date=date(2026, 4, 30),
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
     assert r["verdict"] in ("WFA_PASS", "WFA_FAIL"), f"Got {r['verdict']}"
     assert "data_volume" not in r["failed_criteria"]

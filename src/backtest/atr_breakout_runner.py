@@ -47,9 +47,10 @@ _BARS_PER_YEAR_BY_INTERVAL: dict[str, int] = {
 
 # Parquet file mapping per (symbol, interval) combo.
 # Mirrors scripts/autoresearch_endless.py::COMBOS.
-# BTCUSDT 4H uses Binance data (8.7y) — all others use Bybit data (3.3y from 2023-01-01).
+# S45 T1: all combos use uniform 3.3y data (2023-01-01 → 2026-04-26).
+# BTCUSDT_4h_binance.parquet (8.7y exception) archived to data/_archive/.
 PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
-    ("BTCUSDT", "240"): "data/BTCUSDT_4h_binance.parquet",
+    ("BTCUSDT", "240"): "data/BTCUSDT_4h.parquet",
     ("BTCUSDT", "60"): "data/BTCUSDT_1h.parquet",
     ("BTCUSDT", "15"): "data/BTCUSDT_15m.parquet",
     ("BTCUSDT", "D"): "data/BTCUSDT_1d.parquet",

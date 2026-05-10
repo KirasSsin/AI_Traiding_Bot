@@ -153,8 +153,8 @@ def _execute_atr_breakout_research(df: pd.DataFrame, params: dict) -> tuple[list
 
 
 def _load_4h_btcusdt_binance(start: date, end: date) -> pd.DataFrame:
-    """Load 4H BTCUSDT Binance parquet, filter to [start, end] inclusive."""
-    df = pd.read_parquet("data/BTCUSDT_4h_binance.parquet")
+    """Load 4H BTCUSDT Binance parquet (archived 8.7y), filter to [start, end] inclusive."""
+    df = pd.read_parquet("data/_archive/BTCUSDT_4h_binance.parquet")
     # Normalize timestamp column
     if "ts" in df.columns:
         ts_col = "ts"
@@ -252,29 +252,34 @@ def test_atr_breakout_sub_period_pnls_within_tolerance() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_production_runner_replicates_full_period() -> None:
-    """S40 production runner MUST replicate 8.7y baseline within ±0.5%.
+    """S45 T1: production runner uses 3.3y data (2023-01-01 → 2026-04-26). PnL ≈ +174.29%.
 
-    run_atr_breakout_backtest() ports research kernel verbatim.
+    run_atr_breakout_backtest() uses PARQUET_BY_COMBO which now points to uniform 3.3y file.
     End-to-end production path validation.
     """
     from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
 
+    # S45 T1: uniform 3.3y window for BTC 4H
+    _3y_start = date(2023, 1, 1)
+    _3y_end = date(2026, 4, 26)
+    _3y_baseline_pnl = 174.29  # actual 3.3y PnL (S45 T1 measurement)
+    _3y_baseline_trades = 28
+
     result = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=FULL_START,
-        end_date=FULL_END,
+        start_date=_3y_start,
+        end_date=_3y_end,
     )
     pnl = float(result["total_pnl_pct"])
     n = int(result["n_trades"])
-    floor = FULL_BASELINE_PNL_PCT - REPLICATION_TOLERANCE_PCT
+    floor = _3y_baseline_pnl - REPLICATION_TOLERANCE_PCT
     assert pnl >= floor, (
-        f"FAIL Phase 5 HARD-GATE: production runner 8.7y PnL={pnl:.2f}% < "
-        f"floor={floor:.2f}% (baseline={FULL_BASELINE_PNL_PCT}%)."
+        f"FAIL: production runner 3.3y PnL={pnl:.2f}% < "
+        f"floor={floor:.2f}% (baseline={_3y_baseline_pnl}%)."
     )
-    assert abs(n - FULL_BASELINE_N_TRADES) <= 2, (
-        f"FAIL Phase 5 HARD-GATE: production runner n_trades={n}, "
-        f"expected ~{FULL_BASELINE_N_TRADES} (±2)."
+    assert abs(n - _3y_baseline_trades) <= 2, (
+        f"FAIL: production runner n_trades={n}, " f"expected ~{_3y_baseline_trades} (±2)."
     )
 
 
@@ -298,11 +303,11 @@ def test_atr_breakout_preset_registered() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_data_coverage() -> None:
-    """4H BTCUSDT Binance data MUST cover full 8.7y window (2017-08-17 → 2026-04-30)."""
+    """Archived 8.7y BTCUSDT Binance data still accessible at data/_archive/ (S45 T1)."""
     df = _load_4h_btcusdt_binance(FULL_START, FULL_END)
     assert len(df) >= 15000, (
         f"Insufficient 4H bars: {len(df)} < 15000. "
-        f"Data file may not cover 8.7y (2017-08-17 → 2026-04-30)."
+        f"Archived file data/_archive/BTCUSDT_4h_binance.parquet may be missing."
     )
     assert (
         df["timestamp"].dt.date.min() <= FULL_START
@@ -314,15 +319,25 @@ def test_atr_breakout_data_coverage() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_sharpe_positive() -> None:
-    """8.7y Sharpe MUST be positive (autoresearch baseline 1.11)."""
+    """S45 T1: 3.3y Sharpe MUST be positive (3.3y baseline 1.94)."""
     from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
 
     result = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
-        start_date=FULL_START,
-        end_date=FULL_END,
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
     )
     sharpe = float(result["sharpe"])
     assert sharpe > 0, f"Sharpe={sharpe:.3f} is NOT positive."
-    assert sharpe >= 0.5, f"Sharpe={sharpe:.3f} < 0.5 (research baseline 1.11)."
+    assert sharpe >= 0.5, f"Sharpe={sharpe:.3f} < 0.5 (3.3y baseline 1.94)."
+
+
+@pytest.mark.integration
+def test_atr_breakout_btc_4h_uses_3y_data_not_binance_8y() -> None:
+    """S45 T1 — uniform 3.3y data. PARQUET_BY_COMBO[(BTCUSDT,240)] must NOT use 8.7y binance."""
+    from src.backtest.atr_breakout_runner import PARQUET_BY_COMBO
+
+    path = PARQUET_BY_COMBO[("BTCUSDT", "240")]
+    assert "binance" not in path.lower(), f"BTC 4H still using 8.7y binance file: {path}"
+    assert "BTCUSDT_4h.parquet" in path, f"Expected 3.3y file, got: {path}"
