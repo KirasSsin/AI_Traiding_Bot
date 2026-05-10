@@ -12,15 +12,17 @@ tag: v0.1.0-alpha.41
 
 **Phase:** 4-execution  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T2 next (wire envelope into atr_breakout_runner + volume_breakout_runner)
+**in_progress:** T3 next (wire envelope into volume_breakout_runner)
 
 **Completed tasks:**
 - T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
   - 5/6 tests pass. 1 test (`test_envelope_subperiod_robustness_3_of_5_emits_warn_chip`) has data inconsistency:
     equity_curve `[0,50,30,60,50,45]` gives 2/5 positives (not 3/5) under delta-from-previous algorithm.
     Needs operator decision: fix test curve OR adjust algorithm.
+- T2: `src/backtest/atr_breakout_runner.py` wired to envelope + `tests/integration/test_atr_breakout_dashboard_contract.py` — DONE (commit 383e67b)
+  - 5/5 new contract tests PASS. 8/8 baseline floor tests PASS (PnL unchanged). mypy 0 errors.
 
-**Next action:** operator decision on T1 test discrepancy → then T2 wiring.
+**Next action:** T3 — wire envelope into volume_breakout_runner.
 
 ---
 
