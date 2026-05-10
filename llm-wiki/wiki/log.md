@@ -2648,3 +2648,26 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **ADRs:** 64 → **65** / **Sprint pages:** 48 → **49**
 - **Tag:** v0.1.0-alpha.45
 - **Carry к S46:** honest portfolio close + operator strategic decision (Path B excluded). UI deferrals + S37/S38 long-standing → S47+.
+
+## [2026-05-10] sprint-end | S46 — React migration + Anthropic/cyberpunk + honest close UI
+
+- **Sprint:** S46 — feature/sprint-46-react-migration (PHASE 5-verify pending; tag `v0.1.0-alpha.46` после PHASE 6 + ship)
+- **ADRs:** ADR 0066 NEW + ADR 0039 amendment (terminal → Anthropic/cyberpunk + React stack)
+- **Tasks done (22/22):** T1 React infrastructure / T2 Anthropic+cyberpunk design tokens / T3 App.tsx + tab navigation / T4 TypeScript types + API client / T5 hooks (useStrategyInfo + useWfaFailAck) / T6 ConfigureBacktest form + optgroup + supported_combos gating / T7 StrategyDescription collapsible / T8 VerdictPanel + warnings / T9 EquityChart uPlot wrapper / T10 DrawdownSubchart + computeDrawdown / T11 TradeMarkers + envelope ext / T12 MonthlyHeatmap calendar / T13 MetricsTable TIER 1-6 + DSR + MC / T14 TradesTable RAW+WFA / T15 HistoryTab + DocumentationTab / T16 WfaFailBadge / T17 WfaFailBanner ack-gated / T18 Playwright E2E (3 pass / 1 skip) / T19 FastAPI FileResponse / T20 vanilla archive к dashboard_legacy / T21 CI/CD Node.js + Playwright (architect C2) / T22 ADRs + sprint-46 + wiki sync
+- **Architect bindings met:** C1 (Vite outDir + FastAPI mount, NO separate dev server в prod), C2 (Node.js CI step В S46), C4 (`TemplateResponse` → `FileResponse(dist/index.html)`).
+- **Deliverables:**
+  - React 18.3.1 + TypeScript 5.5 strict + Vite 5.4 + CSS Modules в `src/dashboard_react/`
+  - ~22 components, bundle 232 kB JS / 31 kB CSS gzip 80 / 5.7
+  - Anthropic orange (`#cc785c`) + cyberpunk dark base (`#0a0a0a`) + warm cream text + Inter sans + JetBrains Mono (data)
+  - Honest close UI piece: ack-gated NON-dismissible banner + WFA_FAIL badges per preset
+  - `useWfaFailAck` localStorage hook — distinct calendar day dedup + chip downgrade after 3 days
+  - envelope `trade_markers` extension (entry/exit timestamps + prices + pnl per trade) в vb+atr runners
+  - Vanilla archived к `src/dashboard_legacy/` (static + templates)
+  - Playwright E2E 3 pass / 1 skip (`backtest-flow` submit→verdict TODO S47 fixture)
+  - CI Node.js 20 setup-node@v4 + npm ci + npm run build + Playwright
+- **Honest verdict (UI):** Все 11 WFA_FAIL presets shown с red/amber badges. Banner НЕ dismissible — operator должен ack понимание перед использованием.
+- **Tests:** ~970 unit / ~58 integration / mypy 0 (Python preserved); Playwright 3 pass / 1 skip
+- **Canonical counts:** 16/30/74/56 (UNCHANGED — frontend work)
+- **ADRs:** 65 → **66** / **Sprint pages:** 49 → **50**
+- **Tag:** v0.1.0-alpha.46 (pending PHASE 6 + ship)
+- **Carry к S47:** Vitest+RTL units / multiplier+methodology card detail (T15 deferred TODO markers) / `backtest-flow` E2E submit→verdict spec stub fixture / MetricsTable T5 vanilla parity bug cleanup / MonthlyHeatmap hooks-after-guard cosmetic fix / mobile responsive / dark/light theme switch (re-evaluate) / tech debt batch (F8 / M1-M4 / Item #7 / Item #10) / honest close code piece (preset `disabled: bool` flag + dispatch reject 422)

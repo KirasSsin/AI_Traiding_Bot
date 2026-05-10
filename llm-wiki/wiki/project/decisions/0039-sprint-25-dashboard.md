@@ -3,12 +3,13 @@ title: 0039. Sprint 25 — Dashboard UI (FastAPI + vanilla JS, demo-only backtes
 type: decision
 date: 2026-04-26
 sprint: 25
-tags: [adr, sprint-25, dashboard, fastapi, presentation-context, demo-only, no-mainnet, s4-system-criterion-partial]
+tags: [adr, sprint-25, dashboard, fastapi, presentation-context, demo-only, no-mainnet, s4-system-criterion-partial, aesthetic-pivot]
 sources:
   - project/pre-s25-backlog.md
   - project/decisions/0038-sprint-23-honest-close-v05.md
   - project/architecture/acceptance-criteria.md
 status: accepted
+updated: 2026-05-10
 ---
 
 # 0039. Sprint 25 — Dashboard UI
@@ -171,4 +172,21 @@ S25 dashboard does NOT preempt S24 ESC-1 — operator decides at any future poin
 
 ## Поправки
 
-- (none yet)
+### Поправка S46 (2026-05-10): Pivot к Anthropic + cyberpunk + React 18 stack
+
+Per S46 operator binding decision — pivot terminal aesthetic (S26 Bloomberg-pro × refined CRT) к **Anthropic orange palette + cyberpunk hi-tech premium** style. Rationale: оператор показал Claude Signal cyberpunk references в S43 era + explicit S46 request "стилистика антропика и клад-кода". Параллельно — миграция dashboard frontend с vanilla JS на React 18 + TypeScript + Vite + CSS Modules.
+
+**Changes:**
+- Primary palette: green phosphor → Anthropic orange (`#cc785c`)
+- Base: black-on-green → dark cyberpunk (`#0a0a0a`) с warm cream text
+- Effects: scanlines + CRT glow → glass-morphism panels + subtle neon accents
+- Typography: JetBrains Mono primary → Inter sans (UI chrome) + JetBrains Mono (data/code/tables)
+- Status colors: terminal green/amber/red → neon green PASS / orange WFA_FAIL_DATA / neon red FAIL
+- Frontend stack: vanilla HTML+JS → React 18.3 + TypeScript 5.5 strict + Vite 5.4 + CSS Modules + uPlot 1.6.31 wrapper
+- FastAPI backend: `TemplateResponse` → `FileResponse(dist/index.html)` (Jinja2 incompatible с content-hashed React build)
+
+**Implementation:**
+- Migration к React 18 + TypeScript + Vite + CSS Modules полностью описана в [[0066-sprint-46-react-migration]]
+- Design tokens в `src/dashboard_react/src/styles/tokens.css`
+- Original terminal aesthetic preserved в `src/dashboard_legacy/` (archive — vanilla static + templates)
+- Architect binding conditions C1+C2+C4 met — Vite outDir + Node.js CI step + FileResponse mount
