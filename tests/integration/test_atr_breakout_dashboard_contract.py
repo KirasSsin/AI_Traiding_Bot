@@ -47,7 +47,9 @@ def test_atr_breakout_returns_envelope_keys() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_envelope_verdict_is_raw() -> None:
-    """RAW verdict — acceptance discipline skipped до S43."""
+    """RAW verdict — runner itself still returns RAW (no wfa_result passed).
+    S44 T5: WFA is wired at dispatch level (backtest_runner.py), not runner level.
+    """
     r = run_atr_breakout_backtest(
         symbol="BTCUSDT",
         interval="240",
@@ -177,7 +179,9 @@ def test_atr_breakout_preset_has_supported_combos_field() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_dispatch_preserves_envelope_keys() -> None:
-    """T4 critical fix — dispatch must merge envelope, not throw it away."""
+    """T4 critical fix — dispatch must merge envelope, not throw it away.
+    S44 T5: verdict is now WFA_PASS/WFA_FAIL/WFA_FAIL_DATA (not RAW) when WFA succeeds.
+    """
     from src.dashboard.backtest_runner import BacktestRequest, run_backtest
 
     req = BacktestRequest(
@@ -199,11 +203,9 @@ def test_atr_breakout_dispatch_preserves_envelope_keys() -> None:
         "mc_p_value",
     ):
         assert key in r, f"Dispatch must merge envelope key: {key}"
-    assert r["verdict"] == "RAW"
+    assert r["verdict"] in ("WFA_PASS", "WFA_FAIL", "WFA_FAIL_DATA", "RAW")
     assert isinstance(r["failed_criteria"], list)
     assert isinstance(r["warnings"], list)
-    high = [w for w in r["warnings"] if w["code"] == "raw_full_period"]
-    assert len(high) == 1
 
 
 @pytest.mark.integration
@@ -231,7 +233,9 @@ def test_atr_breakout_envelope_includes_equity_curve_timestamps() -> None:
 
 @pytest.mark.integration
 def test_volume_breakout_dispatch_preserves_envelope_keys() -> None:
-    """T4 — same dispatch fix для volume_breakout."""
+    """T4 — same dispatch fix для volume_breakout.
+    S44 T5: verdict is now WFA_PASS/WFA_FAIL/WFA_FAIL_DATA (not RAW) when WFA succeeds.
+    """
     from src.dashboard.backtest_runner import BacktestRequest, run_backtest
 
     req = BacktestRequest(
@@ -244,4 +248,44 @@ def test_volume_breakout_dispatch_preserves_envelope_keys() -> None:
     r = run_backtest(req, force=True)
     for key in ("bars_per_year", "warnings", "failed_criteria", "verdict"):
         assert key in r, f"volume_breakout dispatch must merge envelope key: {key}"
-    assert r["verdict"] == "RAW"
+    assert r["verdict"] in ("WFA_PASS", "WFA_FAIL", "WFA_FAIL_DATA", "RAW")
+
+
+# S44 T6 — dashboard contract: verify WFA verdict returned (not RAW) after dispatch wiring
+
+
+@pytest.mark.integration
+def test_atr_breakout_dashboard_returns_wfa_verdict_btc_4h() -> None:
+    """S44 T6 — after dispatch wiring, BTCUSDT 4H returns WFA verdict (PASS or FAIL), not RAW."""
+    from src.dashboard.backtest_runner import BacktestRequest, run_backtest
+
+    req = BacktestRequest(
+        strategy_id="atr_breakout",
+        symbol="BTCUSDT",
+        interval="240",
+        start="2017-08-17",
+        end="2026-04-30",
+    )
+    r = run_backtest(req, force=True)
+    assert r["verdict"] in ("WFA_PASS", "WFA_FAIL", "WFA_FAIL_DATA"), f"Got {r['verdict']}"
+    assert r["verdict"] != "RAW"
+    assert r["dsr"] is not None
+    assert r["mc_p_value"] is not None
+    assert r["wfa_params"] is not None
+
+
+@pytest.mark.integration
+def test_atr_breakout_dashboard_btc_1d_data_limited() -> None:
+    """S44 T6 — BTCUSDT 1D = 1212 bars < 4520 default → WFA_FAIL_DATA."""
+    from src.dashboard.backtest_runner import BacktestRequest, run_backtest
+
+    req = BacktestRequest(
+        strategy_id="atr_breakout",
+        symbol="BTCUSDT",
+        interval="D",
+        start="2023-01-02",
+        end="2026-04-26",
+    )
+    r = run_backtest(req, force=True)
+    assert r["verdict"] == "WFA_FAIL_DATA"
+    assert "data_volume" in r["failed_criteria"]
