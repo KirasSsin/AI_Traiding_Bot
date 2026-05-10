@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T12 done — MonthlyHeatmap (T9-T12 cluster complete)
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T13 done — MetricsTable (TIER 1-6 + DSR + MC + per-fold subtable)
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T12 done — MonthlyHeatmap (calendar grid с PnL по месяцам, intensity-scaled cells). T9-T12 cluster complete.
+**Текущий статус:** T13 done — MetricsTable (RAW reduced view + WFA TIER 1-6/DSR/MC + per-fold Sharpe subtable). Faithful vanilla port (Bailey 2014 thresholds).
 
-**Следующее действие:** T13: MetricsTable component (TIER 1-6 + DSR + MC) — opus model
+**Следующее действие:** T14: TradesTable component
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -97,6 +97,7 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T10: DrawdownSubchart component — uPlot subchart + computeDrawdown + CC2 sync key | DONE | 1cfd0aa |
 | T11: TradeMarkers — envelope ext (vb+atr runners) + EquityChart scatter overlay (win/loss) | DONE | 553b94c |
 | T12: MonthlyHeatmap — calendar grid с PnL по месяцам, intensity-scaled cells | DONE | 549b7bc |
+| T13: MetricsTable — TIER 1-6 + DSR + MC + per-fold Sharpe subtable (RAW + WFA paths) | DONE | 96b8dac |
 
 ---
 
