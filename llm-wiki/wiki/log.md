@@ -2671,3 +2671,22 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **ADRs:** 65 → **66** / **Sprint pages:** 49 → **50**
 - **Tag:** v0.1.0-alpha.46 (pending PHASE 6 + ship)
 - **Carry к S47:** Vitest+RTL units / multiplier+methodology card detail (T15 deferred TODO markers) / `backtest-flow` E2E submit→verdict spec stub fixture / MetricsTable T5 vanilla parity bug cleanup / MonthlyHeatmap hooks-after-guard cosmetic fix / mobile responsive / dark/light theme switch (re-evaluate) / tech debt batch (F8 / M1-M4 / Item #7 / Item #10) / honest close code piece (preset `disabled: bool` flag + dispatch reject 422)
+
+## [2026-05-11] ship | S46 SHIPPED — squash-merge + tag
+
+- **PR #57** squash-merged → `0fcb3ff` Sprint 46 React migration + Anthropic/cyberpunk + honest close UI
+- **Tag** `v0.1.0-alpha.46` pushed к origin
+- **Branch** `feature/sprint-46-react-migration` deleted (post-merge cleanup)
+- **PHASE 5 verify GREEN:** pytest 1004p / 24s / 0 fail · mypy --strict 85 files / 0 issues · Playwright 3 pass / 1 skip · lint+tsc+build clean (235.11 kB JS / 31.41 kB CSS gzip 81/5.7)
+- **PHASE 6 reviewers (5):**
+  - python-reviewer **APPROVE** (1 MEDIUM: HTTP cache headers → S47)
+  - doc-reviewer **APPROVE** (frontmatter + links + counts + RU narrative all clean)
+  - architecture-reviewer **APPROVE_WITH_CONDITIONS** (C1+C2+C4+CC2+CC3 ALL MET; SPA catch-all → S47)
+  - test-engineer **APPROVE_WITH_CONCERNS** → trade_markers populated path test added (`51760d4`)
+  - frontend-developer **APPROVE_WITH_CONCERNS** → 1 BLOCKER + 2 HIGH addressed (`36d6302`):
+    - BLOCKER MonthlyHeatmap.tsx Rules of Hooks violation (useMemo before guards, eslint-disable removed)
+    - HIGH WfaFailBanner.tsx setTimeout cleanup wrapped в useEffect
+    - HIGH EquityChart.tsx useEffect deps split к granular fields
+- **CI fix-ups (2):** Playwright webServer `python -m uvicorn` for CI compat (`3f60a5f`); canonical counts reason_codes 50→56 baseline bump (`ee8abd6` — pre-existing drift, not S46-introduced)
+- **Total commits на ветке:** 51
+- **Carry-overs S47 (final list):** Vitest+RTL units (test-engineer priority list provided) / `backtest-flow` E2E с `page.route('/api/backtest', ...)` mock / SPA catch-all route (architect MEDIUM — нужно если React Router added) / React asset cache headers / Multiplier+Methodology card detail (T15 TODO markers) / MetricsTable T5 vanilla bug parity cleanup / Tech debt batch (F8/M1-M4/Item 7/Item 10) / Honest close code piece (preset disabled flag + 422 reject) / README npm install note / a11y polish (tablist ARIA + `--color-text-disabled` contrast)

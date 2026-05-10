@@ -1,10 +1,10 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 5+6 COMPLETE (verify GREEN + 5 reviewers DONE; BLOCKER+HIGH fixes commit 36d6302; test-engineer test added 51760d4) → PHASE 8-SHIP
+updated: 2026-05-11  # S46 SHIPPED — squash-merge `0fcb3ff` + tag v0.1.0-alpha.46 + branch deleted → between-sprints
 sprint: 46
-phase: 8-ship
-branch: feature/sprint-46-react-migration
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.46
 ---
 
