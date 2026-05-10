@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T4 done
+updated: 2026-05-10  # T5 done
 sprint: 42
 phase: 4-execution
 branch: feature/sprint-42-atr-breakout-hardening
@@ -12,7 +12,7 @@ tag: v0.1.0-alpha.41
 
 **Phase:** 4-execution  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T5 next
+**in_progress:** T6 next
 
 **Completed tasks:**
 - T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
@@ -28,8 +28,12 @@ tag: v0.1.0-alpha.41
   - Dispatch atr_breakout: envelope merge (17-key base dict) not 4-key cherry-pick.
   - Dispatch volume_breakout: same envelope merge fix.
   - 23/23 new contract tests PASS. 24/24 baseline/multi-combo/unit tests PASS. mypy 0 errors.
+- T5: `src/dashboard/app.py` — `GET /api/strategy/{id}/info` endpoint + `supported_combos` enforcement в `POST /api/backtest` — DONE (commit efd4201)
+  - 6/6 new tests PASS. 16/16 existing dashboard tests PASS (no regressions). mypy 0 errors.
+  - Invalid combos (e.g. BTCUSDT/5m) rejected 422. Valid combos (BTCUSDT/240) pass gate.
+  - Legacy presets without `supported_combos` return empty list — backward-compatible.
 
-**Next action:** T5 — wiki sync (ADR 0062 for unified preset consolidation + sprint-42 page update).
+**Next action:** T6 — wiki sync (ADR 0062 for unified preset consolidation + sprint-42 page update).
 
 ---
 
