@@ -172,3 +172,39 @@ def test_run_research_wfa_default_n_trials_is_1() -> None:
     assert (
         sig.parameters["n_trials"].default == 1
     ), f"Default n_trials must be 1 (fail-safe), got {sig.parameters['n_trials'].default}"
+
+
+def test_get_wfa_tier_params_low_freq_4h() -> None:
+    """S45 — 4H interval returns low-freq tier params."""
+    from src.backtest.research_wfa import get_wfa_tier_params
+
+    p = get_wfa_tier_params("240")
+    assert p["train_bars"] == 1500
+    assert p["test_bars"] == 250
+    assert p["k_folds"] == 5
+    assert p["embargo_bars"] == 20
+
+
+def test_get_wfa_tier_params_low_freq_d() -> None:
+    """S45 — D interval returns low-freq tier params."""
+    from src.backtest.research_wfa import get_wfa_tier_params
+
+    p = get_wfa_tier_params("D")
+    assert p["test_bars"] == 250
+
+
+def test_get_wfa_tier_params_high_freq_15m() -> None:
+    """S45 — 15M returns high-freq default tier."""
+    from src.backtest.research_wfa import get_wfa_tier_params
+
+    p = get_wfa_tier_params("15")
+    assert p["train_bars"] == 2000
+    assert p["test_bars"] == 500
+
+
+def test_get_wfa_tier_params_high_freq_1h() -> None:
+    """S45 — 1H returns high-freq default tier."""
+    from src.backtest.research_wfa import get_wfa_tier_params
+
+    p = get_wfa_tier_params("60")
+    assert p["test_bars"] == 500

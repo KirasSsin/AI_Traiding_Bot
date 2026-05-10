@@ -38,6 +38,35 @@ P_THRESHOLD = 0.05
 N_EFF_THRESHOLD = 50
 T5_FLOOR = 50
 
+# S45 — Low-frequency tier params (ADR 0014 amendment)
+_LOW_FREQ_INTERVALS: frozenset[str] = frozenset({"240", "D"})
+_HIGH_FREQ_DEFAULTS: dict[str, int] = {
+    "train_bars": 2000,
+    "test_bars": 500,
+    "k_folds": 5,
+    "embargo_bars": 20,
+}
+_LOW_FREQ_DEFAULTS: dict[str, int] = {
+    "train_bars": 1500,
+    "test_bars": 250,
+    "k_folds": 5,
+    "embargo_bars": 20,
+}
+
+
+def get_wfa_tier_params(interval: str) -> dict[str, int]:
+    """S45 — Return WFA params для interval tier per ADR 0014 S45 amendment.
+
+    Low-freq (4H, D): train=1500/test=250/k=5/embargo=20 (min_required=2770)
+    High-freq (5M, 15M, 1H): train=2000/test=500/k=5/embargo=20 (min_required=4520)
+
+    Per anti-snooping discipline в ADR 0014 S45 amendment — values committed
+    BEFORE recalibration run, derived from trade-frequency analysis.
+    """
+    return (
+        dict(_LOW_FREQ_DEFAULTS) if interval in _LOW_FREQ_INTERVALS else dict(_HIGH_FREQ_DEFAULTS)
+    )
+
 
 class _PnlPctTrade(Protocol):
     pnl_pct: float

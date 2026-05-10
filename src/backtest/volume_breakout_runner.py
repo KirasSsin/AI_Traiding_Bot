@@ -325,19 +325,27 @@ def _run_volume_breakout_wfa(
     interval: str,
     start_date: date,
     end_date: date,
-    train_bars: int = 2000,
-    test_bars: int = 500,
-    k_folds: int = 5,
-    embargo_bars: int = 20,
+    train_bars: int | None = None,
+    test_bars: int | None = None,
+    k_folds: int | None = None,
+    embargo_bars: int | None = None,
 ) -> dict[str, Any]:
     """S44 T3 — WFA for volume_breakout with LOCKED params (S39 sweep #1644).
+
+    S45 — Tier-aware defaults per ADR 0014 amendment (low-freq 4H/D test_bars=250).
 
     Adapter wraps _backtest_single (df, params) signature to match
     BacktestFn (df, params, bars_per_year) for shared research_wfa helper.
     """
     from src.__main__ import _load_ohlcv
-    from src.backtest.research_wfa import run_research_wfa
+    from src.backtest.research_wfa import get_wfa_tier_params, run_research_wfa
     from src.signalgen.volume_breakout_strategy import VOLUME_BREAKOUT_LOCKED_PARAMS
+
+    tier = get_wfa_tier_params(interval)
+    train_bars = train_bars if train_bars is not None else tier["train_bars"]
+    test_bars = test_bars if test_bars is not None else tier["test_bars"]
+    k_folds = k_folds if k_folds is not None else tier["k_folds"]
+    embargo_bars = embargo_bars if embargo_bars is not None else tier["embargo_bars"]
 
     df = _load_ohlcv(
         symbol=symbol,
