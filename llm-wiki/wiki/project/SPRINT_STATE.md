@@ -1,18 +1,18 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T8 done — full pytest sweep GREEN
+updated: 2026-05-10  # T9+T10 done — wiki sync complete
 sprint: 42
-phase: 4-execution
+phase: 7-sync
 branch: feature/sprint-42-atr-breakout-hardening
-tag: v0.1.0-alpha.41
+tag: v0.1.0-alpha.42
 ---
 
-## S42 IN PROGRESS — ATR breakout hardening (dashboard contract envelope)
+## S42 PHASE 7-SYNC — ATR breakout hardening (dashboard contract envelope)
 
-**Phase:** 4-execution  
+**Phase:** 7-sync  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T9+T10 bundled (ADR 0062 + wiki sync) next
+**in_progress:** PHASE 6 reviewers next, then PHASE 8 ship
 
 **T7 status:** verified-no-change — `.warn-high/.warn-mid/.warn-info` CSS classes уже exist в `dashboard.css` lines 466-471. Envelope chips render автоматически через existing warnings-panel JS loop. No code edits required.
 
@@ -46,7 +46,10 @@ tag: v0.1.0-alpha.41
   - `.verdict-raw` CSS class added (amber #f0a000 for RAW verdict).
   - Smoke test: `/api/strategy/atr_breakout/info` returns 10 `supported_combos`. Backtest returns `verdict: RAW` with all envelope keys present.
 
-**Next action:** T7 — wiki sync (ADR 0062 for unified preset consolidation + sprint-42 page update).
+**T9 status:** done — ADR 0062 created, 0060+0061 marked superseded.
+**T10 status:** done — sprint-42 page + current-state.md + index.md + log.md + atr-breakout-strategy component updated.
+
+**Next action:** PHASE 6 — domain reviewer dispatch (trading-logic / quant-stats / doc-reviewer), then PHASE 8 ship (tag v0.1.0-alpha.42 + PR merge).
 
 ---
 

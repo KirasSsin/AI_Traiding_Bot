@@ -4,7 +4,7 @@ type: decision
 tags: [adr, sprint-40, atr-breakout, autoresearch-integration, locked, anti-snooping, ru]
 created: 2026-05-10
 updated: 2026-05-10
-status: accepted
+status: superseded
 sources:
   - src/signalgen/atr_breakout_strategy.py
   - src/backtest/atr_breakout_runner.py
@@ -13,7 +13,8 @@ sources:
 
 # ADR 0060. Sprint 40 — atr_breakout pre-registration LOCKED
 
-**Статус:** accepted
+**Статус:** superseded by [[0062-sprint-42-atr-breakout-hardening]]
+**Superseded:** 2026-05-10 (заменён ADR 0062 — preset consolidation + envelope contract retrofit)
 **Дата:** 2026-05-10
 **Модель:** anti-snooping LOCK по образцу ADR 0054 / ADR 0059
 

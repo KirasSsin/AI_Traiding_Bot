@@ -1,7 +1,7 @@
 ---
 title: "ADR 0061: Расширение ATR breakout до 9 дополнительных (symbol, interval) комбо (S41)"
 type: decision
-status: accepted
+status: superseded
 created: 2026-05-10
 updated: 2026-05-10
 tags: [atr-breakout, multi-combo, locked-params, autoresearch, dashboard, sprint-41]
@@ -10,7 +10,8 @@ sources: [data/autoresearch_endless/best_per_combo.json]
 
 # ADR 0061: Расширение ATR breakout до 9 дополнительных (symbol, interval) комбо (S41)
 
-**Статус:** принято  
+**Статус:** superseded by [[0062-sprint-42-atr-breakout-hardening]]
+**Superseded:** 2026-05-10 (заменён ADR 0062 — preset consolidation + envelope contract retrofit)
 **Дата:** 2026-05-10  
 **Ссылки:** [[0060-sprint-40-atr-breakout-pre-registration]] (ADR-0060 — исходный BTCUSDT 4H)
 

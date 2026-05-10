@@ -13,7 +13,7 @@ sources:
 
 # ATRBreakoutStrategy
 
-**TL;DR:** Long-only ATR breakout стратегия (S40 autoresearch production integration per ADR 0060 LOCKED). Autoresearch iter 1 BTCUSDT 4H. Backtest verdict = **PASS** — 8.7y +819.81% / Sharpe 1.11 / 5/5 sub-periods positive (первый 5/5 в истории проекта).
+**TL;DR:** Long-only ATR breakout стратегия (S40 autoresearch production integration per ADR 0060 LOCKED). Autoresearch iter 1 BTCUSDT 4H. Backtest verdict = **PASS** — 8.7y +819.81% / Sharpe 1.11 / 5/5 sub-periods positive (первый 5/5 в истории проекта). **S42:** Dashboard preset переименован в `atr_breakout` (unified, 10 combos). `verdict: "RAW"` + `RAW_FULL_PERIOD` warning chip до S43 WFA retrofit (per ADR 0062).
 
 ## Назначение
 
@@ -110,11 +110,15 @@ Sharpe ≥ 0.5
 
 ## Конфигурация
 
-Dashboard preset `atr_breakout_iter_endless` (`src/dashboard/backtest_runner.py`):
-- `type`: `"atr_breakout"` → early-return dispatch к `atr_breakout_runner`
-- `locked_symbol`: `BTCUSDT`
-- `locked_interval`: `"240"` (4H)
-- Параметры = `ATR_BREAKOUT_LOCKED_PARAMS` (immutable constant)
+Dashboard preset `atr_breakout` (`src/dashboard/backtest_runner.py`) — **S42 unified preset (replaces `atr_breakout_iter_endless` + 9 S41 presets)**:
+- `type`: `"atr_breakout"` → envelope dispatch к `atr_breakout_runner` + `build_research_runner_envelope()`
+- `supported_combos`: 10 (symbol, interval) пар — server-side params lookup в `ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)]`
+- Frontend `applyComboGates()` greys out invalid sym/TF combinations
+- Returns 17-key dashboard contract dict via `src/backtest/research_runner_envelope.py::build_research_runner_envelope()`
+- `verdict: "RAW"` + `RAW_FULL_PERIOD` warning chip (WFA retrofit pending S43)
+- Invalid combos rejected с 422 через `GET /api/strategy/{id}/info` enforcement
+
+**Примечание:** Acceptance gate (WFA + DSR + MC + T1-T6) temporarily skipped. S43 будет retrofit per ADR 0062.
 
 ## Инварианты
 
@@ -133,8 +137,10 @@ Dashboard preset `atr_breakout_iter_endless` (`src/dashboard/backtest_runner.py`
 
 ## Связанные
 
-- [[../decisions/0060-sprint-40-atr-breakout-pre-registration]] — ADR 0060 LOCKED params + acceptance criteria
-- [[../sprints/sprint-40-atr-breakout-production]] — sprint context
-- [[volume-breakout-strategy]] — сестринская стратегия (S39, шаблон реализации)
+- [[../decisions/0062-sprint-42-atr-breakout-hardening]] — ADR 0062 S42 retrofit: envelope contract + preset consolidation (current)
+- [[../decisions/0060-sprint-40-atr-breakout-pre-registration]] — ADR 0060 LOCKED params + acceptance criteria (superseded by 0062)
+- [[../sprints/sprint-42-atr-breakout-hardening]] — S42 sprint (envelope retrofit)
+- [[../sprints/sprint-40-atr-breakout-production]] — S40 sprint (original implementation)
+- [[volume-breakout-strategy]] — сестринская стратегия (S39, same envelope wrap applied S42)
 - [[strategy]] — EmaCrossoverAdxRsiStrategy (основная production стратегия, FSM контракт)
 - [[indicators]] — Wilder ATR shared pattern
