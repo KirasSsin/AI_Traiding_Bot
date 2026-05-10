@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T4+T5 done — n_trials per-strategy (C1) + B2 train slice docs
+updated: 2026-05-10  # S45 T6 done — ADR 0014 low-freq tier amendment + tier helper wiring
 sprint: 45
 phase: 4-execution
 branch: feature/sprint-45-wfa-recalibration
@@ -20,11 +20,31 @@ branch: feature/sprint-45-wfa-recalibration
 | T3: CrossTrialLog idempotency guard (B1) — upsert on (sprint, symbol) + reset log | DONE | 5efddee |
 | T4: n_trials per-strategy fix (C1) — default=1, atr=10, vb=1 | DONE | 553e040 |
 | T5: B2 train slice documentation (inline + docstring) | DONE | 553e040 |
-| T6: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
+| T6: ADR 0014 low-freq tier amendment (4H/D test_bars=250) + tier helper wiring | DONE | cafb6a6 |
+| T7: WFA recalibration run — 10 combos с uniform 3.3y window using new tier params | TODO | — |
 
-**Текущий статус:** T4+T5 done. n_trials default=1 (fail-safe), atr_breakout explicit=10, volume_breakout explicit=1. B2 train slice docs added to research_wfa.py. 3 new tests GREEN, mypy clean. T6 next.
+**Текущий статус:** T6 done. ADR 0014 amendment с trade-frequency derivation table committed BEFORE recalibration (anti-snooping). `get_wfa_tier_params()` helper в research_wfa.py routes 4H/D → low-freq tier (train=1500/test=250/k=5/embargo=20, min_required=2770), 5M/15M/1H → high-freq default. atr_breakout + volume_breakout runners auto-select tier. 4 unit + 2 integration tier tests GREEN, mypy clean.
 
-**Следующее действие:** T6 — WFA recalibration run — 10 combos с uniform 3.3y window.
+**Следующее действие:** T7 — WFA recalibration run — 10 combos с uniform 3.3y window using new tier params. Maximum 1 iteration (this ADR per ESC-1 (a)).
+
+### S45 T6 trade-frequency derivation (anti-snooping pre-commit, для T8 ADR 0065 reference)
+
+Computed на 3.3y window (2023-01-01 → 2026-04-26), uniform per S45 ADR 0065:
+
+| Combo | bars/year | 3.3y trades | trades/500bar | trades/250bar |
+|-------|-----------|-------------|---------------|---------------|
+| BTCUSDT_15  | 35064 | 245 | 1.06  | 0.53 |
+| BTCUSDT_60  |  8766 | 106 | 1.83  | 0.92 |
+| BTCUSDT_240 |  2191 |  28 | 1.94  | 0.97 |
+| BTCUSDT_D   |   365 |  32 | 13.28 | 6.64 |
+| ETHUSDT_15  | 35064 | 240 | 1.04  | 0.52 |
+| ETHUSDT_60  |  8766 | 109 | 1.88  | 0.94 |
+| ETHUSDT_240 |  2191 |  28 | 1.94  | 0.97 |
+| SOLUSDT_15  | 35064 | 230 | 0.99  | 0.50 |
+| SOLUSDT_60  |  8766 | 124 | 2.14  | 1.07 |
+| SOLUSDT_240 |  2191 |  71 | 4.91  | 2.45 |
+
+**Conclusion:** 4H/D combos fire 1-3 trades per 500-bar OOS fold = structural T5 floor failure. test_bars=250 doubles density к 0.5-1.5/fold ≈ 5-15 trades pooled across 5 folds. Honest second look — но likely T5 fail для ВСЕХ low-freq.
 
 ---
 
