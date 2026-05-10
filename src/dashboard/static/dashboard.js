@@ -303,46 +303,77 @@ function renderResult(r) {
   }
 
   // T1-T6 + DSR + MC table
-  const m = r.metrics;
-  const cellCls = (val, threshold, op = ">=") => {
-    if (val === null || val === undefined) return "metric-fail";
-    return op === ">=" ? (val >= threshold ? "metric-pass" : "metric-fail")
-                       : (val < threshold ? "metric-pass" : "metric-fail");
-  };
-  const t1Cls = m.t1_sharpe_oos === null ? "metric-fail" : (m.t1_sharpe_oos > 3 ? "metric-warn" : (m.t1_sharpe_oos >= 1 ? "metric-pass" : "metric-fail"));
-  const t1Status = m.t1_sharpe_oos === null || m.t1_sharpe_oos < 1 ? "FAIL" : (m.t1_sharpe_oos > 3 ? "OVERFIT?" : "PASS");
-  $("metrics-table").innerHTML = `
-    <thead><tr><th>METRIC</th><th>VALUE</th><th>THRESHOLD</th><th>STATUS</th></tr></thead>
-    <tbody>
-      <tr><td>T1 · Sharpe OOS (annualized)</td><td class="${t1Cls}">${fmt(m.t1_sharpe_oos, 2)}</td><td>≥ 1.0 (>3.0 = overfit)</td><td class="${t1Cls}">${t1Status}</td></tr>
-      <tr><td>T2 · Sortino OOS</td><td class="${m.t2_sortino_anomaly_guard ? "metric-warn" : cellCls(m.t2_sortino_oos, 1.5)}">${m.t2_sortino_anomaly_guard ? "N/A" : fmt(m.t2_sortino_oos, 2)}</td><td>≥ 1.5</td><td class="${m.t2_sortino_anomaly_guard ? "metric-warn" : cellCls(m.t2_sortino_oos, 1.5)}">${m.t2_sortino_anomaly_guard ? "GUARD" : (m.t2_sortino_oos === null || m.t2_sortino_oos < 1.5 ? "FAIL" : "PASS")}</td></tr>
-      <tr><td>T3 · Max Drawdown</td><td class="${cellCls(m.t3_max_drawdown, 0.25, "<")}">${fmtPct(m.t3_max_drawdown)}</td><td>&lt; 25%</td><td class="${cellCls(m.t3_max_drawdown, 0.25, "<")}">${m.t3_max_drawdown === null || m.t3_max_drawdown >= 0.25 ? "FAIL" : "PASS"}</td></tr>
-      <tr><td>T4 · Win rate</td><td>${fmtPct(m.t4_win_rate)}</td><td>≥ 45%@RR≥1.5 OR ≥ 35%@RR≥2</td><td>—</td></tr>
-      <tr><td>T4 · Avg RR</td><td>${fmt(m.t4_avg_rr, 2)}</td><td>—</td><td>—</td></tr>
-      <tr><td><strong>T5 · Trade count (n)</strong></td><td class="${m.t5_n_trades < 100 ? "metric-fail" : "metric-pass"}"><strong>${m.t5_n_trades}</strong></td><td>≥ 100 (Bailey 2014)</td><td class="${m.t5_n_trades < 100 ? "metric-fail" : "metric-pass"}">${m.t5_n_trades < 100 ? "FAIL" : "PASS"}</td></tr>
-      <tr><td>T5 · Mean PnL %</td><td>${fmtPct(m.t5_mean_pnl_pct, 4)}</td><td>&gt; 0</td><td class="${m.t5_mean_pnl_pct === null || m.t5_mean_pnl_pct <= 0 ? "metric-fail" : "metric-pass"}">${m.t5_mean_pnl_pct === null || m.t5_mean_pnl_pct <= 0 ? "FAIL" : "PASS"}</td></tr>
-      <tr><td>T5 · t-stat</td><td class="${cellCls(m.t5_t_stat, 2.0)}">${fmt(m.t5_t_stat, 2)}</td><td>≥ 2.0</td><td class="${cellCls(m.t5_t_stat, 2.0)}">${m.t5_t_stat === null || m.t5_t_stat < 2 ? "FAIL" : "PASS"}</td></tr>
-      <tr><td>T6 · OOS/IS Sharpe ratio mean</td><td class="${cellCls(m.t6_oos_is_sharpe_ratio_mean, 0.7)}">${fmt(m.t6_oos_is_sharpe_ratio_mean, 2)}</td><td>≥ 0.7 (overfit detector)</td><td class="${cellCls(m.t6_oos_is_sharpe_ratio_mean, 0.7)}">${m.t6_oos_is_sharpe_ratio_mean === null || m.t6_oos_is_sharpe_ratio_mean < 0.7 ? "FAIL" : "PASS"}</td></tr>
-      <tr><td>DSR · Deflated Sharpe Ratio</td><td class="${r.dsr_pass ? "metric-pass" : "metric-fail"}">${fmt(r.dsr, 4)}</td><td>&gt; 0</td><td class="${r.dsr_pass ? "metric-pass" : "metric-fail"}">${r.dsr_pass ? "PASS" : "FAIL"}</td></tr>
-      <tr><td>MC · p-value (sign-flip)</td><td class="${r.mc_p_value <= 0.05 ? "metric-pass" : (r.mc_p_value > 0.10 ? "metric-fail" : "metric-warn")}">${fmt(r.mc_p_value, 4)}</td><td>≤ 0.05</td><td class="${r.mc_p_value <= 0.05 ? "metric-pass" : "metric-fail"}">${r.mc_p_value <= 0.05 ? "PASS" : "FAIL"}</td></tr>
-    </tbody>
-  `;
+  const m = r.metrics || {};
+  const ts = r.trade_stats || {};
 
-  // Trade stats
-  const ts = r.trade_stats;
-  $("trades-table").innerHTML = `
-    <thead><tr><th>STAT</th><th>VALUE</th></tr></thead>
-    <tbody>
-      <tr><td>Profitable trades</td><td class="metric-pass">${ts.n_winners}</td></tr>
-      <tr><td>Losing trades</td><td class="metric-fail">${ts.n_losers}</td></tr>
-      <tr><td>Win rate</td><td>${fmtPct(m.t4_win_rate)}</td></tr>
-      <tr><td>Total PnL</td><td>${fmtMoney(ts.total_pnl_quote)} USDT</td></tr>
-      <tr><td>Total Commissions</td><td>${fmtMoney(ts.total_commissions_quote)} USDT</td></tr>
-      <tr><td>Avg Win</td><td>${fmtMoney(ts.avg_win_quote)} USDT</td></tr>
-      <tr><td>Avg Loss</td><td>${fmtMoney(ts.avg_loss_quote)} USDT</td></tr>
-      <tr><td>Profit Factor</td><td>${fmt(ts.profit_factor, 2)}</td></tr>
-    </tbody>
-  `;
+  // S42.2 — RAW mode (research presets atr_breakout/volume_breakout): show envelope's actual values,
+  // hide WFA-specific TIER 1-T6 + DSR + MC (deferred к S43 retrofit).
+  if (r.verdict === "RAW") {
+    const totalPnl = m.total_pnl_pct ?? r.total_pnl_pct;
+    const sharpeVal = m.sharpe ?? r.sharpe;
+    const nTr = m.n_trades ?? r.n_trades ?? 0;
+    const winR = m.win_rate ?? r.win_rate;
+    const nWin = (winR != null && nTr) ? Math.round(nTr * winR) : null;
+    const nLos = (nWin != null) ? nTr - nWin : null;
+    $("metrics-table").innerHTML = `
+      <thead><tr><th>METRIC</th><th>VALUE</th><th>NOTE</th></tr></thead>
+      <tbody>
+        <tr><td>Total PnL</td><td class="${totalPnl > 0 ? "metric-pass" : "metric-fail"}"><strong>${fmt(totalPnl, 2)}%</strong></td><td>Full-period training (no WFA OOS split)</td></tr>
+        <tr><td>Sharpe (annualized)</td><td class="${sharpeVal >= 1 ? "metric-pass" : "metric-warn"}">${fmt(sharpeVal, 4)}</td><td>per-trade Sharpe × √(bars/year ÷ mean_holding)</td></tr>
+        <tr><td>Trade count (n)</td><td>${nTr}</td><td>Full-period (no train/test split)</td></tr>
+        <tr><td>Win rate</td><td>${fmtPct(winR)}</td><td>—</td></tr>
+        <tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:var(--space-3);">▸ T1-T6 / DSR / MC acceptance gates skipped — see RAW_FULL_PERIOD warning above (WFA retrofit pending S43)</td></tr>
+      </tbody>
+    `;
+    $("trades-table").innerHTML = `
+      <thead><tr><th>STAT</th><th>VALUE</th></tr></thead>
+      <tbody>
+        <tr><td>Profitable trades</td><td class="metric-pass">${nWin ?? "—"}</td></tr>
+        <tr><td>Losing trades</td><td class="metric-fail">${nLos ?? "—"}</td></tr>
+        <tr><td>Win rate</td><td>${fmtPct(winR)}</td></tr>
+        <tr><td>Total PnL %</td><td class="${totalPnl > 0 ? "metric-pass" : "metric-fail"}">${fmt(totalPnl, 2)}%</td></tr>
+        <tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:var(--space-3);">▸ Quote-currency stats (USDT amounts, profit factor, avg win/loss) deferred к S43 WFA retrofit</td></tr>
+      </tbody>
+    `;
+  } else {
+    // Legacy WFA path (replay engine — ema_crossover / mean_reversion / donchian)
+    const cellCls = (val, threshold, op = ">=") => {
+      if (val === null || val === undefined) return "metric-fail";
+      return op === ">=" ? (val >= threshold ? "metric-pass" : "metric-fail")
+                         : (val < threshold ? "metric-pass" : "metric-fail");
+    };
+    const t1Cls = m.t1_sharpe_oos === null ? "metric-fail" : (m.t1_sharpe_oos > 3 ? "metric-warn" : (m.t1_sharpe_oos >= 1 ? "metric-pass" : "metric-fail"));
+    const t1Status = m.t1_sharpe_oos === null || m.t1_sharpe_oos < 1 ? "FAIL" : (m.t1_sharpe_oos > 3 ? "OVERFIT?" : "PASS");
+    $("metrics-table").innerHTML = `
+      <thead><tr><th>METRIC</th><th>VALUE</th><th>THRESHOLD</th><th>STATUS</th></tr></thead>
+      <tbody>
+        <tr><td>T1 · Sharpe OOS (annualized)</td><td class="${t1Cls}">${fmt(m.t1_sharpe_oos, 2)}</td><td>≥ 1.0 (>3.0 = overfit)</td><td class="${t1Cls}">${t1Status}</td></tr>
+        <tr><td>T2 · Sortino OOS</td><td class="${m.t2_sortino_anomaly_guard ? "metric-warn" : cellCls(m.t2_sortino_oos, 1.5)}">${m.t2_sortino_anomaly_guard ? "N/A" : fmt(m.t2_sortino_oos, 2)}</td><td>≥ 1.5</td><td class="${m.t2_sortino_anomaly_guard ? "metric-warn" : cellCls(m.t2_sortino_oos, 1.5)}">${m.t2_sortino_anomaly_guard ? "GUARD" : (m.t2_sortino_oos === null || m.t2_sortino_oos < 1.5 ? "FAIL" : "PASS")}</td></tr>
+        <tr><td>T3 · Max Drawdown</td><td class="${cellCls(m.t3_max_drawdown, 0.25, "<")}">${fmtPct(m.t3_max_drawdown)}</td><td>&lt; 25%</td><td class="${cellCls(m.t3_max_drawdown, 0.25, "<")}">${m.t3_max_drawdown === null || m.t3_max_drawdown >= 0.25 ? "FAIL" : "PASS"}</td></tr>
+        <tr><td>T4 · Win rate</td><td>${fmtPct(m.t4_win_rate)}</td><td>≥ 45%@RR≥1.5 OR ≥ 35%@RR≥2</td><td>—</td></tr>
+        <tr><td>T4 · Avg RR</td><td>${fmt(m.t4_avg_rr, 2)}</td><td>—</td><td>—</td></tr>
+        <tr><td><strong>T5 · Trade count (n)</strong></td><td class="${m.t5_n_trades < 100 ? "metric-fail" : "metric-pass"}"><strong>${m.t5_n_trades}</strong></td><td>≥ 100 (Bailey 2014)</td><td class="${m.t5_n_trades < 100 ? "metric-fail" : "metric-pass"}">${m.t5_n_trades < 100 ? "FAIL" : "PASS"}</td></tr>
+        <tr><td>T5 · Mean PnL %</td><td>${fmtPct(m.t5_mean_pnl_pct, 4)}</td><td>&gt; 0</td><td class="${m.t5_mean_pnl_pct === null || m.t5_mean_pnl_pct <= 0 ? "metric-fail" : "metric-pass"}">${m.t5_mean_pnl_pct === null || m.t5_mean_pnl_pct <= 0 ? "FAIL" : "PASS"}</td></tr>
+        <tr><td>T5 · t-stat</td><td class="${cellCls(m.t5_t_stat, 2.0)}">${fmt(m.t5_t_stat, 2)}</td><td>≥ 2.0</td><td class="${cellCls(m.t5_t_stat, 2.0)}">${m.t5_t_stat === null || m.t5_t_stat < 2 ? "FAIL" : "PASS"}</td></tr>
+        <tr><td>T6 · OOS/IS Sharpe ratio mean</td><td class="${cellCls(m.t6_oos_is_sharpe_ratio_mean, 0.7)}">${fmt(m.t6_oos_is_sharpe_ratio_mean, 2)}</td><td>≥ 0.7 (overfit detector)</td><td class="${cellCls(m.t6_oos_is_sharpe_ratio_mean, 0.7)}">${m.t6_oos_is_sharpe_ratio_mean === null || m.t6_oos_is_sharpe_ratio_mean < 0.7 ? "FAIL" : "PASS"}</td></tr>
+        <tr><td>DSR · Deflated Sharpe Ratio</td><td class="${r.dsr_pass ? "metric-pass" : "metric-fail"}">${fmt(r.dsr, 4)}</td><td>&gt; 0</td><td class="${r.dsr_pass ? "metric-pass" : "metric-fail"}">${r.dsr_pass ? "PASS" : "FAIL"}</td></tr>
+        <tr><td>MC · p-value (sign-flip)</td><td class="${r.mc_p_value <= 0.05 ? "metric-pass" : (r.mc_p_value > 0.10 ? "metric-fail" : "metric-warn")}">${fmt(r.mc_p_value, 4)}</td><td>≤ 0.05</td><td class="${r.mc_p_value <= 0.05 ? "metric-pass" : "metric-fail"}">${r.mc_p_value <= 0.05 ? "PASS" : "FAIL"}</td></tr>
+      </tbody>
+    `;
+    $("trades-table").innerHTML = `
+      <thead><tr><th>STAT</th><th>VALUE</th></tr></thead>
+      <tbody>
+        <tr><td>Profitable trades</td><td class="metric-pass">${ts.n_winners}</td></tr>
+        <tr><td>Losing trades</td><td class="metric-fail">${ts.n_losers}</td></tr>
+        <tr><td>Win rate</td><td>${fmtPct(m.t4_win_rate)}</td></tr>
+        <tr><td>Total PnL</td><td>${fmtMoney(ts.total_pnl_quote)} USDT</td></tr>
+        <tr><td>Total Commissions</td><td>${fmtMoney(ts.total_commissions_quote)} USDT</td></tr>
+        <tr><td>Avg Win</td><td>${fmtMoney(ts.avg_win_quote)} USDT</td></tr>
+        <tr><td>Avg Loss</td><td>${fmtMoney(ts.avg_loss_quote)} USDT</td></tr>
+        <tr><td>Profit Factor</td><td>${fmt(ts.profit_factor, 2)}</td></tr>
+      </tbody>
+    `;
+  }
 
   // Per-fold table
   const folds = r.fold_sharpe_ratios || [];
