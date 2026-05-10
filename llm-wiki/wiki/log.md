@@ -2635,3 +2635,16 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **ADRs:** 63 → **64** / **Sprint pages:** 47 → **48**
 - **Tag:** v0.1.0-alpha.44
 - **Carry к S45:** UI deferrals (drawdown/markers/heatmap), WFA params recalibration для low-frequency strategies, new strategy hypothesis development
+
+## [2026-05-10] sprint-end | S45 — WFA recalibration + quant discipline + uniform 3.3y
+
+- **Sprint:** S45 — feature/sprint-45-wfa-recalibration → main
+- **ADR:** ADR 0065 (+ amendments к ADR 0014 + ADR 0060)
+- **Tasks done (8):** T1 uniform 3.3y data / T2 ADR 0060 amendment / T3 CrossTrialLog dedup B1 / T4+T5 n_trials per-strategy + B2 docs / T6 ADR 0014 amendment + WFA recalibration / T7 11 combos re-run / T8 ADR 0065 + wiki sync
+- **Honest verdict:** 0/11 WFA_PASS post-recalibration. Low-freq tier сделал 4H combos ХУЖЕ (fewer bars/fold). Pre-S44 RAW + post-S44 WFA_FAIL + post-S45 still WFA_FAIL = consistent honest signal.
+- **ESC-1 (a) trigger:** S46 = honest portfolio close per operator pre-commit decision.
+- **Tests:** ~970 unit (+14) / ~58 integration (+4) / mypy 0
+- **Canonical counts:** 16/30/74/56 (UNCHANGED)
+- **ADRs:** 64 → **65** / **Sprint pages:** 48 → **49**
+- **Tag:** v0.1.0-alpha.45
+- **Carry к S46:** honest portfolio close + operator strategic decision (Path B excluded). UI deferrals + S37/S38 long-standing → S47+.
