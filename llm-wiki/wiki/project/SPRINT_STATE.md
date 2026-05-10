@@ -1,13 +1,74 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T8 done — ADR 0065 + wiki sync, phase=8-ship
+updated: 2026-05-10  # S45 SHIPPED tag alpha.45 + S46-S48 roadmap updated
 sprint: 45
-phase: 8-ship
-branch: feature/sprint-45-wfa-recalibration
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.45
 ---
 
-## S45 PHASE 4-EXECUTION — WFA recalibration (uniform 3.3y data)
+## S46-S48 ROADMAP (operator decision 2026-05-10)
+
+Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, each блок).
+
+### S46 — UI redesign + honest close UI piece (~14-16 tasks)
+
+**Scope:**
+- **Option 2 (S43 UI deferrals):** drawdown subchart pane (uPlot stacked), per-trade markers (entry/exit dots на equity), monthly returns heatmap (calendar grid)
+- **Earlier S46 expansion:** mobile responsive layout, dark/light theme switch, live trade feed widget (Claude Signal-style reference), framework decision (vanilla JS keep OR React/Vue migrate?), aesthetic decision (terminal keep OR pivot?)
+- **Option 1 UI piece:** WFA_FAIL warning badges на all 11 research presets, persistent disclosure banner, WFA_FAIL_DATA label clarity (S43 dashboard-reviewer medium concern)
+- **Brainstorm needed:** framework Q + aesthetic Q operator decisions
+
+**Reviewers PHASE 6:** dashboard-reviewer (mandatory) + python + test + doc
+
+### S47 — Tech debt batch + honest close code piece (~12 tasks)
+
+**Scope:**
+- **Option 3 (S37/S38 long-standing):**
+  - F8 block_size constant unification (quant LOW)
+  - M1-M4 bybit-api fixes:
+    - retCode taxonomy (10001/110001/170131)
+    - pybit response shape defensive guards
+    - WS data isinstance check (V3 dict shape regression)
+    - `__repr__` secret redaction (security)
+  - Item #7 RiskSharedDeps backward-compat shim cleanup
+  - Item #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended boundary scenarios
+- **S44 reviewer follow-ups:**
+  - DSR ∈ [0,1] property test (test-engineer C2)
+  - WindowSplitter k_folds=1 edge case
+  - numpy RuntimeWarning suppress (pytest filterwarnings)
+  - Cross_trial_log read failure test (test-engineer C4)
+  - Trading-logic C2-C4 minor (sigma_sr docs, n_eff comment, trial_oos_sharpe annualization)
+- **Option 1 code piece:** preset `disabled: bool` flag в STRATEGY_PRESETS, dispatch reject disabled presets с 422
+- **S45 quant follow-ups:** n_trials assert (>=1), sprint int/str type test
+
+**Reviewers PHASE 6:** quant-stats + trading-logic + python + test + doc + bybit-api-reviewer + security-auditor (M4 secret redaction)
+
+### S48 — Honest close finalize + polish leftover (~8-10 tasks)
+
+**Scope:**
+- **Option 1 finalize (honest portfolio close per ESC-1):**
+  - ADR 0066 — formal portfolio close decision document
+  - Mark all 11 presets `status: superseded` в preset metadata
+  - Update `acceptance-criteria.md` — "ALL 11 strategies failed conjoint per S45 honest discipline"
+  - Update `current-state.md` — "v0.1 strategy validation NEGATIVE — honest close S48"
+  - Update README.md с честным state + carry forward warning
+  - Archive presets к `_legacy/` directory OR keep selectable с big WARNING (operator chooses в brainstorm)
+- **UI polish leftover:** anything deferred from S46 (если scope creep)
+- **Tech debt leftover:** anything deferred from S47
+- **v0.1 wrap-up:** semver bump к v0.1.0 stable? OR keep alpha indefinitely? Operator decision
+
+**Reviewers PHASE 6:** doc-reviewer (mandatory — ADR 0066) + trading-logic + python
+
+### Carry-overs к S49+
+
+- 12mo MAINNET-promotion ADR (нужен δ live data accumulation, не S46-S48 work)
+- Path B (new strategies) — operator excluded entirely
+
+---
+
+## S45 SHIPPED ✅ — WFA recalibration + quant discipline + uniform 3.3y
 
 **Branch:** feature/sprint-45-wfa-recalibration
 
