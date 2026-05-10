@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T4 done — envelope accepts wfa_result kwarg, 12/12 tests GREEN, phase=4-execution
+updated: 2026-05-10  # S44 T5+T6 done — dispatch routes research presets through WFA, 27/27 tests GREEN
 sprint: 44
 phase: 4-execution
 branch: feature/sprint-44-wfa-retrofit
@@ -19,10 +19,12 @@ branch: feature/sprint-44-wfa-retrofit
 | T2: Wire `atr_breakout_runner` к research_wfa (10 combos) | DONE | 3e8532b |
 | T3: Wire `volume_breakout_runner` к research_wfa (1 combo) | DONE | e6d25c9 |
 | T4: `build_research_runner_envelope()` accepts `wfa_result: dict | None` kwarg — populates WFA fields when present, RAW sentinels when None | DONE | 59095c7 |
+| T5: `backtest_runner.py` dispatch — atr_breakout + volume_breakout call `_run_*_wfa()` first, fall back to RAW on ValueError/FileNotFoundError, rebuild envelope with wfa_result | DONE | 6d051a5 |
+| T6: Dashboard contract tests verify WFA verdict (not RAW) — BTC 4H returns WFA_PASS/WFA_FAIL/WFA_FAIL_DATA; BTC 1D → WFA_FAIL_DATA | DONE | 6d051a5 |
 
-**Текущий статус:** T4 done. `build_research_runner_envelope()` extended с `wfa_result: dict[str, Any] | None = None` keyword. When passed: verdict/dsr/mc_p_value/fold_sharpe_ratios/wfa_params populated from WFA result, `raw_full_period` warning stripped. When None: S42 RAW sentinel behavior preserved (backward compat). 12/12 unit tests PASS (9 existing + 3 new). mypy --strict 0 errors. ruff-format clean.
+**Текущий статус:** T5+T6 done. Dispatch for `atr_breakout` + `volume_breakout` now calls WFA first (try/except fallback). Envelope rebuilt with `wfa_result` merged — verdict transitions from RAW → WFA_*. 27/27 integration tests PASS. mypy --strict 0 errors. BTC 4H observed WFA_FAIL (per test). BTC 1D confirmed WFA_FAIL_DATA.
 
-**Следующее действие:** T5 — wire WFA results from `_run_atr_breakout_wfa()` / `_run_volume_breakout_wfa()` through к envelope call (pass wfa_result=wfa dict). Then PHASE 5 verify.
+**Следующее действие:** T7 — PHASE 5 verify (mypy full + pytest full + acceptance gate review). Then PHASE 6 reviewers.
 
 ### Phase tracking
 
@@ -31,7 +33,7 @@ branch: feature/sprint-44-wfa-retrofit
 | 1-orient | done |
 | 2-brainstorm | done |
 | 3-plan | done |
-| 4-execution | in_progress (T1-T4 done, T5 next) |
+| 4-execution | in_progress (T1-T6 done, T7 verify next) |
 | 5-verify | pending |
 | 6-review | pending |
 | 7-sync | pending |
