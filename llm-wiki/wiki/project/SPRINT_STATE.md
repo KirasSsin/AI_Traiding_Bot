@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T7+T8 done — JS verdict mapping + amber CSS for WFA_FAIL_DATA
+updated: 2026-05-10  # S44 T9 done — CrossTrialLog wired, 11 combos run, verdict table captured
 sprint: 44
 phase: 4-execution
 branch: feature/sprint-44-wfa-retrofit
@@ -22,10 +22,31 @@ branch: feature/sprint-44-wfa-retrofit
 | T5: `backtest_runner.py` dispatch — atr_breakout + volume_breakout call `_run_*_wfa()` first, fall back to RAW on ValueError/FileNotFoundError, rebuild envelope with wfa_result | DONE | 6d051a5 |
 | T6: Dashboard contract tests verify WFA verdict (not RAW) — BTC 4H returns WFA_PASS/WFA_FAIL/WFA_FAIL_DATA; BTC 1D → WFA_FAIL_DATA | DONE | 6d051a5 |
 | T7+T8: JS verdict class mapping WFA_PASS/WFA_FAIL/WFA_FAIL_DATA + amber `.verdict-fail-data` CSS | DONE | f14870b |
+| T9: CrossTrialLog wired к research_wfa + 11 combos run + verdict table captured | DONE | d468854 |
 
-**Текущий статус:** T7+T8 done. `verdictCls` updated in both main verdict panel (line 396) and dashboard table (line 529). `.verdict-fail-data { color: #f0a000 }` appended to CSS. Metrics keys verified match JS expectations (9 keys, exact match). No JS key changes needed.
+**Текущий статус:** T9 done. CrossTrialLog.append_trial() wired in run_research_wfa after trial_log init. sprint_tag parsed to int ("S44"→44). 10/11 trials appended (1 skipped: BTCUSDT 1D → WFA_FAIL_DATA, no valid sharpe). mypy --strict clean, 4/4 unit tests pass.
 
-**Следующее действие:** T9 — PHASE 5 verify (mypy full + pytest full + acceptance gate review). Then PHASE 6 reviewers.
+**Следующее действие:** T10 — PHASE 5 verify (mypy full + pytest full). Then T11 — ADR 0064.
+
+### S44 actual verdicts (T9 run — input for T11 ADR 0064)
+
+```
+strategy                  sym      tf   verdict        DSR        MC_p     n_trades failed
+----------------------------------------------------------------------------------------------------
+atr_breakout              BTCUSDT  15   WFA_FAIL       nan        0.9885   9        n_eff_threshold,t5_floor,sharp
+atr_breakout              BTCUSDT  60   WFA_FAIL       0.1274     0.0220   16       n_eff_threshold,t5_floor,sharp
+atr_breakout              BTCUSDT  240  WFA_FAIL       0.0000     0.6687   10       n_eff_threshold,t5_floor,sharp
+atr_breakout              BTCUSDT  D    WFA_FAIL_DATA  nan        nan      0        data_volume
+atr_breakout              ETHUSDT  15   WFA_FAIL       nan        0.4188   7        n_eff_threshold,t5_floor,sharp
+atr_breakout              ETHUSDT  60   WFA_FAIL       0.0000     0.4088   14       n_eff_threshold,t5_floor,sharp
+atr_breakout              ETHUSDT  240  WFA_FAIL       nan        0.3498   6        n_eff_threshold,t5_floor,sharp
+atr_breakout              SOLUSDT  15   WFA_FAIL       nan        0.9630   7        n_eff_threshold,t5_floor,sharp
+atr_breakout              SOLUSDT  60   WFA_FAIL       0.0000     0.5597   15       n_eff_threshold,t5_floor,sharp
+atr_breakout              SOLUSDT  240  WFA_FAIL       0.0000     0.0525   20       n_eff_threshold,t5_floor,sharp
+volume_breakout_iter10    BTCUSDT  240  WFA_FAIL       0.0000     0.1994   38       n_eff_threshold,t5_floor,sharp
+```
+
+Cross-trial log: 10 trials appended (sprint=44). All combos WFA_FAIL (trade count too low for n_eff/t5 thresholds). BTCUSDT 1D → WFA_FAIL_DATA (data_volume insufficient). Note: dashboard presets use best autoresearch params per combo — params vary (atr_period 9/14/21, atr_breakout_mult 1.5/2.0/2.5/3.0).
 
 ### Phase tracking
 
@@ -34,7 +55,7 @@ branch: feature/sprint-44-wfa-retrofit
 | 1-orient | done |
 | 2-brainstorm | done |
 | 3-plan | done |
-| 4-execution | in_progress (T1-T8 done, T9 verify next) |
+| 4-execution | in_progress (T1-T9 done, T10 verify next) |
 | 5-verify | pending |
 | 6-review | pending |
 | 7-sync | pending |
