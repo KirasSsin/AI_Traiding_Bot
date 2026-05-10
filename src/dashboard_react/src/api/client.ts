@@ -5,6 +5,7 @@ import type {
   BacktestRequest,
   BacktestResponse,
   RunSummary,
+  DocsEnvelope,
 } from './types'
 
 const BASE_URL = ''  // same-origin (FastAPI serves React build per architect C1+C4)
@@ -59,4 +60,6 @@ export const api = {
 
   getRun: (runId: string): Promise<BacktestResponse> =>
     request(`/api/runs/${runId}`),
+
+  getDocs: (): Promise<DocsEnvelope> => request('/api/docs'),
 }

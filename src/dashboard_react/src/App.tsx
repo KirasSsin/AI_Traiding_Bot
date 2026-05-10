@@ -5,6 +5,9 @@ import { EquityChart } from './components/EquityChart'
 import { DrawdownSubchart } from './components/DrawdownSubchart'
 import { MonthlyHeatmap } from './components/MonthlyHeatmap'
 import { MetricsTable } from './components/MetricsTable'
+import { TradesTable } from './components/TradesTable'
+import { HistoryTab } from './components/HistoryTab'
+import { DocumentationTab } from './components/DocumentationTab'
 import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
@@ -70,20 +73,11 @@ export function App() {
               </>
             )}
             {result && <MetricsTable result={result} />}
+            {result && <TradesTable result={result} />}
           </>
         )}
-        {activeTab === 'documentation' && (
-          <div className={styles.placeholder}>
-            <h2>Documentation tab</h2>
-            <p>Indicators / Multipliers / Strategies / Methodology — T15</p>
-          </div>
-        )}
-        {activeTab === 'history' && (
-          <div className={styles.placeholder}>
-            <h2>History tab</h2>
-            <p>Cached runs table — T15</p>
-          </div>
-        )}
+        {activeTab === 'documentation' && <DocumentationTab />}
+        {activeTab === 'history' && <HistoryTab />}
       </main>
 
       <footer className={styles.footer}>

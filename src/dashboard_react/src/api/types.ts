@@ -69,8 +69,77 @@ export interface WfaParams {
 }
 
 export interface TradeStats {
+  // Core counts (always present in WFA path)
   n_trades: number
   win_rate: number
+  // Extended WFA quote-currency stats (T14)
+  n_winners?: number
+  n_losers?: number
+  total_pnl_quote?: number
+  total_commissions_quote?: number
+  avg_win_quote?: number
+  avg_loss_quote?: number
+  profit_factor?: number
+}
+
+// Documentation tab types (T15b — /api/docs envelope)
+export interface IndicatorDoc {
+  name: string
+  full_name: string
+  category: string
+  author: string
+  description: string       // HTML — use dangerouslySetInnerHTML
+  formula: string
+  range: string
+  interpretation: string[]
+  params_in_strategies: Record<string, string>
+  source: string
+}
+
+export interface MultiplierDoc {
+  name: string
+  id: string
+  default: number | string
+  description: string       // HTML — use dangerouslySetInnerHTML
+  tradeoff: string          // HTML — use dangerouslySetInnerHTML
+}
+
+export interface StrategyDoc {
+  category: string
+  name: string
+  tagline: string           // HTML — use dangerouslySetInnerHTML
+  entry_logic: string       // HTML — use dangerouslySetInnerHTML
+  exit_logic: string        // HTML — use dangerouslySetInnerHTML
+  historical_results: string // HTML — use dangerouslySetInnerHTML
+  best_for: string          // HTML — use dangerouslySetInnerHTML
+  indicators_used: string[]
+  key_params: Record<string, string | number>
+  academic_reference: string
+}
+
+export interface MethodologyCriteria {
+  id: string
+  metric: string
+  threshold: string
+  note: string              // HTML — use dangerouslySetInnerHTML
+}
+
+export interface MethodologyDoc {
+  name?: string
+  purpose?: string
+  source?: string
+  description?: string      // HTML — use dangerouslySetInnerHTML
+  formula?: string
+  params?: string           // HTML — use dangerouslySetInnerHTML
+  interpretation?: string[]
+  criteria?: MethodologyCriteria[]
+}
+
+export interface DocsEnvelope {
+  indicators: IndicatorDoc[]
+  multipliers: MultiplierDoc[]
+  strategies: StrategyDoc[]
+  methodology: MethodologyDoc[]
 }
 
 export type Verdict = 'WFA_PASS' | 'WFA_FAIL' | 'WFA_FAIL_DATA' | 'PASS' | 'FAIL' | 'RAW'
