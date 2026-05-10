@@ -90,7 +90,7 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "atr_breakout_iter_endless": {
-        "label": "[S40 LATEST] ATR breakout 4H BTCUSDT (LOCKED — autoresearch iter1 best)",
+        "label": "[S40] ATR breakout 4H BTCUSDT (LOCKED — autoresearch iter1 best)",
         "sprint": "S40",
         "verdict": "PASS 8.7y +819.81%/Sharpe=1.11/5/5 sub-periods positive (ADR 0060)",
         "type": "atr_breakout",
@@ -102,6 +102,152 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
                 "atr_breakout_mult": 2.5,
                 "atr_stop_period": 21,
                 "atr_stop_mult": 1.5,
+            },
+        },
+    },
+    # S41 multi-combo presets — autoresearch endless best_per_combo (ADR 0061)
+    # 9 new (symbol, interval) combos with independently locked params
+    "atr_breakout_sol_4h_s41": {
+        "label": "[S41 LATEST] ATR breakout 4H SOLUSDT (LOCKED — autoresearch +264%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +264.29% n=71 (SOLUSDT 4H)",
+        "type": "atr_breakout",
+        "locked_symbol": "SOLUSDT",
+        "locked_interval": "240",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 21,
+                "atr_breakout_mult": 1.5,
+                "atr_stop_period": 9,
+                "atr_stop_mult": 2.0,
+            },
+        },
+    },
+    "atr_breakout_eth_1h_s41": {
+        "label": "[S41 LATEST] ATR breakout 1H ETHUSDT (LOCKED — autoresearch +182%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +181.74% n=109 (ETHUSDT 1H)",
+        "type": "atr_breakout",
+        "locked_symbol": "ETHUSDT",
+        "locked_interval": "60",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 14,
+                "atr_breakout_mult": 2.5,
+                "atr_stop_period": 21,
+                "atr_stop_mult": 1.5,
+            },
+        },
+    },
+    "atr_breakout_btc_15m_s41": {
+        "label": "[S41 LATEST] ATR breakout 15M BTCUSDT (LOCKED — autoresearch +107%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +107.35% n=245 (BTCUSDT 15M)",
+        "type": "atr_breakout",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "15",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 9,
+                "atr_breakout_mult": 3.0,
+                "atr_stop_period": 14,
+                "atr_stop_mult": 3.0,
+            },
+        },
+    },
+    "atr_breakout_btc_1h_s41": {
+        "label": "[S41 LATEST] ATR breakout 1H BTCUSDT (LOCKED — autoresearch +146%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +146.36% n=106 (BTCUSDT 1H)",
+        "type": "atr_breakout",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "60",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 9,
+                "atr_breakout_mult": 2.5,
+                "atr_stop_period": 21,
+                "atr_stop_mult": 3.0,
+            },
+        },
+    },
+    "atr_breakout_sol_1h_s41": {
+        "label": "[S41 LATEST] ATR breakout 1H SOLUSDT (LOCKED — autoresearch +214%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +214.08% n=124 (SOLUSDT 1H)",
+        "type": "atr_breakout",
+        "locked_symbol": "SOLUSDT",
+        "locked_interval": "60",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 9,
+                "atr_breakout_mult": 2.0,
+                "atr_stop_period": 21,
+                "atr_stop_mult": 3.0,
+            },
+        },
+    },
+    "atr_breakout_eth_4h_s41": {
+        "label": "[S41 LATEST] ATR breakout 4H ETHUSDT (LOCKED — autoresearch +152%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +152.30% n=28 (ETHUSDT 4H)",
+        "type": "atr_breakout",
+        "locked_symbol": "ETHUSDT",
+        "locked_interval": "240",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 14,
+                "atr_breakout_mult": 2.5,
+                "atr_stop_period": 14,
+                "atr_stop_mult": 1.5,
+            },
+        },
+    },
+    "atr_breakout_sol_15m_s41": {
+        "label": "[S41 LATEST] ATR breakout 15M SOLUSDT (LOCKED — autoresearch +151%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +150.51% n=230 (SOLUSDT 15M)",
+        "type": "atr_breakout",
+        "locked_symbol": "SOLUSDT",
+        "locked_interval": "15",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 21,
+                "atr_breakout_mult": 2.5,
+                "atr_stop_period": 9,
+                "atr_stop_mult": 3.0,
+            },
+        },
+    },
+    "atr_breakout_btc_1d_s41": {
+        "label": "[S41 LATEST] ATR breakout 1D BTCUSDT (LOCKED — autoresearch +168%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +167.54% n=32 (BTCUSDT 1D)",
+        "type": "atr_breakout",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "D",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 9,
+                "atr_breakout_mult": 1.0,
+                "atr_stop_period": 9,
+                "atr_stop_mult": 3.0,
+            },
+        },
+    },
+    "atr_breakout_eth_15m_s41": {
+        "label": "[S41 LATEST] ATR breakout 15M ETHUSDT (LOCKED — autoresearch +36%)",
+        "sprint": "S41",
+        "verdict": "PASS 3.3y +35.53% n=240 (ETHUSDT 15M)",
+        "type": "atr_breakout",
+        "locked_symbol": "ETHUSDT",
+        "locked_interval": "15",
+        "indicators": {
+            "atr_breakout": {
+                "atr_period": 9,
+                "atr_breakout_mult": 3.0,
+                "atr_stop_period": 14,
+                "atr_stop_mult": 2.0,
             },
         },
     },
@@ -712,19 +858,23 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         cache_path.write_text(json.dumps(result_vb, default=str, indent=2))
         return result_vb
 
-    # S40 T4 — atr_breakout uses dedicated runner (research execution model).
+    # S40 T4 / S41 multi-combo — atr_breakout uses dedicated runner (research execution model).
     # Bypasses replay_engine — same structural gaps as volume_breakout:
     # sl_atr_mult wiring, long_only reverse-signal suppression, WFA+Kelly sizing.
+    # S41: passes per-preset indicators.atr_breakout params so each combo uses its locked params.
     if preset.get("type") == "atr_breakout":
         from datetime import date as _date
 
         from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
 
+        # Use per-preset locked params if present; fall back to combo-level lookup.
+        preset_ab_params = preset.get("indicators", {}).get("atr_breakout")
         ab_result = run_atr_breakout_backtest(
             symbol=req.symbol,
             interval=req.interval,
             start_date=_date.fromisoformat(req.start),
             end_date=_date.fromisoformat(req.end),
+            params=preset_ab_params,  # None → falls back to ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO
         )
         _RUNS_DIR.mkdir(parents=True, exist_ok=True)
         cache_path = _RUNS_DIR / f"{run_id}.json"
