@@ -66,14 +66,38 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=str(_DIR / "static")), name="static")
 
+    # S42.4 — disable static file caching (dev tool, prevents stale JS/CSS issues)
+    from collections.abc import Awaitable, Callable
+
+    from starlette.responses import Response
+
+    @app.middleware("http")
+    async def _no_cache_static(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        response = await call_next(request)
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
+        # S42.4 — cache-bust static assets via mtime query param
+        import os
+
+        css_mtime = int(os.path.getmtime(_DIR / "static" / "dashboard.css"))
+        js_mtime = int(os.path.getmtime(_DIR / "static" / "dashboard.js"))
         return _TEMPLATES.TemplateResponse(
             request=request,
             name="index.html",
             context={
                 "strategies": STRATEGY_PRESETS,
                 "intervals": INTERVAL_LABELS,
+                "css_v": css_mtime,
+                "js_v": js_mtime,
             },
         )
 
