@@ -79,3 +79,34 @@ def test_strategy_info_response_includes_id_label_type(client: TestClient) -> No
     assert data["id"] == "atr_breakout"
     assert "ATR" in data["label"]  # S43 T1: label renamed to semantic Russian
     assert data["type"] == "atr_breakout"
+
+
+def test_strategies_endpoint_returns_description_and_optgroup(client: TestClient) -> None:
+    """S43 T2 — /api/strategies includes description + optgroup для frontend dropdown grouping."""
+    r = client.get("/api/strategies")
+    assert r.status_code == 200
+    data = r.json()
+    assert "atr_breakout" in data
+    p = data["atr_breakout"]
+    assert "description" in p
+    assert "optgroup" in p
+    assert p["optgroup"] == "Прорывы"
+    assert "<strong>" in p["description"]
+
+
+def test_strategy_info_endpoint_returns_description_and_optgroup(client: TestClient) -> None:
+    """S43 T2 — /api/strategy/{id}/info includes description + optgroup для UI block."""
+    r = client.get("/api/strategy/atr_breakout/info")
+    data = r.json()
+    assert "description" in data
+    assert "optgroup" in data
+    assert data["optgroup"] == "Прорывы"
+    assert "<strong>" in data["description"]
+
+
+def test_strategy_info_legacy_preset_still_returns_description(client: TestClient) -> None:
+    """All 6 presets have description after T1."""
+    r = client.get("/api/strategy/ema_crossover_s13/info")
+    data = r.json()
+    assert "description" in data
+    assert data["optgroup"] == "Тренд-следование"
