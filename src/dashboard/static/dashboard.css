@@ -419,6 +419,7 @@ main, header, nav, footer {
 }
 .verdict-pass { color: var(--phosphor); }
 .verdict-fail { color: var(--crimson); }
+.verdict-raw  { color: #f0a000; }
 .verdict-failed-list {
   margin-top: var(--space-4);
   font-size: 12px;
