@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T3 done — volume_breakout WFA wrapper landed, phase=4-execution
+updated: 2026-05-10  # S44 T4 done — envelope accepts wfa_result kwarg, 12/12 tests GREEN, phase=4-execution
 sprint: 44
 phase: 4-execution
 branch: feature/sprint-44-wfa-retrofit
@@ -18,12 +18,11 @@ branch: feature/sprint-44-wfa-retrofit
 | T1: `src/backtest/research_wfa.py` shared helper — WindowSplitter + per-fold backtest_fn + DSR + MC + acceptance gate | DONE | d1f20b6 |
 | T2: Wire `atr_breakout_runner` к research_wfa (10 combos) | DONE | 3e8532b |
 | T3: Wire `volume_breakout_runner` к research_wfa (1 combo) | DONE | e6d25c9 |
+| T4: `build_research_runner_envelope()` accepts `wfa_result: dict | None` kwarg — populates WFA fields when present, RAW sentinels when None | DONE | 59095c7 |
 
-**Текущий статус:** T2 done. `_run_atr_breakout_wfa()` thin wrapper landed в `src/backtest/atr_breakout_runner.py` — resolves per-combo LOCKED params via `ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(symbol, interval)]`, calls shared `run_research_wfa()` с research kernel `_backtest_single`. 4/4 integration tests PASS (`tests/integration/test_atr_breakout_wfa.py` — BTC 4H WFA verdict / BTC 1D WFA_FAIL_DATA / ETH 4H LOCKED params / unknown combo ValueError). mypy --strict 0 errors. 28/28 existing atr_breakout regression tests still GREEN (BTC 4H +819.81% PnL identity preserved per ADR 0064). Initial verdicts informational: BTCUSDT 240 → WFA_FAIL (n_eff_threshold + t5_floor + sharpe_gate + mc_gate + dsr_threshold; n_trades_raw=10, fold_sharpes=[0.0, 0.0, 1.842, 0.544, -80.976]); ETHUSDT 240 → WFA_FAIL (same gates; n_trades_raw=6).
+**Текущий статус:** T4 done. `build_research_runner_envelope()` extended с `wfa_result: dict[str, Any] | None = None` keyword. When passed: verdict/dsr/mc_p_value/fold_sharpe_ratios/wfa_params populated from WFA result, `raw_full_period` warning stripped. When None: S42 RAW sentinel behavior preserved (backward compat). 12/12 unit tests PASS (9 existing + 3 new). mypy --strict 0 errors. ruff-format clean.
 
-**Текущий статус:** T3 done. `_run_volume_breakout_wfa()` adapter wrapper landed в `src/backtest/volume_breakout_runner.py` — wraps `_backtest_single(df, params)` via `_backtest_adapter` к match `BacktestFn(df, params, bars_per_year)` signature, calls shared `run_research_wfa()` с LOCKED params from `VOLUME_BREAKOUT_LOCKED_PARAMS`. 2/2 integration tests PASS (`tests/integration/test_volume_breakout_wfa.py`). mypy --strict 0 errors. 5/5 existing dashboard contract tests still GREEN.
-
-**Следующее действие:** T4 — определить следующую задачу спринта (все задачи выполнены — переход к PHASE 5 verify).
+**Следующее действие:** T5 — wire WFA results from `_run_atr_breakout_wfa()` / `_run_volume_breakout_wfa()` through к envelope call (pass wfa_result=wfa dict). Then PHASE 5 verify.
 
 ### Phase tracking
 
@@ -32,7 +31,7 @@ branch: feature/sprint-44-wfa-retrofit
 | 1-orient | done |
 | 2-brainstorm | done |
 | 3-plan | done |
-| 4-execution | done (T1-T3 all done) |
+| 4-execution | in_progress (T1-T4 done, T5 next) |
 | 5-verify | pending |
 | 6-review | pending |
 | 7-sync | pending |
