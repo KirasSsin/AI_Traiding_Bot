@@ -1,0 +1,81 @@
+import { useState } from 'react'
+import styles from './App.module.css'
+
+type Tab = 'backtest' | 'documentation' | 'history'
+
+const TABS: { id: Tab; num: string; label: string }[] = [
+  { id: 'backtest', num: '01', label: 'BACKTEST' },
+  { id: 'documentation', num: '02', label: 'DOCUMENTATION' },
+  { id: 'history', num: '03', label: 'HISTORY' },
+]
+
+export function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('backtest')
+
+  return (
+    <div className={styles.app}>
+      <header className={styles.header}>
+        <div className={styles.logo}>
+          <span className={styles.logoMark}>◉</span>
+          <div>
+            <h1 className={styles.title}>
+              QUANT<span className={styles.accent}>::</span>TERMINAL
+            </h1>
+            <p className={styles.subtitle}>
+              AI TRADING BOT // BACKTEST INTERFACE // v0.1.0-alpha.46
+            </p>
+          </div>
+        </div>
+        <div className={styles.statusGroup}>
+          <div className={styles.status}>
+            <span className={styles.statusDot} /> SYSTEM READY
+          </div>
+          <div className={styles.statusMuted}>DEMO MODE · LOCALHOST · NO MAINNET</div>
+        </div>
+      </header>
+
+      <nav className={styles.tabNav} role="tablist">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            className={`${styles.tabBtn} ${activeTab === tab.id ? styles.active : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+          >
+            <span className={styles.tabNum}>{tab.num}</span>
+            <span className={styles.tabLabel}>{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <main className={styles.main}>
+        {activeTab === 'backtest' && (
+          <div className={styles.placeholder}>
+            <h2>Backtest tab</h2>
+            <p>ConfigureBacktest + VerdictPanel + EquityChart + tables coming in T6-T15</p>
+          </div>
+        )}
+        {activeTab === 'documentation' && (
+          <div className={styles.placeholder}>
+            <h2>Documentation tab</h2>
+            <p>Indicators / Multipliers / Strategies / Methodology — T15</p>
+          </div>
+        )}
+        {activeTab === 'history' && (
+          <div className={styles.placeholder}>
+            <h2>History tab</h2>
+            <p>Cached runs table — T15</p>
+          </div>
+        )}
+      </main>
+
+      <footer className={styles.footer}>
+        <span>QUANT::TERMINAL · S46 React migration · </span>
+        <a href="https://github.com/KirasSsin/AI_Traiding_Bot" target="_blank" rel="noopener noreferrer">
+          GitHub
+        </a>
+      </footer>
+    </div>
+  )
+}
