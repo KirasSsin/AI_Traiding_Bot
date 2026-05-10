@@ -91,9 +91,10 @@ def test_envelope_subperiod_robustness_3_of_5_emits_warn_chip() -> None:
         n_trades=10,
         sharpe=1.0,
         win_rate=0.5,
-        total_pnl_pct=45.0,
+        total_pnl_pct=75.0,
         bars_per_year=2191,
-        equity_curve=[0.0, 50.0, 30.0, 60.0, 50.0, 45.0],
+        # deltas chunked: [+50, -20, +40, -10, +15] = 3/5 positive
+        equity_curve=[0.0, 50.0, 30.0, 70.0, 60.0, 75.0],
         runner_label="x",
     )
     chips = [w for w in payload["warnings"] if w["code"] == "subperiod_robustness"]
