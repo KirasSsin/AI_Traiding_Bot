@@ -14,7 +14,11 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'cd ../.. && .venv/bin/uvicorn src.dashboard.app:create_app --factory --port 8000',
+    // CI uses pip-installed global uvicorn (no .venv); local uses venv-activated python.
+    // `python -m uvicorn` works в обоих случаях если PYTHONPATH ok.
+    command: process.env.CI
+      ? 'cd ../.. && python -m uvicorn src.dashboard.app:create_app --factory --port 8000'
+      : 'cd ../.. && .venv/bin/uvicorn src.dashboard.app:create_app --factory --port 8000',
     url: 'http://127.0.0.1:8000',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
