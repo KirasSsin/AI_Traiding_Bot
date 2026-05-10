@@ -2,10 +2,26 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-05-10
-sprint: 41
-phase: between-sprints
-branch: main
+sprint: 42
+phase: 4-execution
+branch: feature/sprint-42-atr-breakout-hardening
 tag: v0.1.0-alpha.41
+---
+
+## S42 IN PROGRESS — ATR breakout hardening (dashboard contract envelope)
+
+**Phase:** 4-execution  
+**Branch:** feature/sprint-42-atr-breakout-hardening  
+**in_progress:** T2 next (wire envelope into atr_breakout_runner + volume_breakout_runner)
+
+**Completed tasks:**
+- T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
+  - 5/6 tests pass. 1 test (`test_envelope_subperiod_robustness_3_of_5_emits_warn_chip`) has data inconsistency:
+    equity_curve `[0,50,30,60,50,45]` gives 2/5 positives (not 3/5) under delta-from-previous algorithm.
+    Needs operator decision: fix test curve OR adjust algorithm.
+
+**Next action:** operator decision on T1 test discrepancy → then T2 wiring.
+
 ---
 
 ## S41 COMPLETE ✅ — ATR breakout multi-combo dashboard presets
