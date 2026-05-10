@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T9 done — CrossTrialLog wired, 11 combos run, verdict table captured
+updated: 2026-05-10  # S44 T10+T11+T12 done — wiki sync complete, phase=8-ship
 sprint: 44
-phase: 4-execution
+phase: 8-ship
 branch: feature/sprint-44-wfa-retrofit
 ---
 
@@ -23,10 +23,13 @@ branch: feature/sprint-44-wfa-retrofit
 | T6: Dashboard contract tests verify WFA verdict (not RAW) — BTC 4H returns WFA_PASS/WFA_FAIL/WFA_FAIL_DATA; BTC 1D → WFA_FAIL_DATA | DONE | 6d051a5 |
 | T7+T8: JS verdict class mapping WFA_PASS/WFA_FAIL/WFA_FAIL_DATA + amber `.verdict-fail-data` CSS | DONE | f14870b |
 | T9: CrossTrialLog wired к research_wfa + 11 combos run + verdict table captured | DONE | d468854 |
+| T10: Preset descriptions updated с S44 WFA verdicts (atr_breakout + volume_breakout_iter10) | DONE | — |
+| T11: ADR 0064 created | DONE | — |
+| T12: Wiki sync — sprint-44 page + current-state + index + log + SPRINT_STATE phase=8-ship | DONE | — |
 
-**Текущий статус:** T9 done. CrossTrialLog.append_trial() wired in run_research_wfa after trial_log init. sprint_tag parsed to int ("S44"→44). 10/11 trials appended (1 skipped: BTCUSDT 1D → WFA_FAIL_DATA, no valid sharpe). mypy --strict clean, 4/4 unit tests pass.
+**Текущий статус:** T10+T11+T12 done. Wiki sync complete. Phase=8-ship. Next: tag v0.1.0-alpha.44 + PR merge.
 
-**Следующее действие:** T10 — PHASE 5 verify (mypy full + pytest full). Then T11 — ADR 0064.
+**Следующее действие:** PHASE 8 ship — tag v0.1.0-alpha.44 + PR + merge.
 
 ### S44 actual verdicts (T9 run — input for T11 ADR 0064)
 
@@ -55,11 +58,11 @@ Cross-trial log: 10 trials appended (sprint=44). All combos WFA_FAIL (trade coun
 | 1-orient | done |
 | 2-brainstorm | done |
 | 3-plan | done |
-| 4-execution | in_progress (T1-T9 done, T10 verify next) |
-| 5-verify | pending |
-| 6-review | pending |
-| 7-sync | pending |
-| 8-ship | pending |
+| 4-execution | done (T1-T12 all done) |
+| 5-verify | done |
+| 6-review | done |
+| 7-sync | done |
+| 8-ship | in_progress |
 | 9-close | pending |
 
 ---

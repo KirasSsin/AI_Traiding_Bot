@@ -124,7 +124,10 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "<p><strong>Выход:</strong> close < min(low, exit_lookback=8) либо ATR(9) × 2.97 stop.</p>"
             "<p><strong>Подходит для:</strong> BTCUSDT 4H, начала тренда с институциональным объёмом. "
             "LOCKED params (autoresearch sweep #1644). Только эта пара/TF.</p>"
-            "<p><strong>Вердикт S39:</strong> 3.3y +122.66% / 8mo held-out +20.42%. RAW (WFA pending S44).</p>"
+            "<p><strong>Вердикт S44 (WFA retrofit):</strong> "
+            "WFA_FAIL под default gates (n=38 trades в OOS < 50 floor; DSR=0.00; MC p=0.20). "
+            "Pre-S44 +122.66% RAW headline не survives WFA OOS validation. "
+            "См. ADR 0064.</p>"
         ),
         "sprint": "S39",
         "verdict": "PASS held-out 8mo Sharpe=+9.96 PnL=+20.42% / 3.3y +122.66%; Gate 2 forward N≥10 PENDING",
@@ -156,7 +159,11 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "<p><strong>Подходит для:</strong> 10 (symbol, timeframe) комбинаций — каждая с независимыми LOCKED "
             "параметрами от autoresearch endless. Лучший: BTCUSDT 4H +819.81% за 8.7 года, 5/5 "
             "положительных под-периодов.</p>"
-            "<p><strong>Вердикт S40+S41:</strong> RAW per combo (WFA pending S44). Pre-registered LOCKED params.</p>"
+            "<p><strong>Вердикт S44 (WFA retrofit):</strong> "
+            "ВСЕ 10 комбинаций WFA_FAIL под default WFA gates (n≥50 floor по T5). "
+            "Корень: low trade frequency в OOS windows (5-20 trades vs 50 floor). "
+            "Pre-S44 RAW verdict (+819% headline) hid OOS validation failure. "
+            "См. ADR 0064 для full per-combo table. BTCUSDT 1D = WFA_FAIL_DATA (1212 bars < 4520 default min).</p>"
         ),
         "sprint": "S42",
         "verdict": "RAW (acceptance gate skipped — WFA retrofit pending S43)",
