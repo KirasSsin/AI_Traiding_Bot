@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T18 done — Playwright E2E (wfa-ack-gate PASS, backtest-flow form PASS, submit→verdict SKIPPED/S47)
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION COMPLETE (22/22 done, T22 wiki sync committed) → transition к PHASE 5-VERIFY
 sprint: 46
-phase: 4-execution
+phase: 5-verify
 branch: feature/sprint-46-react-migration
 tag: v0.1.0-alpha.45
 ---
@@ -68,13 +68,13 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 ---
 
-## S46 PHASE 4-EXECUTION 🟡 — React migration (vanilla JS dashboard → React 18 + TypeScript)
+## S46 PHASE 4-EXECUTION ✅ COMPLETE (22/22) → PHASE 5-VERIFY 🟡
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T18 done — Playwright E2E committed (3 passed, 1 skipped). wfa-fail-ack.spec.ts: 2 tests PASS (first-visit banner + chip после 3 дней). backtest-flow.spec.ts: form-render PASS; submit→verdict SKIPPED с TODO S47 (нужна заглушка API для стабильного прогона). playwright.config.ts создан (webServer factory entry, workers=1).
+**Текущий статус:** Execution complete (22/22 tasks done). T22 wiki sync committed `24bc36c` — ADR 0066 NEW + ADR 0039 amendment (terminal → Anthropic/cyberpunk + React stack; pre-S46 backlog/plan referenced "ADR 0040 sprint-26-dashboard-frontend-design.md" — that ADR doesn't exist, actual canonical dashboard ADR is 0039) + sprint-46-react-migration.md NEW + index.md/log.md/current-state.md sync (counts 65→66 ADRs / 49→50 sprint pages).
 
-**Следующее действие:** T22: ADR 0066 + ADR 0040 amendment + sprint-46 page + wiki sync (opus)
+**Следующее действие:** PHASE 5: verify (pytest + mypy + Playwright + canonical counts) — `superpowers:verification-before-completion` checklist. После GREEN → PHASE 6 reviewers (frontend-developer + architecture-reviewer C1+C2+C4 verify + python-reviewer + test-engineer + doc-reviewer).
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -106,6 +106,7 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T19: FastAPI FileResponse integration — app.py → FileResponse(dist/index.html) + StaticFiles /assets/ | DONE | 729a135 |
 | T20: Archive vanilla dashboard → src/dashboard_legacy/ (static + templates) | DONE | 3a0eb97 |
 | T21: CI/CD + start-bot.sh — Node.js setup + React build step + Playwright (architect C2) | DONE | 1992662 |
+| T22: ADR 0066 + ADR 0039 amendment + sprint-46 page + wiki sync | DONE | 24bc36c |
 
 ---
 
