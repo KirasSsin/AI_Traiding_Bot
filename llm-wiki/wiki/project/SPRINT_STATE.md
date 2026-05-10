@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T3 done — App.tsx tab navigation
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T4 done — TypeScript API client + types
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T3 done — App.tsx + App.module.css + vite-env.d.ts (tab nav: Backtest/Documentation/History, Anthropic header, cyberpunk styling)
+**Текущий статус:** T4 done — TypeScript types (types.ts) + API client wrapper (client.ts) для всех FastAPI endpoints
 
-**Следующее действие:** T4 (next task per plan)
+**Следующее действие:** T5 (next task per plan)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -88,6 +88,7 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T1: React infrastructure (Vite + TS strict + ESLint + Prettier) | DONE | b6e1335 |
 | T2: Anthropic + cyberpunk design tokens (tokens.css + globals.css) | DONE | 1992a85 |
 | T3: App.tsx — tab navigation + Anthropic header (Backtest/Documentation/History) | DONE | 9e78c5d |
+| T4: TypeScript types (types.ts) + API client wrapper (client.ts) | DONE | b752010 |
 
 ---
 
