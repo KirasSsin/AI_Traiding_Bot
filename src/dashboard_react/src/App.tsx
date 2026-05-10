@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ConfigureBacktest } from './components/ConfigureBacktest'
 import { VerdictPanel } from './components/VerdictPanel'
 import { EquityChart } from './components/EquityChart'
+import { DrawdownSubchart } from './components/DrawdownSubchart'
 import type { BacktestResponse } from './api/types'
 import styles from './App.module.css'
 
@@ -59,7 +60,12 @@ export function App() {
           <>
             <ConfigureBacktest onResult={setResult} />
             {result && <VerdictPanel result={result} />}
-            {result?.equity_curve && <EquityChart equityCurve={result.equity_curve} />}
+            {result?.equity_curve && (
+              <>
+                <EquityChart equityCurve={result.equity_curve} syncKey="equity-dd-sync" />
+                <DrawdownSubchart equityCurve={result.equity_curve} syncKey="equity-dd-sync" />
+              </>
+            )}
           </>
         )}
         {activeTab === 'documentation' && (

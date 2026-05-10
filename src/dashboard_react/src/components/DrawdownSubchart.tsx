@@ -1,31 +1,45 @@
-// S46 T9 — EquityChart: uPlot wrapper с Anthropic orange palette + ResizeObserver
-// T10: syncKey prop для uPlot cursor sync с DrawdownSubchart
+// S46 T10 — DrawdownSubchart: uPlot drawdown subchart
+// Architect CC2: shares x-axis cursor with EquityChart via uPlot.sync key
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 import type { EquityCurve } from '@/api/types'
-import styles from './EquityChart.module.css'
+import styles from './DrawdownSubchart.module.css'
 
-export interface EquityChartProps {
+export interface DrawdownSubchartProps {
   equityCurve: EquityCurve
-  height?: number
-  /** T10: uPlot sync group key for x-axis cursor sharing with DrawdownSubchart */
+  /** uPlot sync group key — must match EquityChart syncKey for cursor sharing */
   syncKey?: string
-  /** @deprecated T10: use syncKey instead — kept for backward compat */
-  onChartReady?: (chart: uPlot) => void
+  /** Chart height in pixels (default 140 — smaller than main equity chart) */
+  height?: number
 }
 
-// Build uPlot series array — not hard-coded count so T11 can extend
+/**
+ * Converts cumulative equity_pct series to drawdown percent series.
+ * Drawdown is always <= 0 (0 = at peak, negative = below peak).
+ */
+function computeDrawdown(equityPct: number[]): number[] {
+  const result = new Array<number>(equityPct.length)
+  let peak = -Infinity
+  for (let i = 0; i < equityPct.length; i++) {
+    // Convert cumulative % to multiplier: e.g. 12 → 1.12
+    const v = (equityPct[i] ?? 0) / 100 + 1
+    if (v > peak) peak = v
+    // Drawdown as negative percent: (current - peak) / peak * 100
+    result[i] = peak > 0 ? ((v - peak) / peak) * 100 : 0
+  }
+  return result
+}
+
 function buildSeries(): uPlot.Series[] {
   return [
-    // x-axis series (required placeholder by uPlot)
+    // x-axis placeholder (required by uPlot)
     {},
-    // T11: extend with trade-marker series here
     {
-      label: 'Equity %',
-      stroke: '#cc785c',                     // Anthropic orange
-      fill: 'rgba(204, 120, 92, 0.12)',      // translucent orange under-curve
+      label: 'Drawdown %',
+      stroke: '#ff3366',                    // cyberpunk danger red
+      fill: 'rgba(255, 51, 102, 0.15)',     // translucent red under-curve
       width: 1.5,
       points: { show: false },
     },
@@ -40,7 +54,7 @@ function buildOpts(width: number, height: number, syncKey?: string): uPlot.Optio
     height,
     cursor: {
       drag: { x: true, y: false },
-      // T10: attach to sync group when syncKey provided
+      // CC2: sync cursor with EquityChart when syncKey provided
       ...(syncKey !== undefined
         ? { sync: { key: syncKey, setSeries: false } }
         : {}),
@@ -55,14 +69,14 @@ function buildOpts(width: number, height: number, syncKey?: string): uPlot.Optio
         ticks: { stroke: 'rgba(156, 163, 175, 0.20)', width: 1 },
         font: axisFont,
       },
-      // y-axis (equity %)
+      // y-axis (drawdown %, always negative)
       {
         stroke: '#9ca3af',
         grid: { stroke: 'rgba(156, 163, 175, 0.10)', width: 1 },
         ticks: { stroke: 'rgba(156, 163, 175, 0.20)', width: 1 },
         font: axisFont,
         values: (_self: uPlot, ticks: number[]) =>
-          ticks.map((v) => `${v.toFixed(0)}%`),
+          ticks.map((v) => `${v.toFixed(1)}%`),
       },
     ],
     scales: {
@@ -71,12 +85,22 @@ function buildOpts(width: number, height: number, syncKey?: string): uPlot.Optio
   }
 }
 
-export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }: EquityChartProps) {
+export function DrawdownSubchart({
+  equityCurve,
+  syncKey,
+  height = 140,
+}: DrawdownSubchartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<uPlot | null>(null)
 
   const isEmpty =
     equityCurve.timestamps.length === 0 || equityCurve.equity_pct.length === 0
+
+  // Compute drawdown once per equity_pct change (memoized)
+  const drawdownSeries = useMemo(
+    () => computeDrawdown(equityCurve.equity_pct),
+    [equityCurve.equity_pct],
+  )
 
   useEffect(() => {
     if (isEmpty) return
@@ -88,13 +112,11 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
     // uPlot AlignedData: [xs, ...ys]
     const data: uPlot.AlignedData = [
       equityCurve.timestamps,
-      equityCurve.equity_pct,
+      drawdownSeries,
     ]
 
     const chart = new uPlot(buildOpts(width, height, syncKey), data, container)
     chartRef.current = chart
-
-    onChartReady?.(chart)
 
     // ResizeObserver — обновляет ширину при изменении контейнера
     const observer = new ResizeObserver((entries) => {
@@ -112,21 +134,19 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
       chart.destroy()
       chartRef.current = null
     }
-  }, [equityCurve, height, isEmpty, syncKey, onChartReady])
+  }, [equityCurve.timestamps, drawdownSeries, height, isEmpty, syncKey])
 
   if (isEmpty) {
     return (
       <div className={styles.container}>
-        <div className={styles.placeholder}>
-          No equity data available — legacy WFA preset без envelope
-        </div>
+        <div className={styles.placeholder}>No drawdown data</div>
       </div>
     )
   }
 
   return (
     <div className={styles.container}>
-      <div className={styles.title}>▸ EQUITY CURVE</div>
+      <div className={styles.title}>▸ DRAWDOWN</div>
       <div
         ref={containerRef}
         className={styles.chartWrapper}
