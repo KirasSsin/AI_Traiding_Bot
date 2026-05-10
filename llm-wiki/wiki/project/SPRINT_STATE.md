@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S44 T1 done — research_wfa helper landed, phase=4-execution
+updated: 2026-05-10  # S44 T2 done — atr_breakout WFA wrapper landed, phase=4-execution
 sprint: 44
 phase: 4-execution
 branch: feature/sprint-44-wfa-retrofit
@@ -16,12 +16,12 @@ branch: feature/sprint-44-wfa-retrofit
 | Task | Status | Commit |
 |------|--------|--------|
 | T1: `src/backtest/research_wfa.py` shared helper — WindowSplitter + per-fold backtest_fn + DSR + MC + acceptance gate | DONE | d1f20b6 |
-| T2: Wire `atr_breakout_runner` к research_wfa (10 combos) | TODO | — |
+| T2: Wire `atr_breakout_runner` к research_wfa (10 combos) | DONE | 3e8532b |
 | T3: Wire `volume_breakout_runner` к research_wfa (1 combo) | TODO | — |
 
-**Текущий статус:** T1 done. 4/4 unit tests PASS (`tests/unit/test_research_wfa.py`), mypy --strict 0 errors. Helper готов для T2+T3 wiring. Returns verdict dict с keys: verdict (`WFA_PASS`/`WFA_FAIL`/`WFA_FAIL_DATA`), failed_criteria, fold_sharpe_ratios, trial_mean_fold_oos_sharpe, trial_oos_sharpe, mc_p_value, dsr, dsr_pass, dsr_status, sigma_sr_cross_trial, n_trades_raw, n_trials, wfa_params, metrics, trades.
+**Текущий статус:** T2 done. `_run_atr_breakout_wfa()` thin wrapper landed в `src/backtest/atr_breakout_runner.py` — resolves per-combo LOCKED params via `ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(symbol, interval)]`, calls shared `run_research_wfa()` с research kernel `_backtest_single`. 4/4 integration tests PASS (`tests/integration/test_atr_breakout_wfa.py` — BTC 4H WFA verdict / BTC 1D WFA_FAIL_DATA / ETH 4H LOCKED params / unknown combo ValueError). mypy --strict 0 errors. 28/28 existing atr_breakout regression tests still GREEN (BTC 4H +819.81% PnL identity preserved per ADR 0064). Initial verdicts informational: BTCUSDT 240 → WFA_FAIL (n_eff_threshold + t5_floor + sharpe_gate + mc_gate + dsr_threshold; n_trades_raw=10, fold_sharpes=[0.0, 0.0, 1.842, 0.544, -80.976]); ETHUSDT 240 → WFA_FAIL (same gates; n_trades_raw=6).
 
-**Следующее действие:** T2 — adapt `atr_breakout_runner.run_atr_breakout_backtest` к call `run_research_wfa` instead of single contiguous backtest path. Pattern: replace per-symbol contiguous run с WFA verdict envelope (preserve sequential-additive PnL accounting per ADR 0064).
+**Следующее действие:** T3 — wire `volume_breakout_runner` к `run_research_wfa()` analogously (1 combo BTCUSDT 4H). Pattern: replicate T2 wrapper structure adapted к volume_breakout LOCKED params + research kernel.
 
 ### Phase tracking
 
@@ -30,7 +30,7 @@ branch: feature/sprint-44-wfa-retrofit
 | 1-orient | done |
 | 2-brainstorm | done |
 | 3-plan | done |
-| 4-execution | in_progress (T1/3) |
+| 4-execution | in_progress (T2/3) |
 | 5-verify | pending |
 | 6-review | pending |
 | 7-sync | pending |
