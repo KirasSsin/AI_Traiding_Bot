@@ -1,11 +1,25 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T9+T10 done — wiki sync complete
-sprint: 42
-phase: 7-sync
-branch: feature/sprint-42-atr-breakout-hardening
-tag: v0.1.0-alpha.42
+updated: 2026-05-10  # S43 T1 done — preset metadata rename + description + optgroup
+sprint: 43
+phase: 4-execution
+branch: feature/sprint-43-ui-polish
+---
+
+## S43 PHASE 4-EXECUTION — UI polish (preset metadata, optgroup, descriptions)
+
+**Branch:** feature/sprint-43-ui-polish
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: Rename preset labels + add description + optgroup to STRATEGY_PRESETS | DONE | def07e4 |
+| T2: Frontend optgroup `<select>` grouping | pending | — |
+
+**Текущий статус:** T1 done. Следующее действие: T2 — frontend optgroup grouping в dashboard HTML/JS.
+
 ---
 
 ## S42 PHASE 7-SYNC — ATR breakout hardening (dashboard contract envelope)
