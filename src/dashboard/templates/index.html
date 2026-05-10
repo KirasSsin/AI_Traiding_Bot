@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/dashboard.css?v={{ css_v }}">
+  <link rel="stylesheet" href="/static/vendor/uPlot.min.css">
 </head>
 <body>
 
@@ -86,6 +87,12 @@
             </button>
           </div>
         </form>
+        <div id="strategy-description" class="strategy-description-block">
+          <button type="button" id="strategy-description-toggle" class="description-toggle" aria-expanded="true">
+            <span class="toggle-arrow">▾</span> STRATEGY LOGIC
+          </button>
+          <div id="strategy-description-body" class="description-body"></div>
+        </div>
         <div id="data-info" class="data-info"></div>
       </div>
 
@@ -95,6 +102,16 @@
           <div class="panel-label">&gt; VERDICT</div>
           <div id="run-meta" class="run-meta"></div>
           <div id="verdict" class="verdict-block"></div>
+        </div>
+
+        <div class="panel" id="equity-chart-panel">
+          <div class="panel-label">&gt; EQUITY CURVE</div>
+          <div id="equity-chart-container" class="equity-chart-container">
+            <div id="equity-chart"></div>
+            <div id="equity-chart-placeholder" class="equity-placeholder" style="display:none;">
+              ▸ EQUITY CURVE NOT AVAILABLE — WFA path uses replay engine (no per-trade timestamps).
+            </div>
+          </div>
         </div>
 
         <div class="panel" id="warnings-panel" style="display:none;">
@@ -181,6 +198,7 @@
     </div>
   </footer>
 
+  <script src="/static/vendor/uPlot.iife.min.js"></script>
   <script src="/static/dashboard.js?v={{ js_v }}"></script>
 </body>
 </html>
