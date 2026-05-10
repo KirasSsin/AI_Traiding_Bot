@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T2 done — ADR 0060 amendment 3.3y baseline, phase=4-execution
+updated: 2026-05-10  # S45 T3 done — CrossTrialLog idempotency guard (B1), phase=4-execution
 sprint: 45
 phase: 4-execution
 branch: feature/sprint-45-wfa-recalibration
@@ -17,11 +17,12 @@ branch: feature/sprint-45-wfa-recalibration
 |------|--------|--------|
 | T1: Uniform 3.3y data — PARQUET_BY_COMBO BTC 4H → 3.3y file, archive 8.7y binance | DONE | d2612cc |
 | T2: ADR 0060/0061 amendments — update locked baselines to 3.3y | DONE | 91b9b2d |
-| T3: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
+| T3: CrossTrialLog idempotency guard (B1) — upsert on (sprint, symbol) + reset log | DONE | 5efddee |
+| T4: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
 
-**Текущий статус:** T2 done. ADR 0060 amended с 3.3y baseline (+174.29%, Sharpe 1.94, 28 trades). T3 next.
+**Текущий статус:** T3 done. CrossTrialLog.append_trial() now upserts on (sprint, symbol) — B1 quant blocker fixed. Log reset to empty (26 S44 duplicates invalidated). 5/5 tests pass, mypy clean. T4 next.
 
-**Следующее действие:** T3 — WFA recalibration run — 10 combos с uniform 3.3y window.
+**Следующее действие:** T4 — WFA recalibration run — 10 combos с uniform 3.3y window.
 
 ---
 
