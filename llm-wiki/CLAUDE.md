@@ -302,6 +302,7 @@ L5 reviewers (9 после S30) вызываются после `DONE` subagent'
 | `brainstorming` "Get design approval" | Skip если execution of approved ADR. |
 | `brainstorming` "Clarifying questions" | OVERRIDDEN by `brainstorm-init` skill — auto-routes через trader-expert ROUND 1+2. |
 | `using-agent-skills` "Surface Assumptions" | Skip если assumptions в active ADR/plan/sprint page. |
+| `writing-plans` "Execution Handoff" question | **OVERRIDDEN — auto-invoke `superpowers:subagent-driven-development` БЕЗ asking operator** (per operator decision 2026-05-10 — always team of agents default). НЕ показывай "Subagent-Driven OR Inline Execution" choice. Если operator EXPLICITLY says "execute inline" перед PHASE 3 — skip override only тот раз. |
 
 ---
 
