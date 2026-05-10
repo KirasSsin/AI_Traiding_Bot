@@ -85,6 +85,24 @@ def create_app() -> FastAPI:
             for sid, s in STRATEGY_PRESETS.items()
         }
 
+    @app.get("/api/strategy/{strategy_id}/info")
+    async def get_strategy_info(strategy_id: str) -> dict[str, object]:
+        """S42 T5 — preset metadata + supported_combos for frontend gates."""
+        preset = STRATEGY_PRESETS.get(strategy_id)
+        if preset is None:
+            raise HTTPException(status_code=404, detail=f"Unknown strategy: {strategy_id}")
+        # supported_combos: list of (symbol, interval) tuples — convert к list[list] для JSON
+        sc_raw = preset.get("supported_combos", [])
+        sc_serialized: list[list[str]] = [list(combo) for combo in sc_raw]
+        return {
+            "id": strategy_id,
+            "label": preset["label"],
+            "type": preset["type"],
+            "supported_combos": sc_serialized,
+            "locked_symbol": preset.get("locked_symbol"),
+            "locked_interval": preset.get("locked_interval"),
+        }
+
     @app.get("/api/intervals")
     async def get_intervals() -> list[dict[str, str]]:
         return [{"id": k, "label": v} for k, v in INTERVAL_LABELS.items()]
@@ -114,6 +132,22 @@ def create_app() -> FastAPI:
                 status_code=422,
                 detail=f"Strategy {payload.strategy_id} LOCKED to interval={locked_interval}; got {payload.interval}",
             )
+
+        # S42 T5 — supported_combos enforcement (multi-combo presets like atr_breakout)
+        supported_combos = preset.get("supported_combos")
+        if supported_combos:
+            combo_key = (payload.symbol, payload.interval)
+            # supported_combos may be list[tuple] OR list[list] (after JSON round-trip)
+            normalized = [tuple(c) for c in supported_combos]
+            if combo_key not in normalized:
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"Strategy {payload.strategy_id} has no LOCKED params для combo "
+                        f"({payload.symbol}, {payload.interval}). "
+                        f"supported_combos: {normalized}"
+                    ),
+                )
 
         try:
             req = BacktestRequest(
