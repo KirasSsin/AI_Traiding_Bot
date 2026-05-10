@@ -9,7 +9,7 @@ sources:
   - llm-wiki/wiki/project/decisions/0062-sprint-42-atr-breakout-hardening.md
   - llm-wiki/wiki/project/decisions/0063-sprint-43-ui-polish.md
   - llm-wiki/wiki/project/decisions/0014-walk-forward-train2000-test500.md
-  - llm-wiki/wiki/project/decisions/0052-acceptance-criteria-amendment-locked.md
+  - llm-wiki/wiki/project/decisions/0052-sprint-34-acceptance-criteria-amendment.md
 ---
 
 # Pre-S44 Backlog
