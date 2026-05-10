@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T3 done
+updated: 2026-05-10  # T4 done
 sprint: 42
 phase: 4-execution
 branch: feature/sprint-42-atr-breakout-hardening
@@ -12,7 +12,7 @@ tag: v0.1.0-alpha.41
 
 **Phase:** 4-execution  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T4 next
+**in_progress:** T5 next
 
 **Completed tasks:**
 - T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
@@ -23,8 +23,13 @@ tag: v0.1.0-alpha.41
   - 5/5 new contract tests PASS. 8/8 baseline floor tests PASS (PnL unchanged). mypy 0 errors.
 - T3: `src/backtest/volume_breakout_runner.py` wired to envelope + `tests/integration/test_volume_breakout_dashboard_contract.py` — DONE (commit 0ade871)
   - 4/4 new contract tests PASS. 29/29 total volume_breakout tests PASS. mypy 0 errors.
+- T4: `src/dashboard/backtest_runner.py` — 10 atr_breakout_* presets → 1 unified `atr_breakout` preset — DONE (commit 5046d10)
+  - STRATEGY_PRESETS: 10 old preset_ids removed; unified `atr_breakout` с `supported_combos` (10 combos) registered.
+  - Dispatch atr_breakout: envelope merge (17-key base dict) not 4-key cherry-pick.
+  - Dispatch volume_breakout: same envelope merge fix.
+  - 23/23 new contract tests PASS. 24/24 baseline/multi-combo/unit tests PASS. mypy 0 errors.
 
-**Next action:** T4 — next task in S42.
+**Next action:** T5 — wiki sync (ADR 0062 for unified preset consolidation + sprint-42 page update).
 
 ---
 
