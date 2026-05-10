@@ -403,6 +403,17 @@ def run_atr_breakout_backtest(
             equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
             equity_timestamps.append(int(df["_ts"].iloc[tr.exit_idx].timestamp()))
 
+    # T11 — build trade_markers payload (entry/exit timestamps + prices + pnl per trade)
+    trade_markers: dict[str, list[float | int]] | None = None
+    if trades_list and not df.empty:
+        trade_markers = {
+            "entry_timestamps": [int(df["_ts"].iloc[t.entry_idx].timestamp()) for t in trades_list],
+            "exit_timestamps": [int(df["_ts"].iloc[t.exit_idx].timestamp()) for t in trades_list],
+            "entry_prices": [float(t.entry_price) for t in trades_list],
+            "exit_prices": [float(t.exit_price) for t in trades_list],
+            "pnl_pcts": [float(t.pnl_pct * 100.0) for t in trades_list],
+        }
+
     # Wrap in dashboard contract envelope
     from src.backtest.research_runner_envelope import build_research_runner_envelope
 
@@ -423,6 +434,7 @@ def run_atr_breakout_backtest(
         runner_label=f"ATR breakout {interval} {symbol} (LOCKED)",
         start=start_date.isoformat(),
         end=end_date.isoformat(),
+        trade_markers=trade_markers,
     )
 
 

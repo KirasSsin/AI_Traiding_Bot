@@ -187,7 +187,10 @@ def test_envelope_equity_curve_empty_when_no_trades() -> None:
         equity_timestamps=[],
         runner_label="x",
     )
-    assert payload["equity_curve"] == {"timestamps": [], "equity_pct": []}
+    ec = payload["equity_curve"]
+    assert ec["timestamps"] == []
+    assert ec["equity_pct"] == []
+    assert ec["trade_markers"] is None  # T11 — no markers when no trades
 
 
 def test_envelope_equity_timestamps_optional_keyword() -> None:
@@ -313,3 +316,44 @@ def test_envelope_with_wfa_result_strips_raw_full_period_warning() -> None:
     )
     # raw_full_period warning dropped — WFA discipline applied
     assert not any(w["code"] == "raw_full_period" for w in payload["warnings"])
+
+
+def test_envelope_trade_markers_populated_when_trades_passed() -> None:
+    """T11 — trade_markers dict has all 5 keys, same length as n_trades.
+
+    PHASE 6 test-engineer review caught: previously only `trade_markers is None`
+    branch tested. Populated path needs explicit contract assertion since EquityChart
+    scatter overlay depends on all 5 arrays present + same-length.
+    """
+    markers: dict[str, list[float | int]] = {
+        "entry_timestamps": [1_700_000_000, 1_700_100_000],
+        "exit_timestamps": [1_700_050_000, 1_700_150_000],
+        "entry_prices": [30_000.0, 31_000.0],
+        "exit_prices": [31_500.0, 29_500.0],
+        "pnl_pcts": [5.0, -4.84],
+    }
+    payload = build_research_runner_envelope(
+        runner_name="volume_breakout_runner",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=2,
+        sharpe=1.2,
+        win_rate=0.5,
+        total_pnl_pct=200.0,
+        bars_per_year=2191,
+        equity_curve=[0.0, 100.0, 200.0],
+        runner_label="x",
+        trade_markers=markers,
+    )
+    tm = payload["equity_curve"]["trade_markers"]
+    assert tm is not None
+    assert set(tm.keys()) == {
+        "entry_timestamps",
+        "exit_timestamps",
+        "entry_prices",
+        "exit_prices",
+        "pnl_pcts",
+    }
+    lengths = [len(v) for v in tm.values()]
+    assert len(set(lengths)) == 1, "All trade_markers arrays must be same length"
+    assert lengths[0] == 2

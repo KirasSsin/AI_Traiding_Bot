@@ -1,11 +1,11 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 SHIPPED tag alpha.45 + S46-S48 roadmap updated
-sprint: 45
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.45
+updated: 2026-05-10  # S46 PHASE 5+6 COMPLETE (verify GREEN + 5 reviewers DONE; BLOCKER+HIGH fixes commit 36d6302; test-engineer test added 51760d4) → PHASE 8-SHIP
+sprint: 46
+phase: 8-ship
+branch: feature/sprint-46-react-migration
+tag: v0.1.0-alpha.46
 ---
 
 ## S46-S48 ROADMAP (operator decision 2026-05-10)
@@ -65,6 +65,53 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 - 12mo MAINNET-promotion ADR (нужен δ live data accumulation, не S46-S48 work)
 - Path B (new strategies) — operator excluded entirely
+
+---
+
+## S46 PHASE 5+6 ✅ COMPLETE → PHASE 8-SHIP 🟡
+
+**Branch:** feature/sprint-46-react-migration
+
+**Текущий статус:** PHASE 5 verify GREEN (pytest 1004p / mypy 0 issues / lint+tsc+build clean / Playwright 3p+1s). PHASE 6 ALL 5 reviewers complete: python-reviewer APPROVE, doc-reviewer APPROVE, architecture-reviewer APPROVE_WITH_CONDITIONS (C1+C2+C4+CC2+CC3 all MET; SPA catch-all → S47), test-engineer APPROVE_WITH_CONCERNS (trade_markers test added commit `51760d4`), frontend-developer APPROVE_WITH_CONCERNS — 1 BLOCKER + 2 HIGH addressed commit `36d6302`:
+- BLOCKER MonthlyHeatmap.tsx Rules of Hooks violation fixed (useMemo before guards, eslint-disable removed)
+- HIGH WfaFailBanner.tsx setTimeout wrapped в useEffect cleanup
+- HIGH EquityChart.tsx useEffect deps split к granular (timestamps + equity_pct + trade_markers)
+
+Total commits: 47. PHASE 5 re-verified post-fixes: lint 0 / tsc 0 / build 235.11 kB / Playwright 3p+1s.
+
+**Следующее действие:** PHASE 8 ship — `superpowers:finishing-a-development-branch` skill → `git push -u origin feature/sprint-46-react-migration` + `gh pr create` + squash-merge after CI green + tag `v0.1.0-alpha.46`.
+
+**Architect binding conditions (ADR pending):**
+- C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
+- C2 (HIGH): Node.js CI step в `ci.yml` AS PART OF S46 (T21)
+- C4 (MEDIUM): `app.py` `TemplateResponse` → `FileResponse(dist/index.html)` (T19)
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: React infrastructure (Vite + TS strict + ESLint + Prettier) | DONE | b6e1335 |
+| T2: Anthropic + cyberpunk design tokens (tokens.css + globals.css) | DONE | 1992a85 |
+| T3: App.tsx — tab navigation + Anthropic header (Backtest/Documentation/History) | DONE | 9e78c5d |
+| T4: TypeScript types (types.ts) + API client wrapper (client.ts) | DONE | b752010 |
+| T5: React hooks — useStrategyInfo (cache) + useWfaFailAck (localStorage ack-gated) | DONE | 3e508e9 |
+| T6: ConfigureBacktest form — optgroup grouping + supported_combos gating + App.tsx wired | DONE | fa30413 |
+| T7: StrategyDescription component — collapsible block с useStrategyInfo hook + aria-expanded | DONE | 9588f48 |
+| T8: VerdictPanel component — three-valued WFA verdict + warnings panel + App.tsx wired | DONE | f91997d |
+| T9: EquityChart component — uPlot wrapper + Anthropic orange palette + ResizeObserver | DONE | 8b64be9 |
+| T10: DrawdownSubchart component — uPlot subchart + computeDrawdown + CC2 sync key | DONE | 1cfd0aa |
+| T11: TradeMarkers — envelope ext (vb+atr runners) + EquityChart scatter overlay (win/loss) | DONE | 553b94c |
+| T12: MonthlyHeatmap — calendar grid с PnL по месяцам, intensity-scaled cells | DONE | 549b7bc |
+| T13: MetricsTable — TIER 1-6 + DSR + MC + per-fold Sharpe subtable (RAW + WFA paths) | DONE | 96b8dac |
+| T14: TradesTable — RAW 5-row + WFA 8-row quote-currency stats (n_winners/pnl/commissions/avg) | DONE | 62ade5b |
+| T15: HistoryTab (9-col verdict-colored runs table) + DocumentationTab (indicator/strategy/methodology cards) | DONE | 46bfb63, 23115b6 |
+| T16: WfaFailBadge — inline pill badge WFA_FAIL/WFA_FAIL_DATA/FAIL (red/amber) + HistoryTab wiring | DONE | 18959dd |
+| T17: WfaFailBanner — ack-gated NON-dismissible banner (full/chip modes) + App.tsx mount above tabs | DONE | 48f7665 |
+| T18: Playwright E2E tests (backtest-flow + wfa-fail-ack) | DONE | 1535dbf |
+| T19: FastAPI FileResponse integration — app.py → FileResponse(dist/index.html) + StaticFiles /assets/ | DONE | 729a135 |
+| T20: Archive vanilla dashboard → src/dashboard_legacy/ (static + templates) | DONE | 3a0eb97 |
+| T21: CI/CD + start-bot.sh — Node.js setup + React build step + Playwright (architect C2) | DONE | 1992662 |
+| T22: ADR 0066 + ADR 0039 amendment + sprint-46 page + wiki sync | DONE | 24bc36c |
 
 ---
 

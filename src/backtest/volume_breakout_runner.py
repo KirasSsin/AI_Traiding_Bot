@@ -299,6 +299,17 @@ def run_volume_breakout_backtest(
     bars_per_year_lookup = {"5": 105192, "15": 35064, "60": 8766, "240": 2191, "D": 365}
     bars_per_year = bars_per_year_lookup.get(interval, 2191)
 
+    # T11 — build trade_markers payload (entry/exit timestamps + prices + pnl per trade)
+    trade_markers: dict[str, list[float | int]] | None = None
+    if trades_list and not df.empty:
+        trade_markers = {
+            "entry_timestamps": [_ts_to_unix(ts_series.iloc[t.entry_idx]) for t in trades_list],
+            "exit_timestamps": [_ts_to_unix(ts_series.iloc[t.exit_idx]) for t in trades_list],
+            "entry_prices": [float(t.entry_price) for t in trades_list],
+            "exit_prices": [float(t.exit_price) for t in trades_list],
+            "pnl_pcts": [float(t.pnl_pct * 100.0) for t in trades_list],
+        }
+
     # Wrap в dashboard contract envelope
     from src.backtest.research_runner_envelope import build_research_runner_envelope
 
@@ -316,6 +327,7 @@ def run_volume_breakout_backtest(
         runner_label=f"Volume breakout {interval} {symbol} (LOCKED — S39)",
         start=start_date.isoformat(),
         end=end_date.isoformat(),
+        trade_markers=trade_markers,
     )
 
 

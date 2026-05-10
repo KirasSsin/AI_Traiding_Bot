@@ -1,0 +1,40 @@
+/* WfaFailBadge — inline pill badge for WFA_FAIL / WFA_FAIL_DATA / FAIL verdicts.
+ * Cyberpunk aesthetic: red/amber tint + glow text-shadow. */
+
+.badge {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 0 4px currentColor;
+  white-space: nowrap;
+}
+
+/* Size variants */
+.sm {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.md {
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+/* Fail style — neon red */
+.fail {
+  color: var(--color-danger);
+  background: rgba(255, 51, 102, 0.10);
+  border: 1px solid var(--color-danger);
+}
+
+/* Data fail style — amber/orange warning */
+.warn {
+  color: var(--color-warn);
+  background: rgba(204, 120, 92, 0.12);
+  border: 1px solid var(--color-warn);
+}

@@ -68,6 +68,20 @@ case "$MODE" in
         echo "   URL: http://127.0.0.1:8000/"
         echo "   Press Ctrl+C к stop."
         echo ""
+
+        # S46 — React build step (architect C1+C2)
+        if [ -d "src/dashboard_react" ]; then
+          echo "▶ Building React dashboard..."
+          cd src/dashboard_react
+          if [ ! -d "node_modules" ]; then
+            echo "▶ Installing npm dependencies (first run)..."
+            npm install
+          fi
+          npm run build
+          cd ../..
+          echo "✓ React build complete"
+        fi
+
         exec .venv/bin/python -m src.dashboard.app
         ;;
 esac

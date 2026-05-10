@@ -3,7 +3,7 @@
 Localhost-only (127.0.0.1:8000). NO auth, NO CORS (single-user dev tool).
 
 Endpoints:
-  GET  /                       — static HTML dashboard
+  GET  /                       — React SPA (S46 architect C4: FileResponse)
   GET  /api/strategies          — strategy presets list
   GET  /api/intervals           — supported timeframes
   GET  /api/data/availability   — per-symbol+interval data availability
@@ -20,11 +20,9 @@ import webbrowser
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from starlette.requests import Request
 
 from src.dashboard.backtest_runner import (
     INTERVAL_LABELS,
@@ -38,7 +36,9 @@ from src.dashboard.backtest_runner import (
 )
 
 _DIR = Path(__file__).resolve().parent
-_TEMPLATES = Jinja2Templates(directory=str(_DIR / "templates"))
+
+# S46 architect C1+C4 BINDING — обслуживать React build из src/dashboard_react/dist/
+_DIST_DIR = _DIR.parent / "dashboard_react" / "dist"
 
 
 class BacktestPayload(BaseModel):
@@ -64,42 +64,25 @@ def create_app() -> FastAPI:
         version="0.1.0-alpha.25",
     )
 
-    app.mount("/static", StaticFiles(directory=str(_DIR / "static")), name="static")
+    # S46 architect C1 — монтировать React assets из dist/assets/ (content-hashed Vite output)
+    if _DIST_DIR.exists():
+        app.mount("/assets", StaticFiles(directory=str(_DIST_DIR / "assets")), name="assets")
 
-    # S42.4 — disable static file caching (dev tool, prevents stale JS/CSS issues)
-    from collections.abc import Awaitable, Callable
+    # S46 architect C4 — FileResponse для React SPA; graceful fallback если build отсутствует
+    if _DIST_DIR.exists():
 
-    from starlette.responses import Response
+        @app.get("/", response_class=FileResponse)
+        async def index_react() -> FileResponse:
+            return FileResponse(_DIST_DIR / "index.html")
+    else:
 
-    @app.middleware("http")
-    async def _no_cache_static(
-        request: Request,
-        call_next: Callable[[Request], Awaitable[Response]],
-    ) -> Response:
-        response = await call_next(request)
-        if request.url.path.startswith("/static/"):
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-        return response
-
-    @app.get("/", response_class=HTMLResponse)
-    async def index(request: Request) -> HTMLResponse:
-        # S42.4 — cache-bust static assets via mtime query param
-        import os
-
-        css_mtime = int(os.path.getmtime(_DIR / "static" / "dashboard.css"))
-        js_mtime = int(os.path.getmtime(_DIR / "static" / "dashboard.js"))
-        return _TEMPLATES.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={
-                "strategies": STRATEGY_PRESETS,
-                "intervals": INTERVAL_LABELS,
-                "css_v": css_mtime,
-                "js_v": js_mtime,
-            },
-        )
+        @app.get("/", response_class=HTMLResponse)
+        async def index_missing() -> HTMLResponse:
+            return HTMLResponse(
+                "<h1>React build missing</h1>"
+                "<p>Run <code>npm run build</code> в <code>src/dashboard_react/</code></p>",
+                status_code=503,
+            )
 
     @app.get("/api/strategies")
     async def get_strategies() -> dict[str, dict[str, object]]:
