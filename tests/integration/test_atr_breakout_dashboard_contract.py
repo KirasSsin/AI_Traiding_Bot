@@ -207,6 +207,29 @@ def test_atr_breakout_dispatch_preserves_envelope_keys() -> None:
 
 
 @pytest.mark.integration
+def test_atr_breakout_envelope_includes_equity_curve_timestamps() -> None:
+    """S43 T4 — atr_breakout runner passes df timestamps к envelope."""
+    from datetime import date
+
+    from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
+
+    r = run_atr_breakout_backtest(
+        symbol="BTCUSDT",
+        interval="240",
+        start_date=date(2017, 8, 17),
+        end_date=date(2026, 4, 30),
+    )
+    ec = r["equity_curve"]
+    assert isinstance(ec, dict)
+    assert len(ec["timestamps"]) == len(ec["equity_pct"])
+    assert len(ec["timestamps"]) >= 70  # 69 trades + 1 starting zero
+    assert ec["timestamps"][0] >= 1502928000  # 2017-08-17 unix
+    assert all(isinstance(t, int) for t in ec["timestamps"])
+    assert ec["equity_pct"][0] == 0.0
+    assert abs(ec["equity_pct"][-1] - 819.81) < 2.0
+
+
+@pytest.mark.integration
 def test_volume_breakout_dispatch_preserves_envelope_keys() -> None:
     """T4 — same dispatch fix для volume_breakout."""
     from src.dashboard.backtest_runner import BacktestRequest, run_backtest

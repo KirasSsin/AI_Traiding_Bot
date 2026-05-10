@@ -29,7 +29,19 @@ from src.backtest.walk_forward import evaluate_acceptance_gate
 # Latest sprint marker `[Sxx LATEST]` помогает operator distinguish recent additions.
 STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
     "ema_crossover_s13": {
-        "label": "[S13 baseline] EMA crossover (12/26 + ADX + RSI)",
+        "label": "Тренд EMA 12/26 + ADX фильтр",
+        "optgroup": "Тренд-следование",
+        "description": (
+            "<p><strong>Подход:</strong> классическая трендовая стратегия на пересечении "
+            "быстрой EMA(12) и медленной EMA(26) с фильтром силы тренда ADX и подтверждением "
+            "не-перекупленности RSI(14).</p>"
+            "<p><strong>Вход long:</strong> EMA12 пересекает EMA26 снизу вверх + ADX > 25 + "
+            "RSI < 70.</p>"
+            "<p><strong>Выход:</strong> обратное пересечение EMA либо ADX падает ниже 20.</p>"
+            "<p><strong>Подходит для:</strong> сильно-трендовых режимов (бычий или медвежий импульс). "
+            "Плохо работает в боковике — много ложных пересечений (whipsaw).</p>"
+            "<p><strong>Вердикт S13:</strong> FAIL conjoint (T1=−44.46 OOS Sharpe).</p>"
+        ),
         "sprint": "S13",
         "verdict": "FAIL conjoint (T1=-44.46 на BTC 1H)",
         "type": "ema_crossover",
@@ -40,7 +52,18 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "mean_reversion_s15": {
-        "label": "[S15 original] Mean-reversion (RSI 30/70 + BB 2.0σ)",
+        "label": "Возврат к среднему RSI/Bollinger (классика)",
+        "optgroup": "Возврат к среднему",
+        "description": (
+            "<p><strong>Подход:</strong> классический mean-reversion на экстремумах RSI(14) "
+            "с подтверждением через Bollinger Bands (20, 2.0σ). Логика: перепроданность ⇒ возврат вверх, "
+            "перекупленность ⇒ возврат вниз.</p>"
+            "<p><strong>Вход long:</strong> RSI < 30 AND цена ниже нижней BB.</p>"
+            "<p><strong>Выход:</strong> RSI пересекает 50 либо цена возвращается к средней BB.</p>"
+            "<p><strong>Подходит для:</strong> боковиков и низковолатильных режимов. "
+            "Опасно в трендах — перепроданность может углубляться.</p>"
+            "<p><strong>Вердикт S15:</strong> FAIL conjoint (MC p=0.998 — неотличимо от шума).</p>"
+        ),
         "sprint": "S15",
         "verdict": "FAIL conjoint (MC p=0.998 noise)",
         "type": "mean_reversion",
@@ -51,7 +74,17 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "mean_reversion_s17_relaxed": {
-        "label": "[S17 relaxed] Mean-reversion (RSI 35/65 + BB 1.5σ) — S22-validated edge",
+        "label": "Возврат к среднему RSI/Bollinger (мягкий)",
+        "optgroup": "Возврат к среднему",
+        "description": (
+            "<p><strong>Подход:</strong> релакс-версия классического mean-reversion с "
+            "более чувствительными порогами RSI(35/65) и узкими Bollinger Bands (20, 1.5σ). "
+            "Больше сигналов чем S15.</p>"
+            "<p><strong>Вход long:</strong> RSI < 35 AND цена ниже нижней BB(1.5σ).</p>"
+            "<p><strong>Выход:</strong> RSI > 50 либо возврат к средней BB.</p>"
+            "<p><strong>Подходит для:</strong> умеренных боковиков, ETH/SOL чаще чем BTC.</p>"
+            "<p><strong>Вердикт S17:</strong> 5/6 + DSR + MC PASS, но T5 floor (n≥100) недостижим.</p>"
+        ),
         "sprint": "S17",
         "verdict": "PARTIAL PASS 5/6+DSR+MC (S22 4H DSR=0.996, MC p=0.018) — T5 floor unreachable",
         "type": "mean_reversion",
@@ -62,7 +95,17 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "donchian_breakout_s35": {
-        "label": "[S35 LATEST] Donchian breakout (long-only, lookback=20, ATR 2.0× stop)",
+        "label": "Канал Дончиана пробой",
+        "optgroup": "Прорывы",
+        "description": (
+            "<p><strong>Подход:</strong> long-only пробой 20-периодного канала Дончиана "
+            "(максимум за N баров) с trailing-stop через ATR×2.0.</p>"
+            "<p><strong>Вход long:</strong> close > max(high) за последние 20 баров.</p>"
+            "<p><strong>Выход:</strong> close < min(low) за последние 10 баров либо ATR-stop.</p>"
+            "<p><strong>Подходит для:</strong> начала сильных трендов. Хорошо ловит крупные движения, "
+            "но проигрывает в боковиках.</p>"
+            "<p><strong>Вердикт S35:</strong> FAIL conjoint (n=21 << 50, α CLOSED per ADR 0054).</p>"
+        ),
         "sprint": "S35",
         "verdict": "FAIL conjoint (n=21<<50, aggregate Sharpe=-0.95) — α direction CLOSED per ADR 0054",
         "type": "donchian",
@@ -72,7 +115,17 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         },
     },
     "volume_breakout_iter10": {
-        "label": "[S39 LATEST] Volume breakout 4H BTCUSDT (LOCKED — autoresearch sweep#1644)",
+        "label": "Прорыв с подтверждением объёма",
+        "optgroup": "Прорывы",
+        "description": (
+            "<p><strong>Подход:</strong> Donchian-пробой с подтверждением через всплеск объёма. "
+            "Сигнал валиден только если объём бара > среднего × множитель.</p>"
+            "<p><strong>Вход long:</strong> close > max(high, lookback=9) AND volume > MA(volume, 10) × 1.456.</p>"
+            "<p><strong>Выход:</strong> close < min(low, exit_lookback=8) либо ATR(9) × 2.97 stop.</p>"
+            "<p><strong>Подходит для:</strong> BTCUSDT 4H, начала тренда с институциональным объёмом. "
+            "LOCKED params (autoresearch sweep #1644). Только эта пара/TF.</p>"
+            "<p><strong>Вердикт S39:</strong> 3.3y +122.66% / 8mo held-out +20.42%. RAW (WFA pending S44).</p>"
+        ),
         "sprint": "S39",
         "verdict": "PASS held-out 8mo Sharpe=+9.96 PnL=+20.42% / 3.3y +122.66%; Gate 2 forward N≥10 PENDING",
         "type": "volume_breakout",
@@ -93,7 +146,18 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
     # Server-side params lookup от ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)].
     # Frontend introspects supported_combos via /api/strategy/atr_breakout/info → greys out invalid combos.
     "atr_breakout": {
-        "label": "[S42] ATR breakout (LOCKED params per autoresearch — 10 supported combos)",
+        "label": "ATR-адаптивный пробой (multi-combo)",
+        "optgroup": "Прорывы",
+        "description": (
+            "<p><strong>Подход:</strong> long-only пробой адаптивного ATR-канала. Уровень входа "
+            "= close + ATR × множитель. Стоп тоже ATR-based, отдельный период и множитель.</p>"
+            "<p><strong>Вход long:</strong> close > close[−2] + ATR(period_main) × mult_breakout.</p>"
+            "<p><strong>Выход:</strong> ATR(period_stop) × mult_stop trailing-stop либо обратный сигнал.</p>"
+            "<p><strong>Подходит для:</strong> 10 (symbol, timeframe) комбинаций — каждая с независимыми LOCKED "
+            "параметрами от autoresearch endless. Лучший: BTCUSDT 4H +819.81% за 8.7 года, 5/5 "
+            "положительных под-периодов.</p>"
+            "<p><strong>Вердикт S40+S41:</strong> RAW per combo (WFA pending S44). Pre-registered LOCKED params.</p>"
+        ),
         "sprint": "S42",
         "verdict": "RAW (acceptance gate skipped — WFA retrofit pending S43)",
         "type": "atr_breakout",

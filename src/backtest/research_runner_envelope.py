@@ -46,6 +46,7 @@ def build_research_runner_envelope(
     start: str = "",
     end: str = "",
     extra_warnings: list[dict[str, str]] | None = None,
+    equity_timestamps: list[int] | None = None,
 ) -> dict[str, Any]:
     """Build dashboard-contract envelope от research runner outputs.
 
@@ -95,6 +96,11 @@ def build_research_runner_envelope(
         warnings.extend(extra_warnings)
 
     return {
+        # S43 T3 — equity_curve parallel arrays для uPlot native API
+        "equity_curve": {
+            "timestamps": equity_timestamps if equity_timestamps else [],
+            "equity_pct": list(equity_curve),
+        },
         "bars_per_year": bars_per_year,
         "warnings": warnings,
         "failed_criteria": [],

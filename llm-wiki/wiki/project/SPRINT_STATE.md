@@ -1,11 +1,47 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T9+T10 done — wiki sync complete
-sprint: 42
-phase: 7-sync
-branch: feature/sprint-42-atr-breakout-hardening
-tag: v0.1.0-alpha.42
+updated: 2026-05-10  # S43 T12 done — wiki sync complete, phase=8-ship
+sprint: 43
+phase: 8-ship
+branch: feature/sprint-43-ui-polish
+---
+
+## S43 PHASE 8-SHIP — UI polish (preset rename + descriptions + equity chart)
+
+**Branch:** feature/sprint-43-ui-polish
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: Rename preset labels + add description + optgroup to STRATEGY_PRESETS | DONE | def07e4 |
+| T2: Expose description + optgroup via /api/strategies + /api/strategy/{id}/info | DONE | 27d57af |
+| T3 (equity_curve): envelope adds equity_curve parallel arrays для uPlot | DONE | 6baba47 |
+| T4 (equity_timestamps): atr_breakout_runner passes df timestamps to envelope | DONE | d926cd8 |
+| T5 (equity_timestamps): volume_breakout_runner passes df timestamps to envelope | DONE | 0dceae0 |
+| T6: Vendor uPlot (uPlot.iife.min.js + uPlot.min.css) в static/vendor/ | DONE | — |
+| T7: Template — strategy description block + equity chart panel + uPlot script | DONE | dfd8500 |
+| T8+T9+T10: JS optgroup dropdown + description block + uPlot equity chart | DONE | 5f5bc79 |
+| T11: CSS — description styling + uPlot terminal overrides | DONE | — |
+| T12: Wiki sync — ADR 0063 + sprint-43 + current-state/index/log/SPRINT_STATE | DONE | — |
+
+**Текущий статус:** T12 done. Все задачи DONE. Следующее действие: PHASE 8 ship (tag v0.1.0-alpha.43 + PR merge).
+
+### Phase tracking
+
+| Phase | Status |
+|-------|--------|
+| 1-orient | done |
+| 2-brainstorm | done |
+| 3-plan | done |
+| 4-execution | done |
+| 5-verify | done |
+| 6-review | done |
+| 7-sync | done |
+| 8-ship | in_progress |
+| 9-close | pending |
+
 ---
 
 ## S42 PHASE 7-SYNC — ATR breakout hardening (dashboard contract envelope)

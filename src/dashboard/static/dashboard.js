@@ -59,11 +59,39 @@ async function init() {
     availability = avail;
 
     const stratSel = $("strategy-select");
+    // S43 T8 — group strategies by `optgroup` field (Тренд / Возврат / Прорывы)
+    const groupOrder = ["Тренд-следование", "Возврат к среднему", "Прорывы"];
+    const grouped = {};
     for (const sid in strategies) {
-      const opt = document.createElement("option");
-      opt.value = sid;
-      opt.textContent = strategies[sid].label;
-      stratSel.appendChild(opt);
+      const grp = strategies[sid].optgroup || "Прочие";
+      if (!grouped[grp]) grouped[grp] = [];
+      grouped[grp].push({ sid, label: strategies[sid].label });
+    }
+    const renderedGroups = new Set();
+    for (const grp of groupOrder) {
+      if (!grouped[grp]) continue;
+      const og = document.createElement("optgroup");
+      og.label = grp;
+      grouped[grp].forEach(({ sid, label }) => {
+        const opt = document.createElement("option");
+        opt.value = sid;
+        opt.textContent = label;
+        og.appendChild(opt);
+      });
+      stratSel.appendChild(og);
+      renderedGroups.add(grp);
+    }
+    for (const grp in grouped) {
+      if (renderedGroups.has(grp)) continue;
+      const og = document.createElement("optgroup");
+      og.label = grp;
+      grouped[grp].forEach(({ sid, label }) => {
+        const opt = document.createElement("option");
+        opt.value = sid;
+        opt.textContent = label;
+        og.appendChild(opt);
+      });
+      stratSel.appendChild(og);
     }
 
     const symSel = $("symbol-select");
@@ -87,12 +115,14 @@ async function init() {
       applyComboGates(stratSel.value);
     });
     ivSel.addEventListener("change", updateDataInfo);
-    stratSel.addEventListener("change", () => {
-      applyComboGates(stratSel.value);
+    stratSel.addEventListener("change", async () => {
+      await applyComboGates(stratSel.value);
+      renderStrategyDescription(stratSel.value);
     });
+    setupStrategyDescriptionToggle();
     updateDataInfo();
     // Initial gating apply for default selected strategy
-    applyComboGates(stratSel.value);
+    applyComboGates(stratSel.value).then(() => renderStrategyDescription(stratSel.value));
 
     $("backtest-form").addEventListener("submit", handleSubmit);
     $("refresh-history").addEventListener("click", loadHistory);
@@ -188,6 +218,96 @@ async function applyComboGates(strategyId) {
     if (firstValidTf) tfSel.value = firstValidTf.value;
   }
   updateDataInfo();
+}
+
+// ──────────────────────────────────────────────
+//  S43 T9 — STRATEGY DESCRIPTION BLOCK
+// ──────────────────────────────────────────────
+function renderStrategyDescription(strategyId) {
+  const body = $("strategy-description-body");
+  if (!body) return;
+  // Reuse cached info from applyComboGates flow (S42 T6 cache)
+  const info = _strategyInfoCache[strategyId];
+  if (!info || !info.description) {
+    body.innerHTML = '<div class="description-empty">No description available.</div>';
+    return;
+  }
+  // description = pre-authored HTML (XSS-safe — comes from STRATEGY_PRESETS dict, not user input)
+  body.innerHTML = info.description;
+}
+
+function setupStrategyDescriptionToggle() {
+  const btn = $("strategy-description-toggle");
+  const body = $("strategy-description-body");
+  if (!btn || !body) return;
+  btn.addEventListener("click", () => {
+    const expanded = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", String(!expanded));
+    body.style.display = expanded ? "none" : "block";
+    btn.querySelector(".toggle-arrow").textContent = expanded ? "▸" : "▾";
+  });
+}
+
+// ──────────────────────────────────────────────
+//  S43 T10 — EQUITY CURVE CHART (uPlot)
+// ──────────────────────────────────────────────
+let _equityChart = null;
+
+function renderEquityChart(r) {
+  const container = $("equity-chart");
+  const placeholder = $("equity-chart-placeholder");
+  const ec = r.equity_curve || {};
+  const timestamps = ec.timestamps || [];
+  const equity = ec.equity_pct || [];
+  // CC3 — empty data guard (legacy WFA presets без envelope)
+  if (timestamps.length === 0 || equity.length === 0) {
+    container.style.display = "none";
+    placeholder.style.display = "block";
+    return;
+  }
+  container.style.display = "block";
+  placeholder.style.display = "none";
+  // Destroy previous chart instance
+  if (_equityChart) {
+    _equityChart.destroy();
+    _equityChart = null;
+  }
+  // uPlot data: [timestamps_unix_seconds, series1_values]
+  const data = [timestamps, equity];
+  const opts = {
+    width: container.clientWidth || 800,
+    height: 300,
+    title: "",
+    cursor: { drag: { x: true, y: false } },
+    series: [
+      { label: "Date" },
+      {
+        label: "Equity %",
+        stroke: "#26ff8c",
+        fill: "rgba(38, 255, 140, 0.12)",
+        width: 1.5,
+        points: { show: false },
+      },
+    ],
+    axes: [
+      {
+        stroke: "#9ca3af",
+        grid: { stroke: "rgba(156, 163, 175, 0.10)", width: 1 },
+        ticks: { stroke: "#9ca3af" },
+        font: "11px JetBrains Mono, monospace",
+      },
+      {
+        stroke: "#9ca3af",
+        grid: { stroke: "rgba(156, 163, 175, 0.10)", width: 1 },
+        ticks: { stroke: "#9ca3af" },
+        font: "11px JetBrains Mono, monospace",
+        values: (u, vals) => vals.map((v) => v.toFixed(0) + "%"),
+      },
+    ],
+    scales: { x: { time: true } },
+    legend: { show: false },
+  };
+  _equityChart = new uPlot(opts, data, container);
 }
 
 // ──────────────────────────────────────────────
@@ -387,6 +507,8 @@ function renderResult(r) {
   $("folds-table").innerHTML = foldHtml;
 
   $("raw-json").textContent = JSON.stringify(r, null, 2);
+  // S43 T10 — render equity chart
+  renderEquityChart(r);
   $("results-section").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

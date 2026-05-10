@@ -34,10 +34,11 @@ def test_atr_breakout_preset_has_no_per_combo_locked_dimensions() -> None:
 
 
 def test_atr_breakout_preset_label_indicates_locked() -> None:
-    """Label clarifies LOCKED + sprint."""
+    """S43: label is semantic Russian; LOCKED info moved to description field."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
     preset = STRATEGY_PRESETS["atr_breakout"]
-    label = preset["label"]
-    assert "S42" in label
-    assert "LOCKED" in label or "locked" in label
+    # S43 T1: label renamed to semantic Russian — sprint tag removed from label
+    assert preset["label"] == "ATR-адаптивный пробой (multi-combo)"
+    # LOCKED info now lives in description
+    assert "LOCKED" in preset["description"]

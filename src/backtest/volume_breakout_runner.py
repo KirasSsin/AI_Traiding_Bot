@@ -270,11 +270,30 @@ def run_volume_breakout_backtest(
     # Run inner backtest — minimal dict
     inner = _backtest_single(df, params)
 
-    # Build equity_curve from trades list для sub-period robustness chip
+    # S43 T5 — Build equity_curve + timestamps parallel arrays для uPlot.
+    # df from _load_ohlcv has a "timestamp" column (datetime64[us, UTC]).
     trades_list = inner.get("trades", [])
     equity_curve: list[float] = [0.0]
-    for tr in trades_list:
-        equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
+    equity_timestamps: list[int] = []
+    if trades_list and not df.empty:
+        ts_series: pd.Series[Any]
+        for col in ("timestamp", "_ts", "ts", "time"):
+            if col in df.columns:
+                ts_series = df[col]
+                break
+        else:
+            # Fallback: DatetimeIndex
+            ts_series = df.index.to_series().reset_index(drop=True)
+
+        def _ts_to_unix(value: object) -> int:
+            if hasattr(value, "timestamp"):
+                return int(value.timestamp())
+            return int(pd.Timestamp(value).timestamp())
+
+        equity_timestamps.append(_ts_to_unix(ts_series.iloc[0]))
+        for tr in trades_list:
+            equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
+            equity_timestamps.append(_ts_to_unix(ts_series.iloc[tr.exit_idx]))
 
     # bars_per_year по interval (volume_breakout supports only 4H = 2191; future-proof lookup)
     bars_per_year_lookup = {"5": 105192, "15": 35064, "60": 8766, "240": 2191, "D": 365}
@@ -293,6 +312,7 @@ def run_volume_breakout_backtest(
         total_pnl_pct=float(inner["total_pnl_pct"]),
         bars_per_year=bars_per_year,
         equity_curve=equity_curve,
+        equity_timestamps=equity_timestamps,
         runner_label=f"Volume breakout {interval} {symbol} (LOCKED — S39)",
         start=start_date.isoformat(),
         end=end_date.isoformat(),

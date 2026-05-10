@@ -103,15 +103,23 @@ def create_app() -> FastAPI:
 
     @app.get("/api/strategies")
     async def get_strategies() -> dict[str, dict[str, object]]:
-        # Return id → {label, type} only (no nested config exposure)
+        # S43 T2 — include description + optgroup (frontend dropdown grouping + description block)
         return {
-            sid: {"id": sid, "label": s["label"], "type": s["type"]}
+            sid: {
+                "id": sid,
+                "label": s["label"],
+                "type": s["type"],
+                "description": s.get("description", ""),
+                "optgroup": s.get("optgroup", ""),
+            }
             for sid, s in STRATEGY_PRESETS.items()
         }
 
     @app.get("/api/strategy/{strategy_id}/info")
     async def get_strategy_info(strategy_id: str) -> dict[str, object]:
-        """S42 T5 — preset metadata + supported_combos for frontend gates."""
+        """S42 T5 — preset metadata + supported_combos for frontend gates.
+        S43 T2 — added description + optgroup fields для UI block.
+        """
         preset = STRATEGY_PRESETS.get(strategy_id)
         if preset is None:
             raise HTTPException(status_code=404, detail=f"Unknown strategy: {strategy_id}")
@@ -125,6 +133,8 @@ def create_app() -> FastAPI:
             "supported_combos": sc_serialized,
             "locked_symbol": preset.get("locked_symbol"),
             "locked_interval": preset.get("locked_interval"),
+            "description": preset.get("description", ""),
+            "optgroup": preset.get("optgroup", ""),
         }
 
     @app.get("/api/intervals")

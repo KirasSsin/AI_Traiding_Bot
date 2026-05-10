@@ -81,3 +81,25 @@ def test_volume_breakout_envelope_request_carries_symbol_interval() -> None:
     assert r["request"]["start"] == "2023-01-01"
     assert r["request"]["end"] == "2026-04-26"
     assert r["bars_per_year"] == 2191
+
+
+@pytest.mark.integration
+def test_volume_breakout_envelope_includes_equity_curve_timestamps() -> None:
+    """S43 T5 — volume_breakout runner passes df timestamps к envelope."""
+    from datetime import date
+
+    from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
+
+    r = run_volume_breakout_backtest(
+        symbol="BTCUSDT",
+        interval="240",
+        start_date=date(2023, 1, 1),
+        end_date=date(2026, 4, 26),
+    )
+    ec = r["equity_curve"]
+    assert len(ec["timestamps"]) == len(ec["equity_pct"])
+    assert len(ec["timestamps"]) >= 100  # ~114 trades + 1 starting zero
+    assert ec["timestamps"][0] >= 1672531200  # 2023-01-01 unix
+    assert all(isinstance(t, int) for t in ec["timestamps"])
+    assert ec["equity_pct"][0] == 0.0
+    assert abs(ec["equity_pct"][-1] - 122.66) < 5.0  # S39 baseline 3.3y
