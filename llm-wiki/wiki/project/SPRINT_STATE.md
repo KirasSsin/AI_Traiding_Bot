@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T5 done — React hooks useStrategyInfo + useWfaFailAck
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T6 done — ConfigureBacktest form component
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T5 done — React hooks useStrategyInfo (module-level cache) + useWfaFailAck (localStorage ack-gated banner, Q4 REVISE NON-dismissible)
+**Текущий статус:** T6 done — ConfigureBacktest form (optgroup grouping, supported_combos/locked_* gating, data availability info, loading/error states, App.tsx wired)
 
-**Следующее действие:** T6 (next task per plan)
+**Следующее действие:** T7 (next task per plan)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -90,6 +90,7 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T3: App.tsx — tab navigation + Anthropic header (Backtest/Documentation/History) | DONE | 9e78c5d |
 | T4: TypeScript types (types.ts) + API client wrapper (client.ts) | DONE | b752010 |
 | T5: React hooks — useStrategyInfo (cache) + useWfaFailAck (localStorage ack-gated) | DONE | 3e508e9 |
+| T6: ConfigureBacktest form — optgroup grouping + supported_combos gating + App.tsx wired | DONE | fa30413 |
 
 ---
 
