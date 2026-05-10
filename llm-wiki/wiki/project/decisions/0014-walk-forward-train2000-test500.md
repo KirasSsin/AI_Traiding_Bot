@@ -90,7 +90,7 @@ Computed на 3.3y window (2023-01-01 → 2026-04-26) per uniform data per S45 A
 ### Rationale
 
 - test_bars=250 doubles OOS trade density для low-freq strategies (без relaxing T5 floor)
-- train_bars=1500 keeps proportional reduction (3:1 train:test ratio preserved)
+- train_bars=1500 derived from min_required formula: `train + embargo + k*test = 1500 + 20 + 5*250 = 2770`. Train:test ratio = **6:1** (low-freq) vs **4:1** (high-freq 2000:500). Train slice intentionally larger relative к short OOS test windows, но vestigial для LOCKED-params strategies (no per-fold IS fitting per S45 B2 docs).
 - k_folds=5 unchanged (cross-fold variance signal preserved)
 - embargo=20 unchanged (López de Prado lookback isolation)
 - T5_FLOOR=50 LOCKED (Bailey 2014 small-sample T-stat unreliability — не negotiable)
