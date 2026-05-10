@@ -64,3 +64,9 @@ llm-wiki/.obsidian/
 .claude/worktrees/
 .claude/.DS_Store
 # Track .claude/skills/ (project-level workflow templates, version-controlled per Anthropic guidance)
+
+# S46 React build artifacts
+src/dashboard_react/dist/
+src/dashboard_react/node_modules/
+src/dashboard_react/playwright-report/
+src/dashboard_react/test-results/

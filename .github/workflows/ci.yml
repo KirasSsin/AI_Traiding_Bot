@@ -50,6 +50,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,dashboard]"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/dashboard_react/package-lock.json
+
+      - name: Install npm deps
+        run: cd src/dashboard_react && npm ci
+
+      - name: TypeScript build
+        run: cd src/dashboard_react && npm run build
+
+      - name: Playwright install
+        run: cd src/dashboard_react && npx playwright install --with-deps chromium
+
+      - name: Playwright E2E tests
+        run: cd src/dashboard_react && npx playwright test
+
       - name: Ruff lint (informational baseline)
         # Pre-existing baseline: ~169 errors на main (legacy code). Carry-over к S33+ cleanup.
         # Strict guards trip ONLY на regression (count > 169).
