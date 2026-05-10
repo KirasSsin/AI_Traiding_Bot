@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T13 done — MetricsTable (TIER 1-6 + DSR + MC + per-fold subtable)
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T14+T15 done — TradesTable + HistoryTab + DocumentationTab
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T13 done — MetricsTable (RAW reduced view + WFA TIER 1-6/DSR/MC + per-fold Sharpe subtable). Faithful vanilla port (Bailey 2014 thresholds).
+**Текущий статус:** T13-T15 done — MetricsTable + TradesTable (RAW/WFA quote-currency stats) + HistoryTab (9-col history table) + DocumentationTab (indicators/multipliers/strategies/methodology cards).
 
-**Следующее действие:** T14: TradesTable component
+**Следующее действие:** T16: WfaFailBadge component (per preset card)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -98,6 +98,8 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T11: TradeMarkers — envelope ext (vb+atr runners) + EquityChart scatter overlay (win/loss) | DONE | 553b94c |
 | T12: MonthlyHeatmap — calendar grid с PnL по месяцам, intensity-scaled cells | DONE | 549b7bc |
 | T13: MetricsTable — TIER 1-6 + DSR + MC + per-fold Sharpe subtable (RAW + WFA paths) | DONE | 96b8dac |
+| T14: TradesTable — RAW 5-row + WFA 8-row quote-currency stats (n_winners/pnl/commissions/avg) | DONE | 62ade5b |
+| T15: HistoryTab (9-col verdict-colored runs table) + DocumentationTab (indicator/strategy/methodology cards) | DONE | 46bfb63, 23115b6 |
 
 ---
 
