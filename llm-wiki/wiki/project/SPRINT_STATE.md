@@ -2,10 +2,28 @@
 title: Sprint State — живое состояние проекта
 type: state
 updated: 2026-05-10
-sprint: 40
+sprint: 41
 phase: between-sprints
 branch: main
-tag: v0.1.0-alpha.40
+tag: v0.1.0-alpha.41
+---
+
+## S41 COMPLETE ✅ — ATR breakout multi-combo dashboard presets
+
+**All tasks DONE (T1-T10):**
+- T1: Generalized `atr_breakout_runner.py` (params kwarg, PARQUET_BY_COMBO, per-interval BARS_PER_YEAR)
+- T2: `ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO` — 10 combos с независимыми locked params (ADR 0061)
+- T3-T9: 9 новых STRATEGY_PRESETS в dashboard (SOLUSDT 4H / ETHUSDT 1H / BTCUSDT 15M / BTCUSDT 1H / SOLUSDT 1H / ETHUSDT 4H / SOLUSDT 15M / BTCUSDT 1D / ETHUSDT 15M)
+- T10: ADR 0061 + sprint-41 + current-state.md + index.md + log.md + SPRINT_STATE
+
+**Tests:** 934 unit pass / 20 новых integration tests / mypy 0 / ruff 0
+
+**Canonical counts:** 16/30/74/56 (reason codes unchanged)
+
+**ADRs:** 61 / Sprint pages: 45 / Tag: v0.1.0-alpha.41
+
+**Next action:** operator decision — Gate 2 paper-trade для новых комбо, autoresearch iter2, или другое.
+
 ---
 
 ## S40 COMPLETE ✅ — atr_breakout production integration
@@ -20,10 +38,6 @@ tag: v0.1.0-alpha.40
 - T7: git push + PR + merge + tag v0.1.0-alpha.40
 
 **Profit invariant:** 8.7y +819.81% / Sharpe 1.11 / 69 trades / 5/5 sub-periods positive (первый 5/5).
-
-**N_trials:** 9 cumulative.
-
-**Next action:** operator decision — S41+ direction (autoresearch iter2, Gate 2 paper-trade volume_breakout, или другое).
 
 ---
 
