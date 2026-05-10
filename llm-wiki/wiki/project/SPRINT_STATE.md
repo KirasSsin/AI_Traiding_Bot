@@ -1,10 +1,10 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 SHIPPED tag alpha.45 + S46-S48 roadmap updated
-sprint: 45
-phase: between-sprints
-branch: main
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T1 done — React infrastructure
+sprint: 46
+phase: 4-execution
+branch: feature/sprint-46-react-migration
 tag: v0.1.0-alpha.45
 ---
 
@@ -65,6 +65,27 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 - 12mo MAINNET-promotion ADR (нужен δ live data accumulation, не S46-S48 work)
 - Path B (new strategies) — operator excluded entirely
+
+---
+
+## S46 PHASE 4-EXECUTION 🟡 — React migration (vanilla JS dashboard → React 18 + TypeScript)
+
+**Branch:** feature/sprint-46-react-migration
+
+**Текущий статус:** T1 done — React infrastructure (Vite + TS strict + ESLint + Prettier)
+
+**Следующее действие:** T2 (CSS theme tokens) → T3 (App shell component)
+
+**Architect binding conditions (ADR pending):**
+- C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
+- C2 (HIGH): Node.js CI step в `ci.yml` AS PART OF S46 (T21)
+- C4 (MEDIUM): `app.py` `TemplateResponse` → `FileResponse(dist/index.html)` (T19)
+
+### Task table
+
+| Task | Status | Commit |
+|------|--------|--------|
+| T1: React infrastructure (Vite + TS strict + ESLint + Prettier) | DONE | b6e1335 |
 
 ---
 
