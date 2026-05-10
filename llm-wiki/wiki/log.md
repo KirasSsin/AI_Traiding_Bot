@@ -2611,3 +2611,15 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **ADRs:** 61 → **62** / **Sprint pages:** 45 → **46**
 - **Tag:** v0.1.0-alpha.42
 - **Carry к S43:** WFA retrofit (resolve PnL accounting gap), DSR + MC per combo, N_trials counter, restore acceptance discipline
+
+## [2026-05-10] sprint-end | S43 — UI polish (preset rename + descriptions + equity chart)
+
+- **Sprint:** S43 — feature/sprint-43-ui-polish → main
+- **ADR:** ADR 0063
+- **Tasks done (12):** T1 preset rename + description + optgroup / T2 endpoint extensions / T3 envelope equity_curve / T4 atr_breakout timestamps / T5 volume_breakout timestamps / T6 vendor uPlot / T7 template / T8 JS optgroup / T9 JS description block / T10 JS equity chart / T11 CSS / T12 wiki sync
+- **UI improvements:** dropdown grouped by trading approach (Тренд-следование / Возврат к среднему / Прорывы), per-strategy description block (~150 words RU), equity curve chart (uPlot, terminal-themed)
+- **Tests:** ~955 unit (+9) / ~54 integration (+2) / mypy 0 / ruff 0
+- **Canonical counts:** 16/30/74/56 (UNCHANGED)
+- **ADRs:** 62 → **63** / **Sprint pages:** 46 → **47**
+- **Tag:** v0.1.0-alpha.43
+- **Carry к S44:** WFA retrofit (atr_breakout + volume_breakout PnL accounting fix + DSR + MC + T1-T6 acceptance gate). Drawdown chart + per-trade markers + monthly heatmap deferred.
