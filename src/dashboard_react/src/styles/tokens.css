@@ -1,0 +1,85 @@
+/* S46 — Anthropic + Cyberpunk hi-tech premium aesthetic
+ * Operator pivot from terminal (ADR 0040 LOCKED) к Anthropic orange + cyberpunk style
+ * ADR 0040 amendment + ADR 0066 document this decision (T22).
+ */
+:root {
+  /* Anthropic primary palette */
+  --color-anthropic-orange: #cc785c;       /* warm coral — Anthropic brand */
+  --color-anthropic-orange-light: #e89679; /* lighter coral для hover */
+  --color-anthropic-orange-dark: #a85d44;  /* darker coral для pressed */
+  --color-anthropic-cream: #f5e6d3;        /* warm off-white text */
+
+  /* Cyberpunk dark base */
+  --color-bg-base: #0a0a0a;          /* near-black base */
+  --color-bg-panel: #141414;         /* slightly lifted panels */
+  --color-bg-panel-hover: #1f1f1f;   /* hover state */
+  --color-bg-glass: rgba(20, 20, 20, 0.65);  /* glass-morphism */
+
+  /* Text hierarchy */
+  --color-text-primary: var(--color-anthropic-cream);
+  --color-text-secondary: #a8a8a8;
+  --color-text-muted: #6e6e6e;
+  --color-text-disabled: #4a4a4a;
+
+  /* Status colors (cyberpunk neon) */
+  --color-success: #00ff88;          /* neon green для PASS */
+  --color-warn: var(--color-anthropic-orange);  /* orange для warn (RAW, WFA_FAIL_DATA) */
+  --color-danger: #ff3366;           /* neon red для FAIL */
+  --color-info: #00d4ff;             /* neon cyan для info */
+
+  /* Borders + accents */
+  --color-border-subtle: rgba(204, 120, 92, 0.15);
+  --color-border-default: rgba(204, 120, 92, 0.30);
+  --color-border-strong: rgba(204, 120, 92, 0.60);
+  --shadow-border-glow: 0 0 12px rgba(204, 120, 92, 0.45);
+
+  /* Cyberpunk effects */
+  --gradient-anthropic: linear-gradient(135deg, var(--color-anthropic-orange) 0%, var(--color-anthropic-orange-dark) 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(204, 120, 92, 0.08) 0%, rgba(204, 120, 92, 0.02) 100%);
+  --shadow-premium: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-neon: 0 0 20px var(--color-anthropic-orange);
+  --shadow-neon-soft: 0 0 8px rgba(204, 120, 92, 0.40);
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  --font-sans: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+
+  /* Font sizes */
+  --text-xs: 0.7rem;
+  --text-sm: 0.8rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.12s ease-out;
+  --transition-default: 0.2s ease-out;
+  --transition-slow: 0.4s ease-out;
+
+  /* Z-index scale */
+  --z-base: 0;
+  --z-content: 1;
+  --z-overlay: 100;
+  --z-banner: 200;
+  --z-modal: 300;
+  --z-tooltip: 400;
+}
