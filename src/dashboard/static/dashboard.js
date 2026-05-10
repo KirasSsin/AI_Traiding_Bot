@@ -146,6 +146,26 @@ async function applyComboGates(strategyId) {
   }
   const info = await fetchStrategyInfo(strategyId);
   if (!info) return;
+
+  // S42.1 — legacy single-combo lock (S39 ADR 0059): locked_symbol + locked_interval
+  // Disable everything except the locked combo. Auto-switch к it.
+  if (info.locked_symbol || info.locked_interval) {
+    if (info.locked_symbol) {
+      Array.from(symSel.options).forEach((opt) => {
+        if (opt.value !== info.locked_symbol) opt.disabled = true;
+      });
+      symSel.value = info.locked_symbol;
+    }
+    if (info.locked_interval) {
+      Array.from(tfSel.options).forEach((opt) => {
+        if (opt.value !== info.locked_interval) opt.disabled = true;
+      });
+      tfSel.value = info.locked_interval;
+    }
+    updateDataInfo();
+    return;
+  }
+
   const supported = info.supported_combos || [];
   if (supported.length === 0) return;  // legacy preset — no gating
   const validSymbols = new Set(supported.map((c) => c[0]));
