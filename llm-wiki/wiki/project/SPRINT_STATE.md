@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S45 T3 done — CrossTrialLog idempotency guard (B1), phase=4-execution
+updated: 2026-05-10  # S45 T4+T5 done — n_trials per-strategy (C1) + B2 train slice docs
 sprint: 45
 phase: 4-execution
 branch: feature/sprint-45-wfa-recalibration
@@ -18,11 +18,13 @@ branch: feature/sprint-45-wfa-recalibration
 | T1: Uniform 3.3y data — PARQUET_BY_COMBO BTC 4H → 3.3y file, archive 8.7y binance | DONE | d2612cc |
 | T2: ADR 0060/0061 amendments — update locked baselines to 3.3y | DONE | 91b9b2d |
 | T3: CrossTrialLog idempotency guard (B1) — upsert on (sprint, symbol) + reset log | DONE | 5efddee |
-| T4: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
+| T4: n_trials per-strategy fix (C1) — default=1, atr=10, vb=1 | DONE | 553e040 |
+| T5: B2 train slice documentation (inline + docstring) | DONE | 553e040 |
+| T6: WFA recalibration run — 10 combos с uniform 3.3y window | TODO | — |
 
-**Текущий статус:** T3 done. CrossTrialLog.append_trial() now upserts on (sprint, symbol) — B1 quant blocker fixed. Log reset to empty (26 S44 duplicates invalidated). 5/5 tests pass, mypy clean. T4 next.
+**Текущий статус:** T4+T5 done. n_trials default=1 (fail-safe), atr_breakout explicit=10, volume_breakout explicit=1. B2 train slice docs added to research_wfa.py. 3 new tests GREEN, mypy clean. T6 next.
 
-**Следующее действие:** T4 — WFA recalibration run — 10 combos с uniform 3.3y window.
+**Следующее действие:** T6 — WFA recalibration run — 10 combos с uniform 3.3y window.
 
 ---
 
