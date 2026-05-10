@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # T5 done
+updated: 2026-05-10  # T6 done
 sprint: 42
 phase: 4-execution
 branch: feature/sprint-42-atr-breakout-hardening
@@ -12,7 +12,7 @@ tag: v0.1.0-alpha.41
 
 **Phase:** 4-execution  
 **Branch:** feature/sprint-42-atr-breakout-hardening  
-**in_progress:** T6 next
+**in_progress:** T7 next
 
 **Completed tasks:**
 - T1: `src/backtest/research_runner_envelope.py` + `tests/unit/test_research_runner_envelope.py` — DONE (commit fe49e39)
@@ -32,8 +32,13 @@ tag: v0.1.0-alpha.41
   - 6/6 new tests PASS. 16/16 existing dashboard tests PASS (no regressions). mypy 0 errors.
   - Invalid combos (e.g. BTCUSDT/5m) rejected 422. Valid combos (BTCUSDT/240) pass gate.
   - Legacy presets without `supported_combos` return empty list — backward-compatible.
+- T6: `src/dashboard/static/dashboard.js` + `dashboard.css` — JS defensive guards + applyComboGates — DONE (commit 9be78fe)
+  - API constant `strategyInfo` added. `applyComboGates()` greys out invalid sym/TF combos for atr_breakout.
+  - Defensive `??` / `?.` guards in `renderResult` — prevents crash on missing `r.request`, `r.bars_per_year`, `r.failed_criteria`.
+  - `.verdict-raw` CSS class added (amber #f0a000 for RAW verdict).
+  - Smoke test: `/api/strategy/atr_breakout/info` returns 10 `supported_combos`. Backtest returns `verdict: RAW` with all envelope keys present.
 
-**Next action:** T6 — wiki sync (ADR 0062 for unified preset consolidation + sprint-42 page update).
+**Next action:** T7 — wiki sync (ADR 0062 for unified preset consolidation + sprint-42 page update).
 
 ---
 
