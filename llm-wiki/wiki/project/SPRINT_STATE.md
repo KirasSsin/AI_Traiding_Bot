@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-10  # S46 PHASE 4-EXECUTION T10 done — DrawdownSubchart (CC2 x-axis sync)
+updated: 2026-05-10  # S46 PHASE 4-EXECUTION T11 done — TradeMarkers (envelope ext + EquityChart scatter overlay)
 sprint: 46
 phase: 4-execution
 branch: feature/sprint-46-react-migration
@@ -72,9 +72,9 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 
 **Branch:** feature/sprint-46-react-migration
 
-**Текущий статус:** T10 done — DrawdownSubchart (uPlot subchart, danger-red palette, computeDrawdown, uPlot.sync CC2 x-axis sharing, wired into App.tsx)
+**Текущий статус:** T11 done — TradeMarkers (envelope trade_markers ext для vb+atr runners, EquityChart uPlot scatter series win/loss colored)
 
-**Следующее действие:** T11: TradeMarkers (architect CC3 — backend envelope extension first, then React overlay)
+**Следующее действие:** T12: MonthlyHeatmap (calendar grid с PnL по месяцам)
 
 **Architect binding conditions (ADR pending):**
 - C1 (HIGH): Vite `outDir` → `src/dashboard_react/dist/`. FastAPI mounts `dist/`. NO separate Vite dev server в production
@@ -95,6 +95,7 @@ Distribute 3 honest-close options ACROSS 3 sprints (heavier scope per sprint, ea
 | T8: VerdictPanel component — three-valued WFA verdict + warnings panel + App.tsx wired | DONE | f91997d |
 | T9: EquityChart component — uPlot wrapper + Anthropic orange palette + ResizeObserver | DONE | 8b64be9 |
 | T10: DrawdownSubchart component — uPlot subchart + computeDrawdown + CC2 sync key | DONE | 1cfd0aa |
+| T11: TradeMarkers — envelope ext (vb+atr runners) + EquityChart scatter overlay (win/loss) | DONE | 553b94c |
 
 ---
 
