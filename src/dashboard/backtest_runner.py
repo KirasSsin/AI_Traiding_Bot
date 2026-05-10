@@ -89,167 +89,29 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             },
         },
     },
-    "atr_breakout_iter_endless": {
-        "label": "[S40] ATR breakout 4H BTCUSDT (LOCKED — autoresearch iter1 best)",
-        "sprint": "S40",
-        "verdict": "PASS 8.7y +819.81%/Sharpe=1.11/5/5 sub-periods positive (ADR 0060)",
+    # S42 T4 — Single unified atr_breakout preset (replaces S40 + S41 10 separate presets per ADR 0062)
+    # Server-side params lookup от ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)].
+    # Frontend introspects supported_combos via /api/strategy/atr_breakout/info → greys out invalid combos.
+    "atr_breakout": {
+        "label": "[S42] ATR breakout (LOCKED params per autoresearch — 10 supported combos)",
+        "sprint": "S42",
+        "verdict": "RAW (acceptance gate skipped — WFA retrofit pending S43)",
         "type": "atr_breakout",
-        "locked_symbol": "BTCUSDT",
-        "locked_interval": "240",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 9,
-                "atr_breakout_mult": 2.5,
-                "atr_stop_period": 21,
-                "atr_stop_mult": 1.5,
-            },
-        },
-    },
-    # S41 multi-combo presets — autoresearch endless best_per_combo (ADR 0061)
-    # 9 new (symbol, interval) combos with independently locked params
-    "atr_breakout_sol_4h_s41": {
-        "label": "[S41 LATEST] ATR breakout 4H SOLUSDT (LOCKED — autoresearch +264%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +264.29% n=71 (SOLUSDT 4H)",
-        "type": "atr_breakout",
-        "locked_symbol": "SOLUSDT",
-        "locked_interval": "240",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 21,
-                "atr_breakout_mult": 1.5,
-                "atr_stop_period": 9,
-                "atr_stop_mult": 2.0,
-            },
-        },
-    },
-    "atr_breakout_eth_1h_s41": {
-        "label": "[S41 LATEST] ATR breakout 1H ETHUSDT (LOCKED — autoresearch +182%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +181.74% n=109 (ETHUSDT 1H)",
-        "type": "atr_breakout",
-        "locked_symbol": "ETHUSDT",
-        "locked_interval": "60",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 14,
-                "atr_breakout_mult": 2.5,
-                "atr_stop_period": 21,
-                "atr_stop_mult": 1.5,
-            },
-        },
-    },
-    "atr_breakout_btc_15m_s41": {
-        "label": "[S41 LATEST] ATR breakout 15M BTCUSDT (LOCKED — autoresearch +107%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +107.35% n=245 (BTCUSDT 15M)",
-        "type": "atr_breakout",
-        "locked_symbol": "BTCUSDT",
-        "locked_interval": "15",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 9,
-                "atr_breakout_mult": 3.0,
-                "atr_stop_period": 14,
-                "atr_stop_mult": 3.0,
-            },
-        },
-    },
-    "atr_breakout_btc_1h_s41": {
-        "label": "[S41 LATEST] ATR breakout 1H BTCUSDT (LOCKED — autoresearch +146%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +146.36% n=106 (BTCUSDT 1H)",
-        "type": "atr_breakout",
-        "locked_symbol": "BTCUSDT",
-        "locked_interval": "60",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 9,
-                "atr_breakout_mult": 2.5,
-                "atr_stop_period": 21,
-                "atr_stop_mult": 3.0,
-            },
-        },
-    },
-    "atr_breakout_sol_1h_s41": {
-        "label": "[S41 LATEST] ATR breakout 1H SOLUSDT (LOCKED — autoresearch +214%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +214.08% n=124 (SOLUSDT 1H)",
-        "type": "atr_breakout",
-        "locked_symbol": "SOLUSDT",
-        "locked_interval": "60",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 9,
-                "atr_breakout_mult": 2.0,
-                "atr_stop_period": 21,
-                "atr_stop_mult": 3.0,
-            },
-        },
-    },
-    "atr_breakout_eth_4h_s41": {
-        "label": "[S41 LATEST] ATR breakout 4H ETHUSDT (LOCKED — autoresearch +152%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +152.30% n=28 (ETHUSDT 4H)",
-        "type": "atr_breakout",
-        "locked_symbol": "ETHUSDT",
-        "locked_interval": "240",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 14,
-                "atr_breakout_mult": 2.5,
-                "atr_stop_period": 14,
-                "atr_stop_mult": 1.5,
-            },
-        },
-    },
-    "atr_breakout_sol_15m_s41": {
-        "label": "[S41 LATEST] ATR breakout 15M SOLUSDT (LOCKED — autoresearch +151%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +150.51% n=230 (SOLUSDT 15M)",
-        "type": "atr_breakout",
-        "locked_symbol": "SOLUSDT",
-        "locked_interval": "15",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 21,
-                "atr_breakout_mult": 2.5,
-                "atr_stop_period": 9,
-                "atr_stop_mult": 3.0,
-            },
-        },
-    },
-    "atr_breakout_btc_1d_s41": {
-        "label": "[S41 LATEST] ATR breakout 1D BTCUSDT (LOCKED — autoresearch +168%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +167.54% n=32 (BTCUSDT 1D)",
-        "type": "atr_breakout",
-        "locked_symbol": "BTCUSDT",
-        "locked_interval": "D",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 9,
-                "atr_breakout_mult": 1.0,
-                "atr_stop_period": 9,
-                "atr_stop_mult": 3.0,
-            },
-        },
-    },
-    "atr_breakout_eth_15m_s41": {
-        "label": "[S41 LATEST] ATR breakout 15M ETHUSDT (LOCKED — autoresearch +36%)",
-        "sprint": "S41",
-        "verdict": "PASS 3.3y +35.53% n=240 (ETHUSDT 15M)",
-        "type": "atr_breakout",
-        "locked_symbol": "ETHUSDT",
-        "locked_interval": "15",
-        "indicators": {
-            "atr_breakout": {
-                "atr_period": 9,
-                "atr_breakout_mult": 3.0,
-                "atr_stop_period": 14,
-                "atr_stop_mult": 2.0,
-            },
-        },
+        "supported_combos": [
+            ("BTCUSDT", "15"),
+            ("BTCUSDT", "60"),
+            ("BTCUSDT", "240"),
+            ("BTCUSDT", "D"),
+            ("ETHUSDT", "15"),
+            ("ETHUSDT", "60"),
+            ("ETHUSDT", "240"),
+            ("SOLUSDT", "15"),
+            ("SOLUSDT", "60"),
+            ("SOLUSDT", "240"),
+        ],
+        # Per-combo locked params live в src/signalgen/atr_breakout_strategy.py::ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO.
+        # Dispatch performs server-side lookup; preset.indicators is intentionally absent.
+        "indicators": {},
     },
 }
 
@@ -819,83 +681,71 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         )
     preset = STRATEGY_PRESETS[req.strategy_id]
 
-    # S39 T5b — volume_breakout uses dedicated runner (research execution model).
-    # Bypasses replay_engine which has 3 structural gaps for this strategy:
-    # sl_atr_mult wiring, long_only suppression of channel exit, WFA+Kelly sizing.
+    # S42 T4 — volume_breakout dispatch: envelope merge from runner (per T3).
     if preset.get("type") == "volume_breakout":
         from datetime import date as _date
 
         from src.backtest.volume_breakout_runner import run_volume_breakout_backtest
 
-        vb_result = run_volume_breakout_backtest(
+        vb_envelope = run_volume_breakout_backtest(
             symbol=req.symbol,
             interval=req.interval,
             start_date=_date.fromisoformat(req.start),
             end_date=_date.fromisoformat(req.end),
         )
-        # Cache to disk (same cache key scheme as WFA path)
         _RUNS_DIR.mkdir(parents=True, exist_ok=True)
         cache_path = _RUNS_DIR / f"{run_id}.json"
-        result_vb: dict[str, Any] = {
-            "run_id": run_id,
-            "request": {
-                "strategy_id": req.strategy_id,
-                "strategy_label": preset["label"],
-                "strategy_config": preset,
-                "symbol": req.symbol,
-                "interval": req.interval,
-                "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
-                "start": req.start,
-                "end": req.end,
-            },
-            "n_trades": vb_result["n_trades"],
-            "total_pnl_pct": vb_result["total_pnl_pct"],
-            "sharpe": vb_result["sharpe"],
-            "win_rate": vb_result["win_rate"],
-            "runner": "volume_breakout_runner",  # audit marker
-            "cached": False,
+
+        result_vb: dict[str, Any] = dict(vb_envelope)
+        result_vb["run_id"] = run_id
+        result_vb["cached"] = False
+        result_vb["request"] = {
+            "strategy_id": req.strategy_id,
+            "strategy_label": preset["label"],
+            "strategy_config": preset,
+            "symbol": req.symbol,
+            "interval": req.interval,
+            "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
+            "start": req.start,
+            "end": req.end,
         }
         cache_path.write_text(json.dumps(result_vb, default=str, indent=2))
         return result_vb
 
-    # S40 T4 / S41 multi-combo — atr_breakout uses dedicated runner (research execution model).
-    # Bypasses replay_engine — same structural gaps as volume_breakout:
-    # sl_atr_mult wiring, long_only reverse-signal suppression, WFA+Kelly sizing.
-    # S41: passes per-preset indicators.atr_breakout params so each combo uses its locked params.
+    # S42 T4 — atr_breakout dispatch: envelope merge from runner.
+    # Runner returns 17-key envelope (per T2). Dispatch overlays run_id + cached + request.
+    # Per-combo params resolved server-side от ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)].
     if preset.get("type") == "atr_breakout":
         from datetime import date as _date
 
         from src.backtest.atr_breakout_runner import run_atr_breakout_backtest
 
-        # Use per-preset locked params if present; fall back to combo-level lookup.
-        preset_ab_params = preset.get("indicators", {}).get("atr_breakout")
-        ab_result = run_atr_breakout_backtest(
+        # Server-side params lookup (consolidated preset has no per-preset indicators).
+        # Pass params=None — runner falls back к ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO[(sym, tf)].
+        # If combo not in locked dict, runner raises ValueError (caught by run_backtest caller).
+        ab_envelope = run_atr_breakout_backtest(
             symbol=req.symbol,
             interval=req.interval,
             start_date=_date.fromisoformat(req.start),
             end_date=_date.fromisoformat(req.end),
-            params=preset_ab_params,  # None → falls back to ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO
+            params=None,
         )
         _RUNS_DIR.mkdir(parents=True, exist_ok=True)
         cache_path = _RUNS_DIR / f"{run_id}.json"
-        result_ab: dict[str, Any] = {
-            "run_id": run_id,
-            "request": {
-                "strategy_id": req.strategy_id,
-                "strategy_label": preset["label"],
-                "strategy_config": preset,
-                "symbol": req.symbol,
-                "interval": req.interval,
-                "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
-                "start": req.start,
-                "end": req.end,
-            },
-            "n_trades": ab_result["n_trades"],
-            "total_pnl_pct": ab_result["total_pnl_pct"],
-            "sharpe": ab_result["sharpe"],
-            "win_rate": ab_result["win_rate"],
-            "runner": "atr_breakout_runner",  # audit marker
-            "cached": False,
+
+        # Merge envelope (base) + dashboard overlays (run_id, cached, dashboard-preferred request).
+        result_ab: dict[str, Any] = dict(ab_envelope)
+        result_ab["run_id"] = run_id
+        result_ab["cached"] = False
+        result_ab["request"] = {
+            "strategy_id": req.strategy_id,
+            "strategy_label": preset["label"],
+            "strategy_config": preset,
+            "symbol": req.symbol,
+            "interval": req.interval,
+            "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
+            "start": req.start,
+            "end": req.end,
         }
         cache_path.write_text(json.dumps(result_ab, default=str, indent=2))
         return result_ab

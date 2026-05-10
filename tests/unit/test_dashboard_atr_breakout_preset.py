@@ -1,46 +1,43 @@
-"""Tests for atr_breakout dashboard preset (S40 T4 per ADR 0060)."""
+"""Tests for atr_breakout dashboard preset (S42 T4 — unified preset per ADR 0062)."""
 
 from __future__ import annotations
 
 
 def test_atr_breakout_preset_registered() -> None:
-    """Preset atr_breakout_iter_endless must exist in STRATEGY_PRESETS."""
+    """Unified 'atr_breakout' preset must exist in STRATEGY_PRESETS (S42 T4)."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
-    assert "atr_breakout_iter_endless" in STRATEGY_PRESETS
-    preset = STRATEGY_PRESETS["atr_breakout_iter_endless"]
-    assert preset["sprint"] == "S40"
+    assert "atr_breakout" in STRATEGY_PRESETS
+    preset = STRATEGY_PRESETS["atr_breakout"]
+    assert preset["sprint"] == "S42"
     assert preset["type"] == "atr_breakout"
 
 
-def test_atr_breakout_preset_has_locked_dimensions() -> None:
-    """Preset must declare locked_symbol=BTCUSDT and locked_interval=240."""
+def test_atr_breakout_preset_has_supported_combos() -> None:
+    """Unified preset must declare supported_combos list with 10 entries."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
-    preset = STRATEGY_PRESETS["atr_breakout_iter_endless"]
-    assert preset.get("locked_symbol") == "BTCUSDT"
-    assert preset.get("locked_interval") == "240"
+    preset = STRATEGY_PRESETS["atr_breakout"]
+    sc = preset.get("supported_combos")
+    assert isinstance(sc, list)
+    assert len(sc) == 10
+    assert ("BTCUSDT", "240") in sc
 
 
-def test_atr_breakout_preset_locked_params_in_indicators() -> None:
-    """Preset indicators reflect ADR 0060 LOCKED params."""
+def test_atr_breakout_preset_has_no_per_combo_locked_dimensions() -> None:
+    """Unified preset has no locked_symbol/locked_interval (server-side lookup instead)."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
-    preset = STRATEGY_PRESETS["atr_breakout_iter_endless"]
-    ind = preset["indicators"]
-    ab = ind["atr_breakout"]
-    assert ab["atr_period"] == 9
-    assert abs(ab["atr_breakout_mult"] - 2.5) < 1e-9
-    assert ab["atr_stop_period"] == 21
-    assert abs(ab["atr_stop_mult"] - 1.5) < 1e-9
+    preset = STRATEGY_PRESETS["atr_breakout"]
+    assert "locked_symbol" not in preset
+    assert "locked_interval" not in preset
 
 
 def test_atr_breakout_preset_label_indicates_locked() -> None:
     """Label clarifies LOCKED + sprint."""
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
-    preset = STRATEGY_PRESETS["atr_breakout_iter_endless"]
+    preset = STRATEGY_PRESETS["atr_breakout"]
     label = preset["label"]
-    assert "S40" in label
+    assert "S42" in label
     assert "LOCKED" in label or "locked" in label
-    assert "BTCUSDT" in label or "BTC" in label

@@ -280,23 +280,20 @@ def test_atr_breakout_production_runner_replicates_full_period() -> None:
 
 @pytest.mark.integration
 def test_atr_breakout_preset_registered() -> None:
-    """atr_breakout_iter_endless MUST be registered in STRATEGY_PRESETS.
+    """Unified 'atr_breakout' MUST be registered in STRATEGY_PRESETS (S42 T4 — ADR 0062).
 
-    Smoke check that the production preset exists and has the locked params.
+    Smoke check that the production preset exists with supported_combos.
+    Locked params live в ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO (server-side lookup).
     """
     from src.dashboard.backtest_runner import STRATEGY_PRESETS
 
-    assert "atr_breakout_iter_endless" in STRATEGY_PRESETS, (
-        "atr_breakout_iter_endless not in STRATEGY_PRESETS. "
-        "S40 T4 task (register preset) incomplete."
+    assert "atr_breakout" in STRATEGY_PRESETS, (
+        "atr_breakout not in STRATEGY_PRESETS. " "S42 T4 task (consolidate preset) incomplete."
     )
-    preset = STRATEGY_PRESETS["atr_breakout_iter_endless"]
-    ab_params = preset["indicators"]["atr_breakout"]
-
-    assert ab_params["atr_period"] == ATR_BREAKOUT_PARAMS["atr_period"]
-    assert abs(ab_params["atr_breakout_mult"] - ATR_BREAKOUT_PARAMS["atr_breakout_mult"]) < 1e-6
-    assert ab_params["atr_stop_period"] == ATR_BREAKOUT_PARAMS["atr_stop_period"]
-    assert abs(ab_params["atr_stop_mult"] - ATR_BREAKOUT_PARAMS["atr_stop_mult"]) < 1e-6
+    preset = STRATEGY_PRESETS["atr_breakout"]
+    assert preset["type"] == "atr_breakout"
+    assert "supported_combos" in preset
+    assert ("BTCUSDT", "240") in preset["supported_combos"]
 
 
 @pytest.mark.integration
