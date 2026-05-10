@@ -142,3 +142,68 @@ def test_envelope_failed_criteria_is_empty_list_not_none() -> None:
     assert payload["failed_criteria"] == []
     assert payload["fold_sharpe_ratios"] == []
     assert payload["trades_dump"] == []
+
+
+def test_envelope_equity_curve_parallel_arrays_format() -> None:
+    """S43 T3 — envelope returns equity_curve как parallel arrays для uPlot native API.
+    Format: {timestamps: [unix_int...], equity_pct: [float...]}.
+    Both arrays MUST be same length.
+    """
+    payload = build_research_runner_envelope(
+        runner_name="atr_breakout_runner",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=3,
+        sharpe=1.0,
+        win_rate=0.5,
+        total_pnl_pct=15.0,
+        bars_per_year=2191,
+        equity_curve=[0.0, 5.0, 10.0, 15.0],
+        equity_timestamps=[1672531200, 1672617600, 1672704000, 1672790400],
+        runner_label="x",
+    )
+    ec = payload["equity_curve"]
+    assert isinstance(ec, dict)
+    assert "timestamps" in ec
+    assert "equity_pct" in ec
+    assert ec["timestamps"] == [1672531200, 1672617600, 1672704000, 1672790400]
+    assert ec["equity_pct"] == [0.0, 5.0, 10.0, 15.0]
+    assert all(isinstance(t, int) for t in ec["timestamps"])
+    assert all(isinstance(v, float) for v in ec["equity_pct"])
+
+
+def test_envelope_equity_curve_empty_when_no_trades() -> None:
+    """Zero trades → empty arrays (not None) — frontend safely calls .length."""
+    payload = build_research_runner_envelope(
+        runner_name="x",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=0,
+        sharpe=0.0,
+        win_rate=0.0,
+        total_pnl_pct=0.0,
+        bars_per_year=2191,
+        equity_curve=[],
+        equity_timestamps=[],
+        runner_label="x",
+    )
+    assert payload["equity_curve"] == {"timestamps": [], "equity_pct": []}
+
+
+def test_envelope_equity_timestamps_optional_keyword() -> None:
+    """equity_timestamps default = empty list (backward-compat для callers еще не updated)."""
+    payload = build_research_runner_envelope(
+        runner_name="x",
+        symbol="BTCUSDT",
+        interval="240",
+        n_trades=2,
+        sharpe=1.0,
+        win_rate=0.5,
+        total_pnl_pct=10.0,
+        bars_per_year=2191,
+        equity_curve=[0.0, 5.0, 10.0],
+        runner_label="x",
+        # equity_timestamps not passed
+    )
+    assert payload["equity_curve"]["equity_pct"] == [0.0, 5.0, 10.0]
+    assert payload["equity_curve"]["timestamps"] == []
