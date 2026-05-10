@@ -390,11 +390,17 @@ def run_atr_breakout_backtest(
     # Run inner backtest — minimal dict
     inner = _backtest_single(df, resolved_params, bars_per_year)
 
-    # Build equity_curve from trades list for sub-period robustness chip
+    # S43 T4 — Build equity_curve + timestamps parallel arrays для uPlot.
+    # Each trade closes на bar `exit_idx` — its timestamp = df["_ts"].iloc[exit_idx].
     trades_list = inner.get("trades", [])
     equity_curve: list[float] = [0.0]
-    for tr in trades_list:
-        equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
+    equity_timestamps: list[int] = []
+    if trades_list and not df.empty:
+        # Starting equity timestamp = first bar в df (before any trades)
+        equity_timestamps.append(int(df["_ts"].iloc[0].timestamp()))
+        for tr in trades_list:
+            equity_curve.append(equity_curve[-1] + (tr.pnl_pct * 100.0))
+            equity_timestamps.append(int(df["_ts"].iloc[tr.exit_idx].timestamp()))
 
     # Wrap in dashboard contract envelope
     from src.backtest.research_runner_envelope import build_research_runner_envelope
@@ -412,6 +418,7 @@ def run_atr_breakout_backtest(
         total_pnl_pct=float(inner["total_pnl_pct"]),
         bars_per_year=bars_per_year,
         equity_curve=equity_curve,
+        equity_timestamps=equity_timestamps,
         runner_label=f"ATR breakout {interval} {symbol} (LOCKED)",
         start=start_date.isoformat(),
         end=end_date.isoformat(),
