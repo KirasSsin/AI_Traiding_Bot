@@ -298,7 +298,7 @@ export function DocumentationTab() {
       <div className={styles.title}>▸ DOCUMENTATION</div>
 
       {d.indicators.length > 0 && (
-        <DocSection title="▸ INDICATORS">
+        <DocSection title="INDICATORS">
           {d.indicators.map((ind) => (
             <IndicatorCard key={ind.name} ind={ind} />
           ))}
@@ -306,7 +306,7 @@ export function DocumentationTab() {
       )}
 
       {d.multipliers.length > 0 && (
-        <DocSection title="▸ MULTIPLIERS">
+        <DocSection title="MULTIPLIERS">
           {d.multipliers.map((mul) => (
             <MultiplierCard key={mul.id} mul={mul} />
           ))}
@@ -314,7 +314,7 @@ export function DocumentationTab() {
       )}
 
       {d.strategies.length > 0 && (
-        <DocSection title="▸ STRATEGIES">
+        <DocSection title="STRATEGIES">
           {d.strategies.map((strat, idx) => (
             <StrategyCard key={`${strat.name}-${idx}`} strat={strat} />
           ))}
@@ -322,7 +322,7 @@ export function DocumentationTab() {
       )}
 
       {d.methodology.length > 0 && (
-        <DocSection title="▸ METHODOLOGY">
+        <DocSection title="METHODOLOGY">
           {d.methodology.map((meth, idx) => (
             <MethodologyCard key={idx} meth={meth} />
           ))}

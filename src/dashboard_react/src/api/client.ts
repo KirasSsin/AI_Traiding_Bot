@@ -8,6 +8,8 @@ import type {
   DocsEnvelope,
   StrategyExplanation,
   CriterionExplanation,
+  GlossaryResponse,
+  BalanceResponse,
 } from './types'
 
 const BASE_URL = ''  // same-origin (FastAPI serves React build per architect C1+C4)
@@ -71,4 +73,10 @@ export const api = {
 
   getCriterionExplanations: (): Promise<Record<string, CriterionExplanation>> =>
     request('/api/wfa_criterion_explanations'),
+
+  // S48 T15 — Glossary tab (Bug E core)
+  getGlossary: (): Promise<GlossaryResponse> => request('/api/glossary'),
+
+  // S48 T20 — Bybit balance
+  getBalance: (): Promise<BalanceResponse> => request('/api/bybit/balance'),
 }

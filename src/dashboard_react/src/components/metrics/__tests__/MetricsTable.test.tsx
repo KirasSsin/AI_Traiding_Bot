@@ -110,7 +110,7 @@ describe('MetricsTable — WFA path ADR 0052 thresholds (S34 amendment, T5_FLOOR
     expect(t5Row!.textContent).toMatch(/PASS/i)
   })
 
-  it('T1 Sharpe OOS > 3 → OVERFIT? warning (overfit detector)', () => {
+  it('T1 Sharpe OOS > 3 → OVERFIT? badge в informational row (not PASS/FAIL chip)', () => {
     const r: BacktestResponse = {
       ...baseResponse,
       verdict: 'WFA_FAIL',
@@ -126,11 +126,14 @@ describe('MetricsTable — WFA path ADR 0052 thresholds (S34 amendment, T5_FLOOR
     } as unknown as BacktestResponse
     render(<MetricsTable result={r} />)
 
-    // Статус "OVERFIT?" должен быть в DOM (компонент рендерит 'OVERFIT?')
+    // OVERFIT? badge должен быть в DOM (inline badge в T1 informational row)
     expect(screen.getByText(/OVERFIT\?/)).toBeInTheDocument()
+    // T1 row — status cell должен быть "—", не PASS/FAIL
+    const t1Row = screen.getByText(/T1 · Sharpe OOS/i).closest('tr')
+    expect(t1Row!.textContent).toMatch(/—/)
   })
 
-  it('T3 Max Drawdown ≥ 25% → FAIL', () => {
+  it('T3 Max Drawdown ≥ 25% → informational row, status "—" (not FAIL chip)', () => {
     const r: BacktestResponse = {
       ...baseResponse,
       verdict: 'WFA_FAIL',
@@ -146,8 +149,14 @@ describe('MetricsTable — WFA path ADR 0052 thresholds (S34 amendment, T5_FLOOR
     } as unknown as BacktestResponse
     render(<MetricsTable result={r} />)
 
+    // T3 — informational row: value cell shows percentage, status cell = "—"
     const t3Row = screen.getByText(/T3 · Max Drawdown/i).closest('tr')
-    expect(t3Row!.textContent).toMatch(/FAIL/i)
+    expect(t3Row!.textContent).toMatch(/—/)
+    // T3 is now informational — should NOT show FAIL text in status cell
+    // (row contains "—" as status, not "FAIL")
+    const cells = t3Row!.querySelectorAll('td')
+    // 4th cell (STATUS) must be "—"
+    expect(cells[3]?.textContent).toBe('—')
   })
 
   it('MC p-value > 0.10 → FAIL; ≤ 0.05 → PASS', () => {
@@ -202,5 +211,55 @@ describe('MetricsTable — WFA path ADR 0052 thresholds (S34 amendment, T5_FLOOR
     const t5Row = screen.getByText(/T5 · Trade count \(n\)/i).closest('tr')
     expect(t5Row!.textContent).toMatch(/—/)
     expect(t5Row!.textContent).toMatch(/FAIL/i)  // NOT PASS (vanilla bug fixed)
+  })
+})
+
+// ─── S48 T10 — Bug D: GATE-BLOCKING vs INFORMATIONAL sections ────────────
+
+describe('MetricsTable — S48 T10 Bug D: section divider + grayed informational rows', () => {
+  it('Bug D: sections GATE-BLOCKING + INFORMATIONAL + Glossary link present', () => {
+    const r = {
+      ...baseResponse,
+      verdict: 'WFA_FAIL',
+      metrics: { t5_n_trades: 80, t1_sharpe_oos: 0.5, t3_max_drawdown: 0.15 },
+      fold_sharpe_ratios: [],
+      dsr: 0.5,
+      dsr_pass: false,
+      mc_p_value: 0.06,
+    } as unknown as BacktestResponse
+    render(<MetricsTable result={r} />)
+
+    expect(screen.getByText(/GATE-BLOCKING/)).toBeInTheDocument()
+    expect(screen.getByText(/INFORMATIONAL/)).toBeInTheDocument()
+    expect(screen.getByText(/Glossary/)).toBeInTheDocument()
+
+    // T1 row — status должен быть "—", не PASS/FAIL chip (informational)
+    const t1Row = screen.getByText(/T1 · Sharpe OOS/i).closest('tr')
+    expect(t1Row).toBeTruthy()
+    expect(t1Row!.textContent).toMatch(/—/)
+  })
+
+  it('Bug D: T5 gate-blocking row has PASS/FAIL chip (NOT in informational section)', () => {
+    const r = {
+      ...baseResponse,
+      verdict: 'WFA_FAIL',
+      metrics: { t5_n_trades: 30 },  // < 50 → FAIL
+      fold_sharpe_ratios: [],
+      dsr: 0.5,
+      dsr_pass: false,
+      mc_p_value: 0.06,
+    } as unknown as BacktestResponse
+    render(<MetricsTable result={r} />)
+
+    // T5 gate-blocking row — FAIL chip должен быть
+    const t5Row = screen.getByText(/T5 · Trade count/i).closest('tr')
+    expect(t5Row!.textContent).toMatch(/FAIL/i)
+
+    // DSR и MC — также gate-blocking, показывают FAIL chip
+    const dsrRow = screen.getByText(/DSR · Deflated Sharpe/i).closest('tr')
+    expect(dsrRow!.textContent).toMatch(/FAIL/i)
+
+    const mcRow = screen.getByText(/MC · p-value/i).closest('tr')
+    expect(mcRow!.textContent).toMatch(/FAIL/i)
   })
 })

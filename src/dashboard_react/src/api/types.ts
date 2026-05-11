@@ -36,6 +36,7 @@ export interface BacktestRequest {
   start: string
   end: string
   force?: boolean
+  initial_balance?: number
 }
 
 export interface Warning {
@@ -211,4 +212,26 @@ export interface RunSummary {
   n_trades: number
   sharpe: number
   win_rate: number
+}
+
+// S48 T20 — Bybit balance response
+export interface BalanceResponse {
+  source: 'bybit_v5' | 'fallback' | 'cached';
+  total_equity_usdt: number;
+  fetched_at_iso: string;
+  error?: string | null;
+}
+
+// S48 T15 — Glossary tab types (Bug E core)
+export interface GlossaryEntry {
+  section: string
+  description_ru: string
+  applies_to: string[]
+  adr_ref?: string | null
+}
+
+export interface GlossaryResponse {
+  entries: Record<string, GlossaryEntry>
+  strategy_to_metrics: Record<string, string[]>
+  sections: string[]
 }

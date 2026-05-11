@@ -74,6 +74,7 @@ STEP 4: Read raw + offset (full content)
 - ❌ 🆕 (S45 operator decision 2026-05-10) Asking "Subagent-Driven OR Inline Execution?" после `writing-plans` — operator всегда выбирает team. **Auto-invoke `superpowers:subagent-driven-development` БЕЗ asking** (override per `llm-wiki/CLAUDE.md` Autonomous mode overrides table). Skip только если operator EXPLICITLY says "execute inline" перед PHASE 3.
 - ❌ 🆕 (S46 operator decision 2026-05-10) Major stack/language/framework migration (e.g. vanilla→React, Python→Rust, REST→GraphQL) БЕЗ `architecture-reviewer` PRE-PLAN validation. **MANDATORY:** dispatch architecture-reviewer ДО plan lock — verdict APPROVE_WITH_CONDITIONS / REQUEST_CHANGES = binding conditions в ADR. Detail: `llm-wiki/CLAUDE.md` Pre-plan validation gates section.
 - ❌ 🆕 (S46 post-ship 2026-05-11) **Appending historical sprint sections к SPRINT_STATE.md** — file accumulated 86 KB / 1239 lines с S5-S45 history blocks → exceeded 25k Read tool limit, blocked session-start orient. **BUDGET ≤ 6 KB BINDING.** SPRINT_STATE = current sprint state + roadmap ONLY. History → `wiki/log.md` (chronological journal) + `wiki/project/sprints/sprint-NN-<slug>.md` (canonical per-sprint). PHASE 9 close: trim `Текущий статус` к concise current-sprint bullets, NEVER append "## SN SHIPPED" sections.
+- ❌ 🆕 (S48 Bug I 2026-05-11) **Англицизмы в чате с operator** ("Bucket", "scope", "Recommended", "concern") — нарушение Language rules CLAUDE.md section. Использовать русские эквиваленты per Запрещённые англицизмы table (CLAUDE.md). Технические термины (ADR/PHASE/file paths/function names) оставить.
 
 ### Token-saver commands (per Anthropic best practices)
 
@@ -204,6 +205,41 @@ Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; .
 | **Error messages в коде** | **English** | Logging standard |
 
 Технические термины (file paths, code blocks, error strings, command names, library names) — оставлять как есть (без перевода) внутри русского текста.
+
+### Запрещённые англицизмы → русские эквиваленты (S48 Bug I)
+
+В чате с operator (НЕ inter-agent) использовать русские слова вместо английских non-tech terms:
+
+| ❌ Англицизм (drop) | ✓ Русский эквивалент |
+|---|---|
+| Bucket | Блок / Группа |
+| scope | объём / охват |
+| tasks | задачи |
+| Recommended / Recommendation | Рекомендация |
+| concern / concerns | замечание / замечания |
+| split | разделение |
+| diff | разница |
+| review | ревью / проверка |
+| feedback | обратная связь |
+| backlog | бэклог (можно оставить — устоявшийся) |
+| roadmap | дорожная карта / план |
+
+**Технические термины ОСТАВИТЬ как есть:**
+- ADR, PHASE, BLOCKER, WFA, DSR, MC, FSM, RAW, PASS, FAIL, verdict
+- File paths (`MetricsTable.tsx`, `wfa_criterion_explanations.py`)
+- Function/class names (`get_glossary`, `useStrategyContext`)
+- Library names (React, Vite, pybit, FastAPI)
+- Error strings exact quote
+- Commit messages — English (Conventional Commits standard)
+- Code blocks — English
+
+**Анти-пример (S48 brainstorm violation 2026-05-11):**
+
+> "В рамках S48 у нас 22 tasks across 5 buckets. Critical concerns про FailAnalysisTab broken — recommend split: S48 critical bugs + S49 polish."
+
+**Должно быть:**
+
+> "В рамках S48 у нас 22 задачи в 5 блоках. Критические замечания про сломанный FailAnalysisTab — рекомендую разделение: S48 критичные баги + S49 полировка."
 
 ## Kit cycle MANDATORY (BINDING per ADR 0041 — пересмотрено 2026-05-09)
 

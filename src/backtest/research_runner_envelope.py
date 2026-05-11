@@ -50,6 +50,7 @@ def build_research_runner_envelope(
     wfa_result: dict[str, Any] | None = None,
     trade_markers: dict[str, list[float | int]] | None = None,
     trades_list: list[Any] | None = None,  # S47 T13 — _TradeRecord-shaped
+    initial_balance: float = 10000.0,  # S48 T7 (Bug H prereq)
 ) -> dict[str, Any]:
     """Build dashboard-contract envelope от research runner outputs.
 
@@ -154,6 +155,9 @@ def build_research_runner_envelope(
         "avg_win_quote": None,
         "avg_loss_quote": None,
         "profit_factor": None,
+        # S48 T7 (Bug H prereq) — balance fields для HistoryTab expand
+        "initial_balance_quote": initial_balance,
+        "final_balance_quote": initial_balance * (1.0 + total_pnl_pct / 100.0),
     }
 
     return {

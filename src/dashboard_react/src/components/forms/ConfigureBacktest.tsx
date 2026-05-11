@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '@/api/client'
 import { useStrategyInfo } from '@/hooks/useStrategyInfo'
+import { useStrategyContext } from '@/hooks/useStrategyContext'
+import { useBybitBalance } from '@/hooks/useBybitBalance'
+import { BalanceBadge } from '@/components/shared/BalanceBadge'
 import type {
   BacktestRequest,
   BacktestResponse,
@@ -13,7 +16,7 @@ import styles from './ConfigureBacktest.module.css'
 const OPTGROUP_ORDER = ['Тренд-следование', 'Возврат к среднему', 'Прорывы']
 
 interface ConfigureBacktestProps {
-  onResult: (result: BacktestResponse) => void
+  onResult: (result: BacktestResponse, initialBalance: number) => void
 }
 
 export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
@@ -26,8 +29,19 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
   const [start, setStart] = useState<string>('2023-01-01')
   const [end, setEnd] = useState<string>('2026-04-26')
   const [force, setForce] = useState<boolean>(false)
+  const [initialBalance, setInitialBalance] = useState<number>(10000)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const { setCurrentStrategy } = useStrategyContext()
+  const { balance: bybitBalance, source, loading: balLoading, error: balError } = useBybitBalance()
+
+  // Sync initialBalance from Bybit once loaded
+  useEffect(() => {
+    if (!balLoading && bybitBalance > 0) {
+      setInitialBalance(bybitBalance)
+    }
+  }, [balLoading, bybitBalance])
 
   // Strategy info with supported_combos for gating
   const { info: strategyInfo } = useStrategyInfo(strategyId || null)
@@ -148,10 +162,11 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
       start,
       end,
       force,
+      initial_balance: initialBalance,
     }
     try {
       const result = await api.runBacktest(payload)
-      onResult(result)
+      onResult(result, initialBalance)
     } catch (err: unknown) {
       const msg = err instanceof ApiError ? err.detail : String(err)
       setSubmitError(`Backtest error:\n${msg}`)
@@ -168,7 +183,7 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
           <span className={styles.fieldLabel}>STRATEGY</span>
           <select
             value={strategyId}
-            onChange={(e) => setStrategyId(e.target.value)}
+            onChange={(e) => { setStrategyId(e.target.value); setCurrentStrategy(e.target.value) }}
             className={styles.select}
           >
             {orderedGroups.map((group) => (
@@ -231,6 +246,21 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
             onChange={(e) => setEnd(e.target.value)}
             className={styles.input}
           />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>INITIAL BALANCE (USDT)</span>
+          <div className={styles.balanceRow}>
+            <input
+              type="number"
+              min={100}
+              step={100}
+              value={initialBalance}
+              onChange={(e) => setInitialBalance(Number(e.target.value))}
+              className={styles.input}
+            />
+            <BalanceBadge source={source} balance={bybitBalance} loading={balLoading} error={balError} />
+          </div>
         </label>
 
         <label className={`${styles.field} ${styles.fieldCheckbox}`}>

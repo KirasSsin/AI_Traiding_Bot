@@ -1,16 +1,38 @@
 // FailAnalysisTab — S47 T15: RU detailed WHY-failed narrative для FAILED strategies.
 // Visible ONLY когда verdict ∈ {WFA_FAIL, WFA_FAIL_DATA, FAIL}.
-// 3 sections: full strategy description / per-criterion breakdown / per-fold table.
+// 3 sections: full strategy description / per-criterion chip list / per-fold table.
+// S48 T11: section 2 упрощена к chip list — fixes "Неизвестный критерий: t1" (Bug F).
 
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   BacktestResponse,
-  CriterionExplanation,
   StrategyExplanation,
 } from '@/api/types'
 import { api } from '@/api/client'
 import styles from './FailAnalysisTab.module.css'
+
+// S48 T11 — canonical criterion list across both backend paths (replay + research)
+// Per ADR 0014: gate-blocking + informational. Glossary вкладка provides детали.
+const ALL_CRITERIA = [
+  // Gate-blocking
+  't5_floor', 'sharpe_gate', 'mc_gate', 'dsr_threshold', 'n_eff_threshold',
+  // Informational
+  't1', 't2', 't3', 't4', 't6',
+]
+
+const HUMAN_READABLE: Record<string, string> = {
+  t5_floor: 'T5 · Trade count (gate-blocking)',
+  sharpe_gate: 'Fold OOS/IS Sharpe (gate-blocking)',
+  mc_gate: 'Monte Carlo p-value (gate-blocking)',
+  dsr_threshold: 'DSR (gate-blocking)',
+  n_eff_threshold: 'Effective sample size (gate-blocking)',
+  t1: 'T1 · Sharpe OOS (informational)',
+  t2: 'T2 · Sortino OOS (informational)',
+  t3: 'T3 · Max Drawdown (informational)',
+  t4: 'T4 · Win Rate (informational)',
+  t6: 'T6 · OOS/IS Sharpe ratio (informational)',
+}
 
 // Safe markdown-bold renderer без dangerouslySetInnerHTML.
 // Splits text on **...** markers; even-indexed segments = plain text, odd = bold.
@@ -27,7 +49,6 @@ interface FailAnalysisTabProps {
 
 export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
   const [strategyDesc, setStrategyDesc] = useState<StrategyExplanation | null>(null)
-  const [criterionMap, setCriterionMap] = useState<Record<string, CriterionExplanation> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,14 +56,10 @@ export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    Promise.all([
-      api.getStrategyExplanation(result.request.strategy_id),
-      api.getCriterionExplanations(),
-    ])
-      .then(([sd, cm]) => {
+    api.getStrategyExplanation(result.request.strategy_id)
+      .then((sd) => {
         if (cancelled) return
         setStrategyDesc(sd)
-        setCriterionMap(cm)
         setLoading(false)
       })
       .catch((err: Error) => {
@@ -61,7 +78,7 @@ export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
   if (error !== null) {
     return <div className={styles.error}>Ошибка загрузки: {error}</div>
   }
-  if (strategyDesc === null || criterionMap === null) {
+  if (strategyDesc === null) {
     return null
   }
 
@@ -83,67 +100,24 @@ export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
         </div>
       </section>
 
-      {/* Section 2 — per-criterion breakdown */}
+      {/* Section 2 — per-criterion breakdown — S48 T11 simplified к chip list */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>2. Анализ невыполненных критериев</h3>
-        {failedCriteria.length === 0 ? (
-          <p className={styles.empty}>
-            Нет явных failed_criteria — vердикт {result.verdict} мог сработать через aggregate gate
-            (например, недостаточно данных для WFA либо отсутствуют trades).
-          </p>
-        ) : (
-          failedCriteria.map((critId) => {
-            const exp = criterionMap[critId]
-            if (exp === undefined) {
-              return (
-                <div key={critId} className={styles.criterionUnknown}>
-                  Неизвестный критерий: {critId}
-                </div>
-              )
-            }
-            const metrics = result.metrics as Record<string, number | null | undefined> | undefined
-            const actualRaw = metrics !== undefined ? metrics[critId] : undefined
-            const actualValue: string =
-              actualRaw === undefined || actualRaw === null
-                ? '—'
-                : typeof actualRaw === 'number'
-                ? actualRaw.toFixed(4)
-                : String(actualRaw)
-
+        <h3 className={styles.sectionTitle}>2. Статус критериев</h3>
+        <ul className={styles.criteriaList}>
+          {ALL_CRITERIA.map((critId) => {
+            const isFailed = failedCriteria.includes(critId)
+            const chipClass = isFailed ? styles.chipNotUsed : styles.chipUsed
+            const chipText = isFailed ? '✗ Провален' : '✓ Пройден'
+            const glossaryLink = `?strategy=${encodeURIComponent(result.request.strategy_id)}#glossary-${critId}`
             return (
-              <article key={critId} className={styles.criterionCard}>
-                <h4 className={styles.criterionName}>{exp.name}</h4>
-                <div className={styles.criterionRow}>
-                  <strong>Что измеряет:</strong> {exp.measures}
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>Формула:</strong>
-                  <pre className={styles.formula}>{exp.formula}</pre>
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>Порог:</strong> {exp.threshold}
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>Фактическое значение:</strong>{' '}
-                  <span className={styles.actualValue}>{actualValue}</span>
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>Почему fail:</strong> Значение не удовлетворяет порогу выше — см.
-                  «Порог» и «Фактическое значение».
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>На что влияет:</strong> {exp.impact}
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>С чем связано:</strong> {exp.related}
-                </div>
-                <div className={styles.criterionRow}>
-                  <strong>Роль в acceptance gate:</strong> {exp.gate_role}
-                </div>
-              </article>
+              <li key={critId} className={styles.criterionRow}>
+                <span className={styles.criterionName}>{HUMAN_READABLE[critId] ?? critId}</span>
+                <span className={chipClass}>{chipText}</span>
+                <a href={glossaryLink} className={styles.glossaryLink}>→ glossary</a>
+              </li>
             )
-          })
-        )}
+          })}
+        </ul>
       </section>
 
       {/* Section 3 — per-fold breakdown (WFA path) */}

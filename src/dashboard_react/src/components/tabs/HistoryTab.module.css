@@ -64,13 +64,133 @@
   border-bottom: none;
 }
 
-/* Row hover — subtle orange tint */
+/* Row — clickable with accordion expand (S48 T13) */
 .row {
   transition: background var(--transition-fast);
+  cursor: pointer;
 }
 
 .row:hover {
-  background: rgba(204, 120, 92, 0.08);
+  background: rgba(204, 120, 92, 0.06);
+}
+
+.rowExpanded {
+  background: rgba(204, 120, 92, 0.10);
+}
+
+.toggleHeader {
+  width: 30px;
+}
+
+.toggleIcon {
+  font-family: var(--font-mono);
+  color: var(--color-anthropic-orange);
+  text-align: center;
+}
+
+/* Accordion expand panel */
+.expandPanel {
+  position: relative;
+  padding: 16px;
+  background: rgba(10, 10, 10, 0.40);
+  border-left: 3px solid var(--color-anthropic-orange);
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: 1px solid rgba(156, 163, 175, 0.30);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.closeButton:hover {
+  border-color: var(--color-anthropic-orange);
+  color: var(--color-anthropic-orange);
+}
+
+/* Details grid layout */
+.detailsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.detailValue {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.detailValuePos {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-success);
+}
+
+.detailValueNeg {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-danger);
+}
+
+.detailsDivider {
+  border: none;
+  border-top: 1px solid rgba(156, 163, 175, 0.20);
+  margin: 8px 0;
+}
+
+.summary {
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.loadingMsg {
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 16px;
+  text-align: center;
+}
+
+.errorMsg {
+  color: var(--color-danger);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 16px;
+  text-align: center;
 }
 
 /* Range column — slightly muted (secondary info) */
