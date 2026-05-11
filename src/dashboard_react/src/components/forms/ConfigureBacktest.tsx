@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '@/api/client'
 import { useStrategyInfo } from '@/hooks/useStrategyInfo'
+import { useStrategyContext } from '@/hooks/useStrategyContext'
 import type {
   BacktestRequest,
   BacktestResponse,
@@ -28,6 +29,8 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
   const [force, setForce] = useState<boolean>(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const { setCurrentStrategy } = useStrategyContext()
 
   // Strategy info with supported_combos for gating
   const { info: strategyInfo } = useStrategyInfo(strategyId || null)
@@ -168,7 +171,7 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
           <span className={styles.fieldLabel}>STRATEGY</span>
           <select
             value={strategyId}
-            onChange={(e) => setStrategyId(e.target.value)}
+            onChange={(e) => { setStrategyId(e.target.value); setCurrentStrategy(e.target.value) }}
             className={styles.select}
           >
             {orderedGroups.map((group) => (
