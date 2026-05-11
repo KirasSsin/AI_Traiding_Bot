@@ -166,18 +166,25 @@ class BybitPrivateWSConsumer:
     def _on_order_raw(self, msg: dict[str, Any]) -> None:
         try:
             data = msg.get("data")
-            # S39 T12 M3 — defensive isinstance guard (V5 shape = list, drop V3 dict shape)
-            if not isinstance(data, list):
+            # S47 T11 M3 — isinstance guard: pybit V3 may emit data as dict (single-event);
+            # V5 emits list. Wrap dict → [dict] for uniform iteration. Drop None/other types.
+            if data is None:
+                return
+            if isinstance(data, dict):
+                events: list[Any] = [data]
+            elif isinstance(data, list):
+                events = data
+            else:
                 logger.warning(
                     "ws.order.shape_mismatch",
                     extra={
-                        "expected": "list",
+                        "expected": "list|dict",
                         "got": type(data).__name__,
                         "topic": msg.get("topic"),
                     },
                 )
                 return
-            for item in data:
+            for item in events:
                 evt = self._parse_order(item)
                 if evt is None:
                     continue  # dropped (logged in parser)
@@ -188,18 +195,24 @@ class BybitPrivateWSConsumer:
     def _on_wallet_raw(self, msg: dict[str, Any]) -> None:
         try:
             data = msg.get("data")
-            # S39 T12 M3 — defensive isinstance guard (V5 shape = list)
-            if not isinstance(data, list):
+            # S47 T11 M3 — isinstance guard: pybit V3 may emit data as dict (single-event).
+            if data is None:
+                return
+            if isinstance(data, dict):
+                events = [data]
+            elif isinstance(data, list):
+                events = data
+            else:
                 logger.warning(
                     "ws.wallet.shape_mismatch",
                     extra={
-                        "expected": "list",
+                        "expected": "list|dict",
                         "got": type(data).__name__,
                         "topic": msg.get("topic"),
                     },
                 )
                 return
-            for item in data:
+            for item in events:
                 for coin_row in item.get("coin", []):
                     evt = {"coin": coin_row["coin"], "walletBalance": coin_row["walletBalance"]}
                     self._reconciler.on_wallet_event(evt)
@@ -214,18 +227,24 @@ class BybitPrivateWSConsumer:
         """
         try:
             data = msg.get("data")
-            # S39 T12 M3 — defensive isinstance guard (V5 shape = list)
-            if not isinstance(data, list):
+            # S47 T11 M3 — isinstance guard: pybit V3 may emit data as dict (single-event).
+            if data is None:
+                return
+            if isinstance(data, dict):
+                events = [data]
+            elif isinstance(data, list):
+                events = data
+            else:
                 logger.warning(
                     "ws.execution.shape_mismatch",
                     extra={
-                        "expected": "list",
+                        "expected": "list|dict",
                         "got": type(data).__name__,
                         "topic": msg.get("topic"),
                     },
                 )
                 return
-            for item in data:
+            for item in events:
                 self._fill_recorder.on_fill_event(item)
         except Exception:
             logger.exception("execution event dispatch failed; dropping msg=%r", msg)
