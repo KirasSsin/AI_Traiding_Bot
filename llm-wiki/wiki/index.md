@@ -167,6 +167,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/bybit-ws]] — BybitWSConsumer: pybit WebSocket callback → asyncio iteration мост.
 - [[project/components/bar-builder]] — venue-agnostic aggregator: confirm-gate + dedup + out-of-order + gap synthesis.
 - [[project/components/bybit-adapter]] — MARKET spot execution: filter-validate + place_order + retCode→ReasonCode.
+- [[project/components/reason-codes-enums]] 🆕 (S48 infra) — ДВА параллельных ReasonCode enum: main `src/risk/reason_codes.py` (56 members, canonical count tracked) + bybit-local `src/execution/bybit/errors.py` (9 members, NOT tracked). S47 T9 lesson: adding к bybit-local НЕ bumps main count.
 - [[project/components/indicators]] — TA-Lib wrappers: EMA classical/wilder + ADX/±DI/RSI/ATR Wilder.
 - [[project/components/strategy]] — EmaCrossoverAdxRsiStrategy: on_bar(Bar) → Signal | None, FLAT/LONG FSM.
 - [[project/components/kelly]] — 4-phase Kelly + Wilson 95% CI; pure functions, KellyCaps from Settings.
