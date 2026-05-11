@@ -213,6 +213,14 @@ export interface RunSummary {
   win_rate: number
 }
 
+// S48 T20 — Bybit balance response
+export interface BalanceResponse {
+  source: 'bybit_v5' | 'fallback' | 'cached';
+  total_equity_usdt: number;
+  fetched_at_iso: string;
+  error?: string | null;
+}
+
 // S48 T15 — Glossary tab types (Bug E core)
 export interface GlossaryEntry {
   section: string
