@@ -1,81 +1,75 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S46 SHIPPED → between-sprints; SPRINT_STATE trimmed S5-S45 history → log.md + sprint-NN pages
-sprint: 46
-phase: between-sprints
+updated: 2026-05-11  # S47 PHASE 2 brainstorm complete (16 tasks locked, pre-s47-backlog rev 2 c1cbea2 + T16 expand 966309e); operator pivot — S48=NEW strategies (Path B rejoin), honest close DROPPED → PHASE 3 plan write
+sprint: 47
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.46
 ---
 
 ## Текущий статус
 
-**Sprint 46 SHIPPED** — squash-merge `0fcb3ff`, tag `v0.1.0-alpha.46`. Branch `feature/sprint-46-react-migration` deleted. Phase = between-sprints.
+**Sprint 47 PHASE 2 brainstorm COMPLETE** → PHASE 3 plan write next.
 
-**S46 deliverables:**
-- React 18 + TS strict + Vite + CSS Modules dashboard (~22 components, 235 kB JS / 31 kB CSS gzip 81/5.7)
-- Anthropic orange (#cc785c) + cyberpunk dark base aesthetic (ADR 0039 amended)
-- Honest close UI: WfaFailBadge per preset + ack-gated NON-dismissible WfaFailBanner с distinct-day dedup + chip downgrade after 3 ack days
-- Vanilla archived `src/dashboard_legacy/`; FastAPI serves React build via FileResponse
-- envelope `trade_markers` extension (5 parallel arrays per trade) for EquityChart scatter overlay
-- CI Node.js 20 + npm ci + TS build + Playwright E2E (3 pass / 1 skip)
-- ADRs: 0066 NEW, 0039 amended
+**S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
+- Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
+- Bucket B (3): SPA catch-all + cache headers + MetricsTable T5 fix
+- Bucket C (3): M1+M2+M3 bybit-api fixes
+- Bucket D (1): DSR property + n_trials + sprint type bundled
+- Bucket E (3): T14 trade_stats bug + T15 EquityChart cursor + T16 RU Fail Analysis tab
 
-**Architect bindings (ALL MET per architecture-reviewer PHASE 6):** C1 (outDir+mount) / C2 (CI Node) / C4 (FileResponse) / CC2 (uPlot.sync) / CC3 (envelope ext)
+**Operator pivot 2026-05-11:** S48 = NEW strategies (Path B rejoin). Honest close ADR 0067 DROPPED. UI визуально approved.
 
-**Canonical counts:** 16 states / 30 events / 74 transitions / 56 reason_codes / 66 ADRs / 50 sprint pages / 48 components
+**Brainstorm trail:** trader-expert ROUND 1+2 done. Q3+Q5 CONFIRM_REVISE → defer к S48 / mainnet ADR. Q1/Q2/Q4/Q6 CONFIRM. Q7 (operator UI validation) = APPROVED + 3 items surfaced (T14 BUG, T15 cursor, T16 fail analysis tab).
+
+**Canonical counts** (UNCHANGED от S46): 16 states / 30 events / 74 transitions / 56 reason_codes / 66 ADRs / 50 sprint pages / 48 components
+
+**Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
 
 ## Следующее действие
 
-`/sprint-orient` для S47 brainstorm OR explicit operator pivot. PHASE 1 trigger когда operator says "S47" / "next sprint" / "carry-overs".
+PHASE 3 plan write — invoke `superpowers:writing-plans` skill для S47 (16 tasks locked per `pre-s47-backlog.md` rev 2). После plan saved → auto-invoke `superpowers:subagent-driven-development` (per kit override S45).
 
-## S47-S48 ROADMAP (operator decision 2026-05-10)
+## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
-### S47 — Tech debt batch + honest close code piece + S46 carry-overs (~14-18 tasks)
+### S47 — Frontend doraботки + bugs + tech debt carry-overs (~16 tasks LOCKED)
 
-**S46 PHASE 6 carry-overs (priority):**
-- Vitest + React Testing Library unit tests (test-engineer priority list: `computeDrawdown` invariants → `computeMonthlyData` → `useWfaFailAck` hook → `MetricsTable` helpers → `VerdictPanel` mapping)
-- `backtest-flow.spec.ts` activate via `page.route('/api/backtest', ...)` mock fixture
-- SPA catch-all FastAPI route (architect MEDIUM — needed if React Router added)
-- React asset HTTP cache headers (python-reviewer MEDIUM)
-- Multiplier card range/impact + Methodology full detail (T15 TODO markers)
-- MetricsTable T5 vanilla bug parity cleanup (`undefined < 100 → PASS`)
-- README npm install note
-- A11y: tablist ARIA + `--color-text-disabled` contrast
+**Scope per `pre-s47-backlog.md` rev 2** (5 buckets, 16 tasks):
+- Bucket A (5): Vitest+RTL infra + 3 unit tests (computeDrawdown property + useWfaFailAck + MetricsTable threshold) + backtest-flow E2E activate
+- Bucket B (3): SPA catch-all FastAPI route + asset cache headers + MetricsTable T5 bug fix
+- Bucket C (3): M1 retCode taxonomy + M2 dict guards + M3 WS isinstance (BYBIT API fixes)
+- Bucket D (1): DSR property test + n_trials assert + sprint int/str type test (bundled trio)
+- Bucket E (3): T14 trade_stats empty bug fix + T15 EquityChart cursor tooltip + T16 Fail Analysis tab (RU detailed WHY-failed narrative)
 
-**S37/S38 long-standing tech debt (Option 3):**
-- F8 block_size constant unification (quant LOW)
-- M1-M4 bybit-api fixes: retCode taxonomy / pybit response shape guards / WS data isinstance / `__repr__` secret redaction (security)
-- Item #7 RiskSharedDeps backward-compat shim cleanup
-- Item #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended boundary scenarios
+**Out-of-scope S47:** M4 `__repr__` security redaction (defer mainnet ADR), Vitest tests #4/#5, A11y polish, README npm note, F8 constant unification, MonthlyHeatmap eslint cleanup, Item #7/#10, **honest close code piece (preset `disabled: bool` flag) — DROPPED indefinitely per operator pivot 2026-05-11 (Path B rejoin)**.
 
-**S44 reviewer follow-ups:**
-- DSR ∈ [0,1] property test (test-engineer C2)
-- WindowSplitter k_folds=1 edge case
-- numpy RuntimeWarning suppress (pytest filterwarnings)
-- Cross_trial_log read failure test (test-engineer C4)
-- Trading-logic C2-C4 minor (sigma_sr docs, n_eff comment, trial_oos_sharpe annualization)
+**Reviewers PHASE 6:** python + trading-logic + quant-stats + bybit-api + security-auditor (M1-M3 only) + frontend-developer + test-engineer + data-integrity + doc.
 
-**Honest close Option 1 code piece:** preset `disabled: bool` flag в STRATEGY_PRESETS, dispatch reject disabled presets с 422
+### S48 — NEW STRATEGIES (Path B rejoin — operator pivot 2026-05-11)
 
-**S45 quant follow-ups:** n_trials assert (>=1), sprint int/str type test
+Original S48 = honest close finalize + ADR 0067. **PIVOT 2026-05-11:** operator explicit "через один [S48] будем делать новые стратегии". Path B (new strategies) was excluded 2026-05-10, **rejoin 2026-05-11**.
 
-**Reviewers PHASE 6:** quant-stats + trading-logic + python + test + doc + bybit-api-reviewer + security-auditor (M4 secret redaction)
+**Implications:**
+- Honest close ADR 0067 (formal portfolio close) — DROPPED. Operator informed via S46 UI piece (badges + ack-gated banner) уже sufficient. Если новая стратегия WFA_PASS → honest UI organically lose relevance.
+- v0.1 wrap-up semver — keep `alpha.N` indefinitely (Q6 verdict stands). No bump к v0.1.0 ждёт actual WFA_PASS preset.
 
-### S48 — Honest close finalize + polish leftover (~8-10 tasks)
+**S48 brainstorm (TBD when S47 ships):**
+- Strategy direction (mean-reversion / trend / momentum / volatility / multi-asset / ML-augmented)
+- Symbol scope (BTC only / multi-symbol)
+- Timeframe (existing 4H/D OR new 5m/15m/1h)
+- Acceptance criteria (re-use ADR 0014 WFA gates OR adjust)
 
-- **Option 1 finalize (honest portfolio close per ESC-1):** ADR 0067 — formal portfolio close decision; mark all 11 presets `status: superseded`; update acceptance-criteria.md + current-state.md + README с честным state; archive presets к `_legacy/` OR keep selectable с big WARNING (operator brainstorm decision)
-- **UI polish leftover:** anything deferred from S46 (mobile responsive / theme switch / live feed re-evaluate)
-- **Tech debt leftover:** anything deferred from S47
-- **v0.1 wrap-up:** semver bump к v0.1.0 stable? OR keep alpha indefinitely? Operator decision
+### S49+ — TBD
 
-**Reviewers PHASE 6:** doc-reviewer (mandatory ADR 0067) + trading-logic + python
+Operator: "Я не знаю, что там делать". Depends на S48 outcome (если new strategy WFA_PASS → mainnet prep ADR; если FAIL → another iteration OR pivot).
 
-### Carry-overs к S49+
+### Permanently deferred (no clear sprint owner)
 
-- 12mo MAINNET-promotion ADR (нужен δ live data accumulation)
-- Live trade feed widget (deferred S49+ per YAGNI — 0 live trades)
-- Path B (new strategies) — operator excluded entirely
+- 12mo MAINNET-promotion ADR (нужен δ live data accumulation — irrelevant до S48 strategy validates)
+- Live trade feed widget (YAGNI — 0 live trades)
+- Honest close code piece (preset `disabled: bool` + 422 reject) — DROPPED per operator pivot
+- M4 `__repr__` security redaction — defer к когда mainnet activation real
 
 ---
 
