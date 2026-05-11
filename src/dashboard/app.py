@@ -65,6 +65,7 @@ class BacktestPayload(BaseModel):
     start: str
     end: str
     force: bool = False
+    initial_balance: float = 10000.0
 
 
 def create_app() -> FastAPI:
@@ -185,7 +186,7 @@ def create_app() -> FastAPI:
                 start=payload.start,
                 end=payload.end,
             )
-            return run_backtest(req, force=payload.force)
+            return run_backtest(req, force=payload.force, initial_balance=payload.initial_balance)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
         except FileNotFoundError as e:

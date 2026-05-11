@@ -36,6 +36,7 @@ export interface BacktestRequest {
   start: string
   end: string
   force?: boolean
+  initial_balance?: number
 }
 
 export interface Warning {

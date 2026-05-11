@@ -28,8 +28,13 @@ const TABS: { id: Tab; num: string; label: string }[] = [
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('backtest')
   const [result, setResult] = useState<BacktestResponse | null>(null)
-  // S48 T8: placeholder state for initial balance (T22 will wire real Bybit value via useBybitBalance)
-  const [initialBalance] = useState<number>(10000)
+  // S48 T22: initialBalance wired from ConfigureBacktest (via useBybitBalance → onResult callback)
+  const [initialBalance, setInitialBalance] = useState<number>(10000)
+
+  function handleResult(response: BacktestResponse, balance: number) {
+    setResult(response)
+    setInitialBalance(balance)
+  }
 
   return (
     <div className={styles.app}>
@@ -73,7 +78,7 @@ export function App() {
       <main className={styles.main}>
         {activeTab === 'backtest' && (
           <>
-            <ConfigureBacktest onResult={setResult} />
+            <ConfigureBacktest onResult={handleResult} />
             {result && <VerdictPanel result={result} />}
             {result?.equity_curve && (
               <>

@@ -719,7 +719,9 @@ def list_data_availability() -> dict[str, dict[str, Any]]:
     return out
 
 
-def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]:
+def run_backtest(
+    req: BacktestRequest, *, force: bool = False, initial_balance: float = 10000.0
+) -> dict[str, Any]:
     """Run WFA на given request. Cached to disk by run_id.
 
     Args:
@@ -910,7 +912,7 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         # S27 T1: bars_per_year passed к replay_engine для timeframe-correct annualization
         strategy_config: dict[str, object] = {
             "trading": {
-                "initial_balance": 10000.0,
+                "initial_balance": initial_balance,
                 "commission_taker": 0.001,
                 "slippage": 0.0005,
                 "position_size_pct": 10.0,
@@ -1136,8 +1138,8 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
             "total_pnl_quote": total_pnl,
             # S48 T7 (Bug H prereq) — win_rate + balance fields для HistoryTab expand
             "win_rate": t4_win,
-            "initial_balance_quote": 10000.0,
-            "final_balance_quote": 10000.0 * (1.0 + _running_pct / 100.0),
+            "initial_balance_quote": initial_balance,
+            "final_balance_quote": initial_balance * (1.0 + _running_pct / 100.0),
         },
         "fold_sharpe_ratios": sym_fold_sharpes,
         "failed_folds": gate.get("failed_folds", []),
