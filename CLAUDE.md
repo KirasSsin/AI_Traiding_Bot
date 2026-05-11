@@ -260,6 +260,7 @@ Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` 
 | **Uvicorn port collision** | Kill leftover process before `--port 8000 &` start (S47 lesson). | kill + restart retry |
 | **Pre-commit ruff retry** | ruff --fix modifies but doesn't re-stage. First commit fails, second succeeds. Expected 1-retry pattern. | 1 extra commit attempt |
 | **Bare `python` exit 127** | `python` command не на PATH macOS (только `python3` system OR `.venv/bin/python` venv). For project code → ALWAYS `.venv/bin/python`. For stdlib-only check (yaml/json) → `python3` OK. NEVER bare `python`. | command not found retry |
+| **`.pre-commit-config.yaml` unstaged** | Editing pre-commit config → MUST stage it BEFORE OR с next commit. Pre-commit framework blocks ANY commit с error "Your pre-commit configuration is unstaged" если config dirty. Either commit config alone first OR include в same `git add` batch. | commit blocked retry |
 
 **Uvicorn background test pattern (S47 lesson — port collision):**
 ```bash
