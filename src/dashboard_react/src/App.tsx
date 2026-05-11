@@ -8,6 +8,7 @@ import { MetricsTable } from './components/metrics/MetricsTable'
 import { TradesTable } from './components/metrics/TradesTable'
 import { HistoryTab } from './components/tabs/HistoryTab'
 import { DocumentationTab } from './components/tabs/DocumentationTab'
+import { GlossaryTab } from './components/tabs/GlossaryTab'
 import { WfaFailBanner } from './components/shared/WfaFailBanner'
 import { FailAnalysisTab } from './components/shared/FailAnalysisTab'
 import type { BacktestResponse, Verdict } from './api/types'
@@ -15,12 +16,13 @@ import type { BacktestResponse, Verdict } from './api/types'
 const FAILED_VERDICTS = new Set<Verdict>(['WFA_FAIL', 'WFA_FAIL_DATA', 'FAIL'])
 import styles from './App.module.css'
 
-type Tab = 'backtest' | 'documentation' | 'history'
+type Tab = 'backtest' | 'documentation' | 'history' | 'glossary'
 
 const TABS: { id: Tab; num: string; label: string }[] = [
   { id: 'backtest', num: '01', label: 'BACKTEST' },
   { id: 'documentation', num: '02', label: 'DOCUMENTATION' },
   { id: 'history', num: '03', label: 'HISTORY' },
+  { id: 'glossary', num: '04', label: 'GLOSSARY' },
 ]
 
 export function App() {
@@ -89,6 +91,7 @@ export function App() {
         )}
         {activeTab === 'documentation' && <DocumentationTab />}
         {activeTab === 'history' && <HistoryTab />}
+        {activeTab === 'glossary' && <GlossaryTab />}
       </main>
 
       <footer className={styles.footer}>
