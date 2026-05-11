@@ -104,7 +104,35 @@ sources:
 
 15. **FEATURE: EquityChart cursor crosshair + balance tooltip on hover** — operator request: горизонтальное движение курсором показывает actual balance (cumulative equity %). uPlot already supports `cursor.show: true` + `cursor.points` natively; currently `legend: { show: false }` hides values. **Implementation:** enable cursor crosshair с x-axis snap, render small floating tooltip с `Date: <ts>` + `Equity: +X.XX%` (Anthropic orange accent, glass-morphism style, JetBrains Mono). Verify sync с DrawdownSubchart cursor (already syncKey-shared per CC2) — drawdown tooltip shows `DD: -X.XX%` simultaneously.
 
-16. **FEATURE: Fail Analysis tab — per-strategy detailed WHY-failed breakdown** — operator request: для FAILED strategies create separate tab/view с пошаговым разбором каждого WFA fold + каждого TIER 1-T6 criterion + каждого gate decision. **Scope (S47 minimum viable):** new tab `<FailAnalysisTab>` визуализирует existing envelope data — per-fold sharpe ratios (already в `result.fold_sharpe_ratios`), failed_folds list, failed_criteria, per-TIER threshold vs actual с PASS/FAIL chip. **Out-of-scope (defer S48):** new backend data exposure (e.g. per-fold trades drilldown, per-trade marker reasons, sub-period robustness chart). Если operator wants deeper drilldown — separate S48 task для backend envelope ext.
+16. **FEATURE: Fail Analysis tab — per-strategy detailed RU WHY-failed breakdown** — operator request 2026-05-11: для FAILED strategies create separate tab/view. Operator binding: **ВСЯ narrative на русском, MAX detail.**
+
+**Scope (S47):**
+   - **Section 1 — полное описание стратегии** (НЕ кратко): full prose explanation strategy logic — entry signal formula с indicator references, exit logic, parameters meaning, intended market regime, historical context. Source: `STRATEGY_PRESETS` dict уже имеет `description` HTML field (используется в `<StrategyDescription>`) — может extend OR write fresh detailed version per strategy. Detailed version preferable: ~200-400 слов на стратегию.
+   - **Section 2 — пошаговый WHY-failed breakdown.** Per failed criterion (T1-T6 + DSR + MC):
+     - **Что измеряет:** RU explanation criterion semantics
+     - **Формула:** mathematical formula с notation legend (e.g. T1 Sharpe = mean(returns) / std(returns) × √(bars/year ÷ mean_holding))
+     - **Порог:** binding threshold с source citation (e.g. T5 ≥ 100 trades per Bailey 2014)
+     - **Actual value:** strategy's measured value
+     - **Почему fail:** concrete reason (value < threshold, OR NaN, OR overfit guard, etc.)
+     - **На что влияет:** operational impact (e.g. T5 < 100 → DSR confidence низкая → не статистически значимо)
+     - **С чем связано:** related criteria (e.g. T2 Sortino zero downside → anomaly guard sets N/A)
+     - **Как участвует в acceptance gate:** какие downstream gates this fail blocks (e.g. T1 fail → DSR computation skipped per ADR 0014)
+   - **Section 3 — per-fold breakdown** (если WFA path): table with N folds, per-fold sharpe + PASS/FAIL chip, failed_folds highlighted с reason
+
+**Implementation:**
+   - New tab появляется ТОЛЬКО когда `verdict ∈ {WFA_FAIL, WFA_FAIL_DATA, FAIL}` (hidden для PASS/RAW)
+   - Content source: 2 files
+     - `src/dashboard/strategy_descriptions.py` (NEW) — RU detailed descriptions per preset (extends existing `STRATEGY_PRESETS.description`)
+     - `src/dashboard/wfa_criterion_explanations.py` (NEW) — RU explanation text per criterion (T1/T2/T3/T4/T5/T6/DSR/MC) — formula + threshold + impact narrative
+   - Both served via `/api/strategy_explanations` + `/api/wfa_criterion_explanations` endpoints OR bundled inline в FailAnalysisTab если static
+   - Frontend `<FailAnalysisTab>` renders detailed sections per failed criterion с conditional collapse
+
+**Out-of-scope (defer S48 OR later):**
+   - Backend new data exposure (per-fold trades drilldown, per-trade marker reasons, sub-period robustness chart)
+   - Visual formulas (LaTeX/MathJax rendering) — text formulas OK для S47
+   - Cross-criterion correlation analysis — defer
+
+**Reviewer impact:** quant-stats-reviewer MUST verify `wfa_criterion_explanations.py` formulas + thresholds match actual code semantics (Bailey 2014, ADR 0014, ADR 0056). trading-logic-reviewer verify operational impact narrative correctness.
 
 #### Out-of-scope to S47 (per ROUND 2 verdicts + operator scope balance)
 
@@ -125,8 +153,8 @@ sources:
 ### PHASE 6 reviewer matrix S47
 
 - **python-reviewer** — FastAPI SPA catch-all + cache headers + M2 dict guards + envelope trade_stats extension (T14 BUG fix)
-- **trading-logic-reviewer** — MetricsTable T5 cleanup (threshold semantics) + Fail Analysis tab data correctness (T16)
-- **quant-stats-reviewer** — DSR property test + n_trials assert + Bailey threshold tests
+- **trading-logic-reviewer** — MetricsTable T5 cleanup (threshold semantics) + Fail Analysis tab operational impact narrative correctness (T16)
+- **quant-stats-reviewer** — DSR property test + n_trials assert + Bailey threshold tests + **T16 formula + threshold accuracy** (Bailey 2014, ADR 0014, ADR 0056 cross-reference)
 - **bybit-api-reviewer** — M1+M2+M3 (retCode taxonomy + response shape + WS isinstance)
 - **security-auditor** — **SCOPED к M1-M3 only per CC2**, M4 explicit OUT OF SCOPE
 - **frontend-developer** — Vitest+RTL setup + 3 React tests + E2E activate + EquityChart cursor (T15) + Fail Analysis tab (T16) + TradesTable rendering for new envelope fields (T14)
@@ -169,6 +197,8 @@ CREATE:
 - `tests/unit/test_dsr_property.py` (если не уже exists)
 - `src/dashboard_react/src/components/FailAnalysisTab.tsx` (T16)
 - `src/dashboard_react/src/components/FailAnalysisTab.module.css` (T16)
+- `src/dashboard/strategy_descriptions.py` (T16 — RU detailed descriptions per preset)
+- `src/dashboard/wfa_criterion_explanations.py` (T16 — RU formula + threshold + impact per criterion T1/T2/T3/T4/T5/T6/DSR/MC)
 
 MODIFY:
 - `src/dashboard/app.py` — SPA catch-all route + cache headers
