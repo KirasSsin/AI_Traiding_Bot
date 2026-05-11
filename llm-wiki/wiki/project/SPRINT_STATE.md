@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S48 PHASE 3 plan committed `aa66b1a` (24 tasks 6 buckets) → PHASE 4 execute
+updated: 2026-05-11  # S48 T1 done — component subdirs refactor (`610530a`)
 sprint: 48
 phase: 4-execution
 branch: feature/sprint-48-ui-overhaul
@@ -40,7 +40,7 @@ tag: v0.1.0-alpha.47
 | 1 Orient | done | Continuous session post-S47 ship |
 | 2 Brainstorm | done | trader-expert R1+R2, pre-s48-backlog v3 (24 tasks 6 buckets), pre-plan FE+architect dispatch |
 | 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
-| 4 Execute | in_progress | T1-T24 (24/24 pending) |
+| 4 Execute | in_progress | T1 done (`610530a` component subdirs) — T2-T24 (23/24 pending) |
 | 5 Verify | pending | pytest + mypy + Vitest + Playwright + lint+tsc+build |
 | 6 Review | pending | 9 reviewers parallel (frontend-developer PRIMARY + architecture-reviewer C1-C5 verify + python + bybit-api + security-auditor + trading-logic + test-engineer + data-integrity + doc) |
 | 7 Sync | pending | wiki sync (T24) |
@@ -55,7 +55,7 @@ tag: v0.1.0-alpha.47
 
 ## Следующее действие
 
-S48 PHASE 4 — execute T1 (opus) component subdirs refactor. Subagent-driven-development pattern per kit override.
+S48 PHASE 4 — T2: Replay engine equity_curve emission (sonnet) — Bug B fix.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
