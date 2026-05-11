@@ -81,8 +81,10 @@ def compute_dsr(
         observed Sharpe exceeds benchmark after adjusting для selection bias.
 
     Raises:
-        ValueError: n_trials > 1 без sigma_sr.
+        ValueError: n_trials < 1 (invalid) or n_trials > 1 без sigma_sr.
     """
+    if n_trials < 1:
+        raise ValueError(f"n_trials must be >= 1, got {n_trials}")
     returns = compute_returns(trades, use_log=use_log)
     n = len(returns)
     if n < 2:

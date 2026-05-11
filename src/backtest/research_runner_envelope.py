@@ -49,6 +49,7 @@ def build_research_runner_envelope(
     equity_timestamps: list[int] | None = None,
     wfa_result: dict[str, Any] | None = None,
     trade_markers: dict[str, list[float | int]] | None = None,
+    trades_list: list[Any] | None = None,  # S47 T13 — _TradeRecord-shaped
 ) -> dict[str, Any]:
     """Build dashboard-contract envelope от research runner outputs.
 
@@ -134,6 +135,27 @@ def build_research_runner_envelope(
         fold_sharpes_val = []
         n_trades_val = n_trades
 
+    # S47 T13 — derive n_winners/n_losers from trades_list if passed; else None.
+    n_winners_d: int | None = None
+    n_losers_d: int | None = None
+    if trades_list is not None and len(trades_list) > 0:
+        n_winners_d = sum(1 for t in trades_list if float(getattr(t, "pnl_pct", 0.0)) > 0)
+        n_losers_d = len(trades_list) - n_winners_d
+
+    trade_stats_payload: dict[str, Any] = {
+        "n_trades": n_trades,
+        "win_rate": win_rate,
+        "n_winners": n_winners_d,
+        "n_losers": n_losers_d,
+        "total_pnl_pct": total_pnl_pct,
+        # Quote-currency fields — None for research path (no capital basis)
+        "total_pnl_quote": None,
+        "total_commissions_quote": None,
+        "avg_win_quote": None,
+        "avg_loss_quote": None,
+        "profit_factor": None,
+    }
+
     return {
         # S43 T3 — equity_curve parallel arrays для uPlot native API
         # T11 — trade_markers nested under equity_curve (may be None)
@@ -151,10 +173,14 @@ def build_research_runner_envelope(
         "dsr_pass": dsr_pass_val,
         "mc_p_value": mc_p_val,
         "metrics": metrics_val,
-        "trade_stats": {
-            "n_trades": n_trades,
-            "win_rate": win_rate,
-        },
+        # S47 T13 — derive enriched trade_stats from trades_list if passed.
+        # Replay engine path emits full set (n_winners/quote-amounts);
+        # research path historically only n_trades+win_rate. Now derive what we can:
+        # - n_winners / n_losers from pnl_pct signs
+        # - total_pnl_pct (already in metrics, surface to trade_stats too)
+        # Quote-currency fields (USDT amounts) require synthetic capital basis:
+        # emit None gracefully (TradesTable Path B renders "—").
+        "trade_stats": trade_stats_payload,
         "wfa_params": wfa_params_val,
         "wfa_total_bars": wfa_total_bars_val,
         "fold_sharpe_ratios": fold_sharpes_val,

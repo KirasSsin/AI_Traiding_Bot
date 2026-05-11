@@ -6,6 +6,7 @@ import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 import type { EquityCurve } from '@/api/types'
 import styles from './DrawdownSubchart.module.css'
+import { computeDrawdown } from '@/utils/computeDrawdown'
 
 export interface DrawdownSubchartProps {
   equityCurve: EquityCurve
@@ -13,23 +14,6 @@ export interface DrawdownSubchartProps {
   syncKey?: string
   /** Chart height in pixels (default 140 — smaller than main equity chart) */
   height?: number
-}
-
-/**
- * Converts cumulative equity_pct series to drawdown percent series.
- * Drawdown is always <= 0 (0 = at peak, negative = below peak).
- */
-function computeDrawdown(equityPct: number[]): number[] {
-  const result = new Array<number>(equityPct.length)
-  let peak = -Infinity
-  for (let i = 0; i < equityPct.length; i++) {
-    // Convert cumulative % to multiplier: e.g. 12 → 1.12
-    const v = (equityPct[i] ?? 0) / 100 + 1
-    if (v > peak) peak = v
-    // Drawdown as negative percent: (current - peak) / peak * 100
-    result[i] = peak > 0 ? ((v - peak) / peak) * 100 : 0
-  }
-  return result
 }
 
 function buildSeries(): uPlot.Series[] {
@@ -53,7 +37,10 @@ function buildOpts(width: number, height: number, syncKey?: string): uPlot.Optio
     width,
     height,
     cursor: {
+      show: true,
       drag: { x: true, y: false },
+      // S47 T14: crosshair (cursor.show:true) + setCursor hook tooltip below.
+      // Skip cursor.points config — uPlot 1.6 crashes на points object form.
       // CC2: sync cursor with EquityChart when syncKey provided
       ...(syncKey !== undefined
         ? { sync: { key: syncKey, setSeries: false } }
@@ -115,7 +102,37 @@ export function DrawdownSubchart({
       drawdownSeries,
     ]
 
-    const chart = new uPlot(buildOpts(width, height, syncKey), data, container)
+    const opts = buildOpts(width, height, syncKey)
+
+    // S47 T14 — setCursor hook: floating tooltip showing Date + DD%
+    opts.hooks = {
+      setCursor: [
+        (u: uPlot) => {
+          const idx = u.cursor.idx
+          const tooltipEl = container.querySelector(
+            '[data-tooltip="drawdown"]',
+          ) as HTMLDivElement | null
+          if (tooltipEl === null) return
+          if (idx === null || idx === undefined || idx < 0) {
+            tooltipEl.style.display = 'none'
+            return
+          }
+          const ts = u.data[0]?.[idx]
+          const dd = u.data[1]?.[idx]
+          if (ts === undefined || ts === null || dd === undefined || dd === null) {
+            tooltipEl.style.display = 'none'
+            return
+          }
+          const date = new Date(Number(ts) * 1000).toISOString().slice(0, 10)
+          tooltipEl.textContent = `${date} · DD: ${dd.toFixed(2)}%`
+          tooltipEl.style.display = 'block'
+          const left = u.cursor.left ?? 0
+          tooltipEl.style.left = `${left + 12}px`
+        },
+      ],
+    }
+
+    const chart = new uPlot(opts, data, container)
     chartRef.current = chart
 
     // ResizeObserver — обновляет ширину при изменении контейнера
@@ -150,8 +167,11 @@ export function DrawdownSubchart({
       <div
         ref={containerRef}
         className={styles.chartWrapper}
-        style={{ height: `${height}px` }}
-      />
+        style={{ height: `${height}px`, position: 'relative' }}
+      >
+        {/* S47 T14 — floating tooltip rendered by setCursor hook */}
+        <div data-tooltip="drawdown" className={styles.tooltip} style={{ display: 'none' }} />
+      </div>
     </div>
   )
 }

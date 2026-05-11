@@ -18,11 +18,15 @@ from __future__ import annotations
 
 import webbrowser
 from pathlib import Path
+from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from src.dashboard.backtest_runner import (
     INTERVAL_LABELS,
@@ -33,6 +37,11 @@ from src.dashboard.backtest_runner import (
     list_data_availability,
     list_runs,
     run_backtest,
+)
+from src.dashboard.strategy_descriptions import get_strategy_description
+from src.dashboard.wfa_criterion_explanations import (
+    CriterionExplanation,
+    get_all_criterion_explanations,
 )
 
 _DIR = Path(__file__).resolve().parent
@@ -198,6 +207,47 @@ def create_app() -> FastAPI:
         Returns indicators / multipliers / strategies / methodology lists.
         """
         return get_documentation()
+
+    @app.get("/api/strategy_explanation/{preset_id}")
+    async def strategy_explanation(preset_id: str) -> dict[str, str]:
+        """S47 T15 — RU detailed strategy description for FailAnalysisTab."""
+        desc = get_strategy_description(preset_id)
+        if desc is None:
+            raise HTTPException(status_code=404, detail=f"Unknown preset: {preset_id}")
+        return {"preset_id": preset_id, "description_ru": desc}
+
+    @app.get("/api/wfa_criterion_explanations")
+    async def wfa_criterion_explanations() -> dict[str, CriterionExplanation]:
+        """S47 T15 — RU formula+threshold+impact per WFA criterion (T1-T6 + DSR + MC)."""
+        return get_all_criterion_explanations()
+
+    # S47 T7 python-reviewer S46 MEDIUM — cache headers per content type.
+    # /assets/* = content-hashed Vite output → immutable forever.
+    # index.html / /api/* / SPA catch-all → no-cache (dynamic; references new hashes per build).
+    class _CacheControlMiddleware(BaseHTTPMiddleware):
+        """Set cache headers per content type."""
+
+        async def dispatch(self, request: Request, call_next: Any) -> Response:
+            response: Response = await call_next(request)
+            path = request.url.path
+            if path.startswith("/assets/"):
+                response.headers["Cache-Control"] = "public, immutable, max-age=31536000"
+            else:
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            return response
+
+    app.add_middleware(_CacheControlMiddleware)
+
+    # S47 T6 architect MEDIUM (S46 followup) — SPA catch-all для client-side routing.
+    # Mount order: ALL /api/* + /assets/* MUST be registered BEFORE this catch-all.
+    # FastAPI matches routes в registration order; catch-all should be last.
+    if _DIST_DIR.exists():
+
+        @app.get("/{path:path}", response_class=FileResponse, include_in_schema=False)
+        async def spa_fallback(path: str) -> FileResponse:  # noqa: ARG001
+            # Любой non-API non-asset path → serve React SPA shell.
+            # React Router (если added в future) handles client-side routing.
+            return FileResponse(_DIST_DIR / "index.html")
 
     return app
 

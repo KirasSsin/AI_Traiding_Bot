@@ -1,0 +1,138 @@
+.container {
+  background: var(--color-bg-glass);
+  border: 1px solid rgba(204, 120, 92, 0.30);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+}
+
+.title {
+  color: var(--color-anthropic-orange);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(204, 120, 92, 0.30);
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  color: var(--color-anthropic-orange);
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.descriptionBody p {
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.descriptionBody strong {
+  color: var(--color-anthropic-orange);
+  font-weight: 600;
+}
+
+.criterionCard {
+  background: rgba(10, 10, 10, 0.40);
+  border: 1px solid rgba(255, 51, 102, 0.20);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.criterionName {
+  color: #ff3366;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.criterionRow {
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.criterionRow strong {
+  color: var(--color-anthropic-orange);
+  font-weight: 600;
+}
+
+.formula {
+  background: rgba(0, 0, 0, 0.50);
+  color: var(--color-text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+  border-left: 2px solid var(--color-anthropic-orange);
+}
+
+.actualValue {
+  color: #ff3366;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+.foldsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.foldsTable th {
+  text-align: left;
+  padding: 8px 12px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid rgba(204, 120, 92, 0.30);
+  font-weight: 600;
+}
+
+.foldsTable td {
+  padding: 8px 12px;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid rgba(156, 163, 175, 0.10);
+}
+
+.foldPass { color: #00ff88; }
+.foldFail { color: #ff3366; }
+.foldWarn { color: #ffaa00; }
+
+.loading,
+.error,
+.empty {
+  color: var(--color-text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.error {
+  color: #ff3366;
+}
+
+.criterionUnknown {
+  color: #ffaa00;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  padding: 8px;
+}

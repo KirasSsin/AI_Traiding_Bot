@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from src.execution.bybit.errors import ReasonCode, map_error
+from src.execution.bybit.errors import BybitAdapterError, ReasonCode, map_error
 from src.marketdata.bybit.rest import _retry_with_backoff
 from src.marketdata.filters import BybitFilters
 
@@ -17,6 +17,53 @@ _BANNED_SPOT_FIELDS = (
     "slOrderType",
     "triggerDirection",
 )
+
+
+def _safe_extract_list(resp: dict[str, Any], context: str) -> list[Any]:
+    """S47 T10 — defensive extraction of resp['result']['list'].
+
+    bybit-api-reviewer S38 finding M2: direct access raises bare KeyError on
+    Bybit V5 schema shift. This helper raises BybitAdapterError with a clear
+    message including `context` (the calling operation name).
+
+    Use for operations that always expect result.list to be present (get_order,
+    get_wallet_balance). For operations that treat a missing list as empty,
+    use _safe_extract_list_or_empty instead.
+    """
+    result = resp.get("result")
+    if not isinstance(result, dict):
+        raise BybitAdapterError(
+            f"Bybit response missing 'result' dict для {context}: got {type(result).__name__}"
+        )
+    items = result.get("list")
+    if not isinstance(items, list):
+        raise BybitAdapterError(
+            f"Bybit response 'result.list' not list для {context}: got {type(items).__name__}"
+        )
+    return items
+
+
+def _safe_extract_list_or_empty(resp: dict[str, Any], context: str) -> list[Any]:
+    """S47 T10 — defensive extraction of resp['result']['list'], returning [] if list absent.
+
+    For listing endpoints (get_open_orders, get_order_history) where Bybit may
+    omit the 'list' key entirely when there are no results. Raises BybitAdapterError
+    only if 'result' itself is missing or not a dict (genuine schema shift).
+    If 'list' key is absent or None, returns [] (no orders case).
+    """
+    result = resp.get("result")
+    if not isinstance(result, dict):
+        raise BybitAdapterError(
+            f"Bybit response missing 'result' dict для {context}: got {type(result).__name__}"
+        )
+    items = result.get("list")
+    if items is None:
+        return []
+    if not isinstance(items, list):
+        raise BybitAdapterError(
+            f"Bybit response 'result.list' not list для {context}: got {type(items).__name__}"
+        )
+    return items
 
 
 @dataclass(frozen=True)
@@ -234,7 +281,7 @@ class BybitMarketAdapter:
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
-        items = resp["result"].get("list") or []
+        items = _safe_extract_list(resp, "get_order")
         if not items:
             raise BybitAPIError(-1, f"order {order_id} not found", ReasonCode.UNKNOWN_ERROR)
         raw = items[0]
@@ -258,7 +305,7 @@ class BybitMarketAdapter:
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
-        return resp["result"].get("list") or []
+        return _safe_extract_list_or_empty(resp, "get_open_orders")
 
     def get_order_history(self, *, symbol: str, limit: int = 50) -> list[dict[str, Any]]:
         """ADR 0020 sub-decision 9: recent terminal orders for prior-attempt detection.
@@ -270,7 +317,7 @@ class BybitMarketAdapter:
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
-        return resp["result"].get("list") or []
+        return _safe_extract_list_or_empty(resp, "get_order_history")
 
     def get_wallet_balance(self, *, coin: str) -> WalletSnapshot:
         """ADR 0020 sub-decision 4: canonical Spot position truth (no get_position on Spot V5).
@@ -284,7 +331,7 @@ class BybitMarketAdapter:
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
-        items = resp["result"].get("list") or []
+        items = _safe_extract_list(resp, "get_wallet_balance")
         if not items:
             raise BybitAPIError(-1, f"wallet for {coin} not found", ReasonCode.UNKNOWN_ERROR)
         coin_rows = items[0].get("coin") or []

@@ -63,6 +63,9 @@ jobs:
       - name: TypeScript build
         run: cd src/dashboard_react && npm run build
 
+      - name: Vitest unit tests
+        run: cd src/dashboard_react && npm test
+
       - name: Playwright install
         run: cd src/dashboard_react && npx playwright install --with-deps chromium
 

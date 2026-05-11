@@ -309,8 +309,11 @@ def test_reconnect_triggers_check_alive_re_probe() -> None:
         ), "S39 T8 H2 gap: post-disconnect re-probe missing — silent dead-WS risk"
 
 
-def test_on_order_raw_drops_dict_data_with_log(caplog) -> None:
-    """S39 T12 M3 regression: if Bybit sends data=dict (V3 shape), must log + drop, NOT iterate."""
+def test_on_order_raw_processes_dict_data_as_single_event(caplog) -> None:
+    """S47 T11 M3 upgrade: pybit V3 emits data=dict (single-event).
+    Guard wraps dict → [dict] and processes it — NOT dropped.
+    S39 T12 M3 previously dropped dict; S47 T11 upgrades to wrap+process.
+    """
     import logging
 
     coord = MagicMock()
@@ -323,25 +326,22 @@ def test_on_order_raw_drops_dict_data_with_log(caplog) -> None:
         fill_recorder=MagicMock(),
     )
 
-    msg = {"topic": "order", "data": {"orderId": "12345"}}  # dict, not list
+    msg = {"topic": "order", "data": {"orderId": "12345", "orderStatus": "New"}}  # dict, V3 shape
 
     with caplog.at_level(logging.WARNING):
         consumer._on_order_raw(msg)
 
-    # Verify structured log marker present (shape mismatch)
-    assert any(
-        "shape" in rec.message.lower()
-        or "isinstance" in rec.message.lower()
-        or "expected" in rec.message.lower()
-        for rec in caplog.records
-    ), "M3: must log shape mismatch warning"
-
-    # Verify coordinator NOT called (no fake order processed)
-    coord.on_order_event.assert_not_called()
+    # Dict event must be processed (wrapped → [dict], forwarded to coordinator)
+    coord.on_order_event.assert_called_once()
+    evt = coord.on_order_event.call_args.args[0]
+    assert evt["orderId"] == "12345"
 
 
-def test_on_execution_raw_drops_dict_data_with_log(caplog) -> None:
-    """S39 T12 M3 regression: execution handler must guard against V3 dict shape."""
+def test_on_execution_raw_processes_dict_data_as_single_event(caplog) -> None:
+    """S47 T11 M3 upgrade: pybit V3 emits execution data=dict (single-event).
+    Guard wraps dict → [dict] and processes it — NOT dropped.
+    S39 T12 M3 previously dropped dict; S47 T11 upgrades to wrap+process.
+    """
     import logging
 
     fill_recorder = MagicMock()
@@ -354,18 +354,13 @@ def test_on_execution_raw_drops_dict_data_with_log(caplog) -> None:
         fill_recorder=fill_recorder,
     )
 
-    msg = {"topic": "execution", "data": {"execId": "abc"}}  # dict, not list
+    msg = {"topic": "execution", "data": {"execId": "abc"}}  # dict, V3 shape
 
     with caplog.at_level(logging.WARNING):
         consumer._on_execution_raw(msg)
 
-    # Verify structured log marker present
-    assert any(
-        "shape" in rec.message.lower() or "expected" in rec.message.lower()
-        for rec in caplog.records
-    ), "M3: execution handler must log shape mismatch"
-
-    fill_recorder.on_fill_event.assert_not_called()
+    # Dict event must be processed (wrapped → [dict], forwarded to fill_recorder)
+    fill_recorder.on_fill_event.assert_called_once_with({"execId": "abc"})
 
 
 def test_ws_consumer_repr_does_not_contain_api_secret() -> None:

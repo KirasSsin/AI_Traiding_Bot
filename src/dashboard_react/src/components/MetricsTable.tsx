@@ -148,13 +148,14 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
   const t3Status =
     t3 === null || t3 === undefined || t3 >= 0.25 ? 'FAIL' : 'PASS'
 
-  // T5 n trades — vanilla parity: undefined < 100 = false → PASS (sic). Match exactly.
+  // T5 n trades — S34 ADR 0052 amendment: T5_FLOOR=50 (original Bailey 2014 was 100).
+  // missing OR < 50 → FAIL. Vanilla bug: undefined < 50 = false → PASS (wrong).
   const t5nCls =
-    t5n !== null && t5n !== undefined && t5n < 100
-      ? styles.metricFail ?? ''
-      : styles.metricPass ?? ''
+    t5n !== null && t5n !== undefined && t5n >= 50
+      ? styles.metricPass ?? ''
+      : styles.metricFail ?? ''
   const t5nStatus =
-    t5n !== null && t5n !== undefined && t5n < 100 ? 'FAIL' : 'PASS'
+    t5n !== null && t5n !== undefined && t5n >= 50 ? 'PASS' : 'FAIL'
 
   // T5 mean PnL — null OR <=0 → FAIL
   const t5MeanCls =
@@ -248,7 +249,7 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
             <td className={t5nCls}>
               <strong>{t5n ?? '—'}</strong>
             </td>
-            <td>≥ 100 (Bailey 2014)</td>
+            <td>≥ 50 (S34 ADR 0052)</td>
             <td className={t5nCls}>{t5nStatus}</td>
           </tr>
           <tr>

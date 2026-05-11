@@ -6,6 +6,8 @@ import type {
   BacktestResponse,
   RunSummary,
   DocsEnvelope,
+  StrategyExplanation,
+  CriterionExplanation,
 } from './types'
 
 const BASE_URL = ''  // same-origin (FastAPI serves React build per architect C1+C4)
@@ -62,4 +64,11 @@ export const api = {
     request(`/api/runs/${runId}`),
 
   getDocs: (): Promise<DocsEnvelope> => request('/api/docs'),
+
+  // S47 T15 — Fail Analysis tab
+  getStrategyExplanation: (presetId: string): Promise<StrategyExplanation> =>
+    request(`/api/strategy_explanation/${encodeURIComponent(presetId)}`),
+
+  getCriterionExplanations: (): Promise<Record<string, CriterionExplanation>> =>
+    request('/api/wfa_criterion_explanations'),
 }

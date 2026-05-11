@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 PHASE 2 brainstorm complete (16 tasks locked, pre-s47-backlog rev 2 c1cbea2 + T16 expand 966309e); operator pivot — S48=NEW strategies (Path B rejoin), honest close DROPPED → PHASE 3 plan write
+updated: 2026-05-11  # S47 PHASE 4-EXECUTION COMPLETE (16/16) → PHASE 5-VERIFY
 sprint: 47
-phase: 3-planning
-branch: main
+phase: 5-verify
+branch: feature/sprint-47-tech-debt-carryovers
 tag: v0.1.0-alpha.46
 ---
 
 ## Текущий статус
 
-**Sprint 47 PHASE 2 brainstorm COMPLETE** → PHASE 3 plan write next.
+**Sprint 47 PHASE 4 execution COMPLETE (16/16). PHASE 5-VERIFY in progress.** Все 5 бакетов DONE: Bucket A (T1-T5 Vitest+RTL infra + 3 unit tests + E2E activate) + Bucket B (T6-T8 SPA catch-all + cache headers + MetricsTable T5 fix) + Bucket C (T9-T11 M1+M2+M3 bybit-api) + Bucket D (T12 DSR property + n_trials + sprint type trio) + Bucket E (T13 trade_stats bug + T14 cursor tooltip + T15 FailAnalysisTab). **T16 DONE (wiki sync: sprint-47 page + index + log + current-state counts 56→57 + 50→51 sprint pages).**
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -23,13 +23,27 @@ tag: v0.1.0-alpha.46
 
 **Brainstorm trail:** trader-expert ROUND 1+2 done. Q3+Q5 CONFIRM_REVISE → defer к S48 / mainnet ADR. Q1/Q2/Q4/Q6 CONFIRM. Q7 (operator UI validation) = APPROVED + 3 items surfaced (T14 BUG, T15 cursor, T16 fail analysis tab).
 
-**Canonical counts** (UNCHANGED от S46): 16 states / 30 events / 74 transitions / 56 reason_codes / 66 ADRs / 50 sprint pages / 48 components
+**Canonical counts (post-S47):** 16 states / 30 events / 74 transitions / **57** reason_codes (+1 INVALID_PARAM T9) / 66 ADRs / **51** sprint pages / 48 components
 
 **Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
 
+## Phase tracking
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1 Orient | done | Session start orient + git state verified |
+| 2 Brainstorm | done | trader-expert R1+R2, pre-s47-backlog rev 2 (16 tasks 5 buckets) |
+| 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-47-tech-debt-carryovers.md |
+| 4 Execute | done | T1-T16 16/16 all committed |
+| 5 Verify | done | pytest 1037 pass / mypy 0 / Vitest 23 / Playwright 4 / lint+tsc+build clean |
+| 6 Review | done | 9 reviewers APPROVE/AWC, 0 blockers; HIGH+MEDIUM fixes applied pre-merge |
+| 7 Sync | done | wiki sync committed (T16) — sprint-47 page + index + log + current-state |
+| 8 Ship | in_progress | PR #58 → squash-merge + tag v0.1.0-alpha.47 pending |
+| 9 Close | pending | post-merge SPRINT_STATE → between-sprints |
+
 ## Следующее действие
 
-PHASE 3 plan write — invoke `superpowers:writing-plans` skill для S47 (16 tasks locked per `pre-s47-backlog.md` rev 2). После plan saved → auto-invoke `superpowers:subagent-driven-development` (per kit override S45).
+**PHASE 5 verify** — запустить: pytest -x -q + mypy --strict src/ + Vitest + Playwright + lint+tsc+build + canonical counts verify (reason_codes=57 в ci.yml line 133). После GREEN → PHASE 6 reviewers (9: python + trading-logic + quant-stats + bybit-api + security-auditor + frontend-developer + test-engineer + data-integrity + doc) → PHASE 7 wiki sync (done — T16) → PHASE 8 ship.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 

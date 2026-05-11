@@ -30,6 +30,12 @@ function fmtMoney(value: Nullish): string {
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+// S47 T13 — graceful render when quote fields null (research path doesn't emit USDT).
+function fmtUsdtCell(value: Nullish): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—'
+  return fmtMoney(value) + ' USDT'
+}
+
 // ─── RAW path (research presets) ─────────────────────────────────────────
 
 function RawTradesTable({ result }: TradesTableProps) {
@@ -113,19 +119,19 @@ function WfaTradesTable({ result }: TradesTableProps) {
           </tr>
           <tr>
             <td>Total PnL</td>
-            <td>{fmtMoney(ts.total_pnl_quote)} USDT</td>
+            <td>{fmtUsdtCell(ts.total_pnl_quote)}</td>
           </tr>
           <tr>
             <td>Total Commissions</td>
-            <td>{fmtMoney(ts.total_commissions_quote)} USDT</td>
+            <td>{fmtUsdtCell(ts.total_commissions_quote)}</td>
           </tr>
           <tr>
             <td>Avg Win</td>
-            <td>{fmtMoney(ts.avg_win_quote)} USDT</td>
+            <td>{fmtUsdtCell(ts.avg_win_quote)}</td>
           </tr>
           <tr>
             <td>Avg Loss</td>
-            <td>{fmtMoney(ts.avg_loss_quote)} USDT</td>
+            <td>{fmtUsdtCell(ts.avg_loss_quote)}</td>
           </tr>
           <tr>
             <td>Profit Factor</td>

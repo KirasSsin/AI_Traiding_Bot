@@ -9,7 +9,10 @@ import { TradesTable } from './components/TradesTable'
 import { HistoryTab } from './components/HistoryTab'
 import { DocumentationTab } from './components/DocumentationTab'
 import { WfaFailBanner } from './components/WfaFailBanner'
-import type { BacktestResponse } from './api/types'
+import { FailAnalysisTab } from './components/FailAnalysisTab'
+import type { BacktestResponse, Verdict } from './api/types'
+
+const FAILED_VERDICTS = new Set<Verdict>(['WFA_FAIL', 'WFA_FAIL_DATA', 'FAIL'])
 import styles from './App.module.css'
 
 type Tab = 'backtest' | 'documentation' | 'history'
@@ -76,6 +79,9 @@ export function App() {
               </>
             )}
             {result && <MetricsTable result={result} />}
+            {result && FAILED_VERDICTS.has(result.verdict) && (
+              <FailAnalysisTab result={result} />
+            )}
             {result && <TradesTable result={result} />}
           </>
         )}
