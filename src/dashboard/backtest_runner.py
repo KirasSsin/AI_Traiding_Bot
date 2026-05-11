@@ -1002,6 +1002,18 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
                 "kelly_phase": int(t.kelly_phase),
             }
         )
+    # S48 T2 (Bug B fix) — emit equity_curve parallel arrays для frontend chart support.
+    # Cumulative equity_pct relative to initial capital (consistent with research_runner_envelope).
+    # TradeRecord.pnl_pct is fractional (e.g. 0.012 = +1.2%); multiply ×100 for display.
+    # TradeRecord.exit_ts is AwareDatetime — convert to unix seconds for frontend timestamps.
+    _eq_timestamps: list[int] = []
+    _eq_pct: list[float] = []
+    _running_pct = 0.0
+    for _t in sym_trades:
+        _running_pct += float(_t.pnl_pct) * 100.0
+        _eq_timestamps.append(int(_t.exit_ts.timestamp()))
+        _eq_pct.append(_running_pct)
+
     # Verdict
     failed_criteria: list[str] = []
     t1 = nan_safe(metrics["t1_sharpe_oos"])
@@ -1135,6 +1147,13 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
         "warnings": warnings,
         "trades_dump": trades_dump,  # S27 audit
         "cached": False,
+        # S48 T2 (Bug B) — equity_curve parallel arrays for frontend EquityChart.
+        # Cumulative pct from initial capital. trade_markers deferred (replay path).
+        "equity_curve": {
+            "timestamps": _eq_timestamps,
+            "equity_pct": _eq_pct,
+            "trade_markers": None,
+        },
     }
 
     # S38 dashboard: warn если auto-scaled below ADR 0014 defaults
