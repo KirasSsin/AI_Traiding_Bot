@@ -102,12 +102,12 @@ export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
 
       {/* Section 2 — per-criterion breakdown — S48 T11 simplified к chip list */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>2. Применимость критериев</h3>
+        <h3 className={styles.sectionTitle}>2. Статус критериев</h3>
         <ul className={styles.criteriaList}>
           {ALL_CRITERIA.map((critId) => {
             const isFailed = failedCriteria.includes(critId)
-            const chipClass = isFailed ? styles.chipUsed : styles.chipNotUsed
-            const chipText = isFailed ? '✓ Используется' : '✗ Не используется'
+            const chipClass = isFailed ? styles.chipNotUsed : styles.chipUsed
+            const chipText = isFailed ? '✗ Провален' : '✓ Пройден'
             const glossaryLink = `?strategy=${encodeURIComponent(result.request.strategy_id)}#glossary-${critId}`
             return (
               <li key={critId} className={styles.criterionRow}>
