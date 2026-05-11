@@ -27,6 +27,20 @@ tag: v0.1.0-alpha.46
 
 **Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
 
+## Phase tracking
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1 Orient | done | Session start orient + git state verified |
+| 2 Brainstorm | done | trader-expert R1+R2, pre-s47-backlog rev 2 (16 tasks 5 buckets) |
+| 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-47-tech-debt-carryovers.md |
+| 4 Execute | done | T1-T16 16/16 all committed |
+| 5 Verify | done | pytest 1037 pass / mypy 0 / Vitest 23 / Playwright 4 / lint+tsc+build clean |
+| 6 Review | done | 9 reviewers APPROVE/AWC, 0 blockers; HIGH+MEDIUM fixes applied pre-merge |
+| 7 Sync | done | wiki sync committed (T16) — sprint-47 page + index + log + current-state |
+| 8 Ship | in_progress | PR #58 → squash-merge + tag v0.1.0-alpha.47 pending |
+| 9 Close | pending | post-merge SPRINT_STATE → between-sprints |
+
 ## Следующее действие
 
 **PHASE 5 verify** — запустить: pytest -x -q + mypy --strict src/ + Vitest + Playwright + lint+tsc+build + canonical counts verify (reason_codes=57 в ci.yml line 133). После GREEN → PHASE 6 reviewers (9: python + trading-logic + quant-stats + bybit-api + security-auditor + frontend-developer + test-engineer + data-integrity + doc) → PHASE 7 wiki sync (done — T16) → PHASE 8 ship.
