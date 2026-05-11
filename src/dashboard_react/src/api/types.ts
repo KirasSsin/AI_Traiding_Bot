@@ -183,6 +183,22 @@ export interface BacktestResponse {
   runner: string
 }
 
+// S47 T15 — Fail Analysis tab types
+export interface CriterionExplanation {
+  name: string
+  measures: string
+  formula: string
+  threshold: string
+  impact: string
+  related: string
+  gate_role: string
+}
+
+export interface StrategyExplanation {
+  preset_id: string
+  description_ru: string
+}
+
 export interface RunSummary {
   run_id: string
   cached: boolean

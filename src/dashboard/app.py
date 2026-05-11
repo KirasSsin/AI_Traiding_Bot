@@ -38,6 +38,11 @@ from src.dashboard.backtest_runner import (
     list_runs,
     run_backtest,
 )
+from src.dashboard.strategy_descriptions import get_strategy_description
+from src.dashboard.wfa_criterion_explanations import (
+    CriterionExplanation,
+    get_all_criterion_explanations,
+)
 
 _DIR = Path(__file__).resolve().parent
 
@@ -202,6 +207,19 @@ def create_app() -> FastAPI:
         Returns indicators / multipliers / strategies / methodology lists.
         """
         return get_documentation()
+
+    @app.get("/api/strategy_explanation/{preset_id}")
+    async def strategy_explanation(preset_id: str) -> dict[str, str]:
+        """S47 T15 — RU detailed strategy description for FailAnalysisTab."""
+        desc = get_strategy_description(preset_id)
+        if desc is None:
+            raise HTTPException(status_code=404, detail=f"Unknown preset: {preset_id}")
+        return {"preset_id": preset_id, "description_ru": desc}
+
+    @app.get("/api/wfa_criterion_explanations")
+    async def wfa_criterion_explanations() -> dict[str, CriterionExplanation]:
+        """S47 T15 — RU formula+threshold+impact per WFA criterion (T1-T6 + DSR + MC)."""
+        return get_all_criterion_explanations()
 
     # S47 T7 python-reviewer S46 MEDIUM — cache headers per content type.
     # /assets/* = content-hashed Vite output → immutable forever.
