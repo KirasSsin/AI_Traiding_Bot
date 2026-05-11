@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T7 done — cache headers middleware (/assets/ immutable, rest no-cache).
+updated: 2026-05-11  # S47 T8 done — Bucket B complete (SPA catch-all + cache headers + MetricsTable T5 fix).
 sprint: 47
 phase: 4-execution
 branch: feature/sprint-47-tech-debt-carryovers
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.46
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). T6 done (SPA catch-all). T7 done (cache headers middleware: `/assets/*` → `public, immutable, max-age=31536000`; index.html+API+catch-all → `no-cache, no-store, must-revalidate`; mypy strict clean, 4/4 headers verified). 9 tasks remaining.
+**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8): T6 SPA catch-all, T7 cache headers middleware, T8 MetricsTable T5 vanilla bug fix (undefined → FAIL, 7/7 tests pass). 8 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-T8: MetricsTable T5 vanilla bug parity cleanup (sonnet) — Bucket B task 3.
+T9: M1 retCode taxonomy extension (sonnet) — Bucket C task 1.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
