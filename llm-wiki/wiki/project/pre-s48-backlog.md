@@ -133,6 +133,36 @@ Operator request: каждая запись в HistoryTab → click → expand �
 
 **Fix scope:** medium-large (6-8 задач)
 
+### Bug I — Соблюдение языкового паттерна в чате с оператором (NEW 2026-05-11)
+
+Согласно `CLAUDE.md` "Language rules (BINDING — пересмотрено 2026-05-09)":
+
+| Канал | Язык |
+|---|---|
+| Чат с оператором (responses, questions, sprint reports) | **Русский** |
+
+Технические термины (file paths, code blocks, error strings, command names, library names) — оставлять как есть без перевода ВНУТРИ русского текста.
+
+**Нарушение зафиксировано 2026-05-11 в брейнштормe S48:** ассистент писал смешанный текст с английскими словами вместо русских эквивалентов даже там, где это не технические термины:
+
+Anti-пример (моё сообщение оператору во время S48 brainstorm):
+- "Bucket A" → должно быть "Блок A" / "Группа задач A"
+- "scope" → "объём" / "охват"
+- "tasks" → "задачи"
+- "Recommended" → "Рекомендация"
+- "concern" → "замечание"
+- "blocker" → "блокер" (можно оставить — устоявшийся термин) ИЛИ "блокирующая проблема"
+- "verdict" → "вердикт" (можно оставить — закрепился в проекте)
+- "ROUND 2 BINDING" → "РАУНД 2 (обязательный)"
+
+Технические термины оставить:
+- `MetricsTable.tsx`, `wfa_criterion_explanations.py`, ADR номера, имена функций, exit codes
+- Канонические термины проекта: ADR, PHASE, BLOCKER, WFA, DSR, MC
+
+**Задача:** добавить в `CLAUDE.md` явный список запрещённых англицизмов + русских эквивалентов. Использовать сообщение выше как anti-пример в anti-patterns секции.
+
+**Fix scope:** маленькая (1 задача — обновить CLAUDE.md языковую секцию + добавить в anti-patterns)
+
 ## Carry-overs from S47 PHASE 6 (deferred to S48)
 
 - Vitest tests #4 (computeMonthlyData property) + #5 (VerdictPanel mapping)
