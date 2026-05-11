@@ -28,6 +28,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from src.dashboard.account_service import get_account_balance
 from src.dashboard.backtest_runner import (
     INTERVAL_LABELS,
     STRATEGY_PRESETS,
@@ -220,6 +221,11 @@ def create_app() -> FastAPI:
     async def wfa_criterion_explanations() -> dict[str, CriterionExplanation]:
         """S47 T15 — RU formula+threshold+impact per WFA criterion (T1-T6 + DSR + MC)."""
         return get_all_criterion_explanations()
+
+    @app.get("/api/bybit/balance")
+    async def bybit_balance() -> dict[str, Any]:
+        """S48 T4 — fetch current Bybit account balance (via account_service wrapper)."""
+        return get_account_balance()
 
     # S47 T7 python-reviewer S46 MEDIUM — cache headers per content type.
     # /assets/* = content-hashed Vite output → immutable forever.
