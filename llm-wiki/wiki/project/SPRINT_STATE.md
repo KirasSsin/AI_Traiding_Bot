@@ -1,16 +1,22 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 PHASE 4-EXECUTION COMPLETE (16/16) → PHASE 5-VERIFY
+updated: 2026-05-11  # S47 SHIPPED — squash-merge `116f789` + tag v0.1.0-alpha.47 → between-sprints
 sprint: 47
-phase: 5-verify
-branch: feature/sprint-47-tech-debt-carryovers
-tag: v0.1.0-alpha.46
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.47
 ---
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution COMPLETE (16/16). PHASE 5-VERIFY in progress.** Все 5 бакетов DONE: Bucket A (T1-T5 Vitest+RTL infra + 3 unit tests + E2E activate) + Bucket B (T6-T8 SPA catch-all + cache headers + MetricsTable T5 fix) + Bucket C (T9-T11 M1+M2+M3 bybit-api) + Bucket D (T12 DSR property + n_trials + sprint type trio) + Bucket E (T13 trade_stats bug + T14 cursor tooltip + T15 FailAnalysisTab). **T16 DONE (wiki sync: sprint-47 page + index + log + current-state counts 56→57 + 50→51 sprint pages).**
+**Sprint 47 SHIPPED** — squash-merge `116f789`, tag `v0.1.0-alpha.47`. Branch `feature/sprint-47-tech-debt-carryovers` deleted. Phase = between-sprints.
+
+**S47 deliverables (16/16):** Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate / SPA catch-all + cache headers + MetricsTable T5 fix / M1+M2+M3 bybit-api + DSR/n_trials/sprint trio / trade_stats research bug + EquityChart cursor tooltip + FailAnalysisTab RU narrative
+
+**PHASE 6 (9 reviewers):** all APPROVE/AWC, 0 blockers. 5 pre-merge fixes applied (T5 UI threshold ≥100→≥50 / T1+T2 annualization note / T5 n_eff / FailAnalysisTab XSS sweep / strategy_metrics docstring).
+
+**Honest accuracy:** 6 actual presets / T1-T6 informational / T5_FLOOR=50 (S34 ADR 0052) / MC p=0.05 / DSR Pearson kurtosis / 2 parallel ReasonCode enums clarified — main 56 unchanged, bybit-local +1 INVALID_PARAM
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -23,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 **Brainstorm trail:** trader-expert ROUND 1+2 done. Q3+Q5 CONFIRM_REVISE → defer к S48 / mainnet ADR. Q1/Q2/Q4/Q6 CONFIRM. Q7 (operator UI validation) = APPROVED + 3 items surfaced (T14 BUG, T15 cursor, T16 fail analysis tab).
 
-**Canonical counts (post-S47):** 16 states / 30 events / 74 transitions / **57** reason_codes (+1 INVALID_PARAM T9) / 66 ADRs / **51** sprint pages / 48 components
+**Canonical counts (post-S47):** 16 states / 30 events / 74 transitions / **56** reason_codes UNCHANGED (T9 added INVALID_PARAM к bybit-local enum, не main) / 66 ADRs / **51** sprint pages / 48 components
 
 **Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
 
@@ -38,12 +44,12 @@ tag: v0.1.0-alpha.46
 | 5 Verify | done | pytest 1037 pass / mypy 0 / Vitest 23 / Playwright 4 / lint+tsc+build clean |
 | 6 Review | done | 9 reviewers APPROVE/AWC, 0 blockers; HIGH+MEDIUM fixes applied pre-merge |
 | 7 Sync | done | wiki sync committed (T16) — sprint-47 page + index + log + current-state |
-| 8 Ship | in_progress | PR #58 → squash-merge + tag v0.1.0-alpha.47 pending |
-| 9 Close | pending | post-merge SPRINT_STATE → between-sprints |
+| 8 Ship | done | PR #58 squash-merge `116f789` + tag v0.1.0-alpha.47 pushed |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
 
 ## Следующее действие
 
-**PHASE 5 verify** — запустить: pytest -x -q + mypy --strict src/ + Vitest + Playwright + lint+tsc+build + canonical counts verify (reason_codes=57 в ci.yml line 133). После GREEN → PHASE 6 reviewers (9: python + trading-logic + quant-stats + bybit-api + security-auditor + frontend-developer + test-engineer + data-integrity + doc) → PHASE 7 wiki sync (done — T16) → PHASE 8 ship.
+S48 brainstorm — NEW strategies (Path B rejoin per operator pivot 2026-05-11). Trigger: operator says "S48" / "новая стратегия" / `brainstorm-init` skill.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 

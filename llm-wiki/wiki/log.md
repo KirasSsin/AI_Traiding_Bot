@@ -2706,3 +2706,17 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Carry к S48:** **NEW STRATEGIES (Path B rejoin per operator pivot 2026-05-11)** — основной фокус S48 / Vitest tests #4-#5 / A11y polish (tablist ARIA + contrast) / README npm install note / F8 block_size constant unification / MonthlyHeatmap eslint cleanup / Item #7+#10 long-standing tech debt
 - **Permanently deferred:** Honest close code piece (preset disabled flag + 422) DROPPED per operator pivot; M4 `__repr__` security redaction defer к mainnet ADR; 12mo MAINNET-promotion ADR карry к S49+; Live trade feed widget YAGNI
 - **Honest documentation accuracy** (T15 cross-references): 6 presets actual / T1-T6 informational per ADR 0014 / T5_FLOOR=50 (S34 ADR 0052) / MC p=0.05 (S34 ADR 0052) / DSR Pearson kurtosis (fisher=False)
+
+## [2026-05-11] ship | S47 SHIPPED — squash-merge + tag
+
+- **PR #58** squash-merged → `116f789` Sprint 47 tech debt + S46 carry-overs + UI bugs
+- **Tag** `v0.1.0-alpha.47` pushed к origin
+- **Branch** `feature/sprint-47-tech-debt-carryovers` deleted (post-merge cleanup)
+- **PHASE 5 verify GREEN:** pytest 1037 pass / mypy --strict 87 files 0 issues / Vitest 23 / Playwright 4 / lint+tsc+build clean
+- **PHASE 6 reviewers (9):** all APPROVE/APPROVE_WITH_CONCERNS, 0 BLOCKERS
+  - python APPROVE / frontend-developer AWC (XSS sweep applied) / security M1-M3 AWC / trading-logic AWC (T5 threshold fix applied) / quant-stats CRITICAL AWC (2 HIGH + 1 MEDIUM applied) / bybit-api AWC / test-engineer APPROVE / data-integrity AWC / doc APPROVE
+- **5 pre-merge fixes (commit `cf53c46`):** T5 UI threshold ≥100→≥50 (ADR 0052 alignment) + T1/T2 annualization clarifying note + T5 narrative n_eff threshold + FailAnalysisTab XSS sweep (dangerouslySetInnerHTML → safe React renderer) + strategy_metrics.py docstring T5=50
+- **CI fixups:** wiki broken-link slugs (commit `400119e`) + canonical counts revert 57→56 после discovery 2 parallel ReasonCode enums (commit `2c1b90b`) + Phase tracking table для phase-advance.sh hook (commit `55d3f97`)
+- **Discovery:** 2 parallel `ReasonCode` StrEnums — main `src/risk/reason_codes.py` (56 unchanged) + bybit-local `src/execution/bybit/errors.py` (+1 INVALID_PARAM от T9). Architecture intent = bybit-local extension (test imports from bybit.errors). Wiki narrative inaccuracy в sprint-47 page (lines 71+93+148) → S48 cleanup carry.
+- **Total commits на ветке:** ~50
+- **Carry-overs S48 (final list):** **NEW STRATEGIES (Path B rejoin per operator pivot)** primary focus / Vitest tests #4 (computeMonthlyData) + #5 (VerdictPanel mapping) / A11y polish (tablist ARIA + contrast) / README npm install note / F8 block_size constant unification / MonthlyHeatmap eslint cleanup / Item #7+#10 long-standing tech debt / color tokens consolidation (#ff3366/#00ff88/#ffaa00) / BacktestResponse.metrics typing tighten / mean_reversion S15/S17 LONG-only clarification / BybitAdapterError structured context / empty trades_list test pin / FailAnalysisTab+VerdictPanel RTL render tests / wiki narrative cleanup (ReasonCode attribution)
