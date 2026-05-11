@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/api/client'
 import type { RunSummary, Verdict } from '@/api/types'
-import { WfaFailBadge } from './WfaFailBadge'
+import { WfaFailBadge } from '../shared/WfaFailBadge'
 import styles from './HistoryTab.module.css'
 
 // ─── helpers ─────────────────────────────────────────────────────────────
