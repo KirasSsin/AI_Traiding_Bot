@@ -7,6 +7,25 @@ afterEach(() => {
   cleanup()
 })
 
+// uPlot вызывает matchMedia при module-load (setPxRatio). jsdom не реализует matchMedia.
+// Stub достаточен для unit-тестов pure functions из DrawdownSubchart.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: (_query: string) => ({
+      matches: false,
+      media: _query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  })
+}
+
 // jsdom localStorage может отсутствовать ИЛИ быть broken stub — всегда install свой polyfill
 if (typeof window !== 'undefined') {
   const hasWorkingStorage =

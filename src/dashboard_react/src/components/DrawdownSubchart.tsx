@@ -6,6 +6,7 @@ import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 import type { EquityCurve } from '@/api/types'
 import styles from './DrawdownSubchart.module.css'
+import { computeDrawdown } from '@/utils/computeDrawdown'
 
 export interface DrawdownSubchartProps {
   equityCurve: EquityCurve
@@ -13,23 +14,6 @@ export interface DrawdownSubchartProps {
   syncKey?: string
   /** Chart height in pixels (default 140 — smaller than main equity chart) */
   height?: number
-}
-
-/**
- * Converts cumulative equity_pct series to drawdown percent series.
- * Drawdown is always <= 0 (0 = at peak, negative = below peak).
- */
-function computeDrawdown(equityPct: number[]): number[] {
-  const result = new Array<number>(equityPct.length)
-  let peak = -Infinity
-  for (let i = 0; i < equityPct.length; i++) {
-    // Convert cumulative % to multiplier: e.g. 12 → 1.12
-    const v = (equityPct[i] ?? 0) / 100 + 1
-    if (v > peak) peak = v
-    // Drawdown as negative percent: (current - peak) / peak * 100
-    result[i] = peak > 0 ? ((v - peak) / peak) * 100 : 0
-  }
-  return result
 }
 
 function buildSeries(): uPlot.Series[] {
