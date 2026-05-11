@@ -44,51 +44,58 @@
   font-weight: 600;
 }
 
-.criterionCard {
-  background: rgba(10, 10, 10, 0.40);
-  border: 1px solid rgba(255, 51, 102, 0.20);
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.criterionName {
-  color: #ff3366;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 12px;
+/* S48 T11 — chip list для simplified criteria display */
+.criteriaList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .criterionRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(156, 163, 175, 0.10);
+}
+
+.criterionName {
   color: var(--color-text-primary);
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  line-height: 1.5;
-  margin-bottom: 8px;
 }
 
-.criterionRow strong {
-  color: var(--color-anthropic-orange);
-  font-weight: 600;
-}
-
-.formula {
-  background: rgba(0, 0, 0, 0.50);
-  color: var(--color-text-primary);
+.chipUsed {
+  color: #00ff88;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  padding: 8px 12px;
+  padding: 2px 8px;
+  border: 1px solid rgba(0, 255, 136, 0.30);
   border-radius: 4px;
-  margin-top: 4px;
-  white-space: pre-wrap;
-  border-left: 2px solid var(--color-anthropic-orange);
+  background: rgba(0, 255, 136, 0.08);
 }
 
-.actualValue {
-  color: #ff3366;
+.chipNotUsed {
+  color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid rgba(156, 163, 175, 0.30);
+  border-radius: 4px;
+  background: rgba(156, 163, 175, 0.08);
+  opacity: 0.7;
+}
+
+.glossaryLink {
+  color: var(--color-anthropic-orange);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.glossaryLink:hover {
+  text-decoration: underline;
 }
 
 .foldsTable {
@@ -130,9 +137,3 @@
   color: #ff3366;
 }
 
-.criterionUnknown {
-  color: #ffaa00;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  padding: 8px;
-}
