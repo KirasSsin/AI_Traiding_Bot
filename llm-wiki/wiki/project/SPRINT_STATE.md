@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T2 done — computeDrawdown property tests via fast-check (7 pass). computeDrawdown extracted к src/utils/. matchMedia stub added к setupTests.
+updated: 2026-05-11  # S47 T3 done — useWfaFailAck hook unit tests (7 pass). localStorage state machine: init/ack/same-day-dedup/reset/persist/hydrate/malformed.
 sprint: 47
 phase: 4-execution
 branch: feature/sprint-47-tech-debt-carryovers
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.46
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — T1 done (Vitest+RTL infra), T2 done (computeDrawdown 7 fast-check property tests pass). 14 tasks remaining.
+**Sprint 47 PHASE 4 execution IN PROGRESS** — T1 done (Vitest+RTL infra), T2 done (computeDrawdown 7 fast-check property tests pass), T3 done (useWfaFailAck hook 7 unit tests pass). 13 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-T3: useWfaFailAck hook unit tests (sonnet) — next unit test consuming Vitest infra.
+T4: MetricsTable threshold tests (sonnet) — third unit test consuming Vitest infra.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
