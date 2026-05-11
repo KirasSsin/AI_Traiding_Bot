@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 PHASE 2 brainstorm complete (16 tasks locked, pre-s47-backlog rev 2 c1cbea2 + T16 expand 966309e); operator pivot — S48=NEW strategies (Path B rejoin), honest close DROPPED → PHASE 3 plan write
+updated: 2026-05-11  # S47 T1 done — Vitest + RTL infra (config + setupTests + smoke 2/2 pass + CI step). Frontend unit-test layer ready for T2/T3/T4.
 sprint: 47
-phase: 3-planning
-branch: main
+phase: 4-execution
+branch: feature/sprint-47-tech-debt-carryovers
 tag: v0.1.0-alpha.46
 ---
 
 ## Текущий статус
 
-**Sprint 47 PHASE 2 brainstorm COMPLETE** → PHASE 3 plan write next.
+**Sprint 47 PHASE 4 execution IN PROGRESS** — T1 done (Vitest+RTL infra). 15 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-PHASE 3 plan write — invoke `superpowers:writing-plans` skill для S47 (16 tasks locked per `pre-s47-backlog.md` rev 2). После plan saved → auto-invoke `superpowers:subagent-driven-development` (per kit override S45).
+T2: computeDrawdown property tests via fast-check (sonnet) — first unit test consuming new Vitest infra.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
