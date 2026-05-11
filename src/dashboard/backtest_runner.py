@@ -1134,6 +1134,10 @@ def run_backtest(req: BacktestRequest, *, force: bool = False) -> dict[str, Any]
             "avg_loss_quote": avg_loss_quote,
             "profit_factor": profit_factor,
             "total_pnl_quote": total_pnl,
+            # S48 T7 (Bug H prereq) — win_rate + balance fields для HistoryTab expand
+            "win_rate": t4_win,
+            "initial_balance_quote": 10000.0,
+            "final_balance_quote": 10000.0 * (1.0 + _running_pct / 100.0),
         },
         "fold_sharpe_ratios": sym_fold_sharpes,
         "failed_folds": gate.get("failed_folds", []),
