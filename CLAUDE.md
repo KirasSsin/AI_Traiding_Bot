@@ -176,6 +176,18 @@ System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' fro
 - NEVER bare `python` / `python3` — fails or returns wrong-Python results.
 - When dispatching subagent that may run Python — explicitly include venv path in brief.
 
+**Recurring violations 2026-05-11:** S47 retro showed multiple `python -c "import yaml..."` calls failing с `command not found: python` exit 127. Pattern fix:
+
+| ❌ DON'T | ✓ DO |
+|---|---|
+| `python -c "..."` | `.venv/bin/python -c "..."` |
+| `python -m uvicorn ...` | `.venv/bin/uvicorn ...` |
+| `pytest ...` | `.venv/bin/pytest ...` |
+| `mypy ...` | `.venv/bin/mypy ...` |
+| `ruff ...` | `.venv/bin/ruff ...` |
+
+Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; ..."` OR use `python3` which IS available на macOS (system Python 3.9, не для project code, OK для stdlib-only checks like yaml/json/regex). Rule: stdlib-only validation → `python3` OK; project code import → MUST `.venv/bin/python`.
+
 ## Language rules (BINDING — пересмотрено 2026-05-09)
 
 | Канал | Язык | Rationale |
@@ -247,6 +259,7 @@ Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` 
 | **Hook bash quirk** | `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails. | push fails → debug cycle |
 | **Uvicorn port collision** | Kill leftover process before `--port 8000 &` start (S47 lesson). | kill + restart retry |
 | **Pre-commit ruff retry** | ruff --fix modifies but doesn't re-stage. First commit fails, second succeeds. Expected 1-retry pattern. | 1 extra commit attempt |
+| **Bare `python` exit 127** | `python` command не на PATH macOS (только `python3` system OR `.venv/bin/python` venv). For project code → ALWAYS `.venv/bin/python`. For stdlib-only check (yaml/json) → `python3` OK. NEVER bare `python`. | command not found retry |
 
 **Uvicorn background test pattern (S47 lesson — port collision):**
 ```bash
