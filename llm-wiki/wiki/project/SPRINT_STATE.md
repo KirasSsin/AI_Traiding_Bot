@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 SHIPPED — squash-merge `116f789` + tag v0.1.0-alpha.47 → between-sprints
-sprint: 47
-phase: between-sprints
+updated: 2026-05-11  # S48 PHASE 2 brainstorm done → PHASE 3 plan write. Roadmap: S48 UI Overhaul / S49 косметика+carry / S50 NEW strategies
+sprint: 48
+phase: 3-planning
 branch: main
 tag: v0.1.0-alpha.47
 ---
@@ -49,7 +49,7 @@ tag: v0.1.0-alpha.47
 
 ## Следующее действие
 
-S48 brainstorm — NEW strategies (Path B rejoin per operator pivot 2026-05-11). Trigger: operator says "S48" / "новая стратегия" / `brainstorm-init` skill.
+S48 PHASE 3 — написать план под `pre-s48-backlog.md` v3 (~22 задачи: 9 жалоб + Bybit balance + Glossary вкладка). Pre-plan dispatch: architecture-reviewer + frontend-developer pre-design валидация ДО plan lock per operator binding.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
@@ -66,23 +66,49 @@ S48 brainstorm — NEW strategies (Path B rejoin per operator pivot 2026-05-11).
 
 **Reviewers PHASE 6:** python + trading-logic + quant-stats + bybit-api + security-auditor (M1-M3 only) + frontend-developer + test-engineer + data-integrity + doc.
 
-### S48 — NEW STRATEGIES (Path B rejoin — operator pivot 2026-05-11)
+### S48 — UI Overhaul (9 жалоб + Bybit balance + Glossary вкладка)
 
-Original S48 = honest close finalize + ADR 0067. **PIVOT 2026-05-11:** operator explicit "через один [S48] будем делать новые стратегии". Path B (new strategies) was excluded 2026-05-10, **rejoin 2026-05-11**.
+**Operator pivot REVISED 2026-05-11 evening:** S48 = UI Overhaul (was NEW strategies). NEW strategies → S50.
 
-**Implications:**
-- Honest close ADR 0067 (formal portfolio close) — DROPPED. Operator informed via S46 UI piece (badges + ack-gated banner) уже sufficient. Если новая стратегия WFA_PASS → honest UI organically lose relevance.
-- v0.1 wrap-up semver — keep `alpha.N` indefinitely (Q6 verdict stands). No bump к v0.1.0 ждёт actual WFA_PASS preset.
+**Содержимое S48 (~22 задачи) per `pre-s48-backlog.md` v3:**
+- Bug A: tooltip знак + динамический баланс USDT
+- Bug B: chart на ВСЕХ стратегиях (extend replay engine equity_curve)
+- Bug C: Bybit balance fetch (real account, не фиксированные $10000)
+- Bug D: informational vs gate-blocking distinction в MetricsTable
+- Bug E: НОВАЯ Glossary вкладка с RU расшифровкой всех аббревиатур + dynamic per-strategy
+- Bug F: упростить FailAnalysisTab к "used / not used" (детали в Glossary)
+- Bug G: убрать misleading треугольник в DocumentationTab
+- Bug H: HistoryTab per-row expand с balance/winrate/PnL + RU summary
+- Bug I: enforce RU language pattern в чате с operator
 
-**S48 brainstorm (TBD when S47 ships):**
+**Pre-plan validation MANDATORY:** architecture-reviewer + frontend-developer pre-design dispatch перед PHASE 3 plan lock (operator binding "плотно подключать FE + архитектора").
+
+### S49 — Косметика + S47 carry-overs + post-S48 buffer (~10-15 задач)
+
+**Operator decision 2026-05-11 evening:** S49 = маленький полировочный спринт. Operator посмотрит результат S48, добавит что не понравится в S49.
+
+- Цвета вынести в дизайн-токены (`--color-status-fail/pass/warn`)
+- Шрифты + spacing scale унификация
+- Empty/loading/error states
+- A11y minimum (контраст + tablist ARIA)
+- Vitest тесты #4 (computeMonthlyData) + #5 (VerdictPanel)
+- README npm install note
+- F8/Item #7/Item #10 long-standing tech debt
+- MonthlyHeatmap eslint cleanup
+- BacktestResponse.metrics typing tighten
+- mean_reversion S15/S17 LONG-only clarification
+- BybitAdapterError structured context
+- FailAnalysisTab + VerdictPanel RTL render tests
+- Wiki narrative cleanup
+- + что operator/maintainer добавит после оператор test S48
+
+### S50 — NEW STRATEGIES (Path B activation, deferred 2 sprints)
+
+**S50 brainstorm (TBD после S49 ships):**
 - Strategy direction (mean-reversion / trend / momentum / volatility / multi-asset / ML-augmented)
 - Symbol scope (BTC only / multi-symbol)
 - Timeframe (existing 4H/D OR new 5m/15m/1h)
 - Acceptance criteria (re-use ADR 0014 WFA gates OR adjust)
-
-### S49+ — TBD
-
-Operator: "Я не знаю, что там делать". Depends на S48 outcome (если new strategy WFA_PASS → mainnet prep ADR; если FAIL → another iteration OR pivot).
 
 ### Permanently deferred (no clear sprint owner)
 

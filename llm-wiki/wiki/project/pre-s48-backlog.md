@@ -185,7 +185,7 @@ Anti-пример (моё сообщение оператору во время 
 
 **Fix scope:** маленькая (1 задача — обновить CLAUDE.md языковую секцию + добавить в anti-patterns)
 
-## Carry-overs from S47 PHASE 6 (deferred to S48)
+## Carry-overs from S47 PHASE 6 (deferred к S49 per split decision)
 
 - Vitest tests #4 (computeMonthlyData property) + #5 (VerdictPanel mapping)
 - README npm install note
@@ -202,23 +202,24 @@ Anti-пример (моё сообщение оператору во время 
 - Wiki narrative cleanup (sprint-47 page lines 71+93+148 ReasonCode attribution)
 - onChartReady deprecation comment
 
-## S48 scope estimate
+## S48 scope estimate (FINAL — split decision applied)
 
-| Bucket | Items | Tasks |
+| Блок | Содержимое | Задачи |
 |---|---|---|
-| **A** Critical bugs | F (FailAnalysisTab ID broken) + B (chart coverage) + G (Doc collapse) + H (History expand) | 7-8 |
-| **B** UX bugs | A (tooltip sign) + C (initial/final balance) + D (informational distinction) + E (warnings expand) | 8-10 |
-| **C** UI/UX redesign | hierarchy / colors / a11y / mobile / typography / states | 6-8 |
-| **D** S47 carry-overs | tests / typing / cleanup | 4-5 |
-| **TOTAL** | | **25-31 tasks** |
+| **A** Критические функциональные баги | F (FailAnalysisTab упрощение к used/not used) + B (chart на всех стратегиях) + G (убрать треугольник) + H (HistoryTab expand с balance/winrate/PnL) | 6-8 |
+| **B** UX баги | A (tooltip знак + динамический баланс) + C (Bybit balance integration) + D (informational vs gate-blocking) + I (RU language enforcement) | 9-11 |
+| **C** Glossary вкладка (НОВАЯ — расширение Bug E) | Новая страница + backend dict + dynamic per-strategy filter + frontend GlossaryTab | 5-6 |
+| **TOTAL S48** | | **~20-25 задач** |
 
-**Big sprint.** Could split к S48 (Bucket A+B critical) + S49 mini (Bucket C+D polish), но operator preference unknown. Discuss в brainstorm.
+Косметика + a11y minimum + S47 carry-overs → **S49** (operator buffer).
 
-## Roadmap (locked 2026-05-11 evening)
+## Roadmap (FINAL 2026-05-11 evening — operator decision split S48+S49+S50)
 
-- **S48** = UI Overhaul + bug fixes (this backlog)
-- **S49** = NEW strategies (Path B activation, deferred 1 sprint от prior pivot)
-- **S50+** = TBD (depends на S49 outcome)
+- **S48** = 9 жалоб оператора + Bybit balance integration + НОВАЯ Glossary вкладка (~22 задачи)
+- **S49** = косметика (цвета/шрифты/spacing/states/a11y minimum) + S47 carry-overs + что добавится после оператора test S48 (гибкий буфер ~10-15 задач)
+- **S50** = NEW strategies (Path B activation, deferred 2 sprints от первоначального pivot)
+
+Operator binding: "S49 оставить маленьким, я посмотрю результат S48, добавлю если что-то будет".
 
 ## Brainstorm questions for trader-expert (PHASE 2 trigger)
 
