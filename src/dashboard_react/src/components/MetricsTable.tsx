@@ -148,13 +148,15 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
   const t3Status =
     t3 === null || t3 === undefined || t3 >= 0.25 ? 'FAIL' : 'PASS'
 
-  // T5 n trades — vanilla parity: undefined < 100 = false → PASS (sic). Match exactly.
+  // T5 n trades — S47 T8 fix: missing OR < 100 → FAIL.
+  // Vanilla bug: undefined < 100 = false → PASS (wrong). Bailey 2014 requires ≥ 100 trades
+  // for DSR statistical significance — undefined value cannot satisfy that requirement.
   const t5nCls =
-    t5n !== null && t5n !== undefined && t5n < 100
-      ? styles.metricFail ?? ''
-      : styles.metricPass ?? ''
+    t5n !== null && t5n !== undefined && t5n >= 100
+      ? styles.metricPass ?? ''
+      : styles.metricFail ?? ''
   const t5nStatus =
-    t5n !== null && t5n !== undefined && t5n < 100 ? 'FAIL' : 'PASS'
+    t5n !== null && t5n !== undefined && t5n >= 100 ? 'PASS' : 'FAIL'
 
   // T5 mean PnL — null OR <=0 → FAIL
   const t5MeanCls =

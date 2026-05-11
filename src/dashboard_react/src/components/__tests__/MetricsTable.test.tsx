@@ -190,4 +190,17 @@ describe('MetricsTable — WFA path Bailey 2014 thresholds (per ADR 0014)', () =
     const mcRowPass = screen.getByText(/MC · p-value/i).closest('tr')
     expect(mcRowPass!.textContent).toMatch(/PASS/i)
   })
+
+  it('T5 trade count: undefined → FAIL (S47 T8 fix; vanilla bug — used to render PASS)', () => {
+    const r = {
+      ...baseResponse,
+      verdict: 'WFA_FAIL',
+      metrics: {},  // t5_n_trades missing entirely
+      dsr: 0.5, dsr_pass: true, mc_p_value: 0.04,
+    } as unknown as BacktestResponse
+    render(<MetricsTable result={r} />)
+    const t5Row = screen.getByText(/T5 · Trade count \(n\)/i).closest('tr')
+    expect(t5Row!.textContent).toMatch(/—/)
+    expect(t5Row!.textContent).toMatch(/FAIL/i)  // NOT PASS (vanilla bug fixed)
+  })
 })
