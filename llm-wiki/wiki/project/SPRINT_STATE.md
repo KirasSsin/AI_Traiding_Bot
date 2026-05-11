@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T12 done — Bucket D complete (DSR property + n_trials + sprint type trio)
+updated: 2026-05-11  # S47 T13 done — trade_stats empty values bug fix (research preset WFA path)
 sprint: 47
 phase: 4-execution
 branch: feature/sprint-47-tech-debt-carryovers
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.46
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8). Bucket C COMPLETE: T9 DONE (M1 retCode taxonomy), T10 DONE (M2 dict guards), T11 DONE (M3 WS isinstance guard). Bucket D COMPLETE: T12 DONE (DSR property + n_trials >=1 validation в src/analytics/dsr.py + sprint type — 5 tests, mypy strict 0 errors). 3 tasks remaining (Bucket E).
+**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8). Bucket C COMPLETE: T9 DONE (M1 retCode taxonomy), T10 DONE (M2 dict guards), T11 DONE (M3 WS isinstance guard). Bucket D COMPLETE: T12 DONE (DSR property + n_trials >=1 validation в src/analytics/dsr.py + sprint type — 5 tests, mypy strict 0 errors). Bucket E IN PROGRESS: T13 DONE (trade_stats empty values — research path envelope enriched + fmtUsdtCell — 15 tests, mypy 0, frontend build clean). 2 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-T13/T14: trade_stats empty bug fix — Bucket E (sonnet, next task).
+T14: EquityChart cursor crosshair tooltip (sonnet, next task in Bucket E).
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
