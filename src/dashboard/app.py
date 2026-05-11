@@ -18,11 +18,15 @@ from __future__ import annotations
 
 import webbrowser
 from pathlib import Path
+from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from src.dashboard.backtest_runner import (
     INTERVAL_LABELS,
@@ -198,6 +202,23 @@ def create_app() -> FastAPI:
         Returns indicators / multipliers / strategies / methodology lists.
         """
         return get_documentation()
+
+    # S47 T7 python-reviewer S46 MEDIUM — cache headers per content type.
+    # /assets/* = content-hashed Vite output → immutable forever.
+    # index.html / /api/* / SPA catch-all → no-cache (dynamic; references new hashes per build).
+    class _CacheControlMiddleware(BaseHTTPMiddleware):
+        """Set cache headers per content type."""
+
+        async def dispatch(self, request: Request, call_next: Any) -> Response:
+            response: Response = await call_next(request)
+            path = request.url.path
+            if path.startswith("/assets/"):
+                response.headers["Cache-Control"] = "public, immutable, max-age=31536000"
+            else:
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            return response
+
+    app.add_middleware(_CacheControlMiddleware)
 
     # S47 T6 architect MEDIUM (S46 followup) — SPA catch-all для client-side routing.
     # Mount order: ALL /api/* + /assets/* MUST be registered BEFORE this catch-all.
