@@ -6,9 +6,9 @@ created: 2026-05-11
 updated: 2026-05-11
 status: completed
 sources:
-  - llm-wiki/wiki/project/decisions/0014-walk-forward-acceptance-gates.md
+  - llm-wiki/wiki/project/decisions/0014-walk-forward-train2000-test500.md
   - llm-wiki/wiki/project/decisions/0017-review-agent-harness.md
-  - llm-wiki/wiki/project/decisions/0056-dsr-sigma-sourcing.md
+  - llm-wiki/wiki/project/decisions/0056-sprint-36-dsr-sigma-sr-amendment.md
   - llm-wiki/wiki/project/plans/2026-05-11-sprint-47-tech-debt-carryovers.md
   - llm-wiki/wiki/project/pre-s47-backlog.md
 ---
@@ -23,8 +23,8 @@ sources:
 
 - Plan: [[../plans/2026-05-11-sprint-47-tech-debt-carryovers]]
 - Backlog (PHASE 2): [[../pre-s47-backlog]]
-- ADR 0014 (acceptance gates): [[../decisions/0014-walk-forward-acceptance-gates]]
-- ADR 0056 (DSR sigma sourcing): [[../decisions/0056-dsr-sigma-sourcing]]
+- ADR 0014 (acceptance gates): [[../decisions/0014-walk-forward-train2000-test500]]
+- ADR 0056 (DSR sigma sourcing): [[../decisions/0056-sprint-36-dsr-sigma-sr-amendment]]
 - ADR 0017 (review-agent harness): [[../decisions/0017-review-agent-harness]]
 - Предыдущий спринт: [[sprint-46-react-migration]]
 
@@ -183,8 +183,8 @@ Crosshair при наведении на график показывает float
 
 - [[../plans/2026-05-11-sprint-47-tech-debt-carryovers]] — implementation plan (16 tasks)
 - [[../pre-s47-backlog]] — PHASE 2 brainstorm trail + operator binding decisions
-- [[../decisions/0014-walk-forward-acceptance-gates]] — ADR 0014 acceptance gates (T5_FLOOR / MC p / OOS/IS)
-- [[../decisions/0056-dsr-sigma-sourcing]] — ADR 0056 DSR sigma sourcing (thresholds INSUFFICIENT/UNDERPOWERED/GATE_ELIGIBLE)
+- [[../decisions/0014-walk-forward-train2000-test500]] — ADR 0014 acceptance gates (T5_FLOOR / MC p / OOS/IS)
+- [[../decisions/0056-sprint-36-dsr-sigma-sr-amendment]] — ADR 0056 DSR sigma sourcing (thresholds INSUFFICIENT/UNDERPOWERED/GATE_ELIGIBLE)
 - [[../decisions/0017-review-agent-harness]] — ADR 0017 review-agent harness (9 PHASE 6 reviewers)
 - [[../decisions/0066-sprint-46-react-migration]] — S46 ADR (React migration — carry-overs источник)
 - [[sprint-46-react-migration]] — предыдущий спринт
