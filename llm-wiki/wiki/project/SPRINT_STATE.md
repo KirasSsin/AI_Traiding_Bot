@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T1 done — Vitest + RTL infra (config + setupTests + smoke 2/2 pass + CI step). Frontend unit-test layer ready for T2/T3/T4.
+updated: 2026-05-11  # S47 T2 done — computeDrawdown property tests via fast-check (7 pass). computeDrawdown extracted к src/utils/. matchMedia stub added к setupTests.
 sprint: 47
 phase: 4-execution
 branch: feature/sprint-47-tech-debt-carryovers
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.46
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — T1 done (Vitest+RTL infra). 15 tasks remaining.
+**Sprint 47 PHASE 4 execution IN PROGRESS** — T1 done (Vitest+RTL infra), T2 done (computeDrawdown 7 fast-check property tests pass). 14 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-T2: computeDrawdown property tests via fast-check (sonnet) — first unit test consuming new Vitest infra.
+T3: useWfaFailAck hook unit tests (sonnet) — next unit test consuming Vitest infra.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
