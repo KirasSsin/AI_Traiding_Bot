@@ -2690,3 +2690,19 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **CI fix-ups (2):** Playwright webServer `python -m uvicorn` for CI compat (`3f60a5f`); canonical counts reason_codes 50→56 baseline bump (`ee8abd6` — pre-existing drift, not S46-introduced)
 - **Total commits на ветке:** 51
 - **Carry-overs S47 (final list):** Vitest+RTL units (test-engineer priority list provided) / `backtest-flow` E2E с `page.route('/api/backtest', ...)` mock / SPA catch-all route (architect MEDIUM — нужно если React Router added) / React asset cache headers / Multiplier+Methodology card detail (T15 TODO markers) / MetricsTable T5 vanilla bug parity cleanup / Tech debt batch (F8/M1-M4/Item 7/Item 10) / Honest close code piece (preset disabled flag + 422 reject) / README npm install note / a11y polish (tablist ARIA + `--color-text-disabled` contrast)
+
+## [2026-05-11] sprint-end | S47 — Tech debt + S46 carry-overs + UI bugs
+
+- **Сценарий:** locked 16 tasks 5 buckets (Vitest+RTL infra + 3 unit tests + E2E activate + SPA catch-all + cache headers + MetricsTable T5 fix + M1+M2+M3 bybit-api + DSR/n_trials/sprint type trio + T13 trade_stats bug + T14 cursor tooltip + T15 RU FailAnalysisTab + T16 wiki sync)
+- **Frontend:** Vitest+RTL infra (vitest.config.ts + setupTests.ts с localStorage+matchMedia polyfills); 3 React unit tests (computeDrawdown property fast-check 7 / useWfaFailAck localStorage state machine 7 / MetricsTable Bailey threshold 7); EquityChart + DrawdownSubchart cursor tooltip on hover (Anthropic orange + glass-morphism); FailAnalysisTab RU detailed разбор (3 sections: strategy desc + per-criterion breakdown с formula+threshold+impact + per-fold table)
+- **Backend:** envelope trade_stats extension для research presets (vb+atr derive n_winners/n_losers from pnl signs + graceful render); 2 new endpoints (/api/strategy_explanation/{id} + /api/wfa_criterion_explanations); SPA catch-all FastAPI route + asset cache headers middleware
+- **Bybit API:** M1 retCode +1 (10001 INVALID_PARAM); M2 _safe_extract_list + _or_empty defensive helpers + BybitAdapterError NEW class; M3 WS data isinstance guard upgrade (drop→wrap+process semantics для V3 compatibility)
+- **Tests:** Vitest 23 + Playwright E2E 4 (2 backtest-flow + 2 wfa-fail-ack) activated; pytest +new (DSR property + n_trials + sprint type + envelope trade_stats research path + bybit retCode taxonomy + bybit adapter response guards 9 + WS isinstance guard 10); MetricsTable T5 vanilla bug regression test
+- **Operator UI bugs (Q7 surfaced):** T13 trade_stats `'— USDT'` render bug fixed (fmtMoney null guard); T14 cursor crosshair + balance tooltip; T15 FailAnalysisTab RU narrative (6 presets + 8 criteria — честная документация; T5_FLOOR=50 per S34 ADR 0052; MC p=0.05 per S34 ADR 0052)
+- **Canonical counts:** 16 states / 30 events / 74 transitions / **57** reason_codes (T9 +1 INVALID_PARAM) / 66 ADRs / **51** sprint pages
+- **ADRs:** unchanged 66 (нет нового ADR — S47 tech debt, не архитектурные решения)
+- **Sprint pages:** 50 → 51
+- **Tag:** v0.1.0-alpha.47 (pending PHASE 6 reviewers + PHASE 8 ship)
+- **Carry к S48:** **NEW STRATEGIES (Path B rejoin per operator pivot 2026-05-11)** — основной фокус S48 / Vitest tests #4-#5 / A11y polish (tablist ARIA + contrast) / README npm install note / F8 block_size constant unification / MonthlyHeatmap eslint cleanup / Item #7+#10 long-standing tech debt
+- **Permanently deferred:** Honest close code piece (preset disabled flag + 422) DROPPED per operator pivot; M4 `__repr__` security redaction defer к mainnet ADR; 12mo MAINNET-promotion ADR карry к S49+; Live trade feed widget YAGNI
+- **Honest documentation accuracy** (T15 cross-references): 6 presets actual / T1-T6 informational per ADR 0014 / T5_FLOOR=50 (S34 ADR 0052) / MC p=0.05 (S34 ADR 0052) / DSR Pearson kurtosis (fisher=False)
