@@ -28,6 +28,40 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(10, 10, 10, 0.50);
+  border: 1px solid rgba(156, 163, 175, 0.30);
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.searchInput:focus {
+  border-color: var(--color-anthropic-orange);
+  box-shadow: 0 0 6px rgba(204, 120, 92, 0.30);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.filterHint {
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .layout {
