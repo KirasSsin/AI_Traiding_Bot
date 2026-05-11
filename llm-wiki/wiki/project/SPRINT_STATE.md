@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S48 T12 done — DocumentationTab ▸ prefix removed (Bug G)
+updated: 2026-05-11  # S48 T13 done — HistoryTab accordion expand (Bug H)
 sprint: 48
 phase: 4-execution
 branch: feature/sprint-48-ui-overhaul
@@ -40,7 +40,7 @@ tag: v0.1.0-alpha.47
 | 1 Orient | done | Continuous session post-S47 ship |
 | 2 Brainstorm | done | trader-expert R1+R2, pre-s48-backlog v3 (24 tasks 6 buckets), pre-plan FE+architect dispatch |
 | 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
-| 4 Execute | in_progress | T1 done (`610530a` component subdirs) + T2 done (`77567d2` equity_curve) + T3 done (`c2c0e93` account_service) + T4 done (`6517088` balance endpoint) + T5 done (glossary_data.py RU dict + STRATEGY_TO_METRICS_MAP, 40 entries, 8 tests) + T6 done (`9c870c2` /api/glossary endpoint, 3 tests) + T7 done (`f564581` RunRecord balance fields + win_rate, 5 tests, 1063 pass) — **Bucket A 7/7 complete** — T8 done (`22abf0d` EquityChart 3-line tooltip + initialBalance prop, 0 ESLint/tsc errors, 23 Vitest + 4 Playwright pass) + T9 done (`252309b` equity-chart-all-presets E2E: 3 tests research/WFA/empty — 7/7 Playwright pass) — **Bucket B T8+T9 done** — T10 done (`c231c79` MetricsTable GATE-BLOCKING/INFORMATIONAL divider + opacity 0.55 + Glossary link + 2 new tests, 25/25 Vitest pass) + T11 done (`f97ba8e` FailAnalysisTab chip list + Glossary links, removes Bug F "Неизвестный критерий: t1", 25/25 Vitest + 7/7 Playwright pass) — T12 done (`7a46b36` DocumentationTab remove ▸ prefix 4 card titles) — T13-T24 (12/24 pending) |
+| 4 Execute | in_progress | T1 done (`610530a` component subdirs) + T2 done (`77567d2` equity_curve) + T3 done (`c2c0e93` account_service) + T4 done (`6517088` balance endpoint) + T5 done (glossary_data.py RU dict + STRATEGY_TO_METRICS_MAP, 40 entries, 8 tests) + T6 done (`9c870c2` /api/glossary endpoint, 3 tests) + T7 done (`f564581` RunRecord balance fields + win_rate, 5 tests, 1063 pass) — **Bucket A 7/7 complete** — T8 done (`22abf0d` EquityChart 3-line tooltip + initialBalance prop, 0 ESLint/tsc errors, 23 Vitest + 4 Playwright pass) + T9 done (`252309b` equity-chart-all-presets E2E: 3 tests research/WFA/empty — 7/7 Playwright pass) — **Bucket B T8+T9 done** — T10 done (`c231c79` MetricsTable GATE-BLOCKING/INFORMATIONAL divider + opacity 0.55 + Glossary link + 2 new tests, 25/25 Vitest pass) + T11 done (`f97ba8e` FailAnalysisTab chip list + Glossary links, removes Bug F "Неизвестный критерий: t1", 25/25 Vitest + 7/7 Playwright pass) — T12 done (`7a46b36` DocumentationTab remove ▸ prefix 4 card titles) + T13 done (`f219d32` HistoryTab accordion expand Bug H: single-open + ESC + RunDetailsPanel + renderSummary, 25 Vitest + 7 Playwright pass) — T14-T24 (11/24 pending) |
 | 5 Verify | pending | pytest + mypy + Vitest + Playwright + lint+tsc+build |
 | 6 Review | pending | 9 reviewers parallel (frontend-developer PRIMARY + architecture-reviewer C1-C5 verify + python + bybit-api + security-auditor + trading-logic + test-engineer + data-integrity + doc) |
 | 7 Sync | pending | wiki sync (T24) |
@@ -55,7 +55,7 @@ tag: v0.1.0-alpha.47
 
 ## Следующее действие
 
-S48 PHASE 4 — T13: HistoryTab accordion expand (sonnet).
+S48 PHASE 4 — T14: HistoryTab RTL tests (sonnet).
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
