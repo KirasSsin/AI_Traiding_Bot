@@ -73,6 +73,7 @@ STEP 4: Read raw + offset (full content)
 - ❌ 🆕 (S31) CLAUDE.md > 250 lines per file — bloated файл = ignored rules per best practices
 - ❌ 🆕 (S45 operator decision 2026-05-10) Asking "Subagent-Driven OR Inline Execution?" после `writing-plans` — operator всегда выбирает team. **Auto-invoke `superpowers:subagent-driven-development` БЕЗ asking** (override per `llm-wiki/CLAUDE.md` Autonomous mode overrides table). Skip только если operator EXPLICITLY says "execute inline" перед PHASE 3.
 - ❌ 🆕 (S46 operator decision 2026-05-10) Major stack/language/framework migration (e.g. vanilla→React, Python→Rust, REST→GraphQL) БЕЗ `architecture-reviewer` PRE-PLAN validation. **MANDATORY:** dispatch architecture-reviewer ДО plan lock — verdict APPROVE_WITH_CONDITIONS / REQUEST_CHANGES = binding conditions в ADR. Detail: `llm-wiki/CLAUDE.md` Pre-plan validation gates section.
+- ❌ 🆕 (S46 post-ship 2026-05-11) **Appending historical sprint sections к SPRINT_STATE.md** — file accumulated 86 KB / 1239 lines с S5-S45 history blocks → exceeded 25k Read tool limit, blocked session-start orient. **BUDGET ≤ 6 KB BINDING.** SPRINT_STATE = current sprint state + roadmap ONLY. History → `wiki/log.md` (chronological journal) + `wiki/project/sprints/sprint-NN-<slug>.md` (canonical per-sprint). PHASE 9 close: trim `Текущий статус` к concise current-sprint bullets, NEVER append "## SN SHIPPED" sections.
 
 ### Token-saver commands (per Anthropic best practices)
 
@@ -119,7 +120,7 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 
 | Файл | Роль |
 |------|------|
-| `llm-wiki/wiki/project/SPRINT_STATE.md` | Living sprint state (≤2KB) — FIRST READ |
+| `llm-wiki/wiki/project/SPRINT_STATE.md` | Living sprint state (≤6KB BINDING — current sprint + roadmap only; history → log.md + sprint-NN pages) — FIRST READ |
 | **`llm-wiki/wiki/project/architecture/kit-overview-ru.md`** | **Single source of truth gateway (S31) — 1-page TL;DR всех kit settings** |
 | `llm-wiki/CLAUDE.md` | Wiki maintainer rules + 5-layer skills hierarchy + trigger cascade |
 | `llm-wiki/wiki/project/architecture/development-workflow.md` | MASTER SOP — 9-phase sprint lifecycle |

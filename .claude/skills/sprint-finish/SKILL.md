@@ -115,6 +115,7 @@ After merge:
 - `git checkout main && git fetch origin && git reset --hard origin/main`
 - `git tag -a v0.1.0-alpha.<N> -m "<title>" <merge-sha> && git push origin v0.1.0-alpha.<N>`
 - Update SPRINT_STATE → between-sprints
+- **HARD-GATE budget:** `wc -c llm-wiki/wiki/project/SPRINT_STATE.md` MUST be ≤ 6 KB. Если приближается → REWRITE: keep frontmatter + current-sprint `Текущий статус` (≤ 15 bullets) + roadmap (next 2-3 sprints) + update protocol. **Trim ALL historical "## SN SHIPPED" sections** — content lives в `wiki/log.md` (chronological) + `wiki/project/sprints/sprint-NN-<slug>.md` (canonical per-sprint). Anti-pattern (S46 post-ship 2026-05-11): file accumulated 86 KB / 1239 lines, exceeded 25k Read limit, blocked session-start orient.
 
 ### Step 8: Chapter mark
 
