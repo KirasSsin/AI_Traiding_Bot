@@ -1,37 +1,28 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S48 T23 done — CLAUDE.md RU language enforcement (23/24)
+updated: 2026-05-11  # S48 T24 done — wiki sync (24/24) → phase=5-verify
 sprint: 48
-phase: 4-execution
+phase: 5-verify
 branch: feature/sprint-48-ui-overhaul
-tag: v0.1.0-alpha.47
+tag: v0.1.0-alpha.48
 ---
 
 ## Текущий статус
 
-**Sprint 47 SHIPPED** — squash-merge `116f789`, tag `v0.1.0-alpha.47`. Branch `feature/sprint-47-tech-debt-carryovers` deleted. Phase = between-sprints.
+**S48 PHASE 4 COMPLETE (24/24)** — все задачи выполнены. Переход к PHASE 5 verify.
 
-**S47 deliverables (16/16):** Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate / SPA catch-all + cache headers + MetricsTable T5 fix / M1+M2+M3 bybit-api + DSR/n_trials/sprint trio / trade_stats research bug + EquityChart cursor tooltip + FailAnalysisTab RU narrative
+**S48 deliverables (24/24):**
+- Bucket 0 (T1): component subdirs refactor C5
+- Bucket A (T2-T7): backend (replay equity_curve + account_service C1 + /api/bybit/balance + glossary_data + /api/glossary C3 + RunRecord balance/win_rate)
+- Bucket B (T8-T14): frontend bugs A/D/F/G/H (EquityChart tooltip + equity-chart E2E + MetricsTable divider + FailAnalysisTab chips + DocumentationTab ▸ remove + HistoryTab accordion + HistoryTab RTL tests)
+- Bucket C (T15-T19): Bug E GlossaryTab (base + useStrategyContext C2 + filter edge case + search + App nav)
+- Bucket D (T20-T22): Bug C Bybit balance (useBybitBalance + BalanceBadge + ConfigureBacktest integration)
+- Bucket E (T23-T24): Bug I RU enforcement + wiki sync
 
-**PHASE 6 (9 reviewers):** all APPROVE/AWC, 0 blockers. 5 pre-merge fixes applied (T5 UI threshold ≥100→≥50 / T1+T2 annualization note / T5 n_eff / FailAnalysisTab XSS sweep / strategy_metrics docstring).
+**Architect bindings met:** C1/C2/C3/C4/C5 все выполнены.
 
-**Honest accuracy:** 6 actual presets / T1-T6 informational / T5_FLOOR=50 (S34 ADR 0052) / MC p=0.05 / DSR Pearson kurtosis / 2 parallel ReasonCode enums clarified — main 56 unchanged, bybit-local +1 INVALID_PARAM
-
-**S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
-- Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
-- Bucket B (3): SPA catch-all + cache headers + MetricsTable T5 fix
-- Bucket C (3): M1+M2+M3 bybit-api fixes
-- Bucket D (1): DSR property + n_trials + sprint type bundled
-- Bucket E (3): T14 trade_stats bug + T15 EquityChart cursor + T16 RU Fail Analysis tab
-
-**Operator pivot 2026-05-11:** S48 = NEW strategies (Path B rejoin). Honest close ADR 0067 DROPPED. UI визуально approved.
-
-**Brainstorm trail:** trader-expert ROUND 1+2 done. Q3+Q5 CONFIRM_REVISE → defer к S48 / mainnet ADR. Q1/Q2/Q4/Q6 CONFIRM. Q7 (operator UI validation) = APPROVED + 3 items surfaced (T14 BUG, T15 cursor, T16 fail analysis tab).
-
-**Canonical counts (post-S47):** 16 states / 30 events / 74 transitions / **56** reason_codes UNCHANGED (T9 added INVALID_PARAM к bybit-local enum, не main) / 66 ADRs / **51** sprint pages / 48 components
-
-**Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
+**Canonical counts (post-S48):** 16 states / 30 events / 74 transitions / **56** reason_codes UNCHANGED / 66 ADRs / **52** sprint pages / Vitest 32 / Playwright 7 / pytest 1056+
 
 ## Phase tracking (S48 — current sprint)
 
@@ -40,10 +31,10 @@ tag: v0.1.0-alpha.47
 | 1 Orient | done | Continuous session post-S47 ship |
 | 2 Brainstorm | done | trader-expert R1+R2, pre-s48-backlog v3 (24 tasks 6 buckets), pre-plan FE+architect dispatch |
 | 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
-| 4 Execute | in_progress | T1 done (`610530a` component subdirs) + T2 done (`77567d2` equity_curve) + T3 done (`c2c0e93` account_service) + T4 done (`6517088` balance endpoint) + T5 done (glossary_data.py RU dict + STRATEGY_TO_METRICS_MAP, 40 entries, 8 tests) + T6 done (`9c870c2` /api/glossary endpoint, 3 tests) + T7 done (`f564581` RunRecord balance fields + win_rate, 5 tests, 1063 pass) — **Bucket A 7/7 complete** — T8 done (`22abf0d` EquityChart 3-line tooltip + initialBalance prop, 0 ESLint/tsc errors, 23 Vitest + 4 Playwright pass) + T9 done (`252309b` equity-chart-all-presets E2E: 3 tests research/WFA/empty — 7/7 Playwright pass) — **Bucket B T8+T9 done** — T10 done (`c231c79` MetricsTable GATE-BLOCKING/INFORMATIONAL divider + opacity 0.55 + Glossary link + 2 new tests, 25/25 Vitest pass) + T11 done (`f97ba8e` FailAnalysisTab chip list + Glossary links, removes Bug F "Неизвестный критерий: t1", 25/25 Vitest + 7/7 Playwright pass) — T12 done (`7a46b36` DocumentationTab remove ▸ prefix 4 card titles) + T13 done (`f219d32` HistoryTab accordion expand Bug H: single-open + ESC + RunDetailsPanel + renderSummary, 25 Vitest + 7 Playwright pass) + T14 done (`2827329` HistoryTab RTL tests: accordion expand + ESC close + RU summary WFA_FAIL branch, 3/3 Vitest pass, lint+tsc clean) — T15 done (GlossaryTab base component + GlossaryEntry/GlossaryResponse types + getGlossary() API method, section-based sticky-TOC layout + dynamic per-strategy filter primitive + anchor deeplink, ~146 TSX/168 CSS lines, lint/tsc deferred к T19 — useStrategyContext T18-pending) — **T18 done** (`88e8e6f` useStrategyContext URL query state hook, architect C2 BINDING, 4/4 Vitest pass, lint+tsc clean, ConfigureBacktest wired, T15 GlossaryTab import now resolves) — **T16 done** (`05d9c11` GlossaryTab dynamic filter edge case: unknown strategy → null + console.warn, lint+tsc+build clean) — **T17 done** (`082c76d` GlossaryTab search input — case-insensitive substring filter по term + description_ru, branch render to single "Результаты поиска" section, applicable highlighting preserved в search mode для filter context, +searchInput/filterHint CSS, lint+tsc+build clean) — **T19 done** (`54996cf` App.tsx +GlossaryTab import + 'glossary' Tab union + TABS[3] + render case, CSS no change, 32/32 Vitest pass, build clean) — **T20 done** (`45b5080` useBybitBalance hook + BalanceResponse type + getBalance() API method, localStorage cache bybit_balance_cache_v1, FALLBACK_BALANCE=10000) — **T21 done** (`c1d1b13` BalanceBadge component + CSS: LIVE/CACHED/OFFLINE/Loading states, pure presentation, lint+tsc+build clean) — **T22 done** (`6b7cd4b` ConfigureBacktest: useBybitBalance+BalanceBadge wired, initialBalance state+useEffect sync, INITIAL BALANCE field, onResult callback extended to (response, initialBalance), App.tsx handleResult+setInitialBalance→EquityChart, BacktestPayload.initial_balance, run_backtest(initial_balance=), lint+tsc+build clean, 8 pytest pass, mypy clean) — T23 done (`68f2622` CLAUDE.md forbidden anglicisms table + anti-pattern row, Bug I) — T24 (23/24 done, 1 pending) |
-| 5 Verify | pending | pytest + mypy + Vitest + Playwright + lint+tsc+build |
+| 4 Execute | **done** | 24/24 tasks complete. T24 wiki sync done (sprint-48 page + index + log + current-state). |
+| 5 Verify | **in_progress** | pytest + mypy + Vitest + Playwright + lint+tsc+build |
 | 6 Review | pending | 9 reviewers parallel (frontend-developer PRIMARY + architecture-reviewer C1-C5 verify + python + bybit-api + security-auditor + trading-logic + test-engineer + data-integrity + doc) |
-| 7 Sync | pending | wiki sync (T24) |
+| 7 Sync | done | wiki sync T24 complete |
 | 8 Ship | pending | tag v0.1.0-alpha.48 |
 | 9 Close | pending | SPRINT_STATE between-sprints + log ship entry |
 
@@ -55,66 +46,21 @@ tag: v0.1.0-alpha.47
 
 ## Следующее действие
 
-S48 PHASE 4 — T24: Wiki sync sprint-48 (sonnet).
+**PHASE 5 — verify gates:** `pytest + mypy + Vitest + Playwright + lint+tsc+build`. Затем PHASE 6 reviewers parallel (9 агентов).
 
-## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
+## S48-S50 ROADMAP (operator decisions 2026-05-11)
 
-### S47 — Frontend doraботки + bugs + tech debt carry-overs (~16 tasks LOCKED)
+### S48 — UI Overhaul (SHIPPED → PHASE 5 verify)
 
-**Scope per `pre-s47-backlog.md` rev 2** (5 buckets, 16 tasks):
-- Bucket A (5): Vitest+RTL infra + 3 unit tests (computeDrawdown property + useWfaFailAck + MetricsTable threshold) + backtest-flow E2E activate
-- Bucket B (3): SPA catch-all FastAPI route + asset cache headers + MetricsTable T5 bug fix
-- Bucket C (3): M1 retCode taxonomy + M2 dict guards + M3 WS isinstance (BYBIT API fixes)
-- Bucket D (1): DSR property test + n_trials assert + sprint int/str type test (bundled trio)
-- Bucket E (3): T14 trade_stats empty bug fix + T15 EquityChart cursor tooltip + T16 Fail Analysis tab (RU detailed WHY-failed narrative)
+**24/24 tasks done** — see `sprint-48-ui-overhaul.md` canonical summary. Architect C1-C5 all met.
 
-**Out-of-scope S47:** M4 `__repr__` security redaction (defer mainnet ADR), Vitest tests #4/#5, A11y polish, README npm note, F8 constant unification, MonthlyHeatmap eslint cleanup, Item #7/#10, **honest close code piece (preset `disabled: bool` flag) — DROPPED indefinitely per operator pivot 2026-05-11 (Path B rejoin)**.
+### S49 — Косметика + carry-overs (~10-15 задач)
 
-**Reviewers PHASE 6:** python + trading-logic + quant-stats + bybit-api + security-auditor (M1-M3 only) + frontend-developer + test-engineer + data-integrity + doc.
+Маленький полировочный спринт. Operator добавит items post-S48 review. Предварительный scope: color tokens / typography / a11y / Vitest #4+#5 / README npm / F8 / Item #7+#10 / MonthlyHeatmap / typing / BybitAdapterError / RTL tests / wiki cleanup.
 
-### S48 — UI Overhaul (9 жалоб + Bybit balance + Glossary вкладка)
+### S50 — NEW STRATEGIES (Path B activation)
 
-**Operator pivot REVISED 2026-05-11 evening:** S48 = UI Overhaul (was NEW strategies). NEW strategies → S50.
-
-**Содержимое S48 (~22 задачи) per `pre-s48-backlog.md` v3:**
-- Bug A: tooltip знак + динамический баланс USDT
-- Bug B: chart на ВСЕХ стратегиях (extend replay engine equity_curve)
-- Bug C: Bybit balance fetch (real account, не фиксированные $10000)
-- Bug D: informational vs gate-blocking distinction в MetricsTable
-- Bug E: НОВАЯ Glossary вкладка с RU расшифровкой всех аббревиатур + dynamic per-strategy
-- Bug F: упростить FailAnalysisTab к "used / not used" (детали в Glossary)
-- Bug G: убрать misleading треугольник в DocumentationTab
-- Bug H: HistoryTab per-row expand с balance/winrate/PnL + RU summary
-- Bug I: enforce RU language pattern в чате с operator
-
-**Pre-plan validation MANDATORY:** architecture-reviewer + frontend-developer pre-design dispatch перед PHASE 3 plan lock (operator binding "плотно подключать FE + архитектора").
-
-### S49 — Косметика + S47 carry-overs + post-S48 buffer (~10-15 задач)
-
-**Operator decision 2026-05-11 evening:** S49 = маленький полировочный спринт. Operator посмотрит результат S48, добавит что не понравится в S49.
-
-- Цвета вынести в дизайн-токены (`--color-status-fail/pass/warn`)
-- Шрифты + spacing scale унификация
-- Empty/loading/error states
-- A11y minimum (контраст + tablist ARIA)
-- Vitest тесты #4 (computeMonthlyData) + #5 (VerdictPanel)
-- README npm install note
-- F8/Item #7/Item #10 long-standing tech debt
-- MonthlyHeatmap eslint cleanup
-- BacktestResponse.metrics typing tighten
-- mean_reversion S15/S17 LONG-only clarification
-- BybitAdapterError structured context
-- FailAnalysisTab + VerdictPanel RTL render tests
-- Wiki narrative cleanup
-- + что operator/maintainer добавит после оператор test S48
-
-### S50 — NEW STRATEGIES (Path B activation, deferred 2 sprints)
-
-**S50 brainstorm (TBD после S49 ships):**
-- Strategy direction (mean-reversion / trend / momentum / volatility / multi-asset / ML-augmented)
-- Symbol scope (BTC only / multi-symbol)
-- Timeframe (existing 4H/D OR new 5m/15m/1h)
-- Acceptance criteria (re-use ADR 0014 WFA gates OR adjust)
+**TBD после S49 ships.** Brainstorm: strategy direction / symbol scope / timeframe / acceptance criteria.
 
 ### Permanently deferred (no clear sprint owner)
 
@@ -145,24 +91,6 @@ S48 PHASE 4 — T24: Wiki sync sprint-48 (sonnet).
 
 ---
 
-## Как обновлять этот файл
+## Правила файла
 
-**BUDGET: ≤ 6 KB BINDING** (matches Read tool comfort-zone < 50 KB / 25k tokens limit с huge margin).
-
-**Split fallback** (если current sprint state legitimately нужен > 6 KB — e.g. complex sprint с 30+ tasks + multiple architect bindings):
-1. Trim approach FIRST — push detail к sprint-NN.md page (canonical) + log.md (chronological)
-2. Если всё ещё > 6 KB → **indexed split** (per project convention `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md`):
-   - `SPRINT_STATE.md` (index + frontmatter + minimal current-state pointer ≤ 2 KB)
-   - `SPRINT_STATE-part-2.md` (full current-sprint detail)
-3. Pre-trim raw history снапшот → `archive/SPRINT_STATE-archive-part-N.md` (NOT lost; recoverable)
-
-Anti-pattern (S46 post-ship 2026-05-11): file accumulated 86 KB / 1239 lines с S5-S45 history blocks → exceeded Read tool limit, blocked session-start orient. Pre-trim content preserved в `archive/SPRINT_STATE-archive-part-1.md` + `-part-2.md`.
-
-После каждого значимого шага (task complete / phase change / blocker found / session end):
-1. Обнови frontmatter `updated:` + `phase:` + `tag:`
-2. Перепиши "Текущий статус" — concise current-sprint state (≤ 15 bullets)
-3. Обнови "Следующее действие" — конкретное, с командой если применимо
-4. ROADMAP — keep next 2-3 sprints scope; older defer-list trim aggressively
-5. **NEVER append** historical sprint sections — they go к `log.md` (append-only journal) + `sprint-NN.md` (canonical summary)
-
-Per-task SPRINT_STATE update protocol (PHASE 4): edit "Текущий статус" + "Следующее действие" после КАЖДОЙ task complete (not only sprint end). Optional commit `docs(sprint): SPRINT_STATE update phase=4 task=Tx done`.
+**BUDGET ≤ 6 KB BINDING.** History → `log.md` + `sprint-NN.md`. Инструкции → repo CLAUDE.md.
