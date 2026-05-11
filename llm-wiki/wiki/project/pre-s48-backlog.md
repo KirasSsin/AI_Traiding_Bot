@@ -23,13 +23,17 @@ Rationale: working UI = prerequisite для strategy validation. Без него
 
 ## Operator-surfaced bugs (8 total)
 
-### Bug A — EquityChart cursor tooltip всегда +%
+### Bug A — EquityChart cursor tooltip всегда +% + динамический баланс (REVISED 2026-05-11)
 
 Tooltip shows "+X.XX%" даже когда total PnL негативный (-13.46 USDT). T14 (S47) hook reads `equity_pct[idx]` напрямую — либо backend emits cumulative-positive only, либо sign logic broken.
 
-**Diagnose:** check actual `equity_curve.equity_pct` payload для FAIL preset. Likely backend computes cumulative starting from 0 with positive bias, не reflecting actual losses. Need verify ground truth.
+**Operator extended scope 2026-05-11:** при наведении на конкретную дату (например 2023, 5 марта) показывать в tooltip:
+1. Процент earnings/loss на эту точку (с правильным знаком)
+2. **Итоговая сумма USDT** на эту точку (initial_balance × (1 + equity_pct/100)) — динамически обновляется в отдельном месте на странице, аккуратно числом, в стилистике дизайна
 
-**Fix scope:** small (1-2 задачи)
+**Diagnose:** check actual `equity_curve.equity_pct` payload для FAIL preset. Likely backend computes cumulative starting from 0 с positive bias, не reflecting actual losses.
+
+**Fix scope:** medium (2-3 задачи: tooltip sign fix + dynamic balance display panel)
 
 ### Bug B — EquityChart рендерится только на research presets
 
@@ -39,13 +43,22 @@ Chart visible на atr_breakout + volume_breakout (research presets). Legacy WFA
 
 **Fix scope:** medium (2-3 задачи: backend equity_curve emission в replay engine + tests)
 
-### Bug C — TradesTable нет initial/final balance
+### Bug C — TradesTable нет initial/final balance (REVISED 2026-05-11)
 
-Operator wants `$10000 → $X.XX` визуализацию. Сейчас только "Total PnL" в USDT. Не понятно итоговая сумма capital.
+Operator wants `$X → $Y` визуализацию.
 
-**Fix:** envelope add `initial_balance_quote` + `final_balance_quote` fields. TradesTable add 2 rows. Available for both RAW + WFA paths (compute from total_pnl_pct если quote-currency недоступно).
+**Operator extended scope 2026-05-11:** НЕ фиксированные $10000. Подключаемся к Bybit API (умеем уже), запрашиваем текущий баланс оператора, используем как initial balance для backtest. Тестируем стратегию "как будто это 2023 год" но на реальной сумме баланса.
 
-**Fix scope:** small (2 задачи)
+**Реализация:**
+1. Backend endpoint `/api/account/balance` → возвращает current Bybit account balance (USDT). Использует existing pybit V5 API integration.
+2. Frontend на загрузке формы fetches balance, отображает как initial_balance в форме (read-only OR editable override).
+3. POST `/api/backtest` payload включает `initial_balance: <value>` (default = fetched OR override).
+4. Envelope `trade_stats` дополняется `initial_balance_quote` + `final_balance_quote` (computed from total_pnl_pct).
+5. TradesTable показывает 2 строки: Initial Balance / Final Balance.
+
+**Безопасность:** balance fetch требует bybit API keys (testnet OR mainnet). Per ADR 0017 + security-auditor review при PHASE 6. Read-only operation (GET account info), не money-affecting.
+
+**Fix scope:** medium-large (4-5 задач: backend endpoint + auth handling + frontend fetch + form integration + envelope/render)
 
 ### Bug D — Informational criteria (T1/T2/T4/T6) показаны как FAIL chips
 
@@ -58,58 +71,67 @@ Per ADR 0014 + quant-stats-reviewer S47 PHASE 6: T1-T6 informational, gate casca
 
 **Fix scope:** small (2 задачи)
 
-### Bug E — WARNINGS block лаконичный, нужна расшифровка
+### Bug E — Расшифровка warnings + НОВАЯ вкладка Glossary (REVISED 2026-05-11)
 
-Currently shows terse warning code + 1-line message. Operator hard к interpret без знания internals.
+Currently warnings shows terse warning code + 1-line message. Operator hard к interpret без знания internals.
 
 Example actual: `mc_noise: MC permutation p=0.756 > 0.10 — returns indistinguishable от random.`
 
-**Fix:** rich expanded warning panel — per warning code add:
-- Что значит
-- Что делать оператору
-- Cross-reference к criterion explanation если applicable
-- Severity icon + color coding
+**Operator extended scope 2026-05-11 — основное расширение S48:**
 
-Source contents: NEW `src/dashboard/warning_explanations.py` dict of warning_code → expanded explanation.
+Создать **отдельную новую вкладку "Glossary" / "Расшифровка"** где вынести структурированно ВСЕ аббревиатуры/символы/метрики/значения которые показаны на главной странице. Структура соответствует последовательности блоков на главной странице.
 
-**Fix scope:** medium (3 задачи: backend dict + endpoint + frontend rich render)
+**Вкладка содержит:**
+1. Расшифровка верхних аббревиатур (T1, T2, T3, T4, T5, T6, DSR, MC) — что измеряет, как читать значение, что значит PASS/FAIL для оператора
+2. Расшифровка финальных метрик (PnL, Win rate, Profit Factor, Avg Win, Avg Loss, Total Commissions) — на русском языке
+3. Расшифровка warnings (mc_noise, low_sample, raw_full_period, etc.) — почему возникает, что значит, что делать
+4. Расшифровка иконок/символов (▸ ▲ ⚠ ✓ ✗) — что обозначают
+5. Любые другие технические значения с главной страницы
 
-### Bug F — CRITICAL FailAnalysisTab "Неизвестный критерий: t1"
+**Динамическое поведение (CRITICAL UX feature):**
+- При выборе конкретной стратегии в выпадающем списке на главной вкладке → на Glossary вкладке **подсвечиваются (либо выделяются отдельным блоком)** только те параметры которые используются в выбранной стратегии. Остальные dimmed/collapsed.
+- Решение по визуализации (подсветка vs separate block) — на frontend-developer agent в дизайн-сессии.
 
-S47 T15 BUG. `failed_criteria` от backend = `['t1','t2','t4','t5','t6']` (short keys). `wfa_criterion_explanations.py` keys = `t1_sharpe_oos`, `t2_sortino_oos`, `t3_max_drawdown`, etc. Lookup miss → renders "Неизвестный критерий" для every failed criterion. **FailAnalysisTab functionally broken.**
+**Связь с Bug F:** этот glossary заменяет "Неизвестный критерий" на FailAnalysisTab. На главной странице оставляем только указание "используется/не используется", детали смотрим в Glossary.
 
-**Fix:** ID mapping. Either:
-- (a) Rename criterionMap keys к `t1` / `t2` / etc.
-- (b) Add `SHORT_TO_FULL_CRITERION_KEY` mapping в FailAnalysisTab.tsx
-- (c) Backend `failed_criteria` array uses long keys (canonical alignment)
+**Fix scope:** large (5-6 задач: новая вкладка + backend dict с расшифровками всех значений + endpoint + dynamic per-strategy filter + frontend GlossaryTab + integration с главной)
 
-Maintainer rec: (c) backend canonical alignment — fix at source. Update WFA gate evaluation к emit long keys.
+### Bug F — Удалить "Неизвестный критерий", использовать/не использует indicator (REVISED 2026-05-11)
 
-**Fix scope:** tiny (1 задача — backend rename) OR small (2 задачи если frontend mapping fallback)
+S47 T15 BUG: FailAnalysisTab пишет "Неизвестный критерий: t1/t2/...". 3-way ID mismatch (replay path / research walk_forward / frontend dict — все разные ключи).
 
-### Bug G — DocumentationTab cards не collapsible
+**Operator decision 2026-05-11:** убрать показ "Неизвестный критерий" полностью. Глубокая расшифровка переехала в новую вкладку Glossary (Bug E).
 
-Visual hint показывает expandable, но click не работает. Add expand/collapse функционал per card (indicator / multiplier / strategy / methodology).
+**На главной странице (FailAnalysisTab):**
+- Оставить только короткое указание "используется / не используется" для каждого критерия
+- Если оператор хочет узнать детали — открывает Glossary вкладку (там динамическая подсветка под выбранную стратегию)
 
-**Fix:** add useState collapsed boolean per card + onClick handler + CSS transition. Default collapsed после initial render (или operator preference via localStorage).
+**Fix scope:** small (2 задачи: backend canonical key alignment + FailAnalysisTab упрощение к "used/not used" indicator)
 
-**Fix scope:** small (1-2 задачи)
+### Bug G — DocumentationTab убрать misleading triangle icon (REVISED 2026-05-11)
 
-### Bug H — HistoryTab per-row expand с RU summary
+Visual hint (треугольник ▸ смотрит вправо) триггерит ожидание раскрытия, но cards не раскрываются.
 
-Operator request: каждая запись в HistoryTab → click → expand с:
-- **Краткая причинно-следственная RU summary** (~2-3 sentences) почему стратегия сработала / не сработала
-- Initial balance + final balance
-- Кол-во сделок
-- % winners / % losers
+**Operator decision 2026-05-11:** НЕ делать раскрытие. Просто убрать треугольник или заменить на нейтральный символ (точка •, тире — , bullet) чтобы визуально не намекало на раскрывающийся элемент. Это просто блок текста, не expandable list.
+
+**Fix scope:** tiny (1 задача — заменить ▸ в DocumentationTab cards)
+
+### Bug H — HistoryTab per-row expand с RU summary (FINALIZED 2026-05-11)
+
+Каждая запись в HistoryTab → click → expand с полным набором данных:
+- **Краткая причинно-следственная RU summary** (~2-3 предложения) почему стратегия сработала / не сработала (статический шаблон)
+- **Начальный баланс** (initial_balance_quote) + **итоговый баланс** (final_balance_quote)
+- **Total PnL** (USDT)
+- **Win rate** (%)
+- **Lose rate** (%) (= 100 - win_rate)
+- **Profit Factor**
 - НЕ включать график (избыточно — дублирует main view)
-- НЕ включать full metrics narrative (кратко only)
+- НЕ включать полный metrics narrative (только числа)
 
 **Implementation:**
 - Per-row click handler → toggle expanded state
-- Backend NEW endpoint `/api/runs/{run_id}/summary` OR derive from existing `/api/runs/{run_id}` BacktestResponse
-- RU summary generation logic — option (a) static template based on verdict + failed_criteria; option (b) deeper derivation от metrics
-- Maintainer rec: (a) — простой template "Стратегия [verdict] потому что [primary failed criterion human-readable] (фактически: [actual] vs порог [threshold])"
+- Lazy load `/api/runs/{run_id}` on expand (не widening list endpoint, KISS per ESC-2 α)
+- RU summary generation = static template: "Стратегия [verdict] потому что [primary failed criterion human-readable] (фактически: [actual] vs порог [threshold])"
 
 **Fix scope:** medium (3-4 задачи)
 
