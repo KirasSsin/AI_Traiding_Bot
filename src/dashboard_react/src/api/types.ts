@@ -212,3 +212,17 @@ export interface RunSummary {
   sharpe: number
   win_rate: number
 }
+
+// S48 T15 — Glossary tab types (Bug E core)
+export interface GlossaryEntry {
+  section: string
+  description_ru: string
+  applies_to: string[]
+  adr_ref?: string | null
+}
+
+export interface GlossaryResponse {
+  entries: Record<string, GlossaryEntry>
+  strategy_to_metrics: Record<string, string[]>
+  sections: string[]
+}
