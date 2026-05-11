@@ -245,6 +245,21 @@ Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` 
 | **Path verification** | `AI_Traiding_Bot` exact spelling. Verify via `pwd` если doubt. Don't-retry on Read miss (max 1 retry). | hallucination compounds |
 | **MEMORY.md tolerance** | `.claude/agent-memory/<agent>/MEMORY.md` (**project-local**, NOT `~/.claude/agent-memory/`) may NOT exist (created on first WRITE). | wasted Read |
 | **Hook bash quirk** | `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails. | push fails → debug cycle |
+| **Uvicorn port collision** | Kill leftover process before `--port 8000 &` start (S47 lesson). | kill + restart retry |
+| **Pre-commit ruff retry** | ruff --fix modifies but doesn't re-stage. First commit fails, second succeeds. Expected 1-retry pattern. | 1 extra commit attempt |
+
+**Uvicorn background test pattern (S47 lesson — port collision):**
+```bash
+lsof -ti:8000 | xargs kill -9 2>/dev/null || true   # kill leftover
+.venv/bin/uvicorn src.dashboard.app:create_app --factory --port 8000 &
+APP_PID=$!
+sleep 2
+# ... curl tests ...
+kill $APP_PID 2>/dev/null; wait $APP_PID 2>/dev/null
+```
+Alternative: `--port 0` (random port) + extract from uvicorn stdout — more robust for parallel test runs.
+
+**ADR-agent-sync pre-push (S47 lesson):** если ADR changed → `touch ~/.claude/agents/<reviewer>.md` BEFORE push. See `sprint-finish` Step 6b.
 
 Полные правила: `~/.claude/CLAUDE.md` sections 9b + 9c, `llm-wiki/CLAUDE.md` "Anti-waste tool patterns".
 
