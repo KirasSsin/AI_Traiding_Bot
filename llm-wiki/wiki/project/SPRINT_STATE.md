@@ -32,10 +32,10 @@ tag: v0.1.0-alpha.48
 | 2 Brainstorm | done | trader-expert R1+R2, pre-s48-backlog v3 (24 tasks 6 buckets), pre-plan FE+architect dispatch |
 | 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
 | 4 Execute | **done** | 24/24 tasks complete. T24 wiki sync done (sprint-48 page + index + log + current-state). |
-| 5 Verify | **done** | pytest 1065 / mypy 0 / Vitest 36 / Playwright 7 / lint+tsc+build clean |
-| 6 Review | **done** | 9 reviewers: 3 APPROVE / 5 APPROVE_WITH_CONCERNS (security HIGH#1 + test HIGH gaps fixed) / 1 REQUEST_CHANGES → B1 fixed (chip semantic flip), B2 deferred к S49 (T3 verdict ADR clarification) |
+| 5 Verify | done | pytest 1065 / mypy 0 / Vitest 36 / Playwright 7 / lint+tsc+build clean |
+| 6 Review | done | 9 reviewers: 3 APPROVE / 5 APPROVE_WITH_CONCERNS (security HIGH#1 + test HIGH gaps fixed) / 1 REQUEST_CHANGES → B1 fixed (chip semantic flip), B2 deferred к S49 (T3 verdict ADR clarification) |
 | 7 Sync | done | wiki sync T24 complete |
-| 8 Ship | **in_progress** | PR #59 CI GREEN, ready merge + tag v0.1.0-alpha.48 |
+| 8 Ship | in_progress | PR #59 CI GREEN, ready merge + tag v0.1.0-alpha.48 |
 | 9 Close | pending | SPRINT_STATE between-sprints + log ship entry |
 
 ## Phase tracking (S47 — previous shipped)
