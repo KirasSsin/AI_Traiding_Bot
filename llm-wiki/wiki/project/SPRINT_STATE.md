@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T15 done — Bucket E complete (Fail Analysis tab RU detailed)
+updated: 2026-05-11  # S47 PHASE 4-EXECUTION COMPLETE (16/16) → PHASE 5-VERIFY
 sprint: 47
-phase: 4-execution
+phase: 5-verify
 branch: feature/sprint-47-tech-debt-carryovers
 tag: v0.1.0-alpha.46
 ---
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8). Bucket C COMPLETE: T9 DONE (M1 retCode taxonomy), T10 DONE (M2 dict guards), T11 DONE (M3 WS isinstance guard). Bucket D COMPLETE: T12 DONE (DSR property + n_trials >=1 validation в src/analytics/dsr.py + sprint type — 5 tests, mypy strict 0 errors). **Bucket E COMPLETE:** T13 DONE (trade_stats empty values — research path envelope enriched + fmtUsdtCell — 15 tests, mypy 0, frontend build clean). T14 DONE (EquityChart + DrawdownSubchart cursor crosshair tooltip — setCursor hook, glass-morphism floating label, build clean 0 lint/tsc errors). T15 DONE (Fail Analysis tab — RU detailed WHY-failed narrative; strategy_descriptions.py 6 presets + wfa_criterion_explanations.py 8 criteria + 2 endpoints + FailAnalysisTab.tsx; mypy strict 0, lint 0, tsc 0, vite build clean). **All 16 tasks complete.**
+**Sprint 47 PHASE 4 execution COMPLETE (16/16). PHASE 5-VERIFY in progress.** Все 5 бакетов DONE: Bucket A (T1-T5 Vitest+RTL infra + 3 unit tests + E2E activate) + Bucket B (T6-T8 SPA catch-all + cache headers + MetricsTable T5 fix) + Bucket C (T9-T11 M1+M2+M3 bybit-api) + Bucket D (T12 DSR property + n_trials + sprint type trio) + Bucket E (T13 trade_stats bug + T14 cursor tooltip + T15 FailAnalysisTab). **T16 DONE (wiki sync: sprint-47 page + index + log + current-state counts 56→57 + 50→51 sprint pages).**
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -23,13 +23,13 @@ tag: v0.1.0-alpha.46
 
 **Brainstorm trail:** trader-expert ROUND 1+2 done. Q3+Q5 CONFIRM_REVISE → defer к S48 / mainnet ADR. Q1/Q2/Q4/Q6 CONFIRM. Q7 (operator UI validation) = APPROVED + 3 items surfaced (T14 BUG, T15 cursor, T16 fail analysis tab).
 
-**Canonical counts** (UNCHANGED от S46): 16 states / 30 events / 74 transitions / 56 reason_codes / 66 ADRs / 50 sprint pages / 48 components
+**Canonical counts (post-S47):** 16 states / 30 events / 74 transitions / **57** reason_codes (+1 INVALID_PARAM T9) / 66 ADRs / **51** sprint pages / 48 components
 
 **Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
 
 ## Следующее действие
 
-S47 Phase 4 execution DONE. Next: PHASE 5 verification → PHASE 6 reviewers (python + trading-logic + quant-stats + bybit-api + security-auditor + frontend + test-engineer + data-integrity + doc) → PHASE 7 wiki sync → PHASE 8 ship.
+**PHASE 5 verify** — запустить: pytest -x -q + mypy --strict src/ + Vitest + Playwright + lint+tsc+build + canonical counts verify (reason_codes=57 в ci.yml line 133). После GREEN → PHASE 6 reviewers (9: python + trading-logic + quant-stats + bybit-api + security-auditor + frontend-developer + test-engineer + data-integrity + doc) → PHASE 7 wiki sync (done — T16) → PHASE 8 ship.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
