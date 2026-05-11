@@ -53,6 +53,32 @@
   box-shadow: 0 0 8px rgba(204, 120, 92, 0.30);
 }
 
+/* S48 T8 — 3-line tooltip sub-elements */
+.tooltipDate {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.tooltipPct {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.tooltipPctPos {
+  color: #00ff88;
+}
+
+.tooltipPctNeg {
+  color: #ff3366;
+}
+
+.tooltipBalance {
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
 /* Empty data placeholder */
 .placeholder {
   font-family: var(--font-mono);

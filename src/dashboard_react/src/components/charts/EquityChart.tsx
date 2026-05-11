@@ -15,6 +15,8 @@ export interface EquityChartProps {
   syncKey?: string
   /** @deprecated T10: use syncKey instead — kept for backward compat */
   onChartReady?: (chart: uPlot) => void
+  /** S48 T8: initial portfolio balance in USD for balance tooltip computation (default 10000) */
+  initialBalance?: number
 }
 
 /**
@@ -133,7 +135,7 @@ function buildOpts(width: number, height: number, hasMarkers: boolean, syncKey?:
   }
 }
 
-export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }: EquityChartProps) {
+export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady, initialBalance = 10000 }: EquityChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<uPlot | null>(null)
 
@@ -166,7 +168,8 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
 
     const opts = buildOpts(width, height, hasMarkers, syncKey)
 
-    // S47 T14 — setCursor hook: floating tooltip showing Date + Equity%
+    // S48 T8 — setCursor hook: 3-line floating tooltip (date / P&L % / balance USDT)
+    // DOM API вместо innerHTML — избегаем XSS warnings от ESLint
     opts.hooks = {
       setCursor: [
         (u: uPlot) => {
@@ -187,7 +190,29 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
           }
           const date = new Date(Number(ts) * 1000).toISOString().slice(0, 10)
           const sign = eq >= 0 ? '+' : ''
-          tooltipEl.textContent = `${date} · ${sign}${eq.toFixed(2)}%`
+          // S48 T8: balance = initialBalance * (1 + eq/100) — динамический USDT balance
+          const balance = initialBalance * (1 + eq / 100)
+          const balanceFmt = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 2,
+          }).format(balance)
+
+          // Build 3-line tooltip via DOM API (no innerHTML, no XSS risk)
+          const dateDiv = document.createElement('div')
+          dateDiv.className = styles.tooltipDate ?? ''
+          dateDiv.textContent = date
+
+          const pctDiv = document.createElement('div')
+          const pctClass = eq >= 0 ? styles.tooltipPctPos : styles.tooltipPctNeg
+          pctDiv.className = `${styles.tooltipPct ?? ''} ${pctClass ?? ''}`.trim()
+          pctDiv.textContent = `${sign}${eq.toFixed(2)}%`
+
+          const balDiv = document.createElement('div')
+          balDiv.className = styles.tooltipBalance ?? ''
+          balDiv.textContent = balanceFmt
+
+          tooltipEl.replaceChildren(dateDiv, pctDiv, balDiv)
           tooltipEl.style.display = 'block'
           const left = u.cursor.left ?? 0
           tooltipEl.style.left = `${left + 12}px`
@@ -216,7 +241,7 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
       chart.destroy()
       chartRef.current = null
     }
-  }, [timestamps, equity_pct, trade_markers, height, isEmpty, syncKey, onChartReady])
+  }, [timestamps, equity_pct, trade_markers, height, isEmpty, syncKey, onChartReady, initialBalance])  // S48 T8: + initialBalance
 
   if (isEmpty) {
     return (

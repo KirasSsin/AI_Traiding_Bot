@@ -26,6 +26,8 @@ const TABS: { id: Tab; num: string; label: string }[] = [
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('backtest')
   const [result, setResult] = useState<BacktestResponse | null>(null)
+  // S48 T8: placeholder state for initial balance (T22 will wire real Bybit value via useBybitBalance)
+  const [initialBalance] = useState<number>(10000)
 
   return (
     <div className={styles.app}>
@@ -73,7 +75,7 @@ export function App() {
             {result && <VerdictPanel result={result} />}
             {result?.equity_curve && (
               <>
-                <EquityChart equityCurve={result.equity_curve} syncKey="equity-dd-sync" />
+                <EquityChart equityCurve={result.equity_curve} syncKey="equity-dd-sync" initialBalance={initialBalance} />
                 <DrawdownSubchart equityCurve={result.equity_curve} syncKey="equity-dd-sync" />
                 <MonthlyHeatmap equityCurve={result.equity_curve} />
               </>
