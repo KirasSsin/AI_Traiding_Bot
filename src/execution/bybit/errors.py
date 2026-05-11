@@ -36,3 +36,12 @@ _MAP: dict[int, ReasonCode] = {
 def map_error(ret_code: int, ret_msg: str = "") -> ReasonCode:  # noqa: ARG001
     """Return matching ReasonCode, or UNKNOWN_ERROR if ret_code not mapped."""
     return _MAP.get(ret_code, ReasonCode.UNKNOWN_ERROR)
+
+
+class BybitAdapterError(RuntimeError):
+    """S47 T10 — raised when Bybit V5 response schema is unexpected.
+
+    bybit-api-reviewer S38 finding M2: direct dict access (resp["result"]["list"])
+    raises bare KeyError on schema shift with no context. This exception provides
+    a clear message including the calling operation context.
+    """
