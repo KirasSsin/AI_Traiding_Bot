@@ -328,6 +328,7 @@ def run_volume_breakout_backtest(
         start=start_date.isoformat(),
         end=end_date.isoformat(),
         trade_markers=trade_markers,
+        trades_list=trades_list,  # S47 T13 — for enriched trade_stats derivation
     )
 
 

@@ -69,17 +69,19 @@ export interface WfaParams {
 }
 
 export interface TradeStats {
-  // Core counts (always present in WFA path)
+  // Core counts (always present)
   n_trades: number
   win_rate: number
-  // Extended WFA quote-currency stats (T14)
-  n_winners?: number
-  n_losers?: number
-  total_pnl_quote?: number
-  total_commissions_quote?: number
-  avg_win_quote?: number
-  avg_loss_quote?: number
-  profit_factor?: number
+  // S47 T13 — derived from trades_list (research path) OR full (replay path)
+  n_winners?: number | null
+  n_losers?: number | null
+  total_pnl_pct?: number | null
+  // Quote-currency fields — replay path only (research path = null)
+  total_pnl_quote?: number | null
+  total_commissions_quote?: number | null
+  avg_win_quote?: number | null
+  avg_loss_quote?: number | null
+  profit_factor?: number | null
 }
 
 // Documentation tab types (T15b — /api/docs envelope)
