@@ -199,6 +199,17 @@ def create_app() -> FastAPI:
         """
         return get_documentation()
 
+    # S47 T6 architect MEDIUM (S46 followup) — SPA catch-all для client-side routing.
+    # Mount order: ALL /api/* + /assets/* MUST be registered BEFORE this catch-all.
+    # FastAPI matches routes в registration order; catch-all should be last.
+    if _DIST_DIR.exists():
+
+        @app.get("/{path:path}", response_class=FileResponse, include_in_schema=False)
+        async def spa_fallback(path: str) -> FileResponse:  # noqa: ARG001
+            # Любой non-API non-asset path → serve React SPA shell.
+            # React Router (если added в future) handles client-side routing.
+            return FileResponse(_DIST_DIR / "index.html")
+
     return app
 
 
