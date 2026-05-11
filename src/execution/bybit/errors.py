@@ -11,14 +11,19 @@ class ReasonCode(StrEnum):
     INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE"
     FILTER_VIOLATION = "FILTER_VIOLATION"
     REJECT_ORDER_ALREADY_TERMINAL = "REJECT_ORDER_ALREADY_TERMINAL"
+    # S47 T9 — bybit-api-reviewer S38 M1: extend taxonomy для testnet debuggability
+    INVALID_PARAM = "INVALID_PARAM"
     UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
 
 _MAP: dict[int, ReasonCode] = {
+    # S47 T9: 10001 — Parameter error / invalid argument (was UNKNOWN_ERROR before)
+    10001: ReasonCode.INVALID_PARAM,
     10002: ReasonCode.CLOCK_DRIFT,
     10003: ReasonCode.WRONG_API_KEY,
     10006: ReasonCode.RATE_LIMIT_HIT,
     10016: ReasonCode.EXCHANGE_MAINTENANCE,
+    # 110001 stays REJECT_ORDER_ALREADY_TERMINAL — adapter.py line 213 pins this behaviour
     110001: ReasonCode.REJECT_ORDER_ALREADY_TERMINAL,
     110007: ReasonCode.INSUFFICIENT_BALANCE,
     110017: ReasonCode.FILTER_VIOLATION,
