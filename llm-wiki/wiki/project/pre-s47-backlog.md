@@ -70,16 +70,17 @@ sources:
 
 ## S47 Scope (locked)
 
-### In-scope (~14 tasks target с cut gate)
+### In-scope (~16 tasks target с cut gate — operator surfaced 3 NEW items 2026-05-11 → swap MonthlyHeatmap eslint + Item #7/#10 к S48 to maintain budget)
 
-#### Bucket A — S46 PHASE 6 carry-overs (~6 tasks)
+#### Bucket A — S46 PHASE 6 carry-overs (~5 tasks)
 
 1. **Vitest + RTL infra setup** — config + RTL setup + sample test файл + CI integration
 2. **Vitest unit test #1: `computeDrawdown` property tests** — fast-check invariants (drawdown ≤ 0, peak monotonic non-decreasing)
 3. **Vitest unit test #2: `useWfaFailAck` hook unit tests** — localStorage state machine + 3-distinct-day dedup + chip downgrade
 4. **Vitest unit test #3: `MetricsTable` threshold tests** — Bailey 2014 + ADR 0014 color encoding (T1-T6 thresholds + RAW path)
-5. **MonthlyHeatmap eslint-disable cleanup** — restructure useMemo before guards (cosmetic — был flagged S46 PHASE 6 frontend-developer but BLOCKER fix already addressed similar pattern)
-6. **`backtest-flow.spec.ts` E2E activate** — `page.route('/api/backtest', ...)` mock fixture, verify VerdictPanel render
+5. **`backtest-flow.spec.ts` E2E activate** — `page.route('/api/backtest', ...)` mock fixture, verify VerdictPanel render
+
+(MonthlyHeatmap eslint cleanup deferred к S48 — cosmetic only, BLOCKER fix S46 already addressed similar pattern)
 
 #### Bucket B — Architect MEDIUM (~3 tasks)
 
@@ -93,12 +94,19 @@ sources:
 11. **M2 pybit response shape defensive guards** — replace direct dict access с `.get()` + KeyError catch
 12. **M3 WS data isinstance check** — `ws_private.py` isinstance guard against pybit V3 dict shape regression
 
-#### Bucket D — S44 reviewer follow-ups + S45 quant (~2 tasks)
+#### Bucket D — S44 reviewer follow-ups + S45 quant (~1 task)
 
 13. **DSR ∈ [0,1] property test + n_trials assert + sprint int/str type test** — bundled trio (test-engineer C2 + S45 quant follow-ups)
-14. **Item #10 DD_MULTIDAY/NO_TRADE_TIMEOUT extended boundary scenarios OR Item #7 RiskSharedDeps shim cleanup** — slack filler per CC1 (operator picks at PHASE 3)
 
-#### Out-of-scope to S47 (per ROUND 2 verdicts)
+#### Bucket E — Operator Q7 UI validation surfaced (NEW 2026-05-11) (~3 tasks)
+
+14. **BUG: trade_stats empty values для research presets (atr_breakout / volume_breakout)** — root cause: `research_runner_envelope.py:151` emits minimal trade_stats (только `n_trades` + `win_rate`); replay engine path emits полный (n_winners / n_losers / total_pnl_quote / etc). When research preset gets WFA verdict, TradesTable Path B (WFA) renders `—` для missing fields. **Fix:** extend `research_runner_envelope.build_research_runner_envelope()` к accept optional `trades_list` param + derive `n_winners` / `n_losers` from pnl signs + compute `total_pnl_pct` etc. Quote-currency fields (USDT amounts) require synthetic capital basis — emit `None` gracefully OR document как "research path = pct only, replay path = USDT". TradesTable Path B render `—` остаётся для quote fields когда null.
+
+15. **FEATURE: EquityChart cursor crosshair + balance tooltip on hover** — operator request: горизонтальное движение курсором показывает actual balance (cumulative equity %). uPlot already supports `cursor.show: true` + `cursor.points` natively; currently `legend: { show: false }` hides values. **Implementation:** enable cursor crosshair с x-axis snap, render small floating tooltip с `Date: <ts>` + `Equity: +X.XX%` (Anthropic orange accent, glass-morphism style, JetBrains Mono). Verify sync с DrawdownSubchart cursor (already syncKey-shared per CC2) — drawdown tooltip shows `DD: -X.XX%` simultaneously.
+
+16. **FEATURE: Fail Analysis tab — per-strategy detailed WHY-failed breakdown** — operator request: для FAILED strategies create separate tab/view с пошаговым разбором каждого WFA fold + каждого TIER 1-T6 criterion + каждого gate decision. **Scope (S47 minimum viable):** new tab `<FailAnalysisTab>` визуализирует existing envelope data — per-fold sharpe ratios (already в `result.fold_sharpe_ratios`), failed_folds list, failed_criteria, per-TIER threshold vs actual с PASS/FAIL chip. **Out-of-scope (defer S48):** new backend data exposure (e.g. per-fold trades drilldown, per-trade marker reasons, sub-period robustness chart). Если operator wants deeper drilldown — separate S48 task для backend envelope ext.
+
+#### Out-of-scope to S47 (per ROUND 2 verdicts + operator scope balance)
 
 - **Honest close code piece** (preset `disabled: bool` + 422 reject) → **S48 atomic с ADR 0067**
 - **M4 `__repr__` security redaction** → **DEFER к mainnet-activation ADR (S49+)**
@@ -106,6 +114,9 @@ sources:
 - **A11y polish (tablist ARIA + contrast)** → S48
 - **README npm install note** → S48 docs leftover
 - **F8 block_size constant unification** → S48 leftover
+- **Item #10 OR Item #7 (S37/S38 long-standing tech debt)** → **S48** (CC1 backfill no longer needed — Bucket E filled slack)
+- **MonthlyHeatmap eslint cleanup** → **S48** (cosmetic, not blocking; was Bucket A item #5 — remove from S47 to make room for Bucket E)
+- **Fail Analysis backend data exposure** (per-fold trades drilldown) → **S48 OR later** depending operator priority
 
 #### Cut gate (per Q2)
 
@@ -113,16 +124,17 @@ sources:
 
 ### PHASE 6 reviewer matrix S47
 
-- **python-reviewer** — FastAPI SPA catch-all + cache headers + M2 dict guards
-- **trading-logic-reviewer** — MetricsTable T5 cleanup (threshold semantics)
+- **python-reviewer** — FastAPI SPA catch-all + cache headers + M2 dict guards + envelope trade_stats extension (T14 BUG fix)
+- **trading-logic-reviewer** — MetricsTable T5 cleanup (threshold semantics) + Fail Analysis tab data correctness (T16)
 - **quant-stats-reviewer** — DSR property test + n_trials assert + Bailey threshold tests
 - **bybit-api-reviewer** — M1+M2+M3 (retCode taxonomy + response shape + WS isinstance)
 - **security-auditor** — **SCOPED к M1-M3 only per CC2**, M4 explicit OUT OF SCOPE
-- **frontend-developer** — Vitest+RTL setup + 3 React tests + MonthlyHeatmap cleanup + E2E activate
-- **test-engineer** — coverage adequacy + property test design (DSR + computeDrawdown invariants)
+- **frontend-developer** — Vitest+RTL setup + 3 React tests + E2E activate + EquityChart cursor (T15) + Fail Analysis tab (T16) + TradesTable rendering for new envelope fields (T14)
+- **test-engineer** — coverage adequacy + property test design (DSR + computeDrawdown invariants) + envelope trade_stats schema test
+- **data-integrity-reviewer** — envelope schema extension (T14) — research_runner_envelope optional `trades_list` param + derive logic invariants
 - **doc-reviewer** — sprint-47 page + ADR (если новый)
 
-NO architecture-reviewer (no major stack/refactor changes). NO data-integrity-reviewer (no marketdata/persistence touches). NO dashboard-reviewer (superseded by frontend-developer per S46).
+NO architecture-reviewer (no major stack/refactor changes). NO dashboard-reviewer (superseded by frontend-developer per S46).
 
 ## Escalations к operator
 
@@ -137,11 +149,14 @@ Options:
 
 Trader expert recommendation: option (b) paired с ADR 0067, но operator MUST explicitly choose. **Raise в S48 brainstorm as first question — НЕ S47 decision.**
 
-### Q7 (operator manual action) — S46 UI validation
+### Q7 (operator manual action) — S46 UI validation ✅ DONE 2026-05-11
 
-Pre-S47 lock: operator runs `scripts/start-bot.sh` → opens dashboard в browser (5 min) → either confirms aesthetic OK OR adds tweak items к S47 scope. Architect-flagged "title still QUANT::TERMINAL" was caught + fixed mid-sprint, similar issues possible (font sizing, color contrast feel, glass-morphism intensity, etc.).
+Operator surfaced 3 items via manual UI test:
+1. BUG: trade_stats block empty values для research presets → **T14 added**
+2. FEATURE: EquityChart cursor crosshair + balance tooltip on hover → **T15 added**
+3. FEATURE: Fail Analysis tab — per-strategy WHY-failed breakdown → **T16 added**
 
-**Operator action required ДО PHASE 3 plan lock:** confirm "OK ship" OR list visual tweaks → maintainer adds tasks к S47 scope.
+Aesthetic Anthropic/cyberpunk: implicit confirm (no tweaks listed). Bucket E created.
 
 ## Files identified для edit (PHASE 3 plan input)
 
@@ -152,16 +167,25 @@ CREATE:
 - `src/dashboard_react/src/components/__tests__/computeDrawdown.test.ts`
 - `src/dashboard_react/src/hooks/__tests__/useWfaFailAck.test.ts`
 - `tests/unit/test_dsr_property.py` (если не уже exists)
+- `src/dashboard_react/src/components/FailAnalysisTab.tsx` (T16)
+- `src/dashboard_react/src/components/FailAnalysisTab.module.css` (T16)
 
 MODIFY:
 - `src/dashboard/app.py` — SPA catch-all route + cache headers
 - `src/dashboard_react/src/components/MetricsTable.tsx` — T5 bug fix
-- `src/dashboard_react/src/components/MonthlyHeatmap.tsx` — useMemo restructure (eslint cleanup)
 - `src/dashboard_react/tests/e2e/backtest-flow.spec.ts` — activate с mock fixture
 - `src/execution/bybit/adapter.py` — M1 retCode taxonomy
 - `src/execution/bybit/errors.py` — M1 retCode taxonomy
 - `src/execution/bybit/ws_private.py` — M3 isinstance guard (M4 EXPLICITLY EXCLUDED)
-- `src/risk/risk_shared_deps.py` OR `src/risk/dd_multiday.py` — Item #7 OR Item #10 (CC1 backfill — operator picks)
+- `src/backtest/research_runner_envelope.py` — T14 trade_stats extension (optional `trades_list` param + derive n_winners/n_losers/total_pnl_pct)
+- `src/backtest/volume_breakout_runner.py` — T14 pass `trades_list` к envelope
+- `src/backtest/atr_breakout_runner.py` — T14 pass `trades_list` к envelope
+- `src/dashboard_react/src/api/types.ts` — T14 extend `TradeStats` interface (n_winners/n_losers optional, total_pnl_pct field)
+- `src/dashboard_react/src/components/TradesTable.tsx` — T14 graceful render when quote fields missing (research path)
+- `src/dashboard_react/src/components/EquityChart.tsx` — T15 enable cursor crosshair + custom tooltip
+- `src/dashboard_react/src/components/EquityChart.module.css` — T15 tooltip styles
+- `src/dashboard_react/src/components/DrawdownSubchart.tsx` — T15 mirror cursor enable (sync key уже shared)
+- `src/dashboard_react/src/App.tsx` — T16 wire FailAnalysisTab conditional render когда verdict ∈ {WFA_FAIL, WFA_FAIL_DATA, FAIL}
 - `.github/workflows/ci.yml` — Vitest step add
 
 CREATE wiki:
