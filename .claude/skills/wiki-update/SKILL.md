@@ -78,6 +78,26 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 
 Verify output matches current-state.md canonical-counts table values.
 
+### Step 5b: ADR slug resolution before writing links (prevents wiki-broken-link-check.sh failures)
+
+Before writing any `[[../decisions/NNNN-*]]` cross-link в новых sprint/component pages — resolve actual slug:
+
+```bash
+# Resolve correct ADR slug (prevents guessing wrong filename)
+.claude/scripts/resolve-adr-slug.sh <NNNN>
+# Returns: "NNNN-actual-slug-from-filesystem"
+# Use exact output as link target
+```
+
+Example:
+```bash
+.claude/scripts/resolve-adr-slug.sh 0014
+# → 0014-walk-forward-train2000-test500
+# Link: [[../decisions/0014-walk-forward-train2000-test500]]
+```
+
+Anti-pattern: guessing slug from memory → `0014-walk-forward` (truncated) → `wiki-broken-link-check.sh` blocks push.
+
 ### Step 6: Touch agent prompt если ADR changed
 
 ```bash
@@ -117,6 +137,7 @@ Concise list:
 - ❌ Editing only Block 2 без verifying Block 1 anchor still exists (broken refs)
 - ❌ Not touching agent prompt после ADR change (adr-agent-sync hook blocks push)
 - ❌ Renaming src function без updating ALL dependent wiki anchors (PR-A verification pass purpose)
+- ❌ Guessing ADR slugs in cross-links (wiki-broken-link-check.sh blocks push) — always use `resolve-adr-slug.sh <N>` first
 
 ## Related kit references
 

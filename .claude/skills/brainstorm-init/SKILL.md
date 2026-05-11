@@ -23,6 +23,23 @@ Per `dev-workflow.md` PHASE 2 step 3a-3f: ALL scope/architecture questions MUST 
 
 ## Steps (imperative)
 
+### Step 0: Pre-brainstorm code verification (BINDING — prevents plan assumption drift)
+
+Before formulating questions, verify actual counts/structures that questions may reference. Plan assumptions wrong at S47 (spec said "11 presets", code had 6) → wasted execution work.
+
+```bash
+# Examples — run relevant checks для sprint scope:
+grep -rn "STRATEGY_PRESETS\|preset_id" src/dashboard/ | head -10     # preset count
+grep -nE "class.*Strategy" src/ -r | head -10                        # strategy count
+grep -c "= \"" src/risk/reason_codes.py                              # main reason codes
+grep -nE "T1_|t1_|CRITERIA" src/backtest/ | head -10                 # criteria names
+ls src/dashboard_react/components/ | wc -l                            # React component count
+```
+
+Verify BEFORE structuring Q<N> questions. If reality differs from expected — use actual code value в question, NOT assumed spec value.
+
+Anti-pattern: "We have 11 presets, should we extend?" when code shows 6 → misleads trader-expert → wrong verdict → retry.
+
 ### Step 1: Collect open questions
 
 Sources:

@@ -76,6 +76,36 @@ Concise summary (≤ 8 bullets):
 
 Не dump file contents. Synthesize.
 
+## Step 4b: Phase tracking table guard (HARD-GATE per phase-advance.sh)
+
+После чтения SPRINT_STATE.md — verify Phase tracking table присутствует. Если отсутствует:
+
+```bash
+grep "5 Verify\|5\.Verify" llm-wiki/wiki/project/SPRINT_STATE.md
+```
+
+Если строка не найдена — добавь Phase tracking table НЕМЕДЛЕННО (до выхода из PHASE 1):
+
+```markdown
+## Phase tracking
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1 Orient | done | session start orient |
+| 2 Brainstorm | pending | — |
+| 3 Plan | pending | — |
+| 4 Execute | pending | — |
+| 5 Verify | pending | — |
+| 6 Review | pending | — |
+| 7 Sync | pending | — |
+| 8 Ship | pending | — |
+| 9 Close | pending | — |
+```
+
+Без этой таблицы `phase-advance.sh` хук заблокирует `gh pr merge` в PHASE 8 (ищет `| 5 Verify | done |` regex).
+
+Status values: `done` / `in_progress` / `pending` / `skipped (reason)`.
+
 ## Anti-patterns (НЕ делать)
 
 - ❌ Reading plan files (50-117KB) — use sprint-NN.md sprint page instead (~5KB)
@@ -83,6 +113,7 @@ Concise summary (≤ 8 bullets):
 - ❌ Skipping git verify — mismatch SPRINT_STATE vs actual branch = bug surface
 - ❌ Re-orienting каждый prompt — once per session OR after `/clear`
 - ❌ Dumping raw file contents — synthesize bullets
+- ❌ Missing Phase tracking table в SPRINT_STATE — add immediately if absent (phase-advance.sh blocks merge)
 
 ## Related kit references
 

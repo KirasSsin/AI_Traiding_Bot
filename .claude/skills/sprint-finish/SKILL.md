@@ -107,6 +107,29 @@ branch: feature/sprint-<N>-<slug>
 tag: v0.1.0-alpha.<N>
 ```
 
+### Step 6b: Pre-push hook preparation (prevents adr-agent-sync-check.sh blocking)
+
+**Run BEFORE `git push`:**
+
+```bash
+# 1. If any ADR (llm-wiki/wiki/project/decisions/*.md) changed in sprint commits:
+git diff --name-only main..HEAD -- 'llm-wiki/wiki/project/decisions/*.md'
+
+# 2. If output non-empty → touch a relevant agent prompt to acknowledge sync:
+touch ~/.claude/agents/trading-logic-reviewer.md
+# OR more specific agent if ADR is domain-specific:
+# touch ~/.claude/agents/architecture-reviewer.md   # for architecture ADRs
+# touch ~/.claude/agents/security-auditor.md        # for security ADRs
+# touch ~/.claude/agents/dashboard-reviewer.md      # for dashboard ADRs
+
+# 3. Verify: latest agent mtime >= latest ADR commit time
+stat -f '%m %N' ~/.claude/agents/*.md | sort -nr | head -3
+git log -1 --format='%ct %ci' -- 'llm-wiki/wiki/project/decisions/'
+```
+
+If agent mtime < ADR commit time → `adr-agent-sync-check.sh` blocks push → retry required.
+Pre-emptive touch = 0 retries.
+
 ### Step 7: Commit + ship
 
 Use `superpowers:finishing-a-development-branch` skill → push branch + gh pr create + squash-merge + tag.
