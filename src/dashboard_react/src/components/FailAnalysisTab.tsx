@@ -3,6 +3,7 @@
 // 3 sections: full strategy description / per-criterion breakdown / per-fold table.
 
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import type {
   BacktestResponse,
   CriterionExplanation,
@@ -10,6 +11,15 @@ import type {
 } from '@/api/types'
 import { api } from '@/api/client'
 import styles from './FailAnalysisTab.module.css'
+
+// Safe markdown-bold renderer без dangerouslySetInnerHTML.
+// Splits text on **...** markers; even-indexed segments = plain text, odd = bold.
+function renderBoldMarkdown(text: string): ReactNode[] {
+  const parts = text.split(/\*\*(.+?)\*\*/g)
+  return parts.map((part, i) =>
+    i % 2 === 0 ? part : <strong key={i}>{part}</strong>
+  )
+}
 
 interface FailAnalysisTabProps {
   result: BacktestResponse
@@ -59,12 +69,6 @@ export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
   const folds: number[] = result.fold_sharpe_ratios ?? []
   const failedFolds = new Set<number>(result.failed_folds ?? [])
 
-  const renderParagraph = (para: string, idx: number) => {
-    // Render markdown-lite **bold** as <strong>
-    const html = para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    return <p key={idx} dangerouslySetInnerHTML={{ __html: html }} />
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.title}>▸ ДЕТАЛЬНЫЙ РАЗБОР: ПОЧЕМУ СТРАТЕГИЯ НЕ ПРОШЛА</div>
@@ -73,7 +77,9 @@ export function FailAnalysisTab({ result }: FailAnalysisTabProps) {
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>1. Описание стратегии</h3>
         <div className={styles.descriptionBody}>
-          {strategyDesc.description_ru.split('\n\n').map(renderParagraph)}
+          {strategyDesc.description_ru.split('\n\n').map((para, i) => (
+            <p key={i}>{renderBoldMarkdown(para)}</p>
+          ))}
         </div>
       </section>
 

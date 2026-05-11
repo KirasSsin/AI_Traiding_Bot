@@ -42,7 +42,10 @@ WFA_CRITERION_EXPLANATIONS_RU: dict[str, CriterionExplanation] = {
             "где pnl_pct — массив per-trade процентных доходностей по всем OOS trades;\n"
             "std с ddof=1 (sample std, N−1 в знаменателе);\n"
             "annualization_factor = √bars_per_year (default 8760 = 1H × 24/7).\n"
-            "Источник: src/backtest/strategy_metrics.py:73-75 (compute_t1_t6_metrics)."
+            "Источник: src/backtest/strategy_metrics.py:73-75 (compute_t1_t6_metrics).\n"
+            "Note: annualization применяется к per-trade returns (не per-bar);\n"
+            "при avg_trade_duration ≠ 1 bar абсолютное значение T1 не сопоставимо\n"
+            "с классическим annualized Sharpe — legacy implementation per src/backtest/strategy_metrics.py:73-75."
         ),
         "threshold": (
             "≥ 1.0 для PASS (acceptance-criteria.md amended footnote S13 PHASE 2). "
@@ -78,7 +81,10 @@ WFA_CRITERION_EXPLANATIONS_RU: dict[str, CriterionExplanation] = {
             "T2 = mean(pnl_pct) / downside_dev × √bars_per_year\n"
             "NaN если downside_dev = 0 (нет losing trades — undefined denominator).\n"
             "Источник: src/backtest/strategy_metrics.py:84-91. S27 fix: pre-S27 ошибочно "
-            "использовала std(losers_subset, ddof=1) что давало ~3.6× inflated Sortino."
+            "использовала std(losers_subset, ddof=1) что давало ~3.6× inflated Sortino.\n"
+            "Note: annualization применяется к per-trade returns (не per-bar);\n"
+            "при avg_trade_duration ≠ 1 bar абсолютное значение T2 не сопоставимо\n"
+            "с классическим annualized Sortino — legacy implementation per src/backtest/strategy_metrics.py:84-91."
         ),
         "threshold": (
             "≥ 1.5 для PASS (acceptance-criteria.md S13 PHASE 2). Источник: ADR 0014 §T2; "
@@ -192,7 +198,9 @@ WFA_CRITERION_EXPLANATIONS_RU: dict[str, CriterionExplanation] = {
         ),
         "gate_role": (
             "L4 acceptance gate (если t5_floor передан): n_trades_raw < t5_floor → failed_criteria "
-            "включает 't5_floor'. Hard blocker для overall PASS."
+            "включает 't5_floor'. Hard blocker для overall PASS. "
+            "Также: n_trades_n_eff < n_eff_threshold (Kish 1965) → failed_criteria включает "
+            "'n_eff_threshold'. Оба — независимые hard blockers per ADR 0052 §10 п.2."
         ),
     },
     "t6_oos_is_sharpe_ratio_mean": {

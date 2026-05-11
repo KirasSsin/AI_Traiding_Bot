@@ -61,19 +61,19 @@ describe('MetricsTable — RAW path', () => {
   })
 })
 
-// ─── WFA path — Bailey 2014 thresholds (per ADR 0014) ─────────────────────
+// ─── WFA path — ADR 0052 thresholds (S34 amendment) ──────────────────────
 
-describe('MetricsTable — WFA path Bailey 2014 thresholds (per ADR 0014)', () => {
-  it('T5 trade count: n=99 → FAIL (Bailey threshold ≥ 100, exclusive lower bound)', () => {
+describe('MetricsTable — WFA path ADR 0052 thresholds (S34 amendment, T5_FLOOR=50)', () => {
+  it('T5 trade count: n=49 → FAIL (ADR 0052 threshold ≥ 50, exclusive lower bound)', () => {
     const r: BacktestResponse = {
       ...baseResponse,
       verdict: 'WFA_FAIL',
-      metrics: { t5_n_trades: 99, t1_sharpe_oos: 1.2, t3_max_drawdown: 0.15 },
+      metrics: { t5_n_trades: 49, t1_sharpe_oos: 1.2, t3_max_drawdown: 0.15 },
       fold_sharpe_ratios: [1.1, 1.0, 0.9],
       dsr: 0.5,
       dsr_pass: true,
       mc_p_value: 0.04,
-      n_trades: 99,
+      n_trades: 49,
       sharpe: 1.2,
       win_rate: 0.5,
       total_pnl_pct: 5.0,
@@ -84,20 +84,20 @@ describe('MetricsTable — WFA path Bailey 2014 thresholds (per ADR 0014)', () =
     const t5Label = screen.getByText(/T5 · Trade count \(n\)/i)
     const t5Row = t5Label.closest('tr')
     expect(t5Row).toBeTruthy()
-    expect(t5Row!.textContent).toMatch(/99/)
+    expect(t5Row!.textContent).toMatch(/49/)
     expect(t5Row!.textContent).toMatch(/FAIL/i)
   })
 
-  it('T5 trade count: n=100 → PASS (Bailey threshold inclusive at 100)', () => {
+  it('T5 trade count: n=50 → PASS (ADR 0052 threshold inclusive at 50)', () => {
     const r: BacktestResponse = {
       ...baseResponse,
       verdict: 'WFA_PASS',
-      metrics: { t5_n_trades: 100 },
+      metrics: { t5_n_trades: 50 },
       fold_sharpe_ratios: [],
       dsr: 0.5,
       dsr_pass: true,
       mc_p_value: 0.04,
-      n_trades: 100,
+      n_trades: 50,
       sharpe: 1.2,
       win_rate: 0.5,
       total_pnl_pct: 5.0,
@@ -106,7 +106,7 @@ describe('MetricsTable — WFA path Bailey 2014 thresholds (per ADR 0014)', () =
 
     const t5Label = screen.getByText(/T5 · Trade count \(n\)/i)
     const t5Row = t5Label.closest('tr')
-    expect(t5Row!.textContent).toMatch(/100/)
+    expect(t5Row!.textContent).toMatch(/50/)
     expect(t5Row!.textContent).toMatch(/PASS/i)
   })
 

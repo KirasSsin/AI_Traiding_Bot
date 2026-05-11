@@ -6,7 +6,7 @@ S13 PHASE 2 reconciliation):
 - T2: Sortino OOS >= 1.5
 - T3: MaxDD < 25%
 - T4: Win rate >= 45% при RR>=1.5 OR >=35% при RR>=2.0
-- T5: Mean pnl_pct > 0, t-stat > 2.0, n >= 100 OOS
+- T5: Mean pnl_pct > 0, t-stat > 2.0, n >= 50 OOS (per S34 ADR 0052 amendment; original Bailey 2014 floor was 100)
 - T6: OOS/IS Sharpe ratio mean >= 0.7
 
 Annualization: sqrt(8760) для 24/7 crypto 1H bars (per ADR 0025).
@@ -14,6 +14,7 @@ Annualization: sqrt(8760) для 24/7 crypto 1H bars (per ADR 0025).
 CC1: N_trials tracking — extractor receives n_trials from caller (consumer
 responsibility). DSR consumed via separate compute_dsr call.
 """
+
 from __future__ import annotations
 
 import math
@@ -82,7 +83,7 @@ def compute_t1_t6_metrics(
     # n trades, target=0. Pre-fix produced ~3.6x inflated Sortino, и returned
     # NaN spuriously when all losers identical (std=0).
     downside = np.minimum(pnl_pcts, 0.0)
-    downside_dev = float(np.sqrt(np.mean(downside ** 2)))
+    downside_dev = float(np.sqrt(np.mean(downside**2)))
     if downside_dev > 0:
         sortino_per_trade = float(pnl_pcts.mean() / downside_dev)
         t2_sortino_oos = sortino_per_trade * annualization_factor
