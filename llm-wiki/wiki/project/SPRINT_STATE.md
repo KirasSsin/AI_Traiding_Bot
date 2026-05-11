@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T8 done — Bucket B complete (SPA catch-all + cache headers + MetricsTable T5 fix).
+updated: 2026-05-11  # S47 T9 done — M1 retCode taxonomy +1 code (10001 INVALID_PARAM). Bucket C task 1/3.
 sprint: 47
 phase: 4-execution
 branch: feature/sprint-47-tech-debt-carryovers
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.46
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8): T6 SPA catch-all, T7 cache headers middleware, T8 MetricsTable T5 vanilla bug fix (undefined → FAIL, 7/7 tests pass). 8 tasks remaining.
+**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8). Bucket C IN PROGRESS: T9 DONE (M1 retCode taxonomy — 10001→INVALID_PARAM added, 6 tests pass, mypy strict 0 errors). 7 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-T9: M1 retCode taxonomy extension (sonnet) — Bucket C task 1.
+T10: M2 pybit response shape defensive guards (sonnet) — Bucket C task 2.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
