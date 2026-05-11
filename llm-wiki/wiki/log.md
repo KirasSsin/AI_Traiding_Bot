@@ -2732,3 +2732,12 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Canonical counts:** UI/dashboard sprint — FSM/reason_codes UNCHANGED. Sprint pages 51→52. Vitest 23→32. Playwright 4→7. Components +2 React (BalanceBadge + GlossaryTab — React components, не wiki pages)
 - **Tag:** v0.1.0-alpha.48 (pending PHASE 6 + PHASE 8 ship)
 - **Carry к S49:** косметика (color tokens / typography / spacing / states / a11y minimum) + S47 carry-overs (Vitest #4-#5 / README npm / F8 / Item #7+#10 / MonthlyHeatmap eslint / typing) + post-S48 buffer (mean_reversion LONG-only clarification / useStrategyContext first render race / Glossary TOC mobile scroll)
+
+## [2026-05-11] ship | S48 v0.1.0-alpha.48 — UI Overhaul
+
+- Squash-merge `7456cbe` (PR #59) → tag `v0.1.0-alpha.48` pushed
+- 24/24 tasks shipped, 56 commits, ~9000 LOC delta
+- PHASE 5 GREEN: pytest 1065, mypy 0, Vitest 36, Playwright 7, lint+tsc+build clean
+- PHASE 6 reviewers (9 parallel): 3 APPROVE / 5 APPROVE_WITH_CONCERNS / 1 REQUEST_CHANGES → B1 fixed inline (FailAnalysisTab chip flip), B2 deferred S49 (T3 verdict ADR clarification)
+- Inline post-review fixes: security HIGH#1 (Field bounds initial_balance), test-engineer 3 HIGH gaps (endpoint tests + useBybitBalance hook)
+- Carry-overs S49: T3 verdict semantic / balance compounding / RunRecord backward-compat / Bybit TTL cache / GlossaryTab RTL / version string / useStrategyContext multi-instance

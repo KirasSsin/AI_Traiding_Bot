@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S48 T24 done — wiki sync (24/24) → phase=5-verify
+updated: 2026-05-11  # S48 SHIPPED v0.1.0-alpha.48 merge 7456cbe — between-sprints
 sprint: 48
-phase: 5-verify
-branch: feature/sprint-48-ui-overhaul
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.48
 ---
 
 ## Текущий статус
 
-**S48 PHASE 4 COMPLETE (24/24)** — все задачи выполнены. Переход к PHASE 5 verify.
+**S48 SHIPPED** — squash-merge `7456cbe`, tag `v0.1.0-alpha.48`. 24/24 tasks + 9 reviewers all addressed (B1 chip semantic fixed, B2 T3 verdict deferred к S49). Готов к S49 brainstorm.
 
 **S48 deliverables (24/24):**
 - Bucket 0 (T1): component subdirs refactor C5
@@ -33,9 +33,10 @@ tag: v0.1.0-alpha.48
 | 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
 | 4 Execute | **done** | 24/24 tasks complete. T24 wiki sync done (sprint-48 page + index + log + current-state). |
 | 5 Verify | done | pytest 1065 / mypy 0 / Vitest 36 / Playwright 7 / lint+tsc+build clean |
-| 6 Review | done | 9 reviewers: 3 APPROVE / 5 APPROVE_WITH_CONCERNS (security HIGH#1 + test HIGH gaps fixed) / 1 REQUEST_CHANGES → B1 fixed (chip semantic flip), B2 deferred к S49 (T3 verdict ADR clarification) |
+| 6 Review | done | 9 reviewers: 3 APPROVE / 5 APPROVE_WITH_CONCERNS / 1 REQUEST_CHANGES → B1 fixed, B2 deferred S49 |
 | 7 Sync | done | wiki sync T24 complete |
-| 8 Ship | in_progress | PR #59 CI GREEN, ready merge + tag v0.1.0-alpha.48 |
+| 8 Ship | done | PR #59 squash-merge `7456cbe`, tag v0.1.0-alpha.48 pushed |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
 | 9 Close | pending | SPRINT_STATE between-sprints + log ship entry |
 
 ## Phase tracking (S47 — previous shipped)
