@@ -58,6 +58,15 @@ tag: v0.1.0-alpha.48
 
 Маленький полировочный спринт. Operator добавит items post-S48 review. Предварительный scope: color tokens / typography / a11y / Vitest #4+#5 / README npm / F8 / Item #7+#10 / MonthlyHeatmap / typing / BybitAdapterError / RTL tests / wiki cleanup.
 
+**Carry-overs from S48 PHASE 6 reviews:**
+- **T3 verdict semantic (trading-logic BLOCKER B2 deferred):** `src/dashboard/backtest_runner.py:1027` включает `"t3"` в `failed_criteria` при DD ≥ 25%, но ADR 0014 + MetricsTable UI декларируют T3 как informational. Resolve: либо backend exclude T3 from verdict (matches ADR/UI) OR обновить ADR 0014 declaring T3 gate-blocking. Trader-expert verdict needed.
+- **C1 backend balance compounding (data-integrity):** `final_balance_quote` = additive `_running_pct` sum, не compounded equity. Display-only — но материальный для large PnL.
+- **C3 RunRecord backward-compat (data-integrity):** старые cached runs lack new fields — Python callers must `.get()` defaults.
+- **Bybit balance TTL cache (bybit-api MEDIUM + security MEDIUM):** добавить 30s server-side cache или frontend mount-only fetch — предотвратить rate limit.
+- **Test coverage gaps LOW (test-engineer):** GlossaryTab RTL / BalanceBadge snapshot / glossary_data property test.
+- **App.tsx version string stale (frontend-developer LOW):** header показывает v0.1.0-alpha.46.
+- **useStrategyContext multi-instance (frontend-developer MEDIUM):** `replaceState` не fires popstate → instances diverge.
+
 ### S50 — NEW STRATEGIES (Path B activation)
 
 **TBD после S49 ships.** Brainstorm: strategy direction / symbol scope / timeframe / acceptance criteria.
@@ -81,10 +90,7 @@ tag: v0.1.0-alpha.48
 **Chronological:**
 - **`llm-wiki/wiki/log.md`** — append-only journal с per-sprint ship entries (S1 → S46+) — для "когда что произошло"
 
-**SPRINT_STATE pre-trim raw archive (S46 post-ship 2026-05-11):**
-- [[archive/SPRINT_STATE-archive-part-1]] — S33-S46 historical sections (46 KB)
-- [[archive/SPRINT_STATE-archive-part-2]] — S5-S32e historical sections (38 KB)
-- Source: git commit `cbf3328` (last pre-trim snapshot, 86 KB / 1239 lines)
+**SPRINT_STATE pre-trim archive (S46 post-ship):** [[archive/SPRINT_STATE-archive-part-1]] + [[archive/SPRINT_STATE-archive-part-2]]. Source git `cbf3328`.
 
 **Cross-cutting:**
 - **`llm-wiki/wiki/project/architecture/current-state.md`** — sprint history table + canonical counts evolution
