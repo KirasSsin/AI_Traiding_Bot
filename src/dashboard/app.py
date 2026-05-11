@@ -23,7 +23,7 @@ from typing import Any
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -65,7 +65,7 @@ class BacktestPayload(BaseModel):
     start: str
     end: str
     force: bool = False
-    initial_balance: float = 10000.0
+    initial_balance: float = Field(default=10000.0, gt=0, le=1_000_000)
 
 
 def create_app() -> FastAPI:
