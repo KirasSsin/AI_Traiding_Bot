@@ -39,8 +39,8 @@ function buildOpts(width: number, height: number, syncKey?: string): uPlot.Optio
     cursor: {
       show: true,
       drag: { x: true, y: false },
-      // S47 T14: cursor dot on drawdown line
-      points: { show: true, size: 6, fill: '#ff3366', stroke: '#ff3366' },
+      // S47 T14: crosshair (cursor.show:true) + setCursor hook tooltip below.
+      // Skip cursor.points config — uPlot 1.6 crashes на points object form.
       // CC2: sync cursor with EquityChart when syncKey provided
       ...(syncKey !== undefined
         ? { sync: { key: syncKey, setSeries: false } }

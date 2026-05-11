@@ -98,8 +98,10 @@ function buildOpts(width: number, height: number, hasMarkers: boolean, syncKey?:
     cursor: {
       show: true,
       drag: { x: true, y: false },
-      // S47 T14: cursor dot on equity line
-      points: { show: true, size: 6, fill: '#cc785c', stroke: '#cc785c' },
+      // S47 T14: crosshair (cursor.show:true) + setCursor hook tooltip below.
+      // Skip cursor.points config — uPlot 1.6 crashes на points: {show, size, fill, stroke}
+      // object form с 'Cannot read properties of undefined reading contains'. Tooltip alone
+      // sufficient для balance display on hover.
       // T10: attach to sync group when syncKey provided
       ...(syncKey !== undefined
         ? { sync: { key: syncKey, setSeries: false } }

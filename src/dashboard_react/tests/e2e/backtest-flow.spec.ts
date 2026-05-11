@@ -82,8 +82,27 @@ test.describe('Backtest flow', () => {
       })
     })
 
+    // S47 T15 added FailAnalysisTab fetching explanation endpoints when verdict ∈ FAILED.
+    // Mock both к prevent in-flight fetch errors during test teardown.
+    await page.route('**/api/strategy_explanation/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ preset_id: 'ema_crossover_s13', description_ru: 'тест' }),
+      })
+    })
+    await page.route('**/api/wfa_criterion_explanations', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      })
+    })
+
     await page.goto('/')
     await expect(page.getByText('STRATEGY')).toBeVisible()
+    // Wait for strategies dropdown к hydrate (api/strategies returns) — submit no-op otherwise
+    await expect(page.getByRole('button', { name: /EXECUTE/ })).toBeEnabled()
 
     const executeBtn = page.getByRole('button', { name: /EXECUTE/ })
     await executeBtn.click()
