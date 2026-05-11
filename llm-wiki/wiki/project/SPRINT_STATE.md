@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S47 T10 done — M2 pybit response shape defensive guards. Bucket C task 2/3.
+updated: 2026-05-11  # S47 T11 done — Bucket C complete (M1+M2+M3 bybit-api fixes all done)
 sprint: 47
 phase: 4-execution
 branch: feature/sprint-47-tech-debt-carryovers
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.46
 
 ## Текущий статус
 
-**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8). Bucket C IN PROGRESS: T9 DONE (M1 retCode taxonomy), T10 DONE (M2 dict guards — `_safe_extract_list` + `_safe_extract_list_or_empty`, 9 tests pass, mypy strict 0 errors). 6 tasks remaining.
+**Sprint 47 PHASE 4 execution IN PROGRESS** — Bucket A COMPLETE (T1-T5). Bucket B COMPLETE (T6-T8). Bucket C COMPLETE: T9 DONE (M1 retCode taxonomy), T10 DONE (M2 dict guards), T11 DONE (M3 WS isinstance guard — dict→[dict] wrap в 3 handlers, 10 new tests, mypy strict 0 errors). 5 tasks remaining.
 
 **S47 scope locked (16 tasks, 5 buckets)** per `pre-s47-backlog.md` rev 2:
 - Bucket A (5): Vitest+RTL infra + 3 unit tests + backtest-flow E2E activate
@@ -29,7 +29,7 @@ tag: v0.1.0-alpha.46
 
 ## Следующее действие
 
-T11: M3 WS data isinstance guard (sonnet) — Bucket C task 3.
+T12: DSR property test + n_trials assert + sprint int/str type test (bundled trio — Bucket D).
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
