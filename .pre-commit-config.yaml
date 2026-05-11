@@ -14,6 +14,14 @@
 #
 # Mirror of GitHub Actions CI checks (.github/workflows/ci.yml).
 # Local-first principle: catch errors перед push, не после CI fail.
+#
+# KNOWN BEHAVIOR — ruff auto-fix retry:
+#   ruff check --fix modifies files but doesn't re-stage them.
+#   First `git commit` attempt fails with "ruff modified files".
+#   Second `git commit -m "<same message>"` succeeds immediately.
+#   This is expected — pre-commit framework limitation (no native re-stage).
+#   One retry only, not a loop. Both attempts use identical message.
+#   Alternative: `git add -u && git commit -m "..."` after first failure.
 
 repos:
   # Ruff lint + format (auto-fix). Mirror CI.
