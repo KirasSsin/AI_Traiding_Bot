@@ -81,18 +81,36 @@ tag: v0.1.0-alpha.46
 
 ## История спринтов (где искать)
 
-**SPRINT_STATE — only current.** Historical sprint sections moved к:
-- **`llm-wiki/wiki/log.md`** — chronological journal с per-sprint ship entries (S1 → S46+)
-- **`llm-wiki/wiki/project/sprints/sprint-NN-<slug>.md`** — canonical per-sprint summary pages (50 pages, S1-S46)
-- **`llm-wiki/wiki/project/architecture/current-state.md`** — sprint history table + canonical counts evolution
+**SPRINT_STATE — only current.** Historical sprint sections archived и распределены:
 
-При вопросе "что было в SN" — читай sprint-N page. При вопросе "когда что произошло" — `tail` of log.md.
+**Per-sprint canonical (preferred):**
+- **`llm-wiki/wiki/project/sprints/sprint-NN-<slug>.md`** — canonical per-sprint summary pages (50 pages, S1-S46) — primary lookup для "что было в SN"
+
+**Chronological:**
+- **`llm-wiki/wiki/log.md`** — append-only journal с per-sprint ship entries (S1 → S46+) — для "когда что произошло"
+
+**SPRINT_STATE pre-trim raw archive (S46 post-ship 2026-05-11):**
+- [[archive/SPRINT_STATE-archive-part-1]] — S33-S46 historical sections (46 KB)
+- [[archive/SPRINT_STATE-archive-part-2]] — S5-S32e historical sections (38 KB)
+- Source: git commit `cbf3328` (last pre-trim snapshot, 86 KB / 1239 lines)
+
+**Cross-cutting:**
+- **`llm-wiki/wiki/project/architecture/current-state.md`** — sprint history table + canonical counts evolution
 
 ---
 
 ## Как обновлять этот файл
 
-**BUDGET: ≤ 6 KB BINDING** (matches Read tool comfort-zone < 50 KB / 25k tokens limit с huge margin). Если SPRINT_STATE приближается к 10 KB — trim history к log.md + sprint pages. Anti-pattern (S46 post-ship 2026-05-11): file accumulated 86 KB / 1239 lines с S5-S45 history blocks → exceeded Read tool limit, blocked session-start orient.
+**BUDGET: ≤ 6 KB BINDING** (matches Read tool comfort-zone < 50 KB / 25k tokens limit с huge margin).
+
+**Split fallback** (если current sprint state legitimately нужен > 6 KB — e.g. complex sprint с 30+ tasks + multiple architect bindings):
+1. Trim approach FIRST — push detail к sprint-NN.md page (canonical) + log.md (chronological)
+2. Если всё ещё > 6 KB → **indexed split** (per project convention `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md`):
+   - `SPRINT_STATE.md` (index + frontmatter + minimal current-state pointer ≤ 2 KB)
+   - `SPRINT_STATE-part-2.md` (full current-sprint detail)
+3. Pre-trim raw history снапшот → `archive/SPRINT_STATE-archive-part-N.md` (NOT lost; recoverable)
+
+Anti-pattern (S46 post-ship 2026-05-11): file accumulated 86 KB / 1239 lines с S5-S45 history blocks → exceeded Read tool limit, blocked session-start orient. Pre-trim content preserved в `archive/SPRINT_STATE-archive-part-1.md` + `-part-2.md`.
 
 После каждого значимого шага (task complete / phase change / blocker found / session end):
 1. Обнови frontmatter `updated:` + `phase:` + `tag:`

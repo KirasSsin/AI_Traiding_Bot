@@ -115,7 +115,18 @@ After merge:
 - `git checkout main && git fetch origin && git reset --hard origin/main`
 - `git tag -a v0.1.0-alpha.<N> -m "<title>" <merge-sha> && git push origin v0.1.0-alpha.<N>`
 - Update SPRINT_STATE → between-sprints
-- **HARD-GATE budget:** `wc -c llm-wiki/wiki/project/SPRINT_STATE.md` MUST be ≤ 6 KB. Если приближается → REWRITE: keep frontmatter + current-sprint `Текущий статус` (≤ 15 bullets) + roadmap (next 2-3 sprints) + update protocol. **Trim ALL historical "## SN SHIPPED" sections** — content lives в `wiki/log.md` (chronological) + `wiki/project/sprints/sprint-NN-<slug>.md` (canonical per-sprint). Anti-pattern (S46 post-ship 2026-05-11): file accumulated 86 KB / 1239 lines, exceeded 25k Read limit, blocked session-start orient.
+- **HARD-GATE budget:** `wc -c llm-wiki/wiki/project/SPRINT_STATE.md` MUST be ≤ 6 KB. Если приближается:
+
+  **Trim path (default — sprint normal):**
+  1. ARCHIVE pre-trim snapshot к `wiki/project/archive/SPRINT_STATE-archive-part-N.md` (NEVER discard — preserve historical context). Если pre-trim > 50 KB → split к `-part-1` + `-part-2` indexed (per project convention `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md`).
+  2. REWRITE: keep frontmatter + current-sprint `Текущий статус` (≤ 15 bullets) + roadmap (next 2-3 sprints) + update protocol + pointers к archive parts.
+  3. Trim ALL historical "## SN SHIPPED" sections — content lives в `wiki/log.md` (chronological) + `wiki/project/sprints/sprint-NN-<slug>.md` (canonical per-sprint).
+
+  **Split fallback (если current sprint legitimately > 6 KB — complex sprint с 30+ tasks):**
+  1. `SPRINT_STATE.md` (index + frontmatter + minimal current-state pointer ≤ 2 KB)
+  2. `SPRINT_STATE-part-2.md` (full current-sprint detail)
+
+  Anti-pattern (S46 post-ship 2026-05-11): file accumulated 86 KB / 1239 lines, exceeded 25k Read limit, blocked session-start orient. Pre-trim raw preserved в `archive/SPRINT_STATE-archive-part-1.md` (S33-S46) + `-part-2.md` (S5-S32e).
 
 ### Step 8: Chapter mark
 

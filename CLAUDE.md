@@ -225,6 +225,18 @@ L1: claude-mem + ccd_session (session bookends + chapter marks)
 
 Hard-limit ~25k токенов = ~90KB. Если файл > 50KB — `Read` с `offset`+`limit` или `Grep`-first. Полный список banned-from-full-read файлов → `~/.claude/CLAUDE.md` секция 9.
 
+**Universal split pattern (BINDING — operator decision 2026-05-11):** любой wiki/state/ADR file приближающийся к 50KB → split к indexed parts (НЕ truncate, НЕ overwrite-with-loss):
+
+```
+<topic>.md          ← index/primary (frontmatter + minimal current state + pointers)
+<topic>-part-2.md   ← continuation
+<topic>-part-3.md   ← если still grows
+```
+
+Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` (S32e split). `SPRINT_STATE.md` + `archive/SPRINT_STATE-archive-part-1/2.md` (S46 post-ship 2026-05-11 — historical preservation).
+
+**Anti-pattern:** REWRITE-with-discard где historical content нигде else не сохранён. ALWAYS archive раньше trim — content recoverable via git, но dedicated archive file даёт zero-friction lookup.
+
 ## Anti-waste tool patterns (BINDING — CRITICAL)
 
 | Pattern | Rule | Cost on miss |
