@@ -1,10 +1,10 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S48 PHASE 2 brainstorm done → PHASE 3 plan write. Roadmap: S48 UI Overhaul / S49 косметика+carry / S50 NEW strategies
+updated: 2026-05-11  # S48 PHASE 3 plan committed `aa66b1a` (24 tasks 6 buckets) → PHASE 4 execute
 sprint: 48
-phase: 3-planning
-branch: main
+phase: 4-execution
+branch: feature/sprint-48-ui-overhaul
 tag: v0.1.0-alpha.47
 ---
 
@@ -33,23 +33,29 @@ tag: v0.1.0-alpha.47
 
 **Last shipped:** S46 v0.1.0-alpha.46 squash-merge `0fcb3ff` (React 18 + Anthropic/cyberpunk + honest close UI piece). 22 tasks. PHASE 6 5 reviewers, 1 BLOCKER + 2 HIGH + 1 MEDIUM addressed. CI GREEN.
 
-## Phase tracking
+## Phase tracking (S48 — current sprint)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | Session start orient + git state verified |
-| 2 Brainstorm | done | trader-expert R1+R2, pre-s47-backlog rev 2 (16 tasks 5 buckets) |
-| 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-47-tech-debt-carryovers.md |
-| 4 Execute | done | T1-T16 16/16 all committed |
-| 5 Verify | done | pytest 1037 pass / mypy 0 / Vitest 23 / Playwright 4 / lint+tsc+build clean |
-| 6 Review | done | 9 reviewers APPROVE/AWC, 0 blockers; HIGH+MEDIUM fixes applied pre-merge |
-| 7 Sync | done | wiki sync committed (T16) — sprint-47 page + index + log + current-state |
-| 8 Ship | done | PR #58 squash-merge `116f789` + tag v0.1.0-alpha.47 pushed |
-| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
+| 1 Orient | done | Continuous session post-S47 ship |
+| 2 Brainstorm | done | trader-expert R1+R2, pre-s48-backlog v3 (24 tasks 6 buckets), pre-plan FE+architect dispatch |
+| 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
+| 4 Execute | in_progress | T1-T24 (24/24 pending) |
+| 5 Verify | pending | pytest + mypy + Vitest + Playwright + lint+tsc+build |
+| 6 Review | pending | 9 reviewers parallel (frontend-developer PRIMARY + architecture-reviewer C1-C5 verify + python + bybit-api + security-auditor + trading-logic + test-engineer + data-integrity + doc) |
+| 7 Sync | pending | wiki sync (T24) |
+| 8 Ship | pending | tag v0.1.0-alpha.48 |
+| 9 Close | pending | SPRINT_STATE between-sprints + log ship entry |
+
+## Phase tracking (S47 — previous shipped)
+
+| Phase | Status |
+|---|---|
+| 1-9 all | done v0.1.0-alpha.47 squash-merge `116f789` |
 
 ## Следующее действие
 
-S48 PHASE 3 — написать план под `pre-s48-backlog.md` v3 (~22 задачи: 9 жалоб + Bybit balance + Glossary вкладка). Pre-plan dispatch: architecture-reviewer + frontend-developer pre-design валидация ДО plan lock per operator binding.
+S48 PHASE 4 — execute T1 (opus) component subdirs refactor. Subagent-driven-development pattern per kit override.
 
 ## S47-S49 ROADMAP (operator decisions 2026-05-10 + 2026-05-11 PIVOT)
 
