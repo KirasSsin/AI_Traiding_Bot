@@ -96,6 +96,56 @@
   font-weight: 600;
 }
 
+/* S48 T10 — section header divider (GATE-BLOCKING / INFORMATIONAL) */
+.sectionHeader td {
+  padding: 12px 8px 4px;
+}
+
+.sectionLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  border-top: 1px solid rgba(204, 120, 92, 0.40);
+}
+
+.sectionDivider td {
+  padding-top: 16px;
+}
+
+/* Informational rows — grayed out (справочные, не gate-blocking) */
+.informationalRow {
+  opacity: 0.55;
+}
+
+/* Glossary link в section divider */
+.glossaryLink {
+  color: var(--color-anthropic-orange);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.glossaryLink:hover {
+  text-decoration-style: solid;
+}
+
+/* OVERFIT? inline badge в T1 informational row */
+.overfitBadge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-warn);
+  border: 1px solid var(--color-warn);
+  border-radius: 3px;
+  vertical-align: middle;
+  opacity: 1; /* badge остаётся читаемым внутри затемнённой строки */
+}
+
 /* RAW footer note row */
 .footerNote {
   text-align: center;

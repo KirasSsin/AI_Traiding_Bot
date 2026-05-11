@@ -119,7 +119,7 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
   const t5T: Nullish = m.t5_t_stat
   const t6: Nullish = m.t6_oos_is_sharpe_ratio_mean
 
-  // T1 — Sharpe OOS: null/<1 FAIL; >3 OVERFIT? warn; else PASS
+  // T1 — цвет value-ячейки (информационно, OVERFIT? badge если > 3)
   const t1Cls =
     t1 === null || t1 === undefined
       ? styles.metricFail ?? ''
@@ -128,52 +128,21 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
         : t1 >= 1
           ? styles.metricPass ?? ''
           : styles.metricFail ?? ''
-  const t1Status =
-    t1 === null || t1 === undefined || t1 < 1
-      ? 'FAIL'
-      : t1 > 3
-        ? 'OVERFIT?'
-        : 'PASS'
 
-  // T2 — Sortino OOS: anomaly guard → N/A + GUARD (warn); else cellCls(t2, 1.5)
+  // T2 — цвет value-ячейки (информационно)
   const t2Cls = t2Guard ? styles.metricWarn ?? '' : cellCls(t2, 1.5)
-  const t2Status = t2Guard
-    ? 'GUARD'
-    : t2 === null || t2 === undefined || t2 < 1.5
-      ? 'FAIL'
-      : 'PASS'
 
-  // T3 — Max Drawdown: PASS если < 0.25; null OR >= 0.25 → FAIL
+  // T3 — цвет value-ячейки (информационно)
   const t3Cls = cellCls(t3, 0.25, '<')
-  const t3Status =
-    t3 === null || t3 === undefined || t3 >= 0.25 ? 'FAIL' : 'PASS'
 
-  // T5 n trades — S34 ADR 0052 amendment: T5_FLOOR=50 (original Bailey 2014 was 100).
-  // missing OR < 50 → FAIL. Vanilla bug: undefined < 50 = false → PASS (wrong).
+  // T5 n trades — GATE-BLOCKING: S34 ADR 0052 (T5_FLOOR=50).
+  // missing OR < 50 → FAIL. Vanilla bug: undefined < 50 = false → PASS (wrong, S47 T8 fix).
   const t5nCls =
     t5n !== null && t5n !== undefined && t5n >= 50
       ? styles.metricPass ?? ''
       : styles.metricFail ?? ''
   const t5nStatus =
     t5n !== null && t5n !== undefined && t5n >= 50 ? 'PASS' : 'FAIL'
-
-  // T5 mean PnL — null OR <=0 → FAIL
-  const t5MeanCls =
-    t5Mean === null || t5Mean === undefined || t5Mean <= 0
-      ? styles.metricFail ?? ''
-      : styles.metricPass ?? ''
-  const t5MeanStatus =
-    t5Mean === null || t5Mean === undefined || t5Mean <= 0 ? 'FAIL' : 'PASS'
-
-  // T5 t-stat — cellCls(>=2)
-  const t5TCls = cellCls(t5T, 2.0)
-  const t5TStatus =
-    t5T === null || t5T === undefined || t5T < 2 ? 'FAIL' : 'PASS'
-
-  // T6 — OOS/IS ratio: cellCls(>=0.7)
-  const t6Cls = cellCls(t6, 0.7)
-  const t6Status =
-    t6 === null || t6 === undefined || t6 < 0.7 ? 'FAIL' : 'PASS'
 
   // DSR — explicit dsr_pass boolean drives both cells
   const dsrCls = result.dsr_pass
@@ -199,6 +168,9 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
   const mcStatus =
     mc !== null && mc !== undefined && mc <= 0.05 ? 'PASS' : 'FAIL'
 
+  // Ссылка на glossary для informational-секции
+  const glossaryHref = `?strategy=${result.request.strategy_id}#section-informational_metrics`
+
   return (
     <section className={styles.container}>
       <div className={styles.title}>▸ ACCEPTANCE GATE METRICS</div>
@@ -212,36 +184,14 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>T1 · Sharpe OOS (annualized)</td>
-            <td className={t1Cls}>{fmt(t1, 2)}</td>
-            <td>{'≥ 1.0 (>3.0 = overfit)'}</td>
-            <td className={t1Cls}>{t1Status}</td>
+          {/* ── GATE-BLOCKING section ───────────────────────────────────── */}
+          <tr className={styles.sectionHeader}>
+            <td colSpan={4} className={styles.sectionLabel}>
+              GATE-BLOCKING (используется в acceptance decision)
+            </td>
           </tr>
-          <tr>
-            <td>T2 · Sortino OOS</td>
-            <td className={t2Cls}>{t2Guard ? 'N/A' : fmt(t2, 2)}</td>
-            <td>≥ 1.5</td>
-            <td className={t2Cls}>{t2Status}</td>
-          </tr>
-          <tr>
-            <td>T3 · Max Drawdown</td>
-            <td className={t3Cls}>{fmtPct(t3)}</td>
-            <td>{'< 25%'}</td>
-            <td className={t3Cls}>{t3Status}</td>
-          </tr>
-          <tr>
-            <td>T4 · Win rate</td>
-            <td>{fmtPct(t4Wr)}</td>
-            <td>≥ 45%@RR≥1.5 OR ≥ 35%@RR≥2</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>T4 · Avg RR</td>
-            <td>{fmt(t4Rr, 2)}</td>
-            <td>—</td>
-            <td>—</td>
-          </tr>
+
+          {/* T5 trade count — gate-blocking, full opacity, PASS/FAIL chip */}
           <tr className={styles.boldRow}>
             <td>
               <strong>T5 · Trade count (n)</strong>
@@ -252,35 +202,97 @@ function WfaMetricsTable({ result }: MetricsTableProps) {
             <td>≥ 50 (S34 ADR 0052)</td>
             <td className={t5nCls}>{t5nStatus}</td>
           </tr>
-          <tr>
-            <td>T5 · Mean PnL %</td>
-            <td className={t5MeanCls}>{fmtPct(t5Mean, 4)}</td>
-            <td>{'> 0'}</td>
-            <td className={t5MeanCls}>{t5MeanStatus}</td>
-          </tr>
-          <tr>
-            <td>T5 · t-stat</td>
-            <td className={t5TCls}>{fmt(t5T, 2)}</td>
-            <td>≥ 2.0</td>
-            <td className={t5TCls}>{t5TStatus}</td>
-          </tr>
-          <tr>
-            <td>T6 · OOS/IS Sharpe ratio mean</td>
-            <td className={t6Cls}>{fmt(t6, 2)}</td>
-            <td>≥ 0.7 (overfit detector)</td>
-            <td className={t6Cls}>{t6Status}</td>
-          </tr>
+
+          {/* DSR — gate-blocking */}
           <tr>
             <td>DSR · Deflated Sharpe Ratio</td>
             <td className={dsrCls}>{fmt(result.dsr, 4)}</td>
-            <td>{'> 0'}</td>
+            <td>≥ 0.95 (Bailey 2014)</td>
             <td className={dsrCls}>{dsrStatus}</td>
           </tr>
+
+          {/* MC — gate-blocking */}
           <tr>
             <td>MC · p-value (sign-flip)</td>
             <td className={mcCls}>{fmt(mc, 4)}</td>
             <td>≤ 0.05</td>
             <td className={mcStatusCls}>{mcStatus}</td>
+          </tr>
+
+          {/* ── INFORMATIONAL section ───────────────────────────────────── */}
+          <tr className={styles.sectionDivider}>
+            <td colSpan={4} className={styles.sectionLabel}>
+              INFORMATIONAL (справочно — детали в{' '}
+              <a href={glossaryHref} className={styles.glossaryLink}>
+                Glossary
+              </a>
+              )
+            </td>
+          </tr>
+
+          {/* T1 — Sharpe OOS: informational; OVERFIT? badge preserved */}
+          <tr className={styles.informationalRow}>
+            <td>
+              T1 · Sharpe OOS (annualized)
+              {t1 !== null && t1 !== undefined && t1 > 3 && (
+                <span className={styles.overfitBadge}>OVERFIT?</span>
+              )}
+            </td>
+            <td className={t1Cls}>{fmt(t1, 2)}</td>
+            <td>≥ 1.0 (информационно)</td>
+            <td>—</td>
+          </tr>
+
+          {/* T2 — Sortino OOS: informational */}
+          <tr className={styles.informationalRow}>
+            <td>T2 · Sortino OOS</td>
+            <td className={t2Cls}>{t2Guard ? 'N/A' : fmt(t2, 2)}</td>
+            <td>≥ 1.5 (информационно)</td>
+            <td>—</td>
+          </tr>
+
+          {/* T3 — Max Drawdown: informational */}
+          <tr className={styles.informationalRow}>
+            <td>T3 · Max Drawdown</td>
+            <td className={t3Cls}>{fmtPct(t3)}</td>
+            <td>{'< 25% (информационно)'}</td>
+            <td>—</td>
+          </tr>
+
+          {/* T4 — Win rate + Avg RR: informational */}
+          <tr className={styles.informationalRow}>
+            <td>T4 · Win rate</td>
+            <td>{fmtPct(t4Wr)}</td>
+            <td>≥ 45%@RR≥1.5 OR ≥ 35%@RR≥2 (информационно)</td>
+            <td>—</td>
+          </tr>
+          <tr className={styles.informationalRow}>
+            <td>T4 · Avg RR</td>
+            <td>{fmt(t4Rr, 2)}</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+
+          {/* T5 Mean PnL + t-stat: informational */}
+          <tr className={styles.informationalRow}>
+            <td>T5 · Mean PnL %</td>
+            <td>{fmtPct(t5Mean, 4)}</td>
+            <td>{'> 0 (информационно)'}</td>
+            <td>—</td>
+          </tr>
+          <tr className={styles.informationalRow}>
+            <td>T5 · t-stat</td>
+            <td>{fmt(t5T, 2)}</td>
+            <td>≥ 2.0 (информационно)</td>
+            <td>—</td>
+          </tr>
+
+          {/* T6 — OOS/IS Sharpe ratio: informational */}
+          <tr className={styles.informationalRow}>
+            <td>T6 · OOS/IS Sharpe ratio mean</td>
+            <td>{fmt(t6, 2)}</td>
+            <td>≥ 0.7 (информационно)</td>
+            <td>—</td>
           </tr>
         </tbody>
       </table>
