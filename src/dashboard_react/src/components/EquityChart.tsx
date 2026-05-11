@@ -96,7 +96,10 @@ function buildOpts(width: number, height: number, hasMarkers: boolean, syncKey?:
     width,
     height,
     cursor: {
+      show: true,
       drag: { x: true, y: false },
+      // S47 T14: cursor dot on equity line
+      points: { show: true, size: 6, fill: '#cc785c', stroke: '#cc785c' },
       // T10: attach to sync group when syncKey provided
       ...(syncKey !== undefined
         ? { sync: { key: syncKey, setSeries: false } }
@@ -159,7 +162,38 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
       data = [timestamps, equity_pct]
     }
 
-    const chart = new uPlot(buildOpts(width, height, hasMarkers, syncKey), data, container)
+    const opts = buildOpts(width, height, hasMarkers, syncKey)
+
+    // S47 T14 — setCursor hook: floating tooltip showing Date + Equity%
+    opts.hooks = {
+      setCursor: [
+        (u: uPlot) => {
+          const idx = u.cursor.idx
+          const tooltipEl = container.querySelector(
+            '[data-tooltip="equity"]',
+          ) as HTMLDivElement | null
+          if (tooltipEl === null) return
+          if (idx === null || idx === undefined || idx < 0) {
+            tooltipEl.style.display = 'none'
+            return
+          }
+          const ts = u.data[0]?.[idx]
+          const eq = u.data[1]?.[idx]
+          if (ts === undefined || ts === null || eq === undefined || eq === null) {
+            tooltipEl.style.display = 'none'
+            return
+          }
+          const date = new Date(Number(ts) * 1000).toISOString().slice(0, 10)
+          const sign = eq >= 0 ? '+' : ''
+          tooltipEl.textContent = `${date} · ${sign}${eq.toFixed(2)}%`
+          tooltipEl.style.display = 'block'
+          const left = u.cursor.left ?? 0
+          tooltipEl.style.left = `${left + 12}px`
+        },
+      ],
+    }
+
+    const chart = new uPlot(opts, data, container)
     chartRef.current = chart
 
     onChartReady?.(chart)
@@ -198,8 +232,11 @@ export function EquityChart({ equityCurve, height = 320, syncKey, onChartReady }
       <div
         ref={containerRef}
         className={styles.chartWrapper}
-        style={{ height: `${height}px` }}
-      />
+        style={{ height: `${height}px`, position: 'relative' }}
+      >
+        {/* S47 T14 — floating tooltip rendered by setCursor hook */}
+        <div data-tooltip="equity" className={styles.tooltip} style={{ display: 'none' }} />
+      </div>
     </div>
   )
 }
