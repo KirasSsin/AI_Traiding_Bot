@@ -59,9 +59,15 @@ export function GlossaryTab() {
   }, [glossary])
 
   // Applicable terms set per current strategy (T16)
+  // Edge case: strategy selected but not in strategy_to_metrics map → treat as null (show all + warn)
   const applicableTerms = useMemo(() => {
     if (glossary === null || currentStrategy === null) return null
-    return new Set(glossary.strategy_to_metrics[currentStrategy] ?? [])
+    const list = glossary.strategy_to_metrics[currentStrategy]
+    if (list === undefined) {
+      console.warn(`Glossary: strategy "${currentStrategy}" not in map — showing all entries`)
+      return null
+    }
+    return new Set(list)
   }, [glossary, currentStrategy])
 
   // Anchor scroll on mount если location.hash present
