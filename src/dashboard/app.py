@@ -39,6 +39,7 @@ from src.dashboard.backtest_runner import (
     list_runs,
     run_backtest,
 )
+from src.dashboard.glossary_data import get_glossary
 from src.dashboard.strategy_descriptions import get_strategy_description
 from src.dashboard.wfa_criterion_explanations import (
     CriterionExplanation,
@@ -221,6 +222,11 @@ def create_app() -> FastAPI:
     async def wfa_criterion_explanations() -> dict[str, CriterionExplanation]:
         """S47 T15 — RU formula+threshold+impact per WFA criterion (T1-T6 + DSR + MC)."""
         return get_all_criterion_explanations()
+
+    @app.get("/api/glossary")
+    async def glossary() -> dict[str, object]:
+        """S48 T6 — RU glossary content + per-strategy applicability map (architect C3 BINDING)."""
+        return get_glossary()
 
     @app.get("/api/bybit/balance")
     async def bybit_balance() -> dict[str, Any]:
