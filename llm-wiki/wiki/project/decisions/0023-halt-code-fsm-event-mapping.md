@@ -52,6 +52,26 @@ else:
 - Dead-code halts больше не возможны: state ↔ halt_reason инвариант проверяется тестом.
 - Reviewer prompt update — часть процесса (S8b T6).
 
+## Amendment (Sprint 49 H6, 2026-05-12) — регистрация free-form strategy reason strings
+
+**Контекст:** trading-logic-reviewer обнаружил, что EMA / mean-reversion / Donchian стратегии эмитировали reason-строки, которых **не было** в каноническом `ReasonCode` enum. `RiskManager.assess()` делает `ReasonCode(signal.reason)` с `except ValueError → ENTRY_LONG_TREND_FOLLOWING` fallback. Результат: каждый live entry/exit этих трёх семейств стратегий логировался с generic fallback-кодом → **strategy attribution молча терялась в audit-log**. Тот же класс бага, что ADR S39 R3 C4 пытался закрыть (atr_breakout + volume_breakout были зарегистрированы как коды 51-56, эти три семейства — нет).
+
+**Решение:** зарегистрированы 7 ранее free-form строк как новые `ReasonCode` members (коды 57-63), следуя существующей naming convention `<value> == <name>`:
+
+| # | Код | Стратегия | Источник строки |
+|---|-----|-----------|-----------------|
+| 57 | `ENTRY_LONG_EMA_CROSS_UP` | EmaCrossoverAdxRsiStrategy | `src/signalgen/strategy.py` |
+| 58 | `EXIT_FLAT_SIGNAL_FLIP` | EmaCrossoverAdxRsiStrategy | `src/signalgen/strategy.py` |
+| 59 | `ENTRY_LONG_MEANREV_RSI_BB` | MeanReversionRsiBBStrategy | `src/signalgen/mean_reversion_strategy.py` |
+| 60 | `EXIT_FLAT_MEANREV_REVERT` | MeanReversionRsiBBStrategy | `src/signalgen/mean_reversion_strategy.py` |
+| 61 | `ENTRY_LONG_DONCHIAN_BREAKOUT` | DonchianBreakoutStrategy | `src/signalgen/donchian_strategy.py` |
+| 62 | `EXIT_FLAT_ATR_STOP` | DonchianBreakoutStrategy | `src/signalgen/donchian_strategy.py` |
+| 63 | `EXIT_FLAT_CHANNEL` | DonchianBreakoutStrategy | `src/signalgen/donchian_strategy.py` |
+
+**Total: 56 → 63.** `Signal.reason` остаётся `str` (НЕ типизирован как `ReasonCode`) — типизация вызвала бы signalgen→risk circular dependency (S1 incident, reverted). Round-trip `ReasonCode(strategy_emitted_string)` теперь резолвится без fallback → attribution сохранена.
+
+**НЕ halt-class коды** — на них не распространяется exhaustive-dispatch invariant выше (они entry/exit-class, проходят через `RiskManager.assess()`, не через `Coordinator.request_halt()`).
+
 ## Рассмотренные альтернативы
 
 - **Pure runtime introspection** (no ADR/test): rely на FSM `InvalidTransitionError` чтобы поймать missing dispatch. Reject — exception в production = halt path сломан в момент когда он нужнее всего; better to fail в CI.
