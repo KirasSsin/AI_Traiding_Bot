@@ -39,7 +39,7 @@ sources:
 | FSM states | **16** | `src/execution/state_machine.py` `ExecutionState` enum | S6 (ADR 0020) |
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **74** | `src/execution/state_machine.py` `TRANSITIONS` dict | S8b T7 (ADR 0023, +1 FLAT,RISK_HALT) |
-| Reason codes | **56** | `src/risk/reason_codes.py` `ReasonCode` enum | unchanged S47 (T9 added INVALID_PARAM к bybit-local enum `src/execution/bybit/errors.py:ReasonCode`, не main) |
+| Reason codes | **63** | `src/risk/reason_codes.py` `ReasonCode` enum | S49 H6 (+7 EMA/meanrev/donchian attribution, ADR 0023 amendment) |
 | Component pages | **48** | `wiki/project/components/*.md` (excl. README.md cluster index) | S40 (+atr-breakout-strategy) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
 | ADRs | **66** | `wiki/project/decisions/*.md` (0001-0066) | S46 (ADR 0066 React migration + Anthropic/cyberpunk pivot; ADR 0039 amended) |
@@ -63,7 +63,7 @@ source /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/activate
 python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, ExecutionEvent; from src.risk.reason_codes import ReasonCode; print(f'states={len(list(ExecutionState))}, events={len(list(ExecutionEvent))}, transitions={len(TRANSITIONS)}, reason_codes={len(list(ReasonCode))}')"
 ```
 
-Expected output: `states=16, events=30, transitions=74, reason_codes=56`
+Expected output: `states=16, events=30, transitions=74, reason_codes=63`
 
 ## Структура `src/` (post-S8b)
 

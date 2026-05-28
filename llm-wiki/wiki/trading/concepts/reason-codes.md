@@ -10,7 +10,7 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 
 # Reason Codes
 
-**TL;DR:** 56 стандартизированных enum-кодов для audit-log. Каждая сделка/отказ/halt получает один код. Используется в event `RiskRejected.reason`, `OrderCancelled.reason`, `CircuitBreakerTriggered.reason` и `trade_audit.reason_code`. Канонический enum — `src/risk/reason_codes.py::ReasonCode` (StrEnum, immutable).
+**TL;DR:** 63 стандартизированных enum-кода для audit-log. Каждая сделка/отказ/halt получает один код. Используется в event `RiskRejected.reason`, `OrderCancelled.reason`, `CircuitBreakerTriggered.reason` и `trade_audit.reason_code`. Канонический enum — `src/risk/reason_codes.py::ReasonCode` (StrEnum, immutable).
 
 ## Enum
 
@@ -40,6 +40,10 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 - `EXIT_FLAT_ATR_STOP_VB` — ATR stop triggered для volume breakout позиции (S39 VolumeBreakoutStrategy, ADR 0059 LOCKED).
 - `EXIT_FLAT_ATR_REVERSE` — обратный ATR breakdown (S40 ATRBreakoutStrategy, ADR 0060 LOCKED).
 - `EXIT_FLAT_ATR_STOP_AB` — ATR stop triggered для atr_breakout позиции (S40 ATRBreakoutStrategy, ADR 0060 LOCKED).
+- `EXIT_FLAT_SIGNAL_FLIP` — EMA bearish cross → flat (S3 EmaCrossoverAdxRsiStrategy, ADR 0023 amendment S49 H6).
+- `EXIT_FLAT_MEANREV_REVERT` — возврат к mid-band / RSI exit (S15 MeanReversionRsiBBStrategy, ADR 0023 amendment S49 H6).
+- `EXIT_FLAT_ATR_STOP` — Donchian ATR trailing stop hit (S35 DonchianBreakoutStrategy, ADR 0023 amendment S49 H6).
+- `EXIT_FLAT_CHANNEL` — close ниже lower Donchian channel (S35 DonchianBreakoutStrategy, ADR 0023 amendment S49 H6).
 
 ### Rejects (9)
 - `REJECT_RISK_EXCEEDED` — Kelly или max position fraction.
@@ -110,7 +114,9 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §14, src/risk/reason_codes.py (Sprint 4
 
 **Note (Sprint 39):** добавлены 3 кода VolumeBreakoutStrategy (`ENTRY_LONG_VOLUME_BREAKOUT`, `EXIT_FLAT_VOLUME_CHANNEL`, `EXIT_FLAT_ATR_STOP_VB`). Total: 50 → 53. См. ADR 0059. Реализация: [[../../project/components/volume-breakout-strategy]].
 
-**Note (Sprint 40):** добавлены 3 кода ATRBreakoutStrategy (`ENTRY_LONG_ATR_BREAKOUT`, `EXIT_FLAT_ATR_REVERSE`, `EXIT_FLAT_ATR_STOP_AB`). Total: 53 → **56**. См. ADR 0060. Реализация: [[../../project/components/atr-breakout-strategy]].
+**Note (Sprint 40):** добавлены 3 кода ATRBreakoutStrategy (`ENTRY_LONG_ATR_BREAKOUT`, `EXIT_FLAT_ATR_REVERSE`, `EXIT_FLAT_ATR_STOP_AB`). Total: 53 → 56. См. ADR 0060. Реализация: [[../../project/components/atr-breakout-strategy]].
+
+**Note (Sprint 49 H6, ADR 0023 amendment):** зарегистрированы 7 free-form reason strings, которые EMA / mean-reversion / Donchian стратегии эмитировали, но которые отсутствовали в enum (`ENTRY_LONG_EMA_CROSS_UP`, `EXIT_FLAT_SIGNAL_FLIP`, `ENTRY_LONG_MEANREV_RSI_BB`, `EXIT_FLAT_MEANREV_REVERT`, `ENTRY_LONG_DONCHIAN_BREAKOUT`, `EXIT_FLAT_ATR_STOP`, `EXIT_FLAT_CHANNEL`). До фикса `RiskManager.assess()` сворачивал их к generic fallback `ENTRY_LONG_TREND_FOLLOWING` → strategy attribution молча терялась в audit-log. Total: 56 → **63**. Реализация: [[../../project/components/strategy]], [[../../project/components/donchian-strategy]].
 
 ## Использование
 

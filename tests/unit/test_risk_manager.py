@@ -92,6 +92,7 @@ def _make_trade_record(*, pnl: Decimal, exit_ts: datetime = _T0) -> TradeRecord:
 
 def _make_manager(db, settings, clock=None):
     from src.risk.manager import RiskManager
+
     return RiskManager(
         conn=db,
         settings=settings,
@@ -101,6 +102,7 @@ def _make_manager(db, settings, clock=None):
 
 def _seed_equity(db, *, realized: Decimal, ts: datetime = _T0):
     from src.risk.equity_tracker import EquityTracker
+
     EquityTracker(db).record(
         realized=realized,
         unrealized=Decimal("0"),
@@ -289,7 +291,9 @@ def test_override_is_consumed_after_bypass(db, settings):
 
     # Second assess — no active override → halt re-applies.
     # generated_at must be <= clock (_T0) per look-ahead invariant.
-    second = mgr.assess(_make_signal(generated_at=_T0 - timedelta(seconds=1)), mark_price=Decimal("30000"))
+    second = mgr.assess(
+        _make_signal(generated_at=_T0 - timedelta(seconds=1)), mark_price=Decimal("30000")
+    )
     assert second.approved is False
     assert second.reason_code == ReasonCode.HALT_DRAWDOWN_L2
 
@@ -399,13 +403,13 @@ def test_wilson_lower_bound_phase3(db, settings):
     # Insert 100 trades: 55 wins, 45 losses — within 90-day window
     ts_base = _T0 - timedelta(days=10)
     for i in range(55):
-        repo.insert_closed_trade(_make_trade_record(
-            pnl=Decimal("1.0"), exit_ts=ts_base + timedelta(minutes=i)
-        ))
+        repo.insert_closed_trade(
+            _make_trade_record(pnl=Decimal("1.0"), exit_ts=ts_base + timedelta(minutes=i))
+        )
     for i in range(45):
-        repo.insert_closed_trade(_make_trade_record(
-            pnl=Decimal("-1.0"), exit_ts=ts_base + timedelta(minutes=55 + i)
-        ))
+        repo.insert_closed_trade(
+            _make_trade_record(pnl=Decimal("-1.0"), exit_ts=ts_base + timedelta(minutes=55 + i))
+        )
 
     mgr = _make_manager(db, settings)
     signal = _make_signal()
@@ -578,7 +582,7 @@ def test_update_equity_atomic_rollback_on_state_failure(db, settings, monkeypatc
     mgr = _make_manager(db, settings)
     initial = db.execute("SELECT COUNT(*) FROM equity_snapshots").fetchone()[0]
 
-    def boom(*args, **kwargs):
+    def boom(*args, **kwargs):  # noqa: ARG001 — test double, args ignored intentionally
         raise RuntimeError("simulated state-write failure")
 
     monkeypatch.setattr(mgr._state, "update_many_no_commit", boom)
@@ -601,7 +605,7 @@ def test_qty_quantize_rounds_down(db, settings, monkeypatch):
 
     _seed_equity(db, realized=Decimal("10000"))
     # Force compute_qty to return value with non-zero 9th decimal
-    monkeypatch.setattr(mgr_mod, "compute_qty", lambda **kw: Decimal("0.123456789"))
+    monkeypatch.setattr(mgr_mod, "compute_qty", lambda **kw: Decimal("0.123456789"))  # noqa: ARG005 — stub ignores kwargs
     mgr = _make_manager(db, settings)
     signal = _make_signal()
     result = mgr.assess(signal, mark_price=Decimal("30000"))
