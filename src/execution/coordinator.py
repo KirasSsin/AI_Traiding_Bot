@@ -365,7 +365,7 @@ class Coordinator:
                 qty=leaves_qty,
                 order_link_id=residual_link_id,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 — any place_order failure → halt+FLATTEN_FAILED (control flow preserved)
             self._set_halt(
                 reason=ReasonCode.HALT_FLATTEN_FAILED,
                 last_event=ExecutionEvent.FLATTEN_FAILED,
@@ -433,7 +433,8 @@ class Coordinator:
                 current = self._repo.get(self._symbol)
                 if current is not None and current.state == ExecutionState.LONG_OPEN:
                     self._transition(ExecutionEvent.TP_PLACED)
-            except Exception:
+            except Exception:  # noqa: BLE001 — TP leg place failed; bumped attempt persisted, FSM stays OCO_ARMING for retry
+                _log.warning("arm_oco.tp_place_failed symbol=%s", self._symbol, exc_info=True)
                 return
             try:
                 sl_ack = self._adapter.place_stop_market_order(
@@ -445,7 +446,8 @@ class Coordinator:
                 )
                 self._upsert_fields(oco_sl_order_id=sl_ack.order_id)
                 self._transition(ExecutionEvent.SL_PLACED)
-            except Exception:
+            except Exception:  # noqa: BLE001 — SL leg place failed; FSM stays OCO_ARMING for retry (TP already live)
+                _log.warning("arm_oco.sl_place_failed symbol=%s", self._symbol, exc_info=True)
                 return
 
     def flatten(self, *, reason: ReasonCode) -> None:
@@ -530,7 +532,10 @@ class Coordinator:
                 symbol=self._symbol, side="Sell", qty=qty, order_link_id=link_id
             )
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort flatten Market Sell; caller retries/halts on False
+            _log.warning(
+                "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
+            )
             return False
 
     def _qty_step(self) -> Decimal:

@@ -85,11 +85,9 @@ def _write_html_report(
 
         fig.update_layout(height=900, title_text="AI Trading Bot Backtest Report")
         fig.write_html(report_path, include_plotlyjs="cdn")
-    except Exception:
-        # Fallback minimal HTML if plotly is missing
-        metrics_rows = "\n".join(
-            f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in metrics.items()
-        )
+    except Exception:  # noqa: BLE001 — plotly optional/unstable; fall back to minimal static HTML
+        # Fallback minimal HTML if plotly is missing or chart generation fails
+        metrics_rows = "\n".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in metrics.items())
         html = f"""<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Backtest Report</title></head>

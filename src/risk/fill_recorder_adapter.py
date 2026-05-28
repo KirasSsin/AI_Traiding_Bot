@@ -85,7 +85,7 @@ class FillRecorderAdapter:
         # Layer 2: best-effort DB insert
         try:
             self._try_insert(evt)
-        except Exception:
+        except Exception:  # noqa: BLE001 — WS callback thread must never crash on bad data (logged)
             logger.exception("fill_event_insert_failed: evt=%r", evt)
 
     def _try_insert(self, evt: dict[str, Any]) -> None:

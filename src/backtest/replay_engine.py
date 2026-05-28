@@ -13,6 +13,10 @@ def _to_bool(value: Any) -> bool:
 
 
 def _holding_time_seconds(timestamp_open: Any, timestamp_close: Any) -> float:
+    # S49 M3: narrowed from bare `except Exception` to the only failure modes
+    # possible here — incompatible/None timestamp types (TypeError), non-numeric
+    # delta (ValueError), or missing attribute (AttributeError). A real bug now
+    # propagates instead of being swallowed as 0.0.
     try:
         delta = timestamp_close - timestamp_open
         if hasattr(delta, "total_seconds"):
@@ -20,7 +24,7 @@ def _holding_time_seconds(timestamp_open: Any, timestamp_close: Any) -> float:
         delta_float = float(delta)
         # If timestamps are milliseconds, convert to seconds.
         return delta_float / 1000.0 if abs(delta_float) > 1_000_000 else delta_float
-    except Exception:
+    except (TypeError, ValueError, AttributeError):
         return 0.0
 
 
@@ -67,7 +71,7 @@ def _compute_metrics(
     sortino = 0.0
     if not returns.empty:
         downside = returns.where(returns < 0, 0.0)
-        downside_dev = float(np.sqrt((downside ** 2).mean()))
+        downside_dev = float(np.sqrt((downside**2).mean()))
         if downside_dev > 0:
             sortino = float((returns.mean() / downside_dev) * annualization_factor)
 
@@ -255,9 +259,7 @@ def run_replay(df: pd.DataFrame, config: Dict[str, Any]) -> Dict[str, Any]:
                 }
 
         high_water_mark = max(high_water_mark, balance)
-        drawdown = (
-            (high_water_mark - balance) / high_water_mark if high_water_mark > 0 else 0.0
-        )
+        drawdown = (high_water_mark - balance) / high_water_mark if high_water_mark > 0 else 0.0
 
         if drawdown >= max_drawdown:
             if position is not None:
