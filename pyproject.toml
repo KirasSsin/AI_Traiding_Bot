@@ -90,4 +90,5 @@ testpaths = ["tests/unit", "tests/property"]
 asyncio_mode = "auto"
 markers = [
   "integration: requires live Bybit testnet (env-gated)",
+  "property: Hypothesis property-based invariant tests",
 ]
