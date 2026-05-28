@@ -228,6 +228,73 @@ def _is_valid_run_id(run_id: str) -> bool:
     return bool(_RUN_ID_RE.fullmatch(run_id))
 
 
+# S49 BATCH 5 (H8+H10) — gate-blocking criterion floors. T1/T2/T3/T4/T6 are
+# informational (display-only) per trader-expert BINDING verdict — они НЕ влияют на verdict.
+_N_TRADES_FLOOR = 50
+_N_EFF_FLOOR = 50
+
+
+def _compute_verdict(
+    n_trades: int,
+    dsr_pass: bool,
+    mc_pass: bool,
+    failed_folds: list[int],
+    n_eff: int,
+) -> tuple[list[str], str]:
+    """Compute (failed_criteria, verdict) from gate-blocking criteria ONLY.
+
+    trader-expert BINDING verdict (S49): verdict определяется ИСКЛЮЧИТЕЛЬНО
+    gate-blocking критериями:
+      - T5 n_trades floor (>= 50)        → "t5_floor"
+      - per-fold OOS/IS Sharpe (>= 0.7)  → "sharpe_gate" (failed_folds non-empty)
+      - MC permutation (p <= 0.05)       → "mc_gate" (mc_pass False)
+      - DSR (>= 0.95)                    → "dsr_threshold" (dsr_pass False)
+      - n_eff (>= 50)                    → "n_eff_threshold"
+
+    T1/T2/T3/T4/T6 — informational (отображаются в UI, НЕ блокируют verdict).
+    Criterion keys match FailAnalysisTab ALL_CRITERIA gate-blocking entries.
+    """
+    failed_criteria: list[str] = []
+    if n_trades < _N_TRADES_FLOOR:
+        failed_criteria.append("t5_floor")
+    if failed_folds:
+        failed_criteria.append("sharpe_gate")
+    if not mc_pass:
+        failed_criteria.append("mc_gate")
+    if not dsr_pass:
+        failed_criteria.append("dsr_threshold")
+    if n_eff < _N_EFF_FLOOR:
+        failed_criteria.append("n_eff_threshold")
+    verdict = "PASS" if not failed_criteria else "FAIL"
+    return failed_criteria, verdict
+
+
+def _compound_balance(initial_balance: float, pnl_pcts: list[float]) -> float:
+    """Geometric compounding: initial × Π(1 + pnl_pct_i).
+
+    M1 (S49): per-trade fractional pnl_pct (e.g. 0.10 = +10%) compounds
+    multiplicatively, NOT additively. 3×(+10%) → ×1.331, not ×1.30.
+    """
+    equity = initial_balance
+    for pnl_pct in pnl_pcts:
+        equity *= 1.0 + pnl_pct
+    return equity
+
+
+def _compound_equity_pct(pnl_pcts: list[float]) -> list[float]:
+    """Cumulative compounded return series (percent from initial capital).
+
+    M1 (S49): equity_pct[i] = (Π_{j<=i}(1 + pnl_pct_j) - 1) × 100.
+    Replaces additive running sum which understated cumulative return.
+    """
+    series: list[float] = []
+    cumulative = 1.0
+    for pnl_pct in pnl_pcts:
+        cumulative *= 1.0 + pnl_pct
+        series.append((cumulative - 1.0) * 100.0)
+    return series
+
+
 def _autoscale_wfa_params(total_bars: int) -> dict[str, int]:
     """S38 dashboard extension: auto-scale WFA params для small data ranges.
 
@@ -1019,44 +1086,34 @@ def run_backtest(
     # Cumulative equity_pct relative to initial capital (consistent with research_runner_envelope).
     # TradeRecord.pnl_pct is fractional (e.g. 0.012 = +1.2%); multiply ×100 for display.
     # TradeRecord.exit_ts is AwareDatetime — convert to unix seconds for frontend timestamps.
-    _eq_timestamps: list[int] = []
-    _eq_pct: list[float] = []
-    _running_pct = 0.0
-    for _t in sym_trades:
-        _running_pct += float(_t.pnl_pct) * 100.0
-        _eq_timestamps.append(int(_t.exit_ts.timestamp()))
-        _eq_pct.append(_running_pct)
+    # M1 (S49): compound geometrically — additive sum understated cumulative return.
+    _eq_timestamps = [int(_t.exit_ts.timestamp()) for _t in sym_trades]
+    _pnl_pcts = [float(_t.pnl_pct) for _t in sym_trades]
+    _eq_pct = _compound_equity_pct(_pnl_pcts)
 
-    # Verdict
-    failed_criteria: list[str] = []
+    # Informational metric values (T1/T2/T3/T4/T6) — displayed in UI, NOT gate-blocking.
+    # Per trader-expert BINDING verdict (S49 H8+H10): verdict определяется ИСКЛЮЧИТЕЛЬНО
+    # gate-blocking критериями (T5 floor / sharpe_gate / mc_gate / dsr / n_eff) — см. _compute_verdict.
     t1 = nan_safe(metrics["t1_sharpe_oos"])
-    if t1 is None or t1 < 1.0:
-        failed_criteria.append("t1")
-    if sortino_display is None or (isinstance(sortino_display, float) and sortino_display < 1.5):
-        failed_criteria.append("t2")
     t3 = nan_safe(metrics["t3_max_drawdown"])
-    if t3 is None or t3 >= 0.25:
-        failed_criteria.append("t3")
     t4_win = nan_safe(metrics["t4_win_rate"])
     t4_rr = nan_safe(metrics["t4_avg_rr"])
-    t4_fail = (
-        t4_win is None
-        or t4_rr is None
-        or (t4_rr >= 2.0 and t4_win < 0.35)
-        or (1.5 <= t4_rr < 2.0 and t4_win < 0.45)
-        or t4_rr < 1.5
-    )
-    if t4_fail:
-        failed_criteria.append("t4")
     t5_t = nan_safe(metrics["t5_t_stat"])
     t5_mean = nan_safe(metrics["t5_mean_pnl_pct"])
-    if n_trades < 100 or t5_mean is None or t5_mean <= 0 or t5_t is None or t5_t < 2.0:
-        failed_criteria.append("t5")
     t6 = nan_safe(metrics["t6_oos_is_sharpe_ratio_mean"])
-    if t6 is None or t6 < 0.7:
-        failed_criteria.append("t6")
+
+    # Verdict — gate-blocking criteria ONLY (DSR uses existing dashboard semantic dsr_value > 0).
     dsr_pass = nan_safe(dsr_value) is not None and dsr_value > 0
-    verdict = "PASS" if not failed_criteria and dsr_pass else "FAIL"
+    mc_pass = bool(gate.get("mc_gate_passed", False))
+    n_eff = gate.get("n_trades_n_eff")
+    n_eff_value = n_trades if n_eff is None else int(n_eff)
+    failed_criteria, verdict = _compute_verdict(
+        n_trades=n_trades,
+        dsr_pass=dsr_pass,
+        mc_pass=mc_pass,
+        failed_folds=list(gate.get("failed_folds", [])),
+        n_eff=n_eff_value,
+    )
 
     # Risk warnings (trader spec, 4 mandatory)
     warnings: list[dict[str, str]] = []
@@ -1150,7 +1207,8 @@ def run_backtest(
             # S48 T7 (Bug H prereq) — win_rate + balance fields для HistoryTab expand
             "win_rate": t4_win,
             "initial_balance_quote": initial_balance,
-            "final_balance_quote": initial_balance * (1.0 + _running_pct / 100.0),
+            # M1 (S49): geometric compounding Π(1 + pnl_pct_i), not additive sum.
+            "final_balance_quote": _compound_balance(initial_balance, _pnl_pcts),
         },
         "fold_sharpe_ratios": sym_fold_sharpes,
         "failed_folds": gate.get("failed_folds", []),
@@ -1236,4 +1294,15 @@ def get_run(run_id: str) -> dict[str, Any] | None:
     p = _RUNS_DIR / f"{run_id}.json"
     if not p.exists():
         return None
-    return json.loads(p.read_text())  # type: ignore[no-any-return]
+    data: dict[str, Any] = json.loads(p.read_text())
+    # M6 (S49): assert equity_curve parallel-array length invariant (timestamps vs equity_pct).
+    equity_curve = data.get("equity_curve")
+    if isinstance(equity_curve, dict):
+        _timestamps = equity_curve.get("timestamps")
+        _equity_pct = equity_curve.get("equity_pct")
+        if isinstance(_timestamps, list) and isinstance(_equity_pct, list):
+            assert len(_timestamps) == len(_equity_pct), (
+                f"equity_curve parallel arrays length mismatch for run {run_id}: "
+                f"timestamps={len(_timestamps)} vs equity_pct={len(_equity_pct)}"
+            )
+    return data
