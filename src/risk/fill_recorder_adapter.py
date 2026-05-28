@@ -20,9 +20,11 @@ Race condition note: WS execution events MAY arrive before trade_history.insert_
 (trade still open, exit_ts not yet set). Adapter handles via skip+warn — operator
 post-mortem reads structlog audit для unresolved fills.
 """
+
 from __future__ import annotations
 
 import logging
+import threading
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Protocol
@@ -57,10 +59,18 @@ class FillRecorderAdapter:
         repo: FillHistoryRepository,
         state_repo: _StateRepoProto,
         trade_history_repo: _TradeHistoryRepoProto,
+        lock: threading.Lock | None = None,
     ) -> None:
         self._repo = repo
         self._state_repo = state_repo
         self._trade_history_repo = trade_history_repo
+        # H5 (S49): on_fill_event runs on the pybit WS callback thread and reads
+        # state_repo / trade_history_repo (SQLite connection family shared with the
+        # main-thread Risk/State repos). The read→insert critical section must be
+        # serialized against concurrent main-thread writes to avoid SQLite
+        # "database is locked" / interleaved writes. A caller may inject a shared
+        # lock (the repo/coordinator-layer lock); otherwise a dedicated lock is used.
+        self._lock = lock if lock is not None else threading.Lock()
 
     def on_fill_event(self, evt: dict[str, Any]) -> None:
         """Parse Bybit V5 execution event → best-effort FillRecord insert.
@@ -79,13 +89,23 @@ class FillRecorderAdapter:
             logger.exception("fill_event_insert_failed: evt=%r", evt)
 
     def _try_insert(self, evt: dict[str, Any]) -> None:
-        """Resolve lookup chain; insert if fully resolved, else skip+warn."""
+        """Resolve lookup chain; insert if fully resolved, else skip+warn.
+
+        H5 (S49): the entire lookup→insert path runs under ``self._lock`` so a
+        WS-thread fill insert cannot interleave with a concurrent main-thread
+        write on the shared SQLite connection family.
+        """
         order_id = evt.get("orderId")
         if not order_id:
             logger.warning("fill_event_unresolved_skipping_db: no orderId, evt=%r", evt)
             return
 
-        state_row = self._state_repo.find_by_order_id(str(order_id))
+        with self._lock:
+            self._resolve_and_insert(evt, str(order_id))
+
+    def _resolve_and_insert(self, evt: dict[str, Any], order_id: str) -> None:
+        """Critical section (lock held by caller): resolve chain + insert."""
+        state_row = self._state_repo.find_by_order_id(order_id)
         if state_row is None:
             logger.warning(
                 "fill_event_unresolved_skipping_db: no execution_state for orderId=%s",
