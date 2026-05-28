@@ -80,6 +80,13 @@ def block_bootstrap_p_value(
     тех concatenates к length(returns) sequence. Tests if observed mean
     significantly differs from bootstrap distribution.
 
+    M4 (S49) WARNING — METHOD CAVEAT: this resample-with-replacement from the
+    OBSERVED returns measures the SAMPLING VARIABILITY of the observed mean, NOT
+    directional-edge significance versus a no-edge null. A correct edge null
+    requires block SIGN-FLIP (see SignFlipTest / sign_flip_p_value, the gate).
+    This metric is secondary/informational only. DO NOT promote it to a verdict
+    gate without switching to the sign-flip (edge-null) method.
+
     Args:
         returns: per-trade returns array.
         n_iterations: bootstrap iterations (ADR 0015 default 2000).
