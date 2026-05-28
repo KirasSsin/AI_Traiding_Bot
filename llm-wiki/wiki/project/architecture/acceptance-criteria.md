@@ -52,18 +52,35 @@ sources: [Docs/MVP + ALL PROJECT/MVP.md §10]
 1. Walk-Forward + K=5 CV на 5 лет BTC 1H¹
 2. Compute OOS Sharpe, Sortino, MaxDD, win rate, t-stat, OOS/IS ratio
 3. Compute DSR учитывая N конфигураций (N ≤ 45 по MinBTL)
-4. Gate: все T1-T6 green AND DSR > 0² AND PBO < 0.5³
+4. Gate (блокирует verdict/mainnet — gate-blocking ONLY):
+     T5 n_trades >= 50 (raw floor)
+     AND DSR >= 0.95²
+     AND MC permutation p-value <= 0.05
+     AND per-fold OOS/IS Sharpe >= 0.7 (все фолды)
+     AND n_eff >= 50 (Kish 1965)
 5. Если pass: promote to live (с Kelly Phase 1 — 1% fixed)
 6. Live trading накапливает реальные trades → Kelly phase progression
 ```
+
+**⚠️ Gate-blocking vs informational (S49 — trader-expert BINDING verdict, разрешение T3-противоречия):**
+
+| Класс | Критерии | Эффект |
+|-------|----------|--------|
+| **Gate (блокирует mainnet)** | T5 n_trades≥50 · DSR≥0.95 · MC p≤0.05 · per-fold OOS/IS Sharpe≥0.7 (все фолды) · n_eff≥50 | Любой fail → verdict FAIL |
+| **Informational (НЕ блокирует verdict)** | T1 Sharpe · T2 Sortino · T3 MaxDD · T4 Win Rate · T6 OOS/IS Sharpe (aggregate) | Отображаются, влияют на интерпретацию (risk warnings), не на PASS/FAIL |
+
+T1/T2/T3/T4/T6 — диагностические метрики качества стратегии. T3 MaxDD < 25% (см. таблицу выше) —
+это **рекомендация / risk-flag**, а НЕ gate. Реализация: `backtest_runner._compute_verdict`.
+UI (FailAnalysisTab, MetricsTable) разделяет оба класса. Пороги gate зафиксированы ADR 0052 (LOCKED).
+Согласуется с секцией «Вспомогательные метрики (не gating)» выше и поправкой S34. Детали → [[../decisions/0014-walk-forward-train2000-test500]].
 
 **Footnotes (S13 PHASE 2 reconciliation):**
 
 ¹ **Data span — 5 лет = aspirational, floor 3.5y.** `migration-plan.md` S7 AC says "2y BTC 1H-данных" (retrospective minimum); this gating flow says "5 лет" (target). Reconciliation per S13 ADR 0028: target 5y, fallback к **max available Bybit Spot data, floor 3.5y** for K=5 fold statistical adequacy (ADR 0014: 12,600 bars min; 3.5y × 8760 = 30,660 bars). Если Bybit Spot earliest 1H BTCUSDT timestamp > 2022 → escalate к user. Per ADR 0016: NO Binance fallback (venue consistency).
 
-² **DSR gate active S13+** per S13 PHASE 2 Q5 CONFIRM. N_trials tracking: each measurement attempt increments N_trials (CC1 binding infrastructure). N_trials > 1 requires sigma_sr (cross-fold Sharpe std) per Bailey eq. 12 (S10 implementation).
+² **DSR gate active S13+** per S13 PHASE 2 Q5 CONFIRM. Порог уточнён до **DSR >= 0.95** в ADR 0052 (S34, LOCKED) — заменяет ранний "DSR > 0". N_trials tracking: each measurement attempt increments N_trials (CC1 binding infrastructure). N_trials > 1 requires sigma_sr (cross-fold Sharpe std) per Bailey eq. 12 (S10 implementation).
 
-³ **PBO gate deferred S15+** — PBO requires MCS (Monte Carlo Strategy Selection) framework not implemented в v0.1 (~3 sprints scope expansion). S13 measurement uses **T1-T6 + DSR > 0 only** (PBO gate documented as deferred, not silently dropped).
+³ **PBO gate deferred S15+** — PBO requires MCS (Monte Carlo Strategy Selection) framework not implemented в v0.1 (~3 sprints scope expansion). S13 measurement использовал **T1-T6 + DSR > 0** (исторический контекст; current gate переопределён выше per ADR 0052 — PBO остаётся deferred, not silently dropped).
 
 ## Периодичность ревалидации
 
