@@ -106,6 +106,32 @@ def test_run_not_found_returns_404(client: TestClient) -> None:
     assert r.status_code == 404
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "../etc/passwd",
+        "..%2f..%2fetc%2fpasswd",
+        "abc/../../etc",
+        "%2e%2e%2f",
+        "ABCDEF0123456789",  # uppercase hex — not lowercase sha256
+        "z" * 16,  # non-hex chars
+        "a" * 15,  # too short
+        "a" * 17,  # too long
+    ],
+)
+def test_run_id_traversal_or_malformed_returns_404(client: TestClient, payload: str) -> None:
+    """H1 — path traversal / malformed run_id rejected before any disk access."""
+    r = client.get(f"/api/runs/{payload}")
+    assert r.status_code == 404
+
+
+def test_run_id_valid_16hex_accepted(client: TestClient) -> None:
+    """H1 — valid 16-char lowercase hex run_id reaches get_run (404 only if missing file)."""
+    r = client.get("/api/runs/0123456789abcdef")
+    # No cached run with this id → 404 from get_run None, NOT a validation reject.
+    assert r.status_code == 404
+
+
 def test_get_glossary_returns_200_with_expected_keys() -> None:
     app = create_app()
     client = TestClient(app)

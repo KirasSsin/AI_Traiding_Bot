@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -215,6 +216,16 @@ BARS_PER_YEAR: dict[str, int] = {
 
 _lock = threading.Lock()
 _RUNS_DIR = Path("data/runs")
+
+# H1 (S49) — run_id is ALWAYS sha256[:16] (lowercase hex) generated in BacktestRequest.run_id().
+# Validate user-supplied run_id against this exact shape BEFORE any path join to prevent
+# path traversal (../, %2e%2e%2f) reading arbitrary .json files.
+_RUN_ID_RE = re.compile(r"[a-f0-9]{16}")
+
+
+def _is_valid_run_id(run_id: str) -> bool:
+    """Return True iff run_id matches the sha256[:16] shape (16 lowercase hex chars)."""
+    return bool(_RUN_ID_RE.fullmatch(run_id))
 
 
 def _autoscale_wfa_params(total_bars: int) -> dict[str, int]:
@@ -1215,7 +1226,13 @@ def list_runs() -> list[dict[str, Any]]:
 
 
 def get_run(run_id: str) -> dict[str, Any] | None:
-    """Fetch full run by run_id."""
+    """Fetch full run by run_id.
+
+    H1 (S49) — validate run_id shape (16 lowercase hex) BEFORE path join.
+    Rejects traversal payloads (../, %2e%2e%2f, abc/../../etc) → returns None.
+    """
+    if not _is_valid_run_id(run_id):
+        return None
     p = _RUNS_DIR / f"{run_id}.json"
     if not p.exists():
         return None
