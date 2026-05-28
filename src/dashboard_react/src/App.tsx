@@ -12,9 +12,9 @@ import { GlossaryTab } from './components/tabs/GlossaryTab'
 import { WfaFailBanner } from './components/shared/WfaFailBanner'
 import { FailAnalysisTab } from './components/shared/FailAnalysisTab'
 import type { BacktestResponse, Verdict } from './api/types'
+import styles from './App.module.css'
 
 const FAILED_VERDICTS = new Set<Verdict>(['WFA_FAIL', 'WFA_FAIL_DATA', 'FAIL'])
-import styles from './App.module.css'
 
 type Tab = 'backtest' | 'documentation' | 'history' | 'glossary'
 
