@@ -14,7 +14,6 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-
 from src.backtest.replay_engine import run_replay
 from src.backtest.strategy_metrics import _DEFAULT_BARS_PER_YEAR
 
@@ -78,8 +77,12 @@ def _config_for_1h() -> dict:
 
 
 def test_default_bars_per_year_constant():
-    """_DEFAULT_BARS_PER_YEAR=8760 (1H baseline preserved post-S27 T1 fix)."""
-    assert _DEFAULT_BARS_PER_YEAR == 8760
+    """_DEFAULT_BARS_PER_YEAR=8766 (1H baseline; S49 L6 unify on 365.25 family).
+
+    Was 8760 (365 family); unified to 8766 = round(365.25 × 24). Immaterial to
+    gates (0.07% Sharpe annualization shift) — informational consistency only.
+    """
+    assert _DEFAULT_BARS_PER_YEAR == 8766
 
 
 def test_replay_4h_uses_bars_per_year_2190_for_annualization():

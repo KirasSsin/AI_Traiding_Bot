@@ -29,7 +29,12 @@ from src.risk.trade_history import TradeRecord
 # Default `bars_per_year=8760` (1H × 24/7 = 8760 bars/year) для backward-compat.
 # At 15M: bars_per_year=35040. Caller MUST pass correct value to avoid
 # 2× Sharpe understimate (false-FAIL risk per S17 institutional knowledge).
-_DEFAULT_BARS_PER_YEAR = 8760  # 1H legacy default
+_DEFAULT_BARS_PER_YEAR = 8766  # 1H legacy default (365.25 family — L6 unify)
+
+# S49 BATCH 8 NEW-BUG: zero/near-zero std-dev guard. A degenerate (all-identical)
+# pnl series → std≈0 → mean/std → ±inf → renders as `Infinity` in dashboard JSON.
+# Match dsr.py div-by-zero discipline: treat std below eps as undefined → NaN.
+_STD_EPS = 1e-12
 
 
 def compute_t1_t6_metrics(
@@ -70,9 +75,12 @@ def compute_t1_t6_metrics(
     pnl_pcts = np.array([float(t.pnl_pct) for t in trades])
     pnl_quotes = np.array([float(t.pnl_quote) for t in trades])
 
-    # T1: Sharpe OOS annualized
-    if pnl_pcts.std(ddof=1) > 0:
-        sharpe_per_trade = float(pnl_pcts.mean() / pnl_pcts.std(ddof=1))
+    # T1: Sharpe OOS annualized.
+    # S49 BATCH 8: guard near-zero std (not just ==0) to avoid ±inf on a
+    # degenerate all-identical pnl series (found by BATCH 7 property test).
+    pnl_std = float(pnl_pcts.std(ddof=1))
+    if pnl_std > _STD_EPS:
+        sharpe_per_trade = float(pnl_pcts.mean()) / pnl_std
         t1_sharpe_oos = sharpe_per_trade * annualization_factor
     else:
         t1_sharpe_oos = float("nan")
@@ -84,11 +92,12 @@ def compute_t1_t6_metrics(
     # NaN spuriously when all losers identical (std=0).
     downside = np.minimum(pnl_pcts, 0.0)
     downside_dev = float(np.sqrt(np.mean(downside**2)))
-    if downside_dev > 0:
-        sortino_per_trade = float(pnl_pcts.mean() / downside_dev)
+    # S49 BATCH 8: same near-zero guard as T1 — avoid ±inf on degenerate series.
+    if downside_dev > _STD_EPS:
+        sortino_per_trade = float(pnl_pcts.mean()) / downside_dev
         t2_sortino_oos = sortino_per_trade * annualization_factor
     else:
-        # No losing trades → undefined Sortino (denominator zero)
+        # No losing trades (or zero downside) → undefined Sortino (denominator zero)
         t2_sortino_oos = float("nan")
 
     # T3: Max Drawdown (peak-to-trough on equity curve)
@@ -115,8 +124,9 @@ def compute_t1_t6_metrics(
 
     # T5: Mean pnl_pct + t-stat
     t5_mean_pnl_pct = float(pnl_pcts.mean())
-    if pnl_pcts.std(ddof=1) > 0 and n > 1:
-        t5_t_stat = float(pnl_pcts.mean() / (pnl_pcts.std(ddof=1) / math.sqrt(n)))
+    # S49 BATCH 8: reuse pnl_std (computed for T1) with near-zero guard.
+    if pnl_std > _STD_EPS and n > 1:
+        t5_t_stat = float(pnl_pcts.mean()) / (pnl_std / math.sqrt(n))
     else:
         t5_t_stat = float("nan")
 
