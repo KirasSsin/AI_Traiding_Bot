@@ -3,6 +3,7 @@
 
 import { useMemo } from 'react'
 import type { EquityCurve } from '@/api/types'
+import { computeMonthlyData } from './monthlyHeatmapUtils'
 import styles from './MonthlyHeatmap.module.css'
 
 export interface MonthlyHeatmapProps {
@@ -10,68 +11,6 @@ export interface MonthlyHeatmapProps {
 }
 
 const MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'] as const
-
-interface MonthlyData {
-  years: number[]
-  cells: Map<number, Map<number, number>>  // year → month(0-11) → return%
-}
-
-/** Compute per-month PnL returns from cumulative equity_pct series. */
-function computeMonthlyData(timestamps: number[], equityPct: number[]): MonthlyData {
-  // Group samples by (year, month) — keep first + last equity_pct per group
-  const groups = new Map<string, { first: number; last: number }>()
-
-  for (let i = 0; i < timestamps.length; i++) {
-    const ts = timestamps[i]
-    const val = equityPct[i]
-    if (ts === undefined || val === undefined) continue
-
-    const d = new Date(ts * 1000)
-    const year = d.getUTCFullYear()
-    const month = d.getUTCMonth()  // 0-11
-    const key = `${year}-${month}`
-
-    const existing = groups.get(key)
-    if (existing === undefined) {
-      groups.set(key, { first: val, last: val })
-    } else {
-      // last always updates; first stays at initial value
-      existing.last = val
-    }
-  }
-
-  // Build cells map: year → month → return%
-  const cells = new Map<number, Map<number, number>>()
-  let minYear = Infinity
-  let maxYear = -Infinity
-
-  groups.forEach((entry, key) => {
-    const dashIdx = key.indexOf('-')
-    const year = parseInt(key.slice(0, dashIdx), 10)
-    const month = parseInt(key.slice(dashIdx + 1), 10)
-    const ret = entry.last - entry.first  // cumulative pct diff = monthly return
-
-    if (year < minYear) minYear = year
-    if (year > maxYear) maxYear = year
-
-    let yearMap = cells.get(year)
-    if (yearMap === undefined) {
-      yearMap = new Map<number, number>()
-      cells.set(year, yearMap)
-    }
-    yearMap.set(month, ret)
-  })
-
-  // Build sorted years array spanning full range
-  const years: number[] = []
-  if (minYear !== Infinity) {
-    for (let y = minYear; y <= maxYear; y++) {
-      years.push(y)
-    }
-  }
-
-  return { years, cells }
-}
 
 /** Dynamic cell background based on return magnitude. */
 function cellStyle(value: number | undefined): React.CSSProperties {
