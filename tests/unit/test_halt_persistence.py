@@ -3,9 +3,9 @@
 This file will be EXTENDED in later Sprint 7 tasks (Tasks 9, 10) with
 _set_halt idempotency tests. For Task 1 it covers schema-only.
 """
+
 import sqlite3
 from pathlib import Path
-
 
 MIG_DIR = Path(__file__).resolve().parents[2] / "migrations"
 
@@ -22,9 +22,9 @@ def test_migration_0005_adds_halt_columns(tmp_path):
     try:
         _apply_migrations(db)
         cols = {row[1] for row in db.execute("PRAGMA table_info(execution_state)")}
-        assert {"halt_reason", "last_exit_reason", "last_reconcile_at", "bootstrap_at"}.issubset(cols), (
-            f"missing halt persistence columns; got: {sorted(cols)}"
-        )
+        assert {"halt_reason", "last_exit_reason", "last_reconcile_at", "bootstrap_at"}.issubset(
+            cols
+        ), f"missing halt persistence columns; got: {sorted(cols)}"
     finally:
         db.close()
 
@@ -36,7 +36,9 @@ def test_migration_0005_creates_halt_log_table(tmp_path):
         _apply_migrations(db)
         tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         assert "halt_log" in tables, f"halt_log table missing; got tables: {sorted(tables)}"
-        indexes = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='index'")}
+        indexes = {
+            row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='index'")
+        }
         assert "halt_log_symbol_ts" in indexes, f"index missing; got: {sorted(indexes)}"
     finally:
         db.close()
@@ -69,6 +71,7 @@ from src.platform.db import connect, init_db
 
 def _now_iso_for_test() -> str:
     from datetime import UTC, datetime
+
     return datetime.now(tz=UTC).isoformat()
 
 
@@ -121,8 +124,12 @@ def test_set_halt_first_call_writes_column_and_log(tmp_path):
 def test_set_halt_secondary_call_log_appends_primary_preserved(tmp_path):
     """ADR 0021 sub-decision 5: secondary halt appends log; halt_reason column unchanged."""
     repo = _seed_repo(tmp_path)
-    repo._set_halt(symbol="BTCUSDT", reason="HALT_OCO_ARM_TIMEOUT", context={"state_at_halt": "OCO_ARMING"})
-    repo._set_halt(symbol="BTCUSDT", reason="HALT_RECONCILE_DIVERGENCE", context={"state_at_halt": "HALTED"})
+    repo._set_halt(
+        symbol="BTCUSDT", reason="HALT_OCO_ARM_TIMEOUT", context={"state_at_halt": "OCO_ARMING"}
+    )
+    repo._set_halt(
+        symbol="BTCUSDT", reason="HALT_RECONCILE_DIVERGENCE", context={"state_at_halt": "HALTED"}
+    )
     row = repo.get("BTCUSDT")
     assert row is not None
     assert row.halt_reason == "HALT_OCO_ARM_TIMEOUT"  # primary wins
@@ -141,7 +148,9 @@ def test_set_halt_no_row_logs_only(tmp_path):
     init_db(db_path, MIG_DIR)
     conn = connect(db_path)
     repo = ExecutionStateRepo(conn)
-    repo._set_halt(symbol="ETHUSDT", reason="HALT_BOOTSTRAP_AMBIGUOUS", context={"sub_reason": "stale_age"})
+    repo._set_halt(
+        symbol="ETHUSDT", reason="HALT_BOOTSTRAP_AMBIGUOUS", context={"sub_reason": "stale_age"}
+    )
     log_rows = list(
         repo._conn.execute(
             "SELECT reason FROM halt_log WHERE symbol=?",
@@ -151,12 +160,59 @@ def test_set_halt_no_row_logs_only(tmp_path):
     assert log_rows == [("HALT_BOOTSTRAP_AMBIGUOUS",)]
 
 
+class _ExecuteSpyConn:
+    """Proxy wrapping a real sqlite3.Connection, recording the order of executed SQL.
+
+    sqlite3.Connection.execute is read-only (cannot monkeypatch), so the repo is
+    constructed against this proxy. ``with conn:`` must keep transactional
+    semantics, hence __enter__/__exit__ delegate to the wrapped connection.
+    """
+
+    def __init__(self, conn):
+        self._conn = conn
+        self.issued: list[str] = []
+
+    def execute(self, sql, *args, **kwargs):
+        self.issued.append(sql)
+        return self._conn.execute(sql, *args, **kwargs)
+
+    def __enter__(self):
+        return self._conn.__enter__()
+
+    def __exit__(self, *exc):
+        return self._conn.__exit__(*exc)
+
+
+def test_set_halt_audit_insert_before_state_update(tmp_path):
+    """ADR 0021 sub-decision 5 (write-ahead audit): halt_log INSERT executes BEFORE
+    the execution_state UPDATE within the same transaction.
+
+    Guards against future split-txn refactor introducing an audit gap (UPDATE
+    commits, INSERT lost). Verified by tracking the order of issued SQL statements.
+    """
+    seeded = _seed_repo(tmp_path)
+    spy = _ExecuteSpyConn(seeded._conn)
+    repo = ExecutionStateRepo(spy)  # type: ignore[arg-type]
+
+    repo._set_halt(
+        symbol="BTCUSDT",
+        reason="HALT_OCO_ARM_TIMEOUT",
+        context={"state_at_halt": "OCO_ARMING"},
+    )
+
+    insert_idx = next(i for i, s in enumerate(spy.issued) if "INSERT INTO halt_log" in s)
+    update_idx = next(i for i, s in enumerate(spy.issued) if "UPDATE execution_state" in s)
+    assert insert_idx < update_idx, (
+        f"halt_log INSERT (idx {insert_idx}) must precede execution_state UPDATE "
+        f"(idx {update_idx}) per write-ahead audit invariant; issued order: {spy.issued}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Task 10: Coordinator persists halt_reason + context at HALT callsites
 # ---------------------------------------------------------------------------
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
-
 
 _REQUIRED_CTX_KEYS = (
     "state_at_halt",
@@ -173,6 +229,7 @@ _REQUIRED_CTX_KEYS = (
 def _build_coord_in_oco_arming(tmp_path):
     """Construct Coordinator with a real repo seeded in OCO_ARMING."""
     from src.execution.coordinator import Coordinator
+
     db_path = tmp_path / "coord_halt.db"
     init_db(db_path, MIG_DIR)
     conn = connect(db_path)
@@ -197,8 +254,11 @@ def _build_coord_in_oco_arming(tmp_path):
     adapter = MagicMock()
     reconciler = MagicMock()
     coord = Coordinator(
-        adapter=adapter, repo=repo, reconciler=reconciler,
-        symbol="BTCUSDT", base_coin="BTC",
+        adapter=adapter,
+        repo=repo,
+        reconciler=reconciler,
+        symbol="BTCUSDT",
+        base_coin="BTC",
     )
     return coord, repo
 
@@ -213,8 +273,7 @@ def test_coordinator_arming_ttl_halt_persists_reason_and_context(tmp_path):
     assert row.halt_reason == "HALT_OCO_ARM_TIMEOUT"
     log_row = list(
         repo._conn.execute(
-            "SELECT reason, context_json FROM halt_log "
-            "WHERE symbol=? ORDER BY id DESC LIMIT 1",
+            "SELECT reason, context_json FROM halt_log " "WHERE symbol=? ORDER BY id DESC LIMIT 1",
             ("BTCUSDT",),
         )
     )[0]

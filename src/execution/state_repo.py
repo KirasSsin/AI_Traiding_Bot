@@ -1,4 +1,5 @@
 """SQLite persistence for execution FSM state. ADR 0019 sub-decision 3 + ADR 0020 sub-decision 2."""
+
 from __future__ import annotations
 
 import json
@@ -28,7 +29,7 @@ class ExecutionStateRow:
     halt_reason: str | None = None
     last_exit_reason: str | None = None
     last_reconcile_at: str | None = None  # ISO-8601 UTC; updated each reconcile call
-    bootstrap_at: str | None = None       # ISO-8601 UTC; set once per process startup
+    bootstrap_at: str | None = None  # ISO-8601 UTC; set once per process startup
 
 
 _COLUMNS = (
@@ -132,17 +133,21 @@ class ExecutionStateRepo:
                 (symbol,),
             )
             existing = cur.fetchone()
+            # Write-ahead audit (ADR 0021 sub-decision 5): append the halt_log row
+            # BEFORE the execution_state UPDATE. Both run in one transaction so the
+            # outcome is identical on commit, but ordering the audit INSERT first
+            # preserves the invariant for any future split-txn refactor (no audit
+            # gap if the column UPDATE were ever to commit separately).
+            self._conn.execute(
+                "INSERT INTO halt_log (symbol, ts, reason, context_json) " "VALUES (?, ?, ?, ?)",
+                (symbol, ts, reason, ctx_json),
+            )
             if existing is not None and existing[0] is None:
                 self._conn.execute(
                     "UPDATE execution_state SET halt_reason = ?, updated_at = ? "
                     "WHERE symbol = ? AND halt_reason IS NULL",
                     (reason, ts, symbol),
                 )
-            self._conn.execute(
-                "INSERT INTO halt_log (symbol, ts, reason, context_json) "
-                "VALUES (?, ?, ?, ?)",
-                (symbol, ts, reason, ctx_json),
-            )
 
 
 def _row_to_dataclass(r: tuple[Any, ...]) -> ExecutionStateRow:
