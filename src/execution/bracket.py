@@ -8,9 +8,11 @@ Bybit Spot V5 has no native OCO; we emulate via:
 
 Correlation: orderLinkId = "oco-{bracket_id}-{role}-{attempt}" — propagated to WS events.
 """
+
 from __future__ import annotations
+
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
 from typing import Literal
 
 Role = Literal["entry", "tp", "sl"]
@@ -55,23 +57,58 @@ def make_order_link_id(*, bracket_id: str, role: Role, attempt: int) -> str:
     return lid
 
 
+def make_flatten_link_id(*, bracket_id: str, kind: Literal["res", "emg"], attempt: int) -> str:
+    """S49 B1 — deterministic orderLinkId for flatten/residual Market Sells.
+
+    bybit-api-reviewer S49 BLOCKER B1: flatten/residual place_order calls carried no
+    orderLinkId. _retry_with_backoff auto-retries on order-frequency rate-limit codes
+    (170005/170222); a retry after the order already landed server-side would submit a
+    SECOND Market Sell → double execution. A STABLE orderLinkId makes the placement
+    idempotent (Bybit dedupes by orderLinkId), so a retry of the same logical order is
+    rejected as a duplicate rather than executed twice.
+
+    kind: "res" = SL IOC residual flatten, "emg" = emergency flatten cascade.
+    attempt: stable seq so the SAME logical placement reuses the SAME id across retries.
+    Bybit V5 max length 36 chars.
+    """
+    lid = f"flat-{bracket_id}-{kind}-{attempt}"
+    if len(lid) > 36:
+        raise ValueError(f"orderLinkId too long ({len(lid)} > 36): {lid}")
+    return lid
+
+
 def build_bracket(p: BracketParams) -> BracketLegs:
     exit_side: Literal["Buy", "Sell"] = "Sell" if p.entry_side == "Buy" else "Buy"
     return BracketLegs(
         entry=BracketLeg(
-            role=ROLE_ENTRY, side=p.entry_side, qty=p.entry_qty,
-            price=None, trigger_price=None,
-            order_link_id=make_order_link_id(bracket_id=p.bracket_id, role=ROLE_ENTRY, attempt=p.attempt),
+            role=ROLE_ENTRY,
+            side=p.entry_side,
+            qty=p.entry_qty,
+            price=None,
+            trigger_price=None,
+            order_link_id=make_order_link_id(
+                bracket_id=p.bracket_id, role=ROLE_ENTRY, attempt=p.attempt
+            ),
         ),
         tp=BracketLeg(
-            role=ROLE_TP, side=exit_side, qty=p.entry_qty,
-            price=p.tp_price, trigger_price=None,
-            order_link_id=make_order_link_id(bracket_id=p.bracket_id, role=ROLE_TP, attempt=p.attempt),
+            role=ROLE_TP,
+            side=exit_side,
+            qty=p.entry_qty,
+            price=p.tp_price,
+            trigger_price=None,
+            order_link_id=make_order_link_id(
+                bracket_id=p.bracket_id, role=ROLE_TP, attempt=p.attempt
+            ),
         ),
         sl=BracketLeg(
-            role=ROLE_SL, side=exit_side, qty=p.entry_qty,
-            price=None, trigger_price=p.sl_trigger_price,
-            order_link_id=make_order_link_id(bracket_id=p.bracket_id, role=ROLE_SL, attempt=p.attempt),
+            role=ROLE_SL,
+            side=exit_side,
+            qty=p.entry_qty,
+            price=None,
+            trigger_price=p.sl_trigger_price,
+            order_link_id=make_order_link_id(
+                bracket_id=p.bracket_id, role=ROLE_SL, attempt=p.attempt
+            ),
         ),
     )
 
@@ -90,11 +127,7 @@ def compute_oco_qty(
     quote (USDT). Submitting OCO legs with raw cumExecQty (ignoring fee) leaves dust that
     can't be cancelled and traps the bracket. Floor to qty_step after subtracting.
     """
-    if fee_currency == base_coin:
-        net = cum_exec_qty - cum_exec_fee
-    else:
-        net = cum_exec_qty
+    net = cum_exec_qty - cum_exec_fee if fee_currency == base_coin else cum_exec_qty
     if net <= 0:
         return Decimal("0")
-    floored = (net / qty_step).quantize(Decimal("1"), rounding=ROUND_DOWN) * qty_step
-    return floored
+    return (net / qty_step).quantize(Decimal("1"), rounding=ROUND_DOWN) * qty_step
