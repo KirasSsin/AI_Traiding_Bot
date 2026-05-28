@@ -3,6 +3,7 @@ from decimal import Decimal
 from pathlib import Path
 
 import pyarrow.parquet as pq
+import pytest
 from src.marketdata.models import Bar, DataQuality
 from src.marketdata.storage import ParquetBarWriter
 
@@ -46,6 +47,39 @@ def test_writer_creates_file_and_persists_bars(tmp_path: Path) -> None:
         "trade_count",
         "data_quality",
     }
+
+
+def test_writer_leaves_no_tmp_file_on_success(tmp_path: Path) -> None:
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+    path = writer.append([_bar(0)])
+
+    assert path.exists()
+    # final file written, no leftover temp artifact
+    assert list(tmp_path.glob("*.tmp")) == []
+    assert list(tmp_path.glob("*.parquet")) == [path]
+
+
+def test_writer_atomic_no_partial_final_on_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Simulate a crash during the rename step → final path must not exist
+    # (write went to .tmp), and the tmp artifact must be cleaned up.
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+
+    import src.marketdata.storage as storage_mod
+
+    def _boom(_src: str, _dst: str) -> None:
+        raise OSError("simulated crash during rename")
+
+    monkeypatch.setattr(storage_mod.os, "replace", _boom)
+
+    with pytest.raises(OSError, match="simulated crash"):
+        writer.append([_bar(0)])
+
+    # no corrupt/partial final partition left behind
+    assert list(tmp_path.glob("*.parquet")) == []
+    # tmp cleaned up on failure
+    assert list(tmp_path.glob("*.tmp")) == []
 
 
 def test_writer_append_is_additive(tmp_path: Path) -> None:
