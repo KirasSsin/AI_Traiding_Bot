@@ -99,6 +99,27 @@ class BybitAPIError(RuntimeError):
         self.ret_msg = ret_msg
 
 
+def _safe_extract_list(resp: dict[str, Any], context: str) -> list[Any]:
+    """S49 B2 — defensive extraction of resp['result']['list'].
+
+    bybit-api-reviewer S49 BLOCKER B2: kline loop (rest.py) and
+    filters.from_instruments_info accessed resp['result']['list'][0] directly →
+    bare KeyError/IndexError on a Bybit V5 schema shift. This guard raises a typed
+    BybitAPIError (retCode=-1) with the calling `context` instead. Empty list is a
+    valid value — returned as-is for callers to handle (no IndexError on [0]).
+
+    Mirrors src.execution.bybit.adapter._safe_extract_list but stays in the
+    marketdata layer to avoid a marketdata→execution import inversion.
+    """
+    result = resp.get("result")
+    if not isinstance(result, dict):
+        raise BybitAPIError(-1, f"missing 'result' dict для {context}: got {type(result).__name__}")
+    items = result.get("list")
+    if not isinstance(items, list):
+        raise BybitAPIError(-1, f"'result.list' not list для {context}: got {type(items).__name__}")
+    return items
+
+
 class BybitRESTClient:
     """Wraps pybit V5 HTTP client with our domain-friendly return types."""
 
@@ -181,7 +202,8 @@ class BybitRESTClient:
             )
             if resp["retCode"] != 0:
                 raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""))
-            rows = list(reversed(resp["result"]["list"]))  # oldest-first within batch
+            # S49 B2: guard result.list — typed error on schema shift, empty list = break.
+            rows = list(reversed(_safe_extract_list(resp, "get_klines")))  # oldest-first
             if not rows:
                 break
             batch_bars: list[Bar] = []

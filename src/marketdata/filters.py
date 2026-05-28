@@ -24,9 +24,16 @@ class BybitFilters(BaseModel):
 
     @classmethod
     def from_instruments_info(cls, response: dict[str, Any]) -> "BybitFilters":
+        # S49 B2: guard result.list — typed BybitAPIError on schema shift / empty list,
+        # not bare KeyError/IndexError. Lazy import avoids a marketdata circular import.
+        from src.marketdata.bybit.rest import BybitAPIError, _safe_extract_list
+
         if response["retCode"] != 0:
             raise RuntimeError(f"instruments-info retCode={response['retCode']}")
-        item = response["result"]["list"][0]
+        items = _safe_extract_list(response, "from_instruments_info")
+        if not items:
+            raise BybitAPIError(-1, "instruments-info result.list empty — no symbol filters")
+        item = items[0]
         lot = item["lotSizeFilter"]
         price = item["priceFilter"]
         return cls(
