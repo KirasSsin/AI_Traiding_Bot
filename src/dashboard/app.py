@@ -17,13 +17,14 @@ Launch: scripts/dashboard.sh OR `python -m src.dashboard.app`.
 from __future__ import annotations
 
 import webbrowser
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -66,6 +67,43 @@ class BacktestPayload(BaseModel):
     end: str
     force: bool = False
     initial_balance: float = Field(default=10000.0, gt=0, le=1_000_000)
+
+    @field_validator("start", "end")
+    @classmethod
+    def _validate_iso_date(cls, v: str) -> str:
+        """H2.3 (S49) — reject malformed dates at the schema boundary (→ 422, not 500).
+
+        Backend downstream calls date.fromisoformat(...) — bad input previously
+        surfaced as an unhandled 500. Validate YYYY-MM-DD shape + calendar validity here.
+        """
+        try:
+            date.fromisoformat(v)
+        except ValueError as exc:
+            raise ValueError(f"Invalid date '{v}': expected YYYY-MM-DD") from exc
+        return v
+
+
+class RunResult(BaseModel):
+    """H2.1 (S49) — response_model for /api/backtest + /api/runs/{run_id}.
+
+    Guards the backend↔types.ts contract on the typed core fields shared by BOTH
+    response shapes (WFA pipeline result AND research_runner_envelope RAW path).
+    extra='allow' lets shape-specific backend fields (trades_dump, wfa_params,
+    acceptance_gate, fold_sharpe_ratios, etc.) pass through unchanged.
+
+    `metrics` is dict[str, Any] (types.ts: `Record<string, number>`) — the RAW
+    envelope path legitimately returns an empty metrics dict, so a strict
+    per-criterion model would 500 that path. The typed guard is on run_id /
+    verdict / request / cached, which both shapes always populate.
+    """
+
+    model_config = {"extra": "allow"}
+
+    run_id: str
+    request: dict[str, Any]
+    verdict: str
+    metrics: dict[str, Any]
+    cached: bool
 
 
 def create_app() -> FastAPI:
@@ -136,12 +174,16 @@ def create_app() -> FastAPI:
     async def get_intervals() -> list[dict[str, str]]:
         return [{"id": k, "label": v} for k, v in INTERVAL_LABELS.items()]
 
+    # H2.2 (S49) — disk IO; plain `def` → Starlette runs it in a threadpool
+    # (avoids event-loop starvation under concurrent requests).
     @app.get("/api/data/availability")
-    async def get_availability() -> dict[str, dict[str, object]]:
+    def get_availability() -> dict[str, dict[str, object]]:
         return list_data_availability()
 
-    @app.post("/api/backtest")
-    async def post_backtest(payload: BacktestPayload = Body(...)) -> dict[str, object]:  # noqa: B008
+    # H2.1 response_model=RunResult (contract guard) + H2.2 plain `def`
+    # (run_backtest = heavy CPU+IO under threading.Lock; must not block event loop).
+    @app.post("/api/backtest", response_model=RunResult)
+    def post_backtest(payload: BacktestPayload = Body(...)) -> dict[str, object]:  # noqa: B008
         # S39 T4 — ENFORCE locked dimensions (ADR 0059 anti-snooping)
         preset = STRATEGY_PRESETS.get(payload.strategy_id)
         if preset is None:
@@ -192,12 +234,14 @@ def create_app() -> FastAPI:
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e)) from e
 
+    # H2.2 (S49) — disk IO; plain `def` → threadpool.
     @app.get("/api/runs")
-    async def get_runs() -> list[dict[str, object]]:
+    def get_runs() -> list[dict[str, object]]:
         return list_runs()
 
-    @app.get("/api/runs/{run_id}")
-    async def get_single_run(run_id: str) -> dict[str, object]:
+    # H2.1 response_model=RunResult + H2.2 plain `def` (disk IO).
+    @app.get("/api/runs/{run_id}", response_model=RunResult)
+    def get_single_run(run_id: str) -> dict[str, object]:
         result = get_run(run_id)
         if result is None:
             raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
@@ -229,8 +273,9 @@ def create_app() -> FastAPI:
         """S48 T6 — RU glossary content + per-strategy applicability map (architect C3 BINDING)."""
         return get_glossary()
 
+    # H2.2 (S49) — pybit network IO; plain `def` → threadpool (no event-loop block).
     @app.get("/api/bybit/balance")
-    async def bybit_balance() -> dict[str, Any]:
+    def bybit_balance() -> dict[str, Any]:
         """S48 T4 — fetch current Bybit account balance (via account_service wrapper)."""
         return get_account_balance()
 
