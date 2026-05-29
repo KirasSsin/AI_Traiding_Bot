@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S49 Full Tech-Review Audit — PHASE 8 ship in_progress
+updated: 2026-05-29  # S49 SHIPPED v0.1.0-alpha.49 — between-sprints
 sprint: 49
-phase: 8-ship
-branch: feature/sprint-49-tech-review-audit
+phase: between-sprints
+branch: main
 tag: v0.1.0-alpha.49
 ---
 
 ## Текущий статус
 
-**S49 в процессе ship (PHASE 8).** Full Tech-Review Audit — 9 параллельных ревьюеров (opus) + TDD-исправление всех находок. Все 5 BLOCKER + 10 HIGH + 8 MEDIUM + 8 LOW устранены. 6 повторных ревьюеров APPROVE. Gates GREEN (1350 passed / mypy 0 / Vitest 43 / Playwright 7).
+**S49 SHIPPED** — squash-merge `571e4fa` (PR #60), tag `v0.1.0-alpha.49`. Full Tech-Review Audit: 9 параллельных ревьюеров (opus) + TDD-исправление всех находок. 5 BLOCKER + 10 HIGH + 16 MED/LOW устранены. 6 повторных ревьюеров APPROVE, 0 regressions. Gates GREEN (1348 passed / mypy 0 / Vitest 43 / Playwright 7). Готов к S50 brainstorm.
 
 **Canonical counts (post-S49):** 16 states / 30 events / 74 transitions / **63** reason_codes (+7 H6) / 66 ADRs / **53** sprint pages / Vitest 43 / Playwright 7 / pytest 1350
 
@@ -25,12 +25,12 @@ tag: v0.1.0-alpha.49
 | 5 Verify | done | pytest 1350 / mypy 0 / Vitest 43 / Playwright 7 / lint+tsc+build clean |
 | 6 Review | done | 6 re-review agents: ALL APPROVE, 0 regressions |
 | 7 Sync | done | wiki sync: sprint-49 page + log + current-state + index + SPRINT_STATE |
-| 8 Ship | in_progress | PR #61, 28 commits, CI running → squash-merge + tag v0.1.0-alpha.49 |
-| 9 Close | pending | — |
+| 8 Ship | done | PR #60 squash-merge `571e4fa`, tag v0.1.0-alpha.49 pushed |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
 
 ## Следующее действие
 
-**PHASE 8 ship:** `gh pr create` → squash-merge → tag `v0.1.0-alpha.49` → PHASE 9 close.
+**S50 brainstorm** (NEW strategies / Path B activation) when operator ready. Carry-overs from S49 re-review в `pre-s49-backlog.md` + log ship entry (110072 retСode, parquet manifest, block_bootstrap).
 
 ## S49-S51 ROADMAP (operator decisions 2026-05-29)
 

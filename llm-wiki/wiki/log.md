@@ -2754,3 +2754,14 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - PHASE 6 reviewers (9 parallel): 3 APPROVE / 5 APPROVE_WITH_CONCERNS / 1 REQUEST_CHANGES → B1 fixed inline (FailAnalysisTab chip flip), B2 deferred S49 (T3 verdict ADR clarification)
 - Inline post-review fixes: security HIGH#1 (Field bounds initial_balance), test-engineer 3 HIGH gaps (endpoint tests + useBybitBalance hook)
 - Carry-overs S49: T3 verdict semantic / balance compounding / RunRecord backward-compat / Bybit TTL cache / GlossaryTab RTL / version string / useStrategyContext multi-instance
+
+## [2026-05-29] ship | S49 v0.1.0-alpha.49 — Full Tech-Review Audit
+
+- Squash-merge `571e4fa` (PR #60) -> tag `v0.1.0-alpha.49`
+- 9 parallel domain reviewers (opus) audited entire src/ (14.5k py + 4.2k react + 21.7k tests)
+- Fixed: 5 BLOCKER (B1 orderLinkId dup-order / B2 schema guard / B3 WS gap-fill wire / B4 atomic parquet / .env chmod) + 10 HIGH + 16 MED/LOW
+- T3 resolution (trader-expert binding): gate-blocking = T5/DSR/MC/sharpe_gate/n_eff ONLY; T1/T2/T3/T4/T6 informational. Backend _compute_verdict corrected, ADR 0014 + acceptance-criteria.md contradiction resolved
+- 6 re-review agents (bybit/verdict/data/dashboard/security/python): ALL APPROVE, 0 regressions
+- Gates: pytest 1348 (+283 vs 1065), mypy 0/89, Vitest 43, Playwright 7, lint+tsc+build clean
+- reason codes 56->63 (H6 EMA/meanrev/donchian registration)
+- Carry to S50: 110072 dup-order retCode mapping (bybit re-review HIGH, fails-safe), parquet manifest/partition (backlog), block_bootstrap edge-null (don't promote to gate)
