@@ -25,7 +25,7 @@ tag: v0.1.0-alpha.49
 | 5 Verify | done | pytest 1350 / mypy 0 / Vitest 43 / Playwright 7 / lint+tsc+build clean |
 | 6 Review | done | 6 re-review agents: ALL APPROVE, 0 regressions |
 | 7 Sync | done | wiki sync: sprint-49 page + log + current-state + index + SPRINT_STATE |
-| 8 Ship | **in_progress** | branch ready, commit SHA 26 commits on feature/sprint-49-tech-review-audit |
+| 8 Ship | in_progress | PR #61, 28 commits, CI running → squash-merge + tag v0.1.0-alpha.49 |
 | 9 Close | pending | — |
 
 ## Следующее действие
