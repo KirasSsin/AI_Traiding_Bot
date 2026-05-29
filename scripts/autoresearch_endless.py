@@ -37,6 +37,12 @@ ITER_LOG = OUT_DIR / "iteration_log.jsonl"
 COMMISSION_TAKER = 0.001
 SLIPPAGE = 0.0005
 
+# CC4 S50 (ADR 0067 Q4): held-out date range LOCKED for anti-champion-bias.
+# Parameter sweep reads TRAIN only (ts < HELDOUT_START). Held-out evaluation runs
+# ONCE on the per-combo winner via eval_heldout_once() — never inside the sweep loop.
+HELDOUT_START = "2025-06-01"
+HELDOUT_END = "2026-05-01"
+
 BARS_PER_YEAR_BY_INTERVAL: dict[str, int] = {
     "5": int(365.25 * 24 * 12),
     "15": int(365.25 * 24 * 4),
@@ -338,6 +344,56 @@ def _normalize_df(path: str) -> pd.DataFrame:
     return df[["ts", "open", "high", "low", "close", "volume"]]
 
 
+def split_train_heldout(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Physical train/held-out split on the `ts` column (ADR 0067 Q4, CC4 S50).
+
+    Prevents champion-bias (Bailey 2014): the parameter sweep must only ever see
+    TRAIN data, otherwise sweeping a grid and picking the per-combo winner overfits
+    to the full sample. train = rows with ts < HELDOUT_START; heldout = rows with
+    ts ∈ [HELDOUT_START, HELDOUT_END]. Both slices get a fresh 0..n-1 index for the
+    positional logic in `_backtest`.
+
+    Args:
+        df: normalized OHLCV frame with a tz-aware UTC `ts` column (see _normalize_df).
+
+    Returns:
+        (train, heldout) — disjoint frames; heldout may be empty if data predates
+        HELDOUT_START.
+    """
+    start = pd.Timestamp(HELDOUT_START, tz="UTC")
+    end = pd.Timestamp(HELDOUT_END, tz="UTC")
+    train = df[df["ts"] < start].reset_index(drop=True)
+    heldout = df[(df["ts"] >= start) & (df["ts"] <= end)].reset_index(drop=True)
+    return train, heldout
+
+
+def eval_heldout_once(combo: dict, df: pd.DataFrame) -> dict:
+    """Evaluate a single chosen combo on the held-out slice — ONE call, not a sweep.
+
+    Called on the per-combo winner (T8) after the train-only sweep selects it, to
+    report out-of-sample performance honestly. NEVER call inside the sweep loop —
+    doing so would reintroduce the champion-bias this split exists to remove.
+
+    Args:
+        combo: dict with "strategy", "params", "atr_stop_mult", and "bars_per_year".
+        df: the held-out OHLCV slice from split_train_heldout (tz-aware `ts` column).
+
+    Returns:
+        Metrics dict prefixed with "heldout_" (pnl_pct, sharpe, n_trades, win_rate).
+    """
+    strat_fn, _grid, _stops = _build_grid(combo["strategy"])
+    entry, exit_, warmup, atr_arr = strat_fn(df, **combo["params"])
+    metrics = _backtest(
+        df, entry, exit_, atr_arr, combo["atr_stop_mult"], warmup, combo["bars_per_year"]
+    )
+    return {
+        "heldout_pnl_pct": metrics["pnl_pct"],
+        "heldout_sharpe": metrics["sharpe"],
+        "heldout_n_trades": metrics["n_trades"],
+        "heldout_win_rate": metrics["win_rate"],
+    }
+
+
 def _build_periods(df: pd.DataFrame, n_chunks: int = 5) -> list[tuple[date, date]]:
     start = df["ts"].dt.date.iloc[0]
     end = df["ts"].dt.date.iloc[-1]
@@ -486,6 +542,17 @@ def run_combo(symbol: str, interval: str, path: str, strategies: list[str], iter
     )
     if len(df) < 500:
         print("  SKIP — too few bars", flush=True)
+        return {"skipped": True}
+
+    # CC4 S50: sweep train-only (anti-champion-bias ADR 0067 Q4). The held-out slice
+    # (ts >= HELDOUT_START) is reserved for a single eval_heldout_once() on the winner.
+    df, _heldout = split_train_heldout(df)
+    print(
+        f"  train slice: {len(df):,} bars  (held-out {len(_heldout):,} bars reserved)",
+        flush=True,
+    )
+    if len(df) < 500:
+        print("  SKIP — too few train bars after held-out split", flush=True)
         return {"skipped": True}
 
     periods = _build_periods(df, n_chunks=5)
