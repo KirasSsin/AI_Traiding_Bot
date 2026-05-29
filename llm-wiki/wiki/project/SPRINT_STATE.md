@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 — T3 (CC4 held-out split) done
+updated: 2026-05-29  # S50 PHASE 4 — T4 (SupertrendStrategy Lazybear + reason codes 63->65) done
 sprint: 50
 phase: 4-execution
 branch: feature/sprint-50-supertrend
