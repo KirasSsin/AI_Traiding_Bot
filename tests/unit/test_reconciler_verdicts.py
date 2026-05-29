@@ -1,10 +1,10 @@
 """Reconciler 4-valued verdict tests (ADR 0021 sub-decision 3)."""
+
 from decimal import Decimal
 
 import pytest
-
-from src.execution.reconciler import ReconcileResult
 from src.execution.bybit.adapter import WalletSnapshot
+from src.execution.reconciler import ReconcileResult
 
 
 class _FakeAdapter:
@@ -23,10 +23,10 @@ class _FakeAdapter:
             locked=self._exch_qty,
         )
 
-    def get_open_orders(self, *, symbol: str) -> list:
+    def get_open_orders(self, *, symbol: str) -> list:  # noqa: ARG002
         return self._open_orders
 
-    def get_order(self, *, symbol: str, order_id: str) -> dict | None:
+    def get_order(self, *, symbol: str, order_id: str) -> dict | None:  # noqa: ARG002
         return self._entry_order
 
 
@@ -68,7 +68,7 @@ def test_reconcile_result_rejects_unknown_verdict():
 # Task 12: Reconciler.reconcile() expected_state kw + adapter= alias
 # ---------------------------------------------------------------------------
 
-from src.execution.reconciler import Reconciler, LocalState  # noqa: E402
+from src.execution.reconciler import LocalState, Reconciler  # noqa: E402
 from src.execution.state_machine import ExecutionState  # noqa: E402
 
 
@@ -100,19 +100,20 @@ from datetime import UTC, datetime, timedelta  # noqa: E402
 
 class _EntryOrder:
     """Stub matching real OrderSnapshot field names (order_status, avg_price, cum_exec_fee)."""
-    def __init__(self, status: str, avgPrice: Decimal):
+
+    def __init__(self, status: str, avg_price: Decimal):  # noqa: N803
         self.order_status = status
-        self.avg_price = avgPrice
+        self.avg_price = avg_price
         self.cum_exec_fee = Decimal("0")
         self.fee_currency = "USDT"
 
 
-def test_entry_pending_heal_when_filled_position_matches_no_orphans(tmp_path):
+def test_entry_pending_heal_when_filled_position_matches_no_orphans():
     """ADR 0021 sub-decision 3: all 3 conditions → HEAL_ENTRY_FILLED."""
     adapter = _FakeAdapter(
         exch_qty=Decimal("0.001"),
         open_orders=[],  # no orphan TP/SL
-        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+        entry_order=_EntryOrder(status="Filled", avg_price=Decimal("62000")),
     )
     reco = Reconciler(adapter=adapter)
     local = LocalState(
@@ -128,12 +129,12 @@ def test_entry_pending_heal_when_filled_position_matches_no_orphans(tmp_path):
     assert r.heal_context and r.heal_context["avg_price"] == "62000"
 
 
-def test_entry_pending_halt_when_position_short_of_expected(tmp_path):
+def test_entry_pending_halt_when_position_short_of_expected():
     """Partial fill + no orphans → still DIVERGENCE (HEAL requires exact/overfill above dust)."""
     adapter = _FakeAdapter(
         exch_qty=Decimal("0.0001"),  # way below expected 0.001
         open_orders=[],
-        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+        entry_order=_EntryOrder(status="Filled", avg_price=Decimal("62000")),
     )
     reco = Reconciler(adapter=adapter)
     local = LocalState(
@@ -148,12 +149,12 @@ def test_entry_pending_halt_when_position_short_of_expected(tmp_path):
     assert r.halt_reason == "HALT_BOOTSTRAP_AMBIGUOUS"
 
 
-def test_entry_pending_halt_when_orphan_open_orders_exist(tmp_path):
+def test_entry_pending_halt_when_orphan_open_orders_exist():
     """If any open orders exist for bracket → not narrow HEAL (that's OCO_ARMING path)."""
     adapter = _FakeAdapter(
         exch_qty=Decimal("0.001"),
         open_orders=[{"orderLinkId": "oco-abc-TP-1", "orderId": "tp1"}],
-        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+        entry_order=_EntryOrder(status="Filled", avg_price=Decimal("62000")),
     )
     reco = Reconciler(adapter=adapter)
     local = LocalState(
@@ -171,13 +172,13 @@ def test_entry_pending_halt_when_orphan_open_orders_exist(tmp_path):
 # Task 14: staleness check (heal_max_age_seconds)
 # ---------------------------------------------------------------------------
 
-def test_entry_pending_heal_blocked_by_staleness(monkeypatch):
+
+def test_entry_pending_heal_blocked_by_staleness():
     """ADR 0021 sub-decision 4: crash > heal_max_age_seconds → HALT not HEAL."""
-    monkeypatch.setenv("HEAL_MAX_AGE_SECONDS", "3600")
     adapter = _FakeAdapter(
         exch_qty=Decimal("0.001"),
         open_orders=[],
-        entry_order=_EntryOrder(status="Filled", avgPrice=Decimal("62000")),
+        entry_order=_EntryOrder(status="Filled", avg_price=Decimal("62000")),
     )
     reco = Reconciler(adapter=adapter)
     local = LocalState(
@@ -196,6 +197,7 @@ def test_entry_pending_heal_blocked_by_staleness(monkeypatch):
 # ---------------------------------------------------------------------------
 # Task 15: EXIT_PENDING classification
 # ---------------------------------------------------------------------------
+
 
 def test_exit_pending_exited_when_position_flat_no_open_orders():
     adapter = _FakeAdapter(
@@ -227,7 +229,8 @@ def test_exit_pending_halt_when_position_still_there():
 # Task 16: _wallet_cache + on_wallet_event
 # ---------------------------------------------------------------------------
 
-def test_reconciler_reads_wallet_cache_first(monkeypatch):
+
+def test_reconciler_reads_wallet_cache_first():
     """WS-fed cache hit → no REST call."""
     adapter = _FakeAdapter(
         exch_qty=Decimal("99.9"),  # REST value — should NOT be used
@@ -236,9 +239,11 @@ def test_reconciler_reads_wallet_cache_first(monkeypatch):
     )
     rest_calls = []
     orig_get_wallet = adapter.get_wallet_balance
+
     def spy(*a, **kw):
         rest_calls.append((a, kw))
         return orig_get_wallet(*a, **kw)
+
     adapter.get_wallet_balance = spy
 
     reco = Reconciler(adapter=adapter)
@@ -255,3 +260,31 @@ def test_reconciler_falls_back_to_rest_on_cache_miss():
     local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.002"), entry_order_id=None)
     r = reco.reconcile(local)
     assert r.exch_qty == Decimal("0.002")  # came from REST adapter
+
+
+# ---------------------------------------------------------------------------
+# L4 (S49): binary-path dust tolerance. Sub-dust qty drift between local and
+# exchange must NOT force a spurious DIVERGENCE->HALT (matches the 4-valued path
+# which already uses dust_threshold). Real divergence beyond dust still HALTs.
+# ---------------------------------------------------------------------------
+
+
+def test_binary_sub_dust_drift_agrees():
+    """exch_qty differs from local by < dust_threshold -> AGREE, not DIVERGENCE."""
+    # dust_threshold default = 0.00001. Drift of 1 satoshi-scale (1e-8) is sub-dust.
+    adapter = _FakeAdapter(exch_qty=Decimal("0.50000001"), open_orders=[], entry_order=None)
+    reco = Reconciler(adapter=adapter)  # default dust_threshold=0.00001
+    local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.50000000"), entry_order_id=None)
+    r = reco.reconcile(local)  # binary path (no expected_state)
+    assert r.verdict == "AGREE"
+
+
+def test_binary_real_divergence_still_halts():
+    """exch_qty differs from local by > dust_threshold -> DIVERGENCE->HALT preserved."""
+    adapter = _FakeAdapter(exch_qty=Decimal("0.4"), open_orders=[], entry_order=None)
+    reco = Reconciler(adapter=adapter)
+    local = LocalState(symbol="BTCUSDT", position_qty=Decimal("0.5"), entry_order_id=None)
+    r = reco.reconcile(local)
+    assert r.verdict == "DIVERGENCE"
+    assert r.recommended_state == "HALTED"
+    assert r.halt_reason == "HALT_RECONCILE_DIVERGENCE"

@@ -220,7 +220,7 @@ _RUNS_DIR = Path("data/runs")
 # H1 (S49) — run_id is ALWAYS sha256[:16] (lowercase hex) generated in BacktestRequest.run_id().
 # Validate user-supplied run_id against this exact shape BEFORE any path join to prevent
 # path traversal (../, %2e%2e%2f) reading arbitrary .json files.
-_RUN_ID_RE = re.compile(r"[a-f0-9]{16}")
+_RUN_ID_RE = re.compile(r"\A[a-f0-9]{16}\Z")
 
 
 def _is_valid_run_id(run_id: str) -> bool:

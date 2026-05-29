@@ -2733,6 +2733,19 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Tag:** v0.1.0-alpha.48 (pending PHASE 6 + PHASE 8 ship)
 - **Carry к S49:** косметика (color tokens / typography / spacing / states / a11y minimum) + S47 carry-overs (Vitest #4-#5 / README npm / F8 / Item #7+#10 / MonthlyHeatmap eslint / typing) + post-S48 buffer (mean_reversion LONG-only clarification / useStrategyContext first render race / Glossary TOC mobile scroll)
 
+## [2026-05-29] sprint-end | S49 — Full Tech-Review Audit
+
+- **Сценарий:** audit-first sprint — 9 параллельных доменных ревьюеров (opus) аудируют всю кодовую базу (14.5k src Python + 4.2k React TS + 21.7k тестов). Никаких новых функций — только поиск и устранение дефектов.
+- **Findings:** 5 BLOCKER + 10 HIGH + 8 MEDIUM + 8 LOW. Все устранены в S49.
+- **BLOCKER:** B1 Bybit deterministic orderLinkId (anti-duplicate-order) / B2 _safe_extract_list guard (unguarded schema) / B3 DataQuality.GAP wiring (WS gap-fill) / B4 atomic Parquet write (temp+os.replace) / .env chmod 600 auto-fix
+- **HIGH (10):** H1 path-traversal anchored regex / H2 FastAPI response_model + async→def + date validation / H3 account_service TTL cache 30s / H4 state_repo halt write-ahead (ADR 0021 SD-5) / H5 FillRecorderAdapter threading.Lock / H6 reason_codes 56→63 (+7 EMA/MR/Donchian) / H7 migration 004 REAL→TEXT / H8 _compute_verdict extracted / H9 resume_cb 0%→96% / H10 T3 verdict semantic
+- **T3 RESOLUTION (trader-expert binding):** gate-blocking = T5/DSR/MC/sharpe_gate/n_eff ONLY. T1/T2/T3/T4/T6 = informational. Backend _compute_verdict исправлен. ADR 0014 + acceptance-criteria.md обновлены. UI не тронут (уже корректен post-S48).
+- **MEDIUM+LOW:** M1 compound balance / M2 useStrategyContext multi-instance / M3 narrow except + lazy logging / M4-M5 docstrings / M6 RunRecord raise ValueError / M7 MonthlyHeatmap return math / M8 ReasonCode coverage + compute_metrics property test / L1-L8 ruff/dead-code/import/dust-tolerance
+- **Post-fix re-review (6 agents):** bybit / verdict / data / dashboard / security / python — все APPROVE, 0 регрессий
+- **Tests:** pytest 1065→**1350** (+285) / mypy 0 / 89 files / Vitest **43** (+7) / Playwright 7 / lint+tsc+build clean
+- **Canonical counts:** 16 states / 30 events / 74 transitions / **63** reason_codes (+7 H6) / 66 ADRs / **53** sprint pages / Vitest 43 (+7)
+- **Tag:** v0.1.0-alpha.49 (PHASE 8 ship in_progress)
+
 ## [2026-05-11] ship | S48 v0.1.0-alpha.48 — UI Overhaul
 
 - Squash-merge `7456cbe` (PR #59) → tag `v0.1.0-alpha.48` pushed
