@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 — T8 done (supertrend train sweep + held-out eval → PROCEED_T9)
+updated: 2026-05-29  # S50 PHASE 4 — T9 done (formal WFA → WFA_FAIL: n_eff=47<50, DSR=0.0, gates n_eff+t5+dsr)
 sprint: 50
 phase: 4-execution
 branch: feature/sprint-50-supertrend
@@ -44,7 +44,15 @@ tag: v0.1.0-alpha.49
 
 ## Следующее действие
 
-**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`), T4 (SupertrendStrategy streaming), **T5 (`287dd47`)**, **T6 (`45fae7f`)**, **T7 (`eaa65a9`)**, **T8 (train sweep 35 комбо + single held-out eval → PROCEED_T9)**. Winner: atr_period=21, mult=2.0. Train Sharpe 8.70 / Held-out Sharpe 8.08 / held-out n=162 / held-out PnL +152.8%. Next: **T9 (formal WFA, ADR 0014 gates, n_trials=10, sprint_tag="S50")** via `supertrend_runner.run_research_wfa`.
+**S50 PHASE 4 — T9 DONE. WFA_FAIL.**
+
+Done: T1, T2, T3, T4, T5, T6, T7, T8, **T9**. All execution tasks complete.
+
+**T9 formal WFA verdict: WFA_FAIL** — winner `atr_period=21, mult=2.0`. Failed gates: `n_eff_threshold` + `t5_floor` + `dsr_threshold`. n_trades_raw=47 (threshold 50), DSR=0.0 (sigma_sr=35.41 from S44 cross-trial noise; n_trials=1 DSR would be 0.9999), MC p=0.0005 (PASS). Per-fold OOS Sharpes: [12.5, 12.2, 70.8, 10.7, 10.2] — inflated due to very few trades per fold. Honest result: T8 held-out Sharpe 8.08 was bull-beta (2023-2025 BTC trend); boundary winner (atr=21 grid-max, mult=2.0 grid-min) + insufficient trade volume confirmed by WFA.
+
+**Supertrend hypothesis #10 = WFA_FAIL.** Documented in `pre-s50-backlog.md` T9 section.
+
+**Next: PHASE 5 Verify + PHASE 6 Review + PHASE 7-8 Ship** (S50 complete — no passing strategy found).
 
 ## S49-S51 ROADMAP (operator decisions 2026-05-29)
 
