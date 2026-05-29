@@ -40,6 +40,7 @@ import numpy as np
 
 from src.marketdata.models import Bar
 from src.risk.reason_codes import ReasonCode
+from src.signalgen.indicators import wilder_atr
 from src.signalgen.models import Signal, SignalSide
 
 # ADR 0060 LOCKED — DO NOT modify without a new ADR amendment.
@@ -265,27 +266,12 @@ class ATRBreakoutStrategy:
         closes_arr: np.ndarray,
         period: int,
     ) -> np.ndarray:
-        """Wilder ATR — exact port of scripts/autoresearch_endless.py::_atr().
+        """Wilder ATR — delegates to indicators.wilder_atr (manual RMA recursion).
 
-        Uses prev_close[0] = close[0]. Wilder smoothing: SMA seed then EMA-like.
-        Returns array same length as input; NaN for indices < period-1.
+        Thin wrapper preserved for call-site stability; logic lives in
+        src.signalgen.indicators.wilder_atr (shared with Supertrend).
         """
-        n = len(closes_arr)
-        prev_close = np.concatenate([[closes_arr[0]], closes_arr[:-1]])
-        tr: np.ndarray = np.maximum.reduce(
-            [
-                highs_arr - lows_arr,
-                np.abs(highs_arr - prev_close),
-                np.abs(lows_arr - prev_close),
-            ]
-        )
-        atr_out = np.full(n, np.nan, dtype=np.float64)
-        if n < period:
-            return atr_out
-        atr_out[period - 1] = tr[:period].mean()
-        for i in range(period, n):
-            atr_out[i] = (atr_out[i - 1] * (period - 1) + tr[i]) / period
-        return atr_out
+        return wilder_atr(highs_arr, lows_arr, closes_arr, period)
 
     def _build_signal(
         self,
