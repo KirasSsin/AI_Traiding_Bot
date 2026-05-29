@@ -33,6 +33,8 @@ S49 ADR 0023 amendment +7 (ENTRY_LONG_EMA_CROSS_UP + EXIT_FLAT_SIGNAL_FLIP +
   ENTRY_LONG_MEANREV_RSI_BB + EXIT_FLAT_MEANREV_REVERT + ENTRY_LONG_DONCHIAN_BREAKOUT +
   EXIT_FLAT_ATR_STOP + EXIT_FLAT_CHANNEL) → 63. Restores EMA/meanrev/donchian
   strategy attribution lost to RiskManager.assess() generic fallback (H6 HIGH).
+S50 ADR 0067 +2 (ENTRY_LONG_SUPERTREND + EXIT_FLAT_SUPERTREND_FLIP) → 65.
+  Supertrend strategy (hypothesis #10, Lazybear variant, BTCUSDT 1H).
 """
 
 from enum import StrEnum
@@ -138,3 +140,7 @@ class ReasonCode(StrEnum):
     ENTRY_LONG_DONCHIAN_BREAKOUT = "ENTRY_LONG_DONCHIAN_BREAKOUT"  # 61: upper channel breakout
     EXIT_FLAT_ATR_STOP = "EXIT_FLAT_ATR_STOP"  # 62: Donchian ATR trailing stop hit
     EXIT_FLAT_CHANNEL = "EXIT_FLAT_CHANNEL"  # 63: close below lower Donchian channel
+
+    # --- ADR 0067 — Sprint 50 Supertrend strategy (hypothesis #10, Lazybear) ---
+    ENTRY_LONG_SUPERTREND = "ENTRY_LONG_SUPERTREND"  # 64: trend flips BEAR -> BULL
+    EXIT_FLAT_SUPERTREND_FLIP = "EXIT_FLAT_SUPERTREND_FLIP"  # 65: trend flips BULL -> BEAR
