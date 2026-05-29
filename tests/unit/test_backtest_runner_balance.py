@@ -65,7 +65,7 @@ def test_get_run_mismatched_equity_curve_lengths(tmp_path, monkeypatch) -> None:
         },
     }
     (tmp_path / f"{run_id}.json").write_text(json.dumps(payload))
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError, match="length mismatch"):
         get_run(run_id)
 
 
