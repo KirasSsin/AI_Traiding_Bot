@@ -14,6 +14,8 @@ tag: v0.1.0-alpha.49
 
 **T3 (CC4 held-out split) DONE** — `2fc2cb7`. `split_train_heldout()` + `eval_heldout_once()` + HELDOUT_START/END constants в `scripts/autoresearch_endless.py`; sweep now train-only (ts < 2025-06-01) anti-champion-bias. 5 new tests (`tests/unit/test_autoresearch_heldout.py`). pytest 1359.
 
+**T2 (CC3 N_trials wiring) DONE** — `6d8f7ad`. Investigation+doc: `atr_breakout_runner.py:497` пробрасывает `n_trials=10` через `run_research_wfa` КОРРЕКТНО (эталон для T7). `run_research_wfa` сам делает `append_trial` (retrofit S44 T9) → ADR 0059 G5 «volume_breakout bypasses append» УСТАРЕЛА. Реальный gap: penalty материализуется только при ≥3 cross-trial sharpes (иначе fallback n_trials=1; `compute_dsr` райзит при n_trials>1 без sigma_sr). T7 ОБЯЗАН: `run_research_wfa` + `n_trials=10` + уникальный `sprint_tag`, НЕ inline DSR (donchian), НЕ отдельный append. Тест-док: `tests/unit/test_supertrend_runner_ntrials.py` (3 active + 1 skip). Finding → ADR 0067 CC3.
+
 **S49 SHIPPED** — `571e4fa` tag v0.1.0-alpha.49 (full tech-audit, 1348 tests).
 
 **Canonical counts (post-S49):** 16 states / 30 events / 74 transitions / **63** reason_codes (+7 H6) / 66 ADRs / **53** sprint pages / Vitest 43 / Playwright 7 / pytest 1350
