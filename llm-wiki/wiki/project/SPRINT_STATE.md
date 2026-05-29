@@ -1,16 +1,18 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 2 brainstorm complete → PHASE 3 plan
+updated: 2026-05-29  # S50 PHASE 4 — T3 (CC4 held-out split) done
 sprint: 50
-phase: 3-planning
+phase: 4-execution
 branch: feature/sprint-50-supertrend
 tag: v0.1.0-alpha.49
 ---
 
 ## Текущий статус
 
-**S50 PHASE 2 COMPLETE → PHASE 3 plan.** Supertrend (freqtrade adaptation). Trader-expert ROUND 1+2 binding + operator decisions. ADR 0067 proposed. LOCKED: BTCUSDT 1H, hypothesis #10. Q1 pure Supertrend. Q3 1H (not 4H — T5 reachability). Q4 OPERATOR OVERRIDE: fix autoresearch held-out split → legitimate sweep (not literature defaults). 8-step execution order в pre-s50-backlog. Prereq CC2 (Wilder ATR extract) + CC3 (N_trials gap) + CC4 (held-out split).
+**S50 PHASE 4 execution.** Supertrend (freqtrade adaptation). Trader-expert ROUND 1+2 binding + operator decisions. ADR 0067 proposed. LOCKED: BTCUSDT 1H, hypothesis #10. Q1 pure Supertrend. Q3 1H (not 4H — T5 reachability). Q4 OPERATOR OVERRIDE: fix autoresearch held-out split → legitimate sweep (not literature defaults). 8-step execution order в pre-s50-backlog. Prereq CC2 (Wilder ATR extract) + CC3 (N_trials gap) + CC4 (held-out split).
+
+**T3 (CC4 held-out split) DONE** — `2fc2cb7`. `split_train_heldout()` + `eval_heldout_once()` + HELDOUT_START/END constants в `scripts/autoresearch_endless.py`; sweep now train-only (ts < 2025-06-01) anti-champion-bias. 5 new tests (`tests/unit/test_autoresearch_heldout.py`). pytest 1359.
 
 **S49 SHIPPED** — `571e4fa` tag v0.1.0-alpha.49 (full tech-audit, 1348 tests).
 
@@ -32,7 +34,7 @@ tag: v0.1.0-alpha.49
 
 ## Следующее действие
 
-**S50 brainstorm** (NEW strategies / Path B activation) when operator ready. Carry-overs from S49 re-review в `pre-s49-backlog.md` + log ship entry (110072 retСode, parquet manifest, block_bootstrap).
+**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`). Next: остальные задачи по 8-step order в `pre-s50-backlog.md` (Supertrend strat T6, T5 reachability, T8 held-out winner eval via `eval_heldout_once`).
 
 ## S49-S51 ROADMAP (operator decisions 2026-05-29)
 
