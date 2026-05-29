@@ -293,6 +293,99 @@ def strat_atr_breakout(
     return entry, exit_, warmup, atr_stop
 
 
+def strat_supertrend(df: pd.DataFrame, atr_period: int, mult: float):
+    """Vectorized Lazybear Supertrend — mirrors streaming SupertrendStrategy exactly.
+
+    Entry on BEAR->BULL trend flip (bar T), exit on BULL->BEAR flip (bar T).
+    Fill assumed at open(T+1) per backtest engine convention.
+
+    Lazybear carry/clamp (identical to SupertrendStrategy.on_bar):
+      final_ub = basic_ub if (basic_ub < prev_final_ub or prev_close > prev_final_ub) else prev_final_ub
+      final_lb = basic_lb if (basic_lb > prev_final_lb or prev_close < prev_final_lb) else prev_final_lb
+      if prev_supertrend == prev_final_ub:
+          supertrend = final_ub if close <= final_ub else final_lb
+      else:
+          supertrend = final_lb if close >= final_lb else final_ub
+      trend = BULL if supertrend == final_lb else BEAR
+    Seed bar (first bar with valid ATR): prev_supertrend = basic_ub (BEAR) — no signal.
+    """
+    high = df["high"].to_numpy(dtype=np.float64)
+    low = df["low"].to_numpy(dtype=np.float64)
+    close = df["close"].to_numpy(dtype=np.float64)
+    n = len(df)
+
+    # Wilder ATR (same as src/signalgen/indicators.py::wilder_atr)
+    prev_close_arr = np.concatenate([[close[0]], close[:-1]])
+    tr = np.maximum.reduce(
+        [high - low, np.abs(high - prev_close_arr), np.abs(low - prev_close_arr)]
+    )
+    atr_arr = np.full(n, np.nan, dtype=np.float64)
+    if n >= atr_period:
+        atr_arr[atr_period - 1] = tr[:atr_period].mean()
+        for i in range(atr_period, n):
+            atr_arr[i] = (atr_arr[i - 1] * (atr_period - 1) + tr[i]) / atr_period
+
+    entry = np.zeros(n, dtype=bool)
+    exit_ = np.zeros(n, dtype=bool)
+    warmup = atr_period + 1  # seed bar at atr_period-1 + 1 for carry to start
+
+    # Lazybear carry state
+    prev_final_ub: float | None = None
+    prev_final_lb: float | None = None
+    prev_supertrend: float | None = None
+    prev_trend: str | None = None
+    prev_c: float | None = None
+
+    for i in range(atr_period - 1, n):
+        atr_i = atr_arr[i]
+        if np.isnan(atr_i):
+            continue
+
+        hl2 = (high[i] + low[i]) / 2.0
+        basic_ub = hl2 + mult * atr_i
+        basic_lb = hl2 - mult * atr_i
+
+        # Seed bar: no prior carry → initialize, emit no signal.
+        if prev_final_ub is None:
+            prev_final_ub = basic_ub
+            prev_final_lb = basic_lb
+            prev_supertrend = basic_ub  # conservative BEAR seed (mirrors streaming)
+            prev_trend = "BEAR"
+            prev_c = close[i]
+            continue
+
+        # Lazybear clamp
+        final_ub = (
+            basic_ub if (basic_ub < prev_final_ub or prev_c > prev_final_ub) else prev_final_ub
+        )
+        final_lb = (
+            basic_lb if (basic_lb > prev_final_lb or prev_c < prev_final_lb) else prev_final_lb
+        )
+
+        # Active band selection
+        if prev_supertrend == prev_final_ub:
+            supertrend = final_ub if close[i] <= final_ub else final_lb
+        else:
+            supertrend = final_lb if close[i] >= final_lb else final_ub
+
+        trend = "BULL" if supertrend == final_lb else "BEAR"
+
+        # Signal on flip
+        if prev_trend == "BEAR" and trend == "BULL":
+            entry[i] = True
+        elif prev_trend == "BULL" and trend == "BEAR":
+            exit_[i] = True
+
+        # Update carry
+        prev_final_ub = final_ub
+        prev_final_lb = final_lb
+        prev_supertrend = supertrend
+        prev_trend = trend
+        prev_c = close[i]
+
+    return entry, exit_, warmup, atr_arr
+
+
 def strat_triple_confirm(
     df: pd.DataFrame,
     ema_period: int,
@@ -498,6 +591,19 @@ def _build_grid(strategy: str) -> tuple[Callable, list[dict], list[float]]:
                     "atr_period": 14,
                 }
                 for ep, rt, at in product([50, 100, 200], [50, 60, 70], [20, 25, 30])
+            ],
+            base_atr_stop,
+        )
+    if strategy == "supertrend":
+        # ADR 0067: center params atr_period=10, mult=3.0. Sweep: period ∈ [7..21], mult ∈ [2.0..4.0].
+        return (
+            strat_supertrend,
+            [
+                {"atr_period": ap, "mult": m}
+                for ap, m in product(
+                    [7, 9, 10, 12, 14, 16, 21],
+                    [2.0, 2.5, 3.0, 3.5, 4.0],
+                )
             ],
             base_atr_stop,
         )
