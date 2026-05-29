@@ -8,7 +8,7 @@ LOCKED parameters per ADR 0067 — anti-snooping pre-registration:
 Lazybear Supertrend (the trend-dependent variant freqtrade uses) computed on
 each closed bar T from data through bar T:
   hl2       = (high[T] + low[T]) / 2
-  atr       = wilder_atr(...)[-1]              # ATR at bar T
+  atr       = incremental Wilder ATR at bar T   # full-history RMA, O(1) per bar
   basic_ub  = hl2 + multiplier * atr
   basic_lb  = hl2 - multiplier * atr
   # final bands carry forward with the Lazybear clamp (ratchet):
@@ -34,7 +34,11 @@ layer using atr_14 carried in the Signal; this strategy emits the trend-flip
 signals only (per ADR 0067 exit = flip + ATR bracket SL, no TP).
 
 Invariant: signal evaluated on closed bar(T) using data through bar(T)
-(no look-ahead — wilder_atr[i] depends only on TR[0..i], bands use bar T close).
+(no look-ahead — the incremental Wilder ATR at bar i depends only on TR[0..i],
+bands use bar T close). The ATR is maintained as O(1) instance state via the
+canonical Wilder RMA recursion over FULL history — NOT recomputed from a bounded
+sliding window (which would re-seed the recursion each bar and diverge from the
+full-history ATR; T5 cross-validation enforces exact parity).
 Execution at open(T+1) per existing FSM contract.
 
 Thread-safety: NOT thread-safe — single-producer per symbol pattern
@@ -46,17 +50,13 @@ Lazybear reference — the carry/clamp must match exactly.
 
 from __future__ import annotations
 
-from collections import deque
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Literal
 from uuid import uuid4
 
-import numpy as np
-
 from src.marketdata.models import Bar
 from src.risk.reason_codes import ReasonCode
-from src.signalgen.indicators import wilder_atr
 from src.signalgen.models import Signal, SignalSide
 
 # ADR 0067 LOCKED — DO NOT modify without a new ADR amendment.
@@ -72,9 +72,11 @@ _ZERO = Decimal("0")
 class SupertrendStrategy:
     """Stateful Supertrend long-only strategy (Lazybear variant).
 
-    Internal state: rolling deque of last (buffer_size) bars, current side,
-    Lazybear band/line carry (prev_final_ub/lb, prev_supertrend, prev_close),
-    and last processed close_time (dedup/OOO guard).
+    Internal state: incremental Wilder ATR carry (prev_atr, prev_close for TR,
+    a TR-seed accumulator for warmup), current side, Lazybear band/line carry
+    (prev_final_ub/lb, prev_supertrend, prev_close), and last processed
+    close_time (dedup/OOO guard). No bar buffer is retained — the ATR is a
+    full-history O(1) recursion, not a windowed recompute.
 
     warmup gate = atr_period (bars before ATR is valid produce no signal)
 
@@ -101,11 +103,12 @@ class SupertrendStrategy:
         )
         self._long_only = long_only
 
-        self._buffer_size: int = self._atr_period + 10
-
-        self._highs: deque[float] = deque(maxlen=self._buffer_size)
-        self._lows: deque[float] = deque(maxlen=self._buffer_size)
-        self._closes: deque[float] = deque(maxlen=self._buffer_size)
+        # Incremental Wilder ATR state (full-history RMA recursion, O(1) per bar).
+        # Warmup accumulates the first `atr_period` TRs; the recursion is seeded
+        # with their mean at bar index `atr_period-1`, matching indicators.wilder_atr.
+        self._prev_atr: float | None = None
+        self._atr_prev_close: float | None = None  # close[i-1] for TR (None on bar 0)
+        self._tr_seed: list[float] = []  # first atr_period TRs (warmup seed buffer)
 
         self._current_side: SignalSide = SignalSide.FLAT
         self._last_close_time: datetime | None = None
@@ -142,22 +145,10 @@ class SupertrendStrategy:
         low = float(bar.low)
         close = float(bar.close)
 
-        self._highs.append(high)
-        self._lows.append(low)
-        self._closes.append(close)
-
-        # Warmup: ATR invalid until atr_period bars are buffered.
-        if len(self._closes) < self._atr_period:
-            return None
-
-        atr_arr = wilder_atr(
-            np.array(self._highs, dtype=np.float64),
-            np.array(self._lows, dtype=np.float64),
-            np.array(self._closes, dtype=np.float64),
-            self._atr_period,
-        )
-        atr = float(atr_arr[-1])
-        if np.isnan(atr):
+        # Incremental Wilder ATR (full-history RMA). Returns None during warmup
+        # (before the seed bar at index atr_period-1).
+        atr = self._update_atr(high, low, close)
+        if atr is None:
             return None
 
         hl2 = (high + low) / 2.0
@@ -213,6 +204,42 @@ class SupertrendStrategy:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def _update_atr(self, high: float, low: float, close: float) -> float | None:
+        """Advance the incremental Wilder ATR by one bar; return ATR or None.
+
+        Exact canonical Wilder RMA over FULL history (matches
+        :func:`src.signalgen.indicators.wilder_atr`):
+          - TR[0] = high[0] - low[0]   (prev_close convention: prev_close[0]=close[0]).
+          - TR[i] = max(high-low, |high-prev_close|, |low-prev_close|).
+          - Seed at bar index ``atr_period-1``: atr = mean(TR[0..atr_period-1]).
+          - Recursion thereafter: atr = (atr*(period-1) + TR[i]) / period.
+
+        Returns None for the warmup bars before the seed (indices < period-1);
+        the seed value (mean of the first ``period`` TRs) at the seed bar; and
+        the smoothed value for every subsequent bar.
+        """
+        if self._atr_prev_close is None:
+            # Bar 0: prev_close == close[0] convention -> TR collapses to high-low.
+            tr = high - low
+        else:
+            prev_close = self._atr_prev_close
+            tr = max(high - low, abs(high - prev_close), abs(low - prev_close))
+        self._atr_prev_close = close
+
+        if self._prev_atr is None:
+            # Still seeding: accumulate the first `atr_period` TRs.
+            self._tr_seed.append(tr)
+            if len(self._tr_seed) < self._atr_period:
+                return None
+            # Seed bar (index atr_period-1): ATR = mean of first `period` TRs.
+            self._prev_atr = sum(self._tr_seed) / self._atr_period
+            self._tr_seed = []  # release warmup buffer
+            return self._prev_atr
+
+        # Wilder smoothing recursion (full history, no re-seed).
+        self._prev_atr = (self._prev_atr * (self._atr_period - 1) + tr) / self._atr_period
+        return self._prev_atr
 
     def _evaluate_flip(
         self,
