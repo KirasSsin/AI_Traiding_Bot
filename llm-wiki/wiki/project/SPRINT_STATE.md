@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 — T4 (SupertrendStrategy Lazybear + reason codes 63->65) done
+updated: 2026-05-29  # S50 PHASE 4 — T6 (strat_supertrend vectorized + COMBOS sweep grid) done
 sprint: 50
 phase: 4-execution
 branch: feature/sprint-50-supertrend
@@ -42,7 +42,7 @@ tag: v0.1.0-alpha.49
 
 ## Следующее действие
 
-**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`). Next: остальные задачи по 8-step order в `pre-s50-backlog.md` (Supertrend strat T6, T5 reachability, T8 held-out winner eval via `eval_heldout_once`).
+**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`), T4 (SupertrendStrategy streaming), **T6 (`45fae7f` — `strat_supertrend` vectorized Lazybear + COMBOS sweep grid atr_period ∈ [7..21] × mult ∈ [2.0..4.0], 8 TDD tests, parity GREEN)**. Next: T5 (vectorized Lazybear cross-validation / реachability), T8 (held-out winner eval via `eval_heldout_once`).
 
 ## S49-S51 ROADMAP (operator decisions 2026-05-29)
 
