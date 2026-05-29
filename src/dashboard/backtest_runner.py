@@ -1295,13 +1295,18 @@ def get_run(run_id: str) -> dict[str, Any] | None:
     if not p.exists():
         return None
     data: dict[str, Any] = json.loads(p.read_text())
-    # M6 (S49): assert equity_curve parallel-array length invariant (timestamps vs equity_pct).
+    # M6 (S49): enforce equity_curve parallel-array length invariant (timestamps vs equity_pct).
     equity_curve = data.get("equity_curve")
     if isinstance(equity_curve, dict):
         _timestamps = equity_curve.get("timestamps")
         _equity_pct = equity_curve.get("equity_pct")
-        if isinstance(_timestamps, list) and isinstance(_equity_pct, list):
-            assert len(_timestamps) == len(_equity_pct), (
+        # Explicit raise (not assert) — survives `python -O` stripping.
+        if (
+            isinstance(_timestamps, list)
+            and isinstance(_equity_pct, list)
+            and len(_timestamps) != len(_equity_pct)
+        ):
+            raise ValueError(
                 f"equity_curve parallel arrays length mismatch for run {run_id}: "
                 f"timestamps={len(_timestamps)} vs equity_pct={len(_equity_pct)}"
             )
