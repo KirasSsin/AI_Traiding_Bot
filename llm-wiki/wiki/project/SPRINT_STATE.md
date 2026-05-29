@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 — T9 done (formal WFA → WFA_FAIL: n_eff=47<50, DSR=0.0, gates n_eff+t5+dsr)
+updated: 2026-05-29  # S50 PHASE 4 — T10 done (supertrend dashboard preset registered, WFA_FAIL honest)
 sprint: 50
 phase: 4-execution
 branch: feature/sprint-50-supertrend
@@ -44,13 +44,13 @@ tag: v0.1.0-alpha.49
 
 ## Следующее действие
 
-**S50 PHASE 4 — T9 DONE. WFA_FAIL.**
+**S50 PHASE 4 — T10 DONE. All execution tasks complete.**
 
-Done: T1, T2, T3, T4, T5, T6, T7, T8, **T9**. All execution tasks complete.
+Done: T1, T2, T3, T4, T5, T6, T7, T8, T9, **T10**.
 
-**T9 formal WFA verdict: WFA_FAIL** — winner `atr_period=21, mult=2.0`. Failed gates: `n_eff_threshold` + `t5_floor` + `dsr_threshold`. n_trades_raw=47 (threshold 50), DSR=0.0 (sigma_sr=35.41 from S44 cross-trial noise; n_trials=1 DSR would be 0.9999), MC p=0.0005 (PASS). Per-fold OOS Sharpes: [12.5, 12.2, 70.8, 10.7, 10.2] — inflated due to very few trades per fold. Honest result: T8 held-out Sharpe 8.08 was bull-beta (2023-2025 BTC trend); boundary winner (atr=21 grid-max, mult=2.0 grid-min) + insufficient trade volume confirmed by WFA.
+**T9 formal WFA verdict: WFA_FAIL** — winner `atr_period=21, mult=2.0`. Failed gates: `n_eff_threshold` + `t5_floor` + `dsr_threshold`. n_trades_raw=47, DSR=0.0, MC p=0.0005 (PASS). Bull-beta, не edge.
 
-**Supertrend hypothesis #10 = WFA_FAIL.** Documented in `pre-s50-backlog.md` T9 section.
+**T10 supertrend dashboard preset** — `056312d`. Registered `supertrend` в `STRATEGY_PRESETS`: BTCUSDT 1H locked, optgroup="Тренд", honest WFA_FAIL description (ADR 0067). Dispatch branch added (supertrend type → `run_supertrend_wfa` envelope). 7 new tests, `test_preset_metadata.py` updated. 1412 passed/25 skipped, mypy 0, frontend build clean.
 
 **Next: PHASE 5 Verify + PHASE 6 Review + PHASE 7-8 Ship** (S50 complete — no passing strategy found).
 
