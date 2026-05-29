@@ -14,7 +14,7 @@ tag: v0.1.0-alpha.49
 
 **T9 WFA_FAIL:** winner atr=21/mult=2.0 (boundary-winner snooping flag). Gates failed: t5_floor + n_eff (47<50) + dsr_threshold (0.0, Bailey penalty n_trials=10 sigma=35.41). MC p=0.0005 PASS. Held-out Sharpe 8.08 = bull-beta, не edge. Strategy NOT shipped — dashboard comparison only.
 
-**PHASE 6 BLOCKER FIXED (2026-05-29, `48dac93`):** backtest same-bar fill look-ahead (flip@close[i] исполнялся на open[i] вместо open[i+1]). Fix 3 пути + 2 TDD fill-guard теста; streaming untouched, 4-way parity сохранён. Held-out 8.08→**0.77**, verdict остаётся WFA_FAIL (n_eff 47→16). Детали → `sprints/sprint-50-supertrend.md`.
+**PHASE 6 BLOCKER FIXED (2026-05-29, `48dac93`):** backtest same-bar fill look-ahead (flip@close[i] исполнялся на open[i] вместо open[i+1]). Fix 3 пути + 2 TDD fill-guard теста; streaming untouched, 4-way parity сохранён. Held-out 8.08→**−4.23** (inflation убрана, сигнал отрицательный OOS), verdict остаётся WFA_FAIL (n_eff 47→16). Детали → `sprints/sprint-50-supertrend.md`.
 
 **Reusable infra (despite FAIL):** wilder_atr() shared (indicators.py); autoresearch held-out split (anti-champion-bias); supertrend_runner; SupertrendStrategy streaming. Methodology win: T5 cross-validation поймала windowed-ATR look-ahead bug → incremental ATR.
 
