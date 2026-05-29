@@ -14,9 +14,11 @@ tag: v0.1.0-alpha.49
 
 **T9 WFA_FAIL:** winner atr=21/mult=2.0 (boundary-winner snooping flag). Gates failed: t5_floor + n_eff (47<50) + dsr_threshold (0.0, Bailey penalty n_trials=10 sigma=35.41). MC p=0.0005 PASS. Held-out Sharpe 8.08 = bull-beta, не edge. Strategy NOT shipped — dashboard comparison only.
 
+**PHASE 6 BLOCKER FIXED (2026-05-29, `48dac93`):** backtest same-bar fill look-ahead (flip@close[i] исполнялся на open[i] вместо open[i+1]). Fix 3 пути + 2 TDD fill-guard теста; streaming untouched, 4-way parity сохранён. Held-out 8.08→**0.77**, verdict остаётся WFA_FAIL (n_eff 47→16). Детали → `sprints/sprint-50-supertrend.md`.
+
 **Reusable infra (despite FAIL):** wilder_atr() shared (indicators.py); autoresearch held-out split (anti-champion-bias); supertrend_runner; SupertrendStrategy streaming. Methodology win: T5 cross-validation поймала windowed-ATR look-ahead bug → incremental ATR.
 
-**Canonical post-S50:** 16 states / 30 events / 74 transitions / **65** reason_codes (+2 Supertrend) / 67 ADRs (0067) / **54** sprint pages / Vitest 43 / Playwright 7 / pytest **1412** / mypy 0.
+**Canonical post-S50:** 16 states / 30 events / 74 transitions / **65** reason_codes (+2 Supertrend) / 67 ADRs (0067) / **54** sprint pages / Vitest 43 / Playwright 7 / pytest **1414** (+2 backtest fill-guard) / mypy 0.
 
 ## Phase tracking (S50 — current sprint)
 
@@ -26,15 +28,15 @@ tag: v0.1.0-alpha.49
 | 2 Brainstorm | done | trader ROUND 1+2 + operator Q1/Q4 → ADR 0067 |
 | 3 Plan | done | writing-plans 11-task TDD plan `4ee1e6d` |
 | 4 Execute | done | T1-T11 all committed (verdict WFA_FAIL) |
-| 5 Verify | in_progress | pytest 1412 / mypy 0 GREEN; frontend build clean |
-| 6 Review | in_progress | 5 reviewers parallel (quant/trading-logic/python/test-engineer/trader-expert) |
+| 5 Verify | in_progress | pytest 1414 / mypy 0 GREEN; frontend build clean |
+| 6 Review | in_progress | 5 reviewers parallel; trading-logic BLOCKER (backtest fill look-ahead) FIXED `48dac93` → re-review pending |
 | 7 Sync | done | T11 wiki sync (sprint-50 + index + log + current-state + ADR 0067 accepted) |
 | 8 Ship | pending | WFA_FAIL — NO production tag; merge branch to main для infra preservation |
 | 9 Close | pending | — |
 
 ## Следующее действие
 
-**PHASE 6 reviewers → address → ship decision.** S50 = honest WFA_FAIL (no edge). Ship = merge branch (reusable infra: wilder_atr / held-out split / supertrend_runner) к main, NO production strategy tag. Open Q for operator: cross_trial_sharpes contamination (sigma_sr=35.41 from S44 multi-symbol mixed into Supertrend DSR — quant+trader reviewing).
+**PHASE 6 BLOCKER (backtest fill look-ahead) closed `48dac93` → re-review → ship decision.** S50 = honest WFA_FAIL (no edge). Ship = merge branch (reusable infra: wilder_atr / held-out split / supertrend_runner) к main, NO production strategy tag. Open Q for operator: cross_trial_sharpes contamination (sigma_sr=35.41 from S44 multi-symbol mixed into Supertrend DSR).
 
 ## S51 ROADMAP
 

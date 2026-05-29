@@ -57,7 +57,7 @@ Step-0 code verification результаты:
 | **T5** Look-ahead property + cross-validation | `287dd47` | `tests/property/test_supertrend_lookahead.py`. Поймала look-ahead баг: streaming пересчитывал ATR из bounded deque (re-seed при насыщении → diff ~0.18). **Fix:** incremental Wilder ATR recursion `_update_atr` O(1) → bit-exact (0.0 diff). | DONE — баг найден + исправлен |
 | **T6** strat_supertrend | — | `src/research/strat_supertrend.py` (или аналог). Интеграция с research flow. | DONE |
 | **T7** supertrend_runner | `eaa65a9` | `src/backtest/supertrend_runner.py`. Pattern: `run_research_wfa(n_trials=10)` (аналог atr_breakout, НЕ inline DSR). BTCUSDT 1H / high-freq tier / sprint_tag="S50". 8+3 unit tests. | DONE |
-| **T8** sweep + held-out eval | — | Autoresearch sweep на train (< 2025-06-01). Winner: atr=21/mult=2.0. Held-out eval: Sharpe=8.08, n_trades≥15 → PROCEED к formal WFA. | DONE — PROCEED (held-out threshold met) |
+| **T8** sweep + held-out eval | — | Autoresearch sweep на train (< 2025-06-01). Winner: atr=21/mult=2.0 (held-out Sharpe=8.08 → PROCEED). **PHASE 6 fix `48dac93`:** held-out 8.08 был look-ahead-inflated; после fill-fix winner=atr=10/mult=2.0, held-out Sharpe=0.77, PnL +9.83% → T8 verdict FAIL. | DONE — изначально PROCEED, после fix FAIL |
 | **T9** formal WFA | — | `run_research_wfa(n_trials=10)`. Результат: **WFA_FAIL**. n_eff=47<50 (T5 FAIL), DSR=0.0 (Bailey penalty, sigma=35.41), MC p=0.0005 (PASS). n_trades_raw=47. | DONE — WFA_FAIL |
 | **T10** dashboard preset | `056312d` | `supertrend` зарегистрирован в `STRATEGY_PRESETS`. BTCUSDT 1H locked, optgroup="Тренд", честная разметка WFA_FAIL. 7 new tests. pytest 1412/25 skip. | DONE |
 | **T11** wiki sync | — | sprint-50 page + index + log + current-state + ADR 0067 accepted. | DONE |
@@ -83,6 +83,21 @@ Bailey DSR penalty (2014): при n_trials=10 (hypothesis #10) и sigma_sr=35.41
 ### Held-out = bull-beta, не торговое преимущество
 
 Winner: atr=21/mult=2.0 (boundary параметры sweep grid). Held-out период 2025-06-01 → 2026-05-01 = выраженный бычий рынок BTC. Supertrend trend-follower показывает Sharpe=8.08 на бычьем рынке = trivial bull-beta (любая long-only стратегия даёт высокий Sharpe в таком режиме). Это не торговое преимущество.
+
+### PHASE 6 BLOCKER: backtest fill look-ahead (исправлен `48dac93`, 2026-05-29)
+
+trading-logic-reviewer обнаружил same-bar fill look-ahead во ВСЕХ backtest-путях Supertrend: flip определяется на close[i] (Lazybear trend РЕКУРСИВНЫЙ — active-band selection `supertrend[i] = final_ub if close[i] <= final_ub else final_lb`), а fill происходил на open[i] — цена ДО close, который сгенерировал сигнал. Это завышало PnL на ~+117% и объясняет однородно высокие Sharpe (3.6-8.7 по всей сетке + held-out 8.08), которые изначально приписали bull-beta.
+
+**Исправление (3 пути):** flip@close[i] → fill на open[i+1] (close(T)→open(T+1)):
+1. `supertrend_runner._backtest_single` — entry/exit fill open[i]→open[i+1]; flip на последнем баре отбрасывается (нет next open).
+2. `autoresearch_endless.strat_supertrend` — flip на баре i эмитит `entry[i+1]`/`exit_[i+1]` (signal shift +1), чтобы общий `_backtest` (fill open[k] для entry[k]) исполнил open[i+1]. Shift ОБЯЗАТЕЛЕН: рекурсивный trend нельзя выразить как pure `[i-1]`-условие, как у atr_breakout.
+3. Ложные docstrings ("signal on close(T-1) → fill open(T)") исправлены.
+
+Streaming `SupertrendStrategy` НЕ тронут — он уже look-ahead-clean (emit на закрытом баре T, FSM исполняет T+1; fill-timing отдельно от signal-emission).
+
+**Числа после fix (T8 re-run):** winner сменился atr=21/mult=2.0 → **atr=10/mult=2.0** (look-ahead благоприятствовал медленным параметрам). Held-out Sharpe **8.08 → 0.77** (×10.5 меньше), held-out PnL **+152.8% → +9.83%**, большинство комбо теперь с отрицательным PnL. T8 verdict стал FAIL (был PROCEED). **Финальный T9 verdict остаётся WFA_FAIL** — исправление делает fail ЖЁСТЧЕ (OOS n_eff 47→16), подтверждая прогноз reviewer: убирание look-ahead уменьшает fillable-сделки.
+
+TDD: 2 fill-guard теста в `tests/property/test_supertrend_lookahead.py` (RED→GREEN). 4-way trend/flip parity сохранён (изменён только fill index, не trend computation). Урок: vectorized backtest рекурсивного индикатора ТРЕБУЕТ explicit fill-mapping guard — truncation/PnL-invariance ловит trend-computation leak, но НЕ fill-mapping leak.
 
 ### Boundary-winner = snooping red flag
 
