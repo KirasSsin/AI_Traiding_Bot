@@ -3,7 +3,7 @@ title: Pre-S50 Backlog — Supertrend strategy adaptation (freqtrade)
 type: backlog
 tags: [pre-sprint, backlog, s50, supertrend, strategy]
 created: 2026-05-29
-updated: 2026-05-29
+updated: 2026-05-29  # +carry-over: atr_breakout windowed-ATR re-seed (S50 T4-fix discovery)
 status: draft
 sources:
   - llm-wiki/wiki/project/decisions/0014-walk-forward-train2000-test500.md
@@ -86,6 +86,26 @@ Held-out:    2025-06-01 → 2026-05-01, single eval, threshold Sharpe>0 + n≥15
 6. param sweep on TRAIN only (ATR period + mult ranges around 10/3.0)
 7. single held-out eval on winner (2025-06→2026-05); threshold Sharpe>0 + n≥15
 8. if edge → formal 1H WFA (ADR 0014 gates, n_trials=10); else honest fail
+
+## Carry-overs discovered S50
+
+- **`atr_breakout_strategy.py` same windowed-ATR re-seed pattern** — pre-existing,
+  affects shipped pre-registered strategy (ADR 0060 / 0064). It uses a bounded
+  `deque(maxlen=max(atr_period, atr_stop_period)+10)` and recomputes
+  `wilder_atr(...)` from that sliding window each bar (docstring lines ~164-167),
+  the identical look-ahead / parity defect fixed in `SupertrendStrategy` during the
+  S50 T4-fix (incremental Wilder recursion replaced windowed recompute). Once the
+  buffer saturates, the windowed recompute re-seeds the Wilder RMA and diverges from
+  the canonical full-history ATR.
+  **Investigate:** did its WFA (ADR 0064) use the streaming `on_bar` path or the
+  vectorized `strat_atr_breakout` reference? If the WFA / backtest used the
+  vectorized full-history path while live uses streaming `on_bar`, there is a
+  live/backtest parity gap that needs an ADR note.
+  **Severity:** divergence is small — the Wilder recursion converges geometrically,
+  seed influence decays ~((p-1)/p)^buffer — but real and, in principle, unbounded on
+  adversarial inputs. **DO NOT fix in S50** (out of scope; LOCKED shipped strategy).
+  Defer to a dedicated task with its own cross-validation gate mirroring
+  `tests/property/test_supertrend_lookahead.py`.
 
 ## Related
 - [[decisions/0014-walk-forward-train2000-test500]] (WFA gates + S45 trade-freq table)
