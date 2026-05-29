@@ -11,6 +11,7 @@ EXPECTED_OPTGROUPS = {
     "donchian_breakout_s35": "Прорывы",
     "volume_breakout_iter10": "Прорывы",
     "atr_breakout": "Прорывы",
+    "supertrend": "Тренд",
 }
 
 EXPECTED_LABELS = {
@@ -20,6 +21,7 @@ EXPECTED_LABELS = {
     "donchian_breakout_s35": "Канал Дончиана пробой",
     "volume_breakout_iter10": "Прорыв с подтверждением объёма",
     "atr_breakout": "ATR-адаптивный пробой (multi-combo)",
+    "supertrend": "Supertrend (ATR тренд-следование)",
 }
 
 
