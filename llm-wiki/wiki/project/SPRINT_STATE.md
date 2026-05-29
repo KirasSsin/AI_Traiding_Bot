@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 — T5 done (look-ahead cross-validation; T4 ATR windowing bug fixed)
+updated: 2026-05-29  # S50 PHASE 4 — T8 done (supertrend train sweep + held-out eval → PROCEED_T9)
 sprint: 50
 phase: 4-execution
 branch: feature/sprint-50-supertrend
@@ -44,7 +44,7 @@ tag: v0.1.0-alpha.49
 
 ## Следующее действие
 
-**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`), T4 (SupertrendStrategy streaming), **T5 (`287dd47` — look-ahead property + vectorized cross-validation; T4-fix incremental ATR recursion folded in)**, **T6 (`45fae7f` — `strat_supertrend` vectorized Lazybear + COMBOS sweep grid)**, **T7 (`eaa65a9` — `supertrend_runner.py` WFA runner, n_trials=10 wired, CrossTrialLog via run_research_wfa, 8 TDD tests, mypy strict clean)**. Next: T8 (held-out winner eval via `eval_heldout_once`). NOTE: T6 vectorized `strat_supertrend` должен совпадать с T5 reference `_vectorized_supertrend` — verify parity при T8.
+**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`), T4 (SupertrendStrategy streaming), **T5 (`287dd47`)**, **T6 (`45fae7f`)**, **T7 (`eaa65a9`)**, **T8 (train sweep 35 комбо + single held-out eval → PROCEED_T9)**. Winner: atr_period=21, mult=2.0. Train Sharpe 8.70 / Held-out Sharpe 8.08 / held-out n=162 / held-out PnL +152.8%. Next: **T9 (formal WFA, ADR 0014 gates, n_trials=10, sprint_tag="S50")** via `supertrend_runner.run_research_wfa`.
 
 ## S49-S51 ROADMAP (operator decisions 2026-05-29)
 
