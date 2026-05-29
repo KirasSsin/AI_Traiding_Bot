@@ -16,6 +16,7 @@ test_end) integer index 4-tuples — caller slices df itself per fold.
 
 from __future__ import annotations
 
+import logging
 import math
 import statistics
 from pathlib import Path
@@ -31,12 +32,21 @@ from src.backtest.mc_permutation import sign_flip_p_value
 from src.backtest.strategy_metrics import compute_t1_t6_metrics
 from src.backtest.walk_forward import WindowSplitter, evaluate_acceptance_gate
 
+_log = logging.getLogger(__name__)
+
 # ADR 0052 LOCKED thresholds
 DSR_THRESHOLD = 0.95
 SHARPE_THRESHOLD = 0.7
 P_THRESHOLD = 0.05
 N_EFF_THRESHOLD = 50
 T5_FLOOR = 50
+
+# M5 (S49): NOMINAL mean-holding-bars scale — a PLACEHOLDER, not measured.
+# `trial_oos_sharpe` annualizes via sqrt(bars_per_year / mean_holding). Research
+# _TradeRecord carries only pnl_pct (no entry/exit bar indices), so the real
+# holding period is not derivable here. This is INFORMATIONAL only (never a gate
+# input). Do NOT treat the resulting Sharpe scale as measured.
+_MEAN_HOLDING_BARS_PLACEHOLDER = 100.0
 
 # S45 — Low-frequency tier params (ADR 0014 amendment)
 _LOW_FREQ_INTERVALS: frozenset[str] = frozenset({"240", "D"})
@@ -219,9 +229,13 @@ def run_research_wfa(
         pnls_arr = np.asarray(all_pnls, dtype=float)
         std_p = float(pnls_arr.std(ddof=1))
         if std_p > 0:
-            # Approximate annualization via bars_per_year / mean_holding (~100 bars
-            # default). Used as informational metric, не gate input.
-            trial_oos_sharpe = float(pnls_arr.mean() / std_p) * math.sqrt(bars_per_year / 100.0)
+            # M5 (S49): annualize via bars_per_year / mean_holding using a NOMINAL
+            # PLACEHOLDER (_MEAN_HOLDING_BARS_PLACEHOLDER) — research trades carry no
+            # entry/exit indices, so real holding isn't derivable. INFORMATIONAL only,
+            # NOT a gate input — see constant docstring.
+            trial_oos_sharpe = float(pnls_arr.mean() / std_p) * math.sqrt(
+                bars_per_year / _MEAN_HOLDING_BARS_PLACEHOLDER
+            )
         else:
             trial_oos_sharpe = 0.0
     else:
@@ -250,9 +264,11 @@ def run_research_wfa(
                 symbol=f"{symbol}_{params.get('atr_period', '?')}_{params.get('atr_breakout_mult', '?')}",
                 oos_sharpe=trial_mean_fold_oos_sharpe,
             )
-        except Exception:
-            # Don't break dashboard if log write fails
-            pass
+        except Exception:  # noqa: BLE001 — best-effort cross-trial log append; never break verdict on log write
+            # Don't break dashboard if log write fails (disk full / concurrent write).
+            _log.warning(
+                "research_wfa.cross_trial_log_append_failed symbol=%s", symbol, exc_info=True
+            )
     cross_trial_sharpes = pre_existing + [trial_mean_fold_oos_sharpe]
     if len(cross_trial_sharpes) >= 3 and not math.isnan(trial_mean_fold_oos_sharpe):
         sigma_sr: float | None = statistics.stdev(cross_trial_sharpes)

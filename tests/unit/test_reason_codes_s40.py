@@ -24,6 +24,7 @@ def test_reason_code_total_count_56():
     Accounting:
     - S39 ADR 0059 baseline: 53
     - S40 ADR 0060 adds: +3 (ENTRY_LONG_ATR_BREAKOUT + EXIT_FLAT_ATR_REVERSE + EXIT_FLAT_ATR_STOP_AB)
-    → 56 total
+    - S49 H6 ADR 0023 amendment adds: +7 (EMA/meanrev/donchian strategy attribution)
+    → 63 total
     """
-    assert len(list(ReasonCode)) == 56
+    assert len(list(ReasonCode)) == 63

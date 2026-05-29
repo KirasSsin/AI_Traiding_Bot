@@ -20,7 +20,12 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.execution.reconciler import LocalState
 
-from src.execution.bracket import BracketParams, build_bracket, make_order_link_id
+from src.execution.bracket import (
+    BracketParams,
+    build_bracket,
+    make_flatten_link_id,
+    make_order_link_id,
+)
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
 from src.execution.state_machine import (
     ExecutionEvent,
@@ -345,13 +350,22 @@ class Coordinator:
         if leaves_qty <= 0:
             self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
             return
+        # S49 B1: deterministic orderLinkId — idempotency key so a _retry_with_backoff
+        # re-submission (on 170005/170222 after the Sell already landed) is deduped by
+        # Bybit instead of executing a second Market Sell. Stable per bracket attempt.
+        residual_link_id: str | None = None
+        if row is not None and row.bracket_id is not None:
+            residual_link_id = make_flatten_link_id(
+                bracket_id=row.bracket_id, kind="res", attempt=row.last_attempt_num
+            )
         try:
             self._adapter.place_order(
                 symbol=self._symbol,
                 side="Sell",
                 qty=leaves_qty,
+                order_link_id=residual_link_id,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 — any place_order failure → halt+FLATTEN_FAILED (control flow preserved)
             self._set_halt(
                 reason=ReasonCode.HALT_FLATTEN_FAILED,
                 last_event=ExecutionEvent.FLATTEN_FAILED,
@@ -419,7 +433,8 @@ class Coordinator:
                 current = self._repo.get(self._symbol)
                 if current is not None and current.state == ExecutionState.LONG_OPEN:
                     self._transition(ExecutionEvent.TP_PLACED)
-            except Exception:
+            except Exception:  # noqa: BLE001 — TP leg place failed; bumped attempt persisted, FSM stays OCO_ARMING for retry
+                _log.warning("arm_oco.tp_place_failed symbol=%s", self._symbol, exc_info=True)
                 return
             try:
                 sl_ack = self._adapter.place_stop_market_order(
@@ -431,7 +446,8 @@ class Coordinator:
                 )
                 self._upsert_fields(oco_sl_order_id=sl_ack.order_id)
                 self._transition(ExecutionEvent.SL_PLACED)
-            except Exception:
+            except Exception:  # noqa: BLE001 — SL leg place failed; FSM stays OCO_ARMING for retry (TP already live)
+                _log.warning("arm_oco.sl_place_failed symbol=%s", self._symbol, exc_info=True)
                 return
 
     def flatten(self, *, reason: ReasonCode) -> None:
@@ -454,10 +470,20 @@ class Coordinator:
             qty = self._step_floor(free_qty, qty_step)
             if qty <= Decimal("0"):
                 return  # already flat — no-op
-            if self._try_place_market_sell(qty):
+            # S49 B1: deterministic orderLinkId per emergency-flatten attempt.
+            # The two attempts place DIFFERENT logical orders (qty vs qty-step) → distinct
+            # ids; but each id is stable so a _retry_with_backoff re-submission of the SAME
+            # attempt (after a rate-limit code post-landing) is deduped by Bybit, preventing
+            # a second Market Sell. bracket_id may be None on a bare divergence flatten —
+            # fall back to symbol so the key stays deterministic.
+            row = self._repo.get(self._symbol)
+            flatten_key = row.bracket_id if row is not None and row.bracket_id else self._symbol
+            if self._try_place_market_sell(qty, link_id=self._emg_link_id(flatten_key, 1)):
                 return
             retry_qty = self._step_floor(qty - qty_step, qty_step)
-            if retry_qty > Decimal("0") and self._try_place_market_sell(retry_qty):
+            if retry_qty > Decimal("0") and self._try_place_market_sell(
+                retry_qty, link_id=self._emg_link_id(flatten_key, 2)
+            ):
                 return
             self._set_halt(
                 reason=ReasonCode.HALT_FLATTEN_FAILED,
@@ -491,11 +517,25 @@ class Coordinator:
         except Exception as e:
             _log.warning("arm_oco.stale_cancel_exception order_id=%s err=%s", order_id, e)
 
-    def _try_place_market_sell(self, qty: Decimal) -> bool:
+    @staticmethod
+    def _emg_link_id(flatten_key: str, attempt: int) -> str:
+        """S49 B1 — deterministic orderLinkId for an emergency-flatten Market Sell attempt.
+
+        flatten_key is bracket_id when present, else the symbol (bare divergence flatten).
+        Truncated to Bybit's 36-char limit via make_flatten_link_id.
+        """
+        return make_flatten_link_id(bracket_id=flatten_key[:24], kind="emg", attempt=attempt)
+
+    def _try_place_market_sell(self, qty: Decimal, *, link_id: str | None = None) -> bool:
         try:
-            self._adapter.place_order(symbol=self._symbol, side="Sell", qty=qty)
+            self._adapter.place_order(
+                symbol=self._symbol, side="Sell", qty=qty, order_link_id=link_id
+            )
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort flatten Market Sell; caller retries/halts on False
+            _log.warning(
+                "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
+            )
             return False
 
     def _qty_step(self) -> Decimal:

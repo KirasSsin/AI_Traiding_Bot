@@ -1,4 +1,5 @@
 """Post-reconnect reconciler — ADR 0020 sub-decision 4 (walletBalance truth, no get_position)."""
+
 from __future__ import annotations
 
 import threading
@@ -29,13 +30,14 @@ class ExchangeQueryClient(Protocol):
 @dataclass(frozen=True, slots=True)
 class ExchangeState:
     """Normalized exchange-side snapshot. ADR 0020 sub-decision 4."""
+
     wallet: WalletSnapshot
     open_orders: tuple[dict[str, Any], ...]
 
 
 @dataclass(frozen=True, slots=True)
 class LocalState:
-    state: str = ""                           # FSM state name (str to decouple from ExecutionState enum)
+    state: str = ""  # FSM state name (str to decouple from ExecutionState enum)
     position_qty: Decimal = Decimal("0")
     entry_price: Decimal | None = None
     bracket_id: str | None = None
@@ -48,14 +50,14 @@ class LocalState:
 
 @dataclass(frozen=True, slots=True)
 class ReconcileResult:
-    verdict: str                              # "AGREE" | "DIVERGENCE" | "HEAL_ENTRY_FILLED" | "EXITED"
-    position_qty: Decimal = Decimal("0")      # exchange truth (primary field)
-    entry_price: Decimal | None = None        # preserved from local on AGREE, None on DIVERGENCE
+    verdict: str  # "AGREE" | "DIVERGENCE" | "HEAL_ENTRY_FILLED" | "EXITED"
+    position_qty: Decimal = Decimal("0")  # exchange truth (primary field)
+    entry_price: Decimal | None = None  # preserved from local on AGREE, None on DIVERGENCE
     open_order_link_ids: tuple[str, ...] = ()
-    recommended_state: str | None = None      # set on DIVERGENCE → "HALTED"
-    halt_reason: str | None = None            # set on DIVERGENCE → "HALT_RECONCILE_DIVERGENCE"
+    recommended_state: str | None = None  # set on DIVERGENCE → "HALTED"
+    halt_reason: str | None = None  # set on DIVERGENCE → "HALT_RECONCILE_DIVERGENCE"
     heal_context: dict[str, Any] | None = None  # populated only for HEAL_ENTRY_FILLED (ADR 0021)
-    exch_qty: Decimal | None = None           # alias field; synced with position_qty in __post_init__
+    exch_qty: Decimal | None = None  # alias field; synced with position_qty in __post_init__
 
     def __post_init__(self) -> None:
         if self.verdict not in _VALID_VERDICTS:
@@ -72,11 +74,16 @@ class ReconcileResult:
 class Reconciler:
     """Post-reconnect reconciler — ADR 0020 sub-decision 4."""
 
-    def __init__(self, *, query: ExchangeQueryClient | None = None,
-                 adapter: ExchangeQueryClient | None = None,
-                 base_coin: str | None = None, symbol: str | None = None,
-                 dust_threshold: Decimal = Decimal("0.00001"),
-                 heal_max_age_seconds: int = 3600) -> None:
+    def __init__(
+        self,
+        *,
+        query: ExchangeQueryClient | None = None,
+        adapter: ExchangeQueryClient | None = None,
+        base_coin: str | None = None,
+        symbol: str | None = None,
+        dust_threshold: Decimal = Decimal("0.00001"),
+        heal_max_age_seconds: int = 3600,
+    ) -> None:
         _q = query or adapter
         if _q is None:
             raise ValueError("Reconciler requires query= or adapter=")
@@ -102,15 +109,14 @@ class Reconciler:
             if cached is not None:
                 return Decimal("0") if cached < self._dust_threshold else cached
             snap = self._query.get_wallet_balance(coin=coin)
-            return (Decimal("0") if snap.wallet_balance < self._dust_threshold
-                    else snap.wallet_balance)
+            return (
+                Decimal("0") if snap.wallet_balance < self._dust_threshold else snap.wallet_balance
+            )
         return Decimal("0")
 
     def fetch_exchange_state(self) -> ExchangeState:
         if self._base_coin is None or self._symbol is None:
-            raise ValueError(
-                "fetch_exchange_state requires base_coin + symbol set in __init__"
-            )
+            raise ValueError("fetch_exchange_state requires base_coin + symbol set in __init__")
         wallet = self._query.get_wallet_balance(coin=self._base_coin)
         orders = tuple(self._query.get_open_orders(symbol=self._symbol))
         return ExchangeState(wallet=wallet, open_orders=orders)
@@ -121,10 +127,17 @@ class Reconciler:
             return Decimal("0")
         return state.wallet.wallet_balance
 
-    def _binary_verdict(self, local: LocalState, exch_qty: Decimal,
-                        link_ids: tuple[str, ...]) -> ReconcileResult:
-        """S6 binary AGREE/DIVERGENCE path (backward compat)."""
-        if exch_qty != local.position_qty:
+    def _binary_verdict(
+        self, local: LocalState, exch_qty: Decimal, link_ids: tuple[str, ...]
+    ) -> ReconcileResult:
+        """S6 binary AGREE/DIVERGENCE path (backward compat).
+
+        L4 (S49): apply dust_threshold tolerance to the qty equality check so a
+        sub-dust drift (e.g. 1-satoshi rounding) does NOT force a spurious
+        DIVERGENCE→HALT. Mirrors the 4-valued classifier which already uses
+        dust_threshold. Only a drift >= dust_threshold is a real divergence.
+        """
+        if abs(exch_qty - local.position_qty) >= self._dust_threshold:
             return ReconcileResult(
                 verdict="DIVERGENCE",
                 position_qty=exch_qty,
@@ -158,11 +171,17 @@ class Reconciler:
         link_id: str = o.get("orderLinkId", "")
         return link_id.startswith(f"oco-{local.bracket_id}-")
 
-    def _classify(self, local: LocalState, expected_state: object,
-                  exch_qty: Decimal, open_orders: list[dict[str, Any]],
-                  entry_order: OrderSnapshot | None) -> ReconcileResult:
+    def _classify(
+        self,
+        local: LocalState,
+        expected_state: object,
+        exch_qty: Decimal,
+        open_orders: list[dict[str, Any]],
+        entry_order: OrderSnapshot | None,
+    ) -> ReconcileResult:
         """ADR 0021 4-valued path classifier. Tasks 13-15 implement logic."""
         from src.execution.state_machine import ExecutionState  # avoid circular at module level
+
         if expected_state == ExecutionState.ENTRY_PENDING:
             return self._classify_entry_pending(local, exch_qty, open_orders, entry_order)
         if expected_state == ExecutionState.EXIT_PENDING:
@@ -171,8 +190,11 @@ class Reconciler:
         return self._binary_verdict(local, exch_qty, ())
 
     def _classify_entry_pending(
-        self, local: LocalState, exch_qty: Decimal,
-        open_orders: list[dict[str, Any]], entry_order: OrderSnapshot | None,
+        self,
+        local: LocalState,
+        exch_qty: Decimal,
+        open_orders: list[dict[str, Any]],
+        entry_order: OrderSnapshot | None,
     ) -> ReconcileResult:
         """ADR 0021 sub-decision 3: classify ENTRY_PENDING state."""
         # Precondition: entry order must be Filled
@@ -230,16 +252,26 @@ class Reconciler:
             entry_price=entry_order.avg_price,
             halt_reason=None,
             heal_context={
-                "avg_price": str(entry_order.avg_price) if entry_order.avg_price is not None else None,
+                "avg_price": str(entry_order.avg_price)
+                if entry_order.avg_price is not None
+                else None,
                 "cum_exec_fee": str(entry_order.cum_exec_fee),
                 "fee_currency": entry_order.fee_currency,
             },
         )
 
     def _classify_exit_pending(
-        self, local: LocalState, exch_qty: Decimal, open_orders: list[dict[str, Any]],
+        self,
+        _local: LocalState,
+        exch_qty: Decimal,
+        open_orders: list[dict[str, Any]],
     ) -> ReconcileResult:
-        """ADR 0021 sub-decision 3: classify EXIT_PENDING state."""
+        """ADR 0021 sub-decision 3: classify EXIT_PENDING state.
+
+        L1 (S49): `local` renamed to `_local` (ARG002) — the EXIT classification
+        depends only on exchange qty + open orders, not local state; param kept
+        for call-site signature parity with `_classify_entry_pending`.
+        """
         if exch_qty < self._dust_threshold and len(open_orders) == 0:
             return ReconcileResult(
                 verdict="EXITED",
@@ -269,8 +301,7 @@ class Reconciler:
                 # S6 binary path: cache-aware fetch, still uses constructor symbol for orders
                 sym_bin = local.symbol or self._symbol
                 exch_qty = self._fetch_exch_qty(sym_bin)
-                open_orders_bin = (self._query.get_open_orders(symbol=sym_bin)
-                                   if sym_bin else [])
+                open_orders_bin = self._query.get_open_orders(symbol=sym_bin) if sym_bin else []
                 link_ids = tuple(o.get("orderLinkId", "") for o in open_orders_bin)
                 return self._binary_verdict(local, exch_qty, link_ids)
 
@@ -279,6 +310,9 @@ class Reconciler:
             exch_qty = self._fetch_exch_qty(sym)
             open_orders = self._query.get_open_orders(symbol=sym) if sym else []
             get_order = getattr(self._query, "get_order", None)
-            entry_order = (get_order(symbol=sym, order_id=local.entry_order_id)
-                           if (local.entry_order_id and sym and get_order is not None) else None)
+            entry_order = (
+                get_order(symbol=sym, order_id=local.entry_order_id)
+                if (local.entry_order_id and sym and get_order is not None)
+                else None
+            )
             return self._classify(local, expected_state, exch_qty, open_orders, entry_order)

@@ -33,6 +33,28 @@ We will use walk-forward со следующими параметрами для
 - **Acceptance gate**: **OOS/IS Sharpe ratio ≥ 0.7** на каждом fold;
   падение ниже — стратегия отвергается.
 
+### Gate-blocking vs informational критерии (S49 уточнение — trader-expert verdict + ADR 0052)
+
+Verdict (PASS/FAIL, блокирует mainnet) определяется **ИСКЛЮЧИТЕЛЬНО** gate-blocking критериями:
+
+| Gate-blocking (блокирует verdict) | Порог | Источник |
+|-----------------------------------|-------|----------|
+| T5 n_trades floor | ≥ 50 | ADR 0052 (raw floor) |
+| per-fold OOS/IS Sharpe (`sharpe_gate`) | ≥ 0.7 каждый фолд | этот ADR (L1) |
+| MC permutation (`mc_gate`) | p-value ≤ 0.05 | ADR 0015 + ADR 0052 |
+| DSR (`dsr_threshold`) | ≥ 0.95 | ADR 0052 |
+| n_eff (`n_eff_threshold`) | ≥ 50 (Kish 1965) | ADR 0052 |
+
+**Informational (отображаются в UI, НЕ блокируют verdict):** T1 (Sharpe OOS), T2 (Sortino OOS),
+T3 (MaxDD), T4 (Win Rate), T6 (OOS/IS Sharpe ratio aggregate). Они влияют на интерпретацию
+результата (risk warnings, контекст), но не на сам PASS/FAIL.
+
+**Rationale (S49):** ранее backend `backtest_runner._compute_verdict` ошибочно включал
+T1-T4/T6 в `failed_criteria` (например T3 MaxDD ≥ 25% → FAIL), что противоречило ADR 0052
+(T5 floor — primary gate) и UI (FailAnalysisTab / MetricsTable уже разделяли gate-blocking
+vs informational). Backend приведён в соответствие. См. также
+[[../architecture/acceptance-criteria]] секция «Последовательность проверок».
+
 ## Consequences
 - (+) OOS/IS ≥ 0.7 — строгий фильтр против оверфита.
 - (+) Embargo защищает от leakage из-за серий (ATR, rolling features).

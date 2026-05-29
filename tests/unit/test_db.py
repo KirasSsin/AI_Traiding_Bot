@@ -54,4 +54,5 @@ def test_init_db_idempotent(tmp_path: Path) -> None:
         conn.close()
     # S7 ADR 0021: migration 0005 halt persistence (halt_reason col + halt_log table)
     # S9 Q3 B1: migration 0006 trade_fills
-    assert applied == 7
+    # S49 H7: migration 004 money columns REAL->TEXT
+    assert applied == 8

@@ -16,5 +16,5 @@ def test_reason_code_kill_switch_requested_exists():
 
 
 def test_reason_code_total_count_56():
-    """ADR 0021 baseline = 42; ADR 0022 adds 3 → 45; ADR 0055 (S36) adds 4 → 49; ADR 0057 (S37) adds 1 → 50; ADR 0059 (S39) adds 3 → 53; ADR 0060 (S40) adds 3 → 56."""
-    assert len(list(ReasonCode)) == 56
+    """ADR 0021 baseline = 42; ADR 0022 adds 3 → 45; ADR 0055 (S36) adds 4 → 49; ADR 0057 (S37) adds 1 → 50; ADR 0059 (S39) adds 3 → 53; ADR 0060 (S40) adds 3 → 56; ADR 0023 amendment (S49 H6) adds 7 → 63."""
+    assert len(list(ReasonCode)) == 63

@@ -106,6 +106,60 @@ def test_run_not_found_returns_404(client: TestClient) -> None:
     assert r.status_code == 404
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "ABCDEF0123456789",  # uppercase hex — not lowercase sha256
+        "z" * 16,  # non-hex chars
+        "a" * 15,  # too short
+        "a" * 17,  # too long
+    ],
+)
+def test_run_id_malformed_single_segment_returns_404(client: TestClient, payload: str) -> None:
+    """H1 — malformed (non 16-hex) run_id rejected by guard before disk access → 404."""
+    r = client.get(f"/api/runs/{payload}")
+    assert r.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "../etc/passwd",
+        "..%2f..%2fetc%2fpasswd",
+        "abc/../../etc",
+        "%2e%2e%2f",
+    ],
+)
+def test_run_id_traversal_does_not_leak_run_json(client: TestClient, payload: str) -> None:
+    """H1 — path traversal payloads (with slashes / encoded) never return a run's JSON.
+
+    Slash-bearing values cannot match the `/api/runs/{run_id}` path param segment,
+    so they fall through to the SPA catch-all (HTML shell) or 404 — but they MUST
+    NEVER reach get_run and serve arbitrary .json content.
+    """
+    r = client.get(f"/api/runs/{payload}")
+    content_type = r.headers.get("content-type", "")
+    # Must NOT be a JSON run payload. SPA shell (text/html) OR 404 are both safe.
+    assert not content_type.startswith("application/json") or r.status_code == 404
+
+
+def test_get_run_rejects_traversal_at_function_level() -> None:
+    """H1 — direct get_run() call with traversal/malformed id returns None (defense-in-depth)."""
+    from src.dashboard.backtest_runner import get_run
+
+    assert get_run("../../etc/passwd") is None
+    assert get_run("%2e%2e%2f") is None
+    assert get_run("ABCDEF0123456789") is None  # uppercase rejected
+    assert get_run("a" * 17) is None
+
+
+def test_run_id_valid_16hex_accepted(client: TestClient) -> None:
+    """H1 — valid 16-char lowercase hex run_id reaches get_run (404 only if missing file)."""
+    r = client.get("/api/runs/0123456789abcdef")
+    # No cached run with this id → 404 from get_run None, NOT a validation reject.
+    assert r.status_code == 404
+
+
 def test_get_glossary_returns_200_with_expected_keys() -> None:
     app = create_app()
     client = TestClient(app)
@@ -139,3 +193,33 @@ def test_get_bybit_balance_returns_200_fallback_when_no_keys(
     assert body["source"] in ("bybit_v5", "fallback", "cached")
     assert isinstance(body["total_equity_usdt"], int | float)
     assert isinstance(body["fetched_at_iso"], str)
+
+
+def test_backtest_invalid_date_format_returns_422(client: TestClient) -> None:
+    """H2.3 — malformed start/end date → 422 (Pydantic validation), not 500."""
+    r = client.post(
+        "/api/backtest",
+        json={
+            "strategy_id": "mean_reversion_s17_relaxed",
+            "symbol": "BTCUSDT",
+            "interval": "60",
+            "start": "not-a-date",
+            "end": "2023-12-31",
+        },
+    )
+    assert r.status_code == 422
+
+
+def test_backtest_impossible_date_returns_422(client: TestClient) -> None:
+    """H2.3 — calendar-impossible date (month 13) → 422."""
+    r = client.post(
+        "/api/backtest",
+        json={
+            "strategy_id": "mean_reversion_s17_relaxed",
+            "symbol": "BTCUSDT",
+            "interval": "60",
+            "start": "2023-13-01",
+            "end": "2023-12-31",
+        },
+    )
+    assert r.status_code == 422

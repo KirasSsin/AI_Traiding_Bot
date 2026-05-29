@@ -1,72 +1,42 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-11  # S48 SHIPPED v0.1.0-alpha.48 merge 7456cbe — between-sprints
-sprint: 48
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.48
+updated: 2026-05-29  # S49 Full Tech-Review Audit — PHASE 8 ship in_progress
+sprint: 49
+phase: 8-ship
+branch: feature/sprint-49-tech-review-audit
+tag: v0.1.0-alpha.49
 ---
 
 ## Текущий статус
 
-**S48 SHIPPED** — squash-merge `7456cbe`, tag `v0.1.0-alpha.48`. 24/24 tasks + 9 reviewers all addressed (B1 chip semantic fixed, B2 T3 verdict deferred к S49). Готов к S49 brainstorm.
+**S49 в процессе ship (PHASE 8).** Full Tech-Review Audit — 9 параллельных ревьюеров (opus) + TDD-исправление всех находок. Все 5 BLOCKER + 10 HIGH + 8 MEDIUM + 8 LOW устранены. 6 повторных ревьюеров APPROVE. Gates GREEN (1350 passed / mypy 0 / Vitest 43 / Playwright 7).
 
-**S48 deliverables (24/24):**
-- Bucket 0 (T1): component subdirs refactor C5
-- Bucket A (T2-T7): backend (replay equity_curve + account_service C1 + /api/bybit/balance + glossary_data + /api/glossary C3 + RunRecord balance/win_rate)
-- Bucket B (T8-T14): frontend bugs A/D/F/G/H (EquityChart tooltip + equity-chart E2E + MetricsTable divider + FailAnalysisTab chips + DocumentationTab ▸ remove + HistoryTab accordion + HistoryTab RTL tests)
-- Bucket C (T15-T19): Bug E GlossaryTab (base + useStrategyContext C2 + filter edge case + search + App nav)
-- Bucket D (T20-T22): Bug C Bybit balance (useBybitBalance + BalanceBadge + ConfigureBacktest integration)
-- Bucket E (T23-T24): Bug I RU enforcement + wiki sync
+**Canonical counts (post-S49):** 16 states / 30 events / 74 transitions / **63** reason_codes (+7 H6) / 66 ADRs / **53** sprint pages / Vitest 43 / Playwright 7 / pytest 1350
 
-**Architect bindings met:** C1/C2/C3/C4/C5 все выполнены.
-
-**Canonical counts (post-S48):** 16 states / 30 events / 74 transitions / **56** reason_codes UNCHANGED / 66 ADRs / **52** sprint pages / Vitest 32 / Playwright 7 / pytest 1056+
-
-## Phase tracking (S48 — current sprint)
+## Phase tracking (S49 — current sprint)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | Continuous session post-S47 ship |
-| 2 Brainstorm | done | trader-expert R1+R2, pre-s48-backlog v3 (24 tasks 6 buckets), pre-plan FE+architect dispatch |
-| 3 Plan | done | superpowers:writing-plans → 2026-05-11-sprint-48-ui-overhaul.md commit `aa66b1a` |
-| 4 Execute | **done** | 24/24 tasks complete. T24 wiki sync done (sprint-48 page + index + log + current-state). |
-| 5 Verify | done | pytest 1065 / mypy 0 / Vitest 36 / Playwright 7 / lint+tsc+build clean |
-| 6 Review | done | 9 reviewers: 3 APPROVE / 5 APPROVE_WITH_CONCERNS / 1 REQUEST_CHANGES → B1 fixed, B2 deferred S49 |
-| 7 Sync | done | wiki sync T24 complete |
-| 8 Ship | done | PR #59 squash-merge `7456cbe`, tag v0.1.0-alpha.48 pushed |
-| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
-| 9 Close | pending | SPRINT_STATE between-sprints + log ship entry |
-
-## Phase tracking (S47 — previous shipped)
-
-| Phase | Status |
-|---|---|
-| 1-9 all | done v0.1.0-alpha.47 squash-merge `116f789` |
+| 1 Orient | done | Session start post-S48 ship |
+| 2 Brainstorm | done | Audit-only sprint — no brainstorm (tech-review scope) |
+| 3 Plan | done | 9 reviewers → findings aggregated → audit plan |
+| 4 Execute | done | All BLOCKER+HIGH+MEDIUM+LOW fixed TDD |
+| 5 Verify | done | pytest 1350 / mypy 0 / Vitest 43 / Playwright 7 / lint+tsc+build clean |
+| 6 Review | done | 6 re-review agents: ALL APPROVE, 0 regressions |
+| 7 Sync | done | wiki sync: sprint-49 page + log + current-state + index + SPRINT_STATE |
+| 8 Ship | in_progress | PR #61, 28 commits, CI running → squash-merge + tag v0.1.0-alpha.49 |
+| 9 Close | pending | — |
 
 ## Следующее действие
 
-**PHASE 5 — verify gates:** `pytest + mypy + Vitest + Playwright + lint+tsc+build`. Затем PHASE 6 reviewers parallel (9 агентов).
+**PHASE 8 ship:** `gh pr create` → squash-merge → tag `v0.1.0-alpha.49` → PHASE 9 close.
 
-## S48-S50 ROADMAP (operator decisions 2026-05-11)
+## S49-S51 ROADMAP (operator decisions 2026-05-29)
 
-### S48 — UI Overhaul (SHIPPED → PHASE 5 verify)
+### S49 — Full Tech-Review Audit (SHIPPED → PHASE 8 ship in_progress)
 
-**24/24 tasks done** — see `sprint-48-ui-overhaul.md` canonical summary. Architect C1-C5 all met.
-
-### S49 — Косметика + carry-overs (~10-15 задач)
-
-Маленький полировочный спринт. Operator добавит items post-S48 review. Предварительный scope: color tokens / typography / a11y / Vitest #4+#5 / README npm / F8 / Item #7+#10 / MonthlyHeatmap / typing / BybitAdapterError / RTL tests / wiki cleanup.
-
-**Carry-overs from S48 PHASE 6 reviews:**
-- **T3 verdict semantic (trading-logic BLOCKER B2 deferred):** `src/dashboard/backtest_runner.py:1027` включает `"t3"` в `failed_criteria` при DD ≥ 25%, но ADR 0014 + MetricsTable UI декларируют T3 как informational. Resolve: либо backend exclude T3 from verdict (matches ADR/UI) OR обновить ADR 0014 declaring T3 gate-blocking. Trader-expert verdict needed.
-- **C1 backend balance compounding (data-integrity):** `final_balance_quote` = additive `_running_pct` sum, не compounded equity. Display-only — но материальный для large PnL.
-- **C3 RunRecord backward-compat (data-integrity):** старые cached runs lack new fields — Python callers must `.get()` defaults.
-- **Bybit balance TTL cache (bybit-api MEDIUM + security MEDIUM):** добавить 30s server-side cache или frontend mount-only fetch — предотвратить rate limit.
-- **Test coverage gaps LOW (test-engineer):** GlossaryTab RTL / BalanceBadge snapshot / glossary_data property test.
-- **App.tsx version string stale (frontend-developer LOW):** header показывает v0.1.0-alpha.46.
-- **useStrategyContext multi-instance (frontend-developer MEDIUM):** `replaceState` не fires popstate → instances diverge.
+**Все дефекты устранены** — see `sprint-49-tech-review-audit.md` canonical summary. T3 RESOLVED (binding verdict). 63 reason_codes. pytest 1350.
 
 ### S50 — NEW STRATEGIES (Path B activation)
 

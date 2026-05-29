@@ -51,7 +51,11 @@ class MarketDataPipeline:
         self._ws.start()
         count = 0
         async for msg in self._ws.stream():
-            bar = self._builder.process(msg)
+            gap_bar, bar = self._builder.process_with_gap_fill(msg)
+            if gap_bar is not None:
+                # WS missed an interval — persist a DataQuality.GAP marker so
+                # downstream series carries no hidden hole (corrupts lookbacks).
+                self._writer.append([gap_bar])
             if bar is not None:
                 self._writer.append([bar])
                 count += 1

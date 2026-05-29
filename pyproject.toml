@@ -60,6 +60,9 @@ ignore = ["E501"]
 # (intentional — match real callable signatures для mock substitution). E402 — datetime
 # import after _settings helper (intentional helper-grouping pattern).
 "tests/unit/test_runtime_manager.py" = ["ARG005", "E402"]
+# Test sections group their imports mid-file by Sprint 7 task (Task 9/10) —
+# intentional helper-grouping pattern matching the file's existing structure.
+"tests/unit/test_halt_persistence.py" = ["E402"]
 # Test names follow spec (V5, BybitFilters, NOT_reentrant) — uppercase intentional.
 "tests/unit/test_filters.py" = ["N802"]
 "tests/unit/test_bybit_rest.py" = ["N802"]
@@ -87,4 +90,5 @@ testpaths = ["tests/unit", "tests/property"]
 asyncio_mode = "auto"
 markers = [
   "integration: requires live Bybit testnet (env-gated)",
+  "property: Hypothesis property-based invariant tests",
 ]

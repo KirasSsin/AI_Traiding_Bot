@@ -92,6 +92,14 @@ EXPECTED_CODES = {
     "ENTRY_LONG_ATR_BREAKOUT",
     "EXIT_FLAT_ATR_REVERSE",
     "EXIT_FLAT_ATR_STOP_AB",
+    # S49 H6 ADR 0023 amendment — EMA/meanrev/donchian strategy attribution
+    "ENTRY_LONG_EMA_CROSS_UP",
+    "EXIT_FLAT_SIGNAL_FLIP",
+    "ENTRY_LONG_MEANREV_RSI_BB",
+    "EXIT_FLAT_MEANREV_REVERT",
+    "ENTRY_LONG_DONCHIAN_BREAKOUT",
+    "EXIT_FLAT_ATR_STOP",
+    "EXIT_FLAT_CHANNEL",
 }
 
 
@@ -109,8 +117,8 @@ def test_all_codes_exact_set() -> None:
 
 
 def test_reason_code_count() -> None:
-    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50, S39 ADR 0059 +3 → 53, S40 ADR 0060 +3 → 56)
-    assert len(ReasonCode) == 56
+    # (S5: 31, S6 ADR 0020 +8 → 39, S7 ADR 0021 +3 → 42, S8a ADR 0022 +3 → 45, S36 ADR 0055 +4 → 49, S37 ADR 0057 +1 → 50, S39 ADR 0059 +3 → 53, S40 ADR 0060 +3 → 56, S49 H6 ADR 0023 amendment +7 → 63)
+    assert len(ReasonCode) == 63
 
 
 def test_reason_code_is_str() -> None:

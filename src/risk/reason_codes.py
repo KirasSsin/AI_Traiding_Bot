@@ -29,6 +29,10 @@ ADR 0022 (Sprint 8a) adds 3 more → True count:
 S37 ADR 0057 +1 (HALT_UNKNOWN_SYMBOL) → 50.
 S39 ADR 0059 +3 (ENTRY_LONG_VOLUME_BREAKOUT + EXIT_FLAT_VOLUME_CHANNEL + EXIT_FLAT_ATR_STOP_VB) → 53.
 S40 ADR 0060 +3 (ENTRY_LONG_ATR_BREAKOUT + EXIT_FLAT_ATR_REVERSE + EXIT_FLAT_ATR_STOP_AB) → 56.
+S49 ADR 0023 amendment +7 (ENTRY_LONG_EMA_CROSS_UP + EXIT_FLAT_SIGNAL_FLIP +
+  ENTRY_LONG_MEANREV_RSI_BB + EXIT_FLAT_MEANREV_REVERT + ENTRY_LONG_DONCHIAN_BREAKOUT +
+  EXIT_FLAT_ATR_STOP + EXIT_FLAT_CHANNEL) → 63. Restores EMA/meanrev/donchian
+  strategy attribution lost to RiskManager.assess() generic fallback (H6 HIGH).
 """
 
 from enum import StrEnum
@@ -121,3 +125,16 @@ class ReasonCode(StrEnum):
     ENTRY_LONG_ATR_BREAKOUT = "ENTRY_LONG_ATR_BREAKOUT"  # 54
     EXIT_FLAT_ATR_REVERSE = "EXIT_FLAT_ATR_REVERSE"  # 55: opposite ATR breakout
     EXIT_FLAT_ATR_STOP_AB = "EXIT_FLAT_ATR_STOP_AB"  # 56: ATR stop intrabar (atr_breakout-specific)
+
+    # --- ADR 0023 amendment (S49 H6) — EMA/meanrev/donchian strategy attribution ---
+    # These free-form strings were emitted by the EMA, mean-reversion and
+    # Donchian strategies but absent from the enum, so RiskManager.assess()
+    # collapsed them to the generic ENTRY_LONG_TREND_FOLLOWING / EXIT_SIGNAL_FLIP
+    # fallback — silently losing strategy attribution in the audit log.
+    ENTRY_LONG_EMA_CROSS_UP = "ENTRY_LONG_EMA_CROSS_UP"  # 57: EMA fast/slow bullish cross
+    EXIT_FLAT_SIGNAL_FLIP = "EXIT_FLAT_SIGNAL_FLIP"  # 58: EMA bearish cross → flat
+    ENTRY_LONG_MEANREV_RSI_BB = "ENTRY_LONG_MEANREV_RSI_BB"  # 59: RSI oversold + lower BB
+    EXIT_FLAT_MEANREV_REVERT = "EXIT_FLAT_MEANREV_REVERT"  # 60: revert to mid-band / RSI exit
+    ENTRY_LONG_DONCHIAN_BREAKOUT = "ENTRY_LONG_DONCHIAN_BREAKOUT"  # 61: upper channel breakout
+    EXIT_FLAT_ATR_STOP = "EXIT_FLAT_ATR_STOP"  # 62: Donchian ATR trailing stop hit
+    EXIT_FLAT_CHANNEL = "EXIT_FLAT_CHANNEL"  # 63: close below lower Donchian channel

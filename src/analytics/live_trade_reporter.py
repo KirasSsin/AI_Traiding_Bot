@@ -43,15 +43,22 @@ from src.backtest.mc_permutation import MC_BLOCK_SIZE as _MC_BLOCK_SIZE  # noqa:
 _MC_ITERATIONS: int = 2000
 _MC_SEED: int = 42
 
-# 4H bars per year (365.25 * 6)
-_DEFAULT_BARS_PER_YEAR: int = 2190
+# 4H bars per year (365.25 * 6 = 2191.5 → 2191; L6 unify on 365.25 family)
+_DEFAULT_BARS_PER_YEAR: int = 2191
+
+# M5 (S49): NOMINAL holding-period scale — a PLACEHOLDER, not a measured value.
+# Used only to annualize the INFORMATIONAL live Sharpe (never a gate input).
+# It is a fixed assumption of ~12 bars (4H × 12 = 2 days) per trade; the real
+# holding period is not plumbed through to this reporter. Do NOT treat the
+# resulting Sharpe scale as measured — see M5 note in compute_live_sharpe.
+_AVG_BARS_PER_TRADE_PLACEHOLDER: float = 12.0
 
 
 def compute_live_sharpe(
     records: list[TradeRecord],
     *,
     bars_per_year: int = _DEFAULT_BARS_PER_YEAR,
-    avg_bars_per_trade: float = 12.0,
+    avg_bars_per_trade: float = _AVG_BARS_PER_TRADE_PLACEHOLDER,
 ) -> dict[str, Any]:
     """Annualized live Sharpe + status flag per ADR 0056 thresholds.
 
@@ -60,6 +67,12 @@ def compute_live_sharpe(
 
     Per ADR 0056 amendment 2 + S38 F2 HIGH: returns extracted from pnl_pct (dimensionless
     fractional returns), NOT pnl_quote (absolute P&L scales with position size → Kelly bias).
+
+    M5 (S49) WARNING: ``avg_bars_per_trade`` defaults to a NOMINAL PLACEHOLDER
+    (~12 bars), NOT the measured holding period — the actual entry→exit bar count
+    is not plumbed to this reporter. The annualized Sharpe is INFORMATIONAL (never
+    a gate). If a real mean holding becomes available, pass it explicitly; do not
+    mistake the default-scaled Sharpe for a measured annualization.
     """
     n = len(records)
     if n < 10:

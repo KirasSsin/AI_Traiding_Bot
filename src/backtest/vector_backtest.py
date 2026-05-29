@@ -13,7 +13,10 @@ class VectorBacktester:
     """
 
     def __init__(
-        self, df: pd.DataFrame, initial_capital: float = 10000.0, maker_fee: float = 0.001,
+        self,
+        df: pd.DataFrame,
+        initial_capital: float = 10000.0,
+        maker_fee: float = 0.001,
         bars_per_year: int = 8760,
     ):
         """S19 ADR 0034 Condition A3: parameterized annualization.
@@ -77,5 +80,7 @@ class VectorBacktester:
             "Sharpe Ratio": sharpe_ratio,
         }
 
-        logger.info(f"Backtest complete: {kpis}")
+        # L8 (S49): lazy %-style logging (stdlib logging, not structlog) — avoids
+        # eager f-string formatting when the level is disabled.
+        logger.info("Backtest complete: %s", kpis)
         return kpis

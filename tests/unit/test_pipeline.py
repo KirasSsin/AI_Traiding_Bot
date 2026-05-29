@@ -84,6 +84,72 @@ async def test_pipeline_persists_confirmed_bars(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_pipeline_emits_gap_bar_on_ws_gap(tmp_path: Path) -> None:
+    # WS stream with a missing interval between two confirmed bars → synthetic
+    # GAP bar must be appended (DataQuality.GAP) so downstream series has no hidden hole.
+    rest = MagicMock()
+    rest.get_klines.return_value = []  # no seed gap
+
+    open0 = int(datetime(2026, 4, 20, 0, tzinfo=UTC).timestamp() * 1000)
+    open2 = open0 + 2 * INTERVAL_MS  # skip interval 1 → gap
+    ws = MagicMock()
+    ws.start = MagicMock()
+    ws.stream = lambda: _ws_stream([_msg(open0, confirm=True), _msg(open2, confirm=True)])
+
+    parquet_writer = MagicMock()
+    builder = BarBuilder(symbol="BTCUSDT", interval_ms=INTERVAL_MS)
+
+    pipeline = MarketDataPipeline(
+        rest=rest,
+        ws=ws,
+        bar_builder=builder,
+        parquet_writer=parquet_writer,
+        parquet_dir=tmp_path,
+        interval_ms=INTERVAL_MS,
+    )
+    await asyncio.wait_for(pipeline.run(max_bars=2), timeout=2.0)
+
+    appended = [b for (args, _) in parquet_writer.append.call_args_list for b in args[0]]
+    gap_bars = [b for b in appended if b.data_quality is DataQuality.GAP]
+    assert len(gap_bars) == 1
+    assert gap_bars[0].open_time == datetime.fromtimestamp((open0 + INTERVAL_MS) / 1000, tz=UTC)
+    # both real confirmed bars also persisted
+    ok_bars = [b for b in appended if b.data_quality is DataQuality.OK]
+    assert len(ok_bars) == 2
+
+
+@pytest.mark.asyncio
+async def test_pipeline_contiguous_stream_no_gap_bars(tmp_path: Path) -> None:
+    # Contiguous confirmed bars → no spurious GAP bars emitted.
+    rest = MagicMock()
+    rest.get_klines.return_value = []
+
+    open0 = int(datetime(2026, 4, 20, 0, tzinfo=UTC).timestamp() * 1000)
+    open1 = open0 + INTERVAL_MS
+    ws = MagicMock()
+    ws.start = MagicMock()
+    ws.stream = lambda: _ws_stream([_msg(open0, confirm=True), _msg(open1, confirm=True)])
+
+    parquet_writer = MagicMock()
+    builder = BarBuilder(symbol="BTCUSDT", interval_ms=INTERVAL_MS)
+
+    pipeline = MarketDataPipeline(
+        rest=rest,
+        ws=ws,
+        bar_builder=builder,
+        parquet_writer=parquet_writer,
+        parquet_dir=tmp_path,
+        interval_ms=INTERVAL_MS,
+    )
+    await asyncio.wait_for(pipeline.run(max_bars=2), timeout=2.0)
+
+    appended = [b for (args, _) in parquet_writer.append.call_args_list for b in args[0]]
+    gap_bars = [b for b in appended if b.data_quality is DataQuality.GAP]
+    assert len(gap_bars) == 0
+    assert len(appended) == 2
+
+
+@pytest.mark.asyncio
 async def test_pipeline_seeds_gap_via_rest(tmp_path: Path) -> None:
     # Parquet already has bars 0..2; gap at 3,4; pipeline should REST-fill 3,4 on start
     from src.marketdata.storage import ParquetBarWriter

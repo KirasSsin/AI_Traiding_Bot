@@ -1,5 +1,6 @@
 """Parquet writer for OHLCV bars (OLAP storage)."""
 
+import os
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -62,5 +63,14 @@ class ParquetBarWriter:
             f"-{bars_list[-1].close_time.strftime('%Y%m%d%H%M%S')}.parquet"
         )
         path = self._dir / fname
-        pq.write_table(table, path, compression="snappy")  # type: ignore[no-untyped-call]
+        # Atomic write: stage to .tmp then os.replace (atomic rename on POSIX) so
+        # a crash/OOM mid-write never leaves a truncated/corrupt final partition.
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
+        try:
+            pq.write_table(table, tmp_path, compression="snappy")  # type: ignore[no-untyped-call]
+            os.replace(tmp_path, path)
+        finally:
+            # tmp is gone after a successful replace; only matters if write/replace raised.
+            if tmp_path.exists():
+                tmp_path.unlink(missing_ok=True)
         return path

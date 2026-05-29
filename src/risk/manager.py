@@ -291,7 +291,9 @@ class RiskManager:
         # S39 R3 C4 fix — propagate signal.reason для strategy attribution в audit log.
         # Pre-S39: hardcoded ENTRY_LONG_TREND_FOLLOWING — все strategies теряли attribution.
         # Post-S39: signal.reason is canonical ReasonCode value (per Signal model contract).
-        # Fallback к ENTRY_LONG_TREND_FOLLOWING если signal.reason не валидный ReasonCode.
+        # S49 H6: EMA/meanrev/donchian reason strings registered as ReasonCode members
+        # (ADR 0023 amendment), so direct resolution succeeds and attribution is preserved.
+        # Fallback к ENTRY_LONG_TREND_FOLLOWING остаётся для genuinely unknown reasons.
         try:
             reason_code = ReasonCode(signal.reason)
         except ValueError:
