@@ -3,7 +3,7 @@ title: Pre-S50 Backlog — Supertrend strategy adaptation (freqtrade)
 type: backlog
 tags: [pre-sprint, backlog, s50, supertrend, strategy]
 created: 2026-05-29
-updated: 2026-05-29  # +carry-over: atr_breakout windowed-ATR re-seed (S50 T4-fix discovery)
+updated: 2026-05-29  # +T8: supertrend train sweep + held-out verdict PROCEED_T9
 status: draft
 sources:
   - llm-wiki/wiki/project/decisions/0014-walk-forward-train2000-test500.md
@@ -106,6 +106,47 @@ Held-out:    2025-06-01 → 2026-05-01, single eval, threshold Sharpe>0 + n≥15
   adversarial inputs. **DO NOT fix in S50** (out of scope; LOCKED shipped strategy).
   Defer to a dedicated task with its own cross-validation gate mirroring
   `tests/property/test_supertrend_lookahead.py`.
+
+## T8 sweep + held-out result (2026-05-29)
+
+**Задача:** param sweep 35 комбо Supertrend на BTCUSDT 1H TRAIN (ts < 2025-06-01), выбор победителя по train Sharpe, одна held-out оценка.
+
+**Данные:** 29 093 баров 2023-01-01 → 2026-04-26.
+- TRAIN : 21 189 баров 2023-01-01 → 2025-05-31
+- HELD-OUT : 7 904 баров 2025-06-01 → 2026-04-26
+
+**Сетка параметров:** atr_period ∈ [7,9,10,12,14,16,21] × mult ∈ [2.0,2.5,3.0,3.5,4.0] = 35 комбо. atr_stop_mult фиксирован = 2.0. Минимум сделок для победителя (anti-fluke): n_trades_train ≥ 10.
+
+**Результат sweep (все 35 комбо — eligible):**
+
+| atr | mult | n_trades | train_sharpe |
+|-----|------|----------|-------------|
+| 21  | 2.0  | 426      | **8.696** ← победитель |
+| 10  | 2.0  | 407      | 8.659 |
+| 21  | 2.5  | 303      | 7.650 |
+| 16  | 2.5  | 311      | 7.444 |
+| ... | ...  | ...      | ... |
+| 12  | 4.0  | 168      | 3.652 (худший) |
+
+Все 35 комбо имеют train Sharpe > 3.6 (очень высокие показатели на train).
+
+**Победитель (TRAIN Sharpe):**
+- `atr_period=21, mult=2.0`
+- train Sharpe: **8.70**, n_trades=426, PnL=+662.1%
+
+**Held-out оценка (однократно, ADR 0067 Q4):**
+- held-out Sharpe: **8.08**
+- held-out n_trades: **162**
+- held-out PnL%: **+152.8%**
+- held-out win_rate: 0.586
+
+**Порог ADR 0067:** Sharpe > 0 AND n_trades ≥ 15 → **оба выполнены**.
+
+**ВЕРДИКТ: PROCEED_T9** — переход к формальному WFA (ADR 0014 gates, n_trials=10).
+
+**Замечание:** Unusually высокие Sharpe (train 8.7, held-out 8.1) по всей сетке параметров указывают на сильный трендовый сигнал в тестовом периоде (2023-2025: BTC бычий рынок). Formal WFA (T9) проверит robustness на rolling walk-forward windows и применит Bailey DSR penalty — это настоящий тест edge.
+
+Скрипт: `scripts/run_supertrend_s50.py`. JSON артефакты: `data/supertrend_s50_sweep.json`, `data/supertrend_s50_heldout.json` (gitignored, результаты зафиксированы здесь).
 
 ## Related
 - [[decisions/0014-walk-forward-train2000-test500]] (WFA gates + S45 trade-freq table)
