@@ -148,6 +148,73 @@ Held-out:    2025-06-01 → 2026-05-01, single eval, threshold Sharpe>0 + n≥15
 
 Скрипт: `scripts/run_supertrend_s50.py`. JSON артефакты: `data/supertrend_s50_sweep.json`, `data/supertrend_s50_heldout.json` (gitignored, результаты зафиксированы здесь).
 
+## T9 formal WFA result (2026-05-29)
+
+**Задача:** формальный Walk-Forward Analysis на победителе T8 (`atr_period=21, mult=2.0`), BTCUSDT 1H 2023-01-01 → 2026-04-26, n_trials=10 (гипотеза #10, ADR 0067).
+
+**WFA параметры (высокочастотный tier, ADR 0014):**
+- train_bars=2000, test_bars=500, k_folds=5, embargo_bars=20
+- actual bars=29 093 (минимум 4 520 — с запасом)
+- символ=BTCUSDT
+
+### Результат: **WFA_FAIL**
+
+**Провалившиеся критерии:** `n_eff_threshold` + `t5_floor` + `dsr_threshold`
+
+**Per-fold OOS Sharpe (5 фолдов):**
+
+| Fold | OOS Sharpe |
+|------|-----------|
+| 1    | 12.51     |
+| 2    | 12.18     |
+| 3    | 70.81     |
+| 4    | 10.67     |
+| 5    | 10.23     |
+
+*Примечание: Sharpe astronomically high из-за крайне малого числа сделок на фолд — среднее удержание 23.6 бара × малый trade count → hugely inflated annualized Sharpe. Это NaN-артефакт малой выборки, а не реальный edge.*
+
+**Метрики:**
+- Trial mean OOS Sharpe: 23.28 (среднее по фолдам)
+- Trial OOS Sharpe: 5.54 (из всех OOS сделок объединённо)
+- n_trades_raw (все OOS фолды): **47** — ниже порога 50 (T5 floor + n_eff gate)
+- MC p-value: **0.0005** (PASS, ≤ 0.05)
+- DSR: **0.0** (FAIL, требуется ≥ 0.95)
+
+### Разбор провалившихся ворот
+
+**T5/n_eff (n_trades=47 < 50) — FAIL:**
+Победитель `atr_period=21, mult=2.0` — крупный ATR + малый mult = редкие перевороты тренда.
+5 фолдов × 500 баров (~21 день каждый) → в среднем ~9-10 сделок на фолд.
+Суммарно 47 сделок по всем OOS фолдам при пороге 50. Статистическая мощность критически мала.
+
+**DSR = 0.0 — FAIL:**
+- sigma_sr_cross_trial = **35.41** — вычислено из 9 предыдущих записей в `data/cross_trial_sharpes.json`
+- Эти записи из S44 содержат разброс от -89.5 до +0.37 (тестирование под разными параметрами и символами включая ETH/SOL → экстремальные негативные Sharpe)
+- sigma_sr=35.41 вводит мощный multi-testing штраф Бейли: целевой Sharpe для DSR >> текущего trial OOS Sharpe 5.54
+- DSR n_trials=1 (без штрафа): 0.9999 — **почти 1.0** (стратегия в изоляции звучит убедительно)
+- DSR n_trials=10 с sigma=35.41: **0.0** — штраф сделок на пробу поглощает весь сигнал
+- **Кавеат:** sigma_sr=35.41 включает экстремальные выбросы из S44 мультисимвольного тестирования. Если исключить эти выбросы, DSR был бы выше — но правила честны: мы зафиксировали все N=10 гипотез нарастающим итогом.
+
+### n_trials caveat
+
+На момент запуска T9 в `data/cross_trial_sharpes.json` содержалось **8 записей** (из S44, ключ `"trials"`), не 3+ — т.е. полный штраф n_trials=10 применён с sigma_sr=35.41 (стандартное отклонение кросс-трайловых Sharpe). Это не n_trials=1 fallback. Штраф реальный и законный — просто sigma экстремально велика из-за волатильности S44-экспериментов.
+
+### Граничный победитель + bull-beta caveat (T8 предупреждение подтверждено)
+
+- `atr_period=21` — максимум сетки (граница). `mult=2.0` — минимум сетки. Оба на краях.
+- Высокие Sharpe по всей сетке в T8 (3.6-8.7) = сигнал bull-beta, а не genuine timing edge.
+- Formal WFA подтвердил: rolling OOS фолды с Bailey DSR penalty не поддерживают гипотезу.
+
+### Честная интерпретация
+
+T8 held-out Sharpe 8.08 был BTC bull-market beta (2023-2025 тренд). Стратегия генерирует очень мало сделок (47 по всем 5 OOS-фолдам) на оптимальных для неё параметрах — слишком медленный переворот для накопления статистики. DSR penalty от предыдущих тестовых прогонов (sigma=35.41) делает порог практически недостижимым при реальном OOS Sharpe ~5-6.
+
+**Supertrend гипотеза #10 = WFA_FAIL. Честный научный результат.**
+
+9 из 10 предыдущих стратегий тоже FAIL — дисциплина ADR 0014 работает корректно.
+
+Скрипт: `src/backtest/supertrend_runner.py::run_supertrend_wfa`. Данные: `data/cross_trial_sharpes.json`.
+
 ## Related
 - [[decisions/0014-walk-forward-train2000-test500]] (WFA gates + S45 trade-freq table)
 - [[decisions/0059-sprint-39-volume-breakout-pre-registration]] (anti-snooping pattern + G5 N_trials gap)
