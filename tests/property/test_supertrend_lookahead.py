@@ -304,3 +304,138 @@ def test_signal_generated_at_ge_bar_close_time(seed: int) -> None:
         assert s.generated_at >= s.bar_close_time
         # long-only invariant: spot-only v0.1 has no SHORT (SignalSide ∈ {LONG, FLAT}).
         assert s.side in (SignalSide.LONG, SignalSide.FLAT)
+
+
+# ---------------------------------------------------------------------------
+# 5. Backtest FILL look-ahead guard (S50 PHASE 6 BLOCKER — trading-logic).
+#
+#    The Lazybear trend at bar i is RECURSIVE: trend[i] depends on close[i]
+#    (the active-band selection ``supertrend[i] = final_ub if close[i] <= final_ub
+#    else final_lb``). A flip BEAR->BULL whose deciding bar is i is therefore only
+#    KNOWN after close[i]. Filling that entry at open[i] (the open of the very bar
+#    whose close produced the signal) is same-bar look-ahead — the fill price
+#    predates the information that generated the trade. The correct fill is the
+#    NEXT bar open, open[i+1] (close(T) -> open(T+1)), matching the streaming
+#    SupertrendStrategy contract (signal on closed bar T, FSM fills T+1) and the
+#    atr_breakout research kernel (signal from data <= i-1 -> fill open[i]).
+#
+#    These tests construct a series with a single round-trip whose entry flip is
+#    at bar e and exit flip at bar x, with DISTINCTIVE open prices at e, e+1, x,
+#    x+1 so the realised fill index is unambiguous. They FAIL against an open[i]
+#    fill (look-ahead) and PASS only when the fill is open[i+1].
+# ---------------------------------------------------------------------------
+
+
+def _round_trip_df() -> tuple[object, int, int]:  # noqa: F821 (pd.DataFrame)
+    """Build an OHLCV frame with exactly one BEAR->BULL->BEAR round-trip.
+
+    Flip detection (close-based) lands the entry at bar 30 and the exit at bar 40
+    for atr_period=10, mult=3.0 (verified empirically). ``open`` is set DISTINCT
+    from ``close`` at the fill-candidate bars so the fill index is observable:
+      - open[30] (wrong: entry flip bar)      = 1_000_000  (absurd — never correct)
+      - open[31] (right: bar after entry flip) =   400.0
+      - open[40] (wrong: exit flip bar)        = 2_000_000  (absurd)
+      - open[41] (right: bar after exit flip)  =   500.0
+    All other opens equal close (the streaming strategy ignores open entirely, so
+    this does not perturb the trend computation).
+    """
+    import numpy as np
+    import pandas as pd
+
+    closes = (
+        [100.0] * 30
+        + [110, 130, 160, 200, 240, 280, 300, 310, 315, 320]
+        + [270, 220, 180, 150, 120, 100, 90]
+    )
+    closes_arr = np.array(closes, dtype=np.float64)
+    highs = closes_arr + 1.0
+    lows = closes_arr - 1.0
+    opens = closes_arr.copy()
+    # Distinctive opens at fill-candidate bars (entry flip @30, exit flip @40).
+    opens[30] = 1_000_000.0  # entry flip bar — filling here is look-ahead
+    opens[31] = 400.0  # correct entry fill = open after the flip
+    opens[40] = 2_000_000.0  # exit flip bar — filling here is look-ahead
+    opens[41] = 500.0  # correct exit fill = open after the flip
+
+    n = len(closes)
+    t0 = datetime(2024, 1, 1, tzinfo=UTC)
+    df = pd.DataFrame(
+        {
+            "ts": [t0 + timedelta(hours=i) for i in range(n)],
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes_arr,
+            "volume": np.ones(n),
+        }
+    )
+    return df, 30, 40
+
+
+def test_runner_backtest_fills_bar_after_flip() -> None:
+    """supertrend_runner._backtest_single must fill at open[flip+1], not open[flip].
+
+    Reads the realised entry/exit prices from the trade record. open[flip] is set
+    to an absurd 1e6/2e6 so a same-bar fill is unmistakable; the correct fill is
+    open[flip+1] * (1 ± SLIPPAGE).
+    """
+    from src.backtest.supertrend_runner import _SLIPPAGE, _backtest_single
+
+    df, entry_flip, exit_flip = _round_trip_df()
+    result = _backtest_single(df, {"atr_period": 10, "multiplier": 3.0}, bars_per_year=8766)
+
+    assert result["n_trades"] >= 1, "expected at least one round-trip trade"
+    trade = result["trades"][0]
+
+    expected_entry = float(df["open"].iloc[entry_flip + 1]) * (1.0 + _SLIPPAGE)
+    expected_exit = float(df["open"].iloc[exit_flip + 1]) * (1.0 - _SLIPPAGE)
+
+    assert abs(trade.entry_price - expected_entry) < 1e-6, (
+        f"entry filled at {trade.entry_price} — must be open[{entry_flip + 1}] "
+        f"(={expected_entry}), NOT open[{entry_flip}] (look-ahead). "
+        f"open[{entry_flip}]={df['open'].iloc[entry_flip]}"
+    )
+    assert abs(trade.exit_price - expected_exit) < 1e-6, (
+        f"exit filled at {trade.exit_price} — must be open[{exit_flip + 1}] "
+        f"(={expected_exit}), NOT open[{exit_flip}] (look-ahead). "
+        f"open[{exit_flip}]={df['open'].iloc[exit_flip]}"
+    )
+
+
+def test_autoresearch_backtest_fills_bar_after_flip() -> None:
+    """strat_supertrend + _backtest (autoresearch) must realise PnL from open[flip+1].
+
+    The shared _backtest engine has no per-trade price record, so we assert via the
+    realised round-trip PnL. With a flip-only exit (atr_stop_mult huge so the ATR
+    stop never triggers) the single trade's net PnL must equal:
+        (open[x+1]*(1-S) - open[e+1]*(1+S)) / (open[e+1]*(1+S)) - 2*commission
+    i.e. fills at the bar AFTER each flip — NOT open[e]/open[x] (look-ahead).
+    """
+    import numpy as np
+    from scripts.autoresearch_endless import (
+        COMMISSION_TAKER,
+        SLIPPAGE,
+        _backtest,
+        strat_supertrend,
+    )
+
+    df, entry_flip, exit_flip = _round_trip_df()
+    entry, exit_, warmup, atr_arr = strat_supertrend(df, atr_period=10, mult=3.0)
+
+    # atr_stop_mult huge -> ATR stop can never fire; exit is the trend flip only.
+    metrics = _backtest(
+        df, entry, exit_, atr_arr, atr_stop_mult=1e9, warmup=warmup, bars_per_year=8766
+    )
+    assert metrics["n_trades"] == 1, f"expected exactly one trade, got {metrics['n_trades']}"
+
+    open_arr = df["open"].to_numpy(dtype=np.float64)
+    fill_entry = open_arr[entry_flip + 1] * (1.0 + SLIPPAGE)
+    fill_exit = open_arr[exit_flip + 1] * (1.0 - SLIPPAGE)
+    expected_pnl_pct = ((fill_exit - fill_entry) / fill_entry - 2.0 * COMMISSION_TAKER) * 100.0
+
+    assert abs(metrics["pnl_pct"] - expected_pnl_pct) < 1e-6, (
+        f"realised PnL {metrics['pnl_pct']:.6f}% != open[i+1]-fill PnL "
+        f"{expected_pnl_pct:.6f}%. A same-bar (open[i]) fill would use the absurd "
+        f"open[{entry_flip}]={open_arr[entry_flip]} / open[{exit_flip}]="
+        f"{open_arr[exit_flip]} and diverge wildly (look-ahead)."
+    )

@@ -294,10 +294,18 @@ def strat_atr_breakout(
 
 
 def strat_supertrend(df: pd.DataFrame, atr_period: int, mult: float):
-    """Vectorized Lazybear Supertrend — mirrors streaming SupertrendStrategy exactly.
+    """Vectorized Lazybear Supertrend — trend computation mirrors SupertrendStrategy.
 
-    Entry on BEAR->BULL trend flip (bar T), exit on BULL->BEAR flip (bar T).
-    Fill assumed at open(T+1) per backtest engine convention.
+    The trend flip is COMPUTED at the bar whose close decides it (BEAR->BULL or
+    BULL->BEAR at bar T, using close[T]). The returned entry/exit arrays are
+    SHIFTED +1 relative to that flip bar: a flip computed at bar T sets
+    ``entry[T+1]`` / ``exit_[T+1]``. This makes the shared ``_backtest`` engine
+    (which fills ``entry[k]`` at ``open[k]``) execute at ``open[T+1]`` =
+    close(T)->open(T+1), the same fill the streaming SupertrendStrategy gets via
+    the FSM. The shift is REQUIRED because the Lazybear trend is recursive
+    (trend[T] needs close[T]) and so cannot be written as a pure data-through-(k-1)
+    condition at bar k the way the other strats are. Setting ``entry[T]`` directly
+    would fill ``open[T]`` = same-bar look-ahead (S50 PHASE 6 BLOCKER).
 
     Lazybear carry/clamp (identical to SupertrendStrategy.on_bar):
       final_ub = basic_ub if (basic_ub < prev_final_ub or prev_close > prev_final_ub) else prev_final_ub
@@ -370,11 +378,22 @@ def strat_supertrend(df: pd.DataFrame, atr_period: int, mult: float):
 
         trend = "BULL" if supertrend == final_lb else "BEAR"
 
-        # Signal on flip
-        if prev_trend == "BEAR" and trend == "BULL":
-            entry[i] = True
-        elif prev_trend == "BULL" and trend == "BEAR":
-            exit_[i] = True
+        # Signal on flip — shifted +1 to be fillable at open under the _backtest
+        # contract (S50 PHASE 6 BLOCKER). The shared _backtest fills entry[k] at
+        # open[k]; every other strat sets entry[k] from data through k-1 so that
+        # fill is the post-signal bar open (close(T)->open(T+1)). The Lazybear
+        # trend is RECURSIVE — trend[i] depends on close[i] (active-band selection
+        # close[i] <= final_ub[i]) — so it CANNOT be expressed as a pure data-<=-(k-1)
+        # condition at bar k. The flip is only known after close[i]; emitting it at
+        # entry[i+1]/exit_[i+1] makes _backtest fill open[i+1], matching the streaming
+        # SupertrendStrategy (signal on closed bar T, FSM fills T+1). Setting entry[i]
+        # would fill open[i] = same-bar look-ahead. Flip on the last bar (no open[i+1])
+        # is dropped — unfillable.
+        if i + 1 < n:
+            if prev_trend == "BEAR" and trend == "BULL":
+                entry[i + 1] = True
+            elif prev_trend == "BULL" and trend == "BEAR":
+                exit_[i + 1] = True
 
         # Update carry
         prev_final_ub = final_ub

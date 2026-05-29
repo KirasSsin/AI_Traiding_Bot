@@ -6,10 +6,14 @@ Mirrors atr_breakout_runner._run_atr_breakout_wfa pattern:
   - CrossTrialLog.append_trial wired via run_research_wfa (NOT direct — S44 T9 retrofit)
 
 Execution semantics (Lazybear Supertrend):
-  - Signal on close(T-1) → fill at open(T) (no look-ahead)
-  - Entry: BEAR→BULL flip → fill at open[entry_bar] * (1 + SLIPPAGE)
-  - Exit: BULL→BEAR flip → fill at open[exit_bar] * (1 - SLIPPAGE)
-  - Open position closed at last bar mark-to-market
+  - The Lazybear trend is RECURSIVE: trend[i] depends on close[i] (active-band
+    selection close[i] <= final_ub[i]). A flip whose deciding bar is i is only
+    known after close[i], so the fill is the NEXT bar open: close(T) → open(T+1).
+    Filling open[i] (the flip bar's own open) would be same-bar look-ahead.
+  - Entry: BEAR→BULL flip decided at close[i] → fill at open[i+1] * (1 + SLIPPAGE)
+  - Exit: BULL→BEAR flip decided at close[i] → fill at open[i+1] * (1 - SLIPPAGE)
+  - A flip on the last bar has no next-bar open (entry skipped; open position
+    closed at last bar mark-to-market)
   - Sequential additive PnL (per ADR 0064)
 
 LOCKED params per ADR 0067 — DO NOT modify without new ADR:
@@ -171,8 +175,11 @@ def _backtest_single(
 
     BacktestFn-compatible signature: (df, params, bars_per_year) -> dict.
 
-    Entry: BEAR->BULL flip at bar[i-1] → fill at open[i] * (1 + SLIPPAGE)
-    Exit:  BULL->BEAR flip at bar[i-1] → fill at open[i] * (1 - SLIPPAGE)
+    Entry: BEAR->BULL flip decided at close[i] → fill at open[i+1] * (1 + SLIPPAGE)
+    Exit:  BULL->BEAR flip decided at close[i] → fill at open[i+1] * (1 - SLIPPAGE)
+    The Lazybear trend is recursive (trend[i] uses close[i]), so the flip is only
+    known after close[i]; the earliest executable price is the next bar open
+    (close(T) -> open(T+1)). Filling open[i] would be same-bar look-ahead.
     ATR stop: not implemented (Supertrend relies on trend-flip exit only, consistent
     with ADR 0067 exit = flip + downstream FSM ATR bracket SL; research path uses
     flip-only for OOS PnL estimation).
@@ -197,6 +204,14 @@ def _backtest_single(
     entry_idx = -1
     entry_price = 0.0
 
+    # Fill mapping (S50 PHASE 6 BLOCKER): the Lazybear trend is RECURSIVE — trend[i]
+    # depends on close[i] (active-band selection close[i] <= final_ub[i]). A flip
+    # whose deciding bar is i is therefore only KNOWN at close[i], so the earliest
+    # executable price is the NEXT bar open, open[i+1] (close(T) -> open(T+1)). This
+    # matches the streaming SupertrendStrategy contract (signal on closed bar T, FSM
+    # fills T+1). Filling open[i] would be same-bar look-ahead. A flip on the last bar
+    # (i == n-1) has no next-bar open: an entry is skipped; an open position is closed
+    # at the last-bar mark-to-market below.
     for i in range(1, n):
         prev_trend = trend[i - 1]
         curr_trend = trend[i]
@@ -204,18 +219,18 @@ def _backtest_single(
             continue
 
         if not in_pos:
-            # Entry: BEAR(-1) -> BULL(+1) flip on bar[i-1] -> fill at open[i]
-            if prev_trend == -1 and curr_trend == 1:
-                entry_price = open_[i] * (1.0 + _SLIPPAGE)
-                entry_idx = i
+            # Entry: BEAR(-1) -> BULL(+1) flip decided at close[i] -> fill at open[i+1].
+            if prev_trend == -1 and curr_trend == 1 and i + 1 < n:
+                entry_price = open_[i + 1] * (1.0 + _SLIPPAGE)
+                entry_idx = i + 1
                 in_pos = True
         else:
-            # Exit: BULL(+1) -> BEAR(-1) flip on bar[i-1] -> fill at open[i]
-            if prev_trend == 1 and curr_trend == -1:
-                exit_price = open_[i] * (1.0 - _SLIPPAGE)
+            # Exit: BULL(+1) -> BEAR(-1) flip decided at close[i] -> fill at open[i+1].
+            if prev_trend == 1 and curr_trend == -1 and i + 1 < n:
+                exit_price = open_[i + 1] * (1.0 - _SLIPPAGE)
                 pnl_gross = (exit_price - entry_price) / entry_price
                 pnl_net = pnl_gross - 2.0 * _COMMISSION_TAKER
-                trades.append(_TradeRecord(entry_idx, i, entry_price, exit_price, pnl_net))
+                trades.append(_TradeRecord(entry_idx, i + 1, entry_price, exit_price, pnl_net))
                 in_pos = False
 
     # Close open position on last bar mark-to-market

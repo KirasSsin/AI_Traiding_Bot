@@ -215,33 +215,46 @@ def _run_streaming(
 
 
 def test_strat_supertrend_parity_with_streaming() -> None:
-    """Vectorized strat_supertrend signals must match streaming SupertrendStrategy bar indices.
+    """Vectorized strat_supertrend flip detection must match streaming SupertrendStrategy.
 
-    The streaming strategy emits a signal ON bar T (closed bar T evaluated, fill T+1).
-    The vectorized strat sets entry[T] = True / exit_[T] = True at the same bar T.
-    Bar indices must match exactly.
+    The streaming strategy emits a signal ON the flip bar T (closed bar T evaluated;
+    the FSM fills at open T+1). The vectorized strat returns FILL-INTENT arrays under
+    the shared ``_backtest`` contract (entry[k] is filled at open[k]), so a flip at
+    bar T is encoded as ``entry[T+1]`` / ``exit_[T+1]`` (S50 PHASE 6 BLOCKER fix —
+    fill the bar AFTER the flip-deciding close, never the same bar). Therefore the
+    SAME flip parity holds with a +1 fill offset: vectorized signal bar = streaming
+    flip bar + 1. (The underlying per-bar trend array parity is enforced separately
+    by ``test_streaming_matches_vectorized_reference`` in the look-ahead suite.)
     """
     from scripts.autoresearch_endless import strat_supertrend
 
     closes, highs, lows = _build_trend_flip_series()
     df = _make_df(closes, highs, lows)
 
-    # Vectorized signals
+    # Vectorized signals (fill-intent bars = flip bar + 1).
     entry, exit_, warmup, _ = strat_supertrend(df, atr_period=10, mult=3.0)
     vec_entry_bars = list(np.where(entry)[0])
     vec_exit_bars = list(np.where(exit_)[0])
 
-    # Streaming signals (bar index = position in the series, 0-based)
+    # Streaming signals (bar index = flip bar, 0-based).
     stream_entry_bars, stream_exit_bars = _run_streaming(
         closes, highs, lows, atr_period=10, mult=3.0
     )
 
-    assert (
-        vec_entry_bars == stream_entry_bars
-    ), f"Entry bar mismatch:\n  vectorized: {vec_entry_bars}\n  streaming:  {stream_entry_bars}"
-    assert (
-        vec_exit_bars == stream_exit_bars
-    ), f"Exit bar mismatch:\n  vectorized: {vec_exit_bars}\n  streaming:  {stream_exit_bars}"
+    # Same flips, shifted +1 in the fill-intent arrays (close(T) -> fill open(T+1)).
+    expected_entry_bars = [b + 1 for b in stream_entry_bars]
+    expected_exit_bars = [b + 1 for b in stream_exit_bars]
+
+    assert vec_entry_bars == expected_entry_bars, (
+        f"Entry flip parity (with +1 fill offset) broken:\n"
+        f"  vectorized fill-intent: {vec_entry_bars}\n"
+        f"  streaming flip + 1:     {expected_entry_bars}"
+    )
+    assert vec_exit_bars == expected_exit_bars, (
+        f"Exit flip parity (with +1 fill offset) broken:\n"
+        f"  vectorized fill-intent: {vec_exit_bars}\n"
+        f"  streaming flip + 1:     {expected_exit_bars}"
+    )
 
 
 # ---------------------------------------------------------------------------

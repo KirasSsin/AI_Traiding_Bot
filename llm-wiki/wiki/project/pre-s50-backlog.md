@@ -130,21 +130,21 @@ Held-out:    2025-06-01 → 2026-05-01, single eval, threshold Sharpe>0 + n≥15
 
 Все 35 комбо имеют train Sharpe > 3.6 (очень высокие показатели на train).
 
+**⚠️ ПОПРАВКА (2026-05-29, PHASE 6 BLOCKER fix):** числа ниже были **завышены look-ahead bias** в backtest fill. Lazybear trend РЕКУРСИВНЫЙ (trend[i] зависит от close[i]), а fill происходил на open[i] (open того же бара, чей close сгенерировал сигнал) = same-bar look-ahead (~+117% инфляции PnL, объясняет однородные Sharpe 3.6-8.7 по всей сетке). Исправлено: flip@close[i] → fill на open[i+1] (commit `fix(s50): BLOCKER backtest fill look-ahead`). **Корректные числа после fix приведены ниже зачёркнутых.**
+
 **Победитель (TRAIN Sharpe):**
-- `atr_period=21, mult=2.0`
-- train Sharpe: **8.70**, n_trades=426, PnL=+662.1%
+- ~~`atr_period=21, mult=2.0`, train Sharpe **8.70**, n_trades=426, PnL=+662.1%~~ (look-ahead-inflated)
+- **После fix:** `atr_period=10, mult=2.0` (победитель сменился — look-ahead благоприятствовал медленным параметрам), train Sharpe **1.22**, n_trades=637, PnL=+53.3%. Большинство комбо теперь с ОТРИЦАТЕЛЬНЫМ PnL; максимальный train Sharpe по всей сетке упал с 8.7 до 1.22.
 
 **Held-out оценка (однократно, ADR 0067 Q4):**
-- held-out Sharpe: **8.08**
-- held-out n_trades: **162**
-- held-out PnL%: **+152.8%**
-- held-out win_rate: 0.586
+- ~~held-out Sharpe **8.08**, n_trades **162**, PnL% **+152.8%**, win_rate 0.586~~ (look-ahead-inflated)
+- **После fix:** held-out Sharpe **0.77**, n_trades **234**, PnL% **+9.83%** (победитель atr=10/mult=2.0). Инфляция Sharpe убрана: 8.08 → 0.77 (×10.5 меньше), PnL +152.8% → +9.83%.
 
-**Порог ADR 0067:** Sharpe > 0 AND n_trades ≥ 15 → **оба выполнены**.
+**Порог T8 ADR 0067:** Sharpe > 0 AND n_trades ≥ 15 → формально выполнены (0.77 > 0), но это T8-gate, не финальный WFA verdict.
 
-**ВЕРДИКТ: PROCEED_T9** — переход к формальному WFA (ADR 0014 gates, n_trials=10).
+**ВЕРДИКТ T8: PROCEED_T9** (формально) — но финальный WFA verdict = **WFA_FAIL** (см. T9).
 
-**Замечание:** Unusually высокие Sharpe (train 8.7, held-out 8.1) по всей сетке параметров указывают на сильный трендовый сигнал в тестовом периоде (2023-2025: BTC бычий рынок). Formal WFA (T9) проверит robustness на rolling walk-forward windows и применит Bailey DSR penalty — это настоящий тест edge.
+**Замечание:** однородно высокие Sharpe (train 8.7, held-out 8.1) по всей сетке были артефактом look-ahead fill, а НЕ bull-market beta, как предполагалось изначально. После исправления fill сигнал слабый/отрицательный — это и есть честная картина. Formal WFA (T9) подтверждает WFA_FAIL ещё жёстче (n_eff 47 → 16 после fix).
 
 Скрипт: `scripts/run_supertrend_s50.py`. JSON артефакты: `data/supertrend_s50_sweep.json`, `data/supertrend_s50_heldout.json` (gitignored, результаты зафиксированы здесь).
 
