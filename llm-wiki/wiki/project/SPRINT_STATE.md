@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 — T6 (strat_supertrend vectorized + COMBOS sweep grid) done
+updated: 2026-05-29  # S50 PHASE 4 — T7 (supertrend_runner WFA + n_trials=10 wiring) done
 sprint: 50
 phase: 4-execution
 branch: feature/sprint-50-supertrend
@@ -19,6 +19,8 @@ tag: v0.1.0-alpha.49
 **T3 (CC4 held-out split) DONE** — `2fc2cb7`. `split_train_heldout()` + `eval_heldout_once()` + HELDOUT_START/END constants в `scripts/autoresearch_endless.py`; sweep now train-only (ts < 2025-06-01) anti-champion-bias. 5 new tests (`tests/unit/test_autoresearch_heldout.py`). pytest 1359.
 
 **T4 (SupertrendStrategy streaming, Lazybear) DONE** — `0d10eac` (impl) + `9c8d2f1`/`8c1e3a0` (count guards). `src/signalgen/supertrend_strategy.py` + `SUPERTREND_LOCKED_PARAMS` (atr_period=10, mult=3.0). Reason codes 63→65 (ENTRY_LONG_SUPERTREND + EXIT_FLAT_SUPERTREND_FLIP, ADR 0067). Look-ahead-safe (is_closed + OOO/dedup guard + wilder_atr from T1; seed bar trend=BEAR no-entry). Латч verified: BULL line non-decreasing, BEAR non-increasing. 18 new tests (14 strategy + 4 reason codes) + 5 count-guard bumps. pytest 1383, mypy --strict clean. T5 next: vectorized Lazybear cross-validation.
+
+**T7 (supertrend_runner WFA) DONE** — `eaa65a9`. `src/backtest/supertrend_runner.py` mirrors `_run_atr_breakout_wfa` pattern: vectorized Lazybear `_backtest_single` kernel, `run_research_wfa(n_trials=10)`, `CrossTrialLog.append_trial` via `run_research_wfa` (NOT bypassed, NOT inline DSR). BTCUSDT 1H / high-freq tier / sprint_tag="S50". 8 unit tests + 3 ntrials tests GREEN, mypy strict 0. Unskip of `test_supertrend_runner_ntrials.py` placeholder covered by `test_supertrend_runner_n_trials_10_wiring_verified`. pytest 1422 collected / 1397 passed / 25 skipped.
 
 **T2 (CC3 N_trials wiring) DONE** — `6d8f7ad`. Investigation+doc: `atr_breakout_runner.py:497` пробрасывает `n_trials=10` через `run_research_wfa` КОРРЕКТНО (эталон для T7). `run_research_wfa` сам делает `append_trial` (retrofit S44 T9) → ADR 0059 G5 «volume_breakout bypasses append» УСТАРЕЛА. Реальный gap: penalty материализуется только при ≥3 cross-trial sharpes (иначе fallback n_trials=1; `compute_dsr` райзит при n_trials>1 без sigma_sr). T7 ОБЯЗАН: `run_research_wfa` + `n_trials=10` + уникальный `sprint_tag`, НЕ inline DSR (donchian), НЕ отдельный append. Тест-док: `tests/unit/test_supertrend_runner_ntrials.py` (3 active + 1 skip). Finding → ADR 0067 CC3.
 
@@ -42,7 +44,7 @@ tag: v0.1.0-alpha.49
 
 ## Следующее действие
 
-**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`), T4 (SupertrendStrategy streaming), **T6 (`45fae7f` — `strat_supertrend` vectorized Lazybear + COMBOS sweep grid atr_period ∈ [7..21] × mult ∈ [2.0..4.0], 8 TDD tests, parity GREEN)**. Next: T5 (vectorized Lazybear cross-validation / реachability), T8 (held-out winner eval via `eval_heldout_once`).
+**S50 PHASE 4 — продолжить execution.** Done: T1, T2, T3 (CC4 held-out split, `2fc2cb7`), T4 (SupertrendStrategy streaming), **T6 (`45fae7f` — `strat_supertrend` vectorized Lazybear + COMBOS sweep grid)**, **T7 (`eaa65a9` — `supertrend_runner.py` WFA runner, n_trials=10 wired, CrossTrialLog via run_research_wfa, 8 TDD tests, mypy strict clean)**. Next: T5 (vectorized Lazybear cross-validation / реachability), T8 (held-out winner eval via `eval_heldout_once`).
 
 ## S49-S51 ROADMAP (operator decisions 2026-05-29)
 
