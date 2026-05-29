@@ -25,14 +25,16 @@
 
 ## Task 1: CC2 — Extract Wilder ATR to indicators.py (opus)
 
-**Files:** Modify `src/signalgen/indicators.py`, `atr_breakout_strategy.py:262`, `volume_breakout_strategy.py:204`. Test `tests/unit/test_wilder_atr.py`.
+**⚠️ SCOPE CORRECTED (T1 dispatch finding 2026-05-29):** The two `_wilder_atr`/`_compute_wilder_atr` methods are NOT duplicates. `atr_breakout_strategy.py:262` = manual Wilder RMA recursion (seed at period-1). `volume_breakout_strategy.py:204` = thin wrapper around `talib.ATR` (seed at period, ~1.4% divergence). volume_breakout is LOCKED anti-snooping (ADR 0059) — switching its ATR changes signals → forbidden in a refactor. **Extract ONLY the manual recursion. volume_breakout UNTOUCHED.** True manual-recursion copies: `atr_breakout_strategy.py:262` + `tests/integration/test_volume_breakout_baseline_floor.py:82`.
 
-- [ ] **Step 1: Write failing test** — `wilder_atr(h,l,c,period)` returns RMA-smoothed ATR, seeds SMA of first `period` TRs, NaN before. Assert matches current `_wilder_atr` output on sample data byte-for-byte.
+**Files:** Modify `src/signalgen/indicators.py` (add `wilder_atr`), `atr_breakout_strategy.py:262` (switch to it). Optionally switch integration-test helper. Test `tests/unit/test_wilder_atr.py`. **DO NOT touch volume_breakout_strategy.py.**
+
+- [ ] **Step 1: Write failing test** — `wilder_atr(h,l,c,period)` returns RMA-smoothed ATR, seeds SMA of first `period` TRs, NaN before period-1, all-NaN if n<period. Assert recursion formula + matches current `atr_breakout._wilder_atr` output.
 - [ ] **Step 2: Run fail** (function not defined).
-- [ ] **Step 3: Implement** `wilder_atr()` in indicators.py — copy exact logic from atr_breakout_strategy.py:262-278 (TR loop + RMA). Public, typed `(np.ndarray×3, int)->np.ndarray`.
-- [ ] **Step 4: Switch both consumers** — atr_breakout_strategy `_wilder_atr` → call `wilder_atr`; volume_breakout `_compute_wilder_atr` → call `wilder_atr`. Keep thin wrapper OR direct.
-- [ ] **Step 5: Run** — new test + existing `test_atr_breakout*` + `test_volume_breakout*` all GREEN. mypy --strict clean.
-- [ ] **Step 6: Commit** `refactor(s50): extract wilder_atr to indicators.py — shared by atr_breakout + volume_breakout + supertrend (CC2)`. SPRINT_STATE T1 done.
+- [ ] **Step 3: Implement** `wilder_atr()` in indicators.py — exact copy of `atr_breakout_strategy.py:273-288` manual recursion. Public, typed `(np.ndarray, np.ndarray, np.ndarray, int)->np.ndarray`. Keep talib `atr()` untouched.
+- [ ] **Step 4: Switch atr_breakout ONLY** — `_wilder_atr` body → `return wilder_atr(highs_arr, lows_arr, closes_arr, period)` (thin wrapper). Import from indicators. volume_breakout NOT touched.
+- [ ] **Step 5: Run** — new test + `test_atr_breakout*` + full suite (baseline 1348) all GREEN. mypy --strict clean.
+- [ ] **Step 6: Commit** `refactor(s50): extract wilder_atr (manual recursion) to indicators.py — atr_breakout + supertrend share it; volume_breakout (talib, LOCKED) untouched (CC2 T1)`. SPRINT_STATE T1 done.
 
 ## Task 2: CC3 — Verify N_trials runtime gap (opus)
 

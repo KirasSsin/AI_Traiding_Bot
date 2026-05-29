@@ -4,7 +4,7 @@ type: decision
 tags: [decision, adr, s50, supertrend, anti-snooping, strategy]
 created: 2026-05-29
 updated: 2026-05-29
-status: proposed
+status: accepted
 sources:
   - llm-wiki/wiki/project/decisions/0014-walk-forward-train2000-test500.md
   - llm-wiki/wiki/project/decisions/0059-sprint-39-volume-breakout-pre-registration.md
@@ -14,8 +14,18 @@ sources:
 
 # 0067. Sprint 50 — Supertrend pre-registration (freqtrade adaptation)
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-05-29
+
+## Исход (S50)
+
+**Verdict: WFA_FAIL** — hypothesis #10 closed (10th conjoint fail, consistent с S13-S45 precedent).
+
+- **T8 sweep + held-out:** winner `atr_period=21, mult=2.0` (BOUNDARY of grid — snooping red flag). Held-out Sharpe 8.08 / n=162 / +152.8% → PROCEED. **Но:** Sharpe 3.6-8.7 по ВСЕЙ grid = 2023-2025 BTC bull-beta, не timing edge.
+- **T9 formal WFA:** WFA_FAIL. T5 n_eff=47 < 50 (gate-blocking) + DSR=0.0 (Bailey penalty n_trials=10, sigma_sr=35.41 из 8 prior cross-trial Sharpes поглотил сигнал). MC p=0.0005 PASS. Per-fold OOS Sharpe 10-70 = artifact малого trade count + long-holding annualization, не edge.
+- **Honest interpretation:** held-out high Sharpe = bull-market beta; boundary-winner = snooping signal; rolling-OOS WFA + DSR penalty корректно отсеяли. Strategy НЕ promoted к production (dashboard preset = comparison only).
+- **Reusable infra (despite FAIL):** `wilder_atr` extracted к indicators.py; autoresearch held-out split (anti-champion-bias, operator Q4); `supertrend_runner`; `SupertrendStrategy` streaming. T5 cross-validation поймала windowed-ATR look-ahead bug = methodology win.
+- **Carry S51:** atr_breakout windowed-ATR same pattern (pre-existing LOCKED); ADX-filter Supertrend = hypothesis #11 (deferred operator Q1).
 
 ## Контекст
 

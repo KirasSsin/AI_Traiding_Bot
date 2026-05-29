@@ -2765,3 +2765,14 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Gates: pytest 1348 (+283 vs 1065), mypy 0/89, Vitest 43, Playwright 7, lint+tsc+build clean
 - reason codes 56->63 (H6 EMA/meanrev/donchian registration)
 - Carry to S50: 110072 dup-order retCode mapping (bybit re-review HIGH, fails-safe), parquet manifest/partition (backlog), block_bootstrap edge-null (don't promote to gate)
+
+## [2026-05-29] sprint-end | S50 — Supertrend (freqtrade adaptation) WFA_FAIL
+
+- Hypothesis #10: Supertrend trend-follower (Lazybear), BTCUSDT 1H, freqtrade adaptation per operator request
+- Verdict WFA_FAIL — T5 n_eff 47<50 + DSR 0.0 (Bailey penalty n_trials=10 sigma=35.41). Held-out Sharpe 8.08 = bull-beta, boundary-winner (atr=21/mult=2.0 grid edge) snooping red flag
+- Trader ROUND 1+2: Q3 1H over 4H (T5 reachability), Q4 operator OVERRIDE (fix autoresearch held-out split)
+- Reusable infra: wilder_atr extracted, autoresearch held-out split (anti-champion-bias), supertrend_runner, SupertrendStrategy streaming
+- Methodology win: T5 vectorized cross-validation caught windowed-ATR re-seed look-ahead bug -> incremental ATR
+- Reason codes 63->65 (ENTRY_LONG_SUPERTREND + EXIT_FLAT_SUPERTREND_FLIP)
+- Carry S51: atr_breakout same windowed-ATR bug (pre-existing LOCKED), ADX-filter Supertrend hypothesis #11
+- pytest 1412, mypy 0. NOT shipped (FAIL) — registered in dashboard for comparison only
