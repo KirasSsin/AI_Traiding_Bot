@@ -44,8 +44,13 @@ Pre-register **SupertrendStrategy** как hypothesis #10 (Bailey 2014 N_trials 
 | Exit prio 1 | trend flips bearish → EXIT_FLAT signal на close(T) | Q2 CONFIRM |
 | Exit prio 2 | ATR-multiple bracket SL (safety net) | Q2 CONFIRM |
 | TP | none (trend-runner) | Q2 CONFIRM |
-| Held-out | 2025-06-01 → 2026-05-01, single eval | Q4 ROUND 2 binding |
+| Held-out | 2025-06-01 → 2026-05-01, single eval | Q4 + operator override |
 | Held-out threshold | Sharpe>0 AND n_trades≥15 → proceed formal WFA | Q4 binding |
+| Params source | **autoresearch sweep on train (after held-out split fix)** | operator override 2026-05-29 |
+
+**Operator decisions (2026-05-29, binding):**
+- Q1 → **Pure Supertrend (#10) only.** ADX-filter (#11) deferred S51.
+- Q4 → **OVERRIDE trader ROUND 2.** Operator chose third path: fix `autoresearch_endless.py` held-out split FIRST (prerequisite), THEN legitimate param sweep on train-only, single held-out eval on winner. NOT literature defaults. Rationale: param discovery without champion-bias > blind defaults. Scope expands. ATR=10/MULT=3.0 become sweep CENTER not locked values; sweep ranges around them.
 
 ### Brainstorm verdict trail (trader-expert)
 
@@ -60,6 +65,7 @@ Pre-register **SupertrendStrategy** как hypothesis #10 (Bailey 2014 N_trials 
 ### Прерогативы (prerequisite tasks, BEFORE Supertrend impl)
 - **CC2:** вынести Wilder ATR → `indicators.py` public fn. Сейчас дублирован 2× (`atr_breakout_strategy.py:262 _wilder_atr` + `volume_breakout_strategy.py:204 _compute_wilder_atr`). `indicators.py:67 atr()` = talib (НЕ Wilder-exact). Все 3 consumer переходят на одну функцию.
 - **CC3:** verify N_trials runtime gap (ADR 0059 G5). research_wfa.py:262 делает `append_trial`, но runner wiring (donchian/atr pattern) надо проверить что Supertrend runner передаёт `n_trials=10` + CrossTrialLog корректно. Иначе DSR inflated.
+- **CC4 (operator override Q4):** fix `autoresearch_endless.py` held-out split. Сейчас 0 held-out separation (grep-verified). Требуется: (1) физический train/held-out date split ДО sweep loop; (2) sweep ТОЛЬКО на train; (3) held-out eval ОДИН РАЗ на winner. Held-out date range LOCKED: 2025-06-01 → 2026-05-01. Это предотвращает champion-bias (Bailey 2014). Prerequisite ДО Supertrend sweep.
 
 ### Risks
 - Whipsaw на 1H → low per-fold Sharpe → возможный WFA_FAIL (но measurable, informative — в отличие от 4H T5-fail).

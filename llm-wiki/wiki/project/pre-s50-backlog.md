@@ -70,11 +70,22 @@ Held-out:    2025-06-01 → 2026-05-01, single eval, threshold Sharpe>0 + n≥15
 - **CC2:** Extract `_wilder_atr()` from `atr_breakout_strategy.py:261` → public `src/signalgen/indicators.py`. ATRBreakout switches to it. Supertrend uses it. (Existing `indicators.py:67 atr()` uses talib.ATR — NOT Wilder-exact, ATRBreakout deliberately bypasses.) Separate task, prerequisite.
 - **CC3:** Verify N_trials runtime gap (ADR 0059 G5). Confirm whether new Supertrend runner bypasses `CrossTrialLog.append_trial()` (volume_breakout did → DSR sees n_trials=1 not 10 → inflates DSR). Fix before first WFA.
 
-## Open questions для operator (escalation)
+## Operator decisions (2026-05-29, binding)
 
-1. **Pure Supertrend vs +ADX filter:** pure = hypothesis #10 (S50), ADX-filter = hypothesis #11 (S51+). Recommend pure first, ADX if pure passes. Operator decides sequence.
-2. **N_trials=10 irreversible:** Supertrend as hypothesis #10 grows Bailey DSR penalty pool permanently. Operator must accept per discipline.
-3. **(resolved by trader)** 4H rejected — not an operator choice (structural T5 fail). 1H binding.
+1. **Q1 → Pure Supertrend (#10) only.** ADX-filter (#11) → S51 если pure passes. (= trader rec.)
+2. **Q4 → OVERRIDE trader ROUND 2.** Operator выбрал third path: починить autoresearch held-out split (prerequisite CC4) → легитимный param sweep на train → single held-out eval. НЕ literature defaults. Param discovery без champion-bias. **Scope расширяется** (+CC4 task). ATR=10/MULT=3.0 = sweep center, не locked.
+3. **(resolved by trader, not operator choice)** 4H rejected — structural T5 fail. 1H binding.
+
+## Revised execution order (post-operator-override)
+
+1. CC2 — extract Wilder ATR → indicators.py (prereq)
+2. CC3 — verify/fix N_trials runtime gap (prereq)
+3. CC4 — fix autoresearch_endless.py held-out split (prereq, operator Q4) — train/held-out physical split, sweep train-only, single held-out eval
+4. SupertrendStrategy impl (stateful streaming + property-test + vectorized cross-validation, Lazybear variant)
+5. autoresearch Supertrend strat function (`strat_supertrend`)
+6. param sweep on TRAIN only (ATR period + mult ranges around 10/3.0)
+7. single held-out eval on winner (2025-06→2026-05); threshold Sharpe>0 + n≥15
+8. if edge → formal 1H WFA (ADR 0014 gates, n_trials=10); else honest fail
 
 ## Related
 - [[decisions/0014-walk-forward-train2000-test500]] (WFA gates + S45 trade-freq table)

@@ -1,16 +1,18 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S49 SHIPPED v0.1.0-alpha.49 — between-sprints
-sprint: 49
-phase: between-sprints
-branch: main
+updated: 2026-05-29  # S50 PHASE 2 brainstorm complete → PHASE 3 plan
+sprint: 50
+phase: 3-planning
+branch: feature/sprint-50-supertrend
 tag: v0.1.0-alpha.49
 ---
 
 ## Текущий статус
 
-**S49 SHIPPED** — squash-merge `571e4fa` (PR #60), tag `v0.1.0-alpha.49`. Full Tech-Review Audit: 9 параллельных ревьюеров (opus) + TDD-исправление всех находок. 5 BLOCKER + 10 HIGH + 16 MED/LOW устранены. 6 повторных ревьюеров APPROVE, 0 regressions. Gates GREEN (1348 passed / mypy 0 / Vitest 43 / Playwright 7). Готов к S50 brainstorm.
+**S50 PHASE 2 COMPLETE → PHASE 3 plan.** Supertrend (freqtrade adaptation). Trader-expert ROUND 1+2 binding + operator decisions. ADR 0067 proposed. LOCKED: BTCUSDT 1H, hypothesis #10. Q1 pure Supertrend. Q3 1H (not 4H — T5 reachability). Q4 OPERATOR OVERRIDE: fix autoresearch held-out split → legitimate sweep (not literature defaults). 8-step execution order в pre-s50-backlog. Prereq CC2 (Wilder ATR extract) + CC3 (N_trials gap) + CC4 (held-out split).
+
+**S49 SHIPPED** — `571e4fa` tag v0.1.0-alpha.49 (full tech-audit, 1348 tests).
 
 **Canonical counts (post-S49):** 16 states / 30 events / 74 transitions / **63** reason_codes (+7 H6) / 66 ADRs / **53** sprint pages / Vitest 43 / Playwright 7 / pytest 1350
 
