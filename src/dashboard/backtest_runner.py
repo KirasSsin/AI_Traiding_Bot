@@ -25,6 +25,17 @@ from src.analytics.dsr import compute_dsr
 from src.backtest.strategy_metrics import compute_t1_t6_metrics
 from src.backtest.walk_forward import evaluate_acceptance_gate
 
+# S53 T5 (C11) — Kronos constants and helpers live in _kronos_dispatch.
+# Re-exported here so existing tests can patch br._KRONOS_CACHE_DIR / br._load_kronos_df.
+from src.dashboard._kronos_dispatch import (
+    _KRONOS_CACHE_DIR,
+    _KRONOS_MANIFEST_NAME,  # noqa: F401 — re-export for test patching compatibility
+    _KRONOS_MANIFEST_SCHEMA_VERSION,  # noqa: F401 — re-export for test patching compatibility
+    _KRONOS_PARQUET_BY_COMBO,  # noqa: F401 — re-export for test patching compatibility
+    _load_kronos_df,  # noqa: F401 — re-export so tests can patch br._load_kronos_df
+    _read_kronos_manifest,  # noqa: F401 — re-export for test patching compatibility
+)
+
 # S25: strategy presets. Operator can extend.
 # S38 T8 dashboard extension: explicit sprint markers в labels + S35 α Donchian added.
 # Latest sprint marker `[Sxx LATEST]` помогает operator distinguish recent additions.
@@ -292,111 +303,6 @@ BARS_PER_YEAR: dict[str, int] = {
 
 _lock = threading.Lock()
 _RUNS_DIR = Path("data/runs")
-
-# S52 T8 — Kronos cache dir and parquet paths (11 combos, mirrors atr_breakout_runner pattern).
-# Cache dir is gitignored — operator must run scripts/run_kronos_s52.py on M4 first.
-_KRONOS_CACHE_DIR: Path = Path("data/kronos_cache")
-
-_KRONOS_PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
-    ("BTCUSDT", "5"): "data/BTCUSDT_5m.parquet",
-    ("BTCUSDT", "15"): "data/BTCUSDT_15m.parquet",
-    ("BTCUSDT", "60"): "data/BTCUSDT_1h.parquet",
-    ("BTCUSDT", "240"): "data/BTCUSDT_4h.parquet",
-    ("BTCUSDT", "D"): "data/BTCUSDT_1d.parquet",
-    ("ETHUSDT", "15"): "data/ETHUSDT_15m.parquet",
-    ("ETHUSDT", "60"): "data/ETHUSDT_1h.parquet",
-    ("ETHUSDT", "240"): "data/ETHUSDT_4h.parquet",
-    ("SOLUSDT", "15"): "data/SOLUSDT_15m.parquet",
-    ("SOLUSDT", "60"): "data/SOLUSDT_1h.parquet",
-    ("SOLUSDT", "240"): "data/SOLUSDT_4h.parquet",
-}
-
-
-# S52 FIX A (PHASE 6 R2) — manifest sidecar written by scripts/run_kronos_s52.py.
-# Mirrors the S51 D2 parquet-manifest pattern: captures the cache-key-defining
-# params (model_id, weights_hash, params_hash, device) so the dashboard can
-# reconstruct CacheKeys that MATCH the operator-built cache. Schema v1.
-_KRONOS_MANIFEST_NAME = "_manifest.json"
-_KRONOS_MANIFEST_SCHEMA_VERSION = 1
-
-
-def _read_kronos_manifest(cache_dir: Path) -> dict[str, Any] | None:
-    """Read ``<cache_dir>/_manifest.json`` and return its parsed dict, else ``None``.
-
-    The manifest carries the 4 non-(symbol, timeframe, bar_close_ts) cache-key
-    fields the strategy needs to reconstruct matching :class:`CacheKey`s:
-    ``model_id``, ``weights_hash``, ``params_hash``, ``device`` (+ schema version
-    and per-combo coverage). Absent manifest = cache not built (honest "not built"
-    path); present manifest = built (per-bar misses are legitimate, not "not built").
-
-    Returns ``None`` on a missing or unparsable manifest (treated as "not built").
-    """
-    manifest_path = cache_dir / _KRONOS_MANIFEST_NAME
-    if not manifest_path.exists():
-        return None
-    try:
-        data: dict[str, Any] = json.loads(manifest_path.read_text())
-    except (json.JSONDecodeError, OSError):
-        return None
-    return data
-
-
-def _load_kronos_df(
-    symbol: str,
-    interval: str,
-    start: str,
-    end: str,
-) -> Any:
-    """Load and normalize OHLCV DataFrame from parquet for a Kronos (symbol, interval) combo.
-
-    Handles 'ts' (Binance) and 'time' (Bybit) column schemas — mirrors
-    atr_breakout_runner._load_parquet_df normalization.
-
-    Args:
-        symbol: Trading symbol (e.g. "BTCUSDT").
-        interval: Dashboard interval code (e.g. "60", "240", "D").
-        start: ISO date string start inclusive (e.g. "2022-01-01").
-        end: ISO date string end inclusive (e.g. "2023-12-31").
-
-    Returns:
-        Normalized DataFrame with ``_ts`` column.
-
-    Raises:
-        FileNotFoundError: if combo not registered or parquet file missing.
-        ValueError: if DataFrame is empty after date filtering.
-    """
-    from datetime import date as _date
-
-    import pandas as pd
-
-    data_path_str = _KRONOS_PARQUET_BY_COMBO.get((symbol, interval))
-    if data_path_str is None:
-        raise FileNotFoundError(
-            f"No parquet data path registered for Kronos ({symbol}, {interval}). "
-            f"Supported combos: {sorted(_KRONOS_PARQUET_BY_COMBO.keys())}"
-        )
-    data_path = Path(data_path_str)
-    if not data_path.exists():
-        raise FileNotFoundError(
-            f"Kronos parquet file missing: {data_path}. " f"Run market data download first."
-        )
-
-    raw = pd.read_parquet(data_path)
-
-    if "ts" in raw.columns:
-        raw["_ts"] = pd.to_datetime(raw["ts"], utc=True)
-    elif "time" in raw.columns:
-        raw["_ts"] = pd.to_datetime(raw["time"], utc=True)
-    else:
-        raw = raw.reset_index()
-        raw["_ts"] = pd.to_datetime(raw.iloc[:, 0], utc=True)
-
-    raw = raw.sort_values("_ts").reset_index(drop=True)
-    start_date = _date.fromisoformat(start)
-    end_date = _date.fromisoformat(end)
-    mask = raw["_ts"].dt.date >= start_date
-    mask &= raw["_ts"].dt.date <= end_date
-    return raw[mask].copy().reset_index(drop=True)
 
 
 # H1 (S49) — run_id is ALWAYS sha256[:16] (lowercase hex) generated in BacktestRequest.run_id().
@@ -1154,126 +1060,20 @@ def run_backtest(
         cache_path.write_text(json.dumps(result_ab, default=str, indent=2))
         return result_ab
 
-    # S52 T8 — Kronos dispatch: cache-replay via run_kronos_exploratory.
+    # S52 T8 / S53 T5 (C11) — Kronos dispatch: delegated to _kronos_dispatch.run_kronos_dispatch.
     # No torch in this path. If cache absent → honest structured result (no crash).
     # Verdict hard-pinned to RAW_PRETRAIN_LEAKAGE_SUSPECTED per ADR 0068.
     if preset.get("type") == "kronos":
-        from src.backtest.research_runner_envelope import VERDICT_RAW_PRETRAIN_LEAKAGE
-        from src.ml.prediction_cache import PredictionCache
+        from src.dashboard._kronos_dispatch import run_kronos_dispatch
 
-        # FIX B (PHASE 6 R2) — validate (symbol, interval) against supported_combos
-        # BEFORE any dispatch (mirrors how server-side dispatch should reject invalid combos).
-        supported_combos_kr = preset.get("supported_combos", [])
-        if (req.symbol, req.interval) not in supported_combos_kr:
-            raise ValueError(
-                f"Kronos does not support combo ({req.symbol}, {req.interval}). "
-                f"Supported combos: {sorted(supported_combos_kr)}"
-            )
-
-        # Map dashboard interval code → kronos timeframe string (e.g. "60" → "1h")
-        timeframe_kr = INTERVAL_FILE_LABEL.get(req.interval, req.interval)
-
-        # FIX A (PHASE 6 R2 / B2) — reconstruct the REAL cache-key params from the
-        # manifest sidecar written by scripts/run_kronos_s52.py. Without this the
-        # dashboard hardcodes placeholder keys (model_id="kronos", weights_hash="unknown",
-        # device="cpu") that NEVER match the operator-built cache (real model_id /
-        # weights_hash / params_hash / device="mps") → 100% MISS. The manifest also
-        # makes "not built" (no manifest) distinguishable from "built but bar-level miss".
-        manifest_kr = _read_kronos_manifest(_KRONOS_CACHE_DIR)
-        if manifest_kr is not None:
-            params_kr: dict[str, Any] = {
-                "model_id": str(manifest_kr.get("model_id", "kronos")),
-                "weights_hash": str(manifest_kr.get("weights_hash", "unknown")),
-                "params_hash": str(manifest_kr.get("params_hash", "unknown")),
-                "device": str(manifest_kr.get("device", "cpu")),
-            }
-        else:
-            # No manifest → cache not built. Placeholder params (only used on the
-            # graceful no-cache path below; never reaches a real lookup).
-            params_kr = {
-                "model_id": "kronos",
-                "weights_hash": "unknown",
-                "params_hash": "unknown",
-                "device": "cpu",
-            }
-
-        cache_kr = PredictionCache(_KRONOS_CACHE_DIR)
-
-        # "Not built" iff the manifest is absent. A manifest with no per-bar entries
-        # for the queried range is a legitimate per-bar miss (0 trades), NOT "not built".
-        if manifest_kr is None:
-            # Cache absent — return honest structured result, no crash
-            result_kr_nocache: dict[str, Any] = {
-                "run_id": run_id,
-                "cached": False,
-                "verdict": VERDICT_RAW_PRETRAIN_LEAKAGE,
-                "failed_criteria": [],
-                "warnings": [
-                    {
-                        "level": "info",
-                        "code": "kronos_cache_absent",
-                        "message": (
-                            "Kronos predictions not cached yet — run "
-                            "`RUN_ML=1 scripts/run_kronos_s52.py` on M4 first. "
-                            "Cache artifacts → data/kronos_cache/ (gitignored)."
-                        ),
-                    }
-                ],
-                "metrics": {},
-                "request": {
-                    "strategy_id": req.strategy_id,
-                    "strategy_label": preset["label"],
-                    "strategy_config": preset,
-                    "symbol": req.symbol,
-                    "interval": req.interval,
-                    "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
-                    "start": req.start,
-                    "end": req.end,
-                },
-                "message": (
-                    "Kronos predictions not cached yet — "
-                    "run `RUN_ML=1 scripts/run_kronos_s52.py` on M4 first."
-                ),
-            }
-            _RUNS_DIR.mkdir(parents=True, exist_ok=True)
-            cache_path.write_text(json.dumps(result_kr_nocache, default=str, indent=2))
-            return result_kr_nocache
-
-        # Cache present — load parquet and replay
-        from src.backtest.kronos_runner import run_kronos_exploratory
-
-        df_kr = _load_kronos_df(
-            symbol=req.symbol,
-            interval=req.interval,
-            start=req.start,
-            end=req.end,
+        return run_kronos_dispatch(
+            req,
+            preset=preset,
+            run_id=run_id,
+            cache_path=cache_path,
+            runs_dir=_RUNS_DIR,
+            cache_dir=_KRONOS_CACHE_DIR,
         )
-
-        kr_envelope = run_kronos_exploratory(
-            df=df_kr,
-            symbol=req.symbol,
-            timeframe=timeframe_kr,
-            params=params_kr,
-            cache=cache_kr,
-        )
-
-        _RUNS_DIR.mkdir(parents=True, exist_ok=True)
-
-        result_kr: dict[str, Any] = dict(kr_envelope)
-        result_kr["run_id"] = run_id
-        result_kr["cached"] = False
-        result_kr["request"] = {
-            "strategy_id": req.strategy_id,
-            "strategy_label": preset["label"],
-            "strategy_config": preset,
-            "symbol": req.symbol,
-            "interval": req.interval,
-            "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
-            "start": req.start,
-            "end": req.end,
-        }
-        cache_path.write_text(json.dumps(result_kr, default=str, indent=2))
-        return result_kr
 
     # S50 T10 — supertrend dispatch: run_supertrend_wfa → envelope (BTCUSDT 1H locked).
     if preset.get("type") == "supertrend":
