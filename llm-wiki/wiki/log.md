@@ -2819,3 +2819,21 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Trader V1-V5: pretrain data-leakage = look-ahead at model-weights level. WFA OOS invalid (in-sample disguised). Backtest = pipeline smoke-test ONLY, not gate. mini variant (ctx2048). Signal rule horizon=1 + locked threshold. sample_count determinism. N_trials NOT incremented until forward gate.
 - ESC-1 (operator decision REQUIRED before PHASE 3): (A) exploratory infra + forward paper-trade [rec] / (B) forward-only gate exception / (C) permanent research track.
 - PAUSED — operator продолжит в новой сессии. Branch feature/sprint-52-kronos created, brainstorm committed 212ce16. RESUME: read pre-s52-backlog.md → operator picks ESC-1 → PHASE 3 writing-plans.
+
+## [2026-05-30] sprint-end | S52 — Kronos ML strategy integration (T10 wiki sync)
+
+- T0-T10 все выполнены. Первая ML-стратегия проекта (Kronos foundation model).
+- T0 GATE 0: BTC/USDT confirmed в Kronos pretrain corpus. Cutoff unpublished (~mid-2025 paper date). Данные contaminated → backtest EXPLORATORY only. ADR 0068 leakage clause LOCKED.
+- T1 `[ml]` optional dep group (torch>=2.2, transformers, tokenizers, safetensors, einops, huggingface_hub) + torch-isolation AST guard test.
+- T2 `src/ml/kronos_adapter.py`: KronosAdapter Protocol + KronosModelAdapter (lazy torch) + MockKronosAdapter. Decimal boundary C6.
+- T3 `src/ml/prediction_cache.py`: CacheKey (7 fields), SHA-256 sidecar, median_ensemble. torch-free.
+- T4 `src/signalgen/kronos_strategy.py`: on_bar cache-consumer, signal V3 (threshold≥0.25%). reason_codes 65→67 (+ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS).
+- T5 RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict в research_runner_envelope.py + glossary + frontend.
+- T6 `src/backtest/kronos_runner.py`: run_kronos_exploratory (cache-replay, open[i+1] fill, NO WFA, NO cross-trial).
+- T7 `scripts/run_kronos_s52.py`: operator-M4 cache-build (RUN_ML=1, 11 combos, mini/mps).
+- T8 Dashboard: parametric `kronos` preset, 11 supported_combos, optgroup «ML / Прогноз», cache-absent graceful message.
+- T9 Opt-in RUN_ML integration test. CI mock-isolated (--ignore=tests/integration, no torch, MockKronosAdapter).
+- T10 ADR 0068 accepted + wiki sync: 3 component pages (kronos-strategy, kronos-adapter, prediction-cache), sprint-52-kronos.md, current-state updates, components/README.md Кластер 11, index.md + mental-map.md entries, SPRINT_STATE phase→5-verify.
+- pytest 1449→1481 (+32) / mypy 0 / reason_codes 65→67.
+- ADR 0068 accepted. Sprint pages 55→56. Component pages 48→51 (+3).
+- Formal hypothesis #11 DEFERRED: N_trials++ + cross_trial pool "kronos" fill = DEFERRED до forward paper-trade ~post-2025-08. Operator action: RUN_ML=1 scripts/run_kronos_s52.py на M4 Pro post-merge.

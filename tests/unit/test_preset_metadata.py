@@ -12,6 +12,7 @@ EXPECTED_OPTGROUPS = {
     "volume_breakout_iter10": "Прорывы",
     "atr_breakout": "Прорывы",
     "supertrend": "Тренд",
+    "kronos": "ML / Прогноз",
 }
 
 EXPECTED_LABELS = {
@@ -22,6 +23,7 @@ EXPECTED_LABELS = {
     "volume_breakout_iter10": "Прорыв с подтверждением объёма",
     "atr_breakout": "ATR-адаптивный пробой (multi-combo)",
     "supertrend": "Supertrend (ATR тренд-следование)",
+    "kronos": "Kronos ML (Transformer прогноз, exploratory)",
 }
 
 

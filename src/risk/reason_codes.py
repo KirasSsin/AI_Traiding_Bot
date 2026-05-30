@@ -35,6 +35,8 @@ S49 ADR 0023 amendment +7 (ENTRY_LONG_EMA_CROSS_UP + EXIT_FLAT_SIGNAL_FLIP +
   strategy attribution lost to RiskManager.assess() generic fallback (H6 HIGH).
 S50 ADR 0067 +2 (ENTRY_LONG_SUPERTREND + EXIT_FLAT_SUPERTREND_FLIP) → 65.
   Supertrend strategy (hypothesis #10, Lazybear variant, BTCUSDT 1H).
+S52 ADR 0068 +2 (ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS) → 67.
+  Kronos forecasting strategy (V3 cache-consumer, horizon=1, BTCUSDT).
 """
 
 from enum import StrEnum
@@ -144,3 +146,7 @@ class ReasonCode(StrEnum):
     # --- ADR 0067 — Sprint 50 Supertrend strategy (hypothesis #10, Lazybear) ---
     ENTRY_LONG_SUPERTREND = "ENTRY_LONG_SUPERTREND"  # 64: trend flips BEAR -> BULL
     EXIT_FLAT_SUPERTREND_FLIP = "EXIT_FLAT_SUPERTREND_FLIP"  # 65: trend flips BULL -> BEAR
+
+    # --- ADR 0068 — Sprint 52 Kronos forecasting strategy (V3 cache-consumer) ---
+    ENTRY_LONG_KRONOS = "ENTRY_LONG_KRONOS"  # 66: pred_close > current * (1 + threshold)
+    EXIT_FLAT_KRONOS = "EXIT_FLAT_KRONOS"  # 67: pred_close < current (flatten)

@@ -1,23 +1,22 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 2 brainstorm DONE → PAUSED at ESC-1 (operator продолжит в новой сессии).
+updated: 2026-05-30  # S52 PHASE 6/7 done — 9 reviewers + remediation R1-R4. Enter PHASE 8 ship.
 sprint: 52
-phase: 2-brainstorming-PAUSED-ESC1
+phase: 8-ship
 branch: feature/sprint-52-kronos
 tag: v0.1.0-alpha.51
 ---
 
 ## Текущий статус
 
-**⏸ S52 PAUSED — ожидает operator ESC-1 решения (новая сессия).** PHASE 2 brainstorm DONE (architecture C1-C7 + trader V1-V5). Plan lock (PHASE 3) ЗАБЛОКИРОВАН до ESC-1. Полная детализация → `pre-s52-backlog.md`.
+**S52 PHASE 8 ship — T0-T10 done + PHASE 6 review remediated.** Kronos ML strategy внедрён: `[ml]` dep group, KronosAdapter Protocol, PredictionCache (SHA-256+median+manifest), KronosStrategy on_bar, RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict, kronos_runner exploratory, run_kronos_s52.py (M4 cache-build), dashboard 11 presets, CI mock+opt-in RUN_ML, ADR 0068 accepted + wiki sync. reason_codes 65→67, pytest 1449→**1494**, mypy 0/96.
 
-**RESUME ПРОТОКОЛ (новая сессия):**
-1. Read `pre-s52-backlog.md` (architecture C1-C7 + trader V1-V5 + ESC-1 три опции A/B/C).
-2. Operator выбирает ESC-1: (A) exploratory infra + forward paper-trade [trader+maintainer rec] / (B) forward-only gate exception / (C) permanent research track.
-3. После ESC-1 → PHASE 3 writing-plans на `feature/sprint-52-kronos` (branch уже создан, brainstorm committed `212ce16`).
+**PHASE 6: 9 parallel reviewers** → 3 APPROVE (python/trading-logic/doc) + 6 conditions. Remediation R1-R4 (4 commits): R1 threshold 0.6% break-even (был 0.25% < cost) + per-tf Sharpe + Bar.interval + revision-pin (security ACE) + ADR cost fix; R2 cache-key **manifest sidecar** (dashboard hit-parity, был 100% miss bug) + combo guard + trades JSON; R3 edge tests + **torch-stub sys.modules leak fix** (flaky CI averted); R4 doc resync. Все gates GREEN re-verified.
 
-**ESC-1 суть (data-leakage):** Kronos pretrained на истории (cutoff НЕ опубликован, вероятно overlap с 2023-2026 BTC backtest). WFA "OOS" методологически невалиден = in-sample под видом OOS (look-ahead на уровне весов). Backtest = только pipeline smoke-test, НЕ gate. Forward paper-trade = единственный валидный метод. N_trials НЕ инкрементируется до forward gate.
+**COMPUTE CONSTRAINT:** real Kronos inference = operator Mac M4 Pro MPS. Dev/CI = mocked adapter (C5). Infra built+mock-tested here; operator runs cache-build + exploratory backtest via `RUN_ML=1 scripts/run_kronos_s52.py` post-merge.
+
+**Не останавливаться до полного внедрения (operator directive).**
 
 **S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts). pytest 1449, mypy 0/91, reason codes 65.
 
@@ -49,6 +48,29 @@ tag: v0.1.0-alpha.51
 - **D5 forfeit-N policy** (operator escalation) — accept forfeit-N OR conservative pooled-sigma proxy.
 - **free-form reason strings** (atr_breakout) — verify canonical enum.
 - Permanently deferred: 12mo MAINNET ADR / live trade feed widget / M4 __repr__ redaction.
+
+**S53 carries (S52 PHASE 6 review):**
+- **current-state.md split** (54KB > 50KB порог) — indexed parts per universal split pattern.
+- **backtest_runner.py 1500 LoC split** (god-object, 1636 LoC) — extract `_kronos_dispatch.py` при следующем touch (HARD-GATE @1500).
+- prediction-cache `put()` atomicity (tmp+os.replace) — нужно если cache станет concurrent (сейчас single-thread safe).
+- property test `median_ensemble` length invariant (Hypothesis).
+- integration test horizon=3 variant (operator M4, RUN_ML).
+
+---
+
+## Phase tracking
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1 Orient | done | session resume orient |
+| 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
+| 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
+| 4 Execute | done | T0-T10 complete |
+| 5 Verify | done | pytest 1494 / mypy 0/96 / reason_codes 67 / Vitest 43 / tsc+build clean / torch-absent CI-isolated |
+| 6 Review | done | 9 reviewers → remediation R1-R4 (0d2ef1f/0d3b417/716c0c5/5d46c50), all re-verified GREEN |
+| 7 Sync | done | wiki synced (ADR 0068 + manifest docs + index/README) |
+| 8 Ship | in_progress | sprint-finish HARD-GATE |
+| 9 Close | pending | — |
 
 ---
 

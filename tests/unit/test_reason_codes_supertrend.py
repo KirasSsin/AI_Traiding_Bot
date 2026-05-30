@@ -12,7 +12,7 @@ def test_supertrend_exit_code_exists() -> None:
 
 
 def test_total_reason_code_count_is_65() -> None:
-    assert len(list(ReasonCode)) == 65
+    assert len(list(ReasonCode)) == 67  # S52 ADR 0068 +2 (Kronos) → 67
 
 
 def test_no_duplicate_reason_code_values() -> None:

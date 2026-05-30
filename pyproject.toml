@@ -33,6 +33,16 @@ dashboard = [
   "uvicorn[standard]>=0.32",
   "jinja2>=3.1",
 ]
+# S52 ADR 0068: ML optional deps (Kronos strategy). Install via `pip install -e ".[ml]"`.
+# Architectural isolation: torch MUST NOT be imported at top-level outside src/ml/.
+ml = [
+  "torch>=2.2",
+  "transformers>=4.40",
+  "tokenizers",
+  "safetensors",
+  "einops",
+  "huggingface_hub",
+]
 
 [tool.ruff]
 line-length = 100
@@ -60,6 +70,9 @@ ignore = ["E501"]
 # (intentional — match real callable signatures для mock substitution). E402 — datetime
 # import after _settings helper (intentional helper-grouping pattern).
 "tests/unit/test_runtime_manager.py" = ["ARG005", "E402"]
+# Kronos preset dispatch tests use pytest fixtures as side-effect-only args (monkeypatch path).
+# _populate_cache helper takes unused symbol/timeframe for forward-compat readability.
+"tests/unit/test_dashboard_kronos_preset.py" = ["ARG001"]
 # Test sections group their imports mid-file by Sprint 7 task (Task 9/10) —
 # intentional helper-grouping pattern matching the file's existing structure.
 "tests/unit/test_halt_persistence.py" = ["E402"]

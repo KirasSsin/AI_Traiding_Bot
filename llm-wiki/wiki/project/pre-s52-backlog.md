@@ -47,7 +47,18 @@ S52 = интеграция Kronos (HuggingFace foundation model, K-line forecast
 - **CC2:** determinism цепочка (C4 + V4): seed + sample_count≥20 + median + cache-checksum — все 4 вместе или parity-тест (S50 T5 класс) не пройдёт.
 - **CC3:** GATE 0 cutoff investigation = первая задача, блокирует всё.
 
-## ESC-1 → operator (risk-appetite, BINDING product decision)
+## ESC-1 RESOLVED → (A) + expanded scope (operator 2026-05-30)
+
+**Operator decision:** **(A)** — build full Kronos integration as a tradeable strategy in the dropdown NOW. Backtest = exploratory (RAW_PRETRAIN_LEAKAGE_SUSPECTED label, honest disclosure), formal hypothesis #11 + N_trials increment DEFERRED to forward paper-trade gate (separate future ADR). Operator directive: «внедряй полностью как отдельную торговую стратегию которая будет в выпадающем списке... не заканчивай спринты пока не закончишь его внедрение полностью».
+
+**EXPANDED scope (operator):** адаптировать под ВСЕ наши данные — НЕ только BTCUSDT 1H (brainstorm V3/Q6 lock superseded by operator):
+- **Pairs:** BTCUSDT, ETHUSDT, SOLUSDT (наши parquet)
+- **Timeframes:** 5m, 15m, 1h, 4h, 1d (наши parquet)
+- **Data:** существующие `data/{SYM}_{TF}.parquet` файлы
+- Kronos = data-agnostic (works on any OHLCV) → register dropdown presets per available (symbol, timeframe) combo, ALL с RAW label (exploratory).
+- Anti-snooping note: multi-combo = applying SAME pretrained model к разным data (НЕ param-fitting). No per-combo param sweep. ctx + signal rule + threshold identical across combos. Honest: each combo = same model, different input.
+
+## ESC-1 original options (preserved for trail)
 
 **Может ли pretrained-модель ВООБЩЕ быть допущена к live-капиталу под нашей дисциплиной?** Даже идеальный forward paper-trade слабее WFA на genuinely-unseen данных (cutoff неточен, режимы автокоррелируют, мы не контролируем pretrain content). Operator решает: принимает ли более слабую гарантию для ML-стратегий чем для 10 self-built гипотез? Если НЕТ → Kronos навсегда exploratory-only. Если ДА → сколько месяцев forward + какой Sharpe порог. Trader рек: forward ≥6мес post-cutoff + Sharpe>1.0 + DSR на forward-only пуле перед live.
 
