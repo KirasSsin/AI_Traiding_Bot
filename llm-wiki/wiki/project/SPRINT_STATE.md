@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 4 — T6 kronos_runner done. Next: T7 run_kronos_s52 cache-build script (operator M4).
+updated: 2026-05-30  # S52 PHASE 4 — T7 done. Next: T8 dashboard 11 Kronos presets.
 sprint: 52
 phase: 4-execution
 branch: feature/sprint-52-kronos
@@ -60,7 +60,7 @@ tag: v0.1.0-alpha.51
 | 1 Orient | done | session resume orient |
 | 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
 | 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
-| 4 Execute | in_progress | T0-T6 done. Next: T7 run_kronos_s52 cache-build script (operator M4) |
+| 4 Execute | in_progress | T0-T7 done. Next: T8 dashboard 11 Kronos presets |
 | 5 Verify | pending | — |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
