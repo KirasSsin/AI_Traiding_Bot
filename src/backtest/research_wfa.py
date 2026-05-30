@@ -259,9 +259,13 @@ def run_research_wfa(
     if not math.isnan(trial_mean_fold_oos_sharpe):
         try:
             sprint_int = int("".join(filter(str.isdigit, sprint_tag)) or "0")
+            # S50 hygiene fix: strategies key the multiplier differently
+            # (atr_breakout → 'atr_breakout_mult', supertrend → 'multiplier').
+            # Fall back across both so the cross-trial provenance tag is never '?'.
+            _mult = params.get("atr_breakout_mult", params.get("multiplier", "?"))
             trial_log.append_trial(
                 sprint=sprint_int,
-                symbol=f"{symbol}_{params.get('atr_period', '?')}_{params.get('atr_breakout_mult', '?')}",
+                symbol=f"{symbol}_{params.get('atr_period', '?')}_{_mult}",
                 oos_sharpe=trial_mean_fold_oos_sharpe,
             )
         except Exception:  # noqa: BLE001 — best-effort cross-trial log append; never break verdict on log write

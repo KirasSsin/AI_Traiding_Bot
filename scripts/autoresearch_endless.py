@@ -37,6 +37,12 @@ ITER_LOG = OUT_DIR / "iteration_log.jsonl"
 COMMISSION_TAKER = 0.001
 SLIPPAGE = 0.0005
 
+# CC4 S50 (ADR 0067 Q4): held-out date range LOCKED for anti-champion-bias.
+# Parameter sweep reads TRAIN only (ts < HELDOUT_START). Held-out evaluation runs
+# ONCE on the per-combo winner via eval_heldout_once() — never inside the sweep loop.
+HELDOUT_START = "2025-06-01"
+HELDOUT_END = "2026-05-01"
+
 BARS_PER_YEAR_BY_INTERVAL: dict[str, int] = {
     "5": int(365.25 * 24 * 12),
     "15": int(365.25 * 24 * 4),
@@ -287,6 +293,118 @@ def strat_atr_breakout(
     return entry, exit_, warmup, atr_stop
 
 
+def strat_supertrend(df: pd.DataFrame, atr_period: int, mult: float):
+    """Vectorized Lazybear Supertrend — trend computation mirrors SupertrendStrategy.
+
+    The trend flip is COMPUTED at the bar whose close decides it (BEAR->BULL or
+    BULL->BEAR at bar T, using close[T]). The returned entry/exit arrays are
+    SHIFTED +1 relative to that flip bar: a flip computed at bar T sets
+    ``entry[T+1]`` / ``exit_[T+1]``. This makes the shared ``_backtest`` engine
+    (which fills ``entry[k]`` at ``open[k]``) execute at ``open[T+1]`` =
+    close(T)->open(T+1), the same fill the streaming SupertrendStrategy gets via
+    the FSM. The shift is REQUIRED because the Lazybear trend is recursive
+    (trend[T] needs close[T]) and so cannot be written as a pure data-through-(k-1)
+    condition at bar k the way the other strats are. Setting ``entry[T]`` directly
+    would fill ``open[T]`` = same-bar look-ahead (S50 PHASE 6 BLOCKER).
+
+    Lazybear carry/clamp (identical to SupertrendStrategy.on_bar):
+      final_ub = basic_ub if (basic_ub < prev_final_ub or prev_close > prev_final_ub) else prev_final_ub
+      final_lb = basic_lb if (basic_lb > prev_final_lb or prev_close < prev_final_lb) else prev_final_lb
+      if prev_supertrend == prev_final_ub:
+          supertrend = final_ub if close <= final_ub else final_lb
+      else:
+          supertrend = final_lb if close >= final_lb else final_ub
+      trend = BULL if supertrend == final_lb else BEAR
+    Seed bar (first bar with valid ATR): prev_supertrend = basic_ub (BEAR) — no signal.
+    """
+    high = df["high"].to_numpy(dtype=np.float64)
+    low = df["low"].to_numpy(dtype=np.float64)
+    close = df["close"].to_numpy(dtype=np.float64)
+    n = len(df)
+
+    # Wilder ATR (same as src/signalgen/indicators.py::wilder_atr)
+    prev_close_arr = np.concatenate([[close[0]], close[:-1]])
+    tr = np.maximum.reduce(
+        [high - low, np.abs(high - prev_close_arr), np.abs(low - prev_close_arr)]
+    )
+    atr_arr = np.full(n, np.nan, dtype=np.float64)
+    if n >= atr_period:
+        atr_arr[atr_period - 1] = tr[:atr_period].mean()
+        for i in range(atr_period, n):
+            atr_arr[i] = (atr_arr[i - 1] * (atr_period - 1) + tr[i]) / atr_period
+
+    entry = np.zeros(n, dtype=bool)
+    exit_ = np.zeros(n, dtype=bool)
+    warmup = atr_period + 1  # seed bar at atr_period-1 + 1 for carry to start
+
+    # Lazybear carry state
+    prev_final_ub: float | None = None
+    prev_final_lb: float | None = None
+    prev_supertrend: float | None = None
+    prev_trend: str | None = None
+    prev_c: float | None = None
+
+    for i in range(atr_period - 1, n):
+        atr_i = atr_arr[i]
+        if np.isnan(atr_i):
+            continue
+
+        hl2 = (high[i] + low[i]) / 2.0
+        basic_ub = hl2 + mult * atr_i
+        basic_lb = hl2 - mult * atr_i
+
+        # Seed bar: no prior carry → initialize, emit no signal.
+        if prev_final_ub is None:
+            prev_final_ub = basic_ub
+            prev_final_lb = basic_lb
+            prev_supertrend = basic_ub  # conservative BEAR seed (mirrors streaming)
+            prev_trend = "BEAR"
+            prev_c = close[i]
+            continue
+
+        # Lazybear clamp
+        final_ub = (
+            basic_ub if (basic_ub < prev_final_ub or prev_c > prev_final_ub) else prev_final_ub
+        )
+        final_lb = (
+            basic_lb if (basic_lb > prev_final_lb or prev_c < prev_final_lb) else prev_final_lb
+        )
+
+        # Active band selection
+        if prev_supertrend == prev_final_ub:
+            supertrend = final_ub if close[i] <= final_ub else final_lb
+        else:
+            supertrend = final_lb if close[i] >= final_lb else final_ub
+
+        trend = "BULL" if supertrend == final_lb else "BEAR"
+
+        # Signal on flip — shifted +1 to be fillable at open under the _backtest
+        # contract (S50 PHASE 6 BLOCKER). The shared _backtest fills entry[k] at
+        # open[k]; every other strat sets entry[k] from data through k-1 so that
+        # fill is the post-signal bar open (close(T)->open(T+1)). The Lazybear
+        # trend is RECURSIVE — trend[i] depends on close[i] (active-band selection
+        # close[i] <= final_ub[i]) — so it CANNOT be expressed as a pure data-<=-(k-1)
+        # condition at bar k. The flip is only known after close[i]; emitting it at
+        # entry[i+1]/exit_[i+1] makes _backtest fill open[i+1], matching the streaming
+        # SupertrendStrategy (signal on closed bar T, FSM fills T+1). Setting entry[i]
+        # would fill open[i] = same-bar look-ahead. Flip on the last bar (no open[i+1])
+        # is dropped — unfillable.
+        if i + 1 < n:
+            if prev_trend == "BEAR" and trend == "BULL":
+                entry[i + 1] = True
+            elif prev_trend == "BULL" and trend == "BEAR":
+                exit_[i + 1] = True
+
+        # Update carry
+        prev_final_ub = final_ub
+        prev_final_lb = final_lb
+        prev_supertrend = supertrend
+        prev_trend = trend
+        prev_c = close[i]
+
+    return entry, exit_, warmup, atr_arr
+
+
 def strat_triple_confirm(
     df: pd.DataFrame,
     ema_period: int,
@@ -336,6 +454,56 @@ def _normalize_df(path: str) -> pd.DataFrame:
     df["ts"] = pd.to_datetime(df[ts_col], utc=True)
     df = df.sort_values("ts").reset_index(drop=True)
     return df[["ts", "open", "high", "low", "close", "volume"]]
+
+
+def split_train_heldout(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Physical train/held-out split on the `ts` column (ADR 0067 Q4, CC4 S50).
+
+    Prevents champion-bias (Bailey 2014): the parameter sweep must only ever see
+    TRAIN data, otherwise sweeping a grid and picking the per-combo winner overfits
+    to the full sample. train = rows with ts < HELDOUT_START; heldout = rows with
+    ts ∈ [HELDOUT_START, HELDOUT_END]. Both slices get a fresh 0..n-1 index for the
+    positional logic in `_backtest`.
+
+    Args:
+        df: normalized OHLCV frame with a tz-aware UTC `ts` column (see _normalize_df).
+
+    Returns:
+        (train, heldout) — disjoint frames; heldout may be empty if data predates
+        HELDOUT_START.
+    """
+    start = pd.Timestamp(HELDOUT_START, tz="UTC")
+    end = pd.Timestamp(HELDOUT_END, tz="UTC")
+    train = df[df["ts"] < start].reset_index(drop=True)
+    heldout = df[(df["ts"] >= start) & (df["ts"] <= end)].reset_index(drop=True)
+    return train, heldout
+
+
+def eval_heldout_once(combo: dict, df: pd.DataFrame) -> dict:
+    """Evaluate a single chosen combo on the held-out slice — ONE call, not a sweep.
+
+    Called on the per-combo winner (T8) after the train-only sweep selects it, to
+    report out-of-sample performance honestly. NEVER call inside the sweep loop —
+    doing so would reintroduce the champion-bias this split exists to remove.
+
+    Args:
+        combo: dict with "strategy", "params", "atr_stop_mult", and "bars_per_year".
+        df: the held-out OHLCV slice from split_train_heldout (tz-aware `ts` column).
+
+    Returns:
+        Metrics dict prefixed with "heldout_" (pnl_pct, sharpe, n_trades, win_rate).
+    """
+    strat_fn, _grid, _stops = _build_grid(combo["strategy"])
+    entry, exit_, warmup, atr_arr = strat_fn(df, **combo["params"])
+    metrics = _backtest(
+        df, entry, exit_, atr_arr, combo["atr_stop_mult"], warmup, combo["bars_per_year"]
+    )
+    return {
+        "heldout_pnl_pct": metrics["pnl_pct"],
+        "heldout_sharpe": metrics["sharpe"],
+        "heldout_n_trades": metrics["n_trades"],
+        "heldout_win_rate": metrics["win_rate"],
+    }
 
 
 def _build_periods(df: pd.DataFrame, n_chunks: int = 5) -> list[tuple[date, date]]:
@@ -445,6 +613,19 @@ def _build_grid(strategy: str) -> tuple[Callable, list[dict], list[float]]:
             ],
             base_atr_stop,
         )
+    if strategy == "supertrend":
+        # ADR 0067: center params atr_period=10, mult=3.0. Sweep: period ∈ [7..21], mult ∈ [2.0..4.0].
+        return (
+            strat_supertrend,
+            [
+                {"atr_period": ap, "mult": m}
+                for ap, m in product(
+                    [7, 9, 10, 12, 14, 16, 21],
+                    [2.0, 2.5, 3.0, 3.5, 4.0],
+                )
+            ],
+            base_atr_stop,
+        )
     raise ValueError(f"Unknown: {strategy}")
 
 
@@ -486,6 +667,17 @@ def run_combo(symbol: str, interval: str, path: str, strategies: list[str], iter
     )
     if len(df) < 500:
         print("  SKIP — too few bars", flush=True)
+        return {"skipped": True}
+
+    # CC4 S50: sweep train-only (anti-champion-bias ADR 0067 Q4). The held-out slice
+    # (ts >= HELDOUT_START) is reserved for a single eval_heldout_once() on the winner.
+    df, _heldout = split_train_heldout(df)
+    print(
+        f"  train slice: {len(df):,} bars  (held-out {len(_heldout):,} bars reserved)",
+        flush=True,
+    )
+    if len(df) < 500:
+        print("  SKIP — too few train bars after held-out split", flush=True)
         return {"skipped": True}
 
     periods = _build_periods(df, n_chunks=5)

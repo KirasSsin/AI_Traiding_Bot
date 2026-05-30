@@ -39,6 +39,11 @@
       "sprint": 44,
       "symbol": "BTCUSDT_9_?",
       "oos_sharpe": -0.27553551433587015
+    },
+    {
+      "sprint": 50,
+      "symbol": "BTCUSDT_7_3.0",
+      "oos_sharpe": -9.375705277435056
     }
   ]
 }

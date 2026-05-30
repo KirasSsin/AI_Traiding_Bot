@@ -185,6 +185,38 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
         # Dispatch performs server-side lookup; preset.indicators is intentionally absent.
         "indicators": {},
     },
+    # S50 T10 — Supertrend preset (ADR 0067, hypothesis #10). Honest WFA_FAIL verdict.
+    # Dashboard is a research comparison tool — FAIL presets are shown so operator can
+    # compare equity curves and understand why the strategy did not pass acceptance gates.
+    "supertrend": {
+        "label": "Supertrend (ATR тренд-следование)",
+        "optgroup": "Тренд",
+        "description": (
+            "<p><strong>Подход:</strong> трендовый Lazybear Supertrend на основе ATR-динамической "
+            "линии поддержки/сопротивления. Стратегия идёт long при бычьем флипе "
+            "(BEAR→BULL), выходит при медвежьем флипе (BULL→BEAR). Стоп = ATR-band.</p>"
+            "<p><strong>Вход long:</strong> supertrend переключается на нижнюю полосу "
+            "(бычий режим) → вход на open следующего бара.</p>"
+            "<p><strong>Выход:</strong> supertrend переключается на верхнюю полосу "
+            "(медвежий режим) → выход на open следующего бара.</p>"
+            "<p><strong>LOCKED params (ADR 0067):</strong> atr_period=10, multiplier=3.0, "
+            "long_only. Символ: BTCUSDT 1H.</p>"
+            "<p><strong>Вердикт S50 (WFA):</strong> "
+            "WFA_FAIL — T5 n_eff=47&lt;50 (недостаточно OOS-сделок) + "
+            "DSR=0.00 после Bailey-penalty (bull-beta, не edge). "
+            "Стратегия демонстрирует bull-beta без статистически значимого alpha. "
+            "Направление α ЗАКРЫТО. См. ADR 0067.</p>"
+        ),
+        "sprint": "S50",
+        "verdict": "WFA_FAIL (T5 n_eff=47<50 + DSR=0.0 Bailey-penalty — bull-beta, не edge)",
+        "type": "supertrend",
+        "locked_symbol": "BTCUSDT",
+        "locked_interval": "60",
+        "supported_combos": [("BTCUSDT", "60")],
+        # Locked params live in src/backtest/supertrend_runner.py::SUPERTREND_LOCKED_PARAMS.
+        # Dispatch performs server-side WFA via run_supertrend_wfa; indicators is absent.
+        "indicators": {},
+    },
 }
 
 # Supported intervals (per src/marketdata/bybit/rest.py registry + Bar.interval Literal).
@@ -971,6 +1003,72 @@ def run_backtest(
         }
         cache_path.write_text(json.dumps(result_ab, default=str, indent=2))
         return result_ab
+
+    # S50 T10 — supertrend dispatch: run_supertrend_wfa → envelope (BTCUSDT 1H locked).
+    if preset.get("type") == "supertrend":
+        from datetime import date as _date
+
+        from src.backtest.research_runner_envelope import build_research_runner_envelope
+        from src.backtest.supertrend_runner import run_supertrend_wfa
+
+        wfa_result_st: dict[str, Any] | None = None
+        try:
+            wfa_result_st = run_supertrend_wfa(
+                start_date=_date.fromisoformat(req.start),
+                end_date=_date.fromisoformat(req.end),
+            )
+        except (ValueError, FileNotFoundError):
+            wfa_result_st = None
+
+        # Build envelope from WFA result (no separate full-period replay function for supertrend).
+        n_trades_st = 0
+        sharpe_st = 0.0
+        win_rate_st = 0.0
+        pnl_pct_st = 0.0
+        equity_st: list[float] = []
+        ts_st: list[int] = []
+        if wfa_result_st is not None:
+            n_trades_st = int(wfa_result_st.get("n_trades_raw", 0))
+            sharpe_st = float(wfa_result_st.get("trial_oos_sharpe", 0.0) or 0.0)
+            metrics_st = wfa_result_st.get("metrics", {}) or {}
+            win_rate_st = float(metrics_st.get("win_rate", 0.0) or 0.0)
+            pnl_pct_st = float(metrics_st.get("total_pnl_pct", 0.0) or 0.0)
+
+        st_envelope = build_research_runner_envelope(
+            runner_name="supertrend_runner",
+            symbol=req.symbol,
+            interval=req.interval,
+            n_trades=n_trades_st,
+            sharpe=sharpe_st,
+            win_rate=win_rate_st,
+            total_pnl_pct=pnl_pct_st,
+            bars_per_year=int(BARS_PER_YEAR.get(req.interval, 8760)),
+            equity_curve=equity_st,
+            equity_timestamps=ts_st,
+            runner_label=f"Supertrend {req.interval} {req.symbol} (LOCKED — S50)",
+            start=req.start,
+            end=req.end,
+            wfa_result=wfa_result_st,
+        )
+
+        _RUNS_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path = _RUNS_DIR / f"{run_id}.json"
+
+        result_st: dict[str, Any] = dict(st_envelope)
+        result_st["run_id"] = run_id
+        result_st["cached"] = False
+        result_st["request"] = {
+            "strategy_id": req.strategy_id,
+            "strategy_label": preset["label"],
+            "strategy_config": preset,
+            "symbol": req.symbol,
+            "interval": req.interval,
+            "interval_label": INTERVAL_LABELS.get(req.interval, req.interval),
+            "start": req.start,
+            "end": req.end,
+        }
+        cache_path.write_text(json.dumps(result_st, default=str, indent=2))
+        return result_st
 
     with _lock:
         # Lazy import к keep dashboard module loadable без main module side effects

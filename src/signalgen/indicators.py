@@ -81,6 +81,49 @@ def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) 
     return talib.ATR(high, low, close, timeperiod=period)
 
 
+def wilder_atr(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    period: int,
+) -> np.ndarray:
+    """Wilder ATR via manual RMA recursion — distinct from talib-based ``atr()``.
+
+    Exact port of scripts/autoresearch_endless.py::_atr(). Uses
+    ``prev_close[0] = close[0]`` for the first true-range bar, seeds the recursion
+    with an SMA of the first ``period`` TR values at index ``period-1``, then
+    applies Wilder smoothing ``atr[i] = (atr[i-1]*(period-1) + tr[i]) / period``.
+
+    NOTE: numerically distinct from :func:`atr` (talib seed = period, ~1.4%
+    divergence). Shared by ATR breakout and Supertrend; ``volume_breakout`` keeps
+    talib ``atr()`` (ADR 0059 anti-snooping LOCKED).
+
+    Args:
+        high, low, close: 1-D float arrays, same length.
+        period: smoothing period.
+
+    Returns:
+        Array same length as input; NaN for indices < ``period-1``. All-NaN when
+        ``len(close) < period``.
+    """
+    n = len(close)
+    prev_close = np.concatenate([[close[0]], close[:-1]])
+    tr: np.ndarray = np.maximum.reduce(
+        [
+            high - low,
+            np.abs(high - prev_close),
+            np.abs(low - prev_close),
+        ]
+    )
+    atr_out = np.full(n, np.nan, dtype=np.float64)
+    if n < period:
+        return atr_out
+    atr_out[period - 1] = tr[:period].mean()
+    for i in range(period, n):
+        atr_out[i] = (atr_out[i - 1] * (period - 1) + tr[i]) / period
+    return atr_out
+
+
 def adx(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
     """Average Directional Index (Wilder 1978).
 
