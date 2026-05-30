@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S53 PHASE 2 brainstorm DONE → PHASE 3 planning.
+updated: 2026-05-30  # S53 T2 done (KronosVariant dataclass).
 sprint: 53
 phase: 3-planning
 branch: feature/sprint-53-kronos-enablement
@@ -41,7 +41,7 @@ tag: v0.1.0-alpha.52
 | 1 Orient | done | S53 kickoff (session continuation) |
 | 2 Brainstorm | done | trader ROUND 1 + arch PRE-PLAN → pre-s53-backlog.md, ESC-1 V3-locked+ATR-fix |
 | 3 Plan | done | 2026-05-30-sprint-53-kronos-enablement.md (T1-T8) |
-| 4 Execute | in_progress | sequential subagent-driven, start T1 |
+| 4 Execute | in_progress | T1-T2 done. Next: T3 adapter import fix |
 | 5 Verify | pending | — |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
