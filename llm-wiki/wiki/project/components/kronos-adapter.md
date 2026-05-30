@@ -96,7 +96,7 @@ KRONOS_MINI = KronosVariant(name="mini", model_id="NeoQuasar/Kronos-mini",
 
 ## Связанные
 
-- [[./kronos-variant]] — KronosVariant dataclass (S53 C10)
+- `KronosVariant` dataclass (`src/ml/kronos_variant.py`, S53 C10) — base/mini singletons (документирован в этой странице выше)
 - [[./prediction-cache]] — consumer (адаптер вызывается только при cache-build, не в on_bar)
 - [[./kronos-strategy]] — конечный потребитель прогнозов (через cache)
 - [[../decisions/0069-sprint-53-kronos-enablement]] — ADR 0069 (S53: import fix + variant + submodule + two-step error)
