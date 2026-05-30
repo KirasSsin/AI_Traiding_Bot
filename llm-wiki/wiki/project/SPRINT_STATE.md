@@ -30,13 +30,18 @@ tag: v0.1.0-alpha.50
 | Phase | Status | Notes |
 |---|---|---|
 | 1 Orient | done | post-S50 ship |
-| 2 Brainstorm | skipped | bugfix sprint, debts known (D5 may need trader-expert mini-verdict) |
-| 3 Plan | in_progress | writing-plans for 6 debts |
-| 4-9 | pending | — |
+| 2 Brainstorm | skipped | bugfix sprint, debts known (D5 trader-expert verdict e only) |
+| 3 Plan | done | writing-plans 6-debt plan `5a7c044` |
+| 4 Execute | done | D1-D6 committed (24248be/6309e9b/109462a/00763c5/ac79531/02e775a) |
+| 5 Verify | done | pytest 1449 / mypy 0/91 GREEN |
+| 6 Review | done | 6 reviewers: bybit/python/test-eng/data-integrity/trading-logic APPROVE + quant APPROVE_WITH_CONCERNS → doc-fix `fac2b15` |
+| 7 Sync | done | sprint-51 page + index + log + current-state + ADR 0056/0064 amend |
+| 8 Ship | in_progress | tag v0.1.0-alpha.51 — PR + merge |
+| 9 Close | pending | — |
 
 ## Следующее действие
 
-**S51 PHASE 4** — D1, D2, D3, D4, D6 DONE. Осталось: D5 (cross_trial pool scoping — DONE per D5 row, verify sprint-finish). All 6 debts DONE. Готово к PHASE 5 verify + ship.
+**S51 ship:** PR → squash-merge → tag `v0.1.0-alpha.51`. Затем **S52 = Kronos ML strategy** (operator-scoped: foundation model K-line forecast, Mac M4 Pro MPS, validation→trader-expert brainstorm).
 
 ## S52+ ROADMAP
 
