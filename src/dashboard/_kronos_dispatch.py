@@ -35,7 +35,7 @@ _KRONOS_PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
     ("SOLUSDT", "240"): "data/SOLUSDT_4h.parquet",
 }
 
-# S52 FIX A (PHASE 6 R2) — manifest sidecar written by scripts/run_kronos_s52.py.
+# S52 FIX A (PHASE 6 R2) — manifest sidecar written by scripts/run_kronos_s53.py.
 # Schema v1: captures model_id, weights_hash, params_hash, device so the dashboard
 # can reconstruct CacheKeys matching the operator-built cache.
 _KRONOS_MANIFEST_NAME = "_manifest.json"
@@ -209,7 +209,7 @@ def run_kronos_dispatch(
     timeframe_kr = _INTERVAL_TO_TIMEFRAME.get(req.interval, req.interval)
 
     # FIX A (PHASE 6 R2 / B2) — reconstruct the REAL cache-key params from the
-    # manifest sidecar written by scripts/run_kronos_s52.py. Without this the
+    # manifest sidecar written by scripts/run_kronos_s53.py. Without this the
     # dashboard hardcodes placeholder keys (model_id="kronos", weights_hash="unknown",
     # device="cpu") that NEVER match the operator-built cache (real model_id /
     # weights_hash / params_hash / device="mps") → 100% MISS. The manifest also
@@ -249,7 +249,7 @@ def run_kronos_dispatch(
                     "code": "kronos_cache_absent",
                     "message": (
                         "Kronos predictions not cached yet — run "
-                        "`RUN_ML=1 scripts/run_kronos_s52.py` on M4 first. "
+                        "`RUN_ML=1 scripts/run_kronos_s53.py` on M4 first. "
                         "Cache artifacts → data/kronos_cache/ (gitignored)."
                     ),
                 }
@@ -268,7 +268,7 @@ def run_kronos_dispatch(
             },
             "message": (
                 "Kronos predictions not cached yet — "
-                "run `RUN_ML=1 scripts/run_kronos_s52.py` on M4 first."
+                "run `RUN_ML=1 scripts/run_kronos_s53.py` on M4 first."
             ),
         }
         runs_dir.mkdir(parents=True, exist_ok=True)

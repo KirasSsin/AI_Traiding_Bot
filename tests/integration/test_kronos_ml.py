@@ -55,9 +55,8 @@ def test_kronos_model_adapter_predict_returns_decimal_list() -> None:
 
     import pandas as pd  # noqa: PLC0415 — deferred to avoid collection-time torch pull
     from src.ml.kronos_adapter import KronosModelAdapter  # noqa: PLC0415
+    from src.ml.kronos_variant import KRONOS_BASE  # noqa: PLC0415
 
-    model_id = "NeoQuasar/Kronos-mini"
-    tokenizer_id = "NeoQuasar/Kronos-Tokenizer-base"
     horizon = 1
     lookback = 8
 
@@ -77,10 +76,8 @@ def test_kronos_model_adapter_predict_returns_decimal_list() -> None:
     )
 
     adapter = KronosModelAdapter(
-        model_id=model_id,
-        tokenizer_id=tokenizer_id,
+        variant=KRONOS_BASE,
         device="mps",
-        max_context=2048,
         temperature=1.0,
         top_p=0.9,
         sample_count=1,

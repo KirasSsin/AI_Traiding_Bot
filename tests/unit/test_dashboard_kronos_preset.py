@@ -269,7 +269,7 @@ def test_kronos_dispatch_with_cache_returns_leakage_verdict(
 # the script's REAL keys must produce HITS via the dashboard dispatch.
 # ---------------------------------------------------------------------------
 
-# Real key params (mirror scripts/run_kronos_s52.py constants — what the operator
+# Real key params (mirror scripts/run_kronos_s53.py constants — what the operator
 # would actually write into _manifest.json after a cache-build on M4).
 _REAL_MODEL_ID = "NeoQuasar/Kronos-mini"
 _REAL_WEIGHTS_HASH = "deadbeefcafe"
@@ -278,7 +278,7 @@ _REAL_DEVICE = "mps"
 
 
 def _write_manifest(cache_dir: Path) -> None:
-    """Write a _manifest.json sidecar mirroring scripts/run_kronos_s52.py output."""
+    """Write a _manifest.json sidecar mirroring scripts/run_kronos_s53.py output."""
     import json
 
     manifest = {
