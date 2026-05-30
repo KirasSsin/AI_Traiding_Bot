@@ -1,23 +1,24 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 2 brainstorm DONE → PAUSED at ESC-1 (operator продолжит в новой сессии).
+updated: 2026-05-30  # S52 PHASE 3 plan locked (ESC-1=A + expanded multi-combo) → PHASE 4 execution.
 sprint: 52
-phase: 2-brainstorming-PAUSED-ESC1
+phase: 4-execution
 branch: feature/sprint-52-kronos
 tag: v0.1.0-alpha.51
 ---
 
 ## Текущий статус
 
-**⏸ S52 PAUSED — ожидает operator ESC-1 решения (новая сессия).** PHASE 2 brainstorm DONE (architecture C1-C7 + trader V1-V5). Plan lock (PHASE 3) ЗАБЛОКИРОВАН до ESC-1. Полная детализация → `pre-s52-backlog.md`.
+**S52 PHASE 4 execution — Kronos ML strategy.** ESC-1 RESOLVED = (A) per operator: build full integration as tradeable dropdown strategy NOW, backtest=exploratory RAW label, formal hypothesis #11 DEFERRED to forward paper-trade. EXPANDED scope: all 11 (symbol,TF) parquet combos (BTC 5m/15m/1h/4h/1d + ETH/SOL 15m/1h/4h), не только BTCUSDT 1H. Plan `2026-05-30-sprint-52-kronos.md` (T0-T10). Brainstorm C1-C7 + V1-V5 → `pre-s52-backlog.md`.
 
-**RESUME ПРОТОКОЛ (новая сессия):**
-1. Read `pre-s52-backlog.md` (architecture C1-C7 + trader V1-V5 + ESC-1 три опции A/B/C).
-2. Operator выбирает ESC-1: (A) exploratory infra + forward paper-trade [trader+maintainer rec] / (B) forward-only gate exception / (C) permanent research track.
-3. После ESC-1 → PHASE 3 writing-plans на `feature/sprint-52-kronos` (branch уже создан, brainstorm committed `212ce16`).
+**COMPUTE CONSTRAINT:** real Kronos inference = operator Mac M4 Pro MPS. Dev/CI = mocked adapter (C5). Infra built+mock-tested here; operator runs cache-build + exploratory backtest via `RUN_ML=1 scripts/run_kronos_s52.py` post-merge.
 
-**ESC-1 суть (data-leakage):** Kronos pretrained на истории (cutoff НЕ опубликован, вероятно overlap с 2023-2026 BTC backtest). WFA "OOS" методологически невалиден = in-sample под видом OOS (look-ahead на уровне весов). Backtest = только pipeline smoke-test, НЕ gate. Forward paper-trade = единственный валидный метод. N_trials НЕ инкрементируется до forward gate.
+**Execution T0-T10 (sequential, subagent-driven):**
+- T0 GATE 0 pretrain cutoff investigation (BLOCKING) → ADR 0068 leakage clause
+- T1 [ml] dep group / T2 kronos_adapter (torch boundary) / T3 predict-cache+determinism / T4 KronosStrategy on_bar + 2 reason codes (65→67) / T5 RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict / T6 kronos_runner exploratory / T7 run script (M4) / T8 dashboard 11 presets / T9 CI mock+opt-in / T10 ADR+wiki sync
+
+**Не останавливаться до полного внедрения (operator directive).**
 
 **S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts). pytest 1449, mypy 0/91, reason codes 65.
 
