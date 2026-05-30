@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 4 — T0-T9 done. Next: T10 ADR 0068 finalize + wiki sync.
+updated: 2026-05-30  # S52 PHASE 5 — T0-T10 complete. Enter verify.
 sprint: 52
-phase: 4-execution
+phase: 5-verify
 branch: feature/sprint-52-kronos
 tag: v0.1.0-alpha.51
 ---
 
 ## Текущий статус
 
-**S52 PHASE 4 execution — Kronos ML strategy.** ESC-1 RESOLVED = (A) per operator: build full integration as tradeable dropdown strategy NOW, backtest=exploratory RAW label, formal hypothesis #11 DEFERRED to forward paper-trade. EXPANDED scope: all 11 (symbol,TF) parquet combos (BTC 5m/15m/1h/4h/1d + ETH/SOL 15m/1h/4h), не только BTCUSDT 1H. Plan `2026-05-30-sprint-52-kronos.md` (T0-T10). Brainstorm C1-C7 + V1-V5 → `pre-s52-backlog.md`.
+**S52 PHASE 5 verify — T0-T10 DONE.** Все задачи выполнены: `[ml]` dep group, KronosAdapter Protocol, PredictionCache (SHA-256+median), KronosStrategy on_bar, RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict, kronos_runner (exploratory), run_kronos_s52.py (M4 cache-build), dashboard 11 presets, CI mock+opt-in RUN_ML, ADR 0068 accepted + wiki sync. reason_codes 65→67, pytest 1449→1481. Entering PHASE 5 verify.
 
 **COMPUTE CONSTRAINT:** real Kronos inference = operator Mac M4 Pro MPS. Dev/CI = mocked adapter (C5). Infra built+mock-tested here; operator runs cache-build + exploratory backtest via `RUN_ML=1 scripts/run_kronos_s52.py` post-merge.
 
@@ -60,8 +60,8 @@ tag: v0.1.0-alpha.51
 | 1 Orient | done | session resume orient |
 | 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
 | 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
-| 4 Execute | in_progress | T0-T9 done. Next: T10 ADR 0068 finalize + wiki sync |
-| 5 Verify | pending | — |
+| 4 Execute | done | T0-T10 complete |
+| 5 Verify | in_progress | pytest 1481 / mypy 0 / reason_codes 67 — verify checklist |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
 | 8 Ship | pending | — |

@@ -128,6 +128,21 @@ sources:
 | Стратегия EMA crossover (live S3+) | `components/strategy.md` + `trading/strategies/ema-crossover-adx-rsi.md` |
 | Индикаторы (EMA классический, ADX/RSI/ATR Wilder via TA-Lib) | `components/indicators.md` + `trading/indicators/*.md` (4 файла) + `decisions/0011` |
 | Контракт сигнала (close(T) → fill open(T+1)) | `architecture/execution-timing.md` + `trading/concepts/look-ahead-bias.md` |
+| ML стратегия Kronos (foundation model, exploratory) | `components/kronos-strategy.md` + `decisions/0068-sprint-52-kronos-integration.md` |
+| Predict cache (offline ML predictions store) | `components/prediction-cache.md` |
+| Kronos ML adapter / torch boundary | `components/kronos-adapter.md` |
+| Pretrain leakage / RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict | `decisions/0068` секция "GATE 0" |
+
+### ML / Прогнозирование (S52+)
+
+| Запрос | Путь | Примечания |
+|--------|------|------------|
+| Где torch в проекте? | `components/kronos-adapter.md` + `src/ml/kronos_adapter.py` | Только `src/ml/`, lazy import, optional `[ml]` dep group |
+| Predict-cache: write / get / checksum | `components/prediction-cache.md` | CacheKey 7 полей; SHA-256; returns Decimal |
+| Как запустить cache-build (M4 MPS) | `sprints/sprint-52-kronos.md` "Operator follow-up" + `scripts/run_kronos_s52.py` | `RUN_ML=1 python scripts/run_kronos_s52.py` |
+| Почему WFA невалиден для Kronos? | `decisions/0068` GATE 0 + `components/kronos-strategy.md` | Pretrain leakage, in-sample under WFA-OOS disguise |
+| Какие reason codes у Kronos? | `components/kronos-strategy.md` "Reason codes" | ENTRY_LONG_KRONOS (65) + EXIT_FLAT_KRONOS (66) |
+| Formal hypothesis #11 status | `sprints/sprint-52-kronos.md` "Deferred" | DEFERRED до forward paper-trade ~post-2025-08 |
 
 ### Backtest
 

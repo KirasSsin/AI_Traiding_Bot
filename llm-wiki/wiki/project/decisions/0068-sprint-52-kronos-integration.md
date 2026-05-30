@@ -4,7 +4,7 @@ type: decision
 tags: [decision, adr, s52, kronos, ml-strategy, foundation-model, data-leakage, pretrain-cutoff, exploratory]
 created: 2026-05-30
 updated: 2026-05-30
-status: proposed
+status: accepted
 sources:
   - https://github.com/shiyu-coder/Kronos
   - https://huggingface.co/NeoQuasar/Kronos-base
@@ -16,7 +16,7 @@ sources:
 
 # 0068. Sprint 52 — Kronos ML foundation-model strategy integration
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-05-30
 
 ## Контекст

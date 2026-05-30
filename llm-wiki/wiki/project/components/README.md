@@ -14,7 +14,7 @@ sources:
 
 > **Для LLM-агентов:** этот файл = тематический reverse lookup ("я читаю X — что связано?"). Дополняет плоский алфавитный список `index.md`. Используй, когда читаешь один компонент и нужен связанный контекст.
 
-**TL;DR:** 31 страница компонентов, сгруппированных по 10 доменным кластерам (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics). Каждый кластер имеет anchor (основной компонент) + поддерживающие компоненты. Кросс-кластерные связи — в секции "Bridge components".
+**TL;DR:** 34 страницы компонентов, сгруппированных по 11 доменным кластерам (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics + ML). Каждый кластер имеет anchor (основной компонент) + поддерживающие компоненты. Кросс-кластерные связи — в секции "Bridge components".
 
 ## Кластер 1 — Приём рыночных данных (Market Data ingest)
 
@@ -39,8 +39,9 @@ sources:
 | **[[strategy]]** | EmaCrossoverAdxRsiStrategy — `on_bar(Bar) → Signal \| None`, FLAT/LONG FSM |
 | [[indicators]] | TA-Lib wrappers — EMA classical/Wilder + ADX/±DI/RSI/ATR Wilder |
 | [[models]] | pydantic v2 domain models — Bar/Signal/Order/Fill с look-ahead invariants |
+| [[kronos-strategy]] | KronosStrategy — ML-стратегия Kronos (cache-consumer, on_bar lookup-only, reason codes 65-66) |
 
-**Мост к:** Risk (Signal → assess) → Execution (start_bracket)
+**Мост к:** Risk (Signal → assess) → Execution (start_bracket). KronosStrategy мост к Кластеру 11 (ML).
 
 ## Кластер 3 — Risk + sizing
 
@@ -136,6 +137,17 @@ sources:
 | **[[dsr]]** | Bailey & López de Prado Deflated Sharpe Ratio — pure-function on TradeRecord array. Pearson kurtosis. **S10: sigma_sr extension closes S9 NYI (n_trials > 1, Bailey eq. 12).** |
 
 **Мост к:** Risk (consumes trade_history TradeRecord), [[walk-forward]] + [[wfa-reporter]] (S10 aggregate DSR consumer)
+
+## Кластер 11 — ML / Прогнозирование (S52)
+
+**Тема:** Offline ML inference pipeline для foundation model стратегий (torch изолирован, predict-cache паттерн). Начало: S52 (ADR 0068).
+
+| Компонент | Роль |
+|-----------|------|
+| **[[kronos-adapter]]** | KronosAdapter Protocol + KronosModelAdapter (lazy torch) + MockKronosAdapter (CI). Единственное место torch в `src/ml/`. |
+| [[prediction-cache]] | CacheKey (7 полей) + SHA-256 sidecar + median ensemble. torch-free; читается on_bar, пишется оффлайн. |
+
+**Мост к:** Кластер 2 Signal (kronos-strategy потребляет prediction-cache → Signal)
 
 ## Bridge components (мультикластерные)
 
