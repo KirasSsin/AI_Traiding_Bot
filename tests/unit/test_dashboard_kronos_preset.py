@@ -337,7 +337,8 @@ def test_kronos_dispatch_manifest_keyed_cache_produces_hits(
     real_cache.mkdir()
 
     df = _make_ohlcv_df(50)
-    _build_real_keyed_cache(real_cache, df, fire_bar=3)
+    # fire past the 14-bar Wilder-ATR warm-up so the ENTRY is not risk-gated (S53 T4).
+    _build_real_keyed_cache(real_cache, df, fire_bar=20)
     _write_manifest(real_cache)
 
     import src.dashboard.backtest_runner as br
