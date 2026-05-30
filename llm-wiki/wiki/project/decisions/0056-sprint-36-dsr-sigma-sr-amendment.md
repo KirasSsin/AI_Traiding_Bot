@@ -1,9 +1,9 @@
 ---
 title: ADR 0056 — Sprint 36 DSR Sigma_SR Sourcing Amendment
 type: decision
-tags: [adr, sprint-36, dsr-amendment, sigma-sr-sourcing, n-trials-thresholds, methodology-correction]
+tags: [adr, sprint-36, dsr-amendment, sigma-sr-sourcing, n-trials-thresholds, methodology-correction, two-level-pool-scoping, sprint-51]
 created: 2026-04-27
-updated: 2026-04-27
+updated: 2026-05-30  # S51 D5 two-level pool scoping amendment
 status: accepted
 sources:
   - project/decisions/0052-sprint-34-acceptance-criteria-amendment.md
@@ -155,3 +155,58 @@ Per quant-stats-reviewer ROUND 6: «текущий код использует p
 ### Примечание об обратной совместимости
 
 Существующие тесты `test_live_trade_reporter.py` передают `_make_records()` с синтезированными TradeRecords с `pnl_pct = pnl_quote / Decimal("50000")`. Тесты продолжают проходить — меняется только извлечение returns.
+
+---
+
+## Поправка 3 S51 D5 — two-level pool scoping (sigma per-class, N_trials global)
+
+### Контекст (S50 quant + trader-expert находка)
+
+`data/cross_trial_sharpes.json` — единый пул OOS Sharpe по ВСЕМ стратегиям. После S44 он содержит 8 записей `atr_breakout` (включая ETH Sharpe -89.49 — артефакт windowed-ATR), после S50 — 1 запись `supertrend`. Старый код (`research_wfa.py` + `donchian_runner.py`) вычислял `sigma_SR = stdev(весь_пул)` — то есть дисперсия supertrend DSR была **заражена** дикими atr_breakout значениями из другого семейства стратегий. Это методологически неверно per Bailey 2014: дисперсия отбора (eq.13) должна измеряться ВНУТРИ сопоставимого класса гипотез.
+
+Одновременно нельзя делать N_trials per-class: это создало бы **лазейку anti-snooping** — тестируя 2 варианта в свежем классе, можно было бы обойти multiple-testing штраф и получить false-positive deploy. 6 честных закрытий (S14/S16/S18/S21/S23/S34) опираются на ГЛОБАЛЬНЫЙ монотонный N.
+
+### Решение — разделить ДВА количества Bailey 2014
+
+| Величина | Bailey eq. | Scope (S51 D5) | Обоснование |
+|----------|------------|----------------|-------------|
+| **sigma_SR** (variance-across-trials) | eq. 13 | **PER-STRATEGY-CLASS** (within-class stdev) | Убирает межсемейное заражение. atr_breakout -89 НЕ отравляет supertrend DSR. |
+| **N_trials** (multiple-testing breadth) | eq. 12 | **GLOBAL cumulative monotonic** | Сохраняет anti-snooping. Свежий класс НЕ сбрасывает штраф -> нет лазейки false-positive deploy. |
+
+### Реализация
+
+- `TrialEntry` + поле `strategy_class: str` (`cross_trial_log.py`). Legacy записи без поля -> backfill `"unknown"` на чтении.
+- `sigma_sr(strategy_class: str | None = None)`: `None` -> GLOBAL (legacy callers); `"<name>"` -> фильтр пула к этому классу ПЕРЕД stdev. Иерархия ADR 0056 (>=3 -> stdev; 1-2 -> NaN; 0 -> None) применяется к отфильтрованному подмножеству.
+- `get_oos_sharpes()` / `n_trials()` остаются GLOBAL (кормят N_trials count — НЕ тронуты).
+- Бэкфилл `data/cross_trial_sharpes.json` (9 записей): sprint=44 -> `atr_breakout` (кроме `BTCUSDT_9_?` -> `volume_breakout` per провенанс), sprint=50 -> `supertrend`. Все 9 значений OOS Sharpe сохранены ТОЧНО (добавлено только поле).
+- `run_research_wfa(strategy_class="unknown")` + 4 runner'а передают свой класс (atr_breakout / supertrend / volume_breakout / donchian). `donchian_runner` теперь читает within-class sigma вместо global-pool stdev.
+
+### Fallback policy — INSUFFICIENT_CLASS_HISTORY
+
+Когда GLOBAL N_trials > 1, НО within-class записей < 3 (within-class sigma = NaN/None):
+- DSR **НЕ raise** (старое поведение: NaN sigma + n_trials>1 -> ValueError).
+- DSR **НЕ молча** применяет штраф на полном N.
+- Возвращается статус `sigma_scope_status = "INSUFFICIENT_CLASS_HISTORY"`, DSR вычисляется честно при `n_trials=1`.
+- Вердикт опирается на fill-timing-independent gates (sharpe_gate / MC / T5) — ровно как S50 корректно FAIL'нул на T5 без DSR.
+
+Возможные значения `sigma_scope_status` (`run_research_wfa`): `SINGLE_TRIAL` (n_trials=1, без штрафа) | `INSUFFICIENT_CLASS_HISTORY` (<3 within-class -> fallback) | `CLASS_SCOPED` (>=3 within-class -> полный N_trials breadth).
+
+### Граница семейства (family boundary)
+
+Класс = точный runner-class string. 6 пулов: `atr_breakout`, `supertrend`, `volume_breakout`, `donchian`, `mean_reversion` (future), `unknown` (legacy/CLI). Идемпотентность пула остаётся по (sprint, symbol) — `strategy_class` это метаданные, НЕ часть identity tuple.
+
+### Последствия
+
+- **Положительные:** supertrend DSR больше не заражён atr_breakout. Методология per Bailey 2014 (within-class дисперсия). Anti-snooping сохранён (global N). Честная маркировка underpowered режима.
+- **Нейтральные:** Bailey eq.12/13 МАТЕМАТИКА не тронута — изменён только ИСТОЧНИК sigma_SR + fallback статус. N_trials остаётся GLOBAL.
+- **Отрицательные:** donchian теперь читает within-class("donchian"), но в текущем пуле нет donchian записей -> fallback n_trials=1. Это честнее старого global-pool заражения (которое использовало atr_breakout записи как donchian sigma).
+
+### Статус
+
+Принято + реализовано в S51 D5. TDD: +9 тестов `test_cross_trial_log.py`, +7 тестов `test_research_wfa.py`, +1 тест `test_dsr_sigma_sr_amendment.py` (donchian within-class source assertion). mypy --strict clean. Иерархия источников sigma_SR ADR 0056 без изменений для GLOBAL пути; пороги n_trades без изменений.
+
+### Связанные
+
+- trader-expert вердикт (e) — two-level scoping (S51 D5 binding)
+- D5 в `wiki/project/SPRINT_STATE.md` (S51 debt-closing sprint)
+- Bailey & Lopez de Prado 2014 (eq. 12 breadth + eq. 13 variance)
