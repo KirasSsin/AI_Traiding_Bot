@@ -14,7 +14,7 @@ sources:
 
 > **Для LLM-агентов:** этот файл = тематический reverse lookup ("я читаю X — что связано?"). Дополняет плоский алфавитный список `index.md`. Используй, когда читаешь один компонент и нужен связанный контекст.
 
-**TL;DR:** 34 страницы компонентов, сгруппированных по 11 доменным кластерам (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics + ML). Каждый кластер имеет anchor (основной компонент) + поддерживающие компоненты. Кросс-кластерные связи — в секции "Bridge components".
+**TL;DR:** 51 страница компонентов (excl. README), сгруппированных по 11 доменным кластерам (Market Data + Signal + Risk + Execution + Resilience + Runtime + Infrastructure + Backtest + Tooling + Analytics + ML). Каждый кластер имеет anchor (основной компонент) + поддерживающие компоненты. Кросс-кластерные связи — в секции "Bridge components".
 
 ## Кластер 1 — Приём рыночных данных (Market Data ingest)
 

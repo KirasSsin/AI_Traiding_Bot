@@ -103,6 +103,8 @@ PHASE 2 brainstorm: architecture-reviewer PRE-PLAN APPROVE_WITH_CONDITIONS (C1-C
 
 5. **Пин ревизии модели (FIX 5, SECURITY):** добавлен параметр `revision: str | None = None` в `KronosModelAdapter.__init__()`, пробрасывается в `Kronos.from_pretrained(model_id, revision=revision)` и `KronosTokenizer.from_pretrained(tokenizer_id, revision=revision)`. Добавлена константа `KRONOS_REVISION: str | None = None` в `scripts/run_kronos_s52.py`. **Оператор ОБЯЗАН** установить `KRONOS_REVISION` в верифицированный commit SHA перед любым запуском `RUN_ML=1` — `from_pretrained` десериализует непроверенные чекпоинты (torch.load pickle = ACE). `weights_hash` — это post-download provenance, НЕ защита от ACE.
 
+6. **Манифест sidecar (B2 HIGH, архитектурное):** `scripts/run_kronos_s52.py` пишет `data/kronos_cache/_manifest.json` (схема: `schema_version`, `model_id`, `weights_hash`, `params_hash`, `device`, `combos[]`). `src/dashboard/backtest_runner.py` читает манифест перед построением `CacheKey` при воспроизведении Kronos-пресета. **Инвариант: dashboard ОБЯЗАН читать key-параметры из `_manifest.json`, НИКОГДА не захардкоживать дефолты** — иначе 100% cache miss (именно этот баг был устранён). Отсутствие манифеста = кэш не построен; присутствие манифеста + bar-level miss = легитимный промах (данного бара в кэше нет). Подробности → [[../components/prediction-cache#манифест-dashboard-replay]].
+
 ## Related
 - [[../pre-s52-backlog]] (полный brainstorm trail C1-C7 + V1-V5)
 - [[../plans/2026-05-30-sprint-52-kronos]] (T0-T10)
