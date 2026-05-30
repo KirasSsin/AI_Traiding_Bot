@@ -203,3 +203,94 @@ def test_retry_of_placement_reuses_same_order_link_id(monkeypatch):
         seen_link_ids[0] == seen_link_ids[1]
     ), "retry must reuse the SAME orderLinkId so Bybit dedupes the duplicate submission"
     assert ack.order_link_id == f"flat-{BRACKET_ID}-res-3"
+
+
+# --- S51 D1: 110072 (OrderLinkedID duplicate) → success in flatten paths ---
+#
+# A 110072 on a flatten Market Sell that carries our deterministic orderLinkId
+# means the prior submit of the SAME logical order already landed server-side
+# (idempotency complete) → the position is flat. The flatten path must treat
+# this as SUCCESS, NOT raise HALT_FLATTEN_FAILED (the exact scenario the S49 B1
+# deterministic orderLinkId was designed to survive).
+
+from src.execution.bybit.adapter import BybitAPIError  # noqa: E402
+from src.execution.bybit.errors import ReasonCode as AdapterReasonCode  # noqa: E402
+
+
+@dataclass
+class _DuplicateAdapter(_RecordingAdapter):
+    """Adapter whose flatten Market Sell raises Bybit retCode 110072 (duplicate)."""
+
+    def place_order(self, *, symbol, side, qty, order_link_id=None):
+        self.placed_orders.append(
+            {"symbol": symbol, "side": side, "qty": str(qty), "orderLinkId": order_link_id}
+        )
+        raise BybitAPIError(
+            110072, "OrderLinkedID is duplicate", AdapterReasonCode.REJECT_DUPLICATE_ORDER
+        )
+
+
+def test_emergency_flatten_duplicate_is_success_no_halt(tmp_path):
+    adapter = _DuplicateAdapter(_filters=_filters())
+    repo = _repo(tmp_path)
+    _seed(repo, state=ExecutionState.OCO_ARMED, tp_oid=None)
+    coord = _coord(repo, adapter)
+
+    # Must NOT raise and must NOT halt — the duplicate proves the sell landed.
+    coord.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
+
+    row = repo.get("BTCUSDT")
+    assert row is not None
+    assert (
+        row.state is not ExecutionState.HALTED
+    ), "110072 (duplicate) means our prior flatten sell landed — must not HALT"
+    # Exactly one emergency sell attempted (the duplicate short-circuits the retry).
+    sells = [o for o in adapter.placed_orders if o["side"] == "Sell"]
+    assert len(sells) == 1
+
+
+def test_residual_flatten_duplicate_is_success_no_halt(tmp_path):
+    adapter = _DuplicateAdapter(_filters=_filters())
+    repo = _repo(tmp_path)
+    _seed(repo, state=ExecutionState.OCO_ARMED, tp_oid=None)
+    coord = _coord(repo, adapter)
+
+    coord.on_order_event(
+        {
+            "orderLinkId": f"oco-{BRACKET_ID}-sl-3",
+            "orderStatus": "PartiallyFilled",
+            "leavesQty": "0.0003",
+        }
+    )
+
+    row = repo.get("BTCUSDT")
+    assert row is not None
+    # RESIDUAL_FLATTENED from EXIT_SL_RESIDUAL → FLAT; never HALTED.
+    assert (
+        row.state is ExecutionState.FLAT
+    ), "110072 (duplicate) on residual flatten = idempotency complete → FLAT, not HALTED"
+
+
+def test_emergency_flatten_genuine_error_still_halts(tmp_path):
+    """Guard: a non-110072 BybitAPIError must STILL halt (no over-broad success)."""
+
+    @dataclass
+    class _RealErrorAdapter(_RecordingAdapter):
+        def place_order(self, *, symbol, side, qty, order_link_id=None):
+            self.placed_orders.append(
+                {"symbol": symbol, "side": side, "qty": str(qty), "orderLinkId": order_link_id}
+            )
+            raise BybitAPIError(
+                110007, "insufficient balance", AdapterReasonCode.INSUFFICIENT_BALANCE
+            )
+
+    adapter = _RealErrorAdapter(_filters=_filters())
+    repo = _repo(tmp_path)
+    _seed(repo, state=ExecutionState.OCO_ARMED, tp_oid=None)
+    coord = _coord(repo, adapter)
+
+    coord.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
+
+    row = repo.get("BTCUSDT")
+    assert row is not None
+    assert row.state is ExecutionState.HALTED, "a genuine flatten error must still HALT"
