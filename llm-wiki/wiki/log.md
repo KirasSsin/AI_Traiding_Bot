@@ -2837,3 +2837,14 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - pytest 1449→1481 (+32) / mypy 0 / reason_codes 65→67.
 - ADR 0068 accepted. Sprint pages 55→56. Component pages 48→51 (+3).
 - Formal hypothesis #11 DEFERRED: N_trials++ + cross_trial pool "kronos" fill = DEFERRED до forward paper-trade ~post-2025-08. Operator action: RUN_ML=1 scripts/run_kronos_s52.py на M4 Pro post-merge.
+
+## [2026-05-30] ship | S52 v0.1.0-alpha.52 — Kronos ML strategy integration
+
+- Squash-merge `a188347` (PR #63) → tag `v0.1.0-alpha.52`. Первая ML-стратегия проекта.
+- Kronos foundation model (NeoQuasar/Kronos-mini, K-line forecast transformer, MIT) как tradeable dashboard strategy, 11 (symbol,TF) combos. Offline predict→cache→replay через existing on_bar (NEVER inference-per-bar). torch behind optional [ml] dep + src/ml/ lazy boundary.
+- GATE 0: BTC/USDT confirmed в pretrain, cutoff unpublished → exploratory only (RAW_PRETRAIN_LEAKAGE_SUSPECTED, non-gating). Formal hypothesis #11 DEFERRED → forward paper-trade.
+- PHASE 6: 9 parallel reviewers → 3 APPROVE + 6 conditions → remediation R1-R4: threshold 0.6% break-even (был 0.25% < 0.30% round-trip = negative-EV), cache-key manifest sidecar (dashboard hit-parity, был 100% miss bug), per-timeframe Sharpe annualization, revision-pin (untrusted-checkpoint ACE defense), torch-stub sys.modules leak fix (flaky CI averted), combo guard, trades JSON, edge tests.
+- Gates: pytest 1449→1494 (+45), mypy 0/96, reason_codes 65→67 (ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS), Vitest 43, tsc+build+eslint clean, torch-absent CI-isolated. ADR 0068 accepted. Sprint pages 56. Component pages 51 (+kronos-strategy/adapter/prediction-cache, Кластер 11 ML).
+- Merge conflict resolved (origin/main b912793 brainstorm-backup vs feature branch) — SPRINT_STATE/log/backlog took feature-branch (current) state.
+- OPERATOR M4 FOLLOW-UP: pip install .[ml] → KRONOS_REVISION=<sha> → RUN_ML=1 scripts/run_kronos_s52.py (cache-build 11 combos) → exploratory backtest.
+- Carry S53: current-state.md split (54KB), backtest_runner 1500 LoC split, put() atomicity, median_ensemble property test, integration horizon=3.

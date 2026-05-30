@@ -1,48 +1,22 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 6/7 done — 9 reviewers + remediation R1-R4. Enter PHASE 8 ship.
+updated: 2026-05-30  # S52 SHIPPED v0.1.0-alpha.52 → between-sprints.
 sprint: 52
-phase: 8-ship
-branch: feature/sprint-52-kronos
-tag: v0.1.0-alpha.51
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.52
 ---
 
 ## Текущий статус
 
-**S52 PHASE 8 ship — T0-T10 done + PHASE 6 review remediated.** Kronos ML strategy внедрён: `[ml]` dep group, KronosAdapter Protocol, PredictionCache (SHA-256+median+manifest), KronosStrategy on_bar, RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict, kronos_runner exploratory, run_kronos_s52.py (M4 cache-build), dashboard 11 presets, CI mock+opt-in RUN_ML, ADR 0068 accepted + wiki sync. reason_codes 65→67, pytest 1449→**1494**, mypy 0/96.
+**S52 SHIPPED** — `a188347` (PR #63) tag `v0.1.0-alpha.52`. Kronos ML strategy (первая ML-стратегия проекта, NeoQuasar/Kronos-mini, offline predict→cache→replay). reason_codes 65→67, pytest 1494, mypy 0/96. Backtest = exploratory `RAW_PRETRAIN_LEAKAGE_SUSPECTED` (non-gating, GATE 0: BTC/USDT в pretrain corpus). Детали → `sprints/sprint-52-kronos.md` + log.md.
 
-**PHASE 6: 9 parallel reviewers** → 3 APPROVE (python/trading-logic/doc) + 6 conditions. Remediation R1-R4 (4 commits): R1 threshold 0.6% break-even (был 0.25% < cost) + per-tf Sharpe + Bar.interval + revision-pin (security ACE) + ADR cost fix; R2 cache-key **manifest sidecar** (dashboard hit-parity, был 100% miss bug) + combo guard + trades JSON; R3 edge tests + **torch-stub sys.modules leak fix** (flaky CI averted); R4 doc resync. Все gates GREEN re-verified.
+**OPERATOR M4 FOLLOW-UP (post-merge):** real inference = только Mac M4 Pro MPS. Запустить `pip install -e ".[ml]"` → set `KRONOS_REVISION=<verified sha>` (security ACE) → `RUN_ML=1 .venv/bin/python scripts/run_kronos_s52.py` → собрать prediction-cache + manifest (11 combos) → exploratory backtest в dashboard. Forward paper-trade gate → formal hypothesis #11 (отдельный будущий ADR).
 
-**COMPUTE CONSTRAINT:** real Kronos inference = operator Mac M4 Pro MPS. Dev/CI = mocked adapter (C5). Infra built+mock-tested here; operator runs cache-build + exploratory backtest via `RUN_ML=1 scripts/run_kronos_s52.py` post-merge.
+**S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts).
 
-**Не останавливаться до полного внедрения (operator directive).**
-
-**S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts). pytest 1449, mypy 0/91, reason codes 65.
-
-## S52 Kronos — scouted facts
-
-- **Task:** decoder-only AR transformer, прогноз future OHLCV K-line. Input: DataFrame [open,high,low,close,(volume,amount)] + timestamps. Output: predicted OHLCV для pred_len баров.
-- **Variants:** mini 4.1M/ctx2048 · small 24.7M/ctx512 · base 102.3M/ctx512 · large 499M (closed). Tokenizer = separate model (Kronos-Tokenizer-base).
-- **API:** `KronosPredictor(model, tokenizer, device, max_context).predict(df, x_timestamp, y_timestamp, pred_len, T, top_p, sample_count)`.
-- **Deps:** torch, HF transformers/tokenizers, pandas, Python 3.10+. MIT license.
-- **Compute:** operator Mac M4 Pro → torch device **"mps"** (NOT cuda).
-
-## S52 operator decisions (binding)
-
-- **Validation:** trader-expert ROUND 1+2 в PHASE 2 (data-leakage: pretrained на истории incl. вероятно BTC backtest-период → WFA OOS невалиден; вероятно forward paper-trade на post-cutoff данных).
-- **Compute:** Mac M4 Pro MPS.
-
-## S52 brainstorm questions (trader-expert)
-
-1. Validation под data-leakage: WFA невалиден? forward-only? held-out post-cutoff? как honestly под ADR 0014/anti-snooping.
-2. Variant: base 102M (точнее) vs mini 4.1M (MPS-friendly ctx2048)? accuracy vs latency на M4.
-3. Signal extraction: predicted OHLCV → entry/exit? (pred close > current×threshold = LONG? direction sign? vs ATR band?). Новый archetype.
-4. Inference в streaming on_bar: predict() на rolling lookback каждый бар. Latency M4 MPS? cache? heavy ML без блокировки.
-5. N_trials/hypothesis: Kronos = #11 (Bailey pool class "kronos"). sample_count/T/top_p/threshold = param surface → held-out discipline.
-6. Symbol/timeframe lock: BTCUSDT 1H? ADR 0059 pre-registration.
-
-## S52+ backlog (S51 carries)
+## S52+ backlog (carries)
 
 - **atr_breakout ATR-index offset** (D4 follow-up, HIGH) — live 9 vs research 28 entries; own ADR + WFA re-run ДО live-капитала. ADR 0064.
 - **D5 forfeit-N policy** (operator escalation) — accept forfeit-N OR conservative pooled-sigma proxy.
@@ -69,8 +43,8 @@ tag: v0.1.0-alpha.51
 | 5 Verify | done | pytest 1494 / mypy 0/96 / reason_codes 67 / Vitest 43 / tsc+build clean / torch-absent CI-isolated |
 | 6 Review | done | 9 reviewers → remediation R1-R4 (0d2ef1f/0d3b417/716c0c5/5d46c50), all re-verified GREEN |
 | 7 Sync | done | wiki synced (ADR 0068 + manifest docs + index/README) |
-| 8 Ship | in_progress | sprint-finish HARD-GATE |
-| 9 Close | pending | — |
+| 8 Ship | done | PR #63 squash-merge a188347, tag v0.1.0-alpha.52 |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
 
 ---
 
