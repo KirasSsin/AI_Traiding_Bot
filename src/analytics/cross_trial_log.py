@@ -17,9 +17,18 @@ Bailey 2014 quantities that must be scoped differently:
     Prevents cross-family contamination (S44 atr_breakout ETH Sharpe −89 must NOT
     poison a supertrend DSR variance term). See `sigma_sr(strategy_class=...)`.
   - N_trials (multiple-testing breadth, eq. 12): GLOBAL cumulative monotonic — counts
-    ALL entries across ALL classes. Preserves anti-snooping (a fresh strategy class
-    must NOT reset the multiple-testing penalty → no false-positive deploy escape).
-    See `n_trials()` / `get_oos_sharpes()` — both stay global by design.
+    ALL entries across ALL classes. See `n_trials()` / `get_oos_sharpes()` (both global).
+    HOLDS ONLY in CLASS_SCOPED branch (>=3 within-class entries → admissible sigma_SR).
+
+    CAVEAT (quant PHASE 6 S51): when within-class <3, sigma_SR is inadmissible (df<2,
+    ADR 0056). Bailey eq.12's N-term has no standalone coefficient — it enters ONLY
+    scaled by sigma_SR, so without an admissible sigma_SR research_wfa falls back to
+    compute_dsr(n_trials=1): the global breadth penalty is FORFEITED for that run
+    (status INSUFFICIENT_CLASS_HISTORY). A fresh strategy class therefore DOES escape
+    the penalty for its first 1-2 trials. This is the only Bailey-coherent option (N
+    cannot be applied without sigma_SR); the escape is bounded — DSR is 1 of 4 gates,
+    a no-edge class still fails T5/MC/fold-Sharpe, and sigma_scope_status makes it
+    auditable. "Fresh class never resets penalty" holds ONLY once >=3 within-class.
 
 Format: data/cross_trial_sharpes.json
     {"trials": [{"sprint": 13, "symbol": "BTCUSDT", "oos_sharpe": -44.46}, ...]}
