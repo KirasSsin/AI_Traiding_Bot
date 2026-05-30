@@ -312,6 +312,35 @@ _KRONOS_PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
 }
 
 
+# S52 FIX A (PHASE 6 R2) — manifest sidecar written by scripts/run_kronos_s52.py.
+# Mirrors the S51 D2 parquet-manifest pattern: captures the cache-key-defining
+# params (model_id, weights_hash, params_hash, device) so the dashboard can
+# reconstruct CacheKeys that MATCH the operator-built cache. Schema v1.
+_KRONOS_MANIFEST_NAME = "_manifest.json"
+_KRONOS_MANIFEST_SCHEMA_VERSION = 1
+
+
+def _read_kronos_manifest(cache_dir: Path) -> dict[str, Any] | None:
+    """Read ``<cache_dir>/_manifest.json`` and return its parsed dict, else ``None``.
+
+    The manifest carries the 4 non-(symbol, timeframe, bar_close_ts) cache-key
+    fields the strategy needs to reconstruct matching :class:`CacheKey`s:
+    ``model_id``, ``weights_hash``, ``params_hash``, ``device`` (+ schema version
+    and per-combo coverage). Absent manifest = cache not built (honest "not built"
+    path); present manifest = built (per-bar misses are legitimate, not "not built").
+
+    Returns ``None`` on a missing or unparsable manifest (treated as "not built").
+    """
+    manifest_path = cache_dir / _KRONOS_MANIFEST_NAME
+    if not manifest_path.exists():
+        return None
+    try:
+        data: dict[str, Any] = json.loads(manifest_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    return data
+
+
 def _load_kronos_df(
     symbol: str,
     interval: str,
@@ -1132,30 +1161,47 @@ def run_backtest(
         from src.backtest.research_runner_envelope import VERDICT_RAW_PRETRAIN_LEAKAGE
         from src.ml.prediction_cache import PredictionCache
 
+        # FIX B (PHASE 6 R2) — validate (symbol, interval) against supported_combos
+        # BEFORE any dispatch (mirrors how server-side dispatch should reject invalid combos).
+        supported_combos_kr = preset.get("supported_combos", [])
+        if (req.symbol, req.interval) not in supported_combos_kr:
+            raise ValueError(
+                f"Kronos does not support combo ({req.symbol}, {req.interval}). "
+                f"Supported combos: {sorted(supported_combos_kr)}"
+            )
+
         # Map dashboard interval code → kronos timeframe string (e.g. "60" → "1h")
         timeframe_kr = INTERVAL_FILE_LABEL.get(req.interval, req.interval)
 
-        # Default params (model_id / hashes resolved at cache-build time; unknowns → cache miss)
-        params_kr: dict[str, Any] = {
-            "model_id": "kronos",
-            "weights_hash": "unknown",
-            "params_hash": "unknown",
-            "device": "cpu",
-        }
+        # FIX A (PHASE 6 R2 / B2) — reconstruct the REAL cache-key params from the
+        # manifest sidecar written by scripts/run_kronos_s52.py. Without this the
+        # dashboard hardcodes placeholder keys (model_id="kronos", weights_hash="unknown",
+        # device="cpu") that NEVER match the operator-built cache (real model_id /
+        # weights_hash / params_hash / device="mps") → 100% MISS. The manifest also
+        # makes "not built" (no manifest) distinguishable from "built but bar-level miss".
+        manifest_kr = _read_kronos_manifest(_KRONOS_CACHE_DIR)
+        if manifest_kr is not None:
+            params_kr: dict[str, Any] = {
+                "model_id": str(manifest_kr.get("model_id", "kronos")),
+                "weights_hash": str(manifest_kr.get("weights_hash", "unknown")),
+                "params_hash": str(manifest_kr.get("params_hash", "unknown")),
+                "device": str(manifest_kr.get("device", "cpu")),
+            }
+        else:
+            # No manifest → cache not built. Placeholder params (only used on the
+            # graceful no-cache path below; never reaches a real lookup).
+            params_kr = {
+                "model_id": "kronos",
+                "weights_hash": "unknown",
+                "params_hash": "unknown",
+                "device": "cpu",
+            }
 
-        # Check whether cache has any artifacts (non-empty dir after PredictionCache creates it)
         cache_kr = PredictionCache(_KRONOS_CACHE_DIR)
-        cache_files = (
-            [
-                f
-                for f in _KRONOS_CACHE_DIR.iterdir()
-                if f.suffix == ".json" and not f.name.startswith("_")
-            ]
-            if _KRONOS_CACHE_DIR.exists()
-            else []
-        )
 
-        if not cache_files:
+        # "Not built" iff the manifest is absent. A manifest with no per-bar entries
+        # for the queried range is a legitimate per-bar miss (0 trades), NOT "not built".
+        if manifest_kr is None:
             # Cache absent — return honest structured result, no crash
             result_kr_nocache: dict[str, Any] = {
                 "run_id": run_id,

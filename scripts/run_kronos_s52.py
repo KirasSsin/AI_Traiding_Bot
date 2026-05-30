@@ -102,6 +102,12 @@ _TF_TO_TD: dict[str, timedelta] = {
 CACHE_DIR = Path("data/kronos_cache")
 RESULTS_DIR = Path("data/kronos_s52_results")
 
+# FIX A (PHASE 6 R2) — manifest sidecar. Mirrors S51 D2 parquet-manifest pattern.
+# Captures the cache-key-defining params (model_id, weights_hash, params_hash,
+# device) so the dashboard can reconstruct CacheKeys matching this build → HITS.
+MANIFEST_NAME = "_manifest.json"
+MANIFEST_SCHEMA_VERSION = 1
+
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -240,6 +246,49 @@ def _build_cache_for_combo(
     return written
 
 
+def _write_manifest(
+    *,
+    cache_dir: Path,
+    weights_hash: str,
+    params_hash: str,
+    combos_coverage: list[dict[str, Any]],
+) -> None:
+    """Write/merge ``<cache_dir>/_manifest.json`` (FIX A, PHASE 6 R2).
+
+    Captures the 4 non-(symbol, timeframe, bar_close_ts) cache-key fields the
+    dashboard needs to reconstruct matching :class:`CacheKey`s: ``model_id``,
+    ``weights_hash``, ``params_hash``, ``device``. Includes a schema version and
+    the per-combo coverage list. If a manifest already exists, the key params are
+    overwritten (consistent build) and the combo coverage is merged by
+    (symbol, timeframe) so a partial re-run does not drop prior combos.
+    """
+    manifest_path = cache_dir / MANIFEST_NAME
+
+    merged_combos: dict[tuple[str, str], dict[str, Any]] = {}
+    if manifest_path.exists():
+        try:
+            prior: dict[str, Any] = json.loads(manifest_path.read_text())
+            for entry in prior.get("combos", []):
+                merged_combos[(entry["symbol"], entry["timeframe"])] = entry
+        except (json.JSONDecodeError, OSError, KeyError):
+            merged_combos = {}
+
+    for entry in combos_coverage:
+        merged_combos[(entry["symbol"], entry["timeframe"])] = entry
+
+    manifest = {
+        "schema_version": MANIFEST_SCHEMA_VERSION,
+        "model_id": MODEL_ID,
+        "weights_hash": weights_hash,
+        "params_hash": params_hash,
+        "device": DEVICE,
+        "combos": sorted(merged_combos.values(), key=lambda e: (e["symbol"], e["timeframe"])),
+    }
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    _log.info("Wrote manifest → %s (%d combos)", manifest_path, len(manifest["combos"]))
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 
@@ -317,6 +366,7 @@ def main() -> int:
     cache = PredictionCache(CACHE_DIR)
 
     all_results: list[dict[str, Any]] = []
+    combos_coverage: list[dict[str, Any]] = []
 
     for symbol, timeframe, parquet_path in COMBOS:
         print(f"\n{'─' * 60}")
@@ -365,6 +415,16 @@ def main() -> int:
         )
         print(f"  Cache entries written: {written:,} (total in cache may be larger)")
 
+        # Track per-combo coverage for the manifest sidecar (FIX A).
+        combos_coverage.append(
+            {
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "n_bars": int(len(df)),
+                "n_entries_written": int(written),
+            }
+        )
+
         # ── Run exploratory backtest ────────────────────────────────────────────
         run_params: dict[str, Any] = {
             "model_id": MODEL_ID,
@@ -411,6 +471,14 @@ def main() -> int:
         result_path = RESULTS_DIR / f"kronos_s52_{symbol}_{timeframe}.json"
         result_path.write_text(json.dumps(serializable, indent=2, default=str))
         print(f"  Saved → {result_path}")
+
+    # ── Write manifest sidecar (FIX A) so the dashboard reconstructs matching keys ──
+    _write_manifest(
+        cache_dir=CACHE_DIR,
+        weights_hash=weights_hash,
+        params_hash=params_hash,
+        combos_coverage=combos_coverage,
+    )
 
     # ── Summary ────────────────────────────────────────────────────────────────
     print(f"\n{'=' * 60}")

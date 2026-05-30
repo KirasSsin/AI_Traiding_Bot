@@ -407,6 +407,71 @@ def test_bars_per_year_differs_by_timeframe() -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Test 9: trades serialize to dicts, not str repr (FIX C — PHASE 6 R2 / M1)
+# ---------------------------------------------------------------------------
+
+
+def test_run_kronos_exploratory_trades_are_dicts(tmp_path: Path) -> None:
+    """envelope['trades'] must be a list of plain dicts (json-serializable structured),
+
+    NOT a list of _TradeRecord dataclasses that json.dumps(default=str) turns into
+    '_TradeRecord(...)' strings (broken contract). After a round-trip through
+    json.dumps(..., default=str) + json.loads, each trade must still be a dict
+    with float entry_price / exit_price / pnl_pct fields.
+    """
+    import json
+
+    from src.backtest.kronos_runner import run_kronos_exploratory
+
+    n = 15
+    base_close = 50_000.0
+    closes = [float(base_close)] * n
+    opens = [float(base_close) * 0.999] * n
+    highs = [float(base_close) * 1.002] * n
+    lows = [float(base_close) * 0.998] * n
+
+    tss = [datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i) for i in range(n)]
+    df = pd.DataFrame(
+        {
+            "_ts": pd.to_datetime(tss, utc=True),
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": [100.0] * n,
+        }
+    )
+
+    cache = PredictionCache(tmp_path / "cache_dicts")
+    _populate_cache(cache, bar_idx=3, pred_close=Decimal("55000.0"))
+    _populate_cache(cache, bar_idx=7, pred_close=Decimal("45000.0"))
+
+    result = run_kronos_exploratory(
+        df=df,
+        symbol=_SYMBOL,
+        timeframe=_TF,
+        params=_make_kronos_params(),
+        cache=cache,
+    )
+
+    trades = result["trades"]
+    assert isinstance(trades, list)
+    assert len(trades) >= 1
+    for t in trades:
+        assert isinstance(t, dict), f"trade must be dict, got {type(t)}"
+        assert "entry_price" in t and "exit_price" in t and "pnl_pct" in t
+
+    # Round-trip through the dashboard serialization contract.
+    serialized = json.dumps(result, default=str)
+    reloaded = json.loads(serialized)
+    reloaded_trades = reloaded["trades"]
+    assert isinstance(reloaded_trades, list)
+    for t in reloaded_trades:
+        assert isinstance(t, dict), f"serialized trade must be dict, got {type(t)}: {t!r}"
+        assert not str(t).startswith("_TradeRecord"), "trade was stringified to dataclass repr"
+
+
 def test_build_bar_from_row_interval_matches_timeframe() -> None:
     """_build_bar_from_row must set bar.interval = timeframe, not hard-coded '1h'."""
 

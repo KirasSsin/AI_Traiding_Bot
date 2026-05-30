@@ -21,7 +21,7 @@ Design constraints (V5, ESC-1=A):
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from math import sqrt
@@ -318,7 +318,9 @@ def run_kronos_exploratory(
         verdict_override=VERDICT_RAW_PRETRAIN_LEAKAGE,
     )
 
-    # Inject trades list directly so tests can inspect entry/exit prices.
-    envelope["trades"] = trades
+    # Inject trades as plain dicts so the dashboard json.dumps(..., default=str)
+    # serializes structured records (NOT '_TradeRecord(...)' string reprs).
+    # Tests inspect entry/exit prices via dict keys.
+    envelope["trades"] = [asdict(t) for t in trades]
 
     return envelope

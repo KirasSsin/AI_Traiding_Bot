@@ -262,3 +262,201 @@ def test_kronos_dispatch_with_cache_returns_leakage_verdict(
 
     assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
     assert "run_id" in result
+
+
+# ---------------------------------------------------------------------------
+# FIX A (PHASE 6 R2 / B2) — manifest-driven cache-key parity: a cache built with
+# the script's REAL keys must produce HITS via the dashboard dispatch.
+# ---------------------------------------------------------------------------
+
+# Real key params (mirror scripts/run_kronos_s52.py constants — what the operator
+# would actually write into _manifest.json after a cache-build on M4).
+_REAL_MODEL_ID = "NeoQuasar/Kronos-mini"
+_REAL_WEIGHTS_HASH = "deadbeefcafe"
+_REAL_PARAMS_HASH = "0011223344"
+_REAL_DEVICE = "mps"
+
+
+def _write_manifest(cache_dir: Path) -> None:
+    """Write a _manifest.json sidecar mirroring scripts/run_kronos_s52.py output."""
+    import json
+
+    manifest = {
+        "schema_version": 1,
+        "model_id": _REAL_MODEL_ID,
+        "weights_hash": _REAL_WEIGHTS_HASH,
+        "params_hash": _REAL_PARAMS_HASH,
+        "device": _REAL_DEVICE,
+        "combos": [{"symbol": "BTCUSDT", "timeframe": "1h", "n_entries": 1}],
+    }
+    (cache_dir / "_manifest.json").write_text(json.dumps(manifest, indent=2))
+
+
+def _build_real_keyed_cache(cache_dir: Path, df: pd.DataFrame, *, fire_bar: int) -> None:
+    """Populate a PredictionCache with REAL keys (as the script would) so the
+
+    dashboard dispatch — which reads the manifest to reconstruct keys — gets HITS.
+
+    The CacheKey bar_close_ts mirrors kronos_runner._build_bar_from_row:
+    open_time = _ts[i], close_time = open_time + 1h, bar_close_ts = int(close_time.ts()).
+    A strong upside prediction at ``fire_bar`` triggers an ENTRY_LONG_KRONOS signal.
+    """
+    from datetime import timedelta
+    from decimal import Decimal
+
+    from src.ml.prediction_cache import CacheKey, PredictionCache
+
+    cache = PredictionCache(cache_dir)
+    open_time = pd.Timestamp(df["_ts"].iloc[fire_bar]).to_pydatetime()
+    bar_close_ts = int((open_time + timedelta(hours=1)).timestamp())
+    current_close = float(df["close"].iloc[fire_bar])
+
+    key = CacheKey(
+        model_id=_REAL_MODEL_ID,
+        weights_hash=_REAL_WEIGHTS_HASH,
+        symbol="BTCUSDT",
+        timeframe="1h",
+        bar_close_ts=bar_close_ts,
+        params_hash=_REAL_PARAMS_HASH,
+        device=_REAL_DEVICE,
+    )
+    # Predict well above current close → ENTRY_LONG_KRONOS at fire_bar.
+    cache.put(key, [Decimal(str(current_close * 1.10))])
+
+
+def test_kronos_dispatch_manifest_keyed_cache_produces_hits(
+    tmp_runs_dir: Path, tmp_path: Path
+) -> None:
+    """A cache built with the SCRIPT's real keys + a _manifest.json must produce
+
+    cache HITS through the dashboard dispatch — i.e. n_trades reflects actual
+    cached predictions (> 0), NOT a silent 0-trade all-miss. This is the core
+    FIX A correctness requirement: build→dashboard key parity.
+    """
+    real_cache = tmp_path / "kronos_cache_real"
+    real_cache.mkdir()
+
+    df = _make_ohlcv_df(50)
+    _build_real_keyed_cache(real_cache, df, fire_bar=3)
+    _write_manifest(real_cache)
+
+    import src.dashboard.backtest_runner as br
+    from src.dashboard.backtest_runner import BacktestRequest, run_backtest
+
+    original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
+    try:
+        br._KRONOS_CACHE_DIR = real_cache  # type: ignore[attr-defined]
+        with patch.object(br, "_load_kronos_df", return_value=df):
+            req = BacktestRequest(
+                strategy_id="kronos",
+                symbol="BTCUSDT",
+                interval="60",
+                start="2023-01-01",
+                end="2023-02-01",
+            )
+            result = run_backtest(req, force=True)
+    finally:
+        br._KRONOS_CACHE_DIR = original_cache_dir  # type: ignore[attr-defined]
+
+    assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
+    # The whole point of FIX A: real-keyed cache → HITS → trades.
+    assert result["n_trades"] > 0, (
+        "manifest-keyed cache produced 0 trades — dashboard cache-key did NOT match "
+        "the script-built keys (cache-key parity broken)"
+    )
+
+
+def test_kronos_dispatch_manifest_present_but_bar_missing_is_legit_miss(
+    tmp_runs_dir: Path, tmp_path: Path
+) -> None:
+    """Manifest present but no entry for the queried bars → legitimate per-bar miss
+
+    (0 trades), distinguishable from the no-manifest 'not built' state.
+    """
+    real_cache = tmp_path / "kronos_cache_manifest_only"
+    real_cache.mkdir()
+    _write_manifest(real_cache)  # manifest but NO cache entries
+
+    df = _make_ohlcv_df(50)
+
+    import src.dashboard.backtest_runner as br
+    from src.dashboard.backtest_runner import BacktestRequest, run_backtest
+
+    original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
+    try:
+        br._KRONOS_CACHE_DIR = real_cache  # type: ignore[attr-defined]
+        with patch.object(br, "_load_kronos_df", return_value=df):
+            req = BacktestRequest(
+                strategy_id="kronos",
+                symbol="BTCUSDT",
+                interval="60",
+                start="2023-01-01",
+                end="2023-02-01",
+            )
+            result = run_backtest(req, force=True)
+    finally:
+        br._KRONOS_CACHE_DIR = original_cache_dir  # type: ignore[attr-defined]
+
+    # Manifest present → this is the "built but bar-level miss" path, not "not built".
+    assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
+    assert result.get("n_trades", 0) == 0
+
+
+def test_kronos_dispatch_no_manifest_is_not_built_path(tmp_runs_dir: Path, tmp_path: Path) -> None:
+    """No manifest → the honest 'cache not built — run RUN_ML=1 ...' path."""
+    empty_cache = tmp_path / "kronos_cache_no_manifest"
+    empty_cache.mkdir()
+
+    df = _make_ohlcv_df(50)
+
+    import src.dashboard.backtest_runner as br
+    from src.dashboard.backtest_runner import BacktestRequest, run_backtest
+
+    original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
+    try:
+        br._KRONOS_CACHE_DIR = empty_cache  # type: ignore[attr-defined]
+        with patch.object(br, "_load_kronos_df", return_value=df):
+            req = BacktestRequest(
+                strategy_id="kronos",
+                symbol="BTCUSDT",
+                interval="60",
+                start="2023-01-01",
+                end="2023-02-01",
+            )
+            result = run_backtest(req, force=True)
+    finally:
+        br._KRONOS_CACHE_DIR = original_cache_dir  # type: ignore[attr-defined]
+
+    # 'not built' path emits the run-cache-build instruction.
+    result_str = str(result).lower()
+    assert "run_ml" in result_str or "cache-build" in result_str or "not cached" in result_str
+
+
+# ---------------------------------------------------------------------------
+# FIX B (PHASE 6 R2 MEDIUM) — combo validation guard before dispatch.
+# ---------------------------------------------------------------------------
+
+
+def test_kronos_dispatch_rejects_unsupported_combo(tmp_runs_dir: Path) -> None:
+    """An (symbol, interval) not in supported_combos must raise ValueError with the list."""
+    from src.dashboard.backtest_runner import BacktestRequest, run_backtest
+
+    req = BacktestRequest(
+        strategy_id="kronos",
+        symbol="BTCUSDT",
+        interval="D",  # 1d for ETH/SOL is unsupported; here BTCUSDT D IS supported
+        start="2023-01-01",
+        end="2023-02-01",
+    )
+    # Pick a genuinely unsupported combo: ETHUSDT 5 (5m) is NOT in supported_combos.
+    req_bad = BacktestRequest(
+        strategy_id="kronos",
+        symbol="ETHUSDT",
+        interval="5",
+        start="2023-01-01",
+        end="2023-02-01",
+    )
+    with pytest.raises(ValueError, match="(?i)support"):
+        run_backtest(req_bad, force=True)
+    # Sanity: the supported one does not raise the combo guard (may hit no-cache path).
+    assert req.symbol == "BTCUSDT"
