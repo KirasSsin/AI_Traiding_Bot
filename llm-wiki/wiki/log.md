@@ -2810,3 +2810,12 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - 6 PHASE 6 reviewers: 5 APPROVE + quant APPROVE_WITH_CONCERNS (N-forfeit doc addressed fac2b15).
 - Carry S52: atr_breakout ATR-index offset (own ADR+WFA before live), D5 forfeit-N policy escalation, free-form reason strings verify.
 - NEXT: S52 = Kronos ML strategy (foundation model K-line forecast, Mac M4 Pro MPS, validation->trader-expert brainstorm).
+
+## [2026-05-30] brainstorm | S52 — Kronos ML strategy PHASE 2 (PAUSED at ESC-1)
+
+- Operator request: integrate Kronos foundation model (NeoQuasar/Kronos-base 102M / mini 4.1M, K-line forecasting transformer, MIT) as new ML trading strategy.
+- PHASE 2 brainstorm DONE: architecture-reviewer PRE-PLAN APPROVE_WITH_CONDITIONS (C1-C7) + trader-expert (V1-V5 + ESC-1).
+- Architecture C1-C7: torch in optional [ml] group (lazy import) / adapter boundary src/ml/kronos_adapter.py / predict-CACHE (offline precompute, NEVER inference-per-bar) / determinism seed+cache-checksum / weights gitignored+CI-mock / Decimal boundary / new component+reason codes. KEY reframe: Kronos = offline predict->cache->replay through existing on_bar, NOT inference-in-on_bar.
+- Trader V1-V5: pretrain data-leakage = look-ahead at model-weights level. WFA OOS invalid (in-sample disguised). Backtest = pipeline smoke-test ONLY, not gate. mini variant (ctx2048). Signal rule horizon=1 + locked threshold. sample_count determinism. N_trials NOT incremented until forward gate.
+- ESC-1 (operator decision REQUIRED before PHASE 3): (A) exploratory infra + forward paper-trade [rec] / (B) forward-only gate exception / (C) permanent research track.
+- PAUSED — operator продолжит в новой сессии. Branch feature/sprint-52-kronos created, brainstorm committed 212ce16. RESUME: read pre-s52-backlog.md → operator picks ESC-1 → PHASE 3 writing-plans.
