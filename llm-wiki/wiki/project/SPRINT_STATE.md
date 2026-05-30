@@ -1,16 +1,18 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 5 — T0-T10 complete. Enter verify.
+updated: 2026-05-30  # S52 PHASE 6/7 done — 9 reviewers + remediation R1-R4. Enter PHASE 8 ship.
 sprint: 52
-phase: 5-verify
+phase: 8-ship
 branch: feature/sprint-52-kronos
 tag: v0.1.0-alpha.51
 ---
 
 ## Текущий статус
 
-**S52 PHASE 5 verify — T0-T10 DONE.** Все задачи выполнены: `[ml]` dep group, KronosAdapter Protocol, PredictionCache (SHA-256+median), KronosStrategy on_bar, RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict, kronos_runner (exploratory), run_kronos_s52.py (M4 cache-build), dashboard 11 presets, CI mock+opt-in RUN_ML, ADR 0068 accepted + wiki sync. reason_codes 65→67, pytest 1449→1481. Entering PHASE 5 verify.
+**S52 PHASE 8 ship — T0-T10 done + PHASE 6 review remediated.** Kronos ML strategy внедрён: `[ml]` dep group, KronosAdapter Protocol, PredictionCache (SHA-256+median+manifest), KronosStrategy on_bar, RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict, kronos_runner exploratory, run_kronos_s52.py (M4 cache-build), dashboard 11 presets, CI mock+opt-in RUN_ML, ADR 0068 accepted + wiki sync. reason_codes 65→67, pytest 1449→**1494**, mypy 0/96.
+
+**PHASE 6: 9 parallel reviewers** → 3 APPROVE (python/trading-logic/doc) + 6 conditions. Remediation R1-R4 (4 commits): R1 threshold 0.6% break-even (был 0.25% < cost) + per-tf Sharpe + Bar.interval + revision-pin (security ACE) + ADR cost fix; R2 cache-key **manifest sidecar** (dashboard hit-parity, был 100% miss bug) + combo guard + trades JSON; R3 edge tests + **torch-stub sys.modules leak fix** (flaky CI averted); R4 doc resync. Все gates GREEN re-verified.
 
 **COMPUTE CONSTRAINT:** real Kronos inference = operator Mac M4 Pro MPS. Dev/CI = mocked adapter (C5). Infra built+mock-tested here; operator runs cache-build + exploratory backtest via `RUN_ML=1 scripts/run_kronos_s52.py` post-merge.
 
@@ -51,6 +53,13 @@ tag: v0.1.0-alpha.51
 - **free-form reason strings** (atr_breakout) — verify canonical enum.
 - Permanently deferred: 12mo MAINNET ADR / live trade feed widget / M4 __repr__ redaction.
 
+**S53 carries (S52 PHASE 6 review):**
+- **current-state.md split** (54KB > 50KB порог) — indexed parts per universal split pattern.
+- **backtest_runner.py 1500 LoC split** (god-object, 1636 LoC) — extract `_kronos_dispatch.py` при следующем touch (HARD-GATE @1500).
+- prediction-cache `put()` atomicity (tmp+os.replace) — нужно если cache станет concurrent (сейчас single-thread safe).
+- property test `median_ensemble` length invariant (Hypothesis).
+- integration test horizon=3 variant (operator M4, RUN_ML).
+
 ---
 
 ## Phase tracking
@@ -61,10 +70,10 @@ tag: v0.1.0-alpha.51
 | 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
 | 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
 | 4 Execute | done | T0-T10 complete |
-| 5 Verify | in_progress | pytest 1481 / mypy 0 / reason_codes 67 — verify checklist |
-| 6 Review | pending | — |
-| 7 Sync | pending | — |
-| 8 Ship | pending | — |
+| 5 Verify | done | pytest 1494 / mypy 0/96 / reason_codes 67 / Vitest 43 / tsc+build clean / torch-absent CI-isolated |
+| 6 Review | done | 9 reviewers → remediation R1-R4 (0d2ef1f/0d3b417/716c0c5/5d46c50), all re-verified GREEN |
+| 7 Sync | done | wiki synced (ADR 0068 + manifest docs + index/README) |
+| 8 Ship | in_progress | sprint-finish HARD-GATE |
 | 9 Close | pending | — |
 
 ---
