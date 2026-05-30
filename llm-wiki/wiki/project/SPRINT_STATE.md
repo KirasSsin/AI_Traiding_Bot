@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 PHASE 4 — T0-T8 done. Next: T9 CI mock + opt-in integration test.
+updated: 2026-05-30  # S52 PHASE 4 — T0-T9 done. Next: T10 ADR 0068 finalize + wiki sync.
 sprint: 52
 phase: 4-execution
 branch: feature/sprint-52-kronos
@@ -60,7 +60,7 @@ tag: v0.1.0-alpha.51
 | 1 Orient | done | session resume orient |
 | 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
 | 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
-| 4 Execute | in_progress | T0-T8 done. Next: T9 CI mock + opt-in integration test |
+| 4 Execute | in_progress | T0-T9 done. Next: T10 ADR 0068 finalize + wiki sync |
 | 5 Verify | pending | — |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
