@@ -13,6 +13,12 @@ from __future__ import annotations
 
 from typing import Any
 
+# Verdict constants for research-mode runners (string-typed, no enum — mirrors WFA_PASS/WFA_FAIL pattern).
+VERDICT_RAW_PRETRAIN_LEAKAGE = "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
+"""S52 T5 — ADR 0068: Kronos pretrained on history possibly overlapping backtest period.
+WFA OOS invalid. Exploratory only, NOT a gate (not promotable to live).
+"""
+
 
 def _subperiod_robustness_chunks(equity_curve: list[float], n_chunks: int = 5) -> list[float]:
     """Split equity_curve в n_chunks roughly equal chunks. Return per-chunk PnL delta.
@@ -51,6 +57,7 @@ def build_research_runner_envelope(
     trade_markers: dict[str, list[float | int]] | None = None,
     trades_list: list[Any] | None = None,  # S47 T13 — _TradeRecord-shaped
     initial_balance: float = 10000.0,  # S48 T7 (Bug H prereq)
+    verdict_override: str | None = None,  # S52 T5 — e.g. VERDICT_RAW_PRETRAIN_LEAKAGE
 ) -> dict[str, Any]:
     """Build dashboard-contract envelope от research runner outputs.
 
@@ -103,6 +110,21 @@ def build_research_runner_envelope(
     if wfa_result is not None:
         warnings = [w for w in warnings if w.get("code") != "raw_full_period"]
 
+    # S52 T5 — strip raw_full_period and inject pretrain_leakage warning when verdict_override set
+    if verdict_override == VERDICT_RAW_PRETRAIN_LEAKAGE:
+        warnings = [w for w in warnings if w.get("code") != "raw_full_period"]
+        warnings.insert(
+            0,
+            {
+                "level": "high",
+                "code": "pretrain_leakage",
+                "message": (
+                    "Kronos pretrained on history possibly overlapping backtest period — "
+                    "WFA OOS invalid, exploratory only, NOT a gate."
+                ),
+            },
+        )
+
     # S44 T4 — populate from wfa_result when present, else null sentinels (S42 RAW behavior)
     if wfa_result is not None:
         verdict_val = wfa_result.get("verdict", "RAW")
@@ -135,6 +157,11 @@ def build_research_runner_envelope(
         wfa_total_bars_val = 0
         fold_sharpes_val = []
         n_trades_val = n_trades
+
+    # S52 T5 — apply verdict_override after wfa_result logic (non-gating, acceptance_gate stays None)
+    if verdict_override is not None:
+        verdict_val = verdict_override
+        acceptance_gate_val = None
 
     # S47 T13 — derive n_winners/n_losers from trades_list if passed; else None.
     n_winners_d: int | None = None

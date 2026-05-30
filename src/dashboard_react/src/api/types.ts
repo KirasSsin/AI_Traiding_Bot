@@ -145,7 +145,7 @@ export interface DocsEnvelope {
   methodology: MethodologyDoc[]
 }
 
-export type Verdict = 'WFA_PASS' | 'WFA_FAIL' | 'WFA_FAIL_DATA' | 'PASS' | 'FAIL' | 'RAW'
+export type Verdict = 'WFA_PASS' | 'WFA_FAIL' | 'WFA_FAIL_DATA' | 'PASS' | 'FAIL' | 'RAW' | 'RAW_PRETRAIN_LEAKAGE_SUSPECTED'
 
 export interface BacktestRequestEcho {
   strategy_id: string

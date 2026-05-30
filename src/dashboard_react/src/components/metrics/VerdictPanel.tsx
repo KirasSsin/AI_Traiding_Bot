@@ -12,6 +12,7 @@ function verdictClass(verdict: Verdict): string {
     case 'PASS':
       return styles.verdictPass ?? ''
     case 'RAW':
+    case 'RAW_PRETRAIN_LEAKAGE_SUSPECTED':
       return styles.verdictRaw ?? ''
     case 'WFA_FAIL_DATA':
       return styles.verdictFailData ?? ''

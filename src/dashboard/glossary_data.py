@@ -82,6 +82,17 @@ GLOSSARY_ENTRIES: dict[str, GlossaryEntry] = {
         "applies_to": ["atr_breakout", "volume_breakout_iter10"],
         "adr_ref": None,
     },
+    "verdict_pretrain_leakage": {
+        "section": "verdict_status",
+        "description_ru": (
+            "S52 Kronos: pretrained модель обучена на истории, потенциально пересекающейся "
+            "с периодом backtest — WFA OOS невалиден (data contamination suspected). "
+            "Результат исключительно exploratory. НЕ является gate (не продвигается в live). "
+            "ADR 0068."
+        ),
+        "applies_to": ["kronos"],
+        "adr_ref": "ADR 0068",
+    },
     # === gate_blocking_metrics (5 entries) ===
     "t5_n_trades": {
         "section": "gate_blocking_metrics",
