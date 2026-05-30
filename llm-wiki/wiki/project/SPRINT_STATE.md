@@ -16,10 +16,6 @@ tag: v0.1.0-alpha.51
 
 **COMPUTE CONSTRAINT:** real Kronos inference = operator Mac M4 Pro MPS. Dev/CI = mocked adapter (C5). Infra built+mock-tested here; operator runs cache-build + exploratory backtest via `RUN_ML=1 scripts/run_kronos_s52.py` post-merge.
 
-**Execution T0-T10 (sequential, subagent-driven):**
-- T0 GATE 0 pretrain cutoff investigation (BLOCKING) → ADR 0068 leakage clause
-- T1 [ml] dep group / T2 kronos_adapter (torch boundary) / T3 predict-cache+determinism / T4 KronosStrategy on_bar + 2 reason codes (65→67) / T5 RAW_PRETRAIN_LEAKAGE_SUSPECTED verdict / T6 kronos_runner exploratory / T7 run script (M4) / T8 dashboard 11 presets / T9 CI mock+opt-in / T10 ADR+wiki sync
-
 **Не останавливаться до полного внедрения (operator directive).**
 
 **S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts). pytest 1449, mypy 0/91, reason codes 65.
