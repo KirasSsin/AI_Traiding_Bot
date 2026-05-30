@@ -18,7 +18,7 @@ tag: v0.1.0-alpha.50
 
 | # | Debt | Source | Severity | Fix |
 |---|------|--------|----------|-----|
-| D1 | 110072 dup-order retCode | S49 (bybit re-review) | HIGH (pre-mainnet) | map 110072→REJECT_DUPLICATE_ORDER, treat as success в flatten paths (idempotency complete, no spurious HALT). +retCode mapping test. |
+| D1 | 110072 dup-order retCode | S49 (bybit re-review) | HIGH (pre-mainnet) | **DONE** — 110072→REJECT_DUPLICATE_ORDER (bybit-local enum, canonical 65 unchanged). Flatten paths (_handle_sl_partial residual + _try_place_market_sell emergency) catch BybitAPIError, pin retCode==110072 → success (idempotency complete, no spurious HALT). Mirrors 110001 pattern. RED→GREEN; genuine-error guard still HALTs. |
 | D2 | parquet manifest/partition | S49 (data-integrity) | MEDIUM | SHA-256 manifest + document flat-filename layout. OR honest "deferred" ADR note if scope-heavy. |
 | D3 | block_bootstrap edge-null | S49 (quant) | LOW | **DONE** `109462a` — docstring warning + gate-promotion guard test (AST-parse research_wfa assert sign_flip gate, not block_bootstrap). |
 | D4 | atr_breakout windowed-ATR | S50 (trading-logic) | HIGH (shipped LOCKED) | live/backtest parity check: did ADR 0064 WFA use streaming on_bar OR vectorized? If divergent → ADR note + (maybe) incremental-ATR fix mirroring S50 Supertrend. |
@@ -36,7 +36,7 @@ tag: v0.1.0-alpha.50
 
 ## Следующее действие
 
-**S51 PHASE 3 plan** — writing-plans 6-debt TDD plan на `feature/sprint-51-debt-closing`. D4 (atr_breakout parity) = highest priority (shipped code). D1 (dup-order) = pre-mainnet HIGH.
+**S51 PHASE 4** — D1 (110072 dup-order) DONE, D3+D6 DONE. Осталось: D4 (atr_breakout parity, highest priority shipped code), D2 (parquet manifest), D5 (cross_trial pool scoping, trader-expert verdict).
 
 ## S52+ ROADMAP
 
