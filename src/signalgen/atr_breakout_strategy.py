@@ -22,6 +22,17 @@ Invariant: signal evaluated on closed bar(T) using data through bar(T-1)
 (no look-ahead per execution-timing.md). Execution at open(T+1) per
 existing FSM contract.
 
+ATR parity (D4, S51): BOTH Wilder ATRs (signal period + stop period) are
+maintained INCREMENTALLY over full history via the canonical RMA recursion
+(O(1) per bar, mirrors SupertrendStrategy._update_atr) — exactly matching
+src.signalgen.indicators.wilder_atr and the backtest runner _atr. Previously
+the ATRs were recomputed over a bounded sliding deque (maxlen = max_period +
+10), which re-seeded the recursion every bar once saturated → live ATR
+diverged up to ~39% rel from the full-history path the WFA (ADR 0064)
+validated. The signal indexing (atr[-2] / closes[-2,-3]) and entry/exit
+semantics are UNCHANGED — only the ATR *values* are corrected (no re-seed).
+See ADR 0064 amendment + tests/unit/test_atr_breakout_parity.py.
+
 Thread-safety: NOT thread-safe — single-producer per symbol pattern
 (per ADR 0023 single-writer invariant).
 
@@ -31,16 +42,14 @@ Reference implementation: scripts/autoresearch_endless.py::strat_atr_breakout
 
 from __future__ import annotations
 
+import math
 from collections import deque
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
-import numpy as np
-
 from src.marketdata.models import Bar
 from src.risk.reason_codes import ReasonCode
-from src.signalgen.indicators import wilder_atr
 from src.signalgen.models import Signal, SignalSide
 
 # ADR 0060 LOCKED — DO NOT modify without a new ADR amendment.
@@ -123,11 +132,61 @@ ATR_BREAKOUT_LOCKED_PARAMS_BY_COMBO: dict[tuple[str, str], dict[str, object]] = 
 _ZERO = Decimal("0")
 
 
+class _WilderATR:
+    """Incremental Wilder ATR over FULL history (O(1) per bar).
+
+    Exact canonical RMA matching src.signalgen.indicators.wilder_atr /
+    atr_breakout_runner._atr:
+      - TR[0] = high[0] - low[0]   (prev_close[0] = close[0] convention).
+      - TR[i] = max(high-low, |high-prev_close|, |low-prev_close|).
+      - Seed at bar index ``period-1``: ATR = mean(TR[0..period-1]).
+      - Recursion thereafter: ATR = (ATR*(period-1) + TR[i]) / period.
+
+    Exposes ``current`` (ATR through the latest bar) and ``previous`` (ATR
+    through the bar before it) — None until the respective bar is seeded. These
+    reproduce the old windowed array's ``[-1]`` / ``[-2]`` reads WITHOUT the
+    sliding-window re-seed (the D4 defect).
+    """
+
+    def __init__(self, period: int) -> None:
+        self._period = period
+        self._prev_atr: float | None = None
+        self._prev_close: float | None = None  # close[i-1] for TR
+        self._tr_seed: list[float] = []
+        self.current: float | None = None
+        self.previous: float | None = None
+
+    def update(self, high: float, low: float, close: float) -> None:
+        if self._prev_close is None:
+            tr = high - low  # bar 0: prev_close == close[0] -> TR collapses to h-l
+        else:
+            prev_close = self._prev_close
+            tr = max(high - low, abs(high - prev_close), abs(low - prev_close))
+        self._prev_close = close
+
+        if self._prev_atr is None:
+            self._tr_seed.append(tr)
+            if len(self._tr_seed) < self._period:
+                new = None
+            else:  # seed bar (index period-1): ATR = mean of first `period` TRs
+                self._prev_atr = sum(self._tr_seed) / self._period
+                self._tr_seed = []
+                new = self._prev_atr
+        else:
+            self._prev_atr = (self._prev_atr * (self._period - 1) + tr) / self._period
+            new = self._prev_atr
+
+        self.previous = self.current
+        self.current = new
+
+
 class ATRBreakoutStrategy:
     """Stateful ATR breakout long-only strategy.
 
-    Internal state: rolling deque of last (buffer_size) bars, current_side,
-    and entry_close when LONG.
+    Internal state: incremental full-history Wilder ATR carries (signal + stop),
+    a small rolling close buffer (for the close[-2]/close[-3] references),
+    current_side, and entry_close when LONG. The ATRs are full-history O(1)
+    recursions — NOT windowed recomputes (D4, S51).
 
     warmup gate = max(atr_period, atr_stop_period) + 3  (mirrors research warmup)
 
@@ -145,11 +204,22 @@ class ATRBreakoutStrategy:
 
         # warmup mirrors research: max(atr_period, atr_stop_period) + 3
         self._warmup: int = max(self._atr_period, self._atr_stop_period) + 3
-        self._buffer_size: int = max(self._atr_period, self._atr_stop_period) + 10
 
-        self._highs: deque[float] = deque(maxlen=self._buffer_size)
-        self._lows: deque[float] = deque(maxlen=self._buffer_size)
-        self._closes: deque[float] = deque(maxlen=self._buffer_size)
+        # Small rolling close buffer — only the close[-2]/close[-3] references
+        # are needed (no longer used for ATR; ATR is incremental full-history).
+        self._closes: deque[float] = deque(maxlen=max(self._atr_period, self._atr_stop_period) + 10)
+
+        # Incremental full-history Wilder ATR (signal + stop). When the two
+        # periods coincide the stop ATR aliases the signal ATR (research parity).
+        self._atr_signal = _WilderATR(self._atr_period)
+        self._atr_stop_calc: _WilderATR | None = (
+            None if self._atr_stop_period == self._atr_period else _WilderATR(self._atr_stop_period)
+        )
+
+        # Last ATR values the strategy holds for the just-processed bar (through
+        # bar T). None during warmup. Exposed for parity testing / observability.
+        self._last_atr_signal: float | None = None
+        self._last_atr_stop: float | None = None
 
         self._current_side: SignalSide = SignalSide.FLAT
         # entry_close stored so ATR stop can be computed from it
@@ -170,36 +240,38 @@ class ATRBreakoutStrategy:
         if not bar.is_closed:
             return None
 
-        # Append OHLC to rolling buffers
-        self._highs.append(float(bar.high))
-        self._lows.append(float(bar.low))
-        self._closes.append(float(bar.close))
+        high = float(bar.high)
+        low = float(bar.low)
+        close = float(bar.close)
+
+        # Advance both incremental full-history ATRs (recursion sees full history).
+        self._atr_signal.update(high, low, close)
+        if self._atr_stop_calc is not None:
+            self._atr_stop_calc.update(high, low, close)
+        self._closes.append(close)
+
+        # ATR through bar T (current) for the stop level + Signal.atr_14.
+        atr_stop_curr = (
+            self._atr_stop_calc.current
+            if self._atr_stop_calc is not None
+            else self._atr_signal.current
+        )
+        self._last_atr_signal = self._atr_signal.current
+        self._last_atr_stop = atr_stop_curr
 
         # Warmup gate
         if len(self._closes) < self._warmup:
             return None
 
-        closes_arr = np.array(self._closes, dtype=np.float64)
-        highs_arr = np.array(self._highs, dtype=np.float64)
-        lows_arr = np.array(self._lows, dtype=np.float64)
-
-        # ATR arrays (Wilder)
-        atr_signal = self._wilder_atr(highs_arr, lows_arr, closes_arr, self._atr_period)
-        atr_stop = (
-            self._wilder_atr(highs_arr, lows_arr, closes_arr, self._atr_stop_period)
-            if self._atr_stop_period != self._atr_period
-            else atr_signal
-        )
-
-        # Need valid ATR at index [-2] (bar T-2) for signal computation
-        if len(atr_signal) < 2 or np.isnan(atr_signal[-2]):
+        # Signal ATR through bar T-1 (== old windowed atr_signal[-2], now full-history).
+        atr_at_prev_prev = self._atr_signal.previous
+        if atr_at_prev_prev is None:
             return None
 
-        prev_close = closes_arr[-2]  # bar(T-1) close
-        prev_prev_close = closes_arr[-3] if len(closes_arr) >= 3 else float("nan")  # bar(T-2) close
-        atr_at_prev_prev = atr_signal[-2]  # atr[i-2] in research notation
+        prev_close = self._closes[-2]  # bar(T-1) close
+        prev_prev_close = self._closes[-3] if len(self._closes) >= 3 else float("nan")  # bar(T-2)
 
-        if np.isnan(prev_prev_close) or np.isnan(atr_at_prev_prev):
+        if math.isnan(prev_prev_close):
             return None
 
         # ------------------------------------------------------------------
@@ -210,11 +282,10 @@ class ATRBreakoutStrategy:
             if prev_close > prev_prev_close + self._atr_breakout_mult * atr_at_prev_prev:
                 self._current_side = SignalSide.LONG
                 self._entry_close = prev_close
-                atr_val = float(atr_stop[-1]) if not np.isnan(atr_stop[-1]) else None
                 return self._build_signal(
                     bar,
                     SignalSide.LONG,
-                    atr_val=atr_val,
+                    atr_val=atr_stop_curr,
                     reason=ReasonCode.ENTRY_LONG_ATR_BREAKOUT,
                 )
             return None
@@ -223,7 +294,7 @@ class ATRBreakoutStrategy:
         # Exit logic — LONG → FLAT
         # ------------------------------------------------------------------
         if self._current_side == SignalSide.LONG:
-            atr_val = float(atr_stop[-1]) if not np.isnan(atr_stop[-1]) else None
+            atr_val = atr_stop_curr
 
             # Priority 1: reverse ATR breakdown
             # close[i-1] < close[i-2] - atr_breakout_mult * atr[i-2]
@@ -258,20 +329,6 @@ class ATRBreakoutStrategy:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-
-    @staticmethod
-    def _wilder_atr(
-        highs_arr: np.ndarray,
-        lows_arr: np.ndarray,
-        closes_arr: np.ndarray,
-        period: int,
-    ) -> np.ndarray:
-        """Wilder ATR — delegates to indicators.wilder_atr (manual RMA recursion).
-
-        Thin wrapper preserved for call-site stability; logic lives in
-        src.signalgen.indicators.wilder_atr (shared with Supertrend).
-        """
-        return wilder_atr(highs_arr, lows_arr, closes_arr, period)
 
     def _build_signal(
         self,

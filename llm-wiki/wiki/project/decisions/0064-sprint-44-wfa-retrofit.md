@@ -1,9 +1,9 @@
 ---
 title: "0064. Sprint 44 — WFA retrofit (research presets acceptance gate restoration)"
 type: decision
-tags: [adr, sprint-44, wfa-retrofit, dsr, mc, acceptance-gate, atr-breakout, volume-breakout]
+tags: [adr, sprint-44, wfa-retrofit, dsr, mc, acceptance-gate, atr-breakout, volume-breakout, parity, sprint-51]
 created: 2026-05-10
-updated: 2026-05-10
+updated: 2026-05-30
 status: accepted
 sources:
   - llm-wiki/wiki/project/pre-s44-backlog.md
@@ -74,6 +74,57 @@ S44 = restore epistemic discipline.
 - mypy --strict: 0 errors.
 - Canonical counts: 16/30/74/56 unchanged.
 - Manual smoke: all 11 combos returning honest WFA verdict, dashboard renders TIER 1-6 + DSR + MC table.
+
+## Дополнение D4 (S51, 2026-05-30) — live/backtest ATR parity (windowed re-seed fix)
+
+**Проблема (trading-logic-reviewer S50 carry-over).** WFA в S44 валидировал
+параметры через full-history vectorized Wilder ATR (`atr_breakout_runner._atr`,
+которая идентична `src.signalgen.indicators.wilder_atr`). Но live
+`ATRBreakoutStrategy.on_bar` пересчитывал ОБА Wilder ATR (signal period=9 и
+stop period=21) на ограниченном sliding deque (`maxlen = max(period) + 10 = 31`).
+Wilder ATR — рекурсивный RMA; на скользящем окне он **пере-инициализируется
+(re-seed) каждый бар** после насыщения буфера → live ATR расходится с
+full-history путём, который WFA подтвердил. Тот же класс дефекта, что S50
+исправил в Supertrend (`_update_atr`).
+
+**Измерено эмпирически (BTCUSDT 4H, 7273 бара, LOCKED params):**
+
+| Метрика | Значение (windowed vs full-history) |
+|---------|-------------------------------------|
+| stop ATR (p=21): max rel diff | 38.72% |
+| stop ATR (p=21): mean rel diff | 5.72% (88.7% баров > 1%) |
+| signal ATR (p=9): max rel diff | 10.44% |
+| **SIGNAL-BAR FLIPS (windowed vs full-history, при ОДИНАКОВОЙ [-2] индексации)** | **16** |
+| entries/exits windowed | 13 / 13 |
+| entries/exits full-history | 9 / 9 |
+
+16 расхождений сигналов = live торговал иначе, чем WFA валидировал →
+**MATERIAL** на SHIPPED LOCKED стратегии.
+
+**Решение (S51 D4, TDD).** `on_bar` теперь держит оба Wilder ATR
+**инкрементально по полной истории** (helper `_WilderATR`, O(1)/бар) — зеркало
+`indicators.wilder_atr` и backtest runner `_atr`, без windowed re-seed.
+Сигнальная индексация (`atr[-2]` / `closes[-2,-3]`) и entry/exit семантика
+СОХРАНЕНЫ — менялись только ATR-значения. Параметры НЕ менялись (windowed
+re-seed БЫЛ багом). Parity тесты (`tests/unit/test_atr_breakout_parity.py`):
+streaming ATR == full-history `_atr` в пределах 1e-9 на 7273-баровой серии
+BTCUSDT 4H + 600-баровой синтетике. Full unit suite GREEN (1245 passed), mypy 0.
+
+### Открытый follow-up (НЕ в scope D4 — flagged оператору)
+
+При измерении обнаружен **второй, более крупный** дефект, отдельный от
+windowed re-seed: **ATR-index offset**. Live `on_bar` оценивает breakout по
+`close[T-1]` + `atr_signal[T-1]` (на бар позже), тогда как research kernel
+использует данные через `i-1` с заполнением `open[i]` (research entry bar i ⇔
+streaming decision bar i-1). Из-за этого с full-history ATR live даёт 9 entries
+против 28 у research kernel на BTCUSDT 4H (9 vs 28). Это исправление меняло бы
+больше, чем re-seed, и требует отдельного решения (потенциально новый ADR про
+streaming↔backtest signal-bar parity для всех breakout-стратегий). Помечено для
+оператора, в D4 НЕ трогалось.
+
+## Статус
+
+accepted (2026-05-08) — amended D4 windowed-ATR parity fix (2026-05-30, S51)
 
 ## Связанные
 
