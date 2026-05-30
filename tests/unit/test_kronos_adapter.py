@@ -89,3 +89,90 @@ def test_model_adapter_accepts_variant_and_raises_two_step_hint() -> None:
     msg = str(exc.value)
     assert "submodule" in msg.lower()
     assert "[ml]" in msg
+
+
+# ---------------------------------------------------------------------------
+# T8 / CC3: predict() call-contract guard (torch-free)
+# ---------------------------------------------------------------------------
+
+
+class _StandInPredictor:
+    """Records kwargs passed to .predict() and returns a synthetic pred_df."""
+
+    def __init__(self) -> None:
+        self.recorded_kwargs: dict[str, object] = {}
+
+    def predict(self, **kwargs: object) -> pd.DataFrame:
+        self.recorded_kwargs = kwargs
+        # Return a minimal DataFrame with a 'close' column (horizon=2 rows).
+        return pd.DataFrame({"close": [100.5, 101.0]})
+
+
+def _make_adapter_without_torch(
+    temperature: float = 1.0,
+    top_p: float = 0.9,
+    sample_count: int = 20,
+    max_context: int = 64,
+) -> tuple["KronosModelAdapter", _StandInPredictor]:
+    """Construct KronosModelAdapter bypassing the torch __init__."""
+    from src.ml.kronos_adapter import KronosModelAdapter
+
+    adapter: KronosModelAdapter = object.__new__(KronosModelAdapter)
+    stand_in = _StandInPredictor()
+    adapter._predictor = stand_in  # type: ignore[attr-defined]
+    adapter._device = "cpu"  # type: ignore[attr-defined]
+    adapter._max_context = max_context  # type: ignore[attr-defined]
+    adapter._temperature = temperature  # type: ignore[attr-defined]
+    adapter._top_p = top_p  # type: ignore[attr-defined]
+    adapter._sample_count = sample_count  # type: ignore[attr-defined]
+    return adapter, stand_in
+
+
+def test_predict_forwards_correct_kwargs_to_predictor() -> None:
+    """Lock the call contract: predict() must forward exactly the real Kronos API kwargs."""
+    adapter, stand_in = _make_adapter_without_torch(
+        temperature=1.0, top_p=0.9, sample_count=20, max_context=8
+    )
+
+    # Build a tiny OHLCV DataFrame with at least 2 rows (need interval inference).
+    start = datetime(2025, 1, 1)
+    index = pd.DatetimeIndex([start + timedelta(hours=i) for i in range(10)])
+    df = pd.DataFrame(
+        {
+            "open": [100.0 + i for i in range(10)],
+            "high": [101.0 + i for i in range(10)],
+            "low": [99.0 + i for i in range(10)],
+            "close": [100.5 + i for i in range(10)],
+            "volume": [1000.0 + i for i in range(10)],
+        },
+        index=index,
+    )
+
+    horizon = 2
+    result = adapter.predict(df, lookback=8, horizon=horizon)
+
+    # Verify call contract: exactly these kwargs, no extras.
+    kw = stand_in.recorded_kwargs
+    expected_keys = {"df", "x_timestamp", "y_timestamp", "pred_len", "T", "top_p", "sample_count"}
+    assert set(kw.keys()) == expected_keys, f"Unexpected kwargs: {set(kw.keys()) ^ expected_keys}"
+
+    # Scalar params forwarded from adapter fields.
+    assert kw["pred_len"] == horizon
+    assert kw["T"] == 1.0
+    assert kw["top_p"] == 0.9
+    assert kw["sample_count"] == 20
+
+    # Timestamp indices: x_timestamp = last max_context rows, y_timestamp = future.
+    assert isinstance(kw["x_timestamp"], pd.DatetimeIndex)
+    assert isinstance(kw["y_timestamp"], pd.DatetimeIndex)
+    assert len(kw["y_timestamp"]) == horizon  # type: ignore[arg-type]
+
+    # Result: list[Decimal] read from pred_df["close"].
+    assert isinstance(result, list)
+    assert len(result) == horizon
+    for val in result:
+        assert isinstance(val, Decimal), f"Expected Decimal, got {type(val)}"
+
+    # Values match the stand-in's close column.
+    assert result[0] == Decimal(str(100.5))
+    assert result[1] == Decimal(str(101.0))
