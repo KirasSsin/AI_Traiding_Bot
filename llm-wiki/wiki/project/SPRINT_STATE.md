@@ -60,7 +60,7 @@ tag: v0.1.0-alpha.51
 | 1 Orient | done | session resume orient |
 | 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
 | 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
-| 4 Execute | in_progress | T0-T2 done. Next: T3 prediction-cache + determinism |
+| 4 Execute | in_progress | T0-T3 done. Next: T4 KronosStrategy on_bar + 2 reason codes (65->67) |
 | 5 Verify | pending | — |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
