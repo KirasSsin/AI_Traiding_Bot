@@ -64,3 +64,21 @@ def test_donchian_runner_uses_trial_mean_fold_oos_sharpe() -> None:
         "aggregate_oos_sharpe" not in src_text
     ), "ADR 0056: variable renamed to trial_mean_fold_oos_sharpe"
     assert "trial_mean_fold_oos_sharpe" in src_text
+
+
+def test_donchian_runner_sigma_sr_is_within_class_scoped() -> None:
+    """S51 D5 — donchian sources sigma_SR WITHIN-CLASS, not from the global pool.
+
+    The pre-D5 inline `statistics.stdev(cross_trial_sharpes)` over the GLOBAL pool
+    confounded cross-strategy-class contamination (S44 atr_breakout −89 poisoned
+    the donchian variance term). It MUST now call sigma_sr(strategy_class=...).
+    """
+    src_text = (Path(__file__).parents[2] / "src" / "backtest" / "donchian_runner.py").read_text()
+    assert (
+        "statistics.stdev(cross_trial_sharpes)" not in src_text
+    ), "S51 D5 REMOVED: global-pool stdev (cross-class contamination)"
+    assert (
+        "sigma_sr(strategy_class=" in src_text
+    ), "S51 D5: donchian must source within-class sigma_SR"
+    # N_trials stays GLOBAL (anti-snooping) — the LOCKED breadth constant unchanged.
+    assert "N_TRIALS_LOCKED = 5" in src_text

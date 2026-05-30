@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import logging
 import math
-import statistics
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Protocol
@@ -115,6 +114,7 @@ def run_research_wfa(
     n_trials: int = 1,  # S45 C1 — fail-safe default. Multi-hypothesis callers must explicit pass.
     cross_trial_log_path: Path | None = None,
     sprint_tag: str = "S44",
+    strategy_class: str = "unknown",
 ) -> dict[str, Any]:
     """Run WFA для research-mode runner. Returns verdict dict ready для envelope.
 
@@ -139,6 +139,10 @@ def run_research_wfa(
     that DO fit per fold (future), wrap backtest_fn that uses train_slice.
         cross_trial_log_path: cross-trial Sharpe log path (для DSR sigma_SR).
         sprint_tag: tag для potential CrossTrialLog append (currently unused).
+        strategy_class: runner family for S51 D5 two-level DSR scoping (e.g.
+            "supertrend", "atr_breakout"). sigma_SR is computed WITHIN this class;
+            N_trials stays GLOBAL (the n_trials arg). Default "unknown" preserves
+            legacy callers.
 
     Returns:
         dict с keys: verdict (WFA_PASS/WFA_FAIL/WFA_FAIL_DATA), failed_criteria,
@@ -249,13 +253,13 @@ def run_research_wfa(
         bars_per_year=bars_per_year,
     )
 
-    # DSR per ADR 0056 sigma_SR sourcing hierarchy.
+    # DSR per ADR 0056 sigma_SR sourcing hierarchy + S51 D5 two-level pool scoping.
     if cross_trial_log_path is None:
         cross_trial_log_path = Path("data/cross_trial_sharpes.json")
     trial_log = CrossTrialLog(path=cross_trial_log_path)
-    pre_existing = trial_log.get_oos_sharpes()
 
-    # S44 T9 — append к cross-trial log (skip if no valid sharpe)
+    # S44 T9 — append к cross-trial log (skip if no valid sharpe). S51 D5: tag the
+    # entry with its strategy_class so sigma_SR can be scoped per-class downstream.
     if not math.isnan(trial_mean_fold_oos_sharpe):
         try:
             sprint_int = int("".join(filter(str.isdigit, sprint_tag)) or "0")
@@ -266,6 +270,7 @@ def run_research_wfa(
             trial_log.append_trial(
                 sprint=sprint_int,
                 symbol=f"{symbol}_{params.get('atr_period', '?')}_{_mult}",
+                strategy_class=strategy_class,
                 oos_sharpe=trial_mean_fold_oos_sharpe,
             )
         except Exception:  # noqa: BLE001 — best-effort cross-trial log append; never break verdict on log write
@@ -273,25 +278,42 @@ def run_research_wfa(
             _log.warning(
                 "research_wfa.cross_trial_log_append_failed symbol=%s", symbol, exc_info=True
             )
-    cross_trial_sharpes = pre_existing + [trial_mean_fold_oos_sharpe]
-    if len(cross_trial_sharpes) >= 3 and not math.isnan(trial_mean_fold_oos_sharpe):
-        sigma_sr: float | None = statistics.stdev(cross_trial_sharpes)
-    elif len(cross_trial_sharpes) >= 1:
-        sigma_sr = float("nan")
-    else:
-        sigma_sr = None
 
-    if (
-        sigma_sr is not None
-        and not math.isnan(sigma_sr)
-        and not math.isnan(trial_mean_fold_oos_sharpe)
-    ):
-        dsr_info = compute_dsr_with_status(
-            trades=adapted_trades, n_trials=n_trials, sigma_sr=sigma_sr
-        )
+    # S51 D5 (trader-expert verdict e) — TWO-LEVEL pool scoping:
+    #   - sigma_SR: WITHIN-CLASS stdev (variance term, Bailey eq.13). A wild
+    #     cross-family OOS Sharpe (S44 atr_breakout ETH −89) must NOT poison a
+    #     supertrend DSR — computed over the strategy_class subset only.
+    #   - N_trials: GLOBAL breadth (the caller's pre-registered family count,
+    #     Bailey eq.12). Stays the `n_trials` arg — a fresh class does NOT reset
+    #     the multiple-testing penalty (anti-snooping).
+    # REMOVED (S51 D5): GLOBAL-pool stdev(pre_existing + [trial]) — it confounded
+    # cross-strategy-class selection variance per the verdict.
+    sigma_sr: float | None = trial_log.sigma_sr(strategy_class=strategy_class)
+
+    effective_n_trials = n_trials
+    effective_sigma: float | None = sigma_sr
+    if n_trials <= 1:
+        # Single pre-registered hypothesis — no multiple-testing penalty applicable.
+        sigma_scope_status = "SINGLE_TRIAL"
+        effective_sigma = None
+    elif sigma_sr is None or math.isnan(sigma_sr) or math.isnan(trial_mean_fold_oos_sharpe):
+        # Global breadth says multi-testing, but this class has <3 honest entries →
+        # within-class variance is statistically inadmissible (ADR 0056). Do NOT
+        # raise, do NOT silently apply the penalty. Compute DSR honestly at
+        # n_trials=1; the verdict rests on fill-timing-independent gates
+        # (sharpe_gate / MC / T5) — exactly how S50 correctly FAILed without DSR.
+        sigma_scope_status = "INSUFFICIENT_CLASS_HISTORY"
+        effective_n_trials = 1
+        effective_sigma = None
     else:
-        # DEGENERATE OR EMPTY log path: n_trials=1, no multi-testing penalty.
-        dsr_info = compute_dsr_with_status(trades=adapted_trades, n_trials=1)
+        # >=3 within-class entries → finite class sigma; apply full global breadth.
+        sigma_scope_status = "CLASS_SCOPED"
+
+    dsr_info = compute_dsr_with_status(
+        trades=adapted_trades,
+        n_trials=effective_n_trials,
+        sigma_sr=effective_sigma,
+    )
     dsr_value = dsr_info["dsr"]
 
     # Acceptance gate (ADR 0052 thresholds).
@@ -327,6 +349,7 @@ def run_research_wfa(
         "dsr_pass": dsr_pass,
         "dsr_status": dsr_info["status"],
         "sigma_sr_cross_trial": sigma_sr,
+        "sigma_scope_status": sigma_scope_status,
         "n_trades_raw": n_trades_raw,
         "n_trials": n_trials,
         "wfa_params": {
