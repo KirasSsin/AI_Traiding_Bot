@@ -135,6 +135,8 @@ def test_exit_flat_when_pred_below_current(base_time: datetime, tmp_path) -> Non
     assert sig is not None
     assert sig.side == SignalSide.FLAT
     assert sig.reason == ReasonCode.EXIT_FLAT_KRONOS.value
+    # EXIT_FLAT fires before ATR has warmed — atr_14 must be _ZERO (locked design)
+    assert sig.atr_14 == Decimal("0")
 
 
 def test_no_signal_within_band(base_time: datetime, tmp_path) -> None:
@@ -322,3 +324,32 @@ def test_entry_blocked_until_atr_warmed(base_time: datetime, tmp_path: Path) -> 
     _put_prediction(cache, bar, Decimal("101.00"))  # would-be ENTRY_LONG
     # First bar -> ATR still in warm-up (None) -> no trade despite entry condition.
     assert strat.on_bar(bar) is None
+
+
+def test_entry_blocked_when_atr_is_zero(base_time: datetime, tmp_path: Path) -> None:
+    """ENTRY condition met but 14+ zero-range bars seed ATR=0 -> on_bar returns None.
+
+    If all seed bars have zero TR (high==low==close), Wilder ATR seeds to 0.0 —
+    the zero-ATR gate (atr <= 0) must refuse the ENTRY to avoid zero-denominator
+    bracket sizing downstream. EXIT_FLAT is unaffected (no ATR dependency).
+    """
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    # Feed 14 zero-range bars (high == low == close → TR = 0 each bar).
+    last = base_time
+    for i in range(14):
+        ct = base_time + timedelta(hours=i)
+        bar = _make_bar(close_time=ct, close=100.0, high=100.0, low=100.0)
+        strat.on_bar(bar)  # no cached prediction → None, but ATR advances toward 0
+        last = ct
+
+    # After 14 zero-range bars the Wilder ATR should be warmed (not None) but == 0.
+    assert strat._last_atr is not None, "ATR should be seeded after 14 bars"
+    assert strat._last_atr == Decimal("0"), f"Expected ATR=0 but got {strat._last_atr}"
+
+    # Entry bar with ENTRY_LONG condition met: pred well above current close.
+    entry_ct = last + timedelta(hours=1)
+    entry_bar = _make_bar(close_time=entry_ct, close=100.0, high=100.0, low=100.0)
+    _put_prediction(cache, entry_bar, Decimal("101.00"))  # > 100.60 → would-be ENTRY_LONG
+    # Zero-ATR gate must block ENTRY (atr_14=0 means no valid SL/TP bracket).
+    assert strat.on_bar(entry_bar) is None

@@ -390,3 +390,63 @@ def test_run_kronos_dispatch_matching_variant_hits(tmp_path: Path) -> None:
 
     assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
     assert result["n_trades"] > 0, "mini-keyed cache + mini variant request → should produce hits"
+
+
+def test_run_kronos_dispatch_base_matching_variant_hits(tmp_path: Path) -> None:
+    """Requesting variant='base' against base manifest + base-keyed cache → hits (H2)."""
+    import json
+    from datetime import timedelta
+    from decimal import Decimal
+    from unittest.mock import patch
+
+    from src.dashboard._kronos_dispatch import run_kronos_dispatch
+    from src.ml.kronos_variant import KRONOS_BASE
+    from src.ml.prediction_cache import CacheKey, PredictionCache
+
+    base_cache = tmp_path / "kr_cache_base_hits"
+    base_cache.mkdir()
+
+    # Write manifest with base model_id
+    manifest = {
+        "schema_version": 1,
+        "model_id": KRONOS_BASE.model_id,
+        "weights_hash": "aabbccddeeff",
+        "params_hash": "1122334455",
+        "device": "mps",
+        "combos": [{"symbol": "BTCUSDT", "timeframe": "1h", "n_entries": 1}],
+    }
+    (base_cache / "_manifest.json").write_text(json.dumps(manifest, indent=2))
+
+    df = _make_ohlcv_df(50)
+    fire_bar = 20
+    cache = PredictionCache(base_cache)
+    open_time = pd.Timestamp(df["_ts"].iloc[fire_bar]).to_pydatetime()
+    bar_close_ts = int((open_time + timedelta(hours=1)).timestamp())
+    current_close = float(df["close"].iloc[fire_bar])
+    key = CacheKey(
+        model_id=KRONOS_BASE.model_id,
+        weights_hash="aabbccddeeff",
+        symbol="BTCUSDT",
+        timeframe="1h",
+        bar_close_ts=bar_close_ts,
+        params_hash="1122334455",
+        device="mps",
+    )
+    cache.put(key, [Decimal(str(current_close * 1.10))])
+
+    run_id, cache_path = _make_run_id_and_cache_path(tmp_path)
+    preset = _make_preset()
+    req = _make_req_with_variant("base")
+
+    with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
+        result = run_kronos_dispatch(
+            req,
+            preset=preset,
+            run_id=run_id,
+            cache_path=cache_path,
+            runs_dir=tmp_path / "runs",
+            cache_dir=base_cache,
+        )
+
+    assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
+    assert result["n_trades"] > 0, "base-keyed cache + base variant request → should produce hits"

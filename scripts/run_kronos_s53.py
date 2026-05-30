@@ -363,6 +363,17 @@ def main(argv: list[str] | None = None) -> int:
         print("Results carry VERDICT_RAW_PRETRAIN_LEAKAGE_SUSPECTED — EXPLORATORY ONLY.")
         return 0
 
+    # ── SECURITY: KRONOS_REVISION must be pinned before any RUN_ML=1 run ────────
+    # Unpinned from_pretrained deserializes arbitrary checkpoint from HuggingFace
+    # (torch.load pickle = ACE surface). Operator MUST set KRONOS_REVISION to a
+    # verified commit SHA before running with RUN_ML=1.
+    if KRONOS_REVISION is None:
+        print(
+            "SECURITY: set KRONOS_REVISION=<verified sha> before RUN_ML=1 "
+            "— unpinned weights = ACE risk"
+        )
+        return 1
+
     # ── torch/Kronos imports — ONLY inside RUN_ML branch ──────────────────────
     import torch  # type: ignore[import-not-found]  # noqa: PLC0415 — guarded import
     from src.ml.kronos_adapter import KronosModelAdapter  # noqa: PLC0415

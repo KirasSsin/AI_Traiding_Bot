@@ -13,6 +13,7 @@ no module-level torch import lives anywhere outside ``src/ml/``. The
 
 from __future__ import annotations
 
+import contextlib
 from decimal import Decimal
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
@@ -95,15 +96,20 @@ class KronosModelAdapter:
         kronos_root = os.path.normpath(
             os.path.join(os.path.dirname(__file__), "..", "..", "third_party", "kronos")
         )
+        inserted = False
+        if kronos_root not in sys.path:
+            sys.path.insert(0, kronos_root)
+            inserted = True
         try:
-            if kronos_root not in sys.path:
-                sys.path.insert(0, kronos_root)
             from model import (  # type: ignore[import-not-found]
                 Kronos,
                 KronosPredictor,
                 KronosTokenizer,
             )
         except ImportError as exc:
+            if inserted:
+                with contextlib.suppress(ValueError):
+                    sys.path.remove(kronos_root)
             raise ImportError(
                 "Kronos model code / torch unavailable. Two steps required: "
                 "1) git submodule update --init third_party/kronos  "

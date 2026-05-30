@@ -160,7 +160,7 @@ def test_kronos_dispatch_no_cache_no_crash(tmp_runs_dir: Path, empty_cache_dir: 
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = empty_cache_dir  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -197,7 +197,7 @@ def test_kronos_dispatch_no_cache_returns_structured_result(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = empty_cache_dir  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -248,7 +248,7 @@ def test_kronos_dispatch_with_cache_returns_leakage_verdict(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = populated_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -347,7 +347,7 @@ def test_kronos_dispatch_manifest_keyed_cache_produces_hits(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = real_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -387,7 +387,7 @@ def test_kronos_dispatch_manifest_present_but_bar_missing_is_legit_miss(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = real_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -417,7 +417,7 @@ def test_kronos_dispatch_no_manifest_is_not_built_path(tmp_runs_dir: Path, tmp_p
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = empty_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",

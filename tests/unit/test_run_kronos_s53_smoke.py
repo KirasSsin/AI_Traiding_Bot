@@ -121,3 +121,16 @@ def test_script_uses_kronos_variant_singletons() -> None:
     assert mod.resolve_variant("mini") is KRONOS_MINI
     # mini must be paired with 2k tokenizer (S52 bug fixed)
     assert KRONOS_MINI.tokenizer_id.endswith("Tokenizer-2k")
+
+
+def test_kronos_revision_constant_is_none_by_default() -> None:
+    """KRONOS_REVISION constant must be None by default (operator must set before RUN_ML=1).
+
+    This locks the design: None = unset = safe default.  The FIX 4 hard-fail guard in
+    main() checks ``if KRONOS_REVISION is None`` and returns 1 before any torch import.
+    """
+    mod = _import_script()
+    # The constant lives at module level; operator must supply a verified SHA.
+    assert (
+        mod.KRONOS_REVISION is None
+    ), "KRONOS_REVISION must default to None — operator sets it before RUN_ML=1"

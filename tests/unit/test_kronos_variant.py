@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 from src.ml.kronos_variant import KRONOS_BASE, KRONOS_MINI, variant_by_name
 
@@ -20,7 +22,7 @@ def test_mini_variant_fields_correct_tokenizer() -> None:
 
 
 def test_variant_is_frozen() -> None:
-    with pytest.raises(Exception):  # noqa: B017
+    with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
         KRONOS_BASE.max_context = 999  # type: ignore[misc]
 
 

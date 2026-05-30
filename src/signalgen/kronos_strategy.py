@@ -146,7 +146,7 @@ class KronosStrategy:
         if pred_close > current_close * (Decimal(1) + self._threshold):
             # Risk-safe: no ENTRY without a warmed ATR — the bracket SL/TP cannot
             # be sized from atr_14 == 0 (SL == entry or div-by-zero). Refuse.
-            if self._last_atr is None:
+            if self._last_atr is None or self._last_atr <= 0:
                 return None
             return self._build_signal(bar, SignalSide.LONG, ReasonCode.ENTRY_LONG_KRONOS)
         if pred_close < current_close:

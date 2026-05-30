@@ -78,6 +78,27 @@ def test_model_adapter_raises_clean_importerror_without_torch() -> None:
     assert "[ml]" in str(exc_info.value)
 
 
+def test_model_adapter_syspath_rolled_back_on_importerror() -> None:
+    """After ImportError (torch absent) kronos_root must NOT remain in sys.path (FIX 2)."""
+    import os
+    import sys
+
+    from src.ml import kronos_adapter as _ka_module
+    from src.ml.kronos_variant import KRONOS_MINI
+
+    # Compute the same kronos_root the adapter's __init__ will compute.
+    kronos_root = os.path.normpath(
+        os.path.join(os.path.dirname(_ka_module.__file__), "..", "..", "third_party", "kronos")
+    )
+
+    with pytest.raises(ImportError):
+        KronosModelAdapter(variant=KRONOS_MINI)
+
+    assert (
+        kronos_root not in sys.path
+    ), f"kronos_root leaked into sys.path after ImportError: {kronos_root}"
+
+
 def test_model_adapter_accepts_variant_and_raises_two_step_hint() -> None:
     from src.ml.kronos_adapter import KronosModelAdapter
     from src.ml.kronos_variant import KRONOS_BASE
