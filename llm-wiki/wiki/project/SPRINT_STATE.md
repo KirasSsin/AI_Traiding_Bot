@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S53 T8 done (ADR 0069 + predict-sig guard + wiki sync). Phase → 5-verify.
+updated: 2026-05-30  # S53 PHASE 5 GREEN → PHASE 6 review.
 sprint: 53
-phase: 4-execution
+phase: 6-review
 branch: feature/sprint-53-kronos-enablement
 tag: v0.1.0-alpha.52
 ---
@@ -42,8 +42,8 @@ tag: v0.1.0-alpha.52
 | 2 Brainstorm | done | trader ROUND 1 + arch PRE-PLAN → pre-s53-backlog.md, ESC-1 V3-locked+ATR-fix |
 | 3 Plan | done | 2026-05-30-sprint-53-kronos-enablement.md (T1-T8) |
 | 4 Execute | done | T1-T8 complete |
-| 5 Verify | in_progress | — |
-| 6 Review | pending | — |
+| 5 Verify | done | pytest 1513 / mypy 0/98 / reason_codes 67 / backtest_runner 1489<1500 / isolation order-independent / script skip-exit-0 |
+| 6 Review | in_progress | 8 parallel reviewers |
 | 7 Sync | pending | — |
 | 8 Ship | pending | — |
 | 9 Close | pending | — |
