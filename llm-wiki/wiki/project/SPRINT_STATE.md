@@ -53,6 +53,22 @@ tag: v0.1.0-alpha.51
 
 ---
 
+## Phase tracking
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1 Orient | done | session resume orient |
+| 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
+| 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
+| 4 Execute | in_progress | T0-T1 done. Next: T2 kronos_adapter (torch boundary) |
+| 5 Verify | pending | — |
+| 6 Review | pending | — |
+| 7 Sync | pending | — |
+| 8 Ship | pending | — |
+| 9 Close | pending | — |
+
+---
+
 ## История спринтов (где искать)
 
 - **`wiki/project/sprints/sprint-NN-<slug>.md`** — canonical per-sprint
