@@ -2788,3 +2788,16 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - 5 PHASE 6 reviewers: python APPROVE / quant APPROVE_WITH_CONCERNS / trading-logic BLOCKER→FIXED / test-engineer APPROVE_WITH_CONDITIONS / trader-expert Ship-OK.
 - pytest 1414, mypy 0/91, reason codes 63→65, ADR 0067 accepted, sprint pages 54.
 - Carry S51: atr_breakout windowed-ATR (LOCKED shipped — parity check), cross_trial pool per-strategy-class scoping, supertrend_runner _backtest_single numerical test (gated on reactivation).
+
+## [2026-05-30] sprint-end | S51 — Debt closing (6 carry-overs)
+
+- 6 debts closed (3 S49 + 3 S50). Operator: "все долги". Bugfix sprint, kit lite.
+- D1 Bybit 110072 dup-order -> REJECT_DUPLICATE_ORDER, success in flatten (idempotency complete, no spurious HALT). bybit-local enum 9->10, canonical 65 unchanged.
+- D2 parquet SHA-256 sidecar manifest + verify_parquet. Hive partitioning deferred YAGNI.
+- D3 block_bootstrap edge-null docstring warning + AST gate-guard test (sign_flip = gate, not block_bootstrap).
+- D4 atr_breakout windowed-ATR re-seed -> incremental full-history _WilderATR. MATERIAL on SHIPPED LOCKED (BTCUSDT 4H 16 signal flips). parity 1e-9. NEW follow-up: ATR-index offset (9 vs 28 entries, own ADR+WFA before live).
+- D5 DSR cross-trial two-level scoping (trader verdict e): sigma_SR per-strategy-class (eq.13), N_trials global (eq.12). INSUFFICIENT_CLASS_HISTORY fallback. 9 entries backfilled. ADR 0056 Popravka 3.
+- D6 supertrend_runner _backtest_single parity (5 tests, no bugs - S50 fix confirmed).
+- 6 PHASE 6 reviewers: 5 APPROVE + 1 APPROVE_WITH_CONCERNS (quant D5 N-forfeit doc-fix fac2b15).
+- pytest 1414->1449, mypy 0/91, reason_codes 65 unchanged. Sprint pages 54->55. ADR 0056+0064 amended.
+- Tag v0.1.0-alpha.51. Carry S52: atr_breakout ATR-index offset, D5 forfeit-N policy escalation, free-form reason strings verify. S52 = Kronos ML strategy (operator-scoped).
