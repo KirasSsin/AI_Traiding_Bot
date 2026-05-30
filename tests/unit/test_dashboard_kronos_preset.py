@@ -354,6 +354,7 @@ def test_kronos_dispatch_manifest_keyed_cache_produces_hits(
                 interval="60",
                 start="2023-01-01",
                 end="2023-02-01",
+                variant="mini",  # T6: manifest uses _REAL_MODEL_ID=Kronos-mini → must match
             )
             result = run_backtest(req, force=True)
     finally:
@@ -461,3 +462,31 @@ def test_kronos_dispatch_rejects_unsupported_combo(tmp_runs_dir: Path) -> None:
         run_backtest(req_bad, force=True)
     # Sanity: the supported one does not raise the combo guard (may hit no-cache path).
     assert req.symbol == "BTCUSDT"
+
+
+# ---------------------------------------------------------------------------
+# T6: both-variant presets + Q4 no-cherry-pick warning
+# ---------------------------------------------------------------------------
+
+
+def test_kronos_presets_expose_both_variants() -> None:
+    """STRATEGY_PRESETS['kronos'] must expose both 'base' and 'mini' variants."""
+    from src.dashboard.backtest_runner import STRATEGY_PRESETS
+
+    kp = STRATEGY_PRESETS["kronos"]
+    variants = kp.get("supported_variants") or [v["variant"] for v in kp.get("variants", [])]
+    assert set(variants) == {"base", "mini"}
+
+
+def test_kronos_description_warns_no_cherry_pick() -> None:
+    """Description must contain Q4 no-cherry-pick warning (selection bias / сравнение вариантов)."""
+    from src.dashboard.backtest_runner import STRATEGY_PRESETS
+
+    desc = STRATEGY_PRESETS["kronos"]["description"]
+    desc_lower = desc.lower()
+    assert (
+        "сравнение вариантов" in desc_lower
+        or "не является обоснованием выбора" in desc_lower
+        or "selection bias" in desc_lower
+        or "не выбир" in desc_lower
+    ), f"Q4 warning not found in description: {desc[:200]}"

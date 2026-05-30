@@ -219,10 +219,16 @@ STRATEGY_PRESETS: dict[str, dict[str, Any]] = {
             "<p><strong>Техническое ограничение:</strong> реальный инференс только на M4 (operator). "
             "Dashboard реплеит pre-computed cache. Если cache не собран — показывается "
             "информационное сообщение «run cache-build first».</p>"
+            "<p><strong>⚠ Q4 — Предупреждение (ADR 0069 S53):</strong> "
+            "Сравнение вариантов (base vs mini) или комбинаций по результатам backtest "
+            "не является обоснованием выбора варианта. Pretrain leakage делает эти метрики "
+            "ненадёжными — выбор варианта ТОЛЬКО по результатам forward paper-trade.</p>"
         ),
         "sprint": "S52",
         "verdict": "RAW_PRETRAIN_LEAKAGE_SUSPECTED (exploratory, GATE 0 ADR 0068)",
         "type": "kronos",
+        # T6 (S53): both variants exposed so the dashboard can request cache-replay for either.
+        "supported_variants": ["base", "mini"],
         "supported_combos": [
             ("BTCUSDT", "5"),
             ("BTCUSDT", "15"),
@@ -841,6 +847,7 @@ class BacktestRequest:
     interval: str
     start: str  # YYYY-MM-DD
     end: str
+    variant: str = "base"  # Kronos variant selector: "base" | "mini" (T6, S53)
 
     def run_id(self) -> str:
         s = f"{self.strategy_id}|{self.symbol}|{self.interval}|{self.start}|{self.end}"

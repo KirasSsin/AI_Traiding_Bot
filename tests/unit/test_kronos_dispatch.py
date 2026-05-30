@@ -208,7 +208,17 @@ def test_run_kronos_dispatch_manifest_keyed_cache_produces_hits(tmp_path: Path) 
 
     run_id, cache_path = _make_run_id_and_cache_path(tmp_path)
     preset = _make_preset()
-    req = _make_req()
+    # T6: manifest uses _REAL_MODEL_ID=Kronos-mini → request must specify variant="mini"
+    from src.dashboard.backtest_runner import BacktestRequest
+
+    req = BacktestRequest(
+        strategy_id="kronos",
+        symbol="BTCUSDT",
+        interval="60",
+        start="2023-01-01",
+        end="2023-02-01",
+        variant="mini",
+    )
 
     with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
         result = run_kronos_dispatch(
@@ -251,3 +261,132 @@ def test_run_kronos_dispatch_unsupported_combo_raises_value_error(tmp_path: Path
             runs_dir=tmp_path / "runs",
             cache_dir=empty_cache,
         )
+
+
+# ---------------------------------------------------------------------------
+# T6: variant dispatch — "mini" against base-only manifest → honest miss message
+# ---------------------------------------------------------------------------
+
+
+def _write_base_manifest(cache_dir: Path) -> None:
+    """Write a manifest with model_id = base (NeoQuasar/Kronos-base)."""
+    import json
+
+    from src.ml.kronos_variant import KRONOS_BASE
+
+    manifest = {
+        "schema_version": 1,
+        "model_id": KRONOS_BASE.model_id,
+        "weights_hash": "aabbcc",
+        "params_hash": "001122",
+        "device": "cpu",
+        "combos": [{"symbol": "BTCUSDT", "timeframe": "1h", "n_entries": 1}],
+    }
+    (cache_dir / "_manifest.json").write_text(json.dumps(manifest, indent=2))
+
+
+def _make_req_with_variant(variant: str, symbol: str = "BTCUSDT", interval: str = "60") -> object:
+    """Build BacktestRequest with explicit variant field."""
+    from src.dashboard.backtest_runner import BacktestRequest
+
+    return BacktestRequest(
+        strategy_id="kronos",
+        symbol=symbol,
+        interval=interval,
+        start="2023-01-01",
+        end="2023-02-01",
+        variant=variant,
+    )
+
+
+def test_run_kronos_dispatch_mini_against_base_manifest_returns_honest_miss(tmp_path: Path) -> None:
+    """Requesting variant='mini' against base-only manifest → honest 'not cached for mini' result."""
+    from unittest.mock import patch
+
+    from src.dashboard._kronos_dispatch import run_kronos_dispatch
+
+    base_cache = tmp_path / "kr_cache_base"
+    base_cache.mkdir()
+    _write_base_manifest(base_cache)
+
+    run_id, cache_path = _make_run_id_and_cache_path(tmp_path)
+    preset = _make_preset()
+    req = _make_req_with_variant("mini")
+    df = _make_ohlcv_df()
+
+    with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
+        result = run_kronos_dispatch(
+            req,
+            preset=preset,
+            run_id=run_id,
+            cache_path=cache_path,
+            runs_dir=tmp_path / "runs",
+            cache_dir=base_cache,
+        )
+
+    # Must NOT crash and must return the leakage verdict
+    assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
+    assert result["run_id"] == run_id
+    # Must indicate mini is not cached
+    result_str = str(result).lower()
+    assert "mini" in result_str or "variant" in result_str or "cache" in result_str
+
+
+def test_run_kronos_dispatch_matching_variant_hits(tmp_path: Path) -> None:
+    """Requesting variant='mini' against mini manifest + mini-keyed cache → hits."""
+    import json
+    from datetime import timedelta
+    from decimal import Decimal
+    from unittest.mock import patch
+
+    from src.dashboard._kronos_dispatch import run_kronos_dispatch
+    from src.ml.kronos_variant import KRONOS_MINI
+    from src.ml.prediction_cache import CacheKey, PredictionCache
+
+    mini_cache = tmp_path / "kr_cache_mini"
+    mini_cache.mkdir()
+
+    # Write manifest with mini model_id
+    manifest = {
+        "schema_version": 1,
+        "model_id": KRONOS_MINI.model_id,
+        "weights_hash": "deadbeefcafe",
+        "params_hash": "0011223344",
+        "device": "mps",
+        "combos": [{"symbol": "BTCUSDT", "timeframe": "1h", "n_entries": 1}],
+    }
+    (mini_cache / "_manifest.json").write_text(json.dumps(manifest, indent=2))
+
+    df = _make_ohlcv_df(50)
+    fire_bar = 20
+    cache = PredictionCache(mini_cache)
+    open_time = pd.Timestamp(df["_ts"].iloc[fire_bar]).to_pydatetime()
+    bar_close_ts = int((open_time + timedelta(hours=1)).timestamp())
+    current_close = float(df["close"].iloc[fire_bar])
+    key = CacheKey(
+        model_id=KRONOS_MINI.model_id,
+        weights_hash="deadbeefcafe",
+        symbol="BTCUSDT",
+        timeframe="1h",
+        bar_close_ts=bar_close_ts,
+        params_hash="0011223344",
+        device="mps",
+    )
+    cache.put(key, [Decimal(str(current_close * 1.10))])
+
+    run_id, cache_path = _make_run_id_and_cache_path(tmp_path)
+    preset = _make_preset()
+    req = _make_req_with_variant("mini")
+
+    with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
+        result = run_kronos_dispatch(
+            req,
+            preset=preset,
+            run_id=run_id,
+            cache_path=cache_path,
+            runs_dir=tmp_path / "runs",
+            cache_dir=mini_cache,
+        )
+
+    assert result["verdict"] == "RAW_PRETRAIN_LEAKAGE_SUSPECTED"
+    assert result["n_trades"] > 0, "mini-keyed cache + mini variant request → should produce hits"

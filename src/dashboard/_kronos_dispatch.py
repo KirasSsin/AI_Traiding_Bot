@@ -188,6 +188,7 @@ def run_kronos_dispatch(
             ``preset["supported_combos"]``.
     """
     from src.backtest.research_runner_envelope import VERDICT_RAW_PRETRAIN_LEAKAGE
+    from src.ml.kronos_variant import variant_by_name
     from src.ml.prediction_cache import PredictionCache
 
     # FIX B (PHASE 6 R2) — validate (symbol, interval) against supported_combos
@@ -198,6 +199,11 @@ def run_kronos_dispatch(
             f"Kronos does not support combo ({req.symbol}, {req.interval}). "
             f"Supported combos: {sorted(supported_combos_kr)}"
         )
+
+    # T6 (S53) — resolve requested variant (default "base" via BacktestRequest.variant).
+    # req is a BacktestRequest dataclass; variant field defaults to "base" (backward-compat).
+    requested_variant_name: str = getattr(req, "variant", "base") or "base"
+    requested_variant = variant_by_name(requested_variant_name)
 
     # Map dashboard interval code → kronos timeframe string (e.g. "60" → "1h")
     timeframe_kr = _INTERVAL_TO_TIMEFRAME.get(req.interval, req.interval)
@@ -258,6 +264,7 @@ def run_kronos_dispatch(
                 "interval_label": _INTERVAL_LABELS.get(req.interval, req.interval),
                 "start": req.start,
                 "end": req.end,
+                "variant": requested_variant_name,
             },
             "message": (
                 "Kronos predictions not cached yet — "
@@ -267,6 +274,46 @@ def run_kronos_dispatch(
         runs_dir.mkdir(parents=True, exist_ok=True)
         cache_path.write_text(json.dumps(result_kr_nocache, default=str, indent=2))
         return result_kr_nocache
+
+    # T6 (S53) — variant-mismatch guard: manifest.model_id must match the requested
+    # variant's model_id. If not → this cache was built for a different variant; return
+    # honest "variant not cached" result without crashing or running stale predictions.
+    manifest_model_id = str(manifest_kr.get("model_id", ""))
+    if manifest_model_id != requested_variant.model_id:
+        result_kr_variant_miss: dict[str, Any] = {
+            "run_id": run_id,
+            "cached": False,
+            "verdict": VERDICT_RAW_PRETRAIN_LEAKAGE,
+            "failed_criteria": [],
+            "warnings": [
+                {
+                    "level": "info",
+                    "code": "kronos_variant_not_cached",
+                    "message": (
+                        f"Kronos variant '{requested_variant_name}' (model_id="
+                        f"{requested_variant.model_id!r}) not cached — "
+                        f"manifest has model_id={manifest_model_id!r}. "
+                        f"Run cache-build for variant '{requested_variant_name}' first."
+                    ),
+                }
+            ],
+            "metrics": {},
+            "request": {
+                "strategy_id": req.strategy_id,
+                "strategy_label": preset["label"],
+                "strategy_config": preset,
+                "symbol": req.symbol,
+                "interval": req.interval,
+                "interval_label": _INTERVAL_LABELS.get(req.interval, req.interval),
+                "start": req.start,
+                "end": req.end,
+                "variant": requested_variant_name,
+            },
+            "message": (f"This variant not cached — run cache-build for {requested_variant_name}"),
+        }
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps(result_kr_variant_miss, default=str, indent=2))
+        return result_kr_variant_miss
 
     # Cache present — load parquet and replay
     from src.backtest.kronos_runner import run_kronos_exploratory
@@ -300,6 +347,7 @@ def run_kronos_dispatch(
         "interval_label": _INTERVAL_LABELS.get(req.interval, req.interval),
         "start": req.start,
         "end": req.end,
+        "variant": requested_variant_name,
     }
     cache_path.write_text(json.dumps(result_kr, default=str, indent=2))
     return result_kr
