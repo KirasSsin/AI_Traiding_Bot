@@ -4,8 +4,8 @@ Covers:
 - MockKronosAdapter returns list[Decimal] of length == horizon, all elements Decimal.
 - Determinism: identical input → identical output across calls.
 - MockKronosAdapter satisfies the runtime_checkable KronosAdapter Protocol.
-- KronosModelAdapter instantiation raises a clean ImportError (torch absent here),
-  with the actionable `[ml]` extra message.
+- KronosModelAdapter instantiation raises a clean ImportError (torch/submodule absent
+  here), with the two-step operator instruction (submodule init + `[ml]` extra).
 """
 
 from datetime import datetime, timedelta
@@ -71,9 +71,21 @@ def test_mock_satisfies_protocol() -> None:
 
 
 def test_model_adapter_raises_clean_importerror_without_torch() -> None:
+    from src.ml.kronos_variant import KRONOS_MINI
+
     with pytest.raises(ImportError) as exc_info:
-        KronosModelAdapter(
-            model_id="NeoQuasar/Kronos-mini",
-            tokenizer_id="NeoQuasar/Kronos-Tokenizer-base",
-        )
+        KronosModelAdapter(variant=KRONOS_MINI)
     assert "[ml]" in str(exc_info.value)
+
+
+def test_model_adapter_accepts_variant_and_raises_two_step_hint() -> None:
+    from src.ml.kronos_adapter import KronosModelAdapter
+    from src.ml.kronos_variant import KRONOS_BASE
+
+    # torch/Kronos absent here → __init__ must raise ImportError with the
+    # two-step operator instruction (submodule init + pip install ml).
+    with pytest.raises(ImportError) as exc:
+        KronosModelAdapter(variant=KRONOS_BASE, device="cpu")
+    msg = str(exc.value)
+    assert "submodule" in msg.lower()
+    assert "[ml]" in msg
