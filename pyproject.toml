@@ -33,6 +33,16 @@ dashboard = [
   "uvicorn[standard]>=0.32",
   "jinja2>=3.1",
 ]
+# S52 ADR 0068: ML optional deps (Kronos strategy). Install via `pip install -e ".[ml]"`.
+# Architectural isolation: torch MUST NOT be imported at top-level outside src/ml/.
+ml = [
+  "torch>=2.2",
+  "transformers>=4.40",
+  "tokenizers",
+  "safetensors",
+  "einops",
+  "huggingface_hub",
+]
 
 [tool.ruff]
 line-length = 100
