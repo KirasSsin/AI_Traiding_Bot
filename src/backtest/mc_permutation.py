@@ -77,15 +77,16 @@ def block_bootstrap_p_value(
     """Block bootstrap permutation test (preserves autocorrelation).
 
     Per ADR 0015 secondary method. Resamples blocks of `block_size` bars,
-    тех concatenates к length(returns) sequence. Tests if observed mean
+    then concatenates to length(returns) sequence. Tests if observed mean
     significantly differs from bootstrap distribution.
 
-    M4 (S49) WARNING — METHOD CAVEAT: this resample-with-replacement from the
-    OBSERVED returns measures the SAMPLING VARIABILITY of the observed mean, NOT
-    directional-edge significance versus a no-edge null. A correct edge null
-    requires block SIGN-FLIP (see SignFlipTest / sign_flip_p_value, the gate).
-    This metric is secondary/informational only. DO NOT promote it to a verdict
-    gate without switching to the sign-flip (edge-null) method.
+    WARNING — NOT AN EDGE-SIGNIFICANCE TEST (ADR 0015 / S49 D3):
+    Resampling WITH REPLACEMENT from the OBSERVED returns measures the SAMPLING
+    VARIABILITY of the observed mean, NOT edge-vs-no-edge significance. A valid
+    edge null would SIGN-FLIP whole blocks (as sign_flip_p_value does). Use ONLY
+    as informational secondary diagnostic. The MC GATE uses sign_flip_p_value
+    (see research_wfa.py). DO NOT promote this to a gate without switching to
+    block sign-flip null.
 
     Args:
         returns: per-trade returns array.

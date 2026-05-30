@@ -2,9 +2,12 @@
 
 Sprint 10 Q3 (ADR 0015 secondary method, block 20-50 bars).
 """
+
 from __future__ import annotations
 
+import ast
 import math
+from pathlib import Path
 
 import numpy as np
 from src.backtest.mc_permutation import block_bootstrap_p_value
@@ -43,3 +46,36 @@ def test_empty_returns_returns_nan() -> None:
     """Empty returns array → NaN p (defensive)."""
     p = block_bootstrap_p_value(np.array([]), n_iterations=2000, block_size=20, seed=42)
     assert math.isnan(p)
+
+
+def test_block_bootstrap_not_used_as_gate() -> None:
+    """Gate-promotion guard: research_wfa MC gate must use sign_flip_p_value, NOT block_bootstrap.
+
+    S51 D3 (ADR 0015 / S49 carry): block_bootstrap_p_value measures SAMPLING VARIABILITY
+    of the observed mean — it is NOT an edge-significance test. Promoting it to the gate
+    without switching to block sign-flip would silently pass strategies with no real edge.
+
+    This test parses research_wfa.py AST to assert:
+    - sign_flip_p_value IS imported
+    - block_bootstrap_p_value is NOT imported
+
+    If someone wires block_bootstrap into the gate (import added), this test FAILS — the
+    regression is caught before merge.
+    """
+    wfa_path = Path(__file__).parents[2] / "src" / "backtest" / "research_wfa.py"
+    source = wfa_path.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    imported_names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "src.backtest.mc_permutation":
+            for alias in node.names:
+                imported_names.add(alias.asname or alias.name)
+
+    assert (
+        "sign_flip_p_value" in imported_names
+    ), "research_wfa must import sign_flip_p_value (the MC gate)."
+    assert "block_bootstrap_p_value" not in imported_names, (
+        "block_bootstrap_p_value must NOT be imported in research_wfa — it is not an "
+        "edge-significance test and must not be used as a gate (ADR 0015 / S51 D3)."
+    )
