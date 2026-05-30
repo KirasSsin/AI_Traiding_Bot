@@ -28,8 +28,8 @@ tag: v0.1.0-alpha.50
 | 2 Brainstorm | done | trader ROUND 1+2 + operator Q1/Q4 → ADR 0067 |
 | 3 Plan | done | writing-plans 11-task TDD plan `4ee1e6d` |
 | 4 Execute | done | T1-T11 all committed (verdict WFA_FAIL) |
-| 5 Verify | in_progress | pytest 1414 / mypy 0 GREEN; frontend build clean |
-| 6 Review | in_progress | 5 reviewers parallel; trading-logic BLOCKER (backtest fill look-ahead) FIXED `48dac93` → re-review pending |
+| 5 Verify | done | pytest 1414 / mypy 0/91 GREEN; CI green PR #61 |
+| 6 Review | done | 5 reviewers: python APPROVE / quant APPROVE_WITH_CONCERNS / trading-logic BLOCKER→FIXED `48dac93` / test-engineer APPROVE_WITH_CONDITIONS / trader-expert Ship-OK. All addressed. |
 | 7 Sync | done | T11 wiki sync (sprint-50 + index + log + current-state + ADR 0067 accepted) |
 | 8 Ship | in_progress | operator: merge + tag v0.1.0-alpha.50 (infra-sprint, strategy WFA_FAIL) |
 | 9 Close | pending | — |
