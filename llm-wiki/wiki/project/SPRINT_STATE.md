@@ -1,34 +1,36 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S52 SHIPPED v0.1.0-alpha.52 → between-sprints.
-sprint: 52
-phase: between-sprints
-branch: main
+updated: 2026-05-30  # S53 PHASE 6 R1 remediation done (B1 CI-fix + 4 fixes).
+sprint: 53
+phase: 6-review
+branch: feature/sprint-53-kronos-enablement
 tag: v0.1.0-alpha.52
 ---
 
 ## Текущий статус
 
-**S52 SHIPPED** — `a188347` (PR #63) tag `v0.1.0-alpha.52`. Kronos ML strategy (первая ML-стратегия проекта, NeoQuasar/Kronos-mini, offline predict→cache→replay). reason_codes 65→67, pytest 1494, mypy 0/96. Backtest = exploratory `RAW_PRETRAIN_LEAKAGE_SUSPECTED` (non-gating, GATE 0: BTC/USDT в pretrain corpus). Детали → `sprints/sprint-52-kronos.md` + log.md.
+**S53 — Kronos real-inference enablement.** S52 внедрил инфру, но real-inference path сломан (3 бага). S53 чинит + оба variant + корректная adaptation. Backtest остаётся exploratory (operator принял leakage-дисциплину после глубокого объяснения). Brainstorm → `pre-s53-backlog.md`.
 
-**OPERATOR M4 FOLLOW-UP (post-merge):** real inference = только Mac M4 Pro MPS. Запустить `pip install -e ".[ml]"` → set `KRONOS_REVISION=<verified sha>` (security ACE) → `RUN_ML=1 .venv/bin/python scripts/run_kronos_s52.py` → собрать prediction-cache + manifest (11 combos) → exploratory backtest в dashboard. Forward paper-trade gate → formal hypothesis #11 (отдельный будущий ADR).
+**3 бага S52 (S53 чинит):** (1) import `from kronos`→`from model` (real-inference broken by design); (2) mini↔tokenizer mismatch (нужен Kronos-Tokenizer-2k, не -base); (3) `atr_14=0` в KronosStrategy → broken bracket sizing (нельзя торговать).
 
-**S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts).
+**Brainstorm verdicts:** Q1 git submodule (arch binding) · Q2 KronosVariant dataclass (base+mini) · Q3 V3 locked + ATR fix (operator ESC-1) · Q4 оба exploratory no-cherry-pick · Q5 forward harness→S54+. Architecture C8-C13 binding.
 
-## S52+ backlog (carries)
+**S52 SHIPPED** — `a188347` tag v0.1.0-alpha.52 (Kronos integration). **S51** — `75644e2` v0.1.0-alpha.51.
 
-- **atr_breakout ATR-index offset** (D4 follow-up, HIGH) — live 9 vs research 28 entries; own ADR + WFA re-run ДО live-капитала. ADR 0064.
-- **D5 forfeit-N policy** (operator escalation) — accept forfeit-N OR conservative pooled-sigma proxy.
-- **free-form reason strings** (atr_breakout) — verify canonical enum.
+## S53 scope (locked, brainstorm → pre-s53-backlog.md)
+
+- T0 import fix + mini tokenizer-2k (C8, CC1) · T1 git submodule third_party/kronos pinned + sys.path wiring + error msg (C9,C13) · T2 KronosVariant dataclass base+mini (C10) · T3 ATR fix KronosStrategy (Track A, CC2 BLOCKER) · T4 extract _kronos_dispatch.py (C11, god-object 1682>1500) · T5 variant dispatch 2×11 presets (Q2) · T6 script rename run_kronos_s53.py + variant selector + rebuild warning (CC4,CC5) · T7 CI submodule-existence test + predict() sig verify (C12,CC3) · T8 ADR 0069 + wiki sync + current-state.md split.
+
+## Carry (post-S53)
+
+- **atr_breakout ATR-index offset** (D4, HIGH) — own ADR+WFA до live. ADR 0064.
+- **D5 forfeit-N policy** (operator escalation).
+- **free-form reason strings** (atr_breakout) verify.
+- Track B Kronos signal enrichment (predicted high/low SL/TP, multi-horizon) — DEFER до forward paper-trade.
+- prediction-cache put() atomicity · median_ensemble property test.
+- Forward paper-trade harness → S54+ (единственная валидная Kronos-валидация).
 - Permanently deferred: 12mo MAINNET ADR / live trade feed widget / M4 __repr__ redaction.
-
-**S53 carries (S52 PHASE 6 review):**
-- **current-state.md split** (54KB > 50KB порог) — indexed parts per universal split pattern.
-- **backtest_runner.py 1500 LoC split** (god-object, 1636 LoC) — extract `_kronos_dispatch.py` при следующем touch (HARD-GATE @1500).
-- prediction-cache `put()` atomicity (tmp+os.replace) — нужно если cache станет concurrent (сейчас single-thread safe).
-- property test `median_ensemble` length invariant (Hypothesis).
-- integration test horizon=3 variant (operator M4, RUN_ML).
 
 ---
 
@@ -36,15 +38,15 @@ tag: v0.1.0-alpha.52
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | session resume orient |
-| 2 Brainstorm | done | C1-C7 + V1-V5 + ESC-1=A → pre-s52-backlog.md |
-| 3 Plan | done | 2026-05-30-sprint-52-kronos.md (T0-T10) |
-| 4 Execute | done | T0-T10 complete |
-| 5 Verify | done | pytest 1494 / mypy 0/96 / reason_codes 67 / Vitest 43 / tsc+build clean / torch-absent CI-isolated |
-| 6 Review | done | 9 reviewers → remediation R1-R4 (0d2ef1f/0d3b417/716c0c5/5d46c50), all re-verified GREEN |
-| 7 Sync | done | wiki synced (ADR 0068 + manifest docs + index/README) |
-| 8 Ship | done | PR #63 squash-merge a188347, tag v0.1.0-alpha.52 |
-| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
+| 1 Orient | done | S53 kickoff (session continuation) |
+| 2 Brainstorm | done | trader ROUND 1 + arch PRE-PLAN → pre-s53-backlog.md, ESC-1 V3-locked+ATR-fix |
+| 3 Plan | done | 2026-05-30-sprint-53-kronos-enablement.md (T1-T8) |
+| 4 Execute | done | T1-T8 complete |
+| 5 Verify | done | pytest 1513 / mypy 0/98 / reason_codes 67 / backtest_runner 1489<1500 / isolation order-independent / script skip-exit-0 |
+| 6 Review | in_progress | 8 reviewers → R1 remediation (B1 CI-fix + 4 fixes), re-verified GREEN |
+| 7 Sync | pending | — |
+| 8 Ship | pending | — |
+| 9 Close | pending | — |
 
 ---
 

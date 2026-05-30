@@ -38,6 +38,7 @@ from uuid import uuid4
 from src.marketdata.models import Bar
 from src.ml.prediction_cache import CacheKey, PredictionCache
 from src.risk.reason_codes import ReasonCode
+from src.signalgen.atr_breakout_strategy import _WilderATR
 from src.signalgen.models import Signal, SignalSide
 
 # ADR 0068 / V3 LOCKED — threshold default = 2x round-trip cost
@@ -73,6 +74,7 @@ class KronosStrategy:
         params_hash: str,
         device: str,
         threshold: Decimal = DEFAULT_THRESHOLD,
+        atr_period: int = 14,
     ) -> None:
         """Initialise the strategy with its cache and key-identifying config.
 
@@ -86,6 +88,9 @@ class KronosStrategy:
             device: Device the predictions were produced on (cache key field).
             threshold: Minimum relative upside for an entry (LOCKED default
                 ``Decimal("0.006")`` = 2× round-trip cost, configurable).
+            atr_period: Wilder ATR period used to fill ``Signal.atr_14`` for
+                bracket sizing (default 14). The ATR is computed incrementally
+                from closed bars only (look-ahead-safe).
         """
         self._symbol = symbol
         self._cache = cache
@@ -95,6 +100,10 @@ class KronosStrategy:
         self._params_hash = params_hash
         self._device = device
         self._threshold = threshold
+        # Incremental full-history Wilder ATR (reused from ATRBreakoutStrategy,
+        # DRY). Kronos does NOT compute EMA/RSI/ADX — only ATR for SL/TP sizing.
+        self._atr = _WilderATR(period=atr_period)
+        self._last_atr: Decimal | None = None
 
     def on_bar(self, bar: Bar) -> Signal | None:
         """Evaluate the V3 rule on a closed bar via a cache lookup.
@@ -108,6 +117,13 @@ class KronosStrategy:
             return None
         if bar.symbol != self._symbol:
             return None
+
+        # Advance the incremental Wilder ATR on EVERY closed bar (regardless of
+        # whether a signal fires) — look-ahead-safe (only closed bars up to and
+        # including this one feed the recursion). Store the latest warmed value.
+        self._atr.update(float(bar.high), float(bar.low), float(bar.close))
+        if self._atr.current is not None:
+            self._last_atr = Decimal(str(self._atr.current))
 
         # Build the key from THIS bar's close timestamp — never a future bar's.
         key = CacheKey(
@@ -128,8 +144,14 @@ class KronosStrategy:
         current_close = bar.close
 
         if pred_close > current_close * (Decimal(1) + self._threshold):
+            # Risk-safe: no ENTRY without a warmed ATR — the bracket SL/TP cannot
+            # be sized from atr_14 == 0 (SL == entry or div-by-zero). Refuse.
+            if self._last_atr is None or self._last_atr <= 0:
+                return None
             return self._build_signal(bar, SignalSide.LONG, ReasonCode.ENTRY_LONG_KRONOS)
         if pred_close < current_close:
+            # EXIT_FLAT only flattens an existing position — no SL sizing needed,
+            # so it may fire even before the ATR has warmed up.
             return self._build_signal(bar, SignalSide.FLAT, ReasonCode.EXIT_FLAT_KRONOS)
         return None
 
@@ -147,6 +169,6 @@ class KronosStrategy:
             plus_di_14=_ZERO,
             minus_di_14=_ZERO,
             rsi_14=_ZERO,
-            atr_14=_ZERO,
+            atr_14=self._last_atr if self._last_atr is not None else _ZERO,
             reason=reason.value,
         )

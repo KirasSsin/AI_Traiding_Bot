@@ -2848,3 +2848,19 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Merge conflict resolved (origin/main b912793 brainstorm-backup vs feature branch) — SPRINT_STATE/log/backlog took feature-branch (current) state.
 - OPERATOR M4 FOLLOW-UP: pip install .[ml] → KRONOS_REVISION=<sha> → RUN_ML=1 scripts/run_kronos_s52.py (cache-build 11 combos) → exploratory backtest.
 - Carry S53: current-state.md split (54KB), backtest_runner 1500 LoC split, put() atomicity, median_ensemble property test, integration horizon=3.
+
+## [2026-05-30] sprint-end | S53 — Kronos real-inference enablement
+
+- T1-T8 все выполнены. Real-inference path восстановлен (3 бага S52 устранены).
+- T1 git submodule `third_party/kronos` (sha 67b630e) + existence guard. Pip-from-git IMPOSSIBLE (нет setup.py/pyproject).
+- T2 `src/ml/kronos_variant.py`: KronosVariant frozen dataclass (KRONOS_BASE ctx512/tok-base + KRONOS_MINI ctx2048/tok-2k). Структурная гарантия правильного tokenizer↔max_context coupling.
+- T3 `src/ml/kronos_adapter.py`: import fix (`from model import Kronos, KronosPredictor, KronosTokenizer`), variant param, two-step error msg (submodule init + pip install ml).
+- T4 `src/signalgen/kronos_strategy.py`: реальный Wilder ATR (Track A). ATR=0 → broken bracket sizing устранён.
+- T5 `src/dashboard/_kronos_dispatch.py`: extracted из backtest_runner; backtest_runner < 1500 LoC (C11 god-object split).
+- T6 Variant dispatch: KRONOS_BASE + KRONOS_MINI presets. No-cherry-pick предупреждение в описании preset (Q4).
+- T7 `scripts/run_kronos_s53.py`: variant selector + tokenizer-2k fix + rebuild warning.
+- T8 ADR 0069 accepted + predict-sig guard (CC3 `object.__new__` bypass, torch-free) + current-state.md split (54KB→15KB+22KB, обе < 50KB) + sprint-53 page + kronos-adapter component update + index.md ADR 0069 + sprint-53 entries + SPRINT_STATE phase→5-verify.
+- pytest 1481→~1512 / mypy 0 / reason_codes 67 (без изменений) / FSM 16/30/74 (без изменений).
+- ADR 0069 accepted. Sprint pages 56→57 (+sprint-53-kronos-enablement).
+- Formal hypothesis #11 остаётся DEFERRED. Operator M4 runbook: submodule init → pip install.[ml] → KRONOS_REVISION=<sha> → RUN_ML=1 run_kronos_s53.py --variant base (и --variant mini) → exploratory backtest.
+- current-state-part-2.md новый файл (22KB) — sprint-history таблица S1-S53.

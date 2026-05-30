@@ -139,7 +139,7 @@ sources:
 |--------|------|------------|
 | Где torch в проекте? | `components/kronos-adapter.md` + `src/ml/kronos_adapter.py` | Только `src/ml/`, lazy import, optional `[ml]` dep group |
 | Predict-cache: write / get / checksum | `components/prediction-cache.md` | CacheKey 7 полей; SHA-256; returns Decimal |
-| Как запустить cache-build (M4 MPS) | `sprints/sprint-52-kronos.md` "Operator follow-up" + `scripts/run_kronos_s52.py` | `RUN_ML=1 python scripts/run_kronos_s52.py` |
+| Как запустить cache-build (M4 MPS) | `sprints/sprint-52-kronos.md` "Operator follow-up" + `scripts/run_kronos_s53.py` | `RUN_ML=1 python scripts/run_kronos_s53.py --variant base` |
 | Почему WFA невалиден для Kronos? | `decisions/0068` GATE 0 + `components/kronos-strategy.md` | Pretrain leakage, in-sample under WFA-OOS disguise |
 | Какие reason codes у Kronos? | `components/kronos-strategy.md` "Reason codes" | ENTRY_LONG_KRONOS (65) + EXIT_FLAT_KRONOS (66) |
 | Formal hypothesis #11 status | `sprints/sprint-52-kronos.md` "Deferred" | DEFERRED до forward paper-trade ~post-2025-08 |

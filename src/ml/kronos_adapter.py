@@ -13,12 +13,14 @@ no module-level torch import lives anywhere outside ``src/ml/``. The
 
 from __future__ import annotations
 
+import contextlib
 from decimal import Decimal
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 import pandas as pd
 
-_ML_EXTRA_HINT = "Kronos requires the [ml] extra: pip install -e '.[ml]'"
+if TYPE_CHECKING:
+    from src.ml.kronos_variant import KronosVariant
 
 
 @runtime_checkable
@@ -59,24 +61,20 @@ class KronosModelAdapter:
 
     def __init__(
         self,
-        model_id: str,
-        tokenizer_id: str,
+        variant: KronosVariant,
         device: str = "mps",
-        max_context: int = 2048,
         *,
         temperature: float = 1.0,
         top_p: float = 0.9,
         sample_count: int = 1,
         revision: str | None = None,
     ) -> None:
-        """Load the Kronos model + tokenizer (lazy torch import).
+        """Load the Kronos model + tokenizer for ``variant`` (lazy import).
 
         Args:
-            model_id: HuggingFace id of the Kronos model (e.g. Kronos-mini).
-            tokenizer_id: HuggingFace id of the matching Kronos tokenizer.
+            variant: Kronos model configuration binding ``model_id``,
+                ``tokenizer_id`` and ``max_context`` (see ``kronos_variant``).
             device: torch device string (default ``"mps"`` for operator M4).
-            max_context: Max context length; input is sliced to the last
-                ``max_context`` rows before prediction.
             temperature: Sampling temperature ``T`` passed to ``predict``.
             top_p: Nucleus sampling cutoff passed to ``predict``.
             sample_count: Number of samples drawn per prediction.
@@ -84,27 +82,51 @@ class KronosModelAdapter:
                 ``from_pretrained``. Pin to a verified commit SHA before any
                 RUN_ML=1 run (ACE defense — see class docstring).
 
+        SECURITY: pin ``revision`` to a verified commit SHA before any RUN_ML=1
+        run — ``from_pretrained`` deserializes untrusted checkpoints (torch.load
+        pickle = ACE). ``weights_hash`` is post-download provenance, NOT ACE
+        prevention. The submodule sha pins the model *code*.
+
         Raises:
-            ImportError: If torch / Kronos are not installed.
+            ImportError: if the Kronos submodule code or torch is absent.
         """
+        import os
+        import sys
+
+        kronos_root = os.path.normpath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "third_party", "kronos")
+        )
+        inserted = False
+        if kronos_root not in sys.path:
+            sys.path.insert(0, kronos_root)
+            inserted = True
         try:
-            from kronos import (  # type: ignore[import-not-found]
+            from model import (  # type: ignore[import-not-found]
                 Kronos,
                 KronosPredictor,
                 KronosTokenizer,
             )
-        except ImportError as exc:  # torch/Kronos absent in this env by design
-            raise ImportError(_ML_EXTRA_HINT) from exc
+        except ImportError as exc:
+            if inserted:
+                with contextlib.suppress(ValueError):
+                    sys.path.remove(kronos_root)
+            raise ImportError(
+                "Kronos model code / torch unavailable. Two steps required: "
+                "1) git submodule update --init third_party/kronos  "
+                "2) pip install -e '.[ml]'"
+            ) from exc
 
         self._device = device
-        self._max_context = max_context
+        self._max_context = variant.max_context
         self._temperature = temperature
         self._top_p = top_p
         self._sample_count = sample_count
 
-        model = Kronos.from_pretrained(model_id, revision=revision)
-        tokenizer = KronosTokenizer.from_pretrained(tokenizer_id, revision=revision)
-        self._predictor = KronosPredictor(model, tokenizer, device=device, max_context=max_context)
+        model = Kronos.from_pretrained(variant.model_id, revision=revision)
+        tokenizer = KronosTokenizer.from_pretrained(variant.tokenizer_id, revision=revision)
+        self._predictor = KronosPredictor(
+            model, tokenizer, device=device, max_context=variant.max_context
+        )
 
     def predict(
         self,

@@ -160,7 +160,7 @@ def test_kronos_dispatch_no_cache_no_crash(tmp_runs_dir: Path, empty_cache_dir: 
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = empty_cache_dir  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -197,7 +197,7 @@ def test_kronos_dispatch_no_cache_returns_structured_result(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = empty_cache_dir  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -248,7 +248,7 @@ def test_kronos_dispatch_with_cache_returns_leakage_verdict(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = populated_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -269,7 +269,7 @@ def test_kronos_dispatch_with_cache_returns_leakage_verdict(
 # the script's REAL keys must produce HITS via the dashboard dispatch.
 # ---------------------------------------------------------------------------
 
-# Real key params (mirror scripts/run_kronos_s52.py constants — what the operator
+# Real key params (mirror scripts/run_kronos_s53.py constants — what the operator
 # would actually write into _manifest.json after a cache-build on M4).
 _REAL_MODEL_ID = "NeoQuasar/Kronos-mini"
 _REAL_WEIGHTS_HASH = "deadbeefcafe"
@@ -278,7 +278,7 @@ _REAL_DEVICE = "mps"
 
 
 def _write_manifest(cache_dir: Path) -> None:
-    """Write a _manifest.json sidecar mirroring scripts/run_kronos_s52.py output."""
+    """Write a _manifest.json sidecar mirroring scripts/run_kronos_s53.py output."""
     import json
 
     manifest = {
@@ -337,7 +337,8 @@ def test_kronos_dispatch_manifest_keyed_cache_produces_hits(
     real_cache.mkdir()
 
     df = _make_ohlcv_df(50)
-    _build_real_keyed_cache(real_cache, df, fire_bar=3)
+    # fire past the 14-bar Wilder-ATR warm-up so the ENTRY is not risk-gated (S53 T4).
+    _build_real_keyed_cache(real_cache, df, fire_bar=20)
     _write_manifest(real_cache)
 
     import src.dashboard.backtest_runner as br
@@ -346,13 +347,14 @@ def test_kronos_dispatch_manifest_keyed_cache_produces_hits(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = real_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
                 interval="60",
                 start="2023-01-01",
                 end="2023-02-01",
+                variant="mini",  # T6: manifest uses _REAL_MODEL_ID=Kronos-mini → must match
             )
             result = run_backtest(req, force=True)
     finally:
@@ -385,7 +387,7 @@ def test_kronos_dispatch_manifest_present_but_bar_missing_is_legit_miss(
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = real_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -415,7 +417,7 @@ def test_kronos_dispatch_no_manifest_is_not_built_path(tmp_runs_dir: Path, tmp_p
     original_cache_dir = br._KRONOS_CACHE_DIR  # type: ignore[attr-defined]
     try:
         br._KRONOS_CACHE_DIR = empty_cache  # type: ignore[attr-defined]
-        with patch.object(br, "_load_kronos_df", return_value=df):
+        with patch("src.dashboard._kronos_dispatch._load_kronos_df", return_value=df):
             req = BacktestRequest(
                 strategy_id="kronos",
                 symbol="BTCUSDT",
@@ -460,3 +462,31 @@ def test_kronos_dispatch_rejects_unsupported_combo(tmp_runs_dir: Path) -> None:
         run_backtest(req_bad, force=True)
     # Sanity: the supported one does not raise the combo guard (may hit no-cache path).
     assert req.symbol == "BTCUSDT"
+
+
+# ---------------------------------------------------------------------------
+# T6: both-variant presets + Q4 no-cherry-pick warning
+# ---------------------------------------------------------------------------
+
+
+def test_kronos_presets_expose_both_variants() -> None:
+    """STRATEGY_PRESETS['kronos'] must expose both 'base' and 'mini' variants."""
+    from src.dashboard.backtest_runner import STRATEGY_PRESETS
+
+    kp = STRATEGY_PRESETS["kronos"]
+    variants = kp.get("supported_variants") or [v["variant"] for v in kp.get("variants", [])]
+    assert set(variants) == {"base", "mini"}
+
+
+def test_kronos_description_warns_no_cherry_pick() -> None:
+    """Description must contain Q4 no-cherry-pick warning (selection bias / сравнение вариантов)."""
+    from src.dashboard.backtest_runner import STRATEGY_PRESETS
+
+    desc = STRATEGY_PRESETS["kronos"]["description"]
+    desc_lower = desc.lower()
+    assert (
+        "сравнение вариантов" in desc_lower
+        or "не является обоснованием выбора" in desc_lower
+        or "selection bias" in desc_lower
+        or "не выбир" in desc_lower
+    ), f"Q4 warning not found in description: {desc[:200]}"

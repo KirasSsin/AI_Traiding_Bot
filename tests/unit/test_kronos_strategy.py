@@ -47,15 +47,19 @@ def _make_bar(
     close: float,
     is_closed: bool = True,
     symbol: str = SYMBOL,
+    high: float | None = None,
+    low: float | None = None,
 ) -> Bar:
+    high_v = close if high is None else high
+    low_v = close if low is None else low
     return Bar(
         open_time=close_time - timedelta(hours=1),
         close_time=close_time,
         symbol=symbol,
         interval="1h",
         open=Decimal(str(close)),
-        high=Decimal(str(close)),
-        low=Decimal(str(close)),
+        high=Decimal(str(high_v)),
+        low=Decimal(str(low_v)),
         close=Decimal(str(close)),
         volume=Decimal("100"),
         trade_count=100,
@@ -111,7 +115,9 @@ def test_kronos_reason_codes_exist() -> None:
 def test_entry_long_when_pred_above_threshold(base_time: datetime, tmp_path) -> None:
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
-    bar = _make_bar(close_time=base_time, close=100.0)
+    # Warm up the ATR first — ENTRY is blocked until atr_14 can size the bracket.
+    last = _feed_closed_bars_with_range(strat, base_time, count=14, close=100.0)
+    bar = _make_bar(close_time=last + timedelta(hours=1), close=100.0, high=101.0, low=99.0)
     # pred_close > 100 * (1 + 0.006) = 100.60 -> ENTRY_LONG
     _put_prediction(cache, bar, Decimal("101.00"))
     sig = strat.on_bar(bar)
@@ -129,6 +135,8 @@ def test_exit_flat_when_pred_below_current(base_time: datetime, tmp_path) -> Non
     assert sig is not None
     assert sig.side == SignalSide.FLAT
     assert sig.reason == ReasonCode.EXIT_FLAT_KRONOS.value
+    # EXIT_FLAT fires before ATR has warmed — atr_14 must be _ZERO (locked design)
+    assert sig.atr_14 == Decimal("0")
 
 
 def test_no_signal_within_band(base_time: datetime, tmp_path) -> None:
@@ -264,3 +272,84 @@ def test_threshold_configurable(base_time: datetime, tmp_path) -> None:
     # pred 100.50 > 100.25 but < 105 (5% threshold) -> no signal under wide band
     _put_prediction(cache, bar, Decimal("100.50"))
     assert strat.on_bar(bar) is None
+
+
+# ---------------------------------------------------------------------------
+# real Wilder ATR fill (S53 T4, BLOCKER CC2) — atr_14 > 0 for bracket sizing
+# ---------------------------------------------------------------------------
+
+
+def _feed_closed_bars_with_range(
+    strat: KronosStrategy, base_time: datetime, *, count: int, close: float = 100.0
+) -> datetime:
+    """Feed ``count`` closed bars with a non-trivial high/low range (no cached pred).
+
+    Each bar has TR ~= 2 (high = close+1, low = close-1) so Wilder ATR warms up to
+    a strictly positive value. Returns the close_time of the LAST bar fed so the
+    caller can place the next (entry) bar one hour later.
+    """
+    last = base_time
+    for i in range(count):
+        ct = base_time + timedelta(hours=i)
+        bar = _make_bar(close_time=ct, close=close, high=close + 1.0, low=close - 1.0)
+        strat.on_bar(bar)  # no cached prediction -> None, but ATR advances
+        last = ct
+    return last
+
+
+def test_signal_carries_real_atr_not_zero(base_time: datetime, tmp_path: Path) -> None:
+    """ENTRY signals must carry atr_14 > 0 after warm-up (bracket sizing, was _ZERO)."""
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    # Warm up the ATR: feed 14 closed bars with a real range (period=14 default).
+    last = _feed_closed_bars_with_range(strat, base_time, count=14, close=100.0)
+    # Entry bar: one hour after the last warm-up bar.
+    entry_ct = last + timedelta(hours=1)
+    entry_bar = _make_bar(close_time=entry_ct, close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, entry_bar, Decimal("101.00"))  # > 100.60 -> ENTRY_LONG
+    sig = strat.on_bar(entry_bar)
+    assert sig is not None
+    assert sig.reason == ReasonCode.ENTRY_LONG_KRONOS.value
+    assert sig.atr_14 > Decimal("0")  # NOT the old _ZERO stub
+
+
+def test_entry_blocked_until_atr_warmed(base_time: datetime, tmp_path: Path) -> None:
+    """ENTRY condition met but ATR not warmed (< period bars) -> on_bar returns None.
+
+    No valid SL can be sized without an ATR, so the strategy must refuse the trade.
+    """
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    bar = _make_bar(close_time=base_time, close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, bar, Decimal("101.00"))  # would-be ENTRY_LONG
+    # First bar -> ATR still in warm-up (None) -> no trade despite entry condition.
+    assert strat.on_bar(bar) is None
+
+
+def test_entry_blocked_when_atr_is_zero(base_time: datetime, tmp_path: Path) -> None:
+    """ENTRY condition met but 14+ zero-range bars seed ATR=0 -> on_bar returns None.
+
+    If all seed bars have zero TR (high==low==close), Wilder ATR seeds to 0.0 —
+    the zero-ATR gate (atr <= 0) must refuse the ENTRY to avoid zero-denominator
+    bracket sizing downstream. EXIT_FLAT is unaffected (no ATR dependency).
+    """
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    # Feed 14 zero-range bars (high == low == close → TR = 0 each bar).
+    last = base_time
+    for i in range(14):
+        ct = base_time + timedelta(hours=i)
+        bar = _make_bar(close_time=ct, close=100.0, high=100.0, low=100.0)
+        strat.on_bar(bar)  # no cached prediction → None, but ATR advances toward 0
+        last = ct
+
+    # After 14 zero-range bars the Wilder ATR should be warmed (not None) but == 0.
+    assert strat._last_atr is not None, "ATR should be seeded after 14 bars"
+    assert strat._last_atr == Decimal("0"), f"Expected ATR=0 but got {strat._last_atr}"
+
+    # Entry bar with ENTRY_LONG condition met: pred well above current close.
+    entry_ct = last + timedelta(hours=1)
+    entry_bar = _make_bar(close_time=entry_ct, close=100.0, high=100.0, low=100.0)
+    _put_prediction(cache, entry_bar, Decimal("101.00"))  # > 100.60 → would-be ENTRY_LONG
+    # Zero-ATR gate must block ENTRY (atr_14=0 means no valid SL/TP bracket).
+    assert strat.on_bar(entry_bar) is None

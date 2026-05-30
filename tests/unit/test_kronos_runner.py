@@ -248,13 +248,15 @@ def test_run_kronos_exploratory_next_bar_fill(tmp_path: Path) -> None:
     """
     from src.backtest.kronos_runner import run_kronos_exploratory
 
-    n = 10
+    n = 20
     base_close = 50_000.0
+    # Entry must fire AFTER the 14-bar Wilder-ATR warm-up (S53 T4 risk gate).
+    entry_bar = 16
 
-    # Craft opens: open[3] = 1234.0, open[4] = 9999.0 — clearly distinguishable
+    # Craft opens: open[entry_bar] = 1234.0, open[entry_bar+1] = 9999.0 — distinguishable
     opens = [base_close * 0.999] * n
-    opens[3] = 1234.0
-    opens[4] = 9999.0
+    opens[entry_bar] = 1234.0
+    opens[entry_bar + 1] = 9999.0
 
     closes = [base_close] * n
     highs = [max(o, c) * 1.002 for o, c in zip(opens, closes, strict=False)]
@@ -273,9 +275,8 @@ def test_run_kronos_exploratory_next_bar_fill(tmp_path: Path) -> None:
     )
 
     cache = PredictionCache(tmp_path / "cache_fill")
-    # Bar 3: predict close > current_close * (1 + threshold) -> ENTRY signal
-    # threshold default = 0.0025; current_close = 50_000 -> need pred > 50_125
-    _populate_cache(cache, bar_idx=3, pred_close=Decimal("55000.0"))
+    # entry_bar: predict close > current_close * (1 + threshold) -> ENTRY signal
+    _populate_cache(cache, bar_idx=entry_bar, pred_close=Decimal("55000.0"))
 
     result = run_kronos_exploratory(
         df=df,
@@ -341,7 +342,7 @@ def test_run_kronos_exploratory_entry_and_exit_round_trip(tmp_path: Path) -> Non
     """An entry at bar i followed by an exit signal at bar j produces one closed trade."""
     from src.backtest.kronos_runner import run_kronos_exploratory
 
-    n = 15
+    n = 30
     base_close = 50_000.0
     closes = [float(base_close)] * n
     opens = [float(base_close) * 0.999] * n
@@ -361,10 +362,10 @@ def test_run_kronos_exploratory_entry_and_exit_round_trip(tmp_path: Path) -> Non
     )
 
     cache = PredictionCache(tmp_path / "cache_roundtrip")
-    # Bar 3: strong upside prediction -> ENTRY_LONG_KRONOS
-    _populate_cache(cache, bar_idx=3, pred_close=Decimal("55000.0"))
-    # Bar 7: prediction below current close -> EXIT_FLAT_KRONOS
-    _populate_cache(cache, bar_idx=7, pred_close=Decimal("45000.0"))
+    # Bar 16 (past the 14-bar ATR warm-up): strong upside prediction -> ENTRY_LONG_KRONOS
+    _populate_cache(cache, bar_idx=16, pred_close=Decimal("55000.0"))
+    # Bar 20: prediction below current close -> EXIT_FLAT_KRONOS
+    _populate_cache(cache, bar_idx=20, pred_close=Decimal("45000.0"))
 
     result = run_kronos_exploratory(
         df=df,
@@ -424,7 +425,7 @@ def test_run_kronos_exploratory_trades_are_dicts(tmp_path: Path) -> None:
 
     from src.backtest.kronos_runner import run_kronos_exploratory
 
-    n = 15
+    n = 30
     base_close = 50_000.0
     closes = [float(base_close)] * n
     opens = [float(base_close) * 0.999] * n
@@ -444,8 +445,9 @@ def test_run_kronos_exploratory_trades_are_dicts(tmp_path: Path) -> None:
     )
 
     cache = PredictionCache(tmp_path / "cache_dicts")
-    _populate_cache(cache, bar_idx=3, pred_close=Decimal("55000.0"))
-    _populate_cache(cache, bar_idx=7, pred_close=Decimal("45000.0"))
+    # Bars past the 14-bar ATR warm-up (S53 T4 risk gate).
+    _populate_cache(cache, bar_idx=16, pred_close=Decimal("55000.0"))
+    _populate_cache(cache, bar_idx=20, pred_close=Decimal("45000.0"))
 
     result = run_kronos_exploratory(
         df=df,
@@ -485,15 +487,16 @@ def test_run_kronos_exploratory_last_bar_mark_to_market(tmp_path: Path) -> None:
     where _SLIPPAGE = 0.0005.
 
     Fixture:
-    - 5 bars.  Bar 0 has an entry prediction (pred > threshold).
+    - 20 bars.  Bar 16 (past the 14-bar ATR warm-up) has an entry prediction.
     - No exit prediction on any subsequent bar.
-    - Entry fill = open[1] * (1 + SLIPPAGE).
-    - Exit (mark-to-market) fill = close[4] * (1 - SLIPPAGE).
-    - Exactly 1 trade, exit_idx = n - 1 = 4.
+    - Entry fill = open[17] * (1 + SLIPPAGE).
+    - Exit (mark-to-market) fill = close[19] * (1 - SLIPPAGE).
+    - Exactly 1 trade, exit_idx = n - 1 = 19.
     """
     from src.backtest.kronos_runner import run_kronos_exploratory
 
-    n = 5
+    n = 20
+    entry_bar = 16  # past the 14-bar Wilder-ATR warm-up (S53 T4 risk gate)
     base_close = 50_000.0
     base_open = 49_900.0
     last_close = 51_000.0  # distinct from others to identify mark-to-market branch
@@ -518,9 +521,9 @@ def test_run_kronos_exploratory_last_bar_mark_to_market(tmp_path: Path) -> None:
     slippage = 0.0005  # mirrors kronos_runner._SLIPPAGE constant
 
     cache = PredictionCache(tmp_path / "cache_mtm")
-    # Bar 0: strong upside prediction -> ENTRY_LONG_KRONOS.
-    _populate_cache(cache, bar_idx=0, pred_close=Decimal("60000.0"))
-    # No exit prediction on bars 1-4 -> position never explicitly closed -> mark-to-market.
+    # entry_bar: strong upside prediction -> ENTRY_LONG_KRONOS.
+    _populate_cache(cache, bar_idx=entry_bar, pred_close=Decimal("60000.0"))
+    # No exit prediction afterwards -> position never explicitly closed -> mark-to-market.
 
     result = run_kronos_exploratory(
         df=df,
@@ -565,7 +568,7 @@ def test_run_kronos_exploratory_single_trade_sharpe_is_nan(tmp_path: Path) -> No
 
     from src.backtest.kronos_runner import run_kronos_exploratory
 
-    n = 15
+    n = 30
     base_close = 50_000.0
     closes = [float(base_close)] * n
     opens = [float(base_close) * 0.999] * n
@@ -585,9 +588,9 @@ def test_run_kronos_exploratory_single_trade_sharpe_is_nan(tmp_path: Path) -> No
     )
 
     cache = PredictionCache(tmp_path / "cache_sharpe")
-    # Bar 3: entry; bar 7: exit — exactly one round-trip trade.
-    _populate_cache(cache, bar_idx=3, pred_close=Decimal("55000.0"))
-    _populate_cache(cache, bar_idx=7, pred_close=Decimal("45000.0"))
+    # Bar 16 (past the 14-bar ATR warm-up): entry; bar 20: exit — one round-trip trade.
+    _populate_cache(cache, bar_idx=16, pred_close=Decimal("55000.0"))
+    _populate_cache(cache, bar_idx=20, pred_close=Decimal("45000.0"))
 
     result = run_kronos_exploratory(
         df=df,

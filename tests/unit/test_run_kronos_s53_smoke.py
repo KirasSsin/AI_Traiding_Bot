@@ -1,4 +1,4 @@
-"""Smoke tests for scripts/run_kronos_s52.py — torch-free CI guard.
+"""Smoke tests for scripts/run_kronos_s53.py — torch-free CI guard.
 
 Verifies:
 1. The module imports successfully without torch installed.
@@ -6,6 +6,7 @@ Verifies:
 3. The RUN_ML guard: calling main() without RUN_ML=1 prints the skip message
    and returns 0, without any torch ImportError.
 4. COMBOS elements are (str, str) tuples with valid values.
+5. The script uses KronosVariant singletons (no hardcoded mismatched MODEL_ID/TOKENIZER_ID).
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ def _cleanup_torch_stub() -> None:
 
 
 def _import_script() -> types.ModuleType:
-    """Import scripts/run_kronos_s52.py cleanly, ensuring no torch side-effect."""
+    """Import scripts/run_kronos_s53.py cleanly, ensuring no torch side-effect."""
     # Ensure torch is NOT importable so a top-level import would fail loudly.
     sys.modules.setdefault("torch", None)  # type: ignore[assignment]
 
@@ -46,7 +47,9 @@ def _import_script() -> types.ModuleType:
 
     # Invalidate caches in case prior import attempt happened.
     importlib.invalidate_caches()
-    return importlib.import_module("scripts.run_kronos_s52")
+    # Remove cached module so each test gets a fresh import.
+    sys.modules.pop("scripts.run_kronos_s53", None)
+    return importlib.import_module("scripts.run_kronos_s53")
 
 
 def test_module_imports_without_torch() -> None:
@@ -88,7 +91,7 @@ def test_no_run_ml_exits_zero(capsys: object) -> None:
     os.environ.pop("RUN_ML", None)
     mod = _import_script()
 
-    ret = mod.main()
+    ret = mod.main([])
 
     assert ret == 0, f"Expected exit 0 without RUN_ML, got {ret}"
     captured = capsys.readouterr()
@@ -107,3 +110,27 @@ def test_combos_are_three_tuples() -> None:
         assert isinstance(timeframe, str)
         assert isinstance(path, str)
         assert path.endswith(".parquet"), f"Expected .parquet path, got {path!r}"
+
+
+def test_script_uses_kronos_variant_singletons() -> None:
+    """Script must use KronosVariant singletons; no hardcoded mismatched MODEL_ID/TOKENIZER_ID."""
+    mod = _import_script()
+    from src.ml.kronos_variant import KRONOS_BASE, KRONOS_MINI
+
+    assert mod.resolve_variant("base") is KRONOS_BASE
+    assert mod.resolve_variant("mini") is KRONOS_MINI
+    # mini must be paired with 2k tokenizer (S52 bug fixed)
+    assert KRONOS_MINI.tokenizer_id.endswith("Tokenizer-2k")
+
+
+def test_kronos_revision_constant_is_none_by_default() -> None:
+    """KRONOS_REVISION constant must be None by default (operator must set before RUN_ML=1).
+
+    This locks the design: None = unset = safe default.  The FIX 4 hard-fail guard in
+    main() checks ``if KRONOS_REVISION is None`` and returns 1 before any torch import.
+    """
+    mod = _import_script()
+    # The constant lives at module level; operator must supply a verified SHA.
+    assert (
+        mod.KRONOS_REVISION is None
+    ), "KRONOS_REVISION must default to None — operator sets it before RUN_ML=1"

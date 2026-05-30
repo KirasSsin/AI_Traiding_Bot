@@ -1,14 +1,18 @@
-"""S52 T7 — Kronos (NeoQuasar) cache-build + exploratory backtest runner (11 combos).
+"""S53 T7 — Kronos (NeoQuasar) cache-build + exploratory backtest runner (11 combos).
+
+Variant-driven: uses KronosVariant singletons (no hardcoded MODEL_ID/TOKENIZER_ID).
+Selects variant via ``--variant {base,mini}`` CLI arg (or ``KRONOS_VARIANT`` env,
+default ``base``).
 
 OPERATOR INSTRUCTIONS (Mac M4 Pro, MPS):
   1. pip install -e ".[ml]"
-  2. RUN_ML=1 .venv/bin/python scripts/run_kronos_s52.py
+  2. RUN_ML=1 .venv/bin/python scripts/run_kronos_s53.py --variant base
 
 Without RUN_ML=1 this script prints these instructions and exits 0.
 torch is never imported unless RUN_ML=1 is set.
 
 CACHE ARTIFACTS → data/kronos_cache/  (gitignored — never committed).
-RESULTS JSON    → data/kronos_s52_results/  (gitignored — never committed).
+RESULTS JSON    → data/kronos_s53_results/  (gitignored — never committed).
 
 HONEST DISCLAIMER (ADR 0068, GATE 0):
   BTC/USDT confirmed in Kronos pretraining corpus. Backtest results carry
@@ -24,10 +28,14 @@ DESIGN (ADR 0068, C4 provenance-bound keys):
   - params_hash = hash_params({"T": temperature, "top_p": top_p,
       "sample_count": sample_count, "horizon": horizon, "seed": seed}).
   - median_ensemble() reduces sample_count draws → single Decimal vector per bar.
+
+WARNING (CC4): changing variant/tokenizer changes weights_hash → old cache entries
+  become MISS → full rebuild required.
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import logging
@@ -43,6 +51,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 from src.backtest.kronos_runner import run_kronos_exploratory
+from src.ml.kronos_variant import KronosVariant, variant_by_name
 from src.ml.prediction_cache import CacheKey, PredictionCache, hash_params, median_ensemble
 
 logging.basicConfig(
@@ -54,11 +63,8 @@ _log = logging.getLogger(__name__)
 # ─── Guard ────────────────────────────────────────────────────────────────────
 RUN_ML: bool = os.environ.get("RUN_ML") == "1"
 
-# ─── Kronos model config ──────────────────────────────────────────────────────
-MODEL_ID = "NeoQuasar/Kronos-mini"
-TOKENIZER_ID = "NeoQuasar/Kronos-Tokenizer-base"
+# ─── Kronos config ────────────────────────────────────────────────────────────
 DEVICE = "mps"
-MAX_CONTEXT = 2048
 TEMPERATURE = 1.0
 TOP_P = 0.9
 SAMPLE_COUNT = 20
@@ -100,13 +106,25 @@ _TF_TO_TD: dict[str, timedelta] = {
 
 # Output directories.
 CACHE_DIR = Path("data/kronos_cache")
-RESULTS_DIR = Path("data/kronos_s52_results")
+RESULTS_DIR = Path("data/kronos_s53_results")
 
 # FIX A (PHASE 6 R2) — manifest sidecar. Mirrors S51 D2 parquet-manifest pattern.
 # Captures the cache-key-defining params (model_id, weights_hash, params_hash,
 # device) so the dashboard can reconstruct CacheKeys matching this build → HITS.
 MANIFEST_NAME = "_manifest.json"
 MANIFEST_SCHEMA_VERSION = 1
+
+
+# ─── Variant resolution ───────────────────────────────────────────────────────
+
+
+def resolve_variant(name: str) -> KronosVariant:
+    """Resolve a KronosVariant by name (``base`` | ``mini``).
+
+    Delegates to ``variant_by_name`` from ``src.ml.kronos_variant``.
+    Exposed at module level so smoke tests can verify singleton identity.
+    """
+    return variant_by_name(name)
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -133,11 +151,11 @@ def _normalize_df(path: str) -> pd.DataFrame:
     return df[["_ts", "open", "high", "low", "close", "volume"]]
 
 
-def _compute_weights_hash(model_id: str, tokenizer_id: str) -> str:
-    """Compute SHA-256 over HuggingFace cached weight files for both repos.
+def _compute_weights_hash(variant: KronosVariant) -> str:
+    """Compute SHA-256 over HuggingFace cached weight files for the variant's repos.
 
     Searches the HF cache under the default ``~/.cache/huggingface/`` tree for
-    files matching the model repository AND the tokenizer repository
+    files matching variant.model_id AND variant.tokenizer_id
     (pytorch_model.bin / model.safetensors / model.ckpt). Both repos are
     separate downloads for Kronos (unlike Chronos where they are the same).
     All found weight files are sorted and hashed together for a combined
@@ -145,13 +163,18 @@ def _compute_weights_hash(model_id: str, tokenizer_id: str) -> str:
 
     Falls back to SHA-256 of ``"model_id|tokenizer_id"`` when no files are
     found (e.g. models not yet downloaded).
+
+    WARNING (CC4): changing variant/tokenizer changes weights_hash -> old cache
+    entries become MISS -> full rebuild required.
     """
+    model_id = variant.model_id
+    tokenizer_id = variant.tokenizer_id
     hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
     weight_extensions = {".bin", ".safetensors", ".ckpt", ".pt"}
 
     weight_files: list[Path] = []
     for repo_id in (model_id, tokenizer_id):
-        # Repo id "org/name" → directory prefix "models--org--name"
+        # Repo id "org/name" -> directory prefix "models--org--name"
         repo_dir_name = "models--" + repo_id.replace("/", "--")
         repo_dir = hf_cache / repo_dir_name
         if repo_dir.exists():
@@ -188,8 +211,10 @@ def _build_cache_for_combo(
     df: pd.DataFrame,
     adapter: Any,
     cache: PredictionCache,
+    model_id: str,
     weights_hash: str,
     params_hash: str,
+    max_context: int,
 ) -> int:
     """Build cache entries for every bar in ``df`` for one (symbol, timeframe) combo.
 
@@ -201,7 +226,7 @@ def _build_cache_for_combo(
          bar_close_ts = int(bar.close_time.timestamp())
     2. Skip if key already cached (idempotent rebuild).
     3. Predict using the real adapter (SAMPLE_COUNT draws).
-    4. Reduce via median_ensemble → single Decimal vector.
+    4. Reduce via median_ensemble -> single Decimal vector.
     5. Write to cache (put).
 
     Returns:
@@ -215,7 +240,7 @@ def _build_cache_for_combo(
         bar_close_ts = int((open_time + td).timestamp())
 
         key = CacheKey(
-            model_id=MODEL_ID,
+            model_id=model_id,
             weights_hash=weights_hash,
             symbol=symbol,
             timeframe=timeframe,
@@ -236,7 +261,7 @@ def _build_cache_for_combo(
         # Draw SAMPLE_COUNT samples.
         samples: list[list[Decimal]] = []
         for _ in range(SAMPLE_COUNT):
-            pred = adapter.predict(context_df, lookback=MAX_CONTEXT, horizon=HORIZON)
+            pred = adapter.predict(context_df, lookback=max_context, horizon=HORIZON)
             samples.append(pred)
 
         prediction = median_ensemble(samples)
@@ -249,6 +274,7 @@ def _build_cache_for_combo(
 def _write_manifest(
     *,
     cache_dir: Path,
+    model_id: str,
     weights_hash: str,
     params_hash: str,
     combos_coverage: list[dict[str, Any]],
@@ -278,7 +304,7 @@ def _write_manifest(
 
     manifest = {
         "schema_version": MANIFEST_SCHEMA_VERSION,
-        "model_id": MODEL_ID,
+        "model_id": model_id,
         "weights_hash": weights_hash,
         "params_hash": params_hash,
         "device": DEVICE,
@@ -286,45 +312,86 @@ def _write_manifest(
     }
     cache_dir.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2))
-    _log.info("Wrote manifest → %s (%d combos)", manifest_path, len(manifest["combos"]))
+    combos_list: list[Any] = manifest["combos"]  # type: ignore[assignment]
+    _log.info("Wrote manifest -> %s (%d combos)", manifest_path, len(combos_list))
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 
-def main() -> int:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments (or ``argv`` for testing)."""
+    parser = argparse.ArgumentParser(
+        description="Kronos S53 cache-build + exploratory runner (11 combos)"
+    )
+    parser.add_argument(
+        "--variant",
+        choices=["base", "mini"],
+        default=os.environ.get("KRONOS_VARIANT", "base"),
+        help="Kronos variant to use (default: base or KRONOS_VARIANT env).",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Entry point. ``argv`` overrides sys.argv for testing."""
+    args = _parse_args(argv)
+    variant = resolve_variant(args.variant)
+
     if not RUN_ML:
         print("=" * 60)
-        print("Kronos S52 cache-build + exploratory runner")
+        print("Kronos S53 cache-build + exploratory runner")
         print("=" * 60)
         print()
         print("RUN_ML is not set — skipping real model inference.")
         print()
+        print(f"variant       = {variant.name}  ({variant.model_id})")
+        print(f"tokenizer_id  = {variant.tokenizer_id}")
+        print(f"max_context   = {variant.max_context}")
+        print()
+        print("WARNING: changing variant/tokenizer changes weights_hash ->")
+        print("         old cache entries become MISS -> full rebuild required.")
+        print()
         print("To run on operator M4 Pro (MPS):")
         print('  1. pip install -e ".[ml]"')
-        print("  2. RUN_ML=1 .venv/bin/python scripts/run_kronos_s52.py")
+        print(f"  2. RUN_ML=1 .venv/bin/python scripts/run_kronos_s53.py --variant {variant.name}")
         print()
-        print("Cache artifacts  → data/kronos_cache/  (gitignored)")
-        print("Results JSON     → data/kronos_s52_results/  (gitignored)")
+        print("Cache artifacts  -> data/kronos_cache/  (gitignored)")
+        print("Results JSON     -> data/kronos_s53_results/  (gitignored)")
         print()
         print("HONEST DISCLAIMER: BTC/USDT confirmed in Kronos pretrain corpus.")
         print("Results carry VERDICT_RAW_PRETRAIN_LEAKAGE_SUSPECTED — EXPLORATORY ONLY.")
         return 0
+
+    # ── SECURITY: KRONOS_REVISION must be pinned before any RUN_ML=1 run ────────
+    # Unpinned from_pretrained deserializes arbitrary checkpoint from HuggingFace
+    # (torch.load pickle = ACE surface). Operator MUST set KRONOS_REVISION to a
+    # verified commit SHA before running with RUN_ML=1.
+    if KRONOS_REVISION is None:
+        print(
+            "SECURITY: set KRONOS_REVISION=<verified sha> before RUN_ML=1 "
+            "— unpinned weights = ACE risk"
+        )
+        return 1
 
     # ── torch/Kronos imports — ONLY inside RUN_ML branch ──────────────────────
     import torch  # type: ignore[import-not-found]  # noqa: PLC0415 — guarded import
     from src.ml.kronos_adapter import KronosModelAdapter  # noqa: PLC0415
 
     print("=" * 60)
-    print("S52 T7 — Kronos (NeoQuasar) cache-build + exploratory backtest (11 combos)")
+    print("S53 T7 — Kronos (NeoQuasar) cache-build + exploratory backtest (11 combos)")
     print("=" * 60)
-    print(f"model_id      = {MODEL_ID}")
-    print(f"tokenizer_id  = {TOKENIZER_ID}")
+    print(f"variant       = {variant.name}")
+    print(f"model_id      = {variant.model_id}")
+    print(f"tokenizer_id  = {variant.tokenizer_id}")
+    print(f"max_context   = {variant.max_context}")
     print(f"device        = {DEVICE}")
-    print(f"max_context   = {MAX_CONTEXT}")
     print(f"sample_count  = {SAMPLE_COUNT}")
     print(f"horizon       = {HORIZON}")
     print(f"seed          = {SEED}")
+    print()
+    print("WARNING: changing variant/tokenizer changes weights_hash ->")
+    print("         old cache entries become MISS -> full rebuild required.")
 
     # Fix torch seed for reproducibility (V4 determinism).
     torch.manual_seed(SEED)
@@ -345,10 +412,8 @@ def main() -> int:
     # on disk — avoids fallback hash on first-run (FIX 4, PHASE 6 R1).
     print("\nLoading Kronos adapter ...")
     adapter = KronosModelAdapter(
-        model_id=MODEL_ID,
-        tokenizer_id=TOKENIZER_ID,
+        variant=variant,
         device=DEVICE,
-        max_context=MAX_CONTEXT,
         temperature=TEMPERATURE,
         top_p=TOP_P,
         sample_count=SAMPLE_COUNT,
@@ -358,7 +423,7 @@ def main() -> int:
     # Compute weights hash (C4 provenance — covers model + tokenizer repos).
     # Must run AFTER adapter init so weight files are present.
     print("\nComputing weights hash ...")
-    weights_hash = _compute_weights_hash(MODEL_ID, TOKENIZER_ID)
+    weights_hash = _compute_weights_hash(variant)
     print(f"weights_hash  = {weights_hash}")
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -387,7 +452,7 @@ def main() -> int:
 
         print(
             f"  loaded {len(df):,} bars  "
-            f"{df['_ts'].iloc[0].date()} → {df['_ts'].iloc[-1].date()}"
+            f"{df['_ts'].iloc[0].date()} -> {df['_ts'].iloc[-1].date()}"
         )
 
         if len(df) < 50:
@@ -410,8 +475,10 @@ def main() -> int:
             df=df,
             adapter=adapter,
             cache=cache,
+            model_id=variant.model_id,
             weights_hash=weights_hash,
             params_hash=params_hash,
+            max_context=variant.max_context,
         )
         print(f"  Cache entries written: {written:,} (total in cache may be larger)")
 
@@ -427,7 +494,7 @@ def main() -> int:
 
         # ── Run exploratory backtest ────────────────────────────────────────────
         run_params: dict[str, Any] = {
-            "model_id": MODEL_ID,
+            "model_id": variant.model_id,
             "weights_hash": weights_hash,
             "params_hash": params_hash,
             "device": DEVICE,
@@ -458,7 +525,7 @@ def main() -> int:
             {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "model_id": MODEL_ID,
+                "model_id": variant.model_id,
                 "weights_hash": weights_hash,
                 "params_hash": params_hash,
                 "device": DEVICE,
@@ -468,13 +535,14 @@ def main() -> int:
         )
         all_results.append(serializable)
 
-        result_path = RESULTS_DIR / f"kronos_s52_{symbol}_{timeframe}.json"
+        result_path = RESULTS_DIR / f"kronos_s53_{symbol}_{timeframe}.json"
         result_path.write_text(json.dumps(serializable, indent=2, default=str))
-        print(f"  Saved → {result_path}")
+        print(f"  Saved -> {result_path}")
 
     # ── Write manifest sidecar (FIX A) so the dashboard reconstructs matching keys ──
     _write_manifest(
         cache_dir=CACHE_DIR,
+        model_id=variant.model_id,
         weights_hash=weights_hash,
         params_hash=params_hash,
         combos_coverage=combos_coverage,
@@ -496,9 +564,9 @@ def main() -> int:
             pnl = r.get("total_pnl_pct", 0.0)
             print(f"  {sym:10} {tf:5}  n_trades={nt:4d}  sharpe={sh:7.4f}  pnl%={pnl:7.2f}")
 
-    summary_path = RESULTS_DIR / "kronos_s52_summary.json"
+    summary_path = RESULTS_DIR / "kronos_s53_summary.json"
     summary_path.write_text(json.dumps(all_results, indent=2, default=str))
-    print(f"\nSummary saved → {summary_path}")
+    print(f"\nSummary saved -> {summary_path}")
     print("\nDISCLAIMER: EXPLORATORY ONLY — RAW_PRETRAIN_LEAKAGE_SUSPECTED.")
 
     return 0
