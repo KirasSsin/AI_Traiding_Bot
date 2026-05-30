@@ -472,6 +472,143 @@ def test_run_kronos_exploratory_trades_are_dicts(tmp_path: Path) -> None:
         assert not str(t).startswith("_TradeRecord"), "trade was stringified to dataclass repr"
 
 
+# ---------------------------------------------------------------------------
+# Test 10: last-bar mark-to-market — open position closed at close[-1] * (1 - SLIPPAGE)
+# (PHASE 6 R3)
+# ---------------------------------------------------------------------------
+
+
+def test_run_kronos_exploratory_last_bar_mark_to_market(tmp_path: Path) -> None:
+    """An open position with no exit signal is closed at the final bar's mark-to-market.
+
+    Formula (kronos_runner.py line 272): fill = close_arr[-1] * (1.0 - _SLIPPAGE)
+    where _SLIPPAGE = 0.0005.
+
+    Fixture:
+    - 5 bars.  Bar 0 has an entry prediction (pred > threshold).
+    - No exit prediction on any subsequent bar.
+    - Entry fill = open[1] * (1 + SLIPPAGE).
+    - Exit (mark-to-market) fill = close[4] * (1 - SLIPPAGE).
+    - Exactly 1 trade, exit_idx = n - 1 = 4.
+    """
+    from src.backtest.kronos_runner import run_kronos_exploratory
+
+    n = 5
+    base_close = 50_000.0
+    base_open = 49_900.0
+    last_close = 51_000.0  # distinct from others to identify mark-to-market branch
+
+    closes = [base_close] * (n - 1) + [last_close]
+    opens = [base_open] * n
+    highs = [max(o, c) * 1.001 for o, c in zip(opens, closes, strict=False)]
+    lows = [min(o, c) * 0.999 for o, c in zip(opens, closes, strict=False)]
+
+    tss = [datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i) for i in range(n)]
+    df = pd.DataFrame(
+        {
+            "_ts": pd.to_datetime(tss, utc=True),
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": [100.0] * n,
+        }
+    )
+
+    slippage = 0.0005  # mirrors kronos_runner._SLIPPAGE constant
+
+    cache = PredictionCache(tmp_path / "cache_mtm")
+    # Bar 0: strong upside prediction -> ENTRY_LONG_KRONOS.
+    _populate_cache(cache, bar_idx=0, pred_close=Decimal("60000.0"))
+    # No exit prediction on bars 1-4 -> position never explicitly closed -> mark-to-market.
+
+    result = run_kronos_exploratory(
+        df=df,
+        symbol=_SYMBOL,
+        timeframe=_TF,
+        params=_make_kronos_params(),
+        cache=cache,
+    )
+
+    trades = result.get("trades", [])
+    assert len(trades) == 1, f"expected exactly 1 trade (mark-to-market), got {len(trades)}"
+
+    trade = trades[0]
+    exit_price = trade["exit_price"] if isinstance(trade, dict) else trade.exit_price
+    expected_exit = last_close * (1.0 - slippage)
+    assert (
+        abs(float(exit_price) - expected_exit) < 0.01
+    ), f"mark-to-market exit_price {exit_price} != close[-1]*(1-SLIPPAGE) = {expected_exit}"
+
+    exit_idx = trade["exit_idx"] if isinstance(trade, dict) else trade.exit_idx
+    assert exit_idx == n - 1, f"exit_idx must be {n - 1} (last bar), got {exit_idx}"
+
+
+# ---------------------------------------------------------------------------
+# Test 11: single-trade Sharpe — pnl_std==0 → sharpe=nan (PHASE 6 R3)
+# (Actual code path: n_trades==1 → pnl_std=0.0 → else: float("nan") if pnl_std==0)
+# ---------------------------------------------------------------------------
+
+
+def test_run_kronos_exploratory_single_trade_sharpe_is_nan(tmp_path: Path) -> None:
+    """With exactly 1 trade (pnl_std = 0 by construction), Sharpe is float('nan').
+
+    Code path (kronos_runner.py):
+      pnl_std = 0.0  (n_trades == 1, ddof=1 branch skipped)
+      if pnl_std > 0 and mean_holding > 0: ...   <- False
+      else: sharpe = float("nan") if pnl_std == 0 else 0.0  <- float("nan")
+
+    The test verifies the ACTUAL behavior (nan), not an assumed finite value.
+    ``math.isnan`` must return True and ``math.isfinite`` must return False.
+    """
+    import math
+
+    from src.backtest.kronos_runner import run_kronos_exploratory
+
+    n = 15
+    base_close = 50_000.0
+    closes = [float(base_close)] * n
+    opens = [float(base_close) * 0.999] * n
+    highs = [float(base_close) * 1.002] * n
+    lows = [float(base_close) * 0.998] * n
+
+    tss = [datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i) for i in range(n)]
+    df = pd.DataFrame(
+        {
+            "_ts": pd.to_datetime(tss, utc=True),
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": [100.0] * n,
+        }
+    )
+
+    cache = PredictionCache(tmp_path / "cache_sharpe")
+    # Bar 3: entry; bar 7: exit — exactly one round-trip trade.
+    _populate_cache(cache, bar_idx=3, pred_close=Decimal("55000.0"))
+    _populate_cache(cache, bar_idx=7, pred_close=Decimal("45000.0"))
+
+    result = run_kronos_exploratory(
+        df=df,
+        symbol=_SYMBOL,
+        timeframe=_TF,
+        params=_make_kronos_params(),
+        cache=cache,
+    )
+
+    trades = result.get("trades", [])
+    assert len(trades) == 1, f"expected exactly 1 trade, got {len(trades)}"
+
+    sharpe = result["metrics"]["sharpe"]
+    assert math.isnan(
+        sharpe
+    ), f"single-trade Sharpe (pnl_std=0) must be nan per code path, got {sharpe}"
+    assert not math.isfinite(
+        sharpe
+    ), f"single-trade Sharpe must not be finite (pnl_std=0 → nan branch), got {sharpe}"
+
+
 def test_build_bar_from_row_interval_matches_timeframe() -> None:
     """_build_bar_from_row must set bar.interval = timeframe, not hard-coded '1h'."""
 

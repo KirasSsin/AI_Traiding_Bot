@@ -157,3 +157,37 @@ def test_module_is_torch_free() -> None:
     import src.ml.prediction_cache  # noqa: F401
 
     assert "torch" not in sys.modules
+
+
+# ---------------------------------------------------------------------------
+# Edge-case: median_ensemble raises for invalid input (PHASE 6 R3)
+# ---------------------------------------------------------------------------
+
+
+def test_median_ensemble_raises_for_jagged_vectors() -> None:
+    """Vectors of unequal length must raise ValueError with the documented message."""
+    with pytest.raises(ValueError, match="all sample vectors must have equal length"):
+        median_ensemble([[Decimal("1")], [Decimal("1"), Decimal("2")]])
+
+
+def test_median_ensemble_raises_for_empty_input() -> None:
+    """Empty samples list must raise ValueError (no samples to reduce)."""
+    with pytest.raises(ValueError, match="samples must be non-empty"):
+        median_ensemble([])
+
+
+# ---------------------------------------------------------------------------
+# Edge-case: put(key, []) → get returns [] (PHASE 6 R3)
+# ---------------------------------------------------------------------------
+
+
+def test_put_empty_prediction_get_returns_empty_list(tmp_path: Path) -> None:
+    """put with an empty prediction vector persists it; get returns [] not None."""
+    cache = PredictionCache(tmp_path)
+    key = _make_key()
+    cache.put(key, [])
+
+    out = cache.get(key)
+    # The artifact exists (non-None), but is an empty list.
+    assert out is not None, "get after put([]) must return a list, not None"
+    assert out == [], f"expected [] but got {out!r}"

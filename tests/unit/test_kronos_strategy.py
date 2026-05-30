@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from src.marketdata.models import Bar
@@ -212,6 +213,39 @@ def test_threshold_default_is_locked_value(tmp_path) -> None:
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
     assert strat._threshold == Decimal("0.006")
+
+
+def test_strategy_on_bar_with_cached_empty_list_returns_none(
+    base_time: datetime, tmp_path: Path
+) -> None:
+    """A cached [] for the current bar → on_bar returns None (falsy guard treats [] as miss).
+
+    PredictionCache.get returns [] (not None) when put([]) was called.
+    KronosStrategy.on_bar has ``if not prediction: return None`` which treats an
+    empty list as a cache miss — no signal, no IndexError on prediction[0].
+    """
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    bar = _make_bar(close_time=base_time, close=100.0)
+
+    # Build the exact key the strategy will look up.
+    key = CacheKey(
+        model_id=MODEL_ID,
+        weights_hash=WEIGHTS_HASH,
+        symbol=SYMBOL,
+        timeframe=TIMEFRAME,
+        bar_close_ts=int(bar.close_time.timestamp()),
+        params_hash=PARAMS_HASH,
+        device=DEVICE,
+    )
+    cache.put(key, [])  # persist empty prediction
+
+    # Sanity: cache.get returns [] (not None).
+    got = cache.get(key)
+    assert got == [], f"expected cache.get to return [] but got {got!r}"
+
+    # Strategy must return None — empty list is falsy, treated as cache miss.
+    assert strat.on_bar(bar) is None
 
 
 def test_threshold_configurable(base_time: datetime, tmp_path) -> None:

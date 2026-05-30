@@ -15,6 +15,22 @@ import os
 import sys
 import types
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_torch_stub() -> None:
+    """Remove any torch=None stub from sys.modules after each test.
+
+    _import_script() injects ``sys.modules["torch"] = None`` to prevent
+    accidental torch imports during the smoke test.  Without cleanup this
+    stub leaks across test sessions and breaks test_ml_optional_dep.py's
+    ``test_core_imports_without_torch`` (which asserts torch is absent).
+    The fixture is autouse so every test in this module is covered.
+    """
+    yield  # type: ignore[misc]
+    sys.modules.pop("torch", None)
+
 
 def _import_script() -> types.ModuleType:
     """Import scripts/run_kronos_s52.py cleanly, ensuring no torch side-effect."""
