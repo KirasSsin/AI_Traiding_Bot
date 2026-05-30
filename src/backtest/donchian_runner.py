@@ -22,7 +22,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import statistics
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -49,7 +48,8 @@ P_THRESHOLD = 0.05
 N_EFF_THRESHOLD = 50
 T5_FLOOR = 50
 DSR_THRESHOLD = 0.95
-N_TRIALS_LOCKED = 5  # S13/S15/S17/S22/S35 cumulative per ADR 0054
+N_TRIALS_LOCKED = 5  # S13/S15/S17/S22/S35 cumulative per ADR 0054 (GLOBAL breadth)
+_STRATEGY_CLASS = "donchian"  # S51 D5 — within-class sigma_SR scoping key
 
 
 def _build_strategy_config() -> dict[str, Any]:
@@ -180,36 +180,33 @@ def _run_donchian_wfa(
         bars_per_year=bars_per_year,
     )
 
-    # DSR per ADR 0054: N_trials = 5 LOCKED (S13/S15/S17/S22/S35 cumulative).
-    # ADR 0056 sigma_SR sourcing hierarchy:
-    #   - N >= 3 cross-trial entries: stdev(cross_trial_sharpes) [PREFERRED]
-    #   - 1-2 entries:                NaN [DEGENERATE — df<2 inadmissible]
-    #   - 0 entries:                  None [EMPTY]
+    # DSR per ADR 0054: N_trials = 5 LOCKED (S13/S15/S17/S22/S35 cumulative — GLOBAL
+    # breadth, anti-snooping). S51 D5 two-level pool scoping (trader-expert verdict e):
+    #   - N_trials: GLOBAL = N_TRIALS_LOCKED (unchanged — multiple-testing breadth).
+    #   - sigma_SR: WITHIN-CLASS ("donchian") per ADR 0056 hierarchy — a wild
+    #     cross-family OOS Sharpe (S44 atr_breakout ETH −89 in the shared pool) must
+    #     NOT poison the donchian variance term. <3 within-class entries → NaN/None →
+    #     fall back к n_trials=1 honestly (verdict rests on T5/MC/sharpe gates).
     # REMOVED (S36 T6): per-fold Sharpe stdev as sigma_SR proxy — confounds within-trial
     # noise с cross-trial selection variability per Bailey 2014 eq.12.
+    # REMOVED (S51 D5): GLOBAL-pool stdev(pre_existing + [trial]) — confounded
+    # cross-strategy-class selection variance per the verdict.
     trial_log = CrossTrialLog(path=Path("data/cross_trial_sharpes.json"))
-    pre_existing = trial_log.get_oos_sharpes()
-    cross_trial_sharpes = pre_existing + [trial_mean_fold_oos_sharpe]
-    if len(cross_trial_sharpes) >= 3 and not math.isnan(trial_mean_fold_oos_sharpe):
-        sigma_sr: float | None = statistics.stdev(cross_trial_sharpes)
-    elif len(cross_trial_sharpes) >= 1:
-        # DEGENERATE: 1-2 entries → NaN sigma; caller falls back к n_trials=1 path.
-        sigma_sr = float("nan")
-    else:
-        sigma_sr = None
+    sigma_sr: float | None = trial_log.sigma_sr(strategy_class=_STRATEGY_CLASS)
 
-    # Compute DSR с status flag per ADR 0056 n_trades thresholds.
+    # Compute DSR с status flag per ADR 0056 n_trades thresholds + S51 D5 fallback.
     if (
         sigma_sr is not None
         and not math.isnan(sigma_sr)
         and not math.isnan(trial_mean_fold_oos_sharpe)
     ):
+        # CLASS_SCOPED: >=3 within-class entries → apply GLOBAL N_trials breadth.
         dsr_info = compute_dsr_with_status(
             trades=trades, n_trials=N_TRIALS_LOCKED, sigma_sr=sigma_sr
         )
     else:
-        # DEGENERATE OR EMPTY log path: n_trials=1, no multi-testing penalty.
-        # Honest reporting: gate likely FAIL, recorded в failed_criteria.
+        # INSUFFICIENT_CLASS_HISTORY / EMPTY: <3 within-class entries → n_trials=1,
+        # no multi-testing penalty. Honest reporting: gate likely FAIL, recorded.
         dsr_info = compute_dsr_with_status(trades=trades, n_trials=1)
     dsr_value = dsr_info["dsr"]
 

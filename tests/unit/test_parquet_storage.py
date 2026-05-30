@@ -90,3 +90,66 @@ def test_writer_append_is_additive(tmp_path: Path) -> None:
     files = sorted(tmp_path.glob("*.parquet"))
     total = sum(pq.read_table(f).num_rows for f in files)
     assert total == 5
+
+
+# --- SHA-256 sidecar manifest tests ---
+
+
+def test_append_creates_sha256_sidecar(tmp_path: Path) -> None:
+    """Each parquet write must produce a matching .sha256 sidecar."""
+    from src.marketdata.storage import verify_parquet
+
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+    path = writer.append([_bar(0)])
+
+    sidecar = path.with_suffix(".sha256")
+    assert sidecar.exists(), "sidecar .sha256 not written"
+    # sidecar contains a valid 64-char hex digest
+    digest = sidecar.read_text().strip()
+    assert len(digest) == 64 and all(c in "0123456789abcdef" for c in digest)
+    # verify_parquet confirms integrity
+    assert verify_parquet(path) is True
+
+
+def test_verify_parquet_detects_corruption(tmp_path: Path) -> None:
+    """`verify_parquet` returns False when file content differs from sidecar hash."""
+    from src.marketdata.storage import verify_parquet
+
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+    path = writer.append([_bar(0)])
+
+    # Corrupt the parquet (append a byte)
+    path.write_bytes(path.read_bytes() + b"\x00")
+    assert verify_parquet(path) is False
+
+
+def test_verify_parquet_missing_sidecar(tmp_path: Path) -> None:
+    """`verify_parquet` returns False when sidecar is absent."""
+    from src.marketdata.storage import verify_parquet
+
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+    path = writer.append([_bar(0)])
+
+    path.with_suffix(".sha256").unlink()
+    assert verify_parquet(path) is False
+
+
+def test_no_sidecar_tmp_artifact_on_success(tmp_path: Path) -> None:
+    """Atomic write leaves no .sha256.tmp temp files on success."""
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+    writer.append([_bar(0)])
+
+    assert list(tmp_path.glob("*.tmp")) == []
+
+
+def test_sidecar_written_for_multiple_appends(tmp_path: Path) -> None:
+    """Every `append` call produces its own sidecar; each passes verify_parquet."""
+    from src.marketdata.storage import verify_parquet
+
+    writer = ParquetBarWriter(directory=tmp_path, symbol="BTCUSDT", interval="1h")
+    paths = [writer.append([_bar(i)]) for i in range(3)]
+
+    sidecars = list(tmp_path.glob("*.sha256"))
+    assert len(sidecars) == 3
+    for p in paths:
+        assert verify_parquet(p) is True

@@ -13,6 +13,13 @@ class ReasonCode(StrEnum):
     REJECT_ORDER_ALREADY_TERMINAL = "REJECT_ORDER_ALREADY_TERMINAL"
     # S47 T9 — bybit-api-reviewer S38 M1: extend taxonomy для testnet debuggability
     INVALID_PARAM = "INVALID_PARAM"
+    # S51 D1 — OrderLinkedID duplicate (Bybit V5 retCode 110072). A retried
+    # placement reusing the SAME deterministic orderLinkId after the original
+    # already landed. For idempotent flatten placements (S49 B1) this proves
+    # our prior submit succeeded → flatten treats it as success, not a HALT.
+    # This is the BYBIT-LOCAL enum; it does NOT affect the canonical 65-code
+    # ReasonCode in src/risk/reason_codes.py.
+    REJECT_DUPLICATE_ORDER = "REJECT_DUPLICATE_ORDER"
     UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
 
@@ -25,6 +32,10 @@ _MAP: dict[int, ReasonCode] = {
     10016: ReasonCode.EXCHANGE_MAINTENANCE,
     # 110001 stays REJECT_ORDER_ALREADY_TERMINAL — adapter.py line 213 pins this behaviour
     110001: ReasonCode.REJECT_ORDER_ALREADY_TERMINAL,
+    # 110072 — OrderLinkedID is duplicate (S51 D1). Flatten paths pin retCode==110072
+    # before treating it as success, so this mapping cannot silently swallow a
+    # different error.
+    110072: ReasonCode.REJECT_DUPLICATE_ORDER,
     110007: ReasonCode.INSUFFICIENT_BALANCE,
     110017: ReasonCode.FILTER_VIOLATION,
     170131: ReasonCode.FILTER_VIOLATION,

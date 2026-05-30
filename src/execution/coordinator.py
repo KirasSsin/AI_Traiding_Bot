@@ -26,6 +26,7 @@ from src.execution.bracket import (
     make_flatten_link_id,
     make_order_link_id,
 )
+from src.execution.bybit.adapter import BybitAPIError
 from src.execution.bybit.errors import ReasonCode as AdapterReasonCode
 from src.execution.state_machine import (
     ExecutionEvent,
@@ -365,6 +366,29 @@ class Coordinator:
                 qty=leaves_qty,
                 order_link_id=residual_link_id,
             )
+        except BybitAPIError as exc:
+            # S51 D1: 110072 (OrderLinkedID duplicate) means our prior residual
+            # flatten — placed with this SAME deterministic orderLinkId — already
+            # landed server-side. Idempotency complete: the residual is flat, so
+            # this is success, NOT a spurious HALT. Pin on retCode==110072 (not
+            # the reason alone) so a future _MAP change can't swallow another
+            # error as "duplicate". Mirrors the 110001 pattern in adapter.cancel_order.
+            if exc.ret_code == 110072 and exc.reason is AdapterReasonCode.REJECT_DUPLICATE_ORDER:
+                _log.info(
+                    "flatten.ioc_residual_duplicate symbol=%s ret_code=%s link_id=%s",
+                    self._symbol,
+                    exc.ret_code,
+                    residual_link_id,
+                )
+                self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
+                return
+            self._set_halt(
+                reason=ReasonCode.HALT_FLATTEN_FAILED,
+                last_event=ExecutionEvent.FLATTEN_FAILED,
+                extra={"flatten_path": "ioc_residual", "leaves_qty": str(leaves_qty)},
+            )
+            self._transition(ExecutionEvent.FLATTEN_FAILED)
+            return
         except Exception:  # noqa: BLE001 — any place_order failure → halt+FLATTEN_FAILED (control flow preserved)
             self._set_halt(
                 reason=ReasonCode.HALT_FLATTEN_FAILED,
@@ -532,6 +556,25 @@ class Coordinator:
                 symbol=self._symbol, side="Sell", qty=qty, order_link_id=link_id
             )
             return True
+        except BybitAPIError as exc:
+            # S51 D1: 110072 (OrderLinkedID duplicate) — this emergency-flatten
+            # Market Sell, placed with this SAME deterministic link_id, already
+            # landed server-side. The sell succeeded → return True so flatten()
+            # stops the cascade (no second sell, no HALT). Pin on retCode==110072
+            # to avoid swallowing a different error. Mirrors the 110001 pattern.
+            if exc.ret_code == 110072 and exc.reason is AdapterReasonCode.REJECT_DUPLICATE_ORDER:
+                _log.info(
+                    "flatten.market_sell_duplicate symbol=%s qty=%s ret_code=%s link_id=%s",
+                    self._symbol,
+                    qty,
+                    exc.ret_code,
+                    link_id,
+                )
+                return True
+            _log.warning(
+                "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
+            )
+            return False
         except Exception:  # noqa: BLE001 — best-effort flatten Market Sell; caller retries/halts on False
             _log.warning(
                 "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True

@@ -368,4 +368,5 @@ def run_supertrend_wfa(
         n_trials=10,  # S50 T7 — Supertrend = hypothesis #10 (ADR 0067 CC3 wiring)
         cross_trial_log_path=cross_trial_log_path,
         sprint_tag=sprint_tag,
+        strategy_class="supertrend",  # S51 D5 — within-class sigma_SR scoping
     )

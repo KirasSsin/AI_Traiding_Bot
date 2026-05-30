@@ -496,4 +496,5 @@ def _run_atr_breakout_wfa(
         embargo_bars=embargo_bars,
         n_trials=10,  # S45 C1 — atr_breakout family = 10 hypotheses
         sprint_tag="S44",
+        strategy_class="atr_breakout",  # S51 D5 — within-class sigma_SR scoping
     )

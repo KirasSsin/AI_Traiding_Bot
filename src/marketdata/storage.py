@@ -1,5 +1,6 @@
 """Parquet writer for OHLCV bars (OLAP storage)."""
 
+import hashlib
 import os
 from collections.abc import Iterable
 from pathlib import Path
@@ -63,14 +64,43 @@ class ParquetBarWriter:
             f"-{bars_list[-1].close_time.strftime('%Y%m%d%H%M%S')}.parquet"
         )
         path = self._dir / fname
-        # Atomic write: stage to .tmp then os.replace (atomic rename on POSIX) so
-        # a crash/OOM mid-write never leaves a truncated/corrupt final partition.
+        sidecar = path.with_suffix(".sha256")
+        # Atomic write: stage both parquet and sidecar to .tmp, then os.replace
+        # (atomic rename on POSIX) so a crash never leaves truncated/corrupt files.
         tmp_path = path.with_suffix(path.suffix + ".tmp")
+        tmp_sidecar = sidecar.with_suffix(".sha256.tmp")
         try:
             pq.write_table(table, tmp_path, compression="snappy")  # type: ignore[no-untyped-call]
+            digest = _sha256(tmp_path)
+            tmp_sidecar.write_text(digest)
             os.replace(tmp_path, path)
+            os.replace(tmp_sidecar, sidecar)
         finally:
-            # tmp is gone after a successful replace; only matters if write/replace raised.
+            # tmps are gone after successful replaces; only matters if an error raised.
             if tmp_path.exists():
                 tmp_path.unlink(missing_ok=True)
+            if tmp_sidecar.exists():
+                tmp_sidecar.unlink(missing_ok=True)
         return path
+
+
+def _sha256(path: Path) -> str:
+    """Return lowercase hex SHA-256 digest of a file's contents."""
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def verify_parquet(path: Path) -> bool:
+    """Return True if path's SHA-256 matches its .sha256 sidecar; False otherwise.
+
+    Returns False (not raises) when the sidecar is missing or the digest mismatches,
+    so callers can branch on integrity without exception handling.
+    """
+    sidecar = path.with_suffix(".sha256")
+    if not sidecar.exists():
+        return False
+    expected = sidecar.read_text().strip()
+    return _sha256(path) == expected

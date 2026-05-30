@@ -33,8 +33,26 @@ def test_unknown_code_maps_to_unknown() -> None:
 
 
 def test_110001_maps_to_already_terminal() -> None:
-    assert map_error(110001, "order not exists or finished") is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL
+    assert (
+        map_error(110001, "order not exists or finished")
+        is ReasonCode.REJECT_ORDER_ALREADY_TERMINAL
+    )
 
 
 def test_already_terminal_in_enum() -> None:
     assert "REJECT_ORDER_ALREADY_TERMINAL" in {r.value for r in ReasonCode}
+
+
+def test_110072_maps_to_reject_duplicate_order() -> None:
+    # S51 D1 — OrderLinkedID duplicate. Our prior deterministic flatten submit
+    # already landed; must be mapped (not UNKNOWN_ERROR) so flatten paths can
+    # recognize it as idempotency-complete (success) instead of a spurious HALT.
+    assert map_error(110072, "OrderLinkedID is duplicate") is ReasonCode.REJECT_DUPLICATE_ORDER
+
+
+def test_110072_not_unknown() -> None:
+    assert map_error(110072, "OrderLinkedID is duplicate") is not ReasonCode.UNKNOWN_ERROR
+
+
+def test_reject_duplicate_order_in_enum() -> None:
+    assert "REJECT_DUPLICATE_ORDER" in {r.value for r in ReasonCode}
