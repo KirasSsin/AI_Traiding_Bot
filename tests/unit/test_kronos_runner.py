@@ -20,6 +20,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytest
 from src.backtest.research_runner_envelope import VERDICT_RAW_PRETRAIN_LEAKAGE
 from src.ml.prediction_cache import CacheKey, PredictionCache
 
@@ -376,3 +377,61 @@ def test_run_kronos_exploratory_entry_and_exit_round_trip(tmp_path: Path) -> Non
     trades = result.get("trades", [])
     assert len(trades) >= 1, f"expected >= 1 trade from entry+exit signals, got {len(trades)}"
     assert result["n_trades"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# Test 7: per-timeframe Sharpe annualization (FIX 2 — PHASE 6 R1)
+# ---------------------------------------------------------------------------
+
+
+def test_bars_per_year_differs_by_timeframe() -> None:
+    """bars_per_year must be derived from the timeframe, not hardcoded to 1H.
+
+    Expected values (365.25-day year = 31_557_600 seconds):
+      1h  → 31_557_600 / 3600   = 8766  bars/year
+      1d  → 31_557_600 / 86400  ≈  365.25 bars/year
+      5m  → 31_557_600 / 300    = 105192 bars/year
+    """
+    from src.backtest.kronos_runner import _bars_per_year
+
+    assert _bars_per_year("1h") == pytest.approx(8766.0, rel=1e-3)
+    assert _bars_per_year("1d") == pytest.approx(365.25, rel=1e-3)
+    assert _bars_per_year("5m") == pytest.approx(105192.0, rel=1e-3)
+    # Ensure 5m ≠ 1h ≠ 1d (the fix: not all equal to 8766)
+    assert abs(_bars_per_year("5m") - _bars_per_year("1h")) > 1000
+    assert abs(_bars_per_year("1d") - _bars_per_year("1h")) > 1000
+
+
+# ---------------------------------------------------------------------------
+# Test 8: Bar.interval matches requested timeframe (FIX 3 — PHASE 6 R1)
+# ---------------------------------------------------------------------------
+
+
+def test_build_bar_from_row_interval_matches_timeframe() -> None:
+    """_build_bar_from_row must set bar.interval = timeframe, not hard-coded '1h'."""
+
+    import pandas as pd
+    from src.backtest.kronos_runner import _build_bar_from_row
+
+    row = pd.Series(
+        {
+            "_ts": pd.Timestamp("2024-01-01 00:00:00", tz="UTC"),
+            "open": 50000.0,
+            "high": 50100.0,
+            "low": 49900.0,
+            "close": 50050.0,
+            "volume": 100.0,
+        }
+    )
+
+    bar_1h = _build_bar_from_row(row, symbol="BTCUSDT", timeframe="1h")
+    assert bar_1h.interval == "1h"
+
+    bar_5m = _build_bar_from_row(row, symbol="BTCUSDT", timeframe="5m")
+    assert bar_5m.interval == "5m"
+
+    bar_1d = _build_bar_from_row(row, symbol="BTCUSDT", timeframe="1d")
+    assert bar_1d.interval == "1d"
+
+    bar_4h = _build_bar_from_row(row, symbol="BTCUSDT", timeframe="4h")
+    assert bar_4h.interval == "4h"

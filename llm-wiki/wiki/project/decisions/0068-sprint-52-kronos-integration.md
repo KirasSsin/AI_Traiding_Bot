@@ -51,7 +51,7 @@ PHASE 2 brainstorm: architecture-reviewer PRE-PLAN APPROVE_WITH_CONDITIONS (C1-C
 | Model | Kronos-mini (4.1M, ctx2048) first | V2 |
 | Pairs × TF | 11 combos: BTC {5m,15m,1h,4h,1d} + ETH/SOL {15m,1h,4h} | operator expanded |
 | Signal rule | predicted_close[h=1] > current×(1+threshold) → LONG; symmetric exit | V3 |
-| Threshold | LOCKED ≥0.25% (2× round-trip cost) | V3 |
+| Threshold | LOCKED ≥0.60% (2× round-trip cost: комиссия 0.10%/сторона + проскальзывание 0.05%/сторона = 0.30% round-trip → 0.60%; поправка PHASE 6 — исходные 0.25% были арифметической ошибкой, ниже break-even) | V3, PHASE 6 |
 | Inference params | T=1.0, top_p=0.9, sample_count≥20 + median + seed | V4 |
 | Compute | Mac M4 Pro MPS (dev/CI mocked) | operator |
 | Backtest verdict | RAW_PRETRAIN_LEAKAGE_SUSPECTED (exploratory) | V1+CC1 |
@@ -88,6 +88,20 @@ PHASE 2 brainstorm: architecture-reviewer PRE-PLAN APPROVE_WITH_CONDITIONS (C1-C
 
 ### Открытые (escalation к operator, BINDING product decision позже)
 - **ESC-1 deep:** может ли pretrained-модель ВООБЩЕ к live-капиталу? Trader рек: forward ≥6мес post-cutoff + Sharpe>1.0 + DSR на forward-only пуле. Решается при formal registration ADR (не сейчас).
+
+## Поправка PHASE 6 (PHASE 6 R1, 2026-05-30)
+
+Исправления по результатам ревью PHASE 6 (reviewer: quant, security, data-integrity):
+
+1. **Порог 0.60% (FIX 1):** исходный порог 0.25% был арифметической ошибкой — ниже break-even (round-trip cost 0.30%). Исправлен до 0.60% (2× 0.30%). Изменены: `src/signalgen/kronos_strategy.py` (DEFAULT_THRESHOLD), `src/backtest/kronos_runner.py` (fallback), `scripts/run_kronos_s52.py` (run_params threshold).
+
+2. **Аннуализация Sharpe по таймфрейму (FIX 2):** `_BARS_PER_YEAR_1H = 8766` было хардкодировано для всех 11 комбо. Заменено на `_bars_per_year(timeframe)` — вычисляет `31_557_600 / tf_seconds` (365.25-дневный год). 5m → 105192, 1h → 8766, 1d → 365.25.
+
+3. **Bar.interval по таймфрейму (FIX 3):** `_build_bar_from_row` передавал `interval="1h"` для всех таймфреймов. Исправлено: `interval=timeframe`.
+
+4. **Порядок вычисления weights_hash (FIX 4):** `_compute_weights_hash()` вызывался ДО инстанциирования `KronosModelAdapter` → fallback hash на первом запуске (файлы ещё не скачаны). Исправлено: `KronosModelAdapter(...)` создаётся ПЕРВЫМ (скачивает веса), затем `_compute_weights_hash()`.
+
+5. **Пин ревизии модели (FIX 5, SECURITY):** добавлен параметр `revision: str | None = None` в `KronosModelAdapter.__init__()`, пробрасывается в `Kronos.from_pretrained(model_id, revision=revision)` и `KronosTokenizer.from_pretrained(tokenizer_id, revision=revision)`. Добавлена константа `KRONOS_REVISION: str | None = None` в `scripts/run_kronos_s52.py`. **Оператор ОБЯЗАН** установить `KRONOS_REVISION` в верифицированный commit SHA перед любым запуском `RUN_ML=1` — `from_pretrained` десериализует непроверенные чекпоинты (torch.load pickle = ACE). `weights_hash` — это post-download provenance, НЕ защита от ACE.
 
 ## Related
 - [[../pre-s52-backlog]] (полный brainstorm trail C1-C7 + V1-V5)

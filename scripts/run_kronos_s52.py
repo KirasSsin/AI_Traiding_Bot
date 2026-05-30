@@ -65,6 +65,12 @@ SAMPLE_COUNT = 20
 HORIZON = 1
 SEED = 42
 
+# SECURITY: set to verified commit SHA before any RUN_ML=1 run —
+# from_pretrained deserializes untrusted checkpoints (torch.load pickle = ACE).
+# weights_hash is post-download provenance, NOT ACE prevention.
+# Example: KRONOS_REVISION = "abc123def456..."  (operator: verify on HuggingFace)
+KRONOS_REVISION: str | None = None  # operator: set to verified commit SHA before RUN_ML=1
+
 # ─── 11 combos (ADR 0068 scope) ───────────────────────────────────────────────
 #   (symbol, timeframe_str, parquet_path)
 #   timeframe_str matches the KronosStrategy / CacheKey convention ("5m", "1h", etc.)
@@ -274,11 +280,6 @@ def main() -> int:
     # Fix torch seed for reproducibility (V4 determinism).
     torch.manual_seed(SEED)
 
-    # Compute weights hash (C4 provenance — covers model + tokenizer repos).
-    print("\nComputing weights hash ...")
-    weights_hash = _compute_weights_hash(MODEL_ID, TOKENIZER_ID)
-    print(f"weights_hash  = {weights_hash}")
-
     # Compute params hash (C4).
     sampling_params: dict[str, Any] = {
         "T": TEMPERATURE,
@@ -290,7 +291,9 @@ def main() -> int:
     params_hash = hash_params(sampling_params)
     print(f"params_hash   = {params_hash}")
 
-    # Instantiate adapter (loads model + tokenizer from HF).
+    # Instantiate adapter FIRST (downloads model + tokenizer weights to HF cache).
+    # weights_hash is computed AFTER instantiation so weight files are guaranteed
+    # on disk — avoids fallback hash on first-run (FIX 4, PHASE 6 R1).
     print("\nLoading Kronos adapter ...")
     adapter = KronosModelAdapter(
         model_id=MODEL_ID,
@@ -300,7 +303,14 @@ def main() -> int:
         temperature=TEMPERATURE,
         top_p=TOP_P,
         sample_count=SAMPLE_COUNT,
+        revision=KRONOS_REVISION,
     )
+
+    # Compute weights hash (C4 provenance — covers model + tokenizer repos).
+    # Must run AFTER adapter init so weight files are present.
+    print("\nComputing weights hash ...")
+    weights_hash = _compute_weights_hash(MODEL_ID, TOKENIZER_ID)
+    print(f"weights_hash  = {weights_hash}")
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -361,7 +371,7 @@ def main() -> int:
             "weights_hash": weights_hash,
             "params_hash": params_hash,
             "device": DEVICE,
-            "threshold": "0.0025",
+            "threshold": "0.006",
         }
         print("  Running exploratory backtest ...", flush=True)
         result = run_kronos_exploratory(

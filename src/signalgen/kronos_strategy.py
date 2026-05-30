@@ -12,7 +12,8 @@ close for the next bar and ``current_close`` this bar's close:
   - ``pred_close > current_close * (1 + threshold)`` -> ENTRY_LONG_KRONOS
   - ``pred_close < current_close``                   -> EXIT_FLAT_KRONOS (flatten)
   - otherwise                                        -> None (no signal)
-``threshold`` defaults to ``Decimal("0.0025")`` (= 2x round-trip cost) and is
+``threshold`` defaults to ``Decimal("0.006")`` (= 2x round-trip cost:
+commission 0.10%/side + slippage 0.05%/side = 0.30% round-trip → 0.60%) and is
 configurable. Long-only — the strategy NEVER emits SHORT.
 
 Cache MISS (no prediction stored for this bar's key) -> ``None``: no trade, no
@@ -39,8 +40,9 @@ from src.ml.prediction_cache import CacheKey, PredictionCache
 from src.risk.reason_codes import ReasonCode
 from src.signalgen.models import Signal, SignalSide
 
-# ADR 0068 / V3 LOCKED — threshold default = 2x round-trip cost.
-DEFAULT_THRESHOLD = Decimal("0.0025")
+# ADR 0068 / V3 LOCKED — threshold default = 2x round-trip cost
+# (commission 0.10%/side + slippage 0.05%/side = 0.30% round-trip → 0.60%).
+DEFAULT_THRESHOLD = Decimal("0.006")
 
 _ZERO = Decimal("0")
 
@@ -83,7 +85,7 @@ class KronosStrategy:
             params_hash: Hash of the sampling params (cache key field).
             device: Device the predictions were produced on (cache key field).
             threshold: Minimum relative upside for an entry (LOCKED default
-                ``Decimal("0.0025")``, configurable).
+                ``Decimal("0.006")`` = 2× round-trip cost, configurable).
         """
         self._symbol = symbol
         self._cache = cache

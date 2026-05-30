@@ -7,7 +7,8 @@ V3 signal rule (LOCKED, horizon = 1):
   - pred_close > current_close * (1 + threshold)  -> ENTRY_LONG_KRONOS
   - pred_close < current_close                    -> EXIT_FLAT_KRONOS
   - otherwise                                     -> None
-  threshold default = Decimal("0.0025") (= 2x round-trip cost).
+  threshold default = Decimal("0.006") (= 2x round-trip cost:
+    commission 0.10%/side + slippage 0.05%/side = 0.30% round-trip → 0.60%).
 
 Cache MISS -> None (graceful degradation, no crash). Look-ahead-safe: only acts
 on closed bars; the cache key is built from THIS bar's close timestamp.
@@ -110,8 +111,8 @@ def test_entry_long_when_pred_above_threshold(base_time: datetime, tmp_path) -> 
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
     bar = _make_bar(close_time=base_time, close=100.0)
-    # pred_close > 100 * (1 + 0.0025) = 100.25 -> ENTRY_LONG
-    _put_prediction(cache, bar, Decimal("100.50"))
+    # pred_close > 100 * (1 + 0.006) = 100.60 -> ENTRY_LONG
+    _put_prediction(cache, bar, Decimal("101.00"))
     sig = strat.on_bar(bar)
     assert sig is not None
     assert sig.side == SignalSide.LONG
@@ -133,8 +134,8 @@ def test_no_signal_within_band(base_time: datetime, tmp_path) -> None:
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
     bar = _make_bar(close_time=base_time, close=100.0)
-    # 100 <= pred <= 100.25 -> no signal (within threshold band)
-    _put_prediction(cache, bar, Decimal("100.10"))
+    # 100 <= pred <= 100.60 -> no signal (within threshold band at 0.60%)
+    _put_prediction(cache, bar, Decimal("100.30"))
     assert strat.on_bar(bar) is None
 
 
@@ -142,8 +143,8 @@ def test_no_signal_at_exact_threshold(base_time: datetime, tmp_path) -> None:
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
     bar = _make_bar(close_time=base_time, close=100.0)
-    # pred == 100.25 exactly -> not strictly greater -> no signal
-    _put_prediction(cache, bar, Decimal("100.25"))
+    # pred == 100.60 exactly -> not strictly greater -> no signal
+    _put_prediction(cache, bar, Decimal("100.60"))
     assert strat.on_bar(bar) is None
 
 
@@ -207,9 +208,10 @@ def test_key_uses_current_bar_close_ts(base_time: datetime, tmp_path) -> None:
 
 
 def test_threshold_default_is_locked_value(tmp_path) -> None:
+    """DEFAULT_THRESHOLD must equal 0.006 (2× round-trip cost, PHASE 6 corrected)."""
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
-    assert strat._threshold == Decimal("0.0025")
+    assert strat._threshold == Decimal("0.006")
 
 
 def test_threshold_configurable(base_time: datetime, tmp_path) -> None:

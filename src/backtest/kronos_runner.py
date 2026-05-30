@@ -44,8 +44,30 @@ _log = logging.getLogger(__name__)
 _COMMISSION_TAKER: float = 0.001  # 0.1% taker — mirrors supertrend_runner
 _SLIPPAGE: float = 0.0005  # 0.05% adverse
 
-# BTCUSDT 1H bars per year — mirrors supertrend_runner
-_BARS_PER_YEAR_1H: int = int(365.25 * 24)  # 8766
+# Seconds in a 365.25-day year (consistent with 8766 h/year used elsewhere).
+_SECONDS_PER_YEAR: float = 365.25 * 24 * 3600  # 31_557_600
+
+# Timeframe string → interval in seconds (mirrors _build_bar_from_row map).
+_TF_SECONDS: dict[str, float] = {
+    "1m": 60.0,
+    "5m": 300.0,
+    "15m": 900.0,
+    "1h": 3600.0,
+    "4h": 14400.0,
+    "1d": 86400.0,
+}
+
+
+def _bars_per_year(timeframe: str) -> float:
+    """Return annualised bar count for ``timeframe`` using a 365.25-day year.
+
+    Examples:
+        ``_bars_per_year("1h")`` → 8766.0
+        ``_bars_per_year("1d")`` → 365.25
+        ``_bars_per_year("5m")`` → 105192.0
+    """
+    tf_sec = _TF_SECONDS.get(timeframe, 3600.0)
+    return _SECONDS_PER_YEAR / tf_sec
 
 
 @dataclass
@@ -105,7 +127,7 @@ def _build_bar_from_row(
 
     return Bar(
         symbol=symbol,
-        interval="1h",
+        interval=timeframe,
         open_time=open_time,
         close_time=close_time,
         open=open_price,
@@ -165,7 +187,7 @@ def run_kronos_exploratory(
     device: str = str(params.get("device", "cpu"))
     raw_threshold = params.get("threshold")
     threshold: Decimal = (
-        Decimal(str(raw_threshold)) if raw_threshold is not None else Decimal("0.0025")
+        Decimal(str(raw_threshold)) if raw_threshold is not None else Decimal("0.006")
     )
 
     strategy = KronosStrategy(
@@ -274,7 +296,7 @@ def run_kronos_exploratory(
         pnl_std = float(pnls.std(ddof=1)) if n_trades > 1 else 0.0
         mean_holding = float(np.mean([t.exit_idx - t.entry_idx for t in trades]))
         if pnl_std > 0 and mean_holding > 0:
-            trades_per_year = _BARS_PER_YEAR_1H / mean_holding
+            trades_per_year = _bars_per_year(timeframe) / mean_holding
             sharpe = float((pnls.mean() / pnl_std) * sqrt(trades_per_year))
         else:
             sharpe = float("nan") if pnl_std == 0 else 0.0
@@ -290,7 +312,7 @@ def run_kronos_exploratory(
         sharpe=sharpe,
         win_rate=win_rate if not (isinstance(win_rate, float) and win_rate != win_rate) else 0.0,
         total_pnl_pct=total_pnl_pct,
-        bars_per_year=_BARS_PER_YEAR_1H,
+        bars_per_year=int(_bars_per_year(timeframe)),
         equity_curve=equity_curve_pct,
         runner_label="Kronos (exploratory, pretrain-leakage suspected)",
         verdict_override=VERDICT_RAW_PRETRAIN_LEAKAGE,

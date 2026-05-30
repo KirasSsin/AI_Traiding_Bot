@@ -51,6 +51,10 @@ class KronosModelAdapter:
     This is the ONLY class allowed to import torch / Kronos, and it does so
     lazily inside its methods (C1). If those dependencies are absent, a clean
     :class:`ImportError` with an actionable message is raised.
+
+    SECURITY: pin ``revision`` to a verified commit SHA before any RUN_ML=1 run —
+    ``from_pretrained`` deserializes untrusted checkpoints (torch.load pickle = ACE).
+    ``weights_hash`` is post-download provenance, NOT ACE prevention.
     """
 
     def __init__(
@@ -63,6 +67,7 @@ class KronosModelAdapter:
         temperature: float = 1.0,
         top_p: float = 0.9,
         sample_count: int = 1,
+        revision: str | None = None,
     ) -> None:
         """Load the Kronos model + tokenizer (lazy torch import).
 
@@ -75,6 +80,9 @@ class KronosModelAdapter:
             temperature: Sampling temperature ``T`` passed to ``predict``.
             top_p: Nucleus sampling cutoff passed to ``predict``.
             sample_count: Number of samples drawn per prediction.
+            revision: HuggingFace revision (branch/tag/commit SHA) for
+                ``from_pretrained``. Pin to a verified commit SHA before any
+                RUN_ML=1 run (ACE defense — see class docstring).
 
         Raises:
             ImportError: If torch / Kronos are not installed.
@@ -94,8 +102,8 @@ class KronosModelAdapter:
         self._top_p = top_p
         self._sample_count = sample_count
 
-        model = Kronos.from_pretrained(model_id)
-        tokenizer = KronosTokenizer.from_pretrained(tokenizer_id)
+        model = Kronos.from_pretrained(model_id, revision=revision)
+        tokenizer = KronosTokenizer.from_pretrained(tokenizer_id, revision=revision)
         self._predictor = KronosPredictor(model, tokenizer, device=device, max_context=max_context)
 
     def predict(
