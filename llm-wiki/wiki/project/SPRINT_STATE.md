@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S53 PHASE 5 GREEN → PHASE 6 review.
+updated: 2026-05-30  # S53 PHASE 6 R1 remediation done (B1 CI-fix + 4 fixes).
 sprint: 53
 phase: 6-review
 branch: feature/sprint-53-kronos-enablement
@@ -43,7 +43,7 @@ tag: v0.1.0-alpha.52
 | 3 Plan | done | 2026-05-30-sprint-53-kronos-enablement.md (T1-T8) |
 | 4 Execute | done | T1-T8 complete |
 | 5 Verify | done | pytest 1513 / mypy 0/98 / reason_codes 67 / backtest_runner 1489<1500 / isolation order-independent / script skip-exit-0 |
-| 6 Review | in_progress | 8 parallel reviewers |
+| 6 Review | in_progress | 8 reviewers → R1 remediation (B1 CI-fix + 4 fixes), re-verified GREEN |
 | 7 Sync | pending | — |
 | 8 Ship | pending | — |
 | 9 Close | pending | — |
