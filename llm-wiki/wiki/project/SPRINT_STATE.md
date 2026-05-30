@@ -30,6 +30,7 @@ tag: v0.1.0-alpha.52
 - Track B Kronos signal enrichment (predicted high/low SL/TP, multi-horizon) — DEFER до forward paper-trade.
 - prediction-cache put() atomicity · median_ensemble property test.
 - Forward paper-trade harness → S54+ (единственная валидная Kronos-валидация).
+- **S53 review defers → S54:** single `_manifest.json` last-writer-wins для variants → per-variant subdirs (`data/kronos_cache/{base,mini}/`); frontend variant selector UI (backend готов, dashboard шлёт default base).
 - Permanently deferred: 12mo MAINNET ADR / live trade feed widget / M4 __repr__ redaction.
 
 ---
@@ -43,9 +44,9 @@ tag: v0.1.0-alpha.52
 | 3 Plan | done | 2026-05-30-sprint-53-kronos-enablement.md (T1-T8) |
 | 4 Execute | done | T1-T8 complete |
 | 5 Verify | done | pytest 1513 / mypy 0/98 / reason_codes 67 / backtest_runner 1489<1500 / isolation order-independent / script skip-exit-0 |
-| 6 Review | in_progress | 8 reviewers → R1 remediation (B1 CI-fix + 4 fixes), re-verified GREEN |
-| 7 Sync | pending | — |
-| 8 Ship | pending | — |
+| 6 Review | done | 8 reviewers → R1 (B1 CI-fix + sys.path + zero-ATR + revision hard-fail + tests), re-verified GREEN |
+| 7 Sync | done | wiki synced (ADR 0069 + current-state split + kronos-adapter) T8+R1 |
+| 8 Ship | in_progress | sprint-finish HARD-GATE |
 | 9 Close | pending | — |
 
 ---
