@@ -40,8 +40,8 @@ tag: v0.1.0-alpha.52
 |---|---|---|
 | 1 Orient | done | S53 kickoff (session continuation) |
 | 2 Brainstorm | done | trader ROUND 1 + arch PRE-PLAN → pre-s53-backlog.md, ESC-1 V3-locked+ATR-fix |
-| 3 Plan | in_progress | writing-plans T0-T8 |
-| 4 Execute | pending | — |
+| 3 Plan | done | 2026-05-30-sprint-53-kronos-enablement.md (T1-T8) |
+| 4 Execute | in_progress | sequential subagent-driven, start T1 |
 | 5 Verify | pending | — |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
