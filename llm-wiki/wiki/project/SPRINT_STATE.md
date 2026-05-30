@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S51 D6 done (supertrend_runner parity test).
+updated: 2026-05-30  # S51 D4 done (atr_breakout incremental-ATR parity fix 00763c5).
 sprint: 51
 phase: 3-planning
 branch: main
@@ -21,8 +21,8 @@ tag: v0.1.0-alpha.50
 | D1 | 110072 dup-order retCode | S49 (bybit re-review) | HIGH (pre-mainnet) | **DONE** — 110072→REJECT_DUPLICATE_ORDER (bybit-local enum, canonical 65 unchanged). Flatten paths (_handle_sl_partial residual + _try_place_market_sell emergency) catch BybitAPIError, pin retCode==110072 → success (idempotency complete, no spurious HALT). Mirrors 110001 pattern. RED→GREEN; genuine-error guard still HALTs. |
 | D2 | parquet manifest/partition | S49 (data-integrity) | MEDIUM | SHA-256 manifest + document flat-filename layout. OR honest "deferred" ADR note if scope-heavy. |
 | D3 | block_bootstrap edge-null | S49 (quant) | LOW | **DONE** `109462a` — docstring warning + gate-promotion guard test (AST-parse research_wfa assert sign_flip gate, not block_bootstrap). |
-| D4 | atr_breakout windowed-ATR | S50 (trading-logic) | HIGH (shipped LOCKED) | live/backtest parity check: did ADR 0064 WFA use streaming on_bar OR vectorized? If divergent → ADR note + (maybe) incremental-ATR fix mirroring S50 Supertrend. |
-| D5 | cross_trial pool contamination | S50 (quant+trader) | MEDIUM | ADR-decision: per-strategy-class pool scoping (mixing S44 ATR + S50 Supertrend over-penalizes DSR). trader-expert verdict. |
+| D4 | atr_breakout windowed-ATR | S50 (trading-logic) | HIGH (shipped LOCKED) | **DONE** `00763c5` — ADR 0064 WFA использовал full-history vectorized ATR; live `on_bar` — windowed deque re-seed. MATERIAL (BTCUSDT 4H: stop ATR max 38.7% rel, 16 signal flips, 13 vs 9 entries). Fix: инкрементальный full-history ATR (`_WilderATR`, mirror S50 Supertrend), [-2] индексация и entry/exit семантика сохранены. Parity test 1e-9 GREEN, mypy 0. **NEW FOLLOW-UP flagged** (вне D4 scope): ATR-index offset — live оценивает breakout на бар позже (atr[-2]/close[-2] vs research data-through-i-1) → 9 vs 28 entries; нужно отдельное решение про streaming↔backtest signal-bar parity. См. ADR 0064 «Открытый follow-up». |
+| D5 | cross_trial pool contamination | S50 (quant+trader) | MEDIUM | **DONE** — two-level scoping (trader verdict e): sigma_SR per-strategy-class (within-class stdev, eq.13), N_trials GLOBAL (eq.12, anti-snooping). +strategy_class field, INSUFFICIENT_CLASS_HISTORY fallback, 4 runners wired, ADR 0056 amend. +17 tests, mypy clean. |
 | D6 | supertrend_runner _backtest_single numerical test | S50 (test-engineer) | LOW (gated) | **DONE** `02e775a` — 5 parity tests (GBM×3 seeds, zero-flip, MTM close), all GREEN. _backtest_single PnL matches streaming reference within 1e-9. No src bugs found. |
 
 ## Phase tracking (S51)
@@ -36,7 +36,7 @@ tag: v0.1.0-alpha.50
 
 ## Следующее действие
 
-**S51 PHASE 4** — D1 (110072 dup-order) DONE, D3+D6 DONE. Осталось: D4 (atr_breakout parity, highest priority shipped code), D2 (parquet manifest), D5 (cross_trial pool scoping, trader-expert verdict).
+**S51 PHASE 4** — D1, D3, D4, D6 DONE. Осталось: D2 (parquet manifest), D5 (cross_trial pool scoping, trader-expert verdict). NEW follow-up из D4: atr_breakout ATR-index offset (signal-bar parity) — отдельное решение/ADR, не в S51 scope.
 
 ## S52+ ROADMAP
 
