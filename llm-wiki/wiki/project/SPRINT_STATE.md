@@ -1,18 +1,25 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S51 SHIPPED v0.1.0-alpha.51. S52 = Kronos ML strategy brainstorm.
+updated: 2026-05-30  # S52 PHASE 2 brainstorm DONE → PAUSED at ESC-1 (operator продолжит в новой сессии).
 sprint: 52
-phase: 2-brainstorming
-branch: main
+phase: 2-brainstorming-PAUSED-ESC1
+branch: feature/sprint-52-kronos
 tag: v0.1.0-alpha.51
 ---
 
 ## Текущий статус
 
-**S51 SHIPPED** — squash-merge `75644e2` (PR #62), tag `v0.1.0-alpha.51`. 6 carry-over debts closed (D1 Bybit 110072 / D2 parquet sidecar / D3 block_bootstrap guard / D4 atr_breakout ATR parity / D5 DSR two-level pool scoping / D6 supertrend parity). pytest 1449, mypy 0/91, reason codes 65. Детали → `sprints/sprint-51-debt-closing.md`.
+**⏸ S52 PAUSED — ожидает operator ESC-1 решения (новая сессия).** PHASE 2 brainstorm DONE (architecture C1-C7 + trader V1-V5). Plan lock (PHASE 3) ЗАБЛОКИРОВАН до ESC-1. Полная детализация → `pre-s52-backlog.md`.
 
-**S52 = Kronos ML strategy (operator-scoped, PHASE 2 brainstorm).** Adapt Kronos foundation model (K-line forecasting transformer, NeoQuasar/Kronos-base 102M, MIT) как новую торговую стратегию. Major: новый heavy dep (torch + pretrained weights) + ML inference path (бот = pure streaming on_bar, нет ML). Kit MANDATORY + architecture-reviewer PRE-PLAN (S46 rule major stack change).
+**RESUME ПРОТОКОЛ (новая сессия):**
+1. Read `pre-s52-backlog.md` (architecture C1-C7 + trader V1-V5 + ESC-1 три опции A/B/C).
+2. Operator выбирает ESC-1: (A) exploratory infra + forward paper-trade [trader+maintainer rec] / (B) forward-only gate exception / (C) permanent research track.
+3. После ESC-1 → PHASE 3 writing-plans на `feature/sprint-52-kronos` (branch уже создан, brainstorm committed `212ce16`).
+
+**ESC-1 суть (data-leakage):** Kronos pretrained на истории (cutoff НЕ опубликован, вероятно overlap с 2023-2026 BTC backtest). WFA "OOS" методологически невалиден = in-sample под видом OOS (look-ahead на уровне весов). Backtest = только pipeline smoke-test, НЕ gate. Forward paper-trade = единственный валидный метод. N_trials НЕ инкрементируется до forward gate.
+
+**S51 SHIPPED** — `75644e2` tag v0.1.0-alpha.51 (6 debts). pytest 1449, mypy 0/91, reason codes 65.
 
 ## S52 Kronos — scouted facts
 
