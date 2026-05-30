@@ -1,26 +1,20 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-30  # S53 PHASE 6 R1 remediation done (B1 CI-fix + 4 fixes).
+updated: 2026-05-30  # S53 SHIPPED v0.1.0-alpha.53 → between-sprints.
 sprint: 53
-phase: 6-review
-branch: feature/sprint-53-kronos-enablement
-tag: v0.1.0-alpha.52
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.53
 ---
 
 ## Текущий статус
 
-**S53 — Kronos real-inference enablement.** S52 внедрил инфру, но real-inference path сломан (3 бага). S53 чинит + оба variant + корректная adaptation. Backtest остаётся exploratory (operator принял leakage-дисциплину после глубокого объяснения). Brainstorm → `pre-s53-backlog.md`.
+**S53 SHIPPED** — `eff3ae6` (PR #64) tag `v0.1.0-alpha.53`. Kronos real-inference enablement: 3 S52 бага исправлены (import `from kronos`→`from model` via git submodule; mini→Kronos-Tokenizer-2k; atr_14=0→real Wilder ATR). Оба variant (base 102M/ctx512 + mini 4.1M/ctx2048) через `KronosVariant` dataclass. backtest_runner 1682→1489 (`_kronos_dispatch.py` extract). pytest 1517, mypy 0/98, reason codes 67. Backtest exploratory (RAW_PRETRAIN_LEAKAGE_SUSPECTED). Детали → `sprints/sprint-53-kronos-enablement.md`.
 
-**3 бага S52 (S53 чинит):** (1) import `from kronos`→`from model` (real-inference broken by design); (2) mini↔tokenizer mismatch (нужен Kronos-Tokenizer-2k, не -base); (3) `atr_14=0` в KronosStrategy → broken bracket sizing (нельзя торговать).
+**OPERATOR M4 FOLLOW-UP:** `git submodule update --init third_party/kronos` → `pip install -e ".[ml]"` → `export KRONOS_REVISION=<verified sha>` (security hard-fail if unset) → `RUN_ML=1 .venv/bin/python scripts/run_kronos_s53.py --variant base` (+ `--variant mini`) → exploratory backtest оба variant в dashboard.
 
-**Brainstorm verdicts:** Q1 git submodule (arch binding) · Q2 KronosVariant dataclass (base+mini) · Q3 V3 locked + ATR fix (operator ESC-1) · Q4 оба exploratory no-cherry-pick · Q5 forward harness→S54+. Architecture C8-C13 binding.
-
-**S52 SHIPPED** — `a188347` tag v0.1.0-alpha.52 (Kronos integration). **S51** — `75644e2` v0.1.0-alpha.51.
-
-## S53 scope (locked, brainstorm → pre-s53-backlog.md)
-
-- T0 import fix + mini tokenizer-2k (C8, CC1) · T1 git submodule third_party/kronos pinned + sys.path wiring + error msg (C9,C13) · T2 KronosVariant dataclass base+mini (C10) · T3 ATR fix KronosStrategy (Track A, CC2 BLOCKER) · T4 extract _kronos_dispatch.py (C11, god-object 1682>1500) · T5 variant dispatch 2×11 presets (Q2) · T6 script rename run_kronos_s53.py + variant selector + rebuild warning (CC4,CC5) · T7 CI submodule-existence test + predict() sig verify (C12,CC3) · T8 ADR 0069 + wiki sync + current-state.md split.
+**S52** — `a188347` v0.1.0-alpha.52 (Kronos integration). **S51** — `75644e2` v0.1.0-alpha.51.
 
 ## Carry (post-S53)
 
@@ -45,8 +39,8 @@ tag: v0.1.0-alpha.52
 | 5 Verify | done | pytest 1513 / mypy 0/98 / reason_codes 67 / backtest_runner 1489<1500 / isolation order-independent / script skip-exit-0 |
 | 6 Review | in_progress | 8 reviewers → R1 remediation (B1 CI-fix + 4 fixes), re-verified GREEN |
 | 7 Sync | pending | — |
-| 8 Ship | pending | — |
-| 9 Close | pending | — |
+| 8 Ship | done | PR #64 squash-merge eff3ae6, tag v0.1.0-alpha.53 |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
 
 ---
 

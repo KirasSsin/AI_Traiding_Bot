@@ -2864,3 +2864,14 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - ADR 0069 accepted. Sprint pages 56→57 (+sprint-53-kronos-enablement).
 - Formal hypothesis #11 остаётся DEFERRED. Operator M4 runbook: submodule init → pip install.[ml] → KRONOS_REVISION=<sha> → RUN_ML=1 run_kronos_s53.py --variant base (и --variant mini) → exploratory backtest.
 - current-state-part-2.md новый файл (22KB) — sprint-history таблица S1-S53.
+
+## [2026-05-30] ship | S53 v0.1.0-alpha.53 — Kronos real-inference enablement
+
+- Squash-merge `eff3ae6` (PR #64) → tag `v0.1.0-alpha.53`. Fixes 3 S52 bugs that made Kronos real-inference broken-by-design.
+- B1 import: `from kronos`→`from model` via git submodule third_party/kronos (pinned sha 67b630e). pip-from-git empirically impossible (no setup.py). B2 tokenizer: mini→Kronos-Tokenizer-2k (был -base). B3 ATR: KronosStrategy atr_14=0 → incremental Wilder ATR (reused _WilderATR), ENTRY blocked until warm-up.
+- KronosVariant frozen dataclass (base 102M/ctx512 + mini 4.1M/ctx2048), tokenizer↔ctx coupling structural. Both variants dashboard presets, exploratory. _kronos_dispatch.py extracted (backtest_runner 1682→1489 <1500 gate).
+- Brainstorm: trader ROUND 1 + architecture PRE-PLAN (C8-C13). Q1 submodule / Q2 both variants / Q3 V3-locked+ATR-fix (operator ESC-1) / Q4 no-cherry-pick / Q5 forward harness→S54+.
+- PHASE 6: 8 reviewers → R1 remediation. BLOCKER B1 (patch target broke post-extraction → 2 tests silently relied on real parquet → CI-fail): fixed patch `_kronos_dispatch._load_kronos_df`. + sys.path cleanup on partial ImportError, zero-range ATR gate, KRONOS_REVISION RUN_ML hard-fail (security), test hardening.
+- Gates: pytest 1494→1517, mypy 0/98, reason codes 67 (unchanged), FSM 16/30/74, backtest_runner 1489, torch-isolation order-independent, submodule guard RUN_ML-gated. ADR 0069 accepted. current-state.md split (54KB → 15.7+22.4). Sprint pages 57.
+- OPERATOR M4: git submodule update --init → pip install .[ml] → KRONOS_REVISION=<sha> → RUN_ML=1 scripts/run_kronos_s53.py --variant {base,mini}.
+- Carry S54: per-variant cache subdirs (single-manifest last-writer-wins), frontend variant selector, forward paper-trade harness, Track B signal enrichment.
