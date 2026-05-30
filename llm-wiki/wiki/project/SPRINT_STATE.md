@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 SHIPPED v0.1.0-alpha.50. S51 = debt-closing sprint (operator: все долги).
+updated: 2026-05-30  # S51 D3 done (block_bootstrap gate guard).
 sprint: 51
 phase: 3-planning
 branch: main
@@ -20,7 +20,7 @@ tag: v0.1.0-alpha.50
 |---|------|--------|----------|-----|
 | D1 | 110072 dup-order retCode | S49 (bybit re-review) | HIGH (pre-mainnet) | map 110072→REJECT_DUPLICATE_ORDER, treat as success в flatten paths (idempotency complete, no spurious HALT). +retCode mapping test. |
 | D2 | parquet manifest/partition | S49 (data-integrity) | MEDIUM | SHA-256 manifest + document flat-filename layout. OR honest "deferred" ADR note if scope-heavy. |
-| D3 | block_bootstrap edge-null | S49 (quant) | LOW | docstring warning + guard against gate-promotion. Cheap. |
+| D3 | block_bootstrap edge-null | S49 (quant) | LOW | **DONE** `109462a` — docstring warning + gate-promotion guard test (AST-parse research_wfa assert sign_flip gate, not block_bootstrap). |
 | D4 | atr_breakout windowed-ATR | S50 (trading-logic) | HIGH (shipped LOCKED) | live/backtest parity check: did ADR 0064 WFA use streaming on_bar OR vectorized? If divergent → ADR note + (maybe) incremental-ATR fix mirroring S50 Supertrend. |
 | D5 | cross_trial pool contamination | S50 (quant+trader) | MEDIUM | ADR-decision: per-strategy-class pool scoping (mixing S44 ATR + S50 Supertrend over-penalizes DSR). trader-expert verdict. |
 | D6 | supertrend_runner _backtest_single numerical test | S50 (test-engineer) | LOW (gated) | parity test _backtest_single vs streaming PnL. Gated on reactivation — Supertrend FAIL'd, defer-OK but cheap now. |
