@@ -1,4 +1,4 @@
-"""S52 T7 — Kronos cache-build + exploratory backtest runner (11 combos).
+"""S52 T7 — Kronos (NeoQuasar) cache-build + exploratory backtest runner (11 combos).
 
 OPERATOR INSTRUCTIONS (Mac M4 Pro, MPS):
   1. pip install -e ".[ml]"
@@ -55,8 +55,8 @@ _log = logging.getLogger(__name__)
 RUN_ML: bool = os.environ.get("RUN_ML") == "1"
 
 # ─── Kronos model config ──────────────────────────────────────────────────────
-MODEL_ID = "amazon/chronos-t5-mini"
-TOKENIZER_ID = "amazon/chronos-t5-mini"
+MODEL_ID = "NeoQuasar/Kronos-mini"
+TOKENIZER_ID = "NeoQuasar/Kronos-Tokenizer-base"
 DEVICE = "mps"
 MAX_CONTEXT = 2048
 TEMPERATURE = 1.0
@@ -121,34 +121,41 @@ def _normalize_df(path: str) -> pd.DataFrame:
     return df[["_ts", "open", "high", "low", "close", "volume"]]
 
 
-def _compute_weights_hash(model_id: str) -> str:
-    """Compute SHA-256 of the HuggingFace cached weights file.
+def _compute_weights_hash(model_id: str, tokenizer_id: str) -> str:
+    """Compute SHA-256 over HuggingFace cached weight files for both repos.
 
     Searches the HF cache under the default ``~/.cache/huggingface/`` tree for
-    files matching the model repository (pytorch_model.bin / model.safetensors /
-    model.ckpt). If multiple weight files are found, all are hashed together
-    (sorted for stability). Falls back to SHA-256 of the model_id string if no
-    weight files are located (e.g. model not yet downloaded).
+    files matching the model repository AND the tokenizer repository
+    (pytorch_model.bin / model.safetensors / model.ckpt). Both repos are
+    separate downloads for Kronos (unlike Chronos where they are the same).
+    All found weight files are sorted and hashed together for a combined
+    provenance digest (C4).
+
+    Falls back to SHA-256 of ``"model_id|tokenizer_id"`` when no files are
+    found (e.g. models not yet downloaded).
     """
     hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
-    # Repo id "org/name" → directory prefix "models--org--name"
-    repo_dir_name = "models--" + model_id.replace("/", "--")
-    repo_dir = hf_cache / repo_dir_name
-
     weight_extensions = {".bin", ".safetensors", ".ckpt", ".pt"}
+
     weight_files: list[Path] = []
-    if repo_dir.exists():
-        for candidate in repo_dir.rglob("*"):
-            if candidate.is_file() and candidate.suffix in weight_extensions:
-                weight_files.append(candidate)
+    for repo_id in (model_id, tokenizer_id):
+        # Repo id "org/name" → directory prefix "models--org--name"
+        repo_dir_name = "models--" + repo_id.replace("/", "--")
+        repo_dir = hf_cache / repo_dir_name
+        if repo_dir.exists():
+            for candidate in repo_dir.rglob("*"):
+                if candidate.is_file() and candidate.suffix in weight_extensions:
+                    weight_files.append(candidate)
 
     if not weight_files:
+        fallback_seed = f"{model_id}|{tokenizer_id}"
         _log.warning(
-            "No weight files found for %s under %s; using model_id as hash seed.",
+            "No weight files found for %s / %s under %s; using ids as hash seed.",
             model_id,
+            tokenizer_id,
             hf_cache,
         )
-        return hashlib.sha256(model_id.encode("utf-8")).hexdigest()
+        return hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
 
     weight_files.sort()
     h = hashlib.sha256()
@@ -158,7 +165,7 @@ def _compute_weights_hash(model_id: str) -> str:
             for chunk in iter(lambda: fh.read(65536), b""):
                 h.update(chunk)
     digest = h.hexdigest()
-    _log.info("weights_hash (%d files): %s", len(weight_files), digest)
+    _log.info("weights_hash (%d files, model+tokenizer): %s", len(weight_files), digest)
     return digest
 
 
@@ -254,9 +261,10 @@ def main() -> int:
     from src.ml.kronos_adapter import KronosModelAdapter  # noqa: PLC0415
 
     print("=" * 60)
-    print("S52 T7 — Kronos cache-build + exploratory backtest (11 combos)")
+    print("S52 T7 — Kronos (NeoQuasar) cache-build + exploratory backtest (11 combos)")
     print("=" * 60)
     print(f"model_id      = {MODEL_ID}")
+    print(f"tokenizer_id  = {TOKENIZER_ID}")
     print(f"device        = {DEVICE}")
     print(f"max_context   = {MAX_CONTEXT}")
     print(f"sample_count  = {SAMPLE_COUNT}")
@@ -266,9 +274,9 @@ def main() -> int:
     # Fix torch seed for reproducibility (V4 determinism).
     torch.manual_seed(SEED)
 
-    # Compute weights hash (C4 provenance).
+    # Compute weights hash (C4 provenance — covers model + tokenizer repos).
     print("\nComputing weights hash ...")
-    weights_hash = _compute_weights_hash(MODEL_ID)
+    weights_hash = _compute_weights_hash(MODEL_ID, TOKENIZER_ID)
     print(f"weights_hash  = {weights_hash}")
 
     # Compute params hash (C4).
