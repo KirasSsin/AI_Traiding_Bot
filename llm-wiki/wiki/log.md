@@ -2801,3 +2801,12 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - 6 PHASE 6 reviewers: 5 APPROVE + 1 APPROVE_WITH_CONCERNS (quant D5 N-forfeit doc-fix fac2b15).
 - pytest 1414->1449, mypy 0/91, reason_codes 65 unchanged. Sprint pages 54->55. ADR 0056+0064 amended.
 - Tag v0.1.0-alpha.51. Carry S52: atr_breakout ATR-index offset, D5 forfeit-N policy escalation, free-form reason strings verify. S52 = Kronos ML strategy (operator-scoped).
+
+## [2026-05-30] ship | S51 v0.1.0-alpha.51 — Debt Closing
+
+- Squash-merge `75644e2` (PR #62) -> tag `v0.1.0-alpha.51`
+- 6 carry-over debts closed (3 S49 + 3 S50). pytest 1449, mypy 0/91, reason codes 65 unchanged.
+- D1 Bybit 110072 dup-order success / D2 parquet SHA-256 sidecar / D3 block_bootstrap guard / D4 atr_breakout ATR parity (MATERIAL fix shipped LOCKED) / D5 DSR two-level pool scoping / D6 supertrend parity test.
+- 6 PHASE 6 reviewers: 5 APPROVE + quant APPROVE_WITH_CONCERNS (N-forfeit doc addressed fac2b15).
+- Carry S52: atr_breakout ATR-index offset (own ADR+WFA before live), D5 forfeit-N policy escalation, free-form reason strings verify.
+- NEXT: S52 = Kronos ML strategy (foundation model K-line forecast, Mac M4 Pro MPS, validation->trader-expert brainstorm).
