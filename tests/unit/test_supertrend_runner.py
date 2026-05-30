@@ -292,10 +292,29 @@ def test_run_supertrend_wfa_uses_supertrend_backtest_fn(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_supertrend_runner_n_trials_10_wiring_verified() -> None:
-    """Confirm the T7 wiring requirement is satisfied (replaces the skipped placeholder)."""
-    # This test passes when the module exists and the wiring tests above pass.
-    from src.backtest.supertrend_runner import run_supertrend_wfa  # noqa: F401
+def test_supertrend_runner_n_trials_10_wiring_verified(tmp_path: Path) -> None:
+    """CC3 wiring guard (test-engineer PHASE 6: replace empty-body import-smoke).
 
-    # If we get here, the module exists and is importable.
-    pass
+    Asserts run_supertrend_wfa actually forwards n_trials=10 to run_research_wfa,
+    not just that the module imports. Mirrors test_run_supertrend_wfa_passes_n_trials_10.
+    """
+    from src.backtest.supertrend_runner import run_supertrend_wfa
+
+    wfa_result = _make_wfa_result(verdict="WFA_FAIL")
+
+    with (
+        patch(
+            "src.backtest.supertrend_runner.run_research_wfa", return_value=wfa_result
+        ) as mock_wfa,
+        patch("src.backtest.supertrend_runner._load_ohlcv_df", return_value=_make_df()),
+    ):
+        run_supertrend_wfa(
+            start_date=date(2023, 1, 1),
+            end_date=date(2023, 12, 31),
+            cross_trial_log_path=tmp_path / "cross_trial_sharpes.json",
+        )
+
+    _, kwargs = mock_wfa.call_args
+    assert (
+        kwargs.get("n_trials") == 10
+    ), f"supertrend_runner must forward n_trials=10 (hypothesis #10); got {kwargs.get('n_trials')!r}"

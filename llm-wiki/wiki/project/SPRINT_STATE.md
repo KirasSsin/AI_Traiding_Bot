@@ -1,11 +1,11 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-05-29  # S50 PHASE 4 COMPLETE (T1-T11) → phase=5-verify. Verdict WFA_FAIL.
+updated: 2026-05-29  # S50 PHASE 5+6 done → phase=8-ship. Verdict WFA_FAIL, merge+tag alpha.50 (operator).
 sprint: 50
-phase: 5-verify
+phase: 8-ship
 branch: feature/sprint-50-supertrend
-tag: v0.1.0-alpha.49
+tag: v0.1.0-alpha.50
 ---
 
 ## Текущий статус
@@ -31,7 +31,7 @@ tag: v0.1.0-alpha.49
 | 5 Verify | in_progress | pytest 1414 / mypy 0 GREEN; frontend build clean |
 | 6 Review | in_progress | 5 reviewers parallel; trading-logic BLOCKER (backtest fill look-ahead) FIXED `48dac93` → re-review pending |
 | 7 Sync | done | T11 wiki sync (sprint-50 + index + log + current-state + ADR 0067 accepted) |
-| 8 Ship | pending | WFA_FAIL — NO production tag; merge branch to main для infra preservation |
+| 8 Ship | in_progress | operator: merge + tag v0.1.0-alpha.50 (infra-sprint, strategy WFA_FAIL) |
 | 9 Close | pending | — |
 
 ## Следующее действие
