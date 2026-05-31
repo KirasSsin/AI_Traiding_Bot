@@ -123,14 +123,20 @@ def test_script_uses_kronos_variant_singletons() -> None:
     assert KRONOS_MINI.tokenizer_id.endswith("Tokenizer-2k")
 
 
-def test_kronos_revision_constant_is_none_by_default() -> None:
-    """KRONOS_REVISION constant must be None by default (operator must set before RUN_ML=1).
+def test_variant_revisions_pinned() -> None:
+    """Model + tokenizer HF repos must be pinned to verified 40-hex commit SHAs.
 
-    This locks the design: None = unset = safe default.  The FIX 4 hard-fail guard in
-    main() checks ``if KRONOS_REVISION is None`` and returns 1 before any torch import.
+    Security: separate repos (model, tokenizer) require separate pins — a single
+    shared revision cannot pin both (different SHAs). Pinned in-code in KronosVariant.
     """
-    mod = _import_script()
-    # The constant lives at module level; operator must supply a verified SHA.
-    assert (
-        mod.KRONOS_REVISION is None
-    ), "KRONOS_REVISION must default to None — operator sets it before RUN_ML=1"
+    from src.ml.kronos_variant import KRONOS_BASE, KRONOS_MINI
+
+    for variant in (KRONOS_BASE, KRONOS_MINI):
+        assert len(variant.model_revision) == 40 and all(
+            c in "0123456789abcdef" for c in variant.model_revision
+        ), f"{variant.name} model_revision not a 40-hex SHA"
+        assert len(variant.tokenizer_revision) == 40 and all(
+            c in "0123456789abcdef" for c in variant.tokenizer_revision
+        ), f"{variant.name} tokenizer_revision not a 40-hex SHA"
+        # model and tokenizer are different repos → different SHAs
+        assert variant.model_revision != variant.tokenizer_revision

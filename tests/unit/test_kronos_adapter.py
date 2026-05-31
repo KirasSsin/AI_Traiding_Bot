@@ -183,9 +183,11 @@ def test_predict_forwards_correct_kwargs_to_predictor() -> None:
     assert kw["top_p"] == 0.9
     assert kw["sample_count"] == 20
 
-    # Timestamp indices: x_timestamp = last max_context rows, y_timestamp = future.
-    assert isinstance(kw["x_timestamp"], pd.DatetimeIndex)
-    assert isinstance(kw["y_timestamp"], pd.DatetimeIndex)
+    # Timestamps MUST be pandas Series (Kronos `calc_time_stamps` uses the `.dt`
+    # accessor — a DatetimeIndex has no `.dt` and raises). x_timestamp = last
+    # max_context rows, y_timestamp = future horizon.
+    assert isinstance(kw["x_timestamp"], pd.Series)
+    assert isinstance(kw["y_timestamp"], pd.Series)
     assert len(kw["y_timestamp"]) == horizon  # type: ignore[arg-type]
 
     # Result: list[Decimal] read from pred_df["close"].
