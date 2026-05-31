@@ -215,6 +215,7 @@ def _build_cache_for_combo(
     weights_hash: str,
     params_hash: str,
     max_context: int,
+    max_bars: int | None = None,
 ) -> int:
     """Build cache entries for every bar in ``df`` for one (symbol, timeframe) combo.
 
@@ -234,8 +235,13 @@ def _build_cache_for_combo(
     """
     td = _TF_TO_TD.get(timeframe, timedelta(hours=1))
     written = 0
+    # Only build cache for the last ``max_bars`` bars (earlier bars still serve
+    # as model context via df.iloc[:i+1]). Full-history build is intractable.
+    start_idx = 0 if max_bars is None else max(0, len(df) - max_bars)
 
     for i, row in df.iterrows():
+        if int(i) < start_idx:
+            continue
         open_time = pd.Timestamp(row["_ts"]).to_pydatetime()
         bar_close_ts = int((open_time + td).timestamp())
 
@@ -329,6 +335,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=["base", "mini"],
         default=os.environ.get("KRONOS_VARIANT", "base"),
         help="Kronos variant to use (default: base or KRONOS_VARIANT env).",
+    )
+    parser.add_argument(
+        "--max-bars",
+        type=int,
+        default=None,
+        help=(
+            "Build cache only for the LAST N bars per combo (earlier bars still "
+            "serve as model context). Full-history per-bar build is intractable "
+            "(BTC 1h = 29k bars × sample_count). Recommended for exploratory runs, "
+            "e.g. --max-bars 500. Default None = all bars (very slow)."
+        ),
     )
     return parser.parse_args(argv)
 
@@ -458,7 +475,8 @@ def main(argv: list[str] | None = None) -> int:
             continue
 
         # ── Build cache ────────────────────────────────────────────────────────
-        print(f"  Building cache for {len(df):,} bars ...", flush=True)
+        n_build = len(df) if args.max_bars is None else min(len(df), args.max_bars)
+        print(f"  Building cache for {n_build:,} bars (of {len(df):,}) ...", flush=True)
         written = _build_cache_for_combo(
             symbol=symbol,
             timeframe=timeframe,
@@ -469,6 +487,7 @@ def main(argv: list[str] | None = None) -> int:
             weights_hash=weights_hash,
             params_hash=params_hash,
             max_context=variant.max_context,
+            max_bars=args.max_bars,
         )
         print(f"  Cache entries written: {written:,} (total in cache may be larger)")
 
