@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-01  # S54 PHASE 4 — Kronos UI cached-coverage autofill + uncached-TF block.
+updated: 2026-06-01  # S54 PHASE 4 — T1-T2 done (manifest v2 + coverage API). Next: T3 frontend.
 sprint: 54
 phase: 4-execution
 branch: feature/sprint-54-kronos-ui
@@ -35,7 +35,7 @@ tag: v0.1.0-alpha.53
 | 1 Orient | done | S54 kickoff (Kronos UI, operator-specified scope) |
 | 2 Brainstorm | skipped (operator-specified scope, dashboard polish) | — |
 | 3 Plan | done | 2026-06-01-sprint-54-kronos-ui.md (T1-T4) |
-| 4 Execute | in_progress | T1 manifest v2 → T2 dispatch+API → T3 frontend → T4 ship |
+| 4 Execute | in_progress | T1-T2 done (manifest v2 + coverage API). Next: T3 frontend |
 | 5 Verify | pending | — |
 | 6 Review | pending | — |
 | 7 Sync | pending | — |
