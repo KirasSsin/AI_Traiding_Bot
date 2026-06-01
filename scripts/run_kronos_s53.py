@@ -347,6 +347,23 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "e.g. --max-bars 500. Default None = all bars (very slow)."
         ),
     )
+    parser.add_argument(
+        "--symbols",
+        default=None,
+        help=(
+            "Comma-separated symbols to build (e.g. 'BTCUSDT' or 'BTCUSDT,ETHUSDT'). "
+            "Default None = all. Use to run a single combo fast — the script "
+            "otherwise iterates all 11 (symbol,timeframe) combos."
+        ),
+    )
+    parser.add_argument(
+        "--timeframes",
+        default=None,
+        help=(
+            "Comma-separated timeframes to build (e.g. '1h' or '1h,4h'). "
+            "Default None = all. Combine with --symbols to pin one combo."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -440,7 +457,20 @@ def main(argv: list[str] | None = None) -> int:
     all_results: list[dict[str, Any]] = []
     combos_coverage: list[dict[str, Any]] = []
 
-    for symbol, timeframe, parquet_path in COMBOS:
+    # Optional combo filter — run a single (symbol, timeframe) fast instead of all 11.
+    sym_filter = {s.strip() for s in args.symbols.split(",")} if args.symbols else None
+    tf_filter = {t.strip() for t in args.timeframes.split(",")} if args.timeframes else None
+    combos = [
+        c
+        for c in COMBOS
+        if (sym_filter is None or c[0] in sym_filter) and (tf_filter is None or c[1] in tf_filter)
+    ]
+    if not combos:
+        print(f"No combos match --symbols={args.symbols} --timeframes={args.timeframes}")
+        return 1
+    print(f"Building {len(combos)} of {len(COMBOS)} combos.")
+
+    for symbol, timeframe, parquet_path in combos:
         print(f"\n{'─' * 60}")
         print(f"Combo: {symbol} {timeframe}  ({parquet_path})")
 
