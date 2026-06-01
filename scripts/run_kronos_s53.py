@@ -216,6 +216,7 @@ def _build_cache_for_combo(
     params_hash: str,
     max_context: int,
     max_bars: int | None = None,
+    n_draws: int = SAMPLE_COUNT,
 ) -> int:
     """Build cache entries for every bar in ``df`` for one (symbol, timeframe) combo.
 
@@ -264,9 +265,11 @@ def _build_cache_for_combo(
             df.iloc[: int(i) + 1].rename(columns={"_ts": "ts"}).set_index("ts")
         )
 
-        # Draw SAMPLE_COUNT samples.
+        # Draw ``n_draws`` samples. Fast mode: n_draws=1 with the adapter doing
+        # SAMPLE_COUNT internal paths (mean). Default: n_draws=SAMPLE_COUNT each a
+        # single path → median_ensemble (V4-exact).
         samples: list[list[Decimal]] = []
-        for _ in range(SAMPLE_COUNT):
+        for _ in range(n_draws):
             pred = adapter.predict(context_df, lookback=max_context, horizon=HORIZON)
             samples.append(pred)
 
@@ -364,6 +367,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Default None = all. Combine with --symbols to pin one combo."
         ),
     )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help=(
+            "FAST mode (~4x): one vectorized predict per bar with SAMPLE_COUNT "
+            "internal paths AVERAGED (mean) instead of SAMPLE_COUNT separate "
+            "draws + median. Exploratory-acceptable (Kronos's native averaging); "
+            "minor methodological deviation from V4 median. Use for speed."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -436,16 +449,20 @@ def main(argv: list[str] | None = None) -> int:
     print("\nLoading Kronos adapter ...")
     print(f"model_rev     = {variant.model_revision}")
     print(f"tokenizer_rev = {variant.tokenizer_revision}")
-    # PERF: adapter draws ONE path per predict(); the SAMPLE_COUNT-member ensemble
-    # is the OUTER loop in _build_cache_for_combo (median_ensemble over draws).
-    # Passing sample_count=SAMPLE_COUNT here would over-sample SAMPLE_COUNT× per
-    # draw (= SAMPLE_COUNT² forward passes/bar) — a ~20× waste. V4 = 20 draws + median.
+    # PERF: default = adapter draws ONE path per predict(); the SAMPLE_COUNT-member
+    # ensemble is the OUTER loop (median, V4-exact). --fast = one call with
+    # SAMPLE_COUNT internal paths (mean) → ~4x fewer predict() calls.
+    internal_paths = SAMPLE_COUNT if args.fast else 1
+    n_draws = 1 if args.fast else SAMPLE_COUNT
+    print(
+        f"mode          = {'FAST (mean of SAMPLE_COUNT paths)' if args.fast else 'median ensemble'}"
+    )
     adapter = KronosModelAdapter(
         variant=variant,
         device=DEVICE,
         temperature=TEMPERATURE,
         top_p=TOP_P,
-        sample_count=1,
+        sample_count=internal_paths,
     )
 
     # Compute weights hash (C4 provenance — covers model + tokenizer repos).
@@ -522,6 +539,7 @@ def main(argv: list[str] | None = None) -> int:
             params_hash=params_hash,
             max_context=variant.max_context,
             max_bars=args.max_bars,
+            n_draws=n_draws,
         )
         print(f"  Cache entries written: {written:,} (total in cache may be larger)")
 
