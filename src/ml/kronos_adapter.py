@@ -54,8 +54,9 @@ class KronosModelAdapter:
     lazily inside its methods (C1). If those dependencies are absent, a clean
     :class:`ImportError` with an actionable message is raised.
 
-    SECURITY: pin ``revision`` to a verified commit SHA before any RUN_ML=1 run —
-    ``from_pretrained`` deserializes untrusted checkpoints (torch.load pickle = ACE).
+    SECURITY: model + tokenizer repos are pinned to verified commit SHAs via
+    ``variant.model_revision`` / ``variant.tokenizer_revision`` (ACE defense —
+    ``from_pretrained`` deserializes untrusted checkpoints, torch.load = ACE).
     ``weights_hash`` is post-download provenance, NOT ACE prevention.
     """
 
@@ -67,7 +68,6 @@ class KronosModelAdapter:
         temperature: float = 1.0,
         top_p: float = 0.9,
         sample_count: int = 1,
-        revision: str | None = None,
     ) -> None:
         """Load the Kronos model + tokenizer for ``variant`` (lazy import).
 
@@ -78,14 +78,13 @@ class KronosModelAdapter:
             temperature: Sampling temperature ``T`` passed to ``predict``.
             top_p: Nucleus sampling cutoff passed to ``predict``.
             sample_count: Number of samples drawn per prediction.
-            revision: HuggingFace revision (branch/tag/commit SHA) for
-                ``from_pretrained``. Pin to a verified commit SHA before any
-                RUN_ML=1 run (ACE defense — see class docstring).
 
-        SECURITY: pin ``revision`` to a verified commit SHA before any RUN_ML=1
-        run — ``from_pretrained`` deserializes untrusted checkpoints (torch.load
-        pickle = ACE). ``weights_hash`` is post-download provenance, NOT ACE
-        prevention. The submodule sha pins the model *code*.
+        SECURITY: model + tokenizer HuggingFace repos are pinned to verified
+        commit SHAs via ``variant.model_revision`` / ``variant.tokenizer_revision``
+        (ACE defense — ``from_pretrained`` deserializes untrusted checkpoints,
+        torch.load pickle = ACE). Separate repos → separate pins. ``weights_hash``
+        is post-download provenance, NOT ACE prevention. The submodule sha pins
+        the model *code*.
 
         Raises:
             ImportError: if the Kronos submodule code or torch is absent.
@@ -122,8 +121,10 @@ class KronosModelAdapter:
         self._top_p = top_p
         self._sample_count = sample_count
 
-        model = Kronos.from_pretrained(variant.model_id, revision=revision)
-        tokenizer = KronosTokenizer.from_pretrained(variant.tokenizer_id, revision=revision)
+        model = Kronos.from_pretrained(variant.model_id, revision=variant.model_revision)
+        tokenizer = KronosTokenizer.from_pretrained(
+            variant.tokenizer_id, revision=variant.tokenizer_revision
+        )
         self._predictor = KronosPredictor(
             model, tokenizer, device=device, max_context=variant.max_context
         )
@@ -141,13 +142,16 @@ class KronosModelAdapter:
         and casts each predicted close to :class:`Decimal` (C6).
         """
         context = ohlcv_df.iloc[-self._max_context :]
-        x_timestamp = context.index
-        interval = x_timestamp[-1] - x_timestamp[-2]
-        last_ts = x_timestamp[-1]
-        y_timestamp = pd.DatetimeIndex([last_ts + interval * (i + 1) for i in range(horizon)])
+        index = context.index
+        interval = index[-1] - index[-2]
+        last_ts = index[-1]
+        # Kronos `calc_time_stamps` requires pandas Series (uses the `.dt`
+        # accessor), NOT a DatetimeIndex — pass `.to_series()` for both.
+        x_timestamp = index.to_series().reset_index(drop=True)
+        y_timestamp = pd.Series([last_ts + interval * (i + 1) for i in range(horizon)])
 
         pred_df = self._predictor.predict(
-            df=context,
+            df=context.reset_index(drop=True),
             x_timestamp=x_timestamp,
             y_timestamp=y_timestamp,
             pred_len=horizon,

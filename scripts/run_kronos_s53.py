@@ -71,11 +71,11 @@ SAMPLE_COUNT = 20
 HORIZON = 1
 SEED = 42
 
-# SECURITY: set to verified commit SHA before any RUN_ML=1 run —
-# from_pretrained deserializes untrusted checkpoints (torch.load pickle = ACE).
-# weights_hash is post-download provenance, NOT ACE prevention.
-# Example: KRONOS_REVISION = "abc123def456..."  (operator: verify on HuggingFace)
-KRONOS_REVISION: str | None = None  # operator: set to verified commit SHA before RUN_ML=1
+# SECURITY: model + tokenizer HF repos are pinned to verified commit SHAs in
+# `KronosVariant` (src/ml/kronos_variant.py) — version-controlled, not env. Each
+# repo has its own pin (model and tokenizer are SEPARATE repos with different
+# SHAs). from_pretrained deserializes untrusted checkpoints (torch.load = ACE);
+# the in-code pins are the ACE defense. weights_hash = post-download provenance.
 
 # ─── 11 combos (ADR 0068 scope) ───────────────────────────────────────────────
 #   (symbol, timeframe_str, parquet_path)
@@ -215,6 +215,7 @@ def _build_cache_for_combo(
     weights_hash: str,
     params_hash: str,
     max_context: int,
+    max_bars: int | None = None,
 ) -> int:
     """Build cache entries for every bar in ``df`` for one (symbol, timeframe) combo.
 
@@ -234,8 +235,13 @@ def _build_cache_for_combo(
     """
     td = _TF_TO_TD.get(timeframe, timedelta(hours=1))
     written = 0
+    # Only build cache for the last ``max_bars`` bars (earlier bars still serve
+    # as model context via df.iloc[:i+1]). Full-history build is intractable.
+    start_idx = 0 if max_bars is None else max(0, len(df) - max_bars)
 
     for i, row in df.iterrows():
+        if int(i) < start_idx:
+            continue
         open_time = pd.Timestamp(row["_ts"]).to_pydatetime()
         bar_close_ts = int((open_time + td).timestamp())
 
@@ -330,6 +336,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("KRONOS_VARIANT", "base"),
         help="Kronos variant to use (default: base or KRONOS_VARIANT env).",
     )
+    parser.add_argument(
+        "--max-bars",
+        type=int,
+        default=None,
+        help=(
+            "Build cache only for the LAST N bars per combo (earlier bars still "
+            "serve as model context). Full-history per-bar build is intractable "
+            "(BTC 1h = 29k bars × sample_count). Recommended for exploratory runs, "
+            "e.g. --max-bars 500. Default None = all bars (very slow)."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -362,17 +379,6 @@ def main(argv: list[str] | None = None) -> int:
         print("HONEST DISCLAIMER: BTC/USDT confirmed in Kronos pretrain corpus.")
         print("Results carry VERDICT_RAW_PRETRAIN_LEAKAGE_SUSPECTED — EXPLORATORY ONLY.")
         return 0
-
-    # ── SECURITY: KRONOS_REVISION must be pinned before any RUN_ML=1 run ────────
-    # Unpinned from_pretrained deserializes arbitrary checkpoint from HuggingFace
-    # (torch.load pickle = ACE surface). Operator MUST set KRONOS_REVISION to a
-    # verified commit SHA before running with RUN_ML=1.
-    if KRONOS_REVISION is None:
-        print(
-            "SECURITY: set KRONOS_REVISION=<verified sha> before RUN_ML=1 "
-            "— unpinned weights = ACE risk"
-        )
-        return 1
 
     # ── torch/Kronos imports — ONLY inside RUN_ML branch ──────────────────────
     import torch  # type: ignore[import-not-found]  # noqa: PLC0415 — guarded import
@@ -411,13 +417,14 @@ def main(argv: list[str] | None = None) -> int:
     # weights_hash is computed AFTER instantiation so weight files are guaranteed
     # on disk — avoids fallback hash on first-run (FIX 4, PHASE 6 R1).
     print("\nLoading Kronos adapter ...")
+    print(f"model_rev     = {variant.model_revision}")
+    print(f"tokenizer_rev = {variant.tokenizer_revision}")
     adapter = KronosModelAdapter(
         variant=variant,
         device=DEVICE,
         temperature=TEMPERATURE,
         top_p=TOP_P,
         sample_count=SAMPLE_COUNT,
-        revision=KRONOS_REVISION,
     )
 
     # Compute weights hash (C4 provenance — covers model + tokenizer repos).
@@ -468,7 +475,8 @@ def main(argv: list[str] | None = None) -> int:
             continue
 
         # ── Build cache ────────────────────────────────────────────────────────
-        print(f"  Building cache for {len(df):,} bars ...", flush=True)
+        n_build = len(df) if args.max_bars is None else min(len(df), args.max_bars)
+        print(f"  Building cache for {n_build:,} bars (of {len(df):,}) ...", flush=True)
         written = _build_cache_for_combo(
             symbol=symbol,
             timeframe=timeframe,
@@ -479,6 +487,7 @@ def main(argv: list[str] | None = None) -> int:
             weights_hash=weights_hash,
             params_hash=params_hash,
             max_context=variant.max_context,
+            max_bars=args.max_bars,
         )
         print(f"  Cache entries written: {written:,} (total in cache may be larger)")
 
