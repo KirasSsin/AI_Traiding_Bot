@@ -436,12 +436,16 @@ def main(argv: list[str] | None = None) -> int:
     print("\nLoading Kronos adapter ...")
     print(f"model_rev     = {variant.model_revision}")
     print(f"tokenizer_rev = {variant.tokenizer_revision}")
+    # PERF: adapter draws ONE path per predict(); the SAMPLE_COUNT-member ensemble
+    # is the OUTER loop in _build_cache_for_combo (median_ensemble over draws).
+    # Passing sample_count=SAMPLE_COUNT here would over-sample SAMPLE_COUNT× per
+    # draw (= SAMPLE_COUNT² forward passes/bar) — a ~20× waste. V4 = 20 draws + median.
     adapter = KronosModelAdapter(
         variant=variant,
         device=DEVICE,
         temperature=TEMPERATURE,
         top_p=TOP_P,
-        sample_count=SAMPLE_COUNT,
+        sample_count=1,
     )
 
     # Compute weights hash (C4 provenance — covers model + tokenizer repos).
