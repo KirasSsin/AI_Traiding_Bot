@@ -112,7 +112,10 @@ RESULTS_DIR = Path("data/kronos_s53_results")
 # Captures the cache-key-defining params (model_id, weights_hash, params_hash,
 # device) so the dashboard can reconstruct CacheKeys matching this build → HITS.
 MANIFEST_NAME = "_manifest.json"
-MANIFEST_SCHEMA_VERSION = 1
+# S54 T1 — schema v2: per-combo self-describing entries carrying
+# {model_id, weights_hash, params_hash, device, first_bar_ts, last_bar_ts,
+# n_entries}. Top-level params kept for v1 back-compat readers.
+MANIFEST_SCHEMA_VERSION = 2
 
 
 # ─── Variant resolution ───────────────────────────────────────────────────────
@@ -217,7 +220,7 @@ def _build_cache_for_combo(
     max_context: int,
     max_bars: int | None = None,
     n_draws: int = SAMPLE_COUNT,
-) -> int:
+) -> dict[str, int]:
     """Build cache entries for every bar in ``df`` for one (symbol, timeframe) combo.
 
     For each bar we:
@@ -232,10 +235,17 @@ def _build_cache_for_combo(
     5. Write to cache (put).
 
     Returns:
-        Number of newly written cache entries.
+        Dict with ``written`` (count of newly written cache entries) and
+        ``first_bar_ts`` / ``last_bar_ts`` — the min/max ``bar_close_ts`` over
+        the bars in the BUILT window (S54 T1, manifest v2 coverage). The window
+        spans every bar processed (regardless of cache hit/miss), so the coverage
+        reflects the full cached date range, not just newly written entries.
+        ``first_bar_ts`` / ``last_bar_ts`` are ``0`` when no bar was processed.
     """
     td = _TF_TO_TD.get(timeframe, timedelta(hours=1))
     written = 0
+    first_bar_ts = 0
+    last_bar_ts = 0
     # Only build cache for the last ``max_bars`` bars (earlier bars still serve
     # as model context via df.iloc[:i+1]). Full-history build is intractable.
     start_idx = 0 if max_bars is None else max(0, len(df) - max_bars)
@@ -245,6 +255,13 @@ def _build_cache_for_combo(
             continue
         open_time = pd.Timestamp(row["_ts"]).to_pydatetime()
         bar_close_ts = int((open_time + td).timestamp())
+
+        # Track the built window's coverage (S54 T1) — min/max over every bar in
+        # the window, independent of cache hit/miss.
+        if first_bar_ts == 0 or bar_close_ts < first_bar_ts:
+            first_bar_ts = bar_close_ts
+        if bar_close_ts > last_bar_ts:
+            last_bar_ts = bar_close_ts
 
         key = CacheKey(
             model_id=model_id,
@@ -277,7 +294,11 @@ def _build_cache_for_combo(
         cache.put(key, prediction)
         written += 1
 
-    return written
+    return {
+        "written": written,
+        "first_bar_ts": first_bar_ts,
+        "last_bar_ts": last_bar_ts,
+    }
 
 
 def _write_manifest(
@@ -288,14 +309,20 @@ def _write_manifest(
     params_hash: str,
     combos_coverage: list[dict[str, Any]],
 ) -> None:
-    """Write/merge ``<cache_dir>/_manifest.json`` (FIX A, PHASE 6 R2).
+    """Write/merge ``<cache_dir>/_manifest.json`` (FIX A, PHASE 6 R2; S54 T1 v2).
 
-    Captures the 4 non-(symbol, timeframe, bar_close_ts) cache-key fields the
-    dashboard needs to reconstruct matching :class:`CacheKey`s: ``model_id``,
-    ``weights_hash``, ``params_hash``, ``device``. Includes a schema version and
-    the per-combo coverage list. If a manifest already exists, the key params are
-    overwritten (consistent build) and the combo coverage is merged by
-    (symbol, timeframe) so a partial re-run does not drop prior combos.
+    Schema v2 (S54): each ``combos[]`` entry is self-describing, carrying ITS OWN
+    ``{symbol, timeframe, model_id, weights_hash, params_hash, device,
+    first_bar_ts, last_bar_ts, n_entries}``. This lets combos built with different
+    ``--sample-count`` / variant (different ``params_hash`` / ``model_id``)
+    coexist — dispatch picks the matching entry and uses its params.
+
+    Top-level ``model_id`` / ``weights_hash`` / ``params_hash`` / ``device`` are
+    retained for v1 back-compat readers (the per-combo fields are authoritative
+    in v2).
+
+    If a manifest already exists, combo coverage is merged by (symbol, timeframe)
+    so a partial re-run does not drop prior combos (each keeps its own params).
     """
     manifest_path = cache_dir / MANIFEST_NAME
 
@@ -323,6 +350,85 @@ def _write_manifest(
     manifest_path.write_text(json.dumps(manifest, indent=2))
     combos_list: list[Any] = manifest["combos"]  # type: ignore[assignment]
     _log.info("Wrote manifest -> %s (%d combos)", manifest_path, len(combos_list))
+
+
+def rebuild_manifest_v2(cache_dir: Path = CACHE_DIR) -> dict[str, Any]:
+    """Upgrade an existing v1 ``_manifest.json`` to v2 in-place (S54 T1 backfill).
+
+    torch-free: reads only the existing manifest + the per-combo parquet. For
+    each combo missing ``first_bar_ts`` / ``last_bar_ts``, computes them from the
+    parquet's LAST ``n_entries`` bars (the cached window) using the same
+    ``bar_close_ts = int((open_time + td).timestamp())`` formula as
+    :func:`_build_cache_for_combo`. ``n_entries`` is taken from the existing
+    entry (``n_entries`` or legacy ``n_entries_written``).
+
+    Idempotent: combos already carrying both ts fields are left untouched.
+    Per-combo ``model_id`` / ``weights_hash`` / ``params_hash`` / ``device`` are
+    backfilled from the manifest's top-level (v1) params when absent.
+
+    Returns:
+        The upgraded manifest dict (also written to disk).
+
+    Raises:
+        FileNotFoundError: if no manifest exists at ``cache_dir``.
+    """
+    manifest_path = cache_dir / MANIFEST_NAME
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"No manifest to rebuild: {manifest_path}")
+
+    manifest: dict[str, Any] = json.loads(manifest_path.read_text())
+    top_model_id = manifest.get("model_id", "")
+    top_weights_hash = manifest.get("weights_hash", "")
+    top_params_hash = manifest.get("params_hash", "")
+    top_device = manifest.get("device", DEVICE)
+
+    parquet_by_combo = {(sym, tf): path for sym, tf, path in COMBOS}
+
+    upgraded: list[dict[str, Any]] = []
+    for entry in manifest.get("combos", []):
+        symbol = entry["symbol"]
+        timeframe = entry["timeframe"]
+        n_entries = int(entry.get("n_entries", entry.get("n_entries_written", 0)))
+
+        new_entry: dict[str, Any] = {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "model_id": entry.get("model_id", top_model_id),
+            "weights_hash": entry.get("weights_hash", top_weights_hash),
+            "params_hash": entry.get("params_hash", top_params_hash),
+            "device": entry.get("device", top_device),
+            "n_entries": n_entries,
+        }
+
+        first_ts = int(entry.get("first_bar_ts", 0))
+        last_ts = int(entry.get("last_bar_ts", 0))
+        if (first_ts == 0 or last_ts == 0) and n_entries > 0:
+            parquet_path = parquet_by_combo.get((symbol, timeframe))
+            if parquet_path is not None and Path(parquet_path).exists():
+                df = _normalize_df(parquet_path)
+                td = _TF_TO_TD.get(timeframe, timedelta(hours=1))
+                window = df.iloc[max(0, len(df) - n_entries) :]
+                close_ts = [
+                    int((pd.Timestamp(ts).to_pydatetime() + td).timestamp()) for ts in window["_ts"]
+                ]
+                if close_ts:
+                    first_ts = min(close_ts)
+                    last_ts = max(close_ts)
+            else:
+                _log.warning(
+                    "rebuild_manifest_v2: parquet missing for (%s, %s); leaving ts at 0",
+                    symbol,
+                    timeframe,
+                )
+        new_entry["first_bar_ts"] = first_ts
+        new_entry["last_bar_ts"] = last_ts
+        upgraded.append(new_entry)
+
+    manifest["schema_version"] = MANIFEST_SCHEMA_VERSION
+    manifest["combos"] = sorted(upgraded, key=lambda e: (e["symbol"], e["timeframe"]))
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    _log.info("Rebuilt manifest -> %s (v2, %d combos)", manifest_path, len(upgraded))
+    return manifest
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -379,6 +485,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--rebuild-manifest",
+        action="store_true",
+        help=(
+            "Upgrade the existing data/kronos_cache/_manifest.json from v1 to v2 "
+            "in-place (per-combo params + date coverage) and exit. torch-free: "
+            "reads only the existing manifest + parquet (RUN_ML not required)."
+        ),
+    )
+    parser.add_argument(
         "--fast",
         action="store_true",
         help=(
@@ -396,6 +511,13 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     variant = resolve_variant(args.variant)
     sample_count = args.sample_count
+
+    # S54 T1 — manifest v1→v2 backfill. torch-free, RUN_ML not required (reads
+    # only the existing manifest + parquet). Runs and exits before any inference.
+    if args.rebuild_manifest:
+        manifest = rebuild_manifest_v2(CACHE_DIR)
+        print(json.dumps(manifest, indent=2))
+        return 0
 
     if not RUN_ML:
         print("=" * 60)
@@ -540,7 +662,7 @@ def main(argv: list[str] | None = None) -> int:
         # ── Build cache ────────────────────────────────────────────────────────
         n_build = len(df) if args.max_bars is None else min(len(df), args.max_bars)
         print(f"  Building cache for {n_build:,} bars (of {len(df):,}) ...", flush=True)
-        written = _build_cache_for_combo(
+        build_stats = _build_cache_for_combo(
             symbol=symbol,
             timeframe=timeframe,
             df=df,
@@ -553,15 +675,22 @@ def main(argv: list[str] | None = None) -> int:
             max_bars=args.max_bars,
             n_draws=n_draws,
         )
+        written = build_stats["written"]
         print(f"  Cache entries written: {written:,} (total in cache may be larger)")
 
-        # Track per-combo coverage for the manifest sidecar (FIX A).
+        # Track per-combo coverage for the manifest sidecar (S54 T1 — v2 schema:
+        # each combo is self-describing with its own params + date window).
         combos_coverage.append(
             {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "n_bars": int(len(df)),
-                "n_entries_written": int(written),
+                "model_id": variant.model_id,
+                "weights_hash": weights_hash,
+                "params_hash": params_hash,
+                "device": DEVICE,
+                "first_bar_ts": int(build_stats["first_bar_ts"]),
+                "last_bar_ts": int(build_stats["last_bar_ts"]),
+                "n_entries": n_build,
             }
         )
 
