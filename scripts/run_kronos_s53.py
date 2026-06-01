@@ -368,6 +368,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--sample-count",
+        type=int,
+        default=SAMPLE_COUNT,
+        help=(
+            "Ensemble samples per bar (default 20). LOWER = faster, ~linear: "
+            "20→801ms/bar, 10→390ms, 5→196ms, 1→47ms on M4 MPS. Exploratory may "
+            "use 5-10 for speed; <20 is a V4 deviation (noisier forecast). "
+            "Changes params_hash → cache rebuild required."
+        ),
+    )
+    parser.add_argument(
         "--fast",
         action="store_true",
         help=(
@@ -384,6 +395,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point. ``argv`` overrides sys.argv for testing."""
     args = _parse_args(argv)
     variant = resolve_variant(args.variant)
+    sample_count = args.sample_count
 
     if not RUN_ML:
         print("=" * 60)
@@ -422,7 +434,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"tokenizer_id  = {variant.tokenizer_id}")
     print(f"max_context   = {variant.max_context}")
     print(f"device        = {DEVICE}")
-    print(f"sample_count  = {SAMPLE_COUNT}")
+    print(f"sample_count  = {sample_count}")
     print(f"horizon       = {HORIZON}")
     print(f"seed          = {SEED}")
     print()
@@ -436,7 +448,7 @@ def main(argv: list[str] | None = None) -> int:
     sampling_params: dict[str, Any] = {
         "T": TEMPERATURE,
         "top_p": TOP_P,
-        "sample_count": SAMPLE_COUNT,
+        "sample_count": sample_count,
         "horizon": HORIZON,
         "seed": SEED,
     }
@@ -452,8 +464,8 @@ def main(argv: list[str] | None = None) -> int:
     # PERF: default = adapter draws ONE path per predict(); the SAMPLE_COUNT-member
     # ensemble is the OUTER loop (median, V4-exact). --fast = one call with
     # SAMPLE_COUNT internal paths (mean) → ~4x fewer predict() calls.
-    internal_paths = SAMPLE_COUNT if args.fast else 1
-    n_draws = 1 if args.fast else SAMPLE_COUNT
+    internal_paths = sample_count if args.fast else 1
+    n_draws = 1 if args.fast else sample_count
     print(
         f"mode          = {'FAST (mean of SAMPLE_COUNT paths)' if args.fast else 'median ensemble'}"
     )
