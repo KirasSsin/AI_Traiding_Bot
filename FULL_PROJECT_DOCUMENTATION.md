@@ -1,6 +1,10 @@
 # AI Trading Bot: Полная Техническая и Архитектурная Документация Проекта
 
-Этот документ — основной ориентир по архитектуре и эксплуатации AI Trading Bot. Он обновляется вместе с кодом; при расхождении приоритет у фактического поведения репозитория (`src/`, `config.yaml`).
+> ⚠️ **STALE (снимок ~S39, 2026-04-26).** Канонический live-источник — llm-wiki.
+> Актуальное: [`README.md`](README.md) + [`current-state.md`](llm-wiki/wiki/project/architecture/current-state.md) (counts + sprint history) + [`SPRINT_STATE.md`](llm-wiki/wiki/project/SPRINT_STATE.md).
+> НЕ отражает S40-S54 (volume/ATR breakout, Supertrend, Kronos ML). Исторический снимок.
+
+Этот документ — исторический ориентир по архитектуре. При расхождении приоритет у фактического поведения репозитория (`src/`) и llm-wiki.
 
 ---
 

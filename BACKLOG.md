@@ -1,7 +1,8 @@
 # BACKLOG — AI Trading Bot v0.1
 
-> Статус: S39 phase 0-prep. Последний тег: `v0.1.0-alpha.38`. Ветка: `main`.
-> Последнее обновление: 2026-05-09.
+> ⚠️ **STALE (S39, 2026-05-09).** Текущий бэклог переехал в [`SPRINT_STATE.md`](llm-wiki/wiki/project/SPRINT_STATE.md) (секция «Carry / backlog»). Этот файл — исторический снимок. Актуальный тег: `v0.1.0-alpha.54`.
+>
+> Статус (исторический): S39 phase 0-prep. Тег на момент снимка: `v0.1.0-alpha.38`.
 
 ---
 

@@ -1,5 +1,7 @@
 # TASKS.md — Obsidian Cross-Linking Sweep
 
+> ⚠️ **OBSOLETE — разовый таск (2026-05-09), выполнен.** Текущие задачи/бэклог → [`SPRINT_STATE.md`](llm-wiki/wiki/project/SPRINT_STATE.md). Сохранён исторически.
+
 **Created:** 2026-05-09
 **Project:** AI Trading Bot v0.1
 **Goal:** Add [[wiki-links]] between related pages so Obsidian graph is populated.
