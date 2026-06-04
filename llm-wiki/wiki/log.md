@@ -2887,3 +2887,14 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **ADR 0070 accepted.** Sprint pages 57→58. ADRs 69→70.
 - pytest 1525 passed (+14 vs S53 ~1511), mypy 0/98, reason_codes **67** (без изменений), FSM **16/30/74** (без изменений), frontend Vitest 45 passed + build/lint clean. 6 pytest «fails» = torch-installed-venv artifacts (torch-absent guards; CI torch-free → green).
 - Carry S55+: forward paper-trade harness (единственная валидная Kronos-валидация), Track B signal enrichment, parquet-immutability doc, v1 device fallback narrowing.
+
+## [2026-06-04] ship | S54 v0.1.0-alpha.54 — Kronos UI cached-coverage
+
+- Squash-merge `60ee7f3` (PR #69) → tag `v0.1.0-alpha.54`.
+- Manifest v1→v2 (per-combo self-describing: model_id/weights_hash/params_hash/device/first_bar_ts/last_bar_ts/n_entries) → dispatch per-combo CacheKey reconstruction (mixed sample_count/variant across TF). rebuild_manifest_v2 backfill + --rebuild-manifest.
+- GET /api/kronos/coverage → per-(symbol,timeframe) cached ISO date ranges.
+- Frontend ConfigureBacktest: Kronos + cached (symbol,tf) → auto-fill START/END из кэша + enable EXECUTE; uncached tf (15m) → disable + RU "не построен". INTERVAL_TO_KRONOS_TF map.
+- 3 PHASE 6 reviewers (dashboard/python/data-integrity): ALL APPROVE, 0 blockers. Follow-ups low: parquet-immutability assumption (rebuild_manifest_v2), v1 device fallback narrowing.
+- Gates: mypy 0/98, pytest 1525 passed (+14; 6 torch-installed-venv artifacts CI-green), frontend 45 passed (+2) + tsc+vite+eslint clean. reason codes 67 / FSM 16/30/74 unchanged. ADR 0070 accepted. Sprint pages 58.
+- Also on this branch (perf, post-S53): --fast (single-call mean ~4.6x), --sample-count (~linear lever), --symbols/--timeframes filter. Batch inference + fp16 explored → dead-end on M4 MPS.
+- Kronos exploratory verdict: long-only Spot edge нет (1h -5.61%, 5m -10.24%, both leakage-inflated yet negative). Next decision: futures-short (S55+) OR close Kronos.

@@ -1,20 +1,20 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-04  # S54 PHASE 7 done — ADR 0070 + sprint-54 page + wiki sync complete. Next: PHASE 8 Ship.
+updated: 2026-06-04  # S54 SHIPPED v0.1.0-alpha.54 → between-sprints.
 sprint: 54
-phase: 7-sync
-branch: feature/sprint-54-kronos-ui
-tag: v0.1.0-alpha.53
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.54
 ---
 
 ## Текущий статус
 
-**S54 — Kronos UI: cached-coverage auto-fill + uncached-TF block.** Plan `2026-06-01-sprint-54-kronos-ui.md`. Operator asks: Kronos+1h/5m → авто-период из кэша + график/параметры; Kronos+15m → BLOCK; merge to main. Manifest v1→v2 (per-combo dates+params), coverage API, React autofill. T1 manifest v2+backfill / T2 dispatch+coverage API / T3 frontend / T4 review+ship.
+**S54 SHIPPED** — `60ee7f3` (PR #69) tag `v0.1.0-alpha.54`. Kronos UI: manifest v1→v2 (per-combo dates+params), `GET /api/kronos/coverage`, frontend ConfigureBacktest auto-fill START/END из кэша + блок некэшированных TF (15m). 3 reviewers APPROVE. mypy 0/98, pytest 1525, frontend 45. Детали → `sprints/sprint-54-kronos-ui.md`.
 
-**Kronos exploratory (S53 post-ship):** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. Long-only Spot edge нет. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг (~линейно).
+**Kronos exploratory вывод:** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. **Long-only Spot edge нет.** Если продолжать: futures-шорт (S55+, плечо/ликвидации) ИЛИ закрыть. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг.
 
-**S53** — `eff3ae6` v0.1.0-alpha.53 (real-inference enablement). **S52** — `a188347` v0.1.0-alpha.52.
+**S53** — `eff3ae6` v0.1.0-alpha.53. **S52** — `a188347` v0.1.0-alpha.52.
 
 ## Carry (post-S53)
 
@@ -39,8 +39,8 @@ tag: v0.1.0-alpha.53
 | 5 Verify | done | mypy 0/98, pytest 1525 passed (+14), frontend 45 passed + build+lint clean. 6 "fails" = torch-installed-venv artifacts (torch-absent guards; CI torch-free → green) |
 | 6 Review | done | dashboard APPROVE + python APPROVE + data-integrity APPROVE (3 parallel) |
 | 7 Sync | done | ADR 0070 + sprint-54 page + current-state/index/log/prediction-cache updates |
-| 8 Ship | pending | — |
-| 9 Close | pending | — |
+| 8 Ship | done | PR #69 squash-merge 60ee7f3, tag v0.1.0-alpha.54 |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry + gitignore kronos logs |
 
 ---
 

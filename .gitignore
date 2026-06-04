@@ -73,3 +73,6 @@ src/dashboard_react/node_modules/
 src/dashboard_react/playwright-report/
 src/dashboard_react/test-results/
 src/dashboard_react/tsconfig.tsbuildinfo
+
+# Kronos build logs (runtime, operator M4)
+kronos_build*.log
