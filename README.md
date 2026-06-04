@@ -1,8 +1,8 @@
 # AI Trading Bot v0.1
 
-Algorithmic trading bot для **Bybit Spot**. TESTNET-only deployment per ADR 0055 + ADR 0057. Mean-reversion + Donchian breakout strategies на BTC/ETH/SOL. Walk-forward analysis (WFA) + DSR + MC permutations + dashboard UI.
+Algorithmic trading bot для **Bybit Spot**. TESTNET-only deployment per ADR 0055 + ADR 0057. Стратегии: mean-reversion, Donchian / volume / ATR breakout, Supertrend, и **Kronos ML** (foundation-model K-line forecast, exploratory) на BTC/ETH/SOL. Walk-forward analysis (WFA) + DSR + MC permutations + dashboard UI.
 
-**Текущий статус:** v0.1 infrastructure complete (tag `v0.1.0-alpha.38`). Strategy validation NEGATIVE — **7 hypotheses tested, все FAIL conjoint** per [`acceptance-criteria.md`](llm-wiki/wiki/project/architecture/acceptance-criteria.md). δ TESTNET infrastructure production-ready (S36 wired + S37/S38 hardened).
+**Текущий статус:** v0.1 infrastructure complete (tag `v0.1.0-alpha.54`). Strategy validation NEGATIVE — все протестированные гипотезы FAIL conjoint per [`acceptance-criteria.md`](llm-wiki/wiki/project/architecture/acceptance-criteria.md). **Kronos ML (S52-S54)** — exploratory only (`RAW_PRETRAIN_LEAKAGE_SUSPECTED`): backtest на обоих TF убыточен даже с leakage-преимуществом → edge на long-only Spot не подтверждён. δ TESTNET infrastructure production-ready (S36 wired + S37/S38 hardened).
 
 См. [`current-state.md`](llm-wiki/wiki/project/architecture/current-state.md) для актуальной картины.
 
@@ -69,13 +69,19 @@ python3.12 -m venv .venv
 # 3. Install all deps (core + dashboard)
 .venv/bin/pip install -e ".[dev,dashboard]"
 
+# 3b. (ТОЛЬКО для Kronos ML real-inference, опционально — heavy torch)
+#     Нужно ТОЛЬКО если будешь строить Kronos prediction-cache на своей машине.
+#     git submodule update --init third_party/kronos   # код модели Kronos
+#     .venv/bin/pip install -e ".[ml]"                  # torch + transformers + ...
+#     См. раздел "Kronos ML" ниже.
+
 # 4. Create .env (см. шаблон ниже)
 cp .env.example .env  # OR создай вручную
 # Edit .env: BYBIT_API_KEY, BYBIT_API_SECRET, RISK_OVERRIDE_HMAC_KEY
 
 # 5. Sanity check (optional)
-.venv/bin/pytest tests/unit -q     # 905 passed
-.venv/bin/mypy --strict src/       # 0 errors (79 source files)
+.venv/bin/pytest tests/unit -q     # ~1525 passed (torch-absent; CI baseline)
+.venv/bin/mypy --strict src/       # 0 errors (98 source files)
 ```
 
 ### .env template
@@ -101,14 +107,20 @@ S35_DEMO_ACTIVE=false
 
 ## Что доступно через UI
 
-### Strategy presets (4)
+### Strategy presets (8)
 
 | ID | Sprint | Description | Verdict |
 |----|--------|-------------|---------|
 | `ema_crossover_s13` | S13 baseline | EMA 12/26 + ADX + RSI 14 | FAIL conjoint (T1=-44.46) |
-| `mean_reversion_s15` | S15 original | RSI 30/70 + BB(20, 2.0σ) AND-gated | FAIL conjoint (MC p=0.998 noise) |
-| `mean_reversion_s17_relaxed` | S17 relaxed | RSI 35/65 + BB(20, 1.5σ) AND-gated | **5/6+DSR+MC PASS** / T5 floor unreachable |
-| `donchian_breakout_s35` | **S35 LATEST** | Donchian 20/10 + ATR 2.0× stop, long-only | FAIL conjoint (n=21<<50, α CLOSED per ADR 0054) |
+| `mean_reversion_s15` | S15 | RSI 30/70 + BB(20, 2.0σ) AND-gated | FAIL conjoint (MC p=0.998 noise) |
+| `mean_reversion_s17_relaxed` | S17 | RSI 35/65 + BB(20, 1.5σ) AND-gated | 5/6+DSR+MC PASS / T5 floor unreachable |
+| `donchian_breakout_s35` | S35 | Donchian 20/10 + ATR 2.0× stop, long-only | FAIL conjoint (n=21<<50, α CLOSED ADR 0054) |
+| `volume_breakout_iter10` | S39 | Volume-spike breakout (hypothesis #8) | FAIL conjoint |
+| `atr_breakout` | S42 | ATR channel breakout (hypothesis #9) | FAIL conjoint |
+| `supertrend` | S50 | Supertrend (Lazybear freqtrade adapt, #10) | WFA_FAIL (n_eff 47<50, bull-beta) |
+| `kronos` | **S52-S54** | **Kronos ML** foundation-model K-line forecast (base/mini variant) | **RAW_PRETRAIN_LEAKAGE_SUSPECTED** (exploratory only — NOT a gate) |
+
+> **Kronos** = ML / Прогноз optgroup. Backtest помечен exploratory из-за pretrain data-leakage (модель обучена на истории, перекрывающей backtest-период) → WFA OOS невалиден. Только forward paper-trade валиден. См. раздел **Kronos ML** ниже.
 
 ### Symbols × Timeframes
 
@@ -132,6 +144,40 @@ UI auto-scales для small date ranges:
 - < 100: BLOCKED (extend range OR pick finer interval)
 
 Result JSON shows `wfa_params` actual values + warning если auto-scaled below default.
+
+---
+
+## Kronos ML (S52-S54, exploratory)
+
+Kronos (NeoQuasar, foundation-model K-line forecast transformer, MIT) интегрирован как стратегия `kronos` в dropdown «ML / Прогноз». Архитектура: offline **predict→cache→replay** через existing `on_bar` (НЕ inference-per-bar). torch за optional `[ml]` dep + git submodule `third_party/kronos`. Real inference = только локально (Mac M4 MPS / CUDA), CI/dev — torch-free mock.
+
+**⚠️ Честный статус:** backtest exploratory (`RAW_PRETRAIN_LEAKAGE_SUSPECTED`) — модель обучена на истории, вероятно перекрывающей backtest-период → WFA OOS невалиден, метрикам нельзя верить как edge. Прогон S53: 1h −5.61% / 5m −10.24% (оба убыточны даже с leakage-преимуществом). **Long-only Spot edge не подтверждён.** Live-капитал — только после forward paper-trade (будущий ADR).
+
+### Сборка prediction-cache (локально, с torch)
+
+```bash
+git submodule update --init third_party/kronos        # код модели Kronos
+.venv/bin/pip install -e ".[ml]"                       # torch + transformers + ...
+
+# Один combo, последние N баров (full-history per-bar = неподъёмно):
+RUN_ML=1 .venv/bin/python scripts/run_kronos_s53.py \
+  --variant base \                # base (102M/ctx512) | mini (4.1M/ctx2048)
+  --fast \                        # mean-of-samples (1 вызов/бар, ~4x)
+  --sample-count 5 \              # ↓ = быстрее (~линейно); 20 = V4 default
+  --symbols BTCUSDT \
+  --timeframes 5m \
+  --max-bars 33500                # последние N баров (контекст из полной истории)
+```
+
+Варианты model/tokenizer/revision закреплены в `src/ml/kronos_variant.py` (per-repo verified SHA — ACE-защита). Cache + manifest → `data/kronos_cache/` (gitignored).
+
+### Просмотр в dashboard
+
+Strategy = Kronos ML → SYMBOL + TIMEFRAME. Для **построенных** (symbol, timeframe) период START/END **подставляется автоматически** из кэша → backtest хитит cache → trades + equity. Для **непостроенных** TF (нет кэша) — EXECUTE заблокирован + сообщение «не построен». Coverage: `GET /api/kronos/coverage`.
+
+### Скорость (M4 MPS)
+
+`--sample-count` — единственный рабочий рычаг (~линейно): 20 ≈ 800ms/бар, 5 ≈ 200ms, 1 ≈ 47ms. Batch-inference и fp16 проверены → тупик на MPS (не ускоряют).
 
 ---
 
@@ -220,7 +266,8 @@ TESTNET=false .venv/bin/python -m src backfill \
 ### Bounded contexts (DDD)
 
 - **MarketData** (`src/marketdata/`) — OHLCV ingest (Bybit V5 REST + WS)
-- **SignalGen** (`src/signalgen/`) — strategies (EMA crossover, mean-reversion, Donchian)
+- **SignalGen** (`src/signalgen/`) — strategies (EMA crossover, mean-reversion, Donchian/volume/ATR breakout, Supertrend, Kronos ML)
+- **ML** (`src/ml/`) — Kronos adapter (torch boundary) + prediction-cache (offline predict→cache→replay)
 - **Risk** (`src/risk/`) — Kelly sizing + circuit breakers + HaltGate (S35) + override store
 - **Execution** (`src/execution/`) — FSM coordinator + Bybit Spot adapter + reconciler
 - **Backtest** (`src/backtest/`) — replay engine + WFA runner + MC permutations + DSR
@@ -231,7 +278,7 @@ TESTNET=false .venv/bin/python -m src backfill \
 
 ### FSM (canonical post-S38)
 
-- 16 states / 30 events / 74 transitions / **50 reason codes**
+- 16 states / 30 events / 74 transitions / **67 reason codes**
 - Single-writer per ADR 0023
 - HaltGate wired в RuntimeManager._tick (S36 + S37 + S38 fail-closed)
 
@@ -246,10 +293,11 @@ TESTNET=false .venv/bin/python -m src backfill \
 ## Тестирование
 
 ```bash
-.venv/bin/pytest tests/unit -q                    # 905 passed (post-S38)
-.venv/bin/pytest tests/integration -q             # 33 passed
+.venv/bin/pytest tests/unit -q                    # ~1525 passed (torch-absent CI baseline)
+.venv/bin/pytest tests/integration -q             # integration (opt-in)
 .venv/bin/pytest -m property                      # property tests (Hypothesis)
-.venv/bin/mypy --strict src/                      # 0 errors (79 source files)
+.venv/bin/mypy --strict src/                      # 0 errors (98 source files)
+# Frontend: cd src/dashboard_react && npm run test && npm run build && npm run lint
 ```
 
 ---
@@ -265,7 +313,11 @@ TESTNET=false .venv/bin/python -m src backfill \
 | 0057 | Carry-overs hardening (HALT_UNKNOWN_SYMBOL + HMAC integrity + clock injection) |
 | 0058 | δ Parallel hardening (F2 quant + bybit-api review + Item #7 Demeter) |
 
-Полный список: [`llm-wiki/wiki/project/decisions/`](llm-wiki/wiki/project/decisions/) (58 ADRs).
+| 0068 | Kronos ML integration (S52) — offline predict→cache→replay + pretrain-leakage clause |
+| 0069 | Kronos real-inference enablement (S53) — submodule + variants + ATR fix |
+| 0070 | Kronos UI cached-coverage (S54) — manifest v2 + autofill + uncached-TF block |
+
+Полный список: [`llm-wiki/wiki/project/decisions/`](llm-wiki/wiki/project/decisions/) (70 ADRs).
 
 ---
 
@@ -283,7 +335,7 @@ TESTNET=false .venv/bin/python -m src backfill \
 
 ## Disclaimer
 
-**TESTNET ONLY.** No real capital risked. Не финансовая рекомендация. 7 strategy hypotheses tested — все FAIL conjoint per pre-registered acceptance criteria. Это research project, не production trading system.
+**TESTNET ONLY.** No real capital risked. Не финансовая рекомендация. Все протестированные strategy hypotheses (включая Kronos ML, exploratory) FAIL conjoint / без подтверждённого edge per pre-registered acceptance criteria. Kronos backtest помечен `RAW_PRETRAIN_LEAKAGE_SUSPECTED` — НЕ доказательство прибыльности. Это research project, не production trading system.
 
 MAINNET activation forbidden by code-level invariants (ADR 0055 SD-1) до 12mo TESTNET evidence + new ADR pre-registration.
 
