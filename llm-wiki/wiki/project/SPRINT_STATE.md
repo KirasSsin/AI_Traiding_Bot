@@ -1,9 +1,9 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-01  # S54 PHASE 4 — T1-T2 done (manifest v2 + coverage API). Next: T3 frontend.
+updated: 2026-06-04  # S54 PHASE 7 done — ADR 0070 + sprint-54 page + wiki sync complete. Next: PHASE 8 Ship.
 sprint: 54
-phase: 4-execution
+phase: 7-sync
 branch: feature/sprint-54-kronos-ui
 tag: v0.1.0-alpha.53
 ---
@@ -37,8 +37,8 @@ tag: v0.1.0-alpha.53
 | 3 Plan | done | 2026-06-01-sprint-54-kronos-ui.md (T1-T4) |
 | 4 Execute | done | T1-T3 done (manifest v2 + coverage API + frontend autofill/block) |
 | 5 Verify | done | mypy 0/98, pytest 1525 passed (+14), frontend 45 passed + build+lint clean. 6 "fails" = torch-installed-venv artifacts (torch-absent guards; CI torch-free → green) |
-| 6 Review | in_progress | dashboard + python + data-integrity parallel |
-| 7 Sync | pending | — |
+| 6 Review | done | dashboard APPROVE + python APPROVE + data-integrity APPROVE (3 parallel) |
+| 7 Sync | done | ADR 0070 + sprint-54 page + current-state/index/log/prediction-cache updates |
 | 8 Ship | pending | — |
 | 9 Close | pending | — |
 

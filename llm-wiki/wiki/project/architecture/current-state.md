@@ -1,9 +1,9 @@
 ---
-title: Current State — post-S53 inventory + canonical counts (Kronos real-inference enablement)
+title: Current State — post-S54 inventory + canonical counts (Kronos UI cached-coverage)
 type: architecture
-tags: [current-state, inventory, baseline, canonical-counts, sprint-53, kronos, reason-codes-67, submodule, variant, s53]
+tags: [current-state, inventory, baseline, canonical-counts, sprint-54, kronos, manifest-v2, coverage-api, reason-codes-67, s54]
 created: 2026-04-19
-updated: 2026-05-30
+updated: 2026-06-01
 status: stable
 sources:
   - src/
@@ -22,9 +22,9 @@ sources:
   - project/plans/2026-04-26-sprint-32-kit-phase-0-improvements.md
 ---
 
-# Current State (post-S53, 2026-05-30) — Kronos real-inference enablement (ADR 0069)
+# Current State (post-S54, 2026-06-01) — Kronos UI cached-coverage autofill (ADR 0070)
 
-> **Sprint-history таблица (S1–S53):** [[current-state-part-2]] — вынесена S53 T8 (файл превысил 50KB). Этот файл = index: canonical counts + src/ inventory + tech stack.
+> **Sprint-history таблица (S1–S54):** [[current-state-part-2]] — вынесена S53 T8 (файл превысил 50KB). Этот файл = index: canonical counts + src/ inventory + tech stack.
 
 **TL;DR (post-S31):** Live state on tag `v0.1.0-alpha.31`. **Kit infrastructure layer COMPLETE post-S31:** 9 reviewer agents (L5) + 6 active hooks (mechanical enforcement) + 26 skills mapped к 9-phase flow + 4 plugins curated + 6 MCP servers + 5-step cascade rule + 20/20 best practices coverage. CLAUDE.md split preserved across 3 files (repo + llm-wiki + ~/.claude), pruned -25% tokens (954→756 lines, 61→46KB) per S31. **Kit-overview-ru.md** = single source of truth gateway. **Tooling-inventory-ru.md** Sections 14-19 (Permission modes / Plugin curation / CLI tools / Status line / Token-saver / Non-interactive). **S32 Kit Phase 0 in progress** (this sprint): P0 staleness fixes + 5 skill mappings + cascade smart-explore + Phase 9 consolidate-memory. **Strategy/trading work BLOCKED** awaiting operator decision on ESC-1 (multi-symbol authorization), ESC-2 ("in profit" semantics), ESC-3 (4H operational implications). Pre-S32 КУ analysis showed kit Phase 0 = 57% avg КУ за 45 мин → highest ROI. Phase 1 (CI/SQLite MCP/freshness hook/dashboard-reviewer) deferred к S33.
 
@@ -44,8 +44,8 @@ sources:
 | Reason codes | **67** | `src/risk/reason_codes.py` `ReasonCode` enum | S52 T4 (+2 ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS, reason_codes 65→67) |
 | Component pages | **51** | `wiki/project/components/*.md` (excl. README.md cluster index) | S52 T10 (+3: kronos-strategy + kronos-adapter + prediction-cache) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
-| ADRs | **69** | `wiki/project/decisions/*.md` (0001-0069) | S53 (ADR 0069 Kronos real-inference enablement accepted) |
-| Sprint pages | **57** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-53 + sprint-08a/b/c + sprint-32b/c/d/e, minus S24+S26) | S53 (sprint-53-kronos-enablement) |
+| ADRs | **70** | `wiki/project/decisions/*.md` (0001-0070) | S54 (ADR 0070 Kronos UI cached-coverage autofill accepted) |
+| Sprint pages | **58** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-54 + sprint-08a/b/c + sprint-32b/c/d/e, minus S24+S26) | S54 (sprint-54-kronos-ui) |
 | Reviewer agents | **11** | `~/.claude/agents/` (out-of-repo) | S32d +1 (bybit-api-reviewer sonnet) |
 | Active push hooks | **7** | `~/.claude/hooks/` (PreToolUse Bash) | unchanged S32d |
 | UserPromptSubmit hooks | **2** | `~/.claude/settings.json` (caveman + context-budget) | S32d +context-budget-warn.sh |
@@ -111,7 +111,7 @@ Expected output: `states=16, events=30, transitions=74, reason_codes=67` (reason
 
 ## Карта спринтов
 
-> Таблица вынесена в [[current-state-part-2]] (S53 T8 split — файл превысил 50KB). Последний спринт: **S53** — Kronos real-inference enablement (ADR 0069).
+> Таблица вынесена в [[current-state-part-2]] (S53 T8 split — файл превысил 50KB). Последний спринт: **S54** — Kronos UI cached-coverage autofill (ADR 0070).
 
 Полная таблица (S1–S53) → [[current-state-part-2]].
 
