@@ -222,6 +222,15 @@ export interface BalanceResponse {
   error?: string | null;
 }
 
+// S54 T3 — Kronos coverage (per-combo cached date range)
+export interface KronosCoverage {
+  symbol: string
+  timeframe: string   // Kronos convention: "5m" | "1h" | "15m" | "4h" | "1d"
+  startIso: string    // YYYY-MM-DD
+  endIso: string      // YYYY-MM-DD
+  nEntries: number
+}
+
 // S48 T15 — Glossary tab types (Bug E core)
 export interface GlossaryEntry {
   section: string

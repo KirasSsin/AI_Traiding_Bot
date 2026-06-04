@@ -1,18 +1,18 @@
 ---
-title: Current State part-2 — Карта спринтов (S1–S53)
+title: Current State part-2 — Карта спринтов (S1–S54)
 type: architecture
 tags: [current-state, sprint-history, canonical-counts, part-2]
 created: 2026-05-30
-updated: 2026-05-30
+updated: 2026-06-01
 status: stable
 sources:
   - wiki/project/architecture/current-state.md
 ---
 
-# Current State — Карта спринтов (S1–S53)
+# Current State — Карта спринтов (S1–S54)
 
 > Индексный файл: [[current-state]] — canonical counts + src/ inventory + tech stack.
-> Этот файл содержит только sprint-history таблицу (разделён S53 T8 из-за превышения 50KB).
+> Этот файл содержит только sprint-history таблицу (разделён S53 T8 из-за превышения 50KB). Обновлён S54 T4.
 
 ## Карта спринтов
 
@@ -76,5 +76,6 @@ sources:
 | **S32b** | **0046** | **v0.1.0-alpha.32b** | **2026-04-27** | **Kit Improvement Phase 1 sub-sprint** — dashboard-reviewer L5 agent + SPRINT_STATE freshness check hook + Pre-commit hooks upgraded + GitHub Actions CI + SQLite MCP server. NO src/ code changes. 773 pytest preserved. |
 | **S32** | **0045** | **v0.1.0-alpha.32** | **2026-04-27** | **Kit Improvement Phase 0 sprint** — SPRINT_STATE.md P0 fix + current-state.md P0 fix + 5 NEW skill mappings + cascade smart-explore STEP 2.5 + Phase 9 consolidate-memory step. NO code changes. 762 pytest preserved. |
 | **S53** | **0069** (accepted) | — (enablement sprint) | **2026-05-30** | **Kronos real-inference enablement: submodule + both variants + ATR fix + god-object split** — Fix 3 S52 bugs: import (`from model import`), mini↔tokenizer-2k мисматч, atr_14=0. Git submodule `third_party/kronos` (sha 67b630e). KronosVariant dataclass (base ctx512/tok-base + mini ctx2048/tok-2k). Extract `_kronos_dispatch.py` (backtest_runner <1500 LoC). CI isolation + predict-sig guard CC3. Два variant exploratory, no-cherry-pick. Forward harness → S54+. reason_codes 67 (без изменений), FSM 16/30/74 (без изменений). |
+| **S54** | **0070** (accepted) | — (pending merge) | **2026-06-01** | **Kronos UI cached-coverage autofill: manifest v2 + coverage API + frontend autofill/block** — Manifest v1→v2 (per-combo self-describing: model_id/weights_hash/params_hash/device/first_bar_ts/last_bar_ts/n_entries). `rebuild_manifest_v2` backfill + `--rebuild-manifest` flag. Dispatch: per-combo CacheKey реконструкция (смешанные sample_count/variant поддерживаются). `GET /api/kronos/coverage` → per-(symbol,tf) ISO-даты кэша. Frontend: Kronos+построенный-TF → autofill START/END + EXECUTE активна; Kronos+непостроенный-TF → EXECUTE disabled + RU «не построен». Reviewers: dashboard APPROVE / python APPROVE / data-integrity APPROVE. Exploratory результаты: 1h -5.61%, 5m -10.24% (long-only Spot edge нет). reason_codes **67** (без изменений), FSM **16/30/74** (без изменений). pytest 1525 (+14), mypy 0/98, frontend 45 passed + build/lint clean. |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section.

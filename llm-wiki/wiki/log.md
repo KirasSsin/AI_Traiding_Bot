@@ -2875,3 +2875,15 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Gates: pytest 1494→1517, mypy 0/98, reason codes 67 (unchanged), FSM 16/30/74, backtest_runner 1489, torch-isolation order-independent, submodule guard RUN_ML-gated. ADR 0069 accepted. current-state.md split (54KB → 15.7+22.4). Sprint pages 57.
 - OPERATOR M4: git submodule update --init → pip install .[ml] → KRONOS_REVISION=<sha> → RUN_ML=1 scripts/run_kronos_s53.py --variant {base,mini}.
 - Carry S54: per-variant cache subdirs (single-manifest last-writer-wins), frontend variant selector, forward paper-trade harness, Track B signal enrichment.
+
+## [2026-06-01] sprint-end | S54 — Kronos UI cached-coverage autofill
+
+- T1-T4 все выполнены. Manifest v1→v2 (per-combo self-describing) + coverage API + frontend autofill/block.
+- **Manifest v2 (T1):** schema_version=2, все ключевые поля (model_id/weights_hash/params_hash/device) — per-combo; добавлены first_bar_ts/last_bar_ts/n_entries. `rebuild_manifest_v2` backfill из существующих JSON-артефактов. `--rebuild-manifest` flag. Back-compat: `_read_kronos_manifest` fallback на v1 (top-level поля → наследование всеми комбо). Мотивация: v1 last-writer-wins ломал CacheKey при смешанных sample_count/variant по разным TF.
+- **Coverage API (T2):** `GET /api/kronos/coverage` → per-(symbol,timeframe) ISO-даты кэша (`{"BTCUSDT": {"1h": {"start": "...", "end": "...", "n_entries": 8760}}}`). Dispatch: per-combo CacheKey реконструкция из manifest v2 (смешанные sample_count/variant поддерживаются).
+- **Frontend autofill/block (T3):** React ConfigureBacktest.tsx при выборе Kronos вызывает coverage API. Построенный TF → START/END автозаполняются из кэшированного окна, EXECUTE активна. Непостроенный TF → EXECUTE disabled, RU «не построен» сообщение — честная блокировка.
+- **Exploratory результаты (контекст S53 post-ship):** 1h 25 trades -5.61%, 5m 21 trades -10.24%. Long-only Spot edge отсутствует даже с pretrain leakage-преимуществом. batch/fp16 = тупик на MPS. --sample-count единственный рычаг (~линейно: 20=8h, 5=2h, 1=26min для 5m/год). Эти флаги (--fast/--sample-count/--symbols/--timeframes) уже на main (S53 post-ship, не в S54 scope).
+- **Ревьюеры (3 параллельных):** dashboard APPROVE / python APPROVE / data-integrity APPROVE. Follow-up concerns (не blockers): parquet-immutability assumption в rebuild_manifest_v2 (static research-files → low risk); v1 top-level device fallback narrowing (harmless для v2).
+- **ADR 0070 accepted.** Sprint pages 57→58. ADRs 69→70.
+- pytest 1525 passed (+14 vs S53 ~1511), mypy 0/98, reason_codes **67** (без изменений), FSM **16/30/74** (без изменений), frontend Vitest 45 passed + build/lint clean. 6 pytest «fails» = torch-installed-venv artifacts (torch-absent guards; CI torch-free → green).
+- Carry S55+: forward paper-trade harness (единственная валидная Kronos-валидация), Track B signal enrichment, parquet-immutability doc, v1 device fallback narrowing.

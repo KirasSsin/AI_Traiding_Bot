@@ -29,6 +29,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from src.dashboard._kronos_dispatch import kronos_coverage
 from src.dashboard.account_service import get_account_balance
 from src.dashboard.backtest_runner import (
     INTERVAL_LABELS,
@@ -173,6 +174,13 @@ def create_app() -> FastAPI:
     @app.get("/api/intervals")
     async def get_intervals() -> list[dict[str, str]]:
         return [{"id": k, "label": v} for k, v in INTERVAL_LABELS.items()]
+
+    # S54 T2 — Kronos cached coverage: per-(symbol, timeframe) ISO date range +
+    # n_entries from the v2 manifest. Frontend uses it to auto-fill START/END for
+    # cached timeframes and block uncached ones (e.g. 15m). torch-free.
+    @app.get("/api/kronos/coverage")
+    def get_kronos_coverage() -> dict[str, list[dict[str, Any]]]:
+        return {"coverage": kronos_coverage()}
 
     # H2.2 (S49) — disk IO; plain `def` → Starlette runs it in a threadpool
     # (avoids event-loop starvation under concurrent requests).

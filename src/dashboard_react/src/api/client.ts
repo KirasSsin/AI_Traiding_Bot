@@ -10,6 +10,7 @@ import type {
   CriterionExplanation,
   GlossaryResponse,
   BalanceResponse,
+  KronosCoverage,
 } from './types'
 
 const BASE_URL = ''  // same-origin (FastAPI serves React build per architect C1+C4)
@@ -79,4 +80,17 @@ export const api = {
 
   // S48 T20 — Bybit balance
   getBalance: (): Promise<BalanceResponse> => request('/api/bybit/balance'),
+
+  // S54 T3 — Kronos coverage (cached date ranges per symbol+timeframe)
+  getKronosCoverage: (): Promise<KronosCoverage[]> =>
+    request<{ coverage: Array<{ symbol: string; timeframe: string; start_iso: string; end_iso: string; n_entries: number }> }>('/api/kronos/coverage')
+      .then((r) =>
+        r.coverage.map((e) => ({
+          symbol: e.symbol,
+          timeframe: e.timeframe,
+          startIso: e.start_iso,
+          endIso: e.end_iso,
+          nEntries: e.n_entries,
+        })),
+      ),
 }

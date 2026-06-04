@@ -36,10 +36,13 @@ _KRONOS_PARQUET_BY_COMBO: dict[tuple[str, str], str] = {
 }
 
 # S52 FIX A (PHASE 6 R2) — manifest sidecar written by scripts/run_kronos_s53.py.
-# Schema v1: captures model_id, weights_hash, params_hash, device so the dashboard
-# can reconstruct CacheKeys matching the operator-built cache.
+# Schema v1: captures top-level model_id, weights_hash, params_hash, device.
+# Schema v2 (S54 T1): per-combo self-describing entries carrying their OWN
+# {model_id, weights_hash, params_hash, device, first_bar_ts, last_bar_ts,
+# n_entries} so mixed sample_count / variant combos coexist and dispatch picks
+# the matching entry's params. v1 top-level fields are read as fallback.
 _KRONOS_MANIFEST_NAME = "_manifest.json"
-_KRONOS_MANIFEST_SCHEMA_VERSION = 1
+_KRONOS_MANIFEST_SCHEMA_VERSION = 2
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +70,23 @@ def _read_kronos_manifest(cache_dir: Path) -> dict[str, Any] | None:
     except (json.JSONDecodeError, OSError):
         return None
     return data
+
+
+def _find_combo_entry(
+    manifest: dict[str, Any], symbol: str, timeframe: str
+) -> dict[str, Any] | None:
+    """Return the v2 ``combos[]`` entry matching (symbol, timeframe), else ``None``.
+
+    Used to source per-combo cache-key params (S54 T1 v2). Matching is by
+    (symbol, timeframe); the entry may carry its own ``params_hash`` /
+    ``weights_hash`` / ``device`` / ``model_id`` (v2) — callers fall back to the
+    manifest top-level params (v1) when those per-combo fields are absent.
+    """
+    combos: list[dict[str, Any]] = manifest.get("combos", [])
+    for entry in combos:
+        if entry.get("symbol") == symbol and entry.get("timeframe") == timeframe:
+            return entry
+    return None
 
 
 def _load_kronos_df(
@@ -216,11 +236,19 @@ def run_kronos_dispatch(
     # makes "not built" (no manifest) distinguishable from "built but bar-level miss".
     manifest_kr = _read_kronos_manifest(cache_dir)
     if manifest_kr is not None:
+        # S54 T1 v2 — prefer the per-combo entry's OWN params (so mixed
+        # sample_count / variant combos hit correctly). v1 fallback: top-level.
+        combo_entry = _find_combo_entry(manifest_kr, req.symbol, timeframe_kr)
+        combo_entry = combo_entry or {}
         params_kr: dict[str, Any] = {
-            "model_id": str(manifest_kr.get("model_id", "kronos")),
-            "weights_hash": str(manifest_kr.get("weights_hash", "unknown")),
-            "params_hash": str(manifest_kr.get("params_hash", "unknown")),
-            "device": str(manifest_kr.get("device", "cpu")),
+            "model_id": str(combo_entry.get("model_id", manifest_kr.get("model_id", "kronos"))),
+            "weights_hash": str(
+                combo_entry.get("weights_hash", manifest_kr.get("weights_hash", "unknown"))
+            ),
+            "params_hash": str(
+                combo_entry.get("params_hash", manifest_kr.get("params_hash", "unknown"))
+            ),
+            "device": str(combo_entry.get("device", manifest_kr.get("device", "cpu"))),
         }
     else:
         # No manifest → cache not built. Placeholder params (only used on the
@@ -278,7 +306,7 @@ def run_kronos_dispatch(
     # T6 (S53) — variant-mismatch guard: manifest.model_id must match the requested
     # variant's model_id. If not → this cache was built for a different variant; return
     # honest "variant not cached" result without crashing or running stale predictions.
-    manifest_model_id = str(manifest_kr.get("model_id", ""))
+    manifest_model_id = str(params_kr["model_id"])
     if manifest_model_id != requested_variant.model_id:
         result_kr_variant_miss: dict[str, Any] = {
             "run_id": run_id,
@@ -351,3 +379,49 @@ def run_kronos_dispatch(
     }
     cache_path.write_text(json.dumps(result_kr, default=str, indent=2))
     return result_kr
+
+
+# ---------------------------------------------------------------------------
+# Coverage API (S54 T2) — per-(symbol, timeframe) cached date range for the UI
+# ---------------------------------------------------------------------------
+
+
+def kronos_coverage(cache_dir: Path = _KRONOS_CACHE_DIR) -> list[dict[str, Any]]:
+    """Return per-combo cached date coverage from the v2 manifest (S54 T2).
+
+    Reads ``<cache_dir>/_manifest.json`` and converts each combo's
+    ``first_bar_ts`` / ``last_bar_ts`` (UTC epoch seconds) to ISO ``YYYY-MM-DD``
+    UTC date strings. The frontend uses this to auto-fill START/END for cached
+    timeframes and block uncached ones.
+
+    torch-free. Returns an empty list if no manifest exists. Combos missing the
+    v2 ts fields (e.g. an un-backfilled v1 entry) yield empty ``start_iso`` /
+    ``end_iso`` strings — the UI treats those as "not built".
+
+    Returns:
+        ``[{symbol, timeframe, start_iso, end_iso, n_entries}, ...]``.
+    """
+    from datetime import UTC, datetime
+
+    manifest = _read_kronos_manifest(cache_dir)
+    if manifest is None:
+        return []
+
+    coverage: list[dict[str, Any]] = []
+    for entry in manifest.get("combos", []):
+        first_ts = int(entry.get("first_bar_ts", 0))
+        last_ts = int(entry.get("last_bar_ts", 0))
+        start_iso = (
+            datetime.fromtimestamp(first_ts, tz=UTC).strftime("%Y-%m-%d") if first_ts else ""
+        )
+        end_iso = datetime.fromtimestamp(last_ts, tz=UTC).strftime("%Y-%m-%d") if last_ts else ""
+        coverage.append(
+            {
+                "symbol": str(entry.get("symbol", "")),
+                "timeframe": str(entry.get("timeframe", "")),
+                "start_iso": start_iso,
+                "end_iso": end_iso,
+                "n_entries": int(entry.get("n_entries", entry.get("n_entries_written", 0))),
+            }
+        )
+    return coverage

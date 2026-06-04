@@ -9,9 +9,19 @@ import type {
   BacktestResponse,
   DataAvailability,
   IntervalLabel,
+  KronosCoverage,
   StrategyMetadata,
 } from '@/api/types'
 import styles from './ConfigureBacktest.module.css'
+
+// Dashboard interval code → Kronos timeframe string (mirrors _kronos_dispatch.py)
+const INTERVAL_TO_KRONOS_TF: Record<string, string> = {
+  '5': '5m',
+  '15': '15m',
+  '60': '1h',
+  '240': '4h',
+  'D': '1d',
+}
 
 const OPTGROUP_ORDER = ['Тренд-следование', 'Возврат к среднему', 'Прорывы']
 
@@ -32,6 +42,9 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
   const [initialBalance, setInitialBalance] = useState<number>(10000)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [kronosCoverage, setKronosCoverage] = useState<KronosCoverage[]>([])
+
+  const isKronos = strategyId === 'kronos'
 
   const { setCurrentStrategy } = useStrategyContext()
   const { balance: bybitBalance, source, loading: balLoading, error: balError } = useBybitBalance()
@@ -151,8 +164,32 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
     return availability[symbol]?.[interval] ?? null
   }, [symbol, interval, availability])
 
+  // S54 — Kronos cached coverage: auto-fill dates + block uncached timeframes
+  useEffect(() => {
+    if (!isKronos) return
+    api.getKronosCoverage().then(setKronosCoverage).catch(() => setKronosCoverage([]))
+  }, [isKronos])
+
+  const kronosEntry = useMemo(() => {
+    if (!isKronos || !symbol || !interval) return null
+    const tf = INTERVAL_TO_KRONOS_TF[interval]
+    return kronosCoverage.find((c) => c.symbol === symbol && c.timeframe === tf) ?? null
+  }, [isKronos, symbol, interval, kronosCoverage])
+
+  // Kronos selected but this (symbol, timeframe) has no built cache → block.
+  const kronosBlocked = isKronos && !kronosEntry
+
+  // Auto-fill START/END to the cached window so the backtest hits the cache.
+  useEffect(() => {
+    if (kronosEntry) {
+      setStart(kronosEntry.startIso)
+      setEnd(kronosEntry.endIso)
+    }
+  }, [kronosEntry])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (kronosBlocked) return
     setSubmitting(true)
     setSubmitError(null)
     const payload: BacktestRequest = {
@@ -273,12 +310,24 @@ export function ConfigureBacktest({ onResult }: ConfigureBacktestProps) {
         </label>
 
         <div className={styles.fieldAction}>
-          <button type="submit" disabled={submitting || !strategyId} className={styles.btnPrimary}>
+          <button
+            type="submit"
+            disabled={submitting || !strategyId || kronosBlocked}
+            className={styles.btnPrimary}
+          >
             <span className={styles.btnText}>{submitting ? '⏵ EXECUTING' : '▶ EXECUTE'}</span>
             <span className={styles.btnMeta}>{submitting ? 'running...' : '~30-60s'}</span>
           </button>
         </div>
       </form>
+
+      {kronosBlocked && (
+        <div className={styles.warn}>
+          &#9888; Kronos {INTERVAL_TO_KRONOS_TF[interval] ?? interval} не построен — запусти
+          cache-build: <code>RUN_ML=1 scripts/run_kronos_s53.py --timeframes{' '}
+          {INTERVAL_TO_KRONOS_TF[interval] ?? interval}</code>
+        </div>
+      )}
 
       <div className={styles.dataInfo}>
         {dataInfo ? (
