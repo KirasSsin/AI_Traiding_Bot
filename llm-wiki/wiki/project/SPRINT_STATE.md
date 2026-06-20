@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 Batch 1 — HIGH BYBIT-03 (2afeb6f) + BYBIT-02 (b4c5375) + ARCH-02 (81b0329) DONE.
+updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -18,6 +18,8 @@ tag: v0.1.0-alpha.54
 
 
 **S54 SHIPPED** — `60ee7f3` (PR #69) tag `v0.1.0-alpha.54`. Kronos UI: manifest v1→v2 (per-combo dates+params), `GET /api/kronos/coverage`, frontend ConfigureBacktest auto-fill START/END из кэша + блок некэшированных TF (15m). 3 reviewers APPROVE. mypy 0/98, pytest 1525, frontend 45. Детали → `sprints/sprint-54-kronos-ui.md`.
+
+**S55 B2 DASH-01+DASH-04** (`91f92ec`). Kronos `RAW_PRETRAIN_LEAKAGE_SUSPECTED` misrender'ился как failed WFA-gate — fix: shared `RESEARCH_VERDICTS` (`utils/verdicts.ts`) на dispatch-сайтах (MetricsTable/TradesTable/HistoryTab) → research-view + leakage-caveat. Frontend +4 (49 GREEN), lint/tsc/build GREEN.
 
 **Kronos exploratory вывод:** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. **Long-only Spot edge нет.** Если продолжать: futures-шорт (S55+, плечо/ликвидации) ИЛИ закрыть. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг.
 
