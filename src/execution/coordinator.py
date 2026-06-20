@@ -11,10 +11,12 @@ S5 handle_ws_reconnect removed — ws-reconnect handling moves to Task 22 bootst
 from __future__ import annotations
 
 import logging
+import socket
 import threading
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -39,6 +41,51 @@ from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
 from src.risk.reason_codes import ReasonCode
 
 _log = logging.getLogger(__name__)
+
+
+class _SendOutcome(Enum):
+    """S55 BYBIT-02 — tri-state result of a flatten Market Sell attempt.
+
+    A flatten cascade fires up to two Market Sells with DIFFERENT orderLinkIds
+    (qty vs qty-step), so the S49 B1 / S51 D1 deterministic-orderLinkId dedupe does
+    NOT span the two attempts. Collapsing every failure to a single bool ``False``
+    therefore conflated two opposite situations:
+
+    * ``NOT_SENT`` — a SYNCHRONOUS rejection (param/balance/filter/rate-limit retCode
+      or any non-network error): the order never reached the matching engine, so
+      attempt-2 is safe.
+    * ``UNKNOWN`` — a NETWORK / I/O exception after submit: the order MAY have landed
+      server-side while the ack read failed. Firing attempt-2 (different orderLinkId)
+      risks a SECOND real Market Sell → oversell / phantom short on Spot. Must HALT for
+      operator reconciliation, never auto-retry.
+    * ``SENT_OK`` — the sell succeeded (incl. a 110072 duplicate proving a prior
+      idempotent submit already landed).
+    """
+
+    SENT_OK = auto()
+    NOT_SENT = auto()
+    UNKNOWN = auto()
+
+
+# S55 BYBIT-02 — exceptions whose occurrence means the order MAY already be on the
+# matching engine (the ack/response read failed at the transport layer). pybit's
+# _retry_with_backoff propagates these WITHOUT retrying (rest.py), so they surface here.
+# Treated as UNKNOWN outcome → HALT, never blind attempt-2. OSError covers stdlib
+# ConnectionError / socket.timeout (TimeoutError) / BrokenPipeError, etc.
+_NETWORK_UNKNOWN_EXC: tuple[type[BaseException], ...]
+try:  # pragma: no cover - import wiring only
+    import requests.exceptions as _req_exc
+    from pybit.exceptions import FailedRequestError as _PybitFailedRequest
+
+    _NETWORK_UNKNOWN_EXC = (
+        OSError,
+        socket.timeout,
+        _req_exc.RequestException,
+        _PybitFailedRequest,
+    )
+except Exception:  # pragma: no cover - defensive: missing optional transport deps
+    _NETWORK_UNKNOWN_EXC = (OSError, socket.timeout)
+
 
 _TERMINAL_STATES: frozenset[ExecutionState] = frozenset(
     {
@@ -570,22 +617,48 @@ class Coordinator:
             # fall back to symbol so the key stays deterministic.
             row = self._repo.get(self._symbol)
             flatten_key = row.bracket_id if row is not None and row.bracket_id else self._symbol
-            if self._try_place_market_sell(qty, link_id=self._emg_link_id(flatten_key, 1)):
+            trigger_reason = reason.value if hasattr(reason, "value") else str(reason)
+
+            outcome = self._try_place_market_sell(qty, link_id=self._emg_link_id(flatten_key, 1))
+            if outcome is _SendOutcome.SENT_OK:
                 return
+            # S55 BYBIT-02: attempt-1's outcome is UNKNOWN (network/I/O after submit) —
+            # the order may already be live. Attempt-2 carries a DIFFERENT orderLinkId,
+            # so Bybit can't dedupe it → a second real Market Sell. HALT instead and let
+            # an operator reconcile the true position (no blind double-sell).
+            if outcome is _SendOutcome.UNKNOWN:
+                self._halt_flatten(trigger_reason, cause="attempt1_unknown_outcome")
+                return
+
             retry_qty = self._step_floor(qty - qty_step, qty_step)
-            if retry_qty > Decimal("0") and self._try_place_market_sell(
-                retry_qty, link_id=self._emg_link_id(flatten_key, 2)
-            ):
-                return
-            self._set_halt(
-                reason=ReasonCode.HALT_FLATTEN_FAILED,
-                last_event=ExecutionEvent.FLATTEN_FAILED,
-                extra={
-                    "flatten_path": "emergency",
-                    "trigger_reason": reason.value if hasattr(reason, "value") else str(reason),
-                },
-            )
-            self._transition(ExecutionEvent.FLATTEN_FAILED)
+            if retry_qty > Decimal("0"):
+                outcome = self._try_place_market_sell(
+                    retry_qty, link_id=self._emg_link_id(flatten_key, 2)
+                )
+                if outcome is _SendOutcome.SENT_OK:
+                    return
+                if outcome is _SendOutcome.UNKNOWN:
+                    self._halt_flatten(trigger_reason, cause="attempt2_unknown_outcome")
+                    return
+
+            self._halt_flatten(trigger_reason, cause="both_attempts_not_sent")
+
+    def _halt_flatten(self, trigger_reason: str, *, cause: str) -> None:
+        """S55 BYBIT-02 — HALT the emergency-flatten cascade (FLATTEN_FAILED → HALTED).
+
+        ``cause`` distinguishes the unknown-outcome HALT (operator must reconcile a
+        possibly-live order) from the both-attempts-rejected HALT.
+        """
+        self._set_halt(
+            reason=ReasonCode.HALT_FLATTEN_FAILED,
+            last_event=ExecutionEvent.FLATTEN_FAILED,
+            extra={
+                "flatten_path": "emergency",
+                "trigger_reason": trigger_reason,
+                "cause": cause,
+            },
+        )
+        self._transition(ExecutionEvent.FLATTEN_FAILED)
 
     def _best_effort_cancel(self, order_id: str) -> None:
         """Best-effort cancel for stale arm_oco legs.
@@ -618,18 +691,29 @@ class Coordinator:
         """
         return make_flatten_link_id(bracket_id=flatten_key[:24], kind="emg", attempt=attempt)
 
-    def _try_place_market_sell(self, qty: Decimal, *, link_id: str | None = None) -> bool:
+    def _try_place_market_sell(self, qty: Decimal, *, link_id: str | None = None) -> _SendOutcome:
+        """S55 BYBIT-02 — place a flatten Market Sell, returning a TRI-STATE outcome.
+
+        Returns:
+            SENT_OK   — the sell landed (incl. a 110072 duplicate of a prior idempotent
+                        submit) → flatten stops the cascade.
+            NOT_SENT  — a synchronous rejection (retCode / non-network error): nothing
+                        reached the engine → flatten may safely try attempt-2.
+            UNKNOWN   — a network / I/O exception after submit: the order may already be
+                        live server-side → flatten must HALT, NOT fire attempt-2 (a
+                        different orderLinkId would dodge dedupe → double-sell).
+        """
         try:
             self._adapter.place_order(
                 symbol=self._symbol, side="Sell", qty=qty, order_link_id=link_id
             )
-            return True
+            return _SendOutcome.SENT_OK
         except BybitAPIError as exc:
             # S51 D1: 110072 (OrderLinkedID duplicate) — this emergency-flatten
             # Market Sell, placed with this SAME deterministic link_id, already
-            # landed server-side. The sell succeeded → return True so flatten()
-            # stops the cascade (no second sell, no HALT). Pin on retCode==110072
-            # to avoid swallowing a different error. Mirrors the 110001 pattern.
+            # landed server-side. The sell succeeded → SENT_OK so flatten() stops
+            # the cascade (no second sell, no HALT). Pin on retCode==110072 to avoid
+            # swallowing a different error. Mirrors the 110001 pattern.
             if exc.ret_code == 110072 and exc.reason is AdapterReasonCode.REJECT_DUPLICATE_ORDER:
                 _log.info(
                     "flatten.market_sell_duplicate symbol=%s qty=%s ret_code=%s link_id=%s",
@@ -638,16 +722,36 @@ class Coordinator:
                     exc.ret_code,
                     link_id,
                 )
-                return True
+                return _SendOutcome.SENT_OK
+            # Any other BybitAPIError is a SYNCHRONOUS non-zero-retCode rejection
+            # (or a re-wrapped rate-limit exhaustion, S55 BYBIT-03): the matching
+            # engine refused the order → nothing landed → NOT_SENT (safe attempt-2).
+            _log.warning(
+                "flatten.market_sell_rejected symbol=%s qty=%s ret_code=%s",
+                self._symbol,
+                qty,
+                exc.ret_code,
+                exc_info=True,
+            )
+            return _SendOutcome.NOT_SENT
+        except _NETWORK_UNKNOWN_EXC:
+            # S55 BYBIT-02: transport-layer failure AFTER submit. The order may have
+            # reached Bybit while the ack read failed → UNKNOWN outcome. Do NOT auto-fire
+            # attempt-2 (it carries a different orderLinkId → no dedupe → second real
+            # Market Sell → oversell). flatten() escalates to HALT for operator recon.
+            _log.error(
+                "flatten.market_sell_unknown_outcome symbol=%s qty=%s link_id=%s",
+                self._symbol,
+                qty,
+                link_id,
+                exc_info=True,
+            )
+            return _SendOutcome.UNKNOWN
+        except Exception:  # noqa: BLE001 — non-network failure; nothing landed → safe attempt-2
             _log.warning(
                 "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
             )
-            return False
-        except Exception:  # noqa: BLE001 — best-effort flatten Market Sell; caller retries/halts on False
-            _log.warning(
-                "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
-            )
-            return False
+            return _SendOutcome.NOT_SENT
 
     def _qty_step(self) -> Decimal:
         step: Decimal = self._adapter._filters.step_size

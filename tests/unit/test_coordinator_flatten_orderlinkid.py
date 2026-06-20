@@ -294,3 +294,109 @@ def test_emergency_flatten_genuine_error_still_halts(tmp_path):
     row = repo.get("BTCUSDT")
     assert row is not None
     assert row.state is ExecutionState.HALTED, "a genuine flatten error must still HALT"
+
+
+# --- S55 BYBIT-02: emergency flatten must be tri-state ---
+#
+# attempt-1 and attempt-2 carry DIFFERENT orderLinkIds (qty vs qty-step), so the
+# S49 B1 / S51 D1 idempotency dedupe does NOT span them. If attempt-1's Market Sell
+# LANDS server-side but the response read then fails with a NETWORK exception
+# (which _retry_with_backoff propagates without retrying), the OLD code returned
+# False and fired attempt-2 with a different link_id → a SECOND real Market Sell →
+# oversell / phantom short on Spot.
+#
+# Tri-state fix: classify the outcome.
+#   - synchronous param/balance/rate-limit retCode rejection = definitely-not-sent
+#     (safe to retry attempt-2)
+#   - network/IO exception = UNKNOWN (order may have landed) → HALT, NEVER attempt-2.
+
+
+@dataclass
+class _NetworkAfterLandAdapter(_RecordingAdapter):
+    """attempt-1 Market Sell lands server-side, but the response read raises a
+    network exception (the unknown-outcome case). Records the attempt for assertions."""
+
+    def place_order(self, *, symbol, side, qty, order_link_id=None):
+        self.placed_orders.append(
+            {"symbol": symbol, "side": side, "qty": str(qty), "orderLinkId": order_link_id}
+        )
+        # Order landed on Bybit, but reading the ack failed at the socket layer.
+        raise ConnectionError("connection reset after order landed")
+
+
+def test_emergency_flatten_network_exc_after_land_halts_no_second_sell(tmp_path):
+    """attempt-1 lands then network-fails → HALT, NOT a second Market Sell with a
+    different orderLinkId (BYBIT-02 double-sell prevention)."""
+    adapter = _NetworkAfterLandAdapter(_filters=_filters())
+    repo = _repo(tmp_path)
+    _seed(repo, state=ExecutionState.OCO_ARMED, tp_oid=None)
+    coord = _coord(repo, adapter)
+
+    coord.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
+
+    sells = [o for o in adapter.placed_orders if o["side"] == "Sell"]
+    assert len(sells) == 1, (
+        "network exception = unknown outcome → must NOT auto-fire a second Market Sell "
+        "(order may have landed). Exactly one attempt."
+    )
+    row = repo.get("BTCUSDT")
+    assert row is not None
+    assert row.state is ExecutionState.HALTED, "unknown outcome must HALT for operator"
+
+
+def test_emergency_flatten_socket_timeout_after_land_halts(tmp_path):
+    """A socket.timeout (TimeoutError subclass) is also unknown-outcome → HALT."""
+
+    @dataclass
+    class _TimeoutAdapter(_RecordingAdapter):
+        def place_order(self, *, symbol, side, qty, order_link_id=None):
+            self.placed_orders.append(
+                {"symbol": symbol, "side": side, "qty": str(qty), "orderLinkId": order_link_id}
+            )
+            raise TimeoutError("read timed out after order landed")
+
+    adapter = _TimeoutAdapter(_filters=_filters())
+    repo = _repo(tmp_path)
+    _seed(repo, state=ExecutionState.OCO_ARMED, tp_oid=None)
+    coord = _coord(repo, adapter)
+
+    coord.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
+
+    sells = [o for o in adapter.placed_orders if o["side"] == "Sell"]
+    assert len(sells) == 1
+    row = repo.get("BTCUSDT")
+    assert row is not None
+    assert row.state is ExecutionState.HALTED
+
+
+def test_emergency_flatten_synchronous_reject_still_retries_attempt2(tmp_path):
+    """Guard: a synchronous (definitely-not-sent) BybitAPIError on attempt-1 must
+    STILL allow attempt-2 with qty-step (the step-quantization race the cascade was
+    built for). Only network/unknown halts early."""
+
+    @dataclass
+    class _SyncRejectThenOkAdapter(_RecordingAdapter):
+        n: int = 0
+
+        def place_order(self, *, symbol, side, qty, order_link_id=None):
+            self.n += 1
+            self.placed_orders.append(
+                {"symbol": symbol, "side": side, "qty": str(qty), "orderLinkId": order_link_id}
+            )
+            if self.n == 1:
+                # Synchronous rejection — nothing landed (e.g. lot-size race).
+                raise BybitAPIError(170131, "qty err", AdapterReasonCode.FILTER_VIOLATION)
+            return OrderAck(order_id="EX-2", order_link_id=order_link_id)
+
+    adapter = _SyncRejectThenOkAdapter(_filters=_filters())
+    repo = _repo(tmp_path)
+    _seed(repo, state=ExecutionState.OCO_ARMED, tp_oid=None)
+    coord = _coord(repo, adapter)
+
+    coord.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
+
+    sells = [o for o in adapter.placed_orders if o["side"] == "Sell"]
+    assert len(sells) == 2, "synchronous reject = safe to retry attempt-2 (qty-step)"
+    row = repo.get("BTCUSDT")
+    assert row is not None
+    assert row.state is not ExecutionState.HALTED, "attempt-2 succeeded → not halted"
