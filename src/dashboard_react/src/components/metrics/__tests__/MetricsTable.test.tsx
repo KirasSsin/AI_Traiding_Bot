@@ -59,6 +59,38 @@ describe('MetricsTable — RAW path', () => {
     expect(screen.queryByText(/DSR · /)).not.toBeInTheDocument()
     expect(screen.queryByText(/MC · /)).not.toBeInTheDocument()
   })
+
+  // S55 HIGH DASH-01 — Kronos RAW_PRETRAIN_LEAKAGE_SUSPECTED is a research verdict,
+  // must render reduced research view (NOT fall through to WFA red-fail gate).
+  it('RAW_PRETRAIN_LEAKAGE_SUSPECTED → research view (4 rows, no T5/DSR/MC gate)', () => {
+    const r: BacktestResponse = {
+      ...baseResponse,
+      verdict: 'RAW_PRETRAIN_LEAKAGE_SUSPECTED',
+      total_pnl_pct: 8.3,
+      sharpe: 1.15,
+      n_trades: 42,
+      win_rate: 0.55,
+      metrics: { total_pnl_pct: 8.3, sharpe: 1.15, n_trades: 42, win_rate: 0.55 },
+      fold_sharpe_ratios: [],
+      dsr: null,
+      dsr_pass: null,
+      mc_p_value: null,
+    } as unknown as BacktestResponse
+    render(<MetricsTable result={r} />)
+
+    // Research-shaped cells populated
+    expect(screen.getByText(/Total PnL/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sharpe \(annualized\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/Trade count \(n\)/i)).toBeInTheDocument()
+    expect(screen.getByText('42')).toBeInTheDocument()
+    expect(screen.getByText(/1\.1500/)).toBeInTheDocument()
+
+    // Gate rows MUST NOT render (no failed-WFA misrender)
+    expect(screen.queryByText(/T5 · /)).not.toBeInTheDocument()
+    expect(screen.queryByText(/DSR · /)).not.toBeInTheDocument()
+    expect(screen.queryByText(/MC · /)).not.toBeInTheDocument()
+    expect(screen.queryByText(/GATE-BLOCKING/)).not.toBeInTheDocument()
+  })
 })
 
 // ─── WFA path — ADR 0052 thresholds (S34 amendment) ──────────────────────
