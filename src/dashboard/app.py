@@ -104,8 +104,7 @@ class BacktestPayload(BaseModel):
         """
         if not _SYMBOL_RE.fullmatch(v):
             raise ValueError(
-                f"Invalid symbol '{v}': expected 1-20 uppercase alphanumeric chars "
-                "(e.g. BTCUSDT)"
+                f"Invalid symbol '{v}': expected 1-20 uppercase alphanumeric chars (e.g. BTCUSDT)"
             )
         return v
 

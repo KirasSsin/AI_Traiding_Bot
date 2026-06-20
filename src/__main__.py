@@ -503,8 +503,7 @@ def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> p
     """
     if not _SYMBOL_RE.fullmatch(symbol):
         raise ValueError(
-            f"Invalid symbol '{symbol}': expected 1-20 uppercase alphanumeric chars "
-            "(e.g. BTCUSDT)"
+            f"Invalid symbol '{symbol}': expected 1-20 uppercase alphanumeric chars (e.g. BTCUSDT)"
         )
     interval_label_map: dict[str, str] = {
         "5": "5m",
@@ -923,8 +922,7 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
         halt_rows: list[tuple[_Any, ...]] = []
         with contextlib.suppress(sqlite3.OperationalError):
             halt_rows = conn.execute(
-                "SELECT halt_ts, halt_reason, context FROM halt_log "
-                "ORDER BY halt_ts DESC LIMIT 5"
+                "SELECT halt_ts, halt_reason, context FROM halt_log ORDER BY halt_ts DESC LIMIT 5"
             ).fetchall()
 
         import json
