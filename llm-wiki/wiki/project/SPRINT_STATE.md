@@ -1,14 +1,17 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-04  # S54 SHIPPED v0.1.0-alpha.54 → between-sprints.
-sprint: 54
-phase: between-sprints
-branch: main
+updated: 2026-06-20  # S55 full-audit refactor in progress (branch feature/sprint-55-full-audit-refactor).
+sprint: 55
+phase: 4-execution
+branch: feature/sprint-55-full-audit-refactor
 tag: v0.1.0-alpha.54
 ---
 
 ## Текущий статус
+
+**S55 Batch 0 — BLOCKER TL-01/TL-02 DONE** (`0d84d57`). Live runtime никогда не вооружал OCO-bracket и сбрасывал exit-сигналы (unbounded-loss на shipped execution-пути). Исправлено: entry-fill → `arm_oco` (TP Limit + SL Stop-Market, fee-aware qty G5; точка подключения — `Coordinator.on_order_event`, прицепные tp/sl-цены сохраняются в `start_bracket` через migration 0007); EXIT_FLAT-сигнал → `coordinator.flatten` когда позиция держится; `reconcile_arming_ttl` подключён в `_tick`. `arm_oco`/`flatten`/`reconcile_arming_ttl` теперь имеют production call-sites. TDD: `tests/integration/test_runtime_oco_wiring.py` (4 new) + обновлён on_order_event safety-тест. mypy 0, pytest GREEN (6 torch-absent Kronos pre-existing).
+
 
 **S54 SHIPPED** — `60ee7f3` (PR #69) tag `v0.1.0-alpha.54`. Kronos UI: manifest v1→v2 (per-combo dates+params), `GET /api/kronos/coverage`, frontend ConfigureBacktest auto-fill START/END из кэша + блок некэшированных TF (15m). 3 reviewers APPROVE. mypy 0/98, pytest 1525, frontend 45. Детали → `sprints/sprint-54-kronos-ui.md`.
 
