@@ -21,6 +21,8 @@ tag: v0.1.0-alpha.54
 
 **S55 B2 DASH-01+DASH-04** (`91f92ec`). Kronos `RAW_PRETRAIN_LEAKAGE_SUSPECTED` misrender'ился как failed WFA-gate — fix: shared `RESEARCH_VERDICTS` (`utils/verdicts.ts`) на dispatch-сайтах (MetricsTable/TradesTable/HistoryTab) → research-view + leakage-caveat. Frontend +4 (49 GREEN), lint/tsc/build GREEN.
 
+**S55 B2 HIGH DI-02** (`5a15fad`). `BarSource.poll()` мог отдать формирующийся (не закрытый) бар как `is_closed=True` → live look-ahead. Fix: `poll()` дропает бары с `close_time > now` (инъектируемые часы `now_fn`), выбирает новейший settled; dedup+stall сохранены. TDD +3, pytest+mypy GREEN.
+
 **Kronos exploratory вывод:** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. **Long-only Spot edge нет.** Если продолжать: futures-шорт (S55+, плечо/ликвидации) ИЛИ закрыть. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг.
 
 **S53** — `eff3ae6` v0.1.0-alpha.53. **S52** — `a188347` v0.1.0-alpha.52.
