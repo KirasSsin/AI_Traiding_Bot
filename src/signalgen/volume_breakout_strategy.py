@@ -170,17 +170,11 @@ class VolumeBreakoutStrategy:
         # Exit logic — LONG → FLAT
         # ------------------------------------------------------------------
         if self._current_side == SignalSide.LONG:
-            # Priority 1: channel exit (close[-2] < channel low)
-            if prev_close < ref_low:
-                self._current_side = SignalSide.FLAT
-                self._entry_price = None
-                return self._build_signal(
-                    bar,
-                    SignalSide.FLAT,
-                    atr_val=atr_val,
-                    reason=ReasonCode.EXIT_FLAT_VOLUME_CHANNEL,
-                )
-            # Priority 2: ATR stop intrabar (current bar low breaches stop level)
+            # Priority 1: ATR stop intrabar (current bar low breaches stop level).
+            # Checked BEFORE the channel exit to match the WFA-validated runner
+            # _backtest_single, which evaluates `if low[i] <= stop_price` before
+            # `elif channel_exit` (docstring: "ATR stop checked FIRST"). On a
+            # same-bar double-exit live must book the stop, like the backtest.
             if (
                 self._entry_price is not None
                 and atr_val is not None
@@ -193,6 +187,16 @@ class VolumeBreakoutStrategy:
                     SignalSide.FLAT,
                     atr_val=atr_val,
                     reason=ReasonCode.EXIT_FLAT_ATR_STOP_VB,
+                )
+            # Priority 2: channel exit (close[-2] < channel low)
+            if prev_close < ref_low:
+                self._current_side = SignalSide.FLAT
+                self._entry_price = None
+                return self._build_signal(
+                    bar,
+                    SignalSide.FLAT,
+                    atr_val=atr_val,
+                    reason=ReasonCode.EXIT_FLAT_VOLUME_CHANNEL,
                 )
 
         return None
