@@ -137,6 +137,113 @@ def test_cmd_wfa_returns_nonzero_on_gate_failure() -> None:
         assert exit_code == 2
 
 
+def test_cmd_wfa_dsr_sigma_uses_real_annualized_oos_sharpes_not_ratios(tmp_path, monkeypatch):
+    """S55 QS-2 (ADR 0071): _cmd_wfa DSR sigma_SR must come from REAL annualized OOS
+    Sharpes (aggregate.fold_oos_sharpes), de-annualized via annualization_factor and
+    namespaced strategy_class — NOT from OOS/IS ratios on the GLOBAL cross-trial pool.
+
+    RED before fix: persisted aggregate = mean of OOS/IS ratios (0.85) under
+    strategy_class "unknown", and compute_dsr called WITHOUT annualization_factor.
+    """
+    import json
+    import math
+
+    from src import __main__ as cli
+
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    log_path = data_dir / "cross_trial_sharpes.json"
+    # Seed 2 prior within-class ("wfa_meanrev") REAL OOS Sharpes so the candidate (3rd)
+    # yields an admissible within-class sigma_SR (ADR 0056 N>=3 hierarchy).
+    log_path.write_text(
+        json.dumps(
+            {
+                "trials": [
+                    {
+                        "sprint": 11,
+                        "symbol": "S1",
+                        "strategy_class": "wfa_meanrev",
+                        "oos_sharpe": 12.0,
+                    },
+                    {
+                        "sprint": 12,
+                        "symbol": "S2",
+                        "strategy_class": "wfa_meanrev",
+                        "oos_sharpe": -8.0,
+                    },
+                ]
+            }
+        )
+    )
+
+    args = argparse.Namespace(
+        symbol="BTCUSDT",
+        symbols=None,
+        start="2024-01-01",
+        end="2024-04-01",
+        interval="60",
+        func=cli._cmd_wfa,
+    )
+
+    # Real annualized OOS Sharpes (magnitude ~ O(10)) differ markedly from the OOS/IS
+    # ratios — proving the DSR sigma_SR consumes the former, the gate/T6 the latter.
+    runner_result = {
+        "aggregate": {"fold_oos_sharpes": [30.0, -40.0], "oos_trades_df": None, "k_folds": 2},
+        "folds": [],
+    }
+    fold_ratios = [0.8, 0.9]  # OOS/IS ratios — acceptance-gate + T6 input only
+    fake_trades = [object(), object()]  # non-empty → cross-trial append fires
+
+    captured: dict = {}
+
+    def _capture_dsr(*_a, **k):
+        captured.update(k)
+        return 0.9
+
+    with (
+        patch(
+            "src.__main__._run_wfa_single_symbol",
+            return_value=(fake_trades, fold_ratios, runner_result, 0.03),
+        ),
+        patch("src.__main__._load_ohlcv") as mock_loader,
+        patch("src.__main__.compute_dsr", side_effect=_capture_dsr),
+        patch("src.__main__.compute_t1_t6_metrics") as mock_metrics,
+        patch("src.__main__.evaluate_acceptance_gate", return_value={"failed_criteria": []}),
+        patch("src.__main__.Settings"),
+        patch.dict("os.environ", {"SPRINT_N": "55"}),
+    ):
+        mock_df = MagicMock()
+        mock_df.empty = False
+        mock_loader.return_value = mock_df
+        mock_metrics.return_value = {
+            "t1_sharpe_oos": 1.2,
+            "t2_sortino_oos": 1.8,
+            "t3_max_drawdown": 0.15,
+            "t4_win_rate": 0.50,
+            "t4_avg_rr": 1.8,
+            "t5_mean_pnl_pct": 0.01,
+            "t5_t_stat": 2.5,
+            "t5_n_trades": 150,
+            "t6_oos_is_sharpe_ratio_mean": 0.8,
+        }
+        cli._cmd_wfa(args)
+
+    # (1) De-annualization factor passed and interval-derived (sqrt(bars_per_year=8760)).
+    assert captured.get("annualization_factor") == pytest.approx(math.sqrt(8760))
+    # (2) sigma_SR built from REAL OOS Sharpes (class pool [12, -8, mean(30,-40)=-5] → O(10)),
+    #     NOT stdev of OOS/IS ratios (~O(0.1)).
+    assert captured.get("sigma_sr") is not None
+    assert captured["sigma_sr"] > 1.0
+    # (3) Persisted trial = REAL aggregate (-5.0) under namespaced class, NOT ratio
+    #     (0.85) under "unknown".
+    persisted = json.loads(log_path.read_text())["trials"]
+    new_entry = [e for e in persisted if e["sprint"] == 55]
+    assert len(new_entry) == 1
+    assert new_entry[0]["oos_sharpe"] == pytest.approx(-5.0)
+    assert new_entry[0]["strategy_class"] == "wfa_meanrev"
+
+
 def test_cmd_wfa_returns_one_on_empty_data() -> None:
     """Empty OHLCV loader result → exit 1 (S12 will integrate real data path)."""
     from src import __main__ as cli

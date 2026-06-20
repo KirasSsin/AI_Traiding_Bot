@@ -69,6 +69,12 @@ from src.signalgen.strategy import (
 # is mandatory — a substring `^...$` match would let 'BTCUSDT\n/evil' through.
 _SYMBOL_RE = re.compile(r"\A[A-Z0-9]{1,20}\Z")
 
+# S55 QS-2 (ADR 0071) — strategy_class namespace for the _cmd_wfa cross-trial pool.
+# _cmd_wfa runs MeanReversionRsiBBStrategy (see _run_wfa_single_symbol), so its DSR
+# sigma_SR must be scoped to its own family (S51 D5 two-level scoping) and must not
+# mingle with the research-path supertrend pool that shares cross_trial_sharpes.json.
+_WFA_STRATEGY_CLASS = "wfa_meanrev"
+
 
 def _cmd_run(args: argparse.Namespace) -> int:
     """Wire all dependencies and start RuntimeManager.
@@ -671,7 +677,6 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     """
     import json
     import math
-    import statistics
 
     from src.analytics.cross_trial_log import CrossTrialLog
     from src.risk.trade_history import TradeRecord as _TradeRecord
@@ -680,7 +685,8 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     symbols = _resolve_symbols(args)
 
     all_trades: list[_TradeRecord] = []
-    all_fold_sharpes: list[float] = []
+    all_fold_sharpes: list[float] = []  # OOS/IS ratios — acceptance gate + T6 input
+    all_fold_oos_sharpes: list[float] = []  # S55 QS-2: real annualized OOS Sharpes — DSR sigma_SR
     per_symbol_summary: dict[str, dict[str, object]] = {}
     mc_p_values: list[float] = []
 
@@ -722,6 +728,11 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
 
         all_trades.extend(_cast(list[_TradeRecord], sym_trades))
         all_fold_sharpes.extend(sym_fold_sharpes)
+        # S55 QS-2 (ADR 0071): real annualized OOS Sharpes per fold (NOT the OOS/IS
+        # ratios above) — the canonical sigma_SR + aggregate input for DSR.
+        sym_aggregate = _cast(dict[str, object], sym_runner_result.get("aggregate", {}))
+        sym_fold_oos_sharpes = _cast(list[float], sym_aggregate.get("fold_oos_sharpes", []))
+        all_fold_oos_sharpes.extend(float(s) for s in sym_fold_oos_sharpes)
         mc_p_values.append(sym_mc_p)
         per_symbol_summary[symbol] = {
             "status": "ok",
@@ -752,23 +763,52 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     # Aggregate MC p-value: max (most conservative across symbols)
     mc_p = max(mc_p_values) if mc_p_values else 1.0
 
-    # S15 T0: DSR cross-trial sigma_SR (closes S14 Q2 carry-over)
+    # S15 T0 / S55 QS-2 (ADR 0071): DSR cross-trial sigma_SR.
     trial_log_path = Path("data/cross_trial_sharpes.json")
     trial_log = CrossTrialLog(path=trial_log_path)
+    # Informational: GLOBAL pool snapshot BEFORE this trial is persisted (for output).
     pre_existing_sharpes = trial_log.get_oos_sharpes()
 
-    # Aggregate OOS Sharpe для THIS sprint = mean of all fold sharpes across symbols
+    # Aggregate OOS Sharpe for THIS trial = mean of REAL annualized fold OOS Sharpes
+    # across symbols (NOT the OOS/IS ratios — those drive the acceptance gate + T6).
     aggregate_oos_sharpe = (
-        float(sum(all_fold_sharpes) / len(all_fold_sharpes)) if all_fold_sharpes else float("nan")
+        float(sum(all_fold_oos_sharpes) / len(all_fold_oos_sharpes))
+        if all_fold_oos_sharpes
+        else float("nan")
     )
-    cross_trial_sharpes = pre_existing_sharpes + [aggregate_oos_sharpe]
-    n_trials = len(cross_trial_sharpes)
 
-    if n_trials >= 2 and not math.isnan(aggregate_oos_sharpe):
-        sigma_sr_value = statistics.stdev(cross_trial_sharpes)
-        dsr_value = compute_dsr(trades=all_trades, n_trials=n_trials, sigma_sr=sigma_sr_value)
+    # Persist BEFORE the sigma_SR read so the candidate trial is included in the
+    # within-class variance pool (Bailey eq.13), matching research_wfa ordering.
+    # Namespaced strategy_class keeps _cmd_wfa entries from corrupting research-path
+    # sigma_SR and vice-versa (resolves the shared-log unit collision, ADR 0071).
+    if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
+        sprint_num = int(os.environ.get("SPRINT_N", "0"))
+        trial_log.append_trial(
+            sprint=sprint_num,
+            oos_sharpe=aggregate_oos_sharpe,
+            strategy_class=_WFA_STRATEGY_CLASS,
+        )
+
+    # S51 D5 two-level pool scoping: sigma_SR is WITHIN-CLASS (variance term, Bailey
+    # eq.13) — a cross-family OOS Sharpe must NOT poison it. N_trials stays GLOBAL
+    # (multiple-testing breadth, eq.12). De-annualize sigma_SR via sqrt(bars_per_year)
+    # so SR, SR* and sigma_SR share one frequency (wfa_reporter parity); compute_dsr's
+    # per-trade candidate + Lo (2002) eq.13 denom stay untouched.
+    sigma_sr_value = trial_log.sigma_sr(strategy_class=_WFA_STRATEGY_CLASS)
+    n_trials = trial_log.n_trials()
+    dsr_annualization_factor = math.sqrt(bars_per_year_cli)
+    if (
+        sigma_sr_value is not None
+        and not math.isnan(sigma_sr_value)
+        and not math.isnan(aggregate_oos_sharpe)
+    ):
+        dsr_value = compute_dsr(
+            trades=all_trades,
+            n_trials=n_trials,
+            sigma_sr=sigma_sr_value,
+            annualization_factor=dsr_annualization_factor,
+        )
     else:
-        sigma_sr_value = None
         dsr_value = compute_dsr(trades=all_trades, n_trials=1)
 
     # T1-T6 metrics aggregated across symbols
@@ -835,12 +875,9 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
     verdict = "PASS" if len(failed_criteria) == 0 and dsr_pass else "FAIL"
 
-    # S15 T0/T5: persist this trial AFTER measurement (для future DSR n_trials accumulation).
-    # Guard: only persist when real trades exist (skip CLI smoke tests с mocked extractor returning [] trades).
-    # S17 fix: sprint number now configurable via SPRINT_N env var (default 0 = unknown).
-    if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
-        sprint_num = int(os.environ.get("SPRINT_N", "0"))
-        trial_log.append_trial(sprint=sprint_num, oos_sharpe=aggregate_oos_sharpe)
+    # NOTE (S55 QS-2): cross-trial persistence moved UP — the candidate trial is now
+    # appended BEFORE the within-class sigma_SR read (Bailey eq.13), with namespaced
+    # strategy_class. See the DSR block above.
 
     print(
         json.dumps(

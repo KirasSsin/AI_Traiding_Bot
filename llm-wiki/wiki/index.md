@@ -213,6 +213,7 @@ _(пусто — Stage 3+: бэктесты, walk-forward runs, A/B на paper-t
 
 ## Project — Decisions
 
+- [[project/decisions/0071-sprint-55-cmd-wfa-dsr-units]] 🆕 — ADR 0071 S55 QS-2 `_cmd_wfa` DSR units fix. **status: accepted.** Donchian-twin QS-1 (`919a55f`): CLI WFA DSR `sigma_SR` строился из OOS/IS ratio на GLOBAL pool → теперь из real annualized OOS Sharpes (`aggregate.fold_oos_sharpes`), де-аннуализирован через `annualization_factor=sqrt(bars_per_year)`, namespaced `strategy_class="wfa_meanrev"` (S51 D5 two-level scoping — не смешивать с research-path supertrend pool). Persist-before-sigma read (Bailey eq.13 candidate inclusion). reason_codes 67 (unchanged).
 - [[project/decisions/0001-record-architecture-decisions]] — использовать ADR-формат для всех значимых решений.
 - [[project/decisions/0002-python-only-for-mvp]] — только Python, без микросервисов, для v0.1.
 - [[project/decisions/0003-sqlite-parquet-for-storage]] — SQLite (OLTP) + Parquet (OLAP), без Postgres.
