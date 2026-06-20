@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40) + QS-1 (919a55f, DSR units) + B3 TL-03 (ff9ed12)/TL-04 (146b8c0) + B3 ARCH-03 (c9277df)/BYBIT-04 (d53fcc3)/BYBIT-05 (40e47a5) DONE.
+updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40) + QS-1 (919a55f, DSR units) + B3 TL-03 (ff9ed12)/TL-04 (146b8c0) + B3 ARCH-03 (c9277df)/BYBIT-04 (d53fcc3)/BYBIT-05 (40e47a5) + B3 DI-04 (b66b751)/DI-03 (facc581) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -28,6 +28,8 @@ tag: v0.1.0-alpha.54
 **S55 B2 HIGH QS-1** (`919a55f`). DSR units mismatch: `compute_dsr` candidate Sharpe per-trade (un-annualized), но `sigma_sr` от callers = stdev аннуализированных fold-Sharpe → SR* раздут ~9× → DSR≈0 false-negative (ACTIVE atr_breakout). Fix (quant-stats option B): new `annualization_factor` де-аннуализирует sigma_sr к per-trade шкале внутри `compute_dsr` (Bailey eq.12 одна частота; Lo eq.13 denom не тронут). Wired research_wfa + wfa_reporter. S51 D5 scoping orthogonal (scope≠scale), сохранён. Note: `__main__.py` donchian-путь имеет тот же mismatch — у параллельного агента. TDD +5, mypy 0, pytest GREEN.
 
 **S55 B3 MEDIUM TL-03 (`ff9ed12`) + TL-04 (`146b8c0`).** Streaming exit-priority был ОБРАТНЫМ WFA-runner: atr_breakout проверял reverse-breakdown до ATR-stop, volume_breakout — channel-exit до ATR-stop, тогда как runner'ы делают ATR-stop ПЕРВЫМ (`low[i]<=stop_price` до `elif`). На same-bar double-exit live давал EXIT_FLAT_ATR_REVERSE/VOLUME_CHANNEL вместо stop runner'а (расходящийся reason+fill, live≠backtest). Fix: реордер только streaming-проверок → ATR-stop первым. TDD: parity-тесты same-bar double-exit (atr +1, volume +2). Runner'ы не тронуты. mypy 0, pytest GREEN (6 torch-absent Kronos pre-existing).
+
+**S55 B3 MEDIUM DI-04 (`b66b751`) + DI-03 (`facc581`).** DI-04: `Bar.open_time`/`close_time` → `AwareDatetime` (tz-naive отвергается на domain boundary, как trade_history `entry_ts`). Все src construction sites уже tz-aware (bar_builder real+synth-GAP, bybit rest, kronos). DI-03: `init_db` сортирует миграции по integer-version prefix (не lexicographic — `0006`<`001` ставил FK-миграцию перед referent); +assert non-decreasing order; applied-файлы НЕ переименованы. TDD +5. mypy 0, pytest GREEN.
 
 **S55 B3 MEDIUM ARCH-03 (`c9277df`) + BYBIT-04 (`d53fcc3`) + BYBIT-05 (`40e47a5`).** ARCH-03: публичный `Coordinator.current_state()` (чтение row под RLock — устранён TOCTOU RuntimeManager `_repo.get` вне lock) + `adapter.step_size`/`min_order_qty` свойства (убран `_filters` leak). BYBIT-04: residual-flatten Sell теперь ВСЕГДА несёт детерминированный orderLinkId (при bracket_id=None → symbol-derived fallback, не None → дедуп сохранён). BYBIT-05: residual leavesQty step-floor + sub-min/floored-0 dust → RESIDUAL_FLATTENED (не sell-that-rejects → ложный HALT). current_state pure-read под RLock (no deadlock, no ARCH-02 I/O-под-lock regress). TDD +7. mypy 0 (execution+runtime strict), pytest GREEN.
 
