@@ -168,3 +168,22 @@ def test_place_stop_market_order_rest_exhaustion_rewrapped() -> None:
             order_link_id="CID-sl",
         )
     assert exc.value.reason is ReasonCode.RATE_LIMIT_HIT
+
+
+# --- S55 ARCH-03: public step_size / min_order_qty accessors (no _filters leak) ---
+
+
+def test_adapter_step_size_property_exposes_filter_step() -> None:
+    """ARCH-03: Coordinator._qty_step must read a PUBLIC step_size property, not the
+    private _adapter._filters.step_size attribute (encapsulation leak across modules)."""
+    adapter = BybitMarketAdapter(rest=MagicMock(), filters=_FILTERS)
+    assert adapter.step_size == _FILTERS.step_size
+    assert adapter.step_size == Decimal("0.000001")
+
+
+def test_adapter_min_order_qty_property_exposes_filter_min() -> None:
+    """ARCH-03/BYBIT-05: residual-flatten dust detection needs the venue min_order_qty
+    via a public accessor, not a private _filters attribute reach-in."""
+    adapter = BybitMarketAdapter(rest=MagicMock(), filters=_FILTERS)
+    assert adapter.min_order_qty == _FILTERS.min_order_qty
+    assert adapter.min_order_qty == Decimal("0.000048")

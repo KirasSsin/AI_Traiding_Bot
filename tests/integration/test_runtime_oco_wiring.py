@@ -53,6 +53,15 @@ class _FakeAdapter:
         )
     )
 
+    # S55 ARCH-03: public venue-filter accessors mirroring BybitMarketAdapter.
+    @property
+    def step_size(self) -> Decimal:
+        return self._filters.step_size
+
+    @property
+    def min_order_qty(self) -> Decimal:
+        return self._filters.min_order_qty
+
     def place_order(self, *, symbol, side, qty, order_link_id=None, extra_payload=None):
         self.placed_orders.append(
             {"symbol": symbol, "side": side, "qty": str(qty), "orderLinkId": order_link_id}
@@ -200,8 +209,8 @@ def test_exit_flat_signal_calls_flatten(tmp_path):
 
     coord = MagicMock()
     coord.symbol = _SYMBOL
-    coord._repo = MagicMock()
-    coord._repo.get.return_value = MagicMock(state=ExecutionState.OCO_ARMED)
+    # S55 ARCH-03: manager reads FSM via public current_state(symbol), not _repo.
+    coord.current_state.return_value = ExecutionState.OCO_ARMED
 
     bar = _bar()
     bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
@@ -234,8 +243,7 @@ def test_exit_flat_signal_noop_when_flat(tmp_path):
 
     coord = MagicMock()
     coord.symbol = _SYMBOL
-    coord._repo = MagicMock()
-    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+    coord.current_state.return_value = ExecutionState.FLAT
 
     bar = _bar()
     bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)

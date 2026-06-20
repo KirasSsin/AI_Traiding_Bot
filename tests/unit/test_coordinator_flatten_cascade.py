@@ -12,6 +12,7 @@ Drift fixes vs plan (lines 2309-2406):
 - Coordinator attributes are underscore-prefixed (_adapter, _symbol, _repo, _base_coin).
 - _halt(...) helper does not exist — use _transition(FLATTEN_FAILED) only.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -20,7 +21,6 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-
 from src.execution.bybit.adapter import OrderAck, WalletSnapshot
 from src.execution.coordinator import Coordinator
 from src.execution.state_machine import ExecutionState
@@ -41,7 +41,16 @@ class _FakeAdapter:
     wallet_balance: Decimal = Decimal("0.001234")
     wallet_locked: Decimal = Decimal("0")
 
-    def cancel_all_orders(self, *, symbol: str) -> None:
+    # S55 ARCH-03: public venue-filter accessors mirroring BybitMarketAdapter.
+    @property
+    def step_size(self) -> Decimal:
+        return self._filters.step_size
+
+    @property
+    def min_order_qty(self) -> Decimal:
+        return self._filters.min_order_qty
+
+    def cancel_all_orders(self, *, symbol: str) -> None:  # noqa: ARG002 — test-double interface
         self.cancel_all_called = True
 
     def get_wallet_balance(self, *, coin: str) -> WalletSnapshot:
@@ -52,17 +61,30 @@ class _FakeAdapter:
             locked=self.wallet_locked,
         )
 
-    def place_order(self, *, symbol, side, qty, order_link_id=None, extra_payload=None):
+    def place_order(
+        self,
+        *,
+        symbol,
+        side,
+        qty,
+        order_link_id=None,
+        extra_payload=None,  # noqa: ARG002 — test-double interface
+    ):
         if self.fail_market_sell_count > 0:
             self.fail_market_sell_count -= 1
             raise RuntimeError("simulated market sell failure")
         if self.fail_next_market_sell:
             self.fail_next_market_sell = False
             raise RuntimeError("simulated market sell failure")
-        self.placed_orders.append({
-            "symbol": symbol, "side": side, "qty": str(qty),
-            "orderLinkId": order_link_id, "orderType": "Market",
-        })
+        self.placed_orders.append(
+            {
+                "symbol": symbol,
+                "side": side,
+                "qty": str(qty),
+                "orderLinkId": order_link_id,
+                "orderType": "Market",
+            }
+        )
         return OrderAck(order_id="EX-flatten", order_link_id=order_link_id)
 
 
@@ -82,26 +104,35 @@ def coordinator_armed_harness(tmp_path):
         min_order_amt=Decimal("5"),
     )
     adapter = _FakeAdapter(_filters=filters)
-    repo.upsert(ExecutionStateRow(
-        symbol="BTCUSDT",
-        state=ExecutionState.OCO_ARMED,
-        position_qty=Decimal("0.001234"),
-        entry_price=Decimal("65000"),
-        oco_main_order_id=None,
-        bracket_id="abcd1234",
-        oco_tp_order_id="EX-tp",
-        oco_sl_order_id="EX-sl",
-        expected_oco_qty=Decimal("0.001234"),
-        arming_started_at=None,
-        last_attempt_num=1,
-        updated_at="2026-04-23T10:00:00+00:00",
-    ))
-    coord = Coordinator(adapter=adapter, repo=repo, reconciler=None,
-                        symbol="BTCUSDT", base_coin="BTC")
-    return type("H", (), {
-        "adapter": adapter, "repo": repo, "coordinator": coord,
-        "qty_step": filters.step_size,
-    })()
+    repo.upsert(
+        ExecutionStateRow(
+            symbol="BTCUSDT",
+            state=ExecutionState.OCO_ARMED,
+            position_qty=Decimal("0.001234"),
+            entry_price=Decimal("65000"),
+            oco_main_order_id=None,
+            bracket_id="abcd1234",
+            oco_tp_order_id="EX-tp",
+            oco_sl_order_id="EX-sl",
+            expected_oco_qty=Decimal("0.001234"),
+            arming_started_at=None,
+            last_attempt_num=1,
+            updated_at="2026-04-23T10:00:00+00:00",
+        )
+    )
+    coord = Coordinator(
+        adapter=adapter, repo=repo, reconciler=None, symbol="BTCUSDT", base_coin="BTC"
+    )
+    return type(
+        "H",
+        (),
+        {
+            "adapter": adapter,
+            "repo": repo,
+            "coordinator": coord,
+            "qty_step": filters.step_size,
+        },
+    )()
 
 
 def test_flatten_happy_path(coordinator_armed_harness):
@@ -109,8 +140,9 @@ def test_flatten_happy_path(coordinator_armed_harness):
     h = coordinator_armed_harness
     h.coordinator.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
     assert h.adapter.cancel_all_called is True
-    sells = [o for o in h.adapter.placed_orders
-             if o["side"] == "Sell" and o["orderType"] == "Market"]
+    sells = [
+        o for o in h.adapter.placed_orders if o["side"] == "Sell" and o["orderType"] == "Market"
+    ]
     assert len(sells) == 1
 
 
@@ -119,8 +151,9 @@ def test_flatten_retries_with_qty_minus_step_on_failure(coordinator_armed_harnes
     h = coordinator_armed_harness
     h.adapter.fail_next_market_sell = True
     h.coordinator.flatten(reason=ReasonCode.HALT_RECONCILE_DIVERGENCE)
-    sells = [o for o in h.adapter.placed_orders
-             if o["side"] == "Sell" and o["orderType"] == "Market"]
+    sells = [
+        o for o in h.adapter.placed_orders if o["side"] == "Sell" and o["orderType"] == "Market"
+    ]
     assert len(sells) == 1  # retry succeeded; only retry got recorded
     # Compare retry qty against what the first attempt would have been (free_qty step-floored).
     # Free qty = 0.001234, step = 0.000001 → first attempt = 0.001234, retry = 0.001233.

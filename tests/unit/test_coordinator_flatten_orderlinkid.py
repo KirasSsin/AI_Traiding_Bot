@@ -40,6 +40,15 @@ class _RecordingAdapter:
     wallet_balance: Decimal = Decimal("0.001234")
     wallet_locked: Decimal = Decimal("0")
 
+    # S55 ARCH-03: public venue-filter accessors mirroring BybitMarketAdapter.
+    @property
+    def step_size(self) -> Decimal:
+        return self._filters.step_size
+
+    @property
+    def min_order_qty(self) -> Decimal:
+        return self._filters.min_order_qty
+
     def cancel_all_orders(self, *, symbol: str) -> None:
         self.cancel_all_called = True
         self.last_cancel_all_symbol = symbol

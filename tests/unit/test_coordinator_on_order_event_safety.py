@@ -74,6 +74,15 @@ class _StubAdapter:
             min_order_amt=Decimal("5"),
         )
 
+    # S55 ARCH-03: public venue-filter accessors mirroring BybitMarketAdapter.
+    @property
+    def step_size(self) -> Decimal:
+        return self._filters.step_size
+
+    @property
+    def min_order_qty(self) -> Decimal:
+        return self._filters.min_order_qty
+
     def cancel_order(self, *, symbol: str, order_id: str):  # noqa: D401
         self.cancels.append(order_id)
         from types import SimpleNamespace

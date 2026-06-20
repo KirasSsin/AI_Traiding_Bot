@@ -153,6 +153,27 @@ class BybitMarketAdapter:
         self._rest = rest
         self._filters = filters
 
+    @property
+    def step_size(self) -> Decimal:
+        """S55 ARCH-03: public lot-step accessor (basePrecision).
+
+        Replaces the cross-module reach-in ``coordinator._adapter._filters.step_size``.
+        The Coordinator's step-floor / qty-step logic reads this property instead of the
+        private ``_filters`` attribute (encapsulation — the filter shape is an adapter
+        implementation detail).
+        """
+        return self._filters.step_size
+
+    @property
+    def min_order_qty(self) -> Decimal:
+        """S55 ARCH-03/BYBIT-05: public minimum-order-qty accessor.
+
+        Used by the Coordinator's residual-flatten path to classify sub-min dust
+        (a residual below this floor is unrecoverable → RESIDUAL_FLATTENED, never a
+        sell-that-rejects-and-HALTs). Public accessor, not a private ``_filters`` leak.
+        """
+        return self._filters.min_order_qty
+
     def place_order(
         self,
         *,

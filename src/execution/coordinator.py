@@ -147,6 +147,30 @@ class Coordinator:
         """
         return self._symbol
 
+    def current_state(self, symbol: str | None = None) -> ExecutionState | None:
+        """S55 ARCH-03: public, lock-protected FSM-state read for callers.
+
+        RuntimeManager's tick-loop pre-check previously read the persisted row via the
+        private ``coordinator._repo.get(symbol)`` — OUTSIDE the Coordinator RLock. Because
+        the pybit WS thread mutates the same row under the lock (entry-fill → arm, SL-trigger
+        → flatten), that cross-thread read was a TOCTOU: the manager could observe FLAT for
+        an instant after the WS thread had already begun a transition, racing a second
+        ``start_bracket`` against the one-open-order invariant. Reading the row HERE, under
+        ``self._lock``, makes the snapshot consistent with the single-writer FSM.
+
+        This is a PURE repo read (no I/O) — it does not reintroduce the S55 ARCH-02
+        lock-hoist hazard (which was about blocking REST fetches under the lock). The RLock
+        is reentrant, so a caller already holding it (e.g. an internal helper) does not
+        deadlock. ``symbol`` defaults to the Coordinator's own symbol; an explicit value is
+        accepted for API symmetry with the manager's call site.
+
+        Returns the current ExecutionState, or None when no row is persisted yet.
+        """
+        sym = symbol if symbol is not None else self._symbol
+        with self._lock:
+            row = self._repo.get(sym)
+            return row.state if row is not None else None
+
     def on_ws_reconnect(self) -> None:
         """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
 
@@ -772,8 +796,16 @@ class Coordinator:
             return _SendOutcome.NOT_SENT
 
     def _qty_step(self) -> Decimal:
-        step: Decimal = self._adapter._filters.step_size
+        # S55 ARCH-03: read the lot-step via the adapter's PUBLIC step_size property
+        # instead of the private _adapter._filters.step_size attribute leak.
+        step: Decimal = self._adapter.step_size
         return step
+
+    def _min_order_qty(self) -> Decimal:
+        # S55 BYBIT-05: venue minimum-order-qty via the adapter's PUBLIC accessor —
+        # used to classify a step-floored residual as unrecoverable dust.
+        min_qty: Decimal = self._adapter.min_order_qty
+        return min_qty
 
     @staticmethod
     def _step_floor(value: Decimal, step: Decimal) -> Decimal:

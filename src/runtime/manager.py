@@ -346,31 +346,35 @@ class RuntimeManager:
         signal = self._strategy.on_bar(bar)
         if signal is None:
             return
-        # FSM pre-check — read current state once (no public current_state() on
-        # Coordinator, so read via _repo per T17 plan pattern).
+        # FSM pre-check — read current state once via the Coordinator's PUBLIC,
+        # lock-protected current_state() accessor.
+        # S55 ARCH-03: previously read the row via the private
+        # ``coordinator._repo.get(symbol)`` OUTSIDE the Coordinator RLock — a TOCTOU
+        # against the WS thread mutating the same row under the lock. current_state()
+        # snapshots the state under self._lock, consistent with the single-writer FSM.
         symbol = getattr(self._coordinator, "symbol", None)
         if symbol is None:
             logger.warning("runtime.coordinator_missing_symbol_attr")
             return
-        row = self._coordinator._repo.get(symbol)
+        state = self._coordinator.current_state(symbol)
         # S55 TL-02: route EXIT_FLAT signals → flatten when a position is held.
         # Previously every FLAT signal was dropped, so a strategy exit never closed
         # the position. flatten() cancels live OCO legs + sells the residual.
         if signal.side == SignalSide.FLAT:
-            if row is not None and row.state in _FLATTENABLE_STATES:
+            if state is not None and state in _FLATTENABLE_STATES:
                 logger.info(
                     "runtime.exit_signal_flatten",
                     reason=signal.reason,
-                    current_state=row.state.value,
+                    current_state=state.value,
                 )
                 self._coordinator.flatten(reason=self._exit_reason(signal.reason))
             return
         # LONG entry path — only call start_bracket from FLAT (one-open-order invariant).
-        if row is None or row.state != ExecutionState.FLAT:
+        if state is None or state != ExecutionState.FLAT:
             logger.debug(
                 "runtime.signal_skipped_non_flat_state",
                 side=str(signal.side),
-                current_state=row.state.value if row else "MISSING",
+                current_state=state.value if state else "MISSING",
             )
             return
         assessment = self._risk_manager.assess(signal, mark_price=bar.close)
