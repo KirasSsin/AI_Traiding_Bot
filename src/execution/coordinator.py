@@ -152,6 +152,20 @@ class Coordinator:
 
         Called by WS consumer on disconnect AND by bootstrap.
         Routes through RECONCILING state; dispatches on verdict.
+
+        S55 ARCH-02 (lock-hoist): ``reconciler.reconcile`` does blocking REST fetches
+        (get_wallet_balance / get_open_orders / get_order) that sleep up to ~15.5s under
+        ``_retry_with_backoff`` on rate-limit codes. Previously that ran while the
+        Coordinator RLock was held, blocking the pybit WS thread's ``on_order_event``
+        (whose SL-trigger sibling-cancel must fire in the 0ms Bybit Spot Triggered→Filled
+        gap) → orphan TP self-fill → phantom short. The fix splits the flow into three
+        windows: (1) acquire the RLock briefly to validate state + move FLAT→RECONCILING +
+        snapshot ``local``; (2) RELEASE the RLock and run reconcile's blocking I/O off-lock
+        — the WS thread can now acquire the RLock during the fetch (it sees RECONCILING and
+        drops any stale order echo via the existing IllegalTransitionError guard, instead of
+        hanging for seconds); (3) re-acquire the RLock to apply the verdict transition. The
+        single-writer FSM invariant is preserved: every transition still happens under the
+        RLock. Verdict semantics are unchanged — only the lock-hold window narrowed.
         """
         with self._lock:
             row = self._repo.get(self._symbol)
@@ -163,7 +177,11 @@ class Coordinator:
                 return
             self._transition(ExecutionEvent.WS_RECONNECT)  # → RECONCILING
             local = self._build_local_state(row)
-            result = self._reconciler.reconcile(local, expected_state=state)
+
+        # I/O window: blocking REST fetches run with the RLock RELEASED (ARCH-02).
+        result = self._reconciler.reconcile(local, expected_state=state)
+
+        with self._lock:
             if result.verdict == "HEAL_ENTRY_FILLED":
                 self._apply_heal_entry_filled(result)
                 self._transition(ExecutionEvent.RECONCILE_ENTRY_FILLED)  # → LONG_OPEN
