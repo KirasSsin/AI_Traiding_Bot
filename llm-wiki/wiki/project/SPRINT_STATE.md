@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40) + QS-1 (919a55f, DSR units) + B3 TL-03 (ff9ed12)/TL-04 (146b8c0) + B3 ARCH-03 (c9277df)/BYBIT-04 (d53fcc3)/BYBIT-05 (40e47a5) + B3 DI-04 (b66b751)/DI-03 (facc581) DONE.
+updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40) + QS-1 (919a55f, DSR units) + B3 TL-03 (ff9ed12)/TL-04 (146b8c0) + B3 ARCH-03 (c9277df)/BYBIT-04 (d53fcc3)/BYBIT-05 (40e47a5) + B3 DI-04 (b66b751)/DI-03 (facc581) + B3 QS-2 (4ae88b8) + B3 DASH-02 (b85350d)/DASH-03 (32183fa) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -32,6 +32,8 @@ tag: v0.1.0-alpha.54
 **S55 B3 MEDIUM DI-04 (`b66b751`) + DI-03 (`facc581`).** DI-04: `Bar.open_time`/`close_time` → `AwareDatetime` (tz-naive отвергается на domain boundary, как trade_history `entry_ts`). Все src construction sites уже tz-aware (bar_builder real+synth-GAP, bybit rest, kronos). DI-03: `init_db` сортирует миграции по integer-version prefix (не lexicographic — `0006`<`001` ставил FK-миграцию перед referent); +assert non-decreasing order; applied-файлы НЕ переименованы. TDD +5. mypy 0, pytest GREEN.
 
 **S55 B3 MEDIUM ARCH-03 (`c9277df`) + BYBIT-04 (`d53fcc3`) + BYBIT-05 (`40e47a5`).** ARCH-03: публичный `Coordinator.current_state()` (чтение row под RLock — устранён TOCTOU RuntimeManager `_repo.get` вне lock) + `adapter.step_size`/`min_order_qty` свойства (убран `_filters` leak). BYBIT-04: residual-flatten Sell теперь ВСЕГДА несёт детерминированный orderLinkId (при bracket_id=None → symbol-derived fallback, не None → дедуп сохранён). BYBIT-05: residual leavesQty step-floor + sub-min/floored-0 dust → RESIDUAL_FLATTENED (не sell-that-rejects → ложный HALT). current_state pure-read под RLock (no deadlock, no ARCH-02 I/O-под-lock regress). TDD +7. mypy 0 (execution+runtime strict), pytest GREEN.
+
+**S55 B3 MEDIUM DASH-02 (`b85350d`) + DASH-03 (`32183fa`).** DASH-02: MonthlyHeatmap считал ячейку как разницу двух compounded cumulative `equity_pct` (`last-prevClose`) → завышение тем сильнее, чем дальше equity от 0% (~9× при +800%). Fix: истинная месячная доходность через отношение equity-множителей `(mult_close/mult_prev-1)*100`, baseline первого месяца = 1.0; ячейки теперь компаундятся (произведение), не суммируются. Vitest +1 (6 GREEN), tsc/build/lint clean. DASH-03: cache-writes стали atomic (`tmp`+`os.replace` через `_atomic_write_text`, зеркало storage.py) — устранён torn-file read в `get_run`; `with _lock:` поднят в wrapper `run_backtest`→`_run_backtest_locked` так что ВСЕ strategy-ветки (vb/atr/supertrend/kronos+default) single-flight per docstring (раньше research-ветки и cache-write default-пути были вне lock). TDD +3. mypy --strict dashboard 0, pytest GREEN (6 torch-absent Kronos pre-existing).
 
 **Kronos exploratory вывод:** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. **Long-only Spot edge нет.** Если продолжать: futures-шорт (S55+, плечо/ликвидации) ИЛИ закрыть. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг.
 
