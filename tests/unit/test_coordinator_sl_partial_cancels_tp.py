@@ -254,3 +254,67 @@ def test_residual_flatten_orderlinkid_deterministic_with_bracket_id(tmp_path):
     )
     place = next(args for k, args in adapter.events if k == "place_order")
     assert place["order_link_id"] == f"flat-{BRACKET_ID}-res-1"
+
+
+# --- S55 BYBIT-05: residual flatten qty step-floored + sub-min dust handling -----
+
+
+def test_residual_flatten_qty_step_floored(tmp_path):
+    """BYBIT-05: a raw leavesQty that is NOT a multiple of step_size must be
+    floored to step before the residual Market Sell (raw qty would be rejected by
+    the lot-size filter → false HALT)."""
+    coord, repo, adapter = _make(
+        tmp_path, step_size=Decimal("0.0001"), min_order_qty=Decimal("0.0001")
+    )
+    _seed(repo, state=ExecutionState.OCO_ARMED)
+    coord.on_order_event(
+        {
+            "orderLinkId": SL_LID,
+            "orderStatus": "PartiallyFilled",
+            "leavesQty": "0.00035",  # floors to 0.0003
+        }
+    )
+    place = next(args for k, args in adapter.events if k == "place_order")
+    assert place["qty"] == Decimal("0.0003"), place["qty"]
+    assert repo.get("BTCUSDT").state == ExecutionState.FLAT
+
+
+def test_residual_flatten_sub_min_dust_treated_as_flattened_no_halt(tmp_path):
+    """BYBIT-05: a residual below min_order_qty (unrecoverable dust) must resolve to
+    RESIDUAL_FLATTENED (effectively flat) WITHOUT placing a sell-that-rejects and
+    WITHOUT a false HALT_FLATTEN_FAILED."""
+    coord, repo, adapter = _make(
+        tmp_path, step_size=Decimal("0.0001"), min_order_qty=Decimal("0.001")
+    )
+    _seed(repo, state=ExecutionState.OCO_ARMED)
+    coord.on_order_event(
+        {
+            "orderLinkId": SL_LID,
+            "orderStatus": "PartiallyFilled",
+            "leavesQty": "0.0003",  # >0 but < min_order_qty 0.001 → dust
+        }
+    )
+    kinds = _evt_kinds(adapter)
+    # TP cancel still happens; the key assertion is NO residual Market Sell is fired
+    # for sub-min dust, and the bracket still resolves to FLAT.
+    assert "place_order" not in kinds, "sub-min dust must not trigger a residual Sell"
+    assert repo.get("BTCUSDT").state == ExecutionState.FLAT
+
+
+def test_residual_flatten_floored_to_zero_treated_as_flattened(tmp_path):
+    """BYBIT-05: a residual that floors to exactly 0 (leavesQty < step_size) is dust →
+    RESIDUAL_FLATTENED, no sell, no HALT."""
+    coord, repo, adapter = _make(
+        tmp_path, step_size=Decimal("0.001"), min_order_qty=Decimal("0.0001")
+    )
+    _seed(repo, state=ExecutionState.OCO_ARMED)
+    coord.on_order_event(
+        {
+            "orderLinkId": SL_LID,
+            "orderStatus": "PartiallyFilled",
+            "leavesQty": "0.0005",  # floors to 0 against step 0.001
+        }
+    )
+    kinds = _evt_kinds(adapter)
+    assert "place_order" not in kinds
+    assert repo.get("BTCUSDT").state == ExecutionState.FLAT

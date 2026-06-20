@@ -504,8 +504,26 @@ class Coordinator:
         row = self._repo.get(self._symbol)
         if row is not None and row.oco_tp_order_id is not None:
             self._best_effort_cancel(row.oco_tp_order_id)
-        leaves_qty = Decimal(evt.get("leavesQty", "0"))
-        if leaves_qty <= 0:
+        raw_leaves_qty = Decimal(evt.get("leavesQty", "0"))
+        if raw_leaves_qty <= 0:
+            self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
+            return
+        # S55 BYBIT-05: step-floor the raw leavesQty before the residual Sell. A raw qty
+        # that is not a multiple of the lot step is rejected by the venue's LOT_SIZE
+        # filter → a spurious HALT_FLATTEN_FAILED. After flooring, a sub-min residual is
+        # unrecoverable dust (the position is effectively flat — the venue will not accept
+        # an order below min_order_qty): treat it as RESIDUAL_FLATTENED rather than firing
+        # a sell that can only reject and HALT.
+        qty_step = self._qty_step()
+        leaves_qty = self._step_floor(raw_leaves_qty, qty_step)
+        if leaves_qty <= Decimal("0") or leaves_qty < self._min_order_qty():
+            _log.info(
+                "flatten.ioc_residual_dust symbol=%s raw_leaves_qty=%s floored=%s min_qty=%s",
+                self._symbol,
+                raw_leaves_qty,
+                leaves_qty,
+                self._min_order_qty(),
+            )
             self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
             return
         # S49 B1 / S55 BYBIT-04: deterministic orderLinkId — idempotency key so a
