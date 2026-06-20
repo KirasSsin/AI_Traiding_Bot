@@ -64,13 +64,18 @@ historical cleanup не требуется. Первый же `wfa`-run внёс
   инвертирует дефект в false-positive money-gate (см. Контекст п.3).
 - **B. Только units (ratio→real OOS Sharpe + annualization_factor), GLOBAL pool сохранён.** Частично —
   чинит ratio-collision, но оставляет cross-class контаминацию sigma_SR (S51 D5 нарушение).
-- **C (ВЫБРАНО). Полное выравнивание к donchian/research паттерну:** real annualized OOS Sharpe +
-  class-scoped sigma_SR + namespaced strategy_class + annualization_factor. Чинит units, collision
-  И применяет S51 D5, пропущенный в этом пути. DRY (зеркалит уже отревьюенный паттерн).
+- **C (ВЫБРАНО). Полное выравнивание:** real annualized OOS Sharpe + class-scoped sigma_SR +
+  namespaced strategy_class + annualization_factor. Чинит units, collision И применяет S51 D5,
+  пропущенный в этом пути. DRY (зеркалит уже отревьюенные паттерны). **Две разные blessed-провенансы:**
+  class-scoping (`sigma_sr(strategy_class=)`) зеркалит `donchian_runner` + `research_wfa` (S51 D5);
+  de-annualization (`annualization_factor`) зеркалит `wfa_reporter` + `research_wfa` (S55 QS-1).
+  ВНИМАНИЕ (quant PHASE 6): `donchian_runner` НЕ передаёт `annualization_factor` — у него тот же
+  латентный QS-1 mismatch, он blessed ТОЛЬКО как class-scoping-образец, НЕ как de-annualization.
 
 ## Решение
 
-`_cmd_wfa` приводится к паттерну `donchian_runner.py` / `research_wfa.py`:
+`_cmd_wfa` приводится к паттерну: class-scoping как в `donchian_runner.py` / `research_wfa.py`,
+de-annualization как в `wfa_reporter.py` / `research_wfa.py`:
 
 1. **Канонический sigma_SR-вход = настоящий аннуализированный OOS Sharpe per fold.** Использовать
    `runner_result["aggregate"]["fold_oos_sharpes"]` (`walk_forward.py:149` = `oos_metrics["Sharpe Ratio"]`,
@@ -106,6 +111,10 @@ historical cleanup не требуется. Первый же `wfa`-run внёс
 - **Out-of-scope (сохранено):** S51 D5 scope orthogonal; `compute_dsr` internals; acceptance-gate +
   T6 ratio-входы. mean_holding в этом пути не измеряется (research-trades без bar-индексов) — как и
   research_wfa, используется nominal sqrt(bars_per_year)-фактор.
+- **Follow-up (quant PHASE 6 находка, отдельный fix):** `donchian_runner.py:204` вызывает
+  `compute_dsr_with_status` БЕЗ `annualization_factor` — тот же латентный QS-1 mismatch (sigma_SR из
+  аннуализированных class-scoped OOS Sharpe'ов, не де-аннуализирован). Третий call-site, требует того
+  же fix, что QS-1 применил к research_wfa/wfa_reporter. Вне scope ADR 0071 (отдельный gate).
 - **Authority:** quant-stats-reviewer ратифицирует направление (PHASE 6, money/strategy gate).
 
 ## Связанные документы
