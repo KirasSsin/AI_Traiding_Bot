@@ -1,11 +1,10 @@
 """Market-data domain models (pydantic v2)."""
 
-from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 
 class DataQuality(StrEnum):
@@ -22,8 +21,8 @@ class Bar(BaseModel):
 
     symbol: str = Field(..., pattern=r"^[A-Z]+USDT$")
     interval: Literal["1m", "5m", "15m", "1h", "4h", "1d"]
-    open_time: datetime
-    close_time: datetime
+    open_time: AwareDatetime
+    close_time: AwareDatetime
     open: Decimal
     high: Decimal
     low: Decimal
