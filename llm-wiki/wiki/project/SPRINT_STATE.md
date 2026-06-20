@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 Batch 0 — BLOCKER TL-01/TL-02 + BYBIT-01 DONE (оба закрыты).
+updated: 2026-06-20  # S55 Batch 1 — HIGH BYBIT-03 (2afeb6f) + BYBIT-02 (b4c5375) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -10,11 +10,11 @@ tag: v0.1.0-alpha.54
 
 ## Текущий статус
 
-**S55 Batch 0 — BLOCKER TL-01/TL-02 + BYBIT-01 DONE (оба блока закрыты).**
+**S55 Batch 1 — HIGH BYBIT-03 (`2afeb6f`) + BYBIT-02 (`b4c5375`) DONE (money-path).** BYBIT-03: `adapter.BybitAPIError` ← подкласс `rest.BybitAPIError`, `_call_rest` ре-оборачивает rest-исчерпание retry с mapped `.reason`, 170005/170222 → RATE_LIMIT_HIT. BYBIT-02: emergency-`flatten` tri-state — сеть после submit = UNKNOWN → HALT, не слепой attempt-2 (double-sell). S49 D1 + S50/S51 B1 GREEN. TDD +13, mypy 0, pytest GREEN.
 
 **TL-01/TL-02** (`0d84d57`). Live runtime никогда не вооружал OCO-bracket и сбрасывал exit-сигналы (unbounded-loss на shipped execution-пути). Исправлено: entry-fill → `arm_oco` (TP Limit + SL Stop-Market, fee-aware qty G5; точка подключения — `Coordinator.on_order_event`, прицепные tp/sl-цены сохраняются в `start_bracket` через migration 0007); EXIT_FLAT-сигнал → `coordinator.flatten` когда позиция держится; `reconcile_arming_ttl` подключён в `_tick`. `arm_oco`/`flatten`/`reconcile_arming_ttl` теперь имеют production call-sites. TDD: `tests/integration/test_runtime_oco_wiring.py` (4 new) + обновлён on_order_event safety-тест. mypy 0, pytest GREEN (6 torch-absent Kronos pre-existing).
 
-**BYBIT-01** (`1130cb7`). REST и private-WS подключались к РАЗНЫМ Bybit-окружениям: `_cmd_run` строил WS endpoint `"demo.bybit.com"` при `testnet=True` → pybit-флаги резолвились в MAINNET-demo (`stream-demo`), тогда как REST = `HTTP(testnet=True)` без demo-флага → testnet-биржа (`api-testnet`). testnet-биржа и demo — РАЗНЫЕ account-вселенные → ордера через REST никогда не давали fill/exec/wallet-эхо на WS → FSM не получал ENTRY_FILLED/Filled → OCO не вооружался по live-пути. Исправлено: `demo: bool` добавлен в `Settings` как единый источник истины (пара `testnet`+`demo`); `BybitRESTClient` и `BybitPrivateWSConsumer` строятся из ОДНОЙ пары явных флагов (не substring-эвристика endpoint); startup-лог `bybit.env_resolved` печатает resolved REST+WS хосты. Каноническое окружение S35 demo = testnet-биржа (`testnet=True, demo=False`) — соответствует ADR 0053 LOCKED pre-commit #1 («δ TESTNET ONLY, zero MAINNET») + config.py s35-валидатору. Конфликт с ADR 0027 Q6 (тот описывал Bybit demo-trading для WS, но demo = MAINNET-инфра → противоречит более позднему LOCKED #1) задокументирован в коммите для operator-review. TDD: `tests/unit/test_bybit_env_consistency.py` (7 new — параметризованная проверка REST-вселенная == WS-вселенная для всех 4 комбо + e2e `_cmd_run` no-split + explicit-flags-over-substring + legacy-fallback). mypy 0/98, pytest 1579 passed (6 torch-absent Kronos pre-existing).
+**BYBIT-01** (`1130cb7`). REST и private-WS подключались к РАЗНЫМ Bybit-окружениям (WS `demo.bybit.com` MAINNET-demo vs REST `testnet` без demo-флага) → ордера через REST не давали fill/exec/wallet-эхо на WS → FSM не получал ENTRY_FILLED → OCO не вооружался. Исправлено: `demo: bool` в `Settings` — единый источник истины; REST+WS из ОДНОЙ пары явных флагов; startup-лог `bybit.env_resolved`. Каноник S35 demo = testnet-биржа (`testnet=True, demo=False`, ADR 0053 LOCKED #1). Конфликт с ADR 0027 Q6 в коммите для operator-review. TDD: `test_bybit_env_consistency.py` (7 new). Детали → git `1130cb7`.
 
 
 **S54 SHIPPED** — `60ee7f3` (PR #69) tag `v0.1.0-alpha.54`. Kronos UI: manifest v1→v2 (per-combo dates+params), `GET /api/kronos/coverage`, frontend ConfigureBacktest auto-fill START/END из кэша + блок некэшированных TF (15m). 3 reviewers APPROVE. mypy 0/98, pytest 1525, frontend 45. Детали → `sprints/sprint-54-kronos-ui.md`.
