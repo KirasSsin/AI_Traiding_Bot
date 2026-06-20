@@ -309,10 +309,19 @@ def run_research_wfa(
         # >=3 within-class entries → finite class sigma; apply full global breadth.
         sigma_scope_status = "CLASS_SCOPED"
 
+    # S55 HIGH QS-1 single-scale units fix: stored fold Sharpes (→ sigma_sr) are
+    # ANNUALIZED via sqrt(bars_per_year / mean_holding); compute_dsr's internal
+    # candidate Sharpe is per-trade. Supply the representative annualization factor
+    # so compute_dsr de-annualizes sigma_sr to one frequency (Bailey eq.12/13).
+    # Uses the nominal _MEAN_HOLDING_BARS_PLACEHOLDER — the true per-trial holding is
+    # not derivable here (research trades carry no bar indices) and the residual is
+    # second-order vs the ~sqrt(bars_per_year)-magnitude correction (quant-stats S55).
+    dsr_annualization_factor = math.sqrt(bars_per_year / _MEAN_HOLDING_BARS_PLACEHOLDER)
     dsr_info = compute_dsr_with_status(
         trades=adapted_trades,
         n_trials=effective_n_trials,
         sigma_sr=effective_sigma,
+        annualization_factor=dsr_annualization_factor,
     )
     dsr_value = dsr_info["dsr"]
 
