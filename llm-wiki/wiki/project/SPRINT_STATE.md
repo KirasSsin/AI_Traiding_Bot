@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 Batch 1 — HIGH BYBIT-03 (2afeb6f) + BYBIT-02 (b4c5375) DONE.
+updated: 2026-06-20  # S55 Batch 1 — HIGH BYBIT-03 (2afeb6f) + BYBIT-02 (b4c5375) + ARCH-02 (81b0329) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -10,7 +10,7 @@ tag: v0.1.0-alpha.54
 
 ## Текущий статус
 
-**S55 Batch 1 — HIGH BYBIT-03 (`2afeb6f`) + BYBIT-02 (`b4c5375`) DONE (money-path).** BYBIT-03: `adapter.BybitAPIError` ← подкласс `rest.BybitAPIError`, `_call_rest` ре-оборачивает rest-исчерпание retry с mapped `.reason`, 170005/170222 → RATE_LIMIT_HIT. BYBIT-02: emergency-`flatten` tri-state — сеть после submit = UNKNOWN → HALT, не слепой attempt-2 (double-sell). S49 D1 + S50/S51 B1 GREEN. TDD +13, mypy 0, pytest GREEN.
+**S55 Batch 1 — HIGH BYBIT-03 (`2afeb6f`) + BYBIT-02 (`b4c5375`) DONE (money-path).** BYBIT-03: `adapter.BybitAPIError` ← подкласс `rest.BybitAPIError`, `_call_rest` ре-оборачивает rest-исчерпание retry с mapped `.reason`, 170005/170222 → RATE_LIMIT_HIT. BYBIT-02: emergency-`flatten` tri-state — сеть после submit = UNKNOWN → HALT, не слепой attempt-2 (double-sell). **ARCH-02 (`81b0329`):** reconcile REST-I/O (~15.5s backoff sleep) вынесен ИЗ Coordinator RLock + Reconciler Lock — fetch snapshot off-lock → потом lock только для pure classify + verdict-переход. Раньше lock-hold блокировал WS SL-cancel (0ms Triggered→Filled gap) → orphan TP self-fill → phantom short. Verdict-семантика byte-identical; classify-чистота подтверждена. TDD +2 (`test_reconcile_lock_hoist.py`). S49 D1 + S50/S51 B1 + TL-01 GREEN. mypy 0, pytest GREEN.
 
 **TL-01/TL-02** (`0d84d57`). Live runtime никогда не вооружал OCO-bracket и сбрасывал exit-сигналы (unbounded-loss на shipped execution-пути). Исправлено: entry-fill → `arm_oco` (TP Limit + SL Stop-Market, fee-aware qty G5; точка подключения — `Coordinator.on_order_event`, прицепные tp/sl-цены сохраняются в `start_bracket` через migration 0007); EXIT_FLAT-сигнал → `coordinator.flatten` когда позиция держится; `reconcile_arming_ttl` подключён в `_tick`. `arm_oco`/`flatten`/`reconcile_arming_ttl` теперь имеют production call-sites. TDD: `tests/integration/test_runtime_oco_wiring.py` (4 new) + обновлён on_order_event safety-тест. mypy 0, pytest GREEN (6 torch-absent Kronos pre-existing).
 
