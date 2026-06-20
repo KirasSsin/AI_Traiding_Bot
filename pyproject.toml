@@ -70,6 +70,13 @@ ignore = ["E501"]
 # (intentional — match real callable signatures для mock substitution). E402 — datetime
 # import after _settings helper (intentional helper-grouping pattern).
 "tests/unit/test_runtime_manager.py" = ["ARG005", "E402"]
+# S55 TL-01/TL-02 OCO-wiring tests: fake adapter methods mirror the real adapter
+# signature (unused stub args = intentional contract match); MagicMock side_effect
+# lambdas use **kw / signal placeholders (same rationale as test_runtime_manager.py).
+"tests/integration/test_runtime_oco_wiring.py" = ["ARG002", "ARG005", "E402"]
+# Adapter stub methods (place_limit_order / place_stop_market_order) mirror the real
+# signature; some args are unused in the fake — intentional contract match.
+"tests/unit/test_coordinator_on_order_event_safety.py" = ["ARG002"]
 # Kronos preset dispatch tests use pytest fixtures as side-effect-only args (monkeypatch path).
 # _populate_cache helper takes unused symbol/timeframe for forward-compat readability.
 "tests/unit/test_dashboard_kronos_preset.py" = ["ARG001"]

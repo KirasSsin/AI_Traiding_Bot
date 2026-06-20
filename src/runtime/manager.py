@@ -14,6 +14,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from src.execution.state_machine import ExecutionState
 from src.marketdata.quality import BarPriceQualityDetector
 from src.platform.logging import get_logger
 from src.risk.halt_gate import HaltGate, HaltTrigger
@@ -46,6 +47,21 @@ _HALT_TRIGGER_TO_REASON: dict[HaltTrigger, ReasonCode] = {
     HaltTrigger.CONSECUTIVE_LOSSES: ReasonCode.HALT_S36_CONSECUTIVE_LOSSES,
     HaltTrigger.NO_TRADE_TIMEOUT: ReasonCode.HALT_S36_NO_TRADE_TIMEOUT,
 }
+
+# S55 TL-02: states with a live/held position that an EXIT_FLAT signal must close
+# via coordinator.flatten() (cancel any live OCO legs + sell the residual). FLAT /
+# ENTRY_PENDING / terminal states are NOT flattenable (no position, or already exiting).
+_FLATTENABLE_STATES: frozenset[ExecutionState] = frozenset(
+    {
+        ExecutionState.LONG_OPEN,
+        ExecutionState.OCO_ARMING,
+        ExecutionState.OCO_ARMED,
+    }
+)
+
+# Fallback when a strategy emits a free-text exit reason that is not a canonical
+# ReasonCode value (defense-in-depth — all shipped strategies use valid codes).
+_DEFAULT_EXIT_REASON = ReasonCode.EXIT_SIGNAL_FLIP
 
 
 class RuntimeManager:
@@ -148,6 +164,9 @@ class RuntimeManager:
 
         Sequential by ADR 0022 sub-decisions 1, 2, 4, 5.
         S36 T4: HaltGate evaluation per-tick when settings.s35_demo_active=True.
+        S55 TL-02: reconcile_arming_ttl runs each tick so a bracket stuck in
+        OCO_ARMING past the TTL HALTs (ADR 0020 sub-decision 11) — without this
+        a partial arm (TP placed, SL leg failed) would stay half-armed forever.
         """
         if self._maybe_kill_switch():
             return
@@ -155,6 +174,7 @@ class RuntimeManager:
             return
         if self._settings.s35_demo_active and self._check_halt_gate():
             return
+        self._coordinator.reconcile_arming_ttl(ttl_seconds=self._settings.oco_arming_ttl_seconds)
         self._poll_bar_and_strategy()
 
     def _check_halt_gate(self) -> bool:
@@ -281,6 +301,21 @@ class RuntimeManager:
             max_silence_seconds=self._settings.runtime_ws_check_alive_max_silence
         )
 
+    @staticmethod
+    def _exit_reason(signal_reason: str) -> ReasonCode:
+        """Map a strategy's exit-signal reason string → ReasonCode for flatten().
+
+        Strategy ``Signal.reason`` is a free-text field; all shipped strategies
+        emit a valid ReasonCode value (e.g. ``EXIT_FLAT_MEANREV_REVERT``), but an
+        unknown value falls back to EXIT_SIGNAL_FLIP rather than crashing the
+        safety-critical flatten path.
+        """
+        try:
+            return ReasonCode(signal_reason)
+        except ValueError:
+            logger.warning("runtime.exit_reason_unmapped", reason=signal_reason)
+            return _DEFAULT_EXIT_REASON
+
     def _poll_bar_and_strategy(self) -> None:
         """REST kline → strategy.on_bar → risk.assess → coordinator.start_bracket.
 
@@ -288,8 +323,6 @@ class RuntimeManager:
         (ADR 0022 sub-decision 3). LONG-only — FLAT signals skip risk per
         RiskManager LONG-only contract (src/risk/manager.py:159).
         """
-        from src.execution.state_machine import ExecutionState
-
         bar = self._bar_source.poll()
         if self._bar_source.should_halt(threshold=self._settings.runtime_bar_poll_stall_threshold):
             logger.error(
@@ -311,15 +344,28 @@ class RuntimeManager:
             return
         logger.info("runtime.bar_tick", bar_close_ts=bar.close_time.isoformat())
         signal = self._strategy.on_bar(bar)
-        if signal is None or signal.side == SignalSide.FLAT:
+        if signal is None:
             return
-        # FSM pre-check — only call start_bracket from FLAT (one-open-order invariant).
-        # Reading via _repo (matches T17 plan pattern; no public current_state() on Coordinator).
+        # FSM pre-check — read current state once (no public current_state() on
+        # Coordinator, so read via _repo per T17 plan pattern).
         symbol = getattr(self._coordinator, "symbol", None)
         if symbol is None:
             logger.warning("runtime.coordinator_missing_symbol_attr")
             return
         row = self._coordinator._repo.get(symbol)
+        # S55 TL-02: route EXIT_FLAT signals → flatten when a position is held.
+        # Previously every FLAT signal was dropped, so a strategy exit never closed
+        # the position. flatten() cancels live OCO legs + sells the residual.
+        if signal.side == SignalSide.FLAT:
+            if row is not None and row.state in _FLATTENABLE_STATES:
+                logger.info(
+                    "runtime.exit_signal_flatten",
+                    reason=signal.reason,
+                    current_state=row.state.value,
+                )
+                self._coordinator.flatten(reason=self._exit_reason(signal.reason))
+            return
+        # LONG entry path — only call start_bracket from FLAT (one-open-order invariant).
         if row is None or row.state != ExecutionState.FLAT:
             logger.debug(
                 "runtime.signal_skipped_non_flat_state",
@@ -376,8 +422,6 @@ class RuntimeManager:
         # In-flight order count snapshot — best-effort, never raise
         in_flight = 0
         try:
-            from src.execution.state_machine import ExecutionState
-
             symbol = getattr(self._coordinator, "symbol", None)
             if symbol is not None:
                 row = self._coordinator._repo.get(symbol)

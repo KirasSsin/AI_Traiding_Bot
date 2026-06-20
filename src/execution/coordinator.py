@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 from src.execution.bracket import (
     BracketParams,
     build_bracket,
+    compute_oco_qty,
     make_flatten_link_id,
     make_order_link_id,
 )
@@ -268,6 +269,10 @@ class Coordinator:
                     arming_started_at=None,
                     last_attempt_num=1,
                     updated_at=_now_iso(),
+                    # S55 TL-01: persist planned exit prices so on_order_event can arm
+                    # the OCO legs once the entry fills (arm_oco needs both prices).
+                    bracket_tp_price=tp_price,
+                    bracket_sl_trigger_price=sl_trigger_price,
                 )
             )
             return bracket_id
@@ -306,7 +311,12 @@ class Coordinator:
             try:
                 if role == "entry":
                     if status == "Filled":
-                        self._transition(ExecutionEvent.ENTRY_FILLED)
+                        self._transition(ExecutionEvent.ENTRY_FILLED)  # ENTRY_PENDING → LONG_OPEN
+                        # S55 TL-01: arm the OCO bracket immediately on entry fill
+                        # (ADR 0020 sub-decision 1: TP+SL legs placed после Filled).
+                        # Without this the position stays LONG_OPEN with no SL/TP —
+                        # an unbounded-loss defect. arm_oco re-enters self._lock (RLock).
+                        self._arm_oco_after_entry_fill(evt)
                     # PartiallyFilled / other entry statuses: no-op (Spot Market BUY
                     # fills atomically; defensive against future SDK changes).
                     return
@@ -328,6 +338,64 @@ class Coordinator:
                     role,
                     link_id,
                 )
+
+    def _arm_oco_after_entry_fill(self, evt: dict[str, Any]) -> None:
+        """S55 TL-01: arm the OCO bracket from an entry-Filled WS event.
+
+        Computes the fee-aware OCO qty (ADR 0020 sub-decision 6 / G5) from the
+        fill echo — Spot Buy fees are deducted from the base coin, so the
+        sellable qty is ``cumExecQty - cumExecFee`` floored to the lot step —
+        then places the TP Limit + SL Stop-Market legs at the prices persisted
+        by start_bracket. Runs under the lock already held by on_order_event
+        (arm_oco re-enters the same RLock).
+
+        Fail-closed: if the planned prices or fill qty are missing/invalid (e.g.
+        an entry-fill echo arriving on a bracket whose prices were not persisted),
+        HALT instead of leaving a naked LONG position with no stop-loss.
+        """
+        row = self._repo.get(self._symbol)
+        if row is None or row.bracket_tp_price is None or row.bracket_sl_trigger_price is None:
+            _log.error(
+                "arm_after_fill.missing_bracket_prices symbol=%s bracket_id=%s",
+                self._symbol,
+                row.bracket_id if row is not None else None,
+            )
+            self._set_halt(
+                reason=ReasonCode.HALT_OCO_ARM_TIMEOUT,
+                last_event=ExecutionEvent.RISK_HALT,
+                extra={"arm_path": "entry_fill", "cause": "missing_bracket_prices"},
+            )
+            self._transition(ExecutionEvent.RISK_HALT)
+            return
+        cum_exec_qty = Decimal(str(evt.get("cumExecQty") or "0"))
+        cum_exec_fee = Decimal(str(evt.get("cumExecFee") or "0"))
+        fee_currency = str(evt.get("feeCurrency") or "")
+        oco_qty = compute_oco_qty(
+            cum_exec_qty=cum_exec_qty,
+            cum_exec_fee=cum_exec_fee,
+            fee_currency=fee_currency,
+            base_coin=self._base_coin,
+            qty_step=self._qty_step(),
+        )
+        if oco_qty <= Decimal("0"):
+            _log.error(
+                "arm_after_fill.zero_oco_qty symbol=%s cum_exec_qty=%s cum_exec_fee=%s",
+                self._symbol,
+                cum_exec_qty,
+                cum_exec_fee,
+            )
+            self._set_halt(
+                reason=ReasonCode.HALT_OCO_ARM_TIMEOUT,
+                last_event=ExecutionEvent.RISK_HALT,
+                extra={"arm_path": "entry_fill", "cause": "zero_oco_qty"},
+            )
+            self._transition(ExecutionEvent.RISK_HALT)
+            return
+        self.arm_oco(
+            tp_price=row.bracket_tp_price,
+            sl_trigger_price=row.bracket_sl_trigger_price,
+            oco_qty=oco_qty,
+        )
 
     def _handle_sl_partial(self, evt: dict[str, Any]) -> None:
         """ADR 0020 sub-decision 7: SL IOC partial → flatten residual via Market Sell.
@@ -679,6 +747,8 @@ class Coordinator:
                 last_exit_reason=current.last_exit_reason,
                 last_reconcile_at=current.last_reconcile_at,
                 bootstrap_at=current.bootstrap_at,
+                bracket_tp_price=current.bracket_tp_price,
+                bracket_sl_trigger_price=current.bracket_sl_trigger_price,
             )
         )
 
