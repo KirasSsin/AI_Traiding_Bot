@@ -1,10 +1,12 @@
 """Bybit V5 MARKET order adapter — ADR 0020 sub-decisions 1 & 3."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
 from src.execution.bybit.errors import BybitAdapterError, ReasonCode, map_error
+from src.marketdata.bybit.rest import BybitAPIError as RestBybitAPIError
 from src.marketdata.bybit.rest import _retry_with_backoff
 from src.marketdata.filters import BybitFilters
 
@@ -102,14 +104,46 @@ class WalletSnapshot:
     locked: Decimal
 
 
-class BybitAPIError(RuntimeError):
-    """Bybit `place_order` returned non-zero retCode."""
+class BybitAPIError(RestBybitAPIError):
+    """Bybit `place_order` returned non-zero retCode.
+
+    S55 BYBIT-03: subclasses ``src.marketdata.bybit.rest.BybitAPIError`` so a single
+    ``except BybitAPIError`` (the adapter class) covers both the synchronous
+    non-zero-retCode path AND a re-wrapped rest-layer rate-limit exhaustion. Unlike
+    the rest base, this carries a mapped ``.reason`` (ReasonCode) — the field the
+    coordinator's flatten short-circuits (110072 / RATE_LIMIT_HIT) depend on.
+    """
 
     def __init__(self, ret_code: int, ret_msg: str, reason: ReasonCode) -> None:
-        super().__init__(f"retCode={ret_code} ({reason}): {ret_msg}")
-        self.ret_code = ret_code
-        self.ret_msg = ret_msg
+        super().__init__(ret_code, ret_msg)
+        # Base sets a generic "Bybit API error retCode=..." message; override with the
+        # reason-annotated form for readable adapter-level diagnostics.
+        self.args = (f"retCode={ret_code} ({reason}): {ret_msg}",)
         self.reason = reason
+
+
+def _call_rest(fn: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    """Run a pybit call through _retry_with_backoff, re-wrapping a rest-layer
+    BybitAPIError (rate-limit retry EXHAUSTION) into the adapter's BybitAPIError
+    WITH a mapped ``.reason``.
+
+    S55 BYBIT-03: ``_retry_with_backoff`` raises ``rest.BybitAPIError`` (no ``.reason``)
+    when it exhausts retries on 170005/170222. Callers in the execution layer catch
+    ``adapter.BybitAPIError`` and branch on ``.reason``; an un-translated rest error
+    would escape uncaught (or hit a generic handler with no ``.reason``), making the
+    coordinator's flatten short-circuits unreachable and feeding the BYBIT-02
+    double-sell. Translating here at the adapter boundary keeps every adapter method's
+    error type uniform.
+    """
+    try:
+        return _retry_with_backoff(fn)
+    except BybitAPIError:
+        # Already the adapter class (cannot happen from _retry_with_backoff today, but
+        # keep idempotent if a deeper layer ever raises it) — pass through unchanged.
+        raise
+    except RestBybitAPIError as exc:
+        reason = map_error(exc.ret_code, exc.ret_msg)
+        raise BybitAPIError(exc.ret_code, exc.ret_msg, reason) from exc
 
 
 class BybitMarketAdapter:
@@ -171,7 +205,7 @@ class BybitMarketAdapter:
             payload["orderLinkId"] = order_link_id
         payload.update(extra)
 
-        resp = _retry_with_backoff(lambda: self._rest._http.place_order(**payload))
+        resp = _call_rest(lambda: self._rest._http.place_order(**payload))
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
@@ -208,7 +242,7 @@ class BybitMarketAdapter:
             "marketUnit": "baseCoin",
             "orderLinkId": order_link_id,
         }
-        resp = _retry_with_backoff(lambda: self._rest._http.place_order(**payload))
+        resp = _call_rest(lambda: self._rest._http.place_order(**payload))
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
@@ -239,7 +273,7 @@ class BybitMarketAdapter:
             "marketUnit": "baseCoin",
             "orderLinkId": order_link_id,
         }
-        resp = _retry_with_backoff(lambda: self._rest._http.place_order(**payload))
+        resp = _call_rest(lambda: self._rest._http.place_order(**payload))
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
@@ -251,7 +285,7 @@ class BybitMarketAdapter:
     def cancel_order(self, *, symbol: str, order_id: str) -> CancelResult:
         """ADR 0020 sub-decision 6: cancel-of-Filled returns 110001, classified non-fatal."""
         payload = {"category": "spot", "symbol": symbol, "orderId": order_id}
-        resp = _retry_with_backoff(lambda: self._rest._http.cancel_order(**payload))
+        resp = _call_rest(lambda: self._rest._http.cancel_order(**payload))
         if resp["retCode"] == 0:
             return CancelResult(cancelled=True)
         reason = map_error(resp["retCode"], resp.get("retMsg", ""))
@@ -263,7 +297,7 @@ class BybitMarketAdapter:
 
     def cancel_all_orders(self, *, symbol: str) -> None:
         """Bulk cancel — used by flatten cascade and emergency halt."""
-        resp = _retry_with_backoff(
+        resp = _call_rest(
             lambda: self._rest._http.cancel_all_orders(category="spot", symbol=symbol)
         )
         if resp["retCode"] != 0:
@@ -275,7 +309,7 @@ class BybitMarketAdapter:
 
         Bybit V5 shape: result.list[0] contains the order fields.
         """
-        resp = _retry_with_backoff(
+        resp = _call_rest(
             lambda: self._rest._http.get_order(category="spot", symbol=symbol, orderId=order_id)
         )
         if resp["retCode"] != 0:
@@ -299,9 +333,7 @@ class BybitMarketAdapter:
         """ADR 0020 sub-decision 9: list active orders for prior-attempt detection.
         V5 GET /v5/order/realtime — returns currently open (Untriggered/New/PartiallyFilled).
         """
-        resp = _retry_with_backoff(
-            lambda: self._rest._http.get_open_orders(category="spot", symbol=symbol)
-        )
+        resp = _call_rest(lambda: self._rest._http.get_open_orders(category="spot", symbol=symbol))
         if resp["retCode"] != 0:
             reason = map_error(resp["retCode"], resp.get("retMsg", ""))
             raise BybitAPIError(resp["retCode"], resp.get("retMsg", ""), reason)
@@ -311,7 +343,7 @@ class BybitMarketAdapter:
         """ADR 0020 sub-decision 9: recent terminal orders for prior-attempt detection.
         V5 GET /v5/order/history — Filled/Cancelled/Rejected within ~7 days.
         """
-        resp = _retry_with_backoff(
+        resp = _call_rest(
             lambda: self._rest._http.get_order_history(category="spot", symbol=symbol, limit=limit)
         )
         if resp["retCode"] != 0:
@@ -325,7 +357,7 @@ class BybitMarketAdapter:
         Bybit V5 shape: result.list[0].coin[0] contains the per-coin balance.
         availableToWithdraw='' means funds fully locked — coerce empty string to Decimal('0').
         """
-        resp = _retry_with_backoff(
+        resp = _call_rest(
             lambda: self._rest._http.get_wallet_balance(accountType="UNIFIED", coin=coin)
         )
         if resp["retCode"] != 0:
