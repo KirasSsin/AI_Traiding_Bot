@@ -96,10 +96,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
     conn: Connection = connect(settings.db_path)
 
     # REST client + filters (placeholders — production loads via get_filters S12+)
+    # S55 B0 BLOCKER BYBIT-01: REST + private-WS are built from the SAME
+    # (testnet, demo) pair (single source of truth on Settings), so orders (REST)
+    # and their fill echoes (WS) cannot land in different Bybit account universes.
     rest = BybitRESTClient(
         api_key=settings.bybit_api_key,
         api_secret=settings.bybit_api_secret,
         testnet=settings.testnet,
+        demo=settings.demo,
     )
     filters = BybitFilters(
         symbol=symbol,
@@ -164,14 +168,32 @@ def _cmd_run(args: argparse.Namespace) -> int:
         trade_history_repo=trade_history_repo,
     )
 
-    endpoint = "demo.bybit.com" if settings.testnet else "stream.bybit.com"
+    # S55 B0 BLOCKER BYBIT-01: derive the WS endpoint label from the SAME
+    # (testnet, demo) pair used for REST — no ad-hoc substring routing. The
+    # pybit (testnet, demo) flags are passed explicitly so the WS env can never
+    # diverge from REST. `endpoint` is kept as a human-readable label only.
+    ws_endpoint = _ws_endpoint_label(testnet=settings.testnet, demo=settings.demo)
     ws_consumer = BybitPrivateWSConsumer(
         api_key=settings.bybit_api_key,
         api_secret=settings.bybit_api_secret,
-        endpoint=endpoint,
+        endpoint=ws_endpoint,
         coordinator=coordinator,
         reconciler=reconciler,
         fill_recorder=fill_recorder,
+        testnet=settings.testnet,
+        demo=settings.demo,
+    )
+
+    # Startup-visibility: log the resolved REST + WS hosts so an env split is
+    # obvious in the first lines of any live run (S55 B0 BYBIT-01).
+    from src.platform.logging import get_logger
+
+    get_logger(__name__).info(
+        "bybit.env_resolved",
+        testnet=settings.testnet,
+        demo=settings.demo,
+        rest_host=rest.endpoint,
+        ws_endpoint=ws_endpoint,
     )
 
     # RuntimeManager + run
@@ -196,6 +218,28 @@ def _cmd_run(args: argparse.Namespace) -> int:
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: runtime crash: {e}", file=sys.stderr)
         return 1
+
+
+def _ws_endpoint_label(*, testnet: bool, demo: bool) -> str:
+    """S55 B0 BLOCKER BYBIT-01: human-readable WS host label for the (testnet,
+    demo) pair, mirroring pybit's subdomain resolution.
+
+    The actual pybit env flags are passed separately to BybitPrivateWSConsumer;
+    this string exists only for logging / repr. Returning the true host (rather
+    than the old ad-hoc "demo.bybit.com" / "stream.bybit.com") keeps the label
+    consistent with the resolved env and makes an env split visible in logs.
+
+    Universe matrix (pybit 5.16):
+        testnet=True,  demo=False → stream-testnet
+        testnet=False, demo=True  → stream-demo        (MAINNET-demo)
+        testnet=True,  demo=True  → stream-demo-testnet
+        testnet=False, demo=False → stream             (MAINNET live)
+    """
+    if demo:
+        subdomain = "stream-demo-testnet" if testnet else "stream-demo"
+    else:
+        subdomain = "stream-testnet" if testnet else "stream"
+    return f"wss://{subdomain}.bybit.com/v5/private"
 
 
 def _derive_heal_max_age_seconds(settings: Settings, interval: str) -> int:

@@ -21,7 +21,16 @@ def mock_http_cls() -> MagicMock:
 def test_client_init_passes_credentials(mock_http_cls: MagicMock) -> None:
     with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
         _ = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
-    mock_http_cls.assert_called_once_with(testnet=True, api_key="k", api_secret="s")
+    # S55 B0 BYBIT-01: demo flag now passed explicitly (default False) so REST +
+    # private-WS resolve to the same Bybit account universe.
+    mock_http_cls.assert_called_once_with(testnet=True, demo=False, api_key="k", api_secret="s")
+
+
+def test_client_init_passes_demo_flag_explicitly(mock_http_cls: MagicMock) -> None:
+    """S55 B0 BYBIT-01: demo=True must propagate to pybit HTTP (env consistency)."""
+    with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
+        _ = BybitRESTClient(api_key="k", api_secret="s", testnet=False, demo=True)
+    mock_http_cls.assert_called_once_with(testnet=False, demo=True, api_key="k", api_secret="s")
 
 
 def test_get_server_time_returns_utc_datetime(mock_http_cls: MagicMock) -> None:

@@ -123,8 +123,23 @@ def _safe_extract_list(resp: dict[str, Any], context: str) -> list[Any]:
 class BybitRESTClient:
     """Wraps pybit V5 HTTP client with our domain-friendly return types."""
 
-    def __init__(self, api_key: str, api_secret: str, testnet: bool) -> None:
-        self._http = HTTP(testnet=testnet, api_key=api_key, api_secret=api_secret)
+    def __init__(self, api_key: str, api_secret: str, testnet: bool, demo: bool = False) -> None:
+        """Build the pybit HTTP client.
+
+        S55 B0 BLOCKER BYBIT-01: `demo` is now passed explicitly to pybit so the
+        REST host is resolved from the same (testnet, demo) pair as the private
+        WS consumer. Previously `demo` was omitted → REST always resolved to the
+        testnet exchange while the WS leg could route to MAINNET-demo, splitting
+        orders and their fill echoes across separate account universes.
+        """
+        self._testnet = testnet
+        self._demo = demo
+        self._http = HTTP(testnet=testnet, demo=demo, api_key=api_key, api_secret=api_secret)
+
+    @property
+    def endpoint(self) -> str:
+        """Resolved Bybit REST host (for startup-visibility logging)."""
+        return str(self._http.endpoint)
 
     def get_server_time(self) -> datetime:
         """Fetch Bybit server time as UTC datetime (seconds precision)."""
