@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
 import threading
 from dataclasses import dataclass
@@ -309,6 +310,26 @@ BARS_PER_YEAR: dict[str, int] = {
 
 _lock = threading.Lock()
 _RUNS_DIR = Path("data/runs")
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Write text atomically: stage to a sibling .tmp then os.replace into place.
+
+    DASH-03 (S55): cache writes were non-atomic plain `write_text`. Two concurrent
+    same-run_id requests could interleave/truncate the JSON, and a parallel
+    `get_run`/`GET /api/runs/{run_id}` could read a half-written file → JSONDecodeError 500.
+    os.replace is atomic on POSIX, so a reader always sees either the old file or the
+    fully-written new one — never a torn intermediate. Mirrors the tmp+os.replace
+    idiom in src/marketdata/storage.py.
+    """
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    try:
+        tmp_path.write_text(text)
+        os.replace(tmp_path, path)
+    finally:
+        # tmp is gone after a successful replace; only matters if write/replace raised.
+        if tmp_path.exists():
+            tmp_path.unlink(missing_ok=True)
 
 
 # H1 (S49) — run_id is ALWAYS sha256[:16] (lowercase hex) generated in BacktestRequest.run_id().
@@ -916,6 +937,32 @@ def run_backtest(
         result["cached"] = True
         return result
 
+    # DASH-03 (S55): single-flight across ALL strategy types. The research
+    # branches (volume_breakout / atr_breakout / supertrend / kronos) previously
+    # returned BEFORE the lock, and even the default WFA path released the lock
+    # before its cache write. POST /api/backtest is a plain def → Starlette runs
+    # it in a threadpool, so concurrent requests ran runners in parallel. Hoisting
+    # the lock to wrap the whole dispatch honours the module docstring's
+    # '1 backtest at-a-time' contract for every path.
+    with _lock:
+        return _run_backtest_locked(
+            req, run_id=run_id, cache_path=cache_path, initial_balance=initial_balance
+        )
+
+
+def _run_backtest_locked(
+    req: BacktestRequest,
+    *,
+    run_id: str,
+    cache_path: Path,
+    initial_balance: float = 10000.0,
+) -> dict[str, Any]:
+    """Dispatch body — MUST be called while holding `_lock` (single-flight).
+
+    Split out of run_backtest (DASH-03) so the lock covers every strategy
+    branch (and the cache write), not just part of the default WFA path.
+    """
+
     if req.strategy_id not in STRATEGY_PRESETS:
         raise ValueError(
             f"Unknown strategy '{req.strategy_id}'. "
@@ -991,7 +1038,7 @@ def run_backtest(
             "start": req.start,
             "end": req.end,
         }
-        cache_path.write_text(json.dumps(result_vb, default=str, indent=2))
+        _atomic_write_text(cache_path, json.dumps(result_vb, default=str, indent=2))
         return result_vb
 
     # S42 T4 — atr_breakout dispatch: envelope merge from runner.
@@ -1064,7 +1111,7 @@ def run_backtest(
             "start": req.start,
             "end": req.end,
         }
-        cache_path.write_text(json.dumps(result_ab, default=str, indent=2))
+        _atomic_write_text(cache_path, json.dumps(result_ab, default=str, indent=2))
         return result_ab
 
     # S52 T8 / S53 T5 (C11) — Kronos dispatch: delegated to _kronos_dispatch.run_kronos_dispatch.
@@ -1145,54 +1192,53 @@ def run_backtest(
             "start": req.start,
             "end": req.end,
         }
-        cache_path.write_text(json.dumps(result_st, default=str, indent=2))
+        _atomic_write_text(cache_path, json.dumps(result_st, default=str, indent=2))
         return result_st
 
-    with _lock:
-        # Lazy import к keep dashboard module loadable без main module side effects
-        from src.__main__ import _load_ohlcv, _run_wfa_single_symbol
+    # Lazy import к keep dashboard module loadable без main module side effects
+    from src.__main__ import _load_ohlcv, _run_wfa_single_symbol
 
-        df = _load_ohlcv(symbol=req.symbol, start=req.start, end=req.end, interval=req.interval)
-        if df.empty:
-            raise FileNotFoundError(
-                f"No OHLCV data для {req.symbol} {req.interval} в {req.start}..{req.end}"
-            )
-
-        # S38 dashboard extension: auto-scale WFA params для small data ranges
-        # (operator может select short period где ADR 0014 defaults 4520 bars fail).
-        wfa_params = _autoscale_wfa_params(len(df))
-
-        # S25: build full WFA config from preset
-        # S27 T1: bars_per_year passed к replay_engine для timeframe-correct annualization
-        strategy_config: dict[str, object] = {
-            "trading": {
-                "initial_balance": initial_balance,
-                "commission_taker": 0.001,
-                "slippage": 0.0005,
-                "position_size_pct": 10.0,
-                "max_drawdown_pct": 50.0,
-                "long_only": True,
-            },
-            "strategy": {
-                "type": preset["type"],
-                "indicators": preset["indicators"],
-            },
-            "bars_per_year": BARS_PER_YEAR[req.interval],
-        }
-        from typing import cast
-
-        from src.risk.trade_history import TradeRecord
-
-        _sym_trades_raw, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
-            symbol=req.symbol,
-            df=df,
-            strategy_config=strategy_config,
-            train_bars=wfa_params["train_bars"],
-            test_bars=wfa_params["test_bars"],
-            k_folds=wfa_params["k_folds"],
-            embargo_bars=wfa_params["embargo_bars"],
+    df = _load_ohlcv(symbol=req.symbol, start=req.start, end=req.end, interval=req.interval)
+    if df.empty:
+        raise FileNotFoundError(
+            f"No OHLCV data для {req.symbol} {req.interval} в {req.start}..{req.end}"
         )
-        sym_trades: list[TradeRecord] = cast(list[TradeRecord], _sym_trades_raw)
+
+    # S38 dashboard extension: auto-scale WFA params для small data ranges
+    # (operator может select short period где ADR 0014 defaults 4520 bars fail).
+    wfa_params = _autoscale_wfa_params(len(df))
+
+    # S25: build full WFA config from preset
+    # S27 T1: bars_per_year passed к replay_engine для timeframe-correct annualization
+    strategy_config: dict[str, object] = {
+        "trading": {
+            "initial_balance": initial_balance,
+            "commission_taker": 0.001,
+            "slippage": 0.0005,
+            "position_size_pct": 10.0,
+            "max_drawdown_pct": 50.0,
+            "long_only": True,
+        },
+        "strategy": {
+            "type": preset["type"],
+            "indicators": preset["indicators"],
+        },
+        "bars_per_year": BARS_PER_YEAR[req.interval],
+    }
+    from typing import cast
+
+    from src.risk.trade_history import TradeRecord
+
+    _sym_trades_raw, sym_fold_sharpes, sym_runner_result, sym_mc_p = _run_wfa_single_symbol(
+        symbol=req.symbol,
+        df=df,
+        strategy_config=strategy_config,
+        train_bars=wfa_params["train_bars"],
+        test_bars=wfa_params["test_bars"],
+        k_folds=wfa_params["k_folds"],
+        embargo_bars=wfa_params["embargo_bars"],
+    )
+    sym_trades: list[TradeRecord] = cast(list[TradeRecord], _sym_trades_raw)
 
     bars_per_year = BARS_PER_YEAR[req.interval]
     metrics = compute_t1_t6_metrics(
@@ -1423,7 +1469,7 @@ def run_backtest(
         )
 
     # Cache к disk
-    cache_path.write_text(json.dumps(result, default=str, indent=2))
+    _atomic_write_text(cache_path, json.dumps(result, default=str, indent=2))
 
     # S27: refresh aggregated audit doc (best-effort, non-blocking)
     try:
