@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) DONE.
+updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90, multi-interval GAP per slot) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
