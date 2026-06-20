@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sqlite3
 import sys
 from collections.abc import Callable
@@ -59,6 +60,14 @@ from src.signalgen.mean_reversion_strategy import (
 from src.signalgen.strategy import (
     EmaCrossoverAdxRsiStrategy,  # noqa: F401 — kept for backward-compat tests
 )
+
+# SEC-S55-01 — anchored symbol allowlist (mirrors backtest_runner._RUN_ID_RE S49 H1).
+# `symbol` is f-string-interpolated into the parquet read path in _load_ohlcv below;
+# _load_ohlcv is reachable both from the unauthenticated /api/backtest endpoint and
+# from the CLI, so the gate lives here as defense-in-depth (the dashboard
+# BacktestPayload.symbol validator is the boundary 422). ANCHORED (\A...\Z + fullmatch)
+# is mandatory — a substring `^...$` match would let 'BTCUSDT\n/evil' through.
+_SYMBOL_RE = re.compile(r"\A[A-Z0-9]{1,20}\Z")
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
@@ -486,7 +495,17 @@ def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> p
     >=90% bars else WFA aborts with explicit error.
 
     S19 ADR 0034: interval param extends parquet path: 60 → _1h, 15 → _15m.
+
+    SEC-S55-01: `symbol` is f-string-interpolated into the parquet path below and is
+    attacker-controlled via /api/backtest, so it is validated against an anchored
+    allowlist FIRST — path traversal (e.g. '../../etc/passwd') raises ValueError
+    before any filesystem access.
     """
+    if not _SYMBOL_RE.fullmatch(symbol):
+        raise ValueError(
+            f"Invalid symbol '{symbol}': expected 1-20 uppercase alphanumeric chars "
+            "(e.g. BTCUSDT)"
+        )
     interval_label_map: dict[str, str] = {
         "5": "5m",
         "15": "15m",

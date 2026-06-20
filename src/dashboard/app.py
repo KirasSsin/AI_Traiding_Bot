@@ -16,6 +16,7 @@ Launch: scripts/dashboard.sh OR `python -m src.dashboard.app`.
 
 from __future__ import annotations
 
+import re
 import webbrowser
 from datetime import date
 from pathlib import Path
@@ -53,6 +54,13 @@ _DIR = Path(__file__).resolve().parent
 # S46 architect C1+C4 BINDING — обслуживать React build из src/dashboard_react/dist/
 _DIST_DIR = _DIR.parent / "dashboard_react" / "dist"
 
+# SEC-S55-01 — anchored symbol allowlist (mirrors backtest_runner._RUN_ID_RE S49 H1).
+# `symbol` f-string-interpolates into a parquet read path in src.__main__._load_ohlcv;
+# without this gate an attacker reaching /api/backtest could traverse the filesystem.
+# ANCHORED (\A...\Z + fullmatch) is mandatory: a substring `^...$` match would let
+# 'BTCUSDT\n/evil' through (multiline-$ matches before the newline).
+_SYMBOL_RE = re.compile(r"\A[A-Z0-9]{1,20}\Z")
+
 
 class BacktestPayload(BaseModel):
     """Module-level model — FastAPI resolves к request Body automatically.
@@ -81,6 +89,24 @@ class BacktestPayload(BaseModel):
             date.fromisoformat(v)
         except ValueError as exc:
             raise ValueError(f"Invalid date '{v}': expected YYYY-MM-DD") from exc
+        return v
+
+    @field_validator("symbol")
+    @classmethod
+    def _validate_symbol(cls, v: str) -> str:
+        """SEC-S55-01 — anchored allowlist before symbol reaches the parquet path.
+
+        `symbol` is f-string-interpolated into a filesystem path in
+        src.__main__._load_ohlcv; an unconstrained value (e.g. '../../etc/passwd',
+        'BTCUSDT\\n/evil') is a path-traversal vector reachable from the
+        unauthenticated /api/backtest endpoint. Enforce the same anchored allowlist
+        as backtest_runner._RUN_ID_RE → 422 at the boundary.
+        """
+        if not _SYMBOL_RE.fullmatch(v):
+            raise ValueError(
+                f"Invalid symbol '{v}': expected 1-20 uppercase alphanumeric chars "
+                "(e.g. BTCUSDT)"
+            )
         return v
 
 

@@ -2,6 +2,7 @@
 
 ADR 0022 sub-decisions 2 + 3.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -141,6 +142,68 @@ def test_bar_source_recovery_resets_counter():
     src.poll()  # recovery
     assert src.consecutive_failures == 0
     assert src.should_halt(threshold=24) is False
+
+
+def test_bar_source_drops_forming_bar_returns_settled() -> None:
+    """DI-02 look-ahead: 2-bar window, newest close_time > now (forming),
+    older close_time <= now (settled) → poll() returns SETTLED only, never forming."""
+    from src.runtime.bar_source import BarSource
+
+    now_ms = 1_700_007_200_000  # exactly the settled bar's close
+    settled = _bar(1_700_003_600_000, 1_700_007_200_000)  # close == now → closed
+    forming = _bar(1_700_007_200_000, 1_700_010_800_000)  # close > now → forming
+    adapter = MagicMock()
+    adapter.get_klines.return_value = [settled, forming]
+
+    src = BarSource(
+        adapter=adapter,
+        symbol="BTCUSDT",
+        interval="60",
+        now_fn=lambda: now_ms / 1000.0,
+    )
+    result = src.poll()
+    assert result == settled, "forming bar (close_time > now) must never be forwarded"
+
+
+def test_bar_source_forming_only_returns_none() -> None:
+    """DI-02: if the only bar in window is still forming → poll() returns None (no settled bar)."""
+    from src.runtime.bar_source import BarSource
+
+    now_ms = 1_700_005_000_000
+    forming = _bar(1_700_003_600_000, 1_700_007_200_000)  # close > now → forming
+    adapter = MagicMock()
+    adapter.get_klines.return_value = [forming]
+
+    src = BarSource(
+        adapter=adapter,
+        symbol="BTCUSDT",
+        interval="60",
+        now_fn=lambda: now_ms / 1000.0,
+    )
+    assert src.poll() is None
+
+
+def test_bar_source_forming_bar_not_marked_as_settled_close_ts() -> None:
+    """DI-02: forming bar must not advance dedup cursor — once it settles, it still emits."""
+    from src.runtime.bar_source import BarSource
+
+    settled = _bar(1_700_003_600_000, 1_700_007_200_000)
+    forming = _bar(1_700_007_200_000, 1_700_010_800_000)
+    adapter = MagicMock()
+    # poll 1: now before forming closes → forming dropped, nothing settled-new beyond `settled`
+    # poll 2: now after forming closes → forming now settled → must emit
+    adapter.get_klines.side_effect = [[settled, forming], [settled, forming]]
+    clock = {"now_ms": 1_700_007_200_000}
+
+    src = BarSource(
+        adapter=adapter,
+        symbol="BTCUSDT",
+        interval="60",
+        now_fn=lambda: clock["now_ms"] / 1000.0,
+    )
+    assert src.poll() == settled  # forming dropped
+    clock["now_ms"] = 1_700_010_800_000  # forming has now closed
+    assert src.poll() == forming  # previously-forming bar now emitted
 
 
 @pytest.mark.parametrize(
