@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40) + QS-1 (919a55f, DSR units) DONE.
+updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40) + QS-1 (919a55f, DSR units) + B3 TL-03 (ff9ed12)/TL-04 (146b8c0) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -26,6 +26,8 @@ tag: v0.1.0-alpha.54
 **S55 B2 HIGH SEC-S55-01** (`09f2e40`). Path traversal: attacker-`symbol` f-string'ился в parquet-путь `_load_ohlcv` (`__main__.py:500`), достижим из неаутентиф. `/api/backtest`. Fix defense-in-depth: anchored allowlist `\A[A-Z0-9]{1,20}\Z` (1) `BacktestPayload` field_validator → 422 на границе + (2) gate в `_load_ohlcv` (CLI-reachable). Anchored fullmatch (не substring) отбивает `BTCUSDT\n/evil`. TDD +18 traversal payloads. mypy 0, pytest GREEN.
 
 **S55 B2 HIGH QS-1** (`919a55f`). DSR units mismatch: `compute_dsr` candidate Sharpe per-trade (un-annualized), но `sigma_sr` от callers = stdev аннуализированных fold-Sharpe → SR* раздут ~9× → DSR≈0 false-negative (ACTIVE atr_breakout). Fix (quant-stats option B): new `annualization_factor` де-аннуализирует sigma_sr к per-trade шкале внутри `compute_dsr` (Bailey eq.12 одна частота; Lo eq.13 denom не тронут). Wired research_wfa + wfa_reporter. S51 D5 scoping orthogonal (scope≠scale), сохранён. Note: `__main__.py` donchian-путь имеет тот же mismatch — у параллельного агента. TDD +5, mypy 0, pytest GREEN.
+
+**S55 B3 MEDIUM TL-03 (`ff9ed12`) + TL-04 (`146b8c0`).** Streaming exit-priority был ОБРАТНЫМ WFA-runner: atr_breakout проверял reverse-breakdown до ATR-stop, volume_breakout — channel-exit до ATR-stop, тогда как runner'ы делают ATR-stop ПЕРВЫМ (`low[i]<=stop_price` до `elif`). На same-bar double-exit live давал EXIT_FLAT_ATR_REVERSE/VOLUME_CHANNEL вместо stop runner'а (расходящийся reason+fill, live≠backtest). Fix: реордер только streaming-проверок → ATR-stop первым. TDD: parity-тесты same-bar double-exit (atr +1, volume +2). Runner'ы не тронуты. mypy 0, pytest GREEN (6 torch-absent Kronos pre-existing).
 
 **Kronos exploratory вывод:** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. **Long-only Spot edge нет.** Если продолжать: futures-шорт (S55+, плечо/ликвидации) ИЛИ закрыть. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг.
 
