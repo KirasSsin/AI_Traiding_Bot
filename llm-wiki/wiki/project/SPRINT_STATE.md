@@ -1,7 +1,7 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90, multi-interval GAP per slot) DONE.
+updated: 2026-06-20  # S55 B1 BYBIT-03/02/ARCH-02 + B2 DASH-01/04 (91f92ec) + DI-01 (4740f90) + DI-02 (5a15fad) + SEC-S55-01 (09f2e40, path-traversal) DONE.
 sprint: 55
 phase: 4-execution
 branch: feature/sprint-55-full-audit-refactor
@@ -22,6 +22,8 @@ tag: v0.1.0-alpha.54
 **S55 B2 DASH-01+DASH-04** (`91f92ec`). Kronos `RAW_PRETRAIN_LEAKAGE_SUSPECTED` misrender'ился как failed WFA-gate — fix: shared `RESEARCH_VERDICTS` (`utils/verdicts.ts`) на dispatch-сайтах (MetricsTable/TradesTable/HistoryTab) → research-view + leakage-caveat. Frontend +4 (49 GREEN), lint/tsc/build GREEN.
 
 **S55 B2 HIGH DI-02** (`5a15fad`). `BarSource.poll()` мог отдать формирующийся (не закрытый) бар как `is_closed=True` → live look-ahead. Fix: `poll()` дропает бары с `close_time > now` (инъектируемые часы `now_fn`), выбирает новейший settled; dedup+stall сохранены. TDD +3, pytest+mypy GREEN.
+
+**S55 B2 HIGH SEC-S55-01** (`09f2e40`). Path traversal: attacker-`symbol` f-string'ился в parquet-путь `_load_ohlcv` (`__main__.py:500`), достижим из неаутентиф. `/api/backtest`. Fix defense-in-depth: anchored allowlist `\A[A-Z0-9]{1,20}\Z` (1) `BacktestPayload` field_validator → 422 на границе + (2) gate в `_load_ohlcv` (CLI-reachable). Anchored fullmatch (не substring) отбивает `BTCUSDT\n/evil`. TDD +18 traversal payloads. mypy 0, pytest GREEN.
 
 **Kronos exploratory вывод:** оба TF убыток даже с leakage-преимуществом — 1h 25 trades -5.61%, 5m 21 trades -10.24%. **Long-only Spot edge нет.** Если продолжать: futures-шорт (S55+, плечо/ликвидации) ИЛИ закрыть. Speed: batch/fp16 = тупик на MPS, `--sample-count` единственный рычаг.
 
