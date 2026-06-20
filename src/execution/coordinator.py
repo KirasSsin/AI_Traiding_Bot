@@ -508,14 +508,18 @@ class Coordinator:
         if leaves_qty <= 0:
             self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
             return
-        # S49 B1: deterministic orderLinkId — idempotency key so a _retry_with_backoff
-        # re-submission (on 170005/170222 after the Sell already landed) is deduped by
-        # Bybit instead of executing a second Market Sell. Stable per bracket attempt.
-        residual_link_id: str | None = None
-        if row is not None and row.bracket_id is not None:
-            residual_link_id = make_flatten_link_id(
-                bracket_id=row.bracket_id, kind="res", attempt=row.last_attempt_num
-            )
+        # S49 B1 / S55 BYBIT-04: deterministic orderLinkId — idempotency key so a
+        # _retry_with_backoff re-submission (on 170005/170222 after the Sell already
+        # landed) is deduped by Bybit instead of executing a second Market Sell.
+        # Stable per bracket attempt; when bracket_id is None (e.g. a residual on a row
+        # with no active bracket), fall back to the symbol so the key stays deterministic
+        # and the Sell NEVER carries orderLinkId=None (a None id defeats dedupe).
+        flatten_key = row.bracket_id if row is not None and row.bracket_id else self._symbol
+        residual_link_id = make_flatten_link_id(
+            bracket_id=flatten_key[:24],
+            kind="res",
+            attempt=row.last_attempt_num if row is not None else 1,
+        )
         try:
             self._adapter.place_order(
                 symbol=self._symbol,
