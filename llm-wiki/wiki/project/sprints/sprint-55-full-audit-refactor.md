@@ -6,7 +6,7 @@ created: 2026-06-26
 updated: 2026-06-26
 status: completed
 sources:
-  - llm-wiki/wiki/project/plans/2026-06-26-sprint-55-full-audit-refactor.md
+  - llm-wiki/wiki/project/plans/2026-05-30-sprint-55-audit-refactor.md
   - llm-wiki/wiki/project/decisions/0071-sprint-55-cmd-wfa-dsr-units.md
 ---
 
@@ -152,4 +152,4 @@ States = **16** (без изменений), events = **30** (без измен�
 - [[../components/execution-state-machine]] — FSM 74 → 76 (TL-NEW-01)
 - [[../architecture/current-state]] — canonical counts (FSM 76, ADRs 71)
 - [[sprint-54-kronos-ui]] — предыдущий спринт (baseline 1525 / 16/30/74)
-- [[../plans/2026-06-26-sprint-55-full-audit-refactor]] — план аудита
+- [[../plans/2026-05-30-sprint-55-audit-refactor]] — план аудита
