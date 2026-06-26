@@ -2913,3 +2913,10 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - **Документы:** ADRs 70→71 (ADR 0071 `_cmd_wfa` DSR units accepted), sprint pages 58→59 (sprint-55-full-audit-refactor).
 - **Масштаб:** 70 commits / 106 файлов / +7189/-956. **Gates green:** unit pytest **1694** passed / 0 failed, integration **103** passed, mypy --strict **0**/101, ruff src/ clean, frontend Vitest **51/51** + tsc/lint/build clean.
 - Ready to ship `v0.1.0-alpha.55`.
+
+## [2026-06-26] ship | Sprint 55 — full-project audit + refactor (v0.1.0-alpha.55)
+- Local squash-merge `9f66382` → main + annotated tag `v0.1.0-alpha.55` (remote push pending network/gh-auth).
+- 43 confirmed findings (2 BLOCKER + 9 HIGH + 15 MEDIUM + 17 LOW) + QS-3 + 7 PHASE-6/6.2 re-review follow-ups, all TDD.
+- Canonical: states=16 events=30 transitions=74→76 (TL-NEW-01) reason_codes=67. ADR 0071. New: data_loading.py / _cache_io.py / weights_hash.py / migration 0007.
+- Gates: unit pytest 1694/0, integration 103, mypy --strict 0/101, ruff src/ clean, frontend vitest 51/51 + tsc/lint/build.
+- Carry: BYBIT-08 (adapter-level typed AmbiguousOrderOutcome — own ADR). Detail → sprints/sprint-55-full-audit-refactor.md.

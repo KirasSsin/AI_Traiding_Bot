@@ -1,14 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-26  # S55 full-audit-refactor — PHASE 1-7 done, PHASE 8 ship pending (alpha.55)
+updated: 2026-06-26  # S55 SHIPPED locally (squash 9f66382, tag v0.1.0-alpha.55) — git push pending network
 sprint: 55
-phase: 8-ship
-branch: feature/sprint-55-full-audit-refactor
-tag: v0.1.0-alpha.54
+phase: 9-close
+branch: main
+tag: v0.1.0-alpha.55
 ---
 
 ## Текущий статус
+
+**S55 SHIPPED локально** — squash-merge `9f66382` на `main` + annotated tag `v0.1.0-alpha.55`. ⚠️ **`git push origin main --tags` ОЖИДАЕТ сети** (среда без доступа к github.com + GITHUB_TOKEN истёк). Feature-ветка `feature/sprint-55-full-audit-refactor` (72 granular commits) сохранена для recovery. Operator: восстановить gh auth → `git push origin main --tags`.
 
 **S55 = full-project audit + refactor.** Workflow `w1hxvgkoa` (120 агентов, 9 измерений, 2× skeptic-verified) нашёл 43 подтверждённых дефекта на shipped main (tag alpha.54). Все исправлены через strict TDD + 2 раунда re-review (PHASE 6 + 6.2), которые вскрыли 7 follow-up'ов. Детали по каждому finding → [[sprints/sprint-55-full-audit-refactor]].
 
@@ -45,8 +47,8 @@ tag: v0.1.0-alpha.54
 | 5 Verify | done | unit 1694/0, integration 103, mypy 0/101, ruff clean, frontend 51/51 + build |
 | 6 Review | done | 2 rounds (9 reviewers + adversarial verify); 7 follow-ups fixed, BYBIT-08 carried |
 | 7 Sync | done | sprint-55 page + canonical counts 74→76 + current-state/index/log + ADR 0071 |
-| 8 Ship | in_progress | tag v0.1.0-alpha.55 |
-| 9 Close | pending | — |
+| 8 Ship | done (local) | squash-merge 9f66382 → main, tag v0.1.0-alpha.55. Remote push pending network/gh-auth. |
+| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
 
 ---
 
