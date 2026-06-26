@@ -32,6 +32,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.backtest.indicators import _wilder_atr as _atr  # S55 PY-3: shared Wilder ATR (DRY)
+
 # Mirror constants from scripts/autoresearch_endless.py exactly.
 _COMMISSION_TAKER = 0.001  # 0.1% taker
 _SLIPPAGE = 0.0005  # 0.05% adverse
@@ -137,34 +139,6 @@ class _TradeRecord:
     entry_price: float
     exit_price: float
     pnl_pct: float  # net (after commission + slippage), fractional (not ×100)
-
-
-def _atr(df: pd.DataFrame, period: int) -> np.ndarray:
-    """Wilder ATR — exact port of scripts/autoresearch_endless.py::_atr().
-
-    Uses prev_close[0] = close[0] so TR[0] = h-l for valid OHLC data.
-    Wilder smoothing: SMA seed then EMA-like.
-
-    Returns array same length as df; NaN for indices < period-1.
-    """
-    high = df["high"].to_numpy(dtype=np.float64)
-    low = df["low"].to_numpy(dtype=np.float64)
-    close = df["close"].to_numpy(dtype=np.float64)
-    prev_close = np.concatenate([[close[0]], close[:-1]])
-    tr: np.ndarray = np.maximum.reduce(
-        [
-            high - low,
-            np.abs(high - prev_close),
-            np.abs(low - prev_close),
-        ]
-    )
-    atr_out = np.full_like(tr, np.nan)
-    if len(tr) < period:
-        return atr_out
-    atr_out[period - 1] = tr[:period].mean()
-    for i in range(period, len(tr)):
-        atr_out[i] = (atr_out[i - 1] * (period - 1) + tr[i]) / period
-    return atr_out
 
 
 def _backtest_single(

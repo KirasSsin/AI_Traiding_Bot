@@ -26,6 +26,7 @@ from uuid import uuid4
 import numpy as np
 
 from src.marketdata.models import Bar
+from src.risk.reason_codes import ReasonCode
 from src.signalgen.bollinger_bands import bollinger_bands
 from src.signalgen.indicators import atr, rsi
 from src.signalgen.models import Signal, SignalSide
@@ -170,7 +171,7 @@ class MeanReversionRsiBBStrategy:
         ):
             self._current_side = SignalSide.LONG
             return self._build_signal(
-                bar, SignalSide.LONG, snapshot, reason="ENTRY_LONG_MEANREV_RSI_BB"
+                bar, SignalSide.LONG, snapshot, reason=ReasonCode.ENTRY_LONG_MEANREV_RSI_BB.value
             )
 
         # EXIT: in LONG, RSI > overbought OR close > upper_BB
@@ -179,7 +180,7 @@ class MeanReversionRsiBBStrategy:
         ):
             self._current_side = SignalSide.FLAT
             return self._build_signal(
-                bar, SignalSide.FLAT, snapshot, reason="EXIT_FLAT_MEANREV_REVERT"
+                bar, SignalSide.FLAT, snapshot, reason=ReasonCode.EXIT_FLAT_MEANREV_REVERT.value
             )
 
         return None

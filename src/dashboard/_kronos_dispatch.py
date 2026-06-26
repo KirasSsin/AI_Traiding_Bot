@@ -14,6 +14,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+# S55 DASH-03-GAP-01 — shared atomic cache writer (tmp + os.replace). Lives in a
+# dependency-free low-level module so importing it here does NOT cycle with
+# backtest_runner (which imports FROM this module).
+from src.dashboard._cache_io import atomic_write_text
+
 # ---------------------------------------------------------------------------
 # Constants — Kronos cache dir and per-combo parquet paths (11 combos).
 # Cache dir is gitignored; operator must run scripts/run_kronos_s53.py first.
@@ -300,7 +305,7 @@ def run_kronos_dispatch(
             ),
         }
         runs_dir.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps(result_kr_nocache, default=str, indent=2))
+        atomic_write_text(cache_path, json.dumps(result_kr_nocache, default=str, indent=2))
         return result_kr_nocache
 
     # T6 (S53) — variant-mismatch guard: manifest.model_id must match the requested
@@ -340,7 +345,7 @@ def run_kronos_dispatch(
             "message": (f"This variant not cached — run cache-build for {requested_variant_name}"),
         }
         runs_dir.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps(result_kr_variant_miss, default=str, indent=2))
+        atomic_write_text(cache_path, json.dumps(result_kr_variant_miss, default=str, indent=2))
         return result_kr_variant_miss
 
     # Cache present — load parquet and replay
@@ -377,7 +382,7 @@ def run_kronos_dispatch(
         "end": req.end,
         "variant": requested_variant_name,
     }
-    cache_path.write_text(json.dumps(result_kr, default=str, indent=2))
+    atomic_write_text(cache_path, json.dumps(result_kr, default=str, indent=2))
     return result_kr
 
 

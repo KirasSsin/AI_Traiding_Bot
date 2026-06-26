@@ -56,3 +56,20 @@ def test_110072_not_unknown() -> None:
 
 def test_reject_duplicate_order_in_enum() -> None:
     assert "REJECT_DUPLICATE_ORDER" in {r.value for r in ReasonCode}
+
+
+def test_170005_maps_to_rate_limit() -> None:
+    # S55 BYBIT-03 — order frequency limit (orders/sec). Previously UNKNOWN_ERROR,
+    # which has no flatten short-circuit. After rest-exhaustion re-wrap the
+    # coordinator needs a .reason it recognizes (RATE_LIMIT_HIT) instead of UNKNOWN.
+    assert map_error(170005, "order frequency limit") is ReasonCode.RATE_LIMIT_HIT
+
+
+def test_170222_maps_to_rate_limit() -> None:
+    # S55 BYBIT-03 — order count limit (orders/min).
+    assert map_error(170222, "order count limit") is ReasonCode.RATE_LIMIT_HIT
+
+
+def test_170005_170222_not_unknown() -> None:
+    assert map_error(170005, "") is not ReasonCode.UNKNOWN_ERROR
+    assert map_error(170222, "") is not ReasonCode.UNKNOWN_ERROR

@@ -126,13 +126,15 @@ def _build_real_keyed_cache(cache_dir: Path, df: pd.DataFrame, *, fire_bar: int)
 
 
 def test_run_kronos_dispatch_no_manifest_no_crash(tmp_path: Path) -> None:
-    """No manifest → honest 'not built' result, no exception, no torch import."""
-    import sys
+    """No manifest → honest 'not built' result, no exception.
+
+    Torch-isolation is covered by the dedicated AST gate in
+    test_prediction_cache.py::test_module_is_torch_free; this test asserts
+    ONLY dispatch behavior (verdict + run_id + cache-build hint).
+    """
     from unittest.mock import patch
 
     from src.dashboard._kronos_dispatch import run_kronos_dispatch
-
-    assert "torch" not in sys.modules
 
     empty_cache = tmp_path / "kr_cache"
     empty_cache.mkdir()
@@ -156,7 +158,6 @@ def test_run_kronos_dispatch_no_manifest_no_crash(tmp_path: Path) -> None:
     # Honest "not built" message must reference the cache-build instruction.
     result_str = str(result).lower()
     assert "run_ml" in result_str or "not cached" in result_str or "cache" in result_str
-    assert "torch" not in sys.modules
 
 
 def test_run_kronos_dispatch_no_manifest_returns_structured_result(tmp_path: Path) -> None:

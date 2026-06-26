@@ -89,6 +89,7 @@ def _get_adapter() -> Any | None:
             api_key=settings.bybit_api_key,
             api_secret=settings.bybit_api_secret,
             testnet=settings.testnet,
+            demo=settings.demo,  # S55 PHASE6 SEC: balance from the SAME account universe (BYBIT-01)
         )
         # BybitFilters required by constructor but only validated on order ops;
         # dummy values are safe for balance-only fetch.

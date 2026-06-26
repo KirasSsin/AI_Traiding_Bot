@@ -119,6 +119,43 @@ async def test_pipeline_emits_gap_bar_on_ws_gap(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_pipeline_emits_one_gap_bar_per_missing_interval(tmp_path: Path) -> None:
+    # DI-01: WS jumps 4 intervals (skip 1,2,3) → THREE synthetic GAP bars must be
+    # appended so downstream lookbacks see no hidden multi-bar hole.
+    rest = MagicMock()
+    rest.get_klines.return_value = []  # no seed gap
+
+    open0 = int(datetime(2026, 4, 20, 0, tzinfo=UTC).timestamp() * 1000)
+    open4 = open0 + 4 * INTERVAL_MS  # skip intervals 1,2,3 → 3-bar gap
+    ws = MagicMock()
+    ws.start = MagicMock()
+    ws.stream = lambda: _ws_stream([_msg(open0, confirm=True), _msg(open4, confirm=True)])
+
+    parquet_writer = MagicMock()
+    builder = BarBuilder(symbol="BTCUSDT", interval_ms=INTERVAL_MS)
+
+    pipeline = MarketDataPipeline(
+        rest=rest,
+        ws=ws,
+        bar_builder=builder,
+        parquet_writer=parquet_writer,
+        parquet_dir=tmp_path,
+        interval_ms=INTERVAL_MS,
+    )
+    await asyncio.wait_for(pipeline.run(max_bars=2), timeout=2.0)
+
+    appended = [b for (args, _) in parquet_writer.append.call_args_list for b in args[0]]
+    gap_bars = [b for b in appended if b.data_quality is DataQuality.GAP]
+    assert len(gap_bars) == 3
+    expected_opens = [
+        datetime.fromtimestamp((open0 + n * INTERVAL_MS) / 1000, tz=UTC) for n in (1, 2, 3)
+    ]
+    assert sorted(b.open_time for b in gap_bars) == expected_opens
+    ok_bars = [b for b in appended if b.data_quality is DataQuality.OK]
+    assert len(ok_bars) == 2
+
+
+@pytest.mark.asyncio
 async def test_pipeline_contiguous_stream_no_gap_bars(tmp_path: Path) -> None:
     # Contiguous confirmed bars → no spurious GAP bars emitted.
     rest = MagicMock()

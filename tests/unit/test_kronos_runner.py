@@ -331,6 +331,13 @@ def test_run_kronos_exploratory_cache_miss_no_trades(tmp_path: Path) -> None:
 
     assert result["n_trades"] == 0
     assert result["trades"] == []
+    # S55 TQ-07 — 0-trade path: win_rate is internally nan but the envelope
+    # COERCES it nan→0.0 (kronos_runner.py line ~313). Pin the coercion so a
+    # regression that surfaced raw nan (breaks json + dashboard) would fail.
+    assert result["win_rate"] == 0.0
+    assert result["metrics"]["win_rate"] == 0.0
+    # equity_pct never advances past its seed [0.0] → exposed curve is [0.0].
+    assert result["equity_curve"]["equity_pct"] == [0.0]
 
 
 # ---------------------------------------------------------------------------
@@ -610,6 +617,242 @@ def test_run_kronos_exploratory_single_trade_sharpe_is_nan(tmp_path: Path) -> No
     assert not math.isfinite(
         sharpe
     ), f"single-trade Sharpe must not be finite (pnl_std=0 → nan branch), got {sharpe}"
+
+
+# ---------------------------------------------------------------------------
+# Test 12: EXACT net-PnL value assertions (S55 TQ-06 — closes S27-class
+# structure-not-value gap). Existing tests check trade COUNT / shape / fill
+# LOCATION but NEVER the exact pnl_pct value, so a sign error, a missing 2x
+# commission, or wrong-side slippage would pass every test.  These two cases
+# pin the EXACT pnl_net per the code formula for both fill paths:
+#   signal-exit:    fill = open[exit_idx] * (1 - SLIPPAGE)
+#   mark-to-market: fill = close[-1]      * (1 - SLIPPAGE)
+# with entry fill = open[entry_idx] * (1 + SLIPPAGE),
+#      pnl_gross   = (fill - entry_price) / entry_price,
+#      pnl_net     = pnl_gross - 2.0 * COMMISSION_TAKER.
+# COMMISSION_TAKER = 0.001, SLIPPAGE = 0.0005 (kronos_runner module constants).
+# ---------------------------------------------------------------------------
+
+_COMMISSION_TAKER = 0.001  # mirrors src.backtest.kronos_runner._COMMISSION_TAKER
+_SLIPPAGE = 0.0005  # mirrors src.backtest.kronos_runner._SLIPPAGE
+
+
+def test_run_kronos_exploratory_pnl_exact_signal_exit(tmp_path: Path) -> None:
+    """EXACT pnl_net for a signal-driven round trip (entry open[i+1], exit open[j+1]).
+
+    Fixture: 30 flat-close bars (close = 50_000) so signals fire deterministically.
+      - entry prediction at bar 16 -> entry fill at open[17] (distinct = 49_000)
+      - exit  prediction at bar 20 -> exit  fill at open[21] (distinct = 53_000)
+    Hand-computed expected (mirrors the EXACT code formula):
+      entry_price = 49_000 * (1 + 0.0005) = 49_024.5
+      exit_fill   = 53_000 * (1 - 0.0005) = 52_973.5
+      pnl_gross   = (52_973.5 - 49_024.5) / 49_024.5
+      pnl_net     = pnl_gross - 2 * 0.001
+    """
+    from src.backtest.kronos_runner import run_kronos_exploratory
+
+    n = 30
+    base_close = 50_000.0
+    closes = [float(base_close)] * n
+    opens = [float(base_close) * 0.999] * n  # flat baseline opens
+    entry_fill_idx = 17  # open used for entry fill (entry signal at bar 16)
+    exit_fill_idx = 21  # open used for exit fill  (exit signal at bar 20)
+    opens[entry_fill_idx] = 49_000.0
+    opens[exit_fill_idx] = 53_000.0
+    highs = [max(o, c) * 1.002 for o, c in zip(opens, closes, strict=False)]
+    lows = [min(o, c) * 0.998 for o, c in zip(opens, closes, strict=False)]
+
+    tss = [datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i) for i in range(n)]
+    df = pd.DataFrame(
+        {
+            "_ts": pd.to_datetime(tss, utc=True),
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": [100.0] * n,
+        }
+    )
+
+    cache = PredictionCache(tmp_path / "cache_pnl_signal")
+    _populate_cache(cache, bar_idx=16, pred_close=Decimal("55000.0"))  # ENTRY_LONG
+    _populate_cache(cache, bar_idx=20, pred_close=Decimal("45000.0"))  # EXIT_FLAT
+
+    result = run_kronos_exploratory(
+        df=df,
+        symbol=_SYMBOL,
+        timeframe=_TF,
+        params=_make_kronos_params(),
+        cache=cache,
+    )
+
+    trades = result.get("trades", [])
+    assert len(trades) == 1, f"expected exactly 1 round-trip trade, got {len(trades)}"
+    trade = trades[0]
+    pnl_pct = trade["pnl_pct"] if isinstance(trade, dict) else trade.pnl_pct
+
+    entry_price = 49_000.0 * (1.0 + _SLIPPAGE)
+    exit_fill = 53_000.0 * (1.0 - _SLIPPAGE)
+    expected = (exit_fill - entry_price) / entry_price - 2.0 * _COMMISSION_TAKER
+
+    assert abs(float(pnl_pct) - expected) < 1e-9, (
+        f"signal-exit pnl_net {pnl_pct} != hand-computed {expected} "
+        "(sign / 2x-commission / slippage-side regression)"
+    )
+    # Sanity: this trade is a +profit (exit > entry net of costs) — guards a sign flip.
+    assert float(pnl_pct) > 0.0
+
+
+def test_run_kronos_exploratory_pnl_exact_mark_to_market(tmp_path: Path) -> None:
+    """EXACT pnl_net for the mark-to-market path (open entry, close[-1] exit).
+
+    Fixture: 20 bars, entry prediction at bar 16, NO exit afterwards -> the open
+    position is closed at the last bar's mark-to-market.
+      - entry fill at open[17] (distinct = 49_900)
+      - exit  fill at close[19] = close[-1] (distinct = 51_000)
+    Hand-computed expected:
+      entry_price = 49_900 * (1 + 0.0005) = 49_924.95
+      exit_fill   = 51_000 * (1 - 0.0005) = 50_974.5
+      pnl_net     = (exit_fill - entry_price) / entry_price - 2 * 0.001
+    """
+    from src.backtest.kronos_runner import run_kronos_exploratory
+
+    n = 20
+    entry_bar = 16
+    base_close = 50_000.0
+    last_close = 51_000.0
+    closes = [base_close] * (n - 1) + [last_close]
+    opens = [49_900.0] * n  # flat; only open[17] is used for the entry fill
+    highs = [max(o, c) * 1.001 for o, c in zip(opens, closes, strict=False)]
+    lows = [min(o, c) * 0.999 for o, c in zip(opens, closes, strict=False)]
+
+    tss = [datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i) for i in range(n)]
+    df = pd.DataFrame(
+        {
+            "_ts": pd.to_datetime(tss, utc=True),
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": [100.0] * n,
+        }
+    )
+
+    cache = PredictionCache(tmp_path / "cache_pnl_mtm")
+    _populate_cache(cache, bar_idx=entry_bar, pred_close=Decimal("60000.0"))  # ENTRY only
+
+    result = run_kronos_exploratory(
+        df=df,
+        symbol=_SYMBOL,
+        timeframe=_TF,
+        params=_make_kronos_params(),
+        cache=cache,
+    )
+
+    trades = result.get("trades", [])
+    assert len(trades) == 1, f"expected exactly 1 mark-to-market trade, got {len(trades)}"
+    trade = trades[0]
+    pnl_pct = trade["pnl_pct"] if isinstance(trade, dict) else trade.pnl_pct
+
+    entry_price = 49_900.0 * (1.0 + _SLIPPAGE)
+    exit_fill = last_close * (1.0 - _SLIPPAGE)
+    expected = (exit_fill - entry_price) / entry_price - 2.0 * _COMMISSION_TAKER
+
+    assert abs(float(pnl_pct) - expected) < 1e-9, (
+        f"mark-to-market pnl_net {pnl_pct} != hand-computed {expected} "
+        "(sign / 2x-commission / slippage-side regression)"
+    )
+    assert float(pnl_pct) > 0.0
+
+
+def test_run_kronos_exploratory_two_trades_win_rate_and_equity_curve(tmp_path: Path) -> None:
+    """EXACT win_rate (0.5) + equity_curve_pct (cumulative ×100) for 2 closed trades.
+
+    S55 TQ-07 — closes the S27-class gap: existing tests pin single-trade pnl by
+    value but NEVER the multi-trade win_rate aggregate nor the cumulative
+    equity_curve. A sign error in win_rate or a non-additive equity bug would
+    pass every other test.
+
+    Fixture: 30 flat-close bars (close = 50_000) so signals fire deterministically.
+    The strategy FSM (TL-06) is FLAT→LONG→FLAT, so the predictions drive an
+    ENTRY→EXIT→ENTRY→EXIT sequence → exactly 2 closed round trips:
+      - Trade 1 (WINNER): entry signal bar 16 → fill open[17]=49_000;
+                          exit  signal bar 20 → fill open[21]=53_000.
+      - Trade 2 (LOSER):  entry signal bar 22 → fill open[23]=53_000;
+                          exit  signal bar 24 → fill open[25]=49_000.
+    Hand-computed (entry = open*(1+SLIPPAGE), exit = open*(1-SLIPPAGE),
+    pnl_net = (exit-entry)/entry - 2*COMMISSION):
+      pnl1 = +0.07855156095421677  (winner)
+      pnl2 = -0.07839576438195997  (loser)
+    → win_rate = 0.5; equity_curve_pct = [0, pnl1*100, (pnl1+pnl2)*100].
+    """
+    from src.backtest.kronos_runner import run_kronos_exploratory
+
+    n = 30
+    base_close = 50_000.0
+    closes = [base_close] * n
+    opens = [base_close * 0.999] * n  # flat baseline opens
+    # Fill bars: entry signal at bar k → entry fill at open[k+1];
+    #            exit  signal at bar k → exit  fill at open[k+1].
+    opens[17] = 49_000.0  # trade 1 entry fill (signal bar 16)
+    opens[21] = 53_000.0  # trade 1 exit  fill (signal bar 20)
+    opens[23] = 53_000.0  # trade 2 entry fill (signal bar 22)
+    opens[25] = 49_000.0  # trade 2 exit  fill (signal bar 24)
+    highs = [max(o, c) * 1.002 for o, c in zip(opens, closes, strict=False)]
+    lows = [min(o, c) * 0.998 for o, c in zip(opens, closes, strict=False)]
+
+    tss = [datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i) for i in range(n)]
+    df = pd.DataFrame(
+        {
+            "_ts": pd.to_datetime(tss, utc=True),
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": [100.0] * n,
+        }
+    )
+
+    cache = PredictionCache(tmp_path / "cache_two_trades")
+    # Bars past the 14-bar ATR warm-up. ENTRY: pred > close*(1+threshold);
+    # EXIT: pred < close. FSM enforces alternation FLAT→LONG→FLAT.
+    _populate_cache(cache, bar_idx=16, pred_close=Decimal("55000.0"))  # ENTRY 1
+    _populate_cache(cache, bar_idx=20, pred_close=Decimal("45000.0"))  # EXIT 1
+    _populate_cache(cache, bar_idx=22, pred_close=Decimal("55000.0"))  # ENTRY 2
+    _populate_cache(cache, bar_idx=24, pred_close=Decimal("45000.0"))  # EXIT 2
+
+    result = run_kronos_exploratory(
+        df=df,
+        symbol=_SYMBOL,
+        timeframe=_TF,
+        params=_make_kronos_params(),
+        cache=cache,
+    )
+
+    trades = result.get("trades", [])
+    assert len(trades) == 2, f"expected exactly 2 closed trades, got {len(trades)}"
+
+    # Hand-compute pnl1/pnl2 from the EXACT code formula for both fill paths.
+    entry1 = 49_000.0 * (1.0 + _SLIPPAGE)
+    exit1 = 53_000.0 * (1.0 - _SLIPPAGE)
+    pnl1 = (exit1 - entry1) / entry1 - 2.0 * _COMMISSION_TAKER
+    entry2 = 53_000.0 * (1.0 + _SLIPPAGE)
+    exit2 = 49_000.0 * (1.0 - _SLIPPAGE)
+    pnl2 = (exit2 - entry2) / entry2 - 2.0 * _COMMISSION_TAKER
+    assert pnl1 > 0.0, "fixture invariant: trade 1 must be a winner"
+    assert pnl2 < 0.0, "fixture invariant: trade 2 must be a loser"
+
+    # win_rate = (pnls > 0).mean() = 1 winner / 2 trades = 0.5 (no nan coercion here).
+    assert result["win_rate"] == pytest.approx(0.5, abs=1e-9)
+    assert result["metrics"]["win_rate"] == pytest.approx(0.5, abs=1e-9)
+
+    # equity_curve_pct = cumulative additive pnl_net ×100, seeded with 0.0.
+    equity_pct = result["equity_curve"]["equity_pct"]
+    expected_equity = [0.0, pnl1 * 100.0, (pnl1 + pnl2) * 100.0]
+    assert equity_pct == pytest.approx(expected_equity, abs=1e-9), (
+        f"equity_curve_pct {equity_pct} != cumulative ×100 {expected_equity} "
+        "(non-additive / wrong-scale / missing-seed regression)"
+    )
 
 
 def test_build_bar_from_row_interval_matches_timeframe() -> None:

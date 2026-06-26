@@ -9,6 +9,7 @@ Sprint 10 Q4 + Q6 + Q7 (per pre-s10-backlog.md verdicts + cross-cutting concerns
 
 DSR aggregate uses sigma_sr = std(per-fold Sharpe) per Q7 (Bailey eq. 12).
 """
+
 from __future__ import annotations
 
 import math
@@ -51,9 +52,7 @@ def format_wfa_report(
     aggregate = runner_result.get("aggregate", {})
 
     # Series 1: bar-returns Sharpe per fold
-    bar_returns_sharpe_per_fold = [
-        f.get("oos_metrics", {}).get("Sharpe Ratio", 0.0) for f in folds
-    ]
+    bar_returns_sharpe_per_fold = [f.get("oos_metrics", {}).get("Sharpe Ratio", 0.0) for f in folds]
 
     # Series 2: per-trade Sharpe (DSR internal)
     per_trade_sharpe: float = math.nan
@@ -68,9 +67,7 @@ def format_wfa_report(
 
     # Series 3: display Sharpe (per-trade × sqrt(8760))
     display_sharpe = (
-        per_trade_sharpe * annualization_factor
-        if math.isfinite(per_trade_sharpe)
-        else math.nan
+        per_trade_sharpe * annualization_factor if math.isfinite(per_trade_sharpe) else math.nan
     )
 
     # DSR aggregate (n_trials=K, sigma_sr from per-fold Sharpes per Q7)
@@ -79,10 +76,15 @@ def format_wfa_report(
     fold_oos_sharpes = aggregate.get("fold_oos_sharpes", [])
     if trades_for_dsr and len(fold_oos_sharpes) >= 2:
         sigma_sr = float(np.std(fold_oos_sharpes, ddof=1))
+        # S55 HIGH QS-1 single-scale units fix: fold_oos_sharpes are bar-returns
+        # Sharpes ANNUALIZED via sqrt(bars_per_year); compute_dsr's internal
+        # candidate Sharpe is per-trade. Pass annualization_factor so sigma_sr is
+        # de-annualized to one frequency (Bailey eq.12/13 single-scale assumption).
         dsr_aggregate = compute_dsr(
             trades_for_dsr,
             n_trials=len(fold_oos_sharpes),
             sigma_sr=sigma_sr,
+            annualization_factor=annualization_factor,
         )
 
     # Per-fold DSR (placeholder — DataFrame→TradeRecord conversion deferred)

@@ -4,6 +4,7 @@
 // References: ADR 0014 (acceptance gates), Bailey 2014 (DSR + n≥100 sample size).
 
 import type { BacktestResponse } from '@/api/types'
+import { isResearchVerdict } from '@/utils/verdicts'
 import styles from './MetricsTable.module.css'
 
 interface MetricsTableProps {
@@ -346,7 +347,9 @@ function FoldsSubtable({ result }: MetricsTableProps) {
 // ─── public component ────────────────────────────────────────────────────
 
 export function MetricsTable({ result }: MetricsTableProps) {
-  if (result.verdict === 'RAW') {
+  // S55 HIGH DASH-01: research verdicts (RAW + RAW_PRETRAIN_LEAKAGE_SUSPECTED)
+  // → reduced research view, NOT WFA acceptance-gate render.
+  if (isResearchVerdict(result.verdict)) {
     return <RawMetricsTable result={result} />
   }
   return <WfaMetricsTable result={result} />

@@ -10,11 +10,11 @@ status: stable
 
 # Execution — Конечный автомат
 
-**TL;DR:** **16 состояний / 30 событий / 74 перехода** (актуально; проверка via `.venv/bin/python -c "from src.execution.state_machine import TRANSITIONS, ExecutionEvent; print(len(TRANSITIONS), len(list(ExecutionEvent)))"`). Таблица-ориентированная `TRANSITIONS`. Недопустимые переходы → `IllegalTransitionError`. Персистентность SQLite через `ExecutionStateRepo` (warm-start) + reconcile-as-truth при startup/reconnect + γ halt persistence (ADR 0021 sub-decisions 5+9) + KILL_SWITCH_REQUESTED dispatch инвариант (ADR 0023).
+**TL;DR:** **16 состояний / 30 событий / 76 переходов** (актуально; проверка via `.venv/bin/python -c "from src.execution.state_machine import TRANSITIONS, ExecutionEvent; print(len(TRANSITIONS), len(list(ExecutionEvent)))"`). Таблица-ориентированная `TRANSITIONS`. Недопустимые переходы → `IllegalTransitionError`. Персистентность SQLite через `ExecutionStateRepo` (warm-start) + reconcile-as-truth при startup/reconnect + γ halt persistence (ADR 0021 sub-decisions 5+9) + KILL_SWITCH_REQUESTED dispatch инвариант (ADR 0023).
 
-**История развития:** S5 v1 = 12 состояний / 28 событий / 29 переходов. S6 v2 (ADR 0020) = 16/29/55. S7 v3 (ADR 0021) = 16/29/59 (dedup S6 silent overrides). S8a (ADR 0022) = +1 событие (KILL_SWITCH_REQUESTED) + 11 переходов → 16/30/70. S8b T1 (ADR 0023) = +3 RISK_HALT строк для ENTRY_PENDING/EXIT_PENDING/RECONCILING → 16/30/73. S8b T7 fix-up = +1 (FLAT, RISK_HALT) → **16/30/74 текущее**.
+**История развития:** S5 v1 = 12 состояний / 28 событий / 29 переходов. S6 v2 (ADR 0020) = 16/29/55. S7 v3 (ADR 0021) = 16/29/59 (dedup S6 silent overrides). S8a (ADR 0022) = +1 событие (KILL_SWITCH_REQUESTED) + 11 переходов → 16/30/70. S8b T1 (ADR 0023) = +3 RISK_HALT строк для ENTRY_PENDING/EXIT_PENDING/RECONCILING → 16/30/73. S8b T7 fix-up = +1 (FLAT, RISK_HALT) → 16/30/74. S55 TL-NEW-01 = +2 (LONG_OPEN|OCO_ARMING, FLATTEN_FAILED)→HALTED → **16/30/76 текущее**.
 
-**Последняя синхронизация:** Sprint 37 (2026-04-27, tag `v0.1.0-alpha.37`). count = **50 кодов причин** — added HALT_UNKNOWN_SYMBOL per ADR 0057 SD-1 (T2). FSM состояния/события/переходы без изменений: 16/30/74.
+**Последняя синхронизация:** Sprint 55 (2026-06-26). FSM transitions 74→76 (TL-NEW-01). reason_codes 67 unchanged.
 
 ## Состояния (16)
 
@@ -88,7 +88,7 @@ S6 добавил 8 (ADR 0020 sub-decision 8); S7 добавил 3 (ADR 0021 sub
 ## Ключевые свойства
 
 - Таблица-ориентированная (см. `TRANSITIONS: dict[(State, Event), State]`) — нет implicit if/else.
-- **74 канонических перехода** (S5: 29, S6 net-adds: +26 с дублирующими S5-ключами OVERRIDE'ом; **S7: -2 silent dup-keys удалены, +6 reconcile/timeout transitions** = 59 final; S8b: +15 = 74). Locked в `test_transitions_count_exact*`.
+- **76 канонических переходов** (S5: 29, S6 net-adds: +26 с дублирующими S5-ключами OVERRIDE'ом; **S7: -2 silent dup-keys удалены, +6 reconcile/timeout transitions** = 59 final; S8b: +15 = 74; **S55 TL-NEW-01: +2 (LONG_OPEN|OCO_ARMING, FLATTEN_FAILED)→HALTED = 76**). Locked в `test_transitions_count_exact*`.
 - `(state, event) not in TRANSITIONS` → `IllegalTransitionError`.
 - `WS_RECONNECT` валиден для **9 active states** (`_RECONCILABLE_STATES` в coordinator): ENTRY_PENDING, EXIT_PENDING, OCO_ARMING, EXIT_SIBLING_CANCELLING, EXIT_SL_RESIDUAL, LONG_OPEN, OCO_ARMED, PARTIAL_FILL, EXIT_SIBLING_CANCEL_FAILED.
 
@@ -169,7 +169,7 @@ See [[runtime-manager]] — Lock policy reference table.
 
 ## Архитектурные страницы
 
-- [[../architecture/state-machine]] — архитектурная спецификация FSM (16 состояний / 30 событий / 74 перехода).
+- [[../architecture/state-machine]] — архитектурная спецификация FSM (16 состояний / 30 событий / 76 переходов).
 - [[../architecture/current-state]] — canonical counts table (актуальные счётчики FSM).
 - [[../architecture/reason-codes-schema]] — JSON Schema audit записи использующей reason codes.
 

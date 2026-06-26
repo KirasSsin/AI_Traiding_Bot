@@ -1,18 +1,18 @@
 ---
-title: Current State part-2 — Карта спринтов (S1–S54)
+title: Current State part-2 — Карта спринтов (S1–S55)
 type: architecture
 tags: [current-state, sprint-history, canonical-counts, part-2]
 created: 2026-05-30
-updated: 2026-06-01
+updated: 2026-06-26
 status: stable
 sources:
   - wiki/project/architecture/current-state.md
 ---
 
-# Current State — Карта спринтов (S1–S54)
+# Current State — Карта спринтов (S1–S55)
 
 > Индексный файл: [[current-state]] — canonical counts + src/ inventory + tech stack.
-> Этот файл содержит только sprint-history таблицу (разделён S53 T8 из-за превышения 50KB). Обновлён S54 T4.
+> Этот файл содержит только sprint-history таблицу (разделён S53 T8 из-за превышения 50KB). Обновлён S55 PHASE 7.
 
 ## Карта спринтов
 
@@ -77,5 +77,6 @@ sources:
 | **S32** | **0045** | **v0.1.0-alpha.32** | **2026-04-27** | **Kit Improvement Phase 0 sprint** — SPRINT_STATE.md P0 fix + current-state.md P0 fix + 5 NEW skill mappings + cascade smart-explore STEP 2.5 + Phase 9 consolidate-memory step. NO code changes. 762 pytest preserved. |
 | **S53** | **0069** (accepted) | — (enablement sprint) | **2026-05-30** | **Kronos real-inference enablement: submodule + both variants + ATR fix + god-object split** — Fix 3 S52 bugs: import (`from model import`), mini↔tokenizer-2k мисматч, atr_14=0. Git submodule `third_party/kronos` (sha 67b630e). KronosVariant dataclass (base ctx512/tok-base + mini ctx2048/tok-2k). Extract `_kronos_dispatch.py` (backtest_runner <1500 LoC). CI isolation + predict-sig guard CC3. Два variant exploratory, no-cherry-pick. Forward harness → S54+. reason_codes 67 (без изменений), FSM 16/30/74 (без изменений). |
 | **S54** | **0070** (accepted) | — (pending merge) | **2026-06-01** | **Kronos UI cached-coverage autofill: manifest v2 + coverage API + frontend autofill/block** — Manifest v1→v2 (per-combo self-describing: model_id/weights_hash/params_hash/device/first_bar_ts/last_bar_ts/n_entries). `rebuild_manifest_v2` backfill + `--rebuild-manifest` flag. Dispatch: per-combo CacheKey реконструкция (смешанные sample_count/variant поддерживаются). `GET /api/kronos/coverage` → per-(symbol,tf) ISO-даты кэша. Frontend: Kronos+построенный-TF → autofill START/END + EXECUTE активна; Kronos+непостроенный-TF → EXECUTE disabled + RU «не построен». Reviewers: dashboard APPROVE / python APPROVE / data-integrity APPROVE. Exploratory результаты: 1h -5.61%, 5m -10.24% (long-only Spot edge нет). reason_codes **67** (без изменений), FSM **16/30/74** (без изменений). pytest 1525 (+14), mypy 0/98, frontend 45 passed + build/lint clean. |
+| **S55** | **0071** (accepted) | sprint-55-full-audit-refactor | **2026-06-26** | **Full-project audit + refactor (workflow w1hxvgkoa, 43 дефекта)** — Аудит на shipped main (alpha.54): 120 агентов / 9 измерений / 2× скептик-верификация → 43 подтверждённых дефекта + bonus QS-3. Все исправлены TDD + 2 раунда re-review (PHASE 6 + 6.2 → 7 follow-up). **2 BLOCKER:** TL-01 (live-runtime никогда не вооружал OCO + ронял exit-сигналы → unbounded-loss), BYBIT-01 (REST/WS разные Bybit env → fill-loop сломан). **9 HIGH:** TL-02, BYBIT-02 emergency-flatten tri-state, BYBIT-03 unified error hierarchy, ARCH-02 reconcile I/O off-lock, QS-1 DSR de-annualization, DI-01 multi-gap bars, DI-02 BarSource unclosed-bar drop, SEC-S55-01 path-traversal allowlist, DASH-01 RAW_PRETRAIN render. **15 MEDIUM** (TL-03/04, ARCH-03, BYBIT-04/05, DI-03/04, DASH-02/03, QS-2 ADR 0071, TQ-01..06). **17 LOW** (ARCH-05, TL-06/07, QS-2-bars, DI-06/SEC-S55-03/PY-5, SEC-S55-04, PY-1..4, TQ-07/08, DASH-04/05, BYBIT-06). PHASE 6/6.2 follow-up: SEC-BYBIT01-INCOMPLETE, ARCH-02-REG-01, ARCH-03-REGRESSION, TL-NEW-01 (+2 FSM), DASH-03-GAP-01, QS-6, NEW-LOW-01. Новые модули: `src/backtest/data_loading.py`, `src/dashboard/_cache_io.py`, `src/ml/weights_hash.py`; миграция 0007. **FSM 74→76** (TL-NEW-01: (LONG_OPEN\|OCO_ARMING, FLATTEN_FAILED)→HALTED). reason_codes **67** (без изменений). 70 commits / 106 файлов / +7189/-956. Gates: unit pytest **1694** / integration **103** / mypy 0/101 / ruff clean / frontend Vitest 51/51 + tsc/lint/build clean. Carry S56: BYBIT-08 (coordinator double-sell на post-retCode==0 OrderAck-parse-failure — нужен adapter-level typed AmbiguousOrderOutcome). |
 
 **Tag drift note (S4+S5):** `v0.1.0-alpha.4` + `v0.1.0-alpha.5` never created — S4+S5+S6 consolidated в одну ship-волну под `v0.1.0-alpha.6`. См. `wiki/project/sprints/README.md` Tag exceptions section.

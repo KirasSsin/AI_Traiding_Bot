@@ -35,8 +35,10 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.backtest.indicators import _wilder_atr as _atr  # S55 PY-3: shared Wilder ATR (DRY)
+
 # Mirror constants from research/backtest_v2.py exactly.
-_BARS_PER_YEAR = 2190  # 4H bars per year
+_BARS_PER_YEAR = 2191  # 4H bars per year — int(365.25 * 6), 365.25 family (S55 QS-2: matches reported bars_per_year + atr_breakout canonical)
 _COMMISSION_TAKER = 0.001  # 0.1% taker
 _SLIPPAGE = 0.0005  # 0.05% adverse
 
@@ -48,35 +50,6 @@ class _TradeRecord:
     entry_price: float
     exit_price: float
     pnl_pct: float  # net (after commission + slippage), fractional (not ×100)
-
-
-def _atr(df: pd.DataFrame, period: int) -> np.ndarray:
-    """Wilder ATR — exact port of research/backtest_v2.py::_atr().
-
-    Uses prev_close[0] = close[0] so TR[0] = max(h-l, |h-c|, |l-c|) which
-    equals h-l for valid OHLC data. Wilder smoothing: SMA seed then EMA-like.
-
-    Returns array same length as df; NaN for indices < period-1.
-    """
-    high = df["high"].to_numpy(dtype=np.float64)
-    low = df["low"].to_numpy(dtype=np.float64)
-    close = df["close"].to_numpy(dtype=np.float64)
-    prev_close = np.concatenate([[close[0]], close[:-1]])
-    tr: np.ndarray = np.maximum.reduce(
-        [
-            high - low,
-            np.abs(high - prev_close),
-            np.abs(low - prev_close),
-        ]
-    )
-    atr_out = np.full_like(tr, np.nan)
-    if len(tr) < period:
-        return atr_out
-    # Wilder smoothing: first value = SMA of first `period` TRs, then exponential
-    atr_out[period - 1] = tr[:period].mean()
-    for i in range(period, len(tr)):
-        atr_out[i] = (atr_out[i - 1] * (period - 1) + tr[i]) / period
-    return atr_out
 
 
 def _backtest_single(df: pd.DataFrame, params: dict[str, Any]) -> dict[str, Any]:
@@ -244,9 +217,9 @@ def run_volume_breakout_backtest(
         FileNotFoundError: if parquet data missing for (symbol, interval)
         ValueError: if data is empty for given date range
     """
-    from src.__main__ import _load_ohlcv
+    from src.backtest.data_loading import load_ohlcv
 
-    df = _load_ohlcv(
+    df = load_ohlcv(
         symbol=symbol,
         start=start_date.isoformat(),
         end=end_date.isoformat(),
@@ -350,7 +323,7 @@ def _run_volume_breakout_wfa(
     Adapter wraps _backtest_single (df, params) signature to match
     BacktestFn (df, params, bars_per_year) for shared research_wfa helper.
     """
-    from src.__main__ import _load_ohlcv
+    from src.backtest.data_loading import load_ohlcv
     from src.backtest.research_wfa import get_wfa_tier_params, run_research_wfa
     from src.signalgen.volume_breakout_strategy import VOLUME_BREAKOUT_LOCKED_PARAMS
 
@@ -360,7 +333,7 @@ def _run_volume_breakout_wfa(
     k_folds = k_folds if k_folds is not None else tier["k_folds"]
     embargo_bars = embargo_bars if embargo_bars is not None else tier["embargo_bars"]
 
-    df = _load_ohlcv(
+    df = load_ohlcv(
         symbol=symbol,
         start=start_date.isoformat(),
         end=end_date.isoformat(),

@@ -15,24 +15,26 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import scripts.run_kronos_s53 as rk
+
+# S55 TQ-08 — use the REAL torch-free MockKronosAdapter (Protocol-faithful
+# signature: positional ``predict(self, ohlcv_df, lookback, horizon)``) instead
+# of a local double whose kw-only ``context_df`` param diverged from the
+# KronosAdapter Protocol. _build_cache_for_combo calls
+# ``adapter.predict(context_df, lookback=..., horizon=...)`` positionally on the
+# first arg — a local stub with a different param name / kw-only binding hid a
+# positional-call regression. The real mock reads ``ohlcv_df["close"].iloc[-1]``
+# and is deterministic; the manifest-v2 tests only assert counts/ts, not values.
+from src.ml.kronos_adapter import MockKronosAdapter
 from src.ml.prediction_cache import PredictionCache
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
-
-
-class MockKronosAdapter:
-    """Minimal adapter returning a fixed Decimal prediction (no torch)."""
-
-    def predict(self, context_df: Any, *, lookback: int, horizon: int) -> list[Decimal]:  # noqa: ARG002
-        return [Decimal("100.0")]
 
 
 def _make_df(n: int = 10, freq: str = "1h") -> pd.DataFrame:

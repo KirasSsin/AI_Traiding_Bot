@@ -25,6 +25,7 @@ from uuid import uuid4
 import numpy as np
 
 from src.marketdata.models import Bar
+from src.risk.reason_codes import ReasonCode
 from src.signalgen.indicators import atr
 from src.signalgen.models import Signal, SignalSide
 
@@ -115,7 +116,7 @@ class DonchianBreakoutStrategy:
                 bar,
                 SignalSide.LONG,
                 atr_now=atr_now,
-                reason="ENTRY_LONG_DONCHIAN_BREAKOUT",
+                reason=ReasonCode.ENTRY_LONG_DONCHIAN_BREAKOUT.value,
             )
 
         # Exit rule (FLAT): from LONG, channel exit OR ATR stop hit
@@ -125,7 +126,11 @@ class DonchianBreakoutStrategy:
             atr_stop_exit = close_now < atr_stop_price
             if channel_exit or atr_stop_exit:
                 self._current_side = SignalSide.FLAT
-                reason = "EXIT_FLAT_ATR_STOP" if atr_stop_exit else "EXIT_FLAT_CHANNEL"
+                reason = (
+                    ReasonCode.EXIT_FLAT_ATR_STOP.value
+                    if atr_stop_exit
+                    else ReasonCode.EXIT_FLAT_CHANNEL.value
+                )
                 self._entry_close = None
                 return self._build_signal(
                     bar,

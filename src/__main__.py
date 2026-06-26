@@ -24,14 +24,14 @@ from pathlib import Path
 import pandas as pd
 
 from src.analytics.dsr import compute_dsr
-from src.backtest.data_collector import load_market_data
-from src.backtest.mc_permutation import sign_flip_p_value
-from src.backtest.replay_engine import run_replay
+from src.backtest.data_loading import (
+    load_ohlcv as _load_ohlcv,
+)
+from src.backtest.data_loading import (
+    run_wfa_single_symbol as _run_wfa_single_symbol,
+)
 from src.backtest.strategy_metrics import compute_t1_t6_metrics
-from src.backtest.trade_extractor import extract_trade_records
 from src.backtest.walk_forward import (
-    WalkForwardRunner,
-    WindowSplitter,
     evaluate_acceptance_gate,
 )
 from src.backtest.wfa_reporter import (
@@ -59,6 +59,12 @@ from src.signalgen.mean_reversion_strategy import (
 from src.signalgen.strategy import (
     EmaCrossoverAdxRsiStrategy,  # noqa: F401 — kept for backward-compat tests
 )
+
+# S55 QS-2 (ADR 0071) — strategy_class namespace for the _cmd_wfa cross-trial pool.
+# _cmd_wfa runs MeanReversionRsiBBStrategy (see _run_wfa_single_symbol), so its DSR
+# sigma_SR must be scoped to its own family (S51 D5 two-level scoping) and must not
+# mingle with the research-path supertrend pool that shares cross_trial_sharpes.json.
+_WFA_STRATEGY_CLASS = "wfa_meanrev"
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
@@ -96,10 +102,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
     conn: Connection = connect(settings.db_path)
 
     # REST client + filters (placeholders — production loads via get_filters S12+)
+    # S55 B0 BLOCKER BYBIT-01: REST + private-WS are built from the SAME
+    # (testnet, demo) pair (single source of truth on Settings), so orders (REST)
+    # and their fill echoes (WS) cannot land in different Bybit account universes.
     rest = BybitRESTClient(
         api_key=settings.bybit_api_key,
         api_secret=settings.bybit_api_secret,
         testnet=settings.testnet,
+        demo=settings.demo,
     )
     filters = BybitFilters(
         symbol=symbol,
@@ -164,14 +174,32 @@ def _cmd_run(args: argparse.Namespace) -> int:
         trade_history_repo=trade_history_repo,
     )
 
-    endpoint = "demo.bybit.com" if settings.testnet else "stream.bybit.com"
+    # S55 B0 BLOCKER BYBIT-01: derive the WS endpoint label from the SAME
+    # (testnet, demo) pair used for REST — no ad-hoc substring routing. The
+    # pybit (testnet, demo) flags are passed explicitly so the WS env can never
+    # diverge from REST. `endpoint` is kept as a human-readable label only.
+    ws_endpoint = _ws_endpoint_label(testnet=settings.testnet, demo=settings.demo)
     ws_consumer = BybitPrivateWSConsumer(
         api_key=settings.bybit_api_key,
         api_secret=settings.bybit_api_secret,
-        endpoint=endpoint,
+        endpoint=ws_endpoint,
         coordinator=coordinator,
         reconciler=reconciler,
         fill_recorder=fill_recorder,
+        testnet=settings.testnet,
+        demo=settings.demo,
+    )
+
+    # Startup-visibility: log the resolved REST + WS hosts so an env split is
+    # obvious in the first lines of any live run (S55 B0 BYBIT-01).
+    from src.platform.logging import get_logger
+
+    get_logger(__name__).info(
+        "bybit.env_resolved",
+        testnet=settings.testnet,
+        demo=settings.demo,
+        rest_host=rest.endpoint,
+        ws_endpoint=ws_endpoint,
     )
 
     # RuntimeManager + run
@@ -196,6 +224,28 @@ def _cmd_run(args: argparse.Namespace) -> int:
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: runtime crash: {e}", file=sys.stderr)
         return 1
+
+
+def _ws_endpoint_label(*, testnet: bool, demo: bool) -> str:
+    """S55 B0 BLOCKER BYBIT-01: human-readable WS host label for the (testnet,
+    demo) pair, mirroring pybit's subdomain resolution.
+
+    The actual pybit env flags are passed separately to BybitPrivateWSConsumer;
+    this string exists only for logging / repr. Returning the true host (rather
+    than the old ad-hoc "demo.bybit.com" / "stream.bybit.com") keeps the label
+    consistent with the resolved env and makes an env split visible in logs.
+
+    Universe matrix (pybit 5.16):
+        testnet=True,  demo=False → stream-testnet
+        testnet=False, demo=True  → stream-demo        (MAINNET-demo)
+        testnet=True,  demo=True  → stream-demo-testnet
+        testnet=False, demo=False → stream             (MAINNET live)
+    """
+    if demo:
+        subdomain = "stream-demo-testnet" if testnet else "stream-demo"
+    else:
+        subdomain = "stream-testnet" if testnet else "stream"
+    return f"wss://{subdomain}.bybit.com/v5/private"
 
 
 def _derive_heal_max_age_seconds(settings: Settings, interval: str) -> int:
@@ -305,6 +355,7 @@ def _cmd_backfill(args: argparse.Namespace) -> int:
         api_key=settings.bybit_api_key,
         api_secret=settings.bybit_api_secret,
         testnet=settings.testnet,
+        demo=settings.demo,  # S55 PHASE6 SEC: same (testnet, demo) universe as _cmd_run (BYBIT-01)
     )
 
     interval = getattr(args, "interval", "60")
@@ -366,6 +417,7 @@ def _cmd_reconcile_only(args: argparse.Namespace) -> int:
         api_key=settings.bybit_api_key,
         api_secret=settings.bybit_api_secret,
         testnet=settings.testnet,
+        demo=settings.demo,  # S55 PHASE6 SEC: same (testnet, demo) universe as _cmd_run (BYBIT-01)
     )
     filters = BybitFilters(
         symbol=symbol,
@@ -432,167 +484,6 @@ def _cmd_kill(_args: argparse.Namespace) -> int:
     return 0
 
 
-def _load_ohlcv(*, symbol: str, start: str, end: str, interval: str = "60") -> pd.DataFrame:
-    """Load OHLCV from Parquet via data_collector.
-
-    S12 T2: closes S11 stub. Reuses existing data_collector pipeline.
-    Operator must run `python -m src backfill --symbol <X>` to populate Parquet first.
-
-    S13 T4 (CC4): pre-flight NaN assertion — `df.dropna()` post-warmup must yield
-    >=90% bars else WFA aborts with explicit error.
-
-    S19 ADR 0034: interval param extends parquet path: 60 → _1h, 15 → _15m.
-    """
-    interval_label_map: dict[str, str] = {
-        "5": "5m",
-        "15": "15m",
-        "30": "30m",
-        "60": "1h",
-        "120": "2h",
-        "240": "4h",
-        "D": "1d",
-    }
-    interval_label = interval_label_map.get(interval, "1h")
-    parquet_path = f"data/{symbol}_{interval_label}.parquet"
-    config = {
-        "data": {
-            "source": "parquet",
-            "parquet_path": parquet_path,
-            "start_date": start,
-            "end_date": end,
-        }
-    }
-    try:
-        df = load_market_data(config)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(
-            f"OHLCV Parquet missing at {parquet_path}. "
-            f"Run 'python -m src backfill --symbol {symbol} --from {start} --to {end}' first. "
-            f"Original error: {e}"
-        ) from e
-
-    # CC4: pre-flight NaN assertion (>=90% bars retained after dropna)
-    if not df.empty:
-        retained_pct = len(df.dropna()) / len(df)
-        if retained_pct < 0.90:
-            raise ValueError(
-                f"NaN pre-flight failed for {symbol}: only {retained_pct:.1%} bars retained "
-                f"after dropna (threshold >=90%). Likely data quality issue; investigate Parquet."
-            )
-
-    return df
-
-
-def _default_wfa_config() -> dict[str, object]:
-    """S17 ADR 0032 default config (mean-reversion RSI 35/65 + BB 1.5σ).
-
-    S25 ADR 0039: extracted к standalone function для dashboard к override.
-    Pre-registered binding parameters per ADR — CLI uses this as default,
-    но dashboard может pass alternative strategy config (EMA crossover, S15 strict).
-    """
-    return {
-        "trading": {
-            "initial_balance": 10000.0,
-            "commission_taker": 0.001,
-            "slippage": 0.0005,
-            "position_size_pct": 10.0,
-            "max_drawdown_pct": 50.0,
-            "long_only": True,
-        },
-        "strategy": {
-            "type": "mean_reversion",
-            "indicators": {
-                "atr": {"sl_atr_mult": 1.5, "tp_atr_mult": 3.0},
-                "rsi": {"period": 14, "oversold": 35, "overbought": 65},
-                "bb": {"period": 20, "k": 1.5},
-            },
-        },
-    }
-
-
-def _run_wfa_single_symbol(
-    *,
-    symbol: str,
-    df: pd.DataFrame,
-    strategy_config: dict[str, object] | None = None,
-    bars_per_year: int = 8760,
-    train_bars: int = 2000,
-    test_bars: int = 500,
-    k_folds: int = 5,
-    embargo_bars: int = 20,
-) -> tuple[list[object], list[float], dict[str, object], float]:
-    """Run WFA for one symbol. Returns (trades, fold_oos_sharpes, runner_result, mc_p).
-
-    S15 T5 — extracted from _cmd_wfa for multi-symbol aggregation.
-    S25 ADR 0039: optional strategy_config override (для dashboard preset selection).
-    None → defaults к _default_wfa_config (S17 mean-reversion).
-    S27 T1: bars_per_year injected в config — fixes replay_engine annualization
-    bug (sqrt(24*365) hardcoded). Default 8760 = 1H для backward compat.
-    Note: trades typed as list[object] (forward-compat) — actual TradeRecord
-    instances; cast at call site if needed.
-    """
-    from typing import cast
-
-    # S33 T4 (Item #10): WFA window customizable per-call (CC6 (b) consensus train=1000/test=250 для 4H)
-    splitter = WindowSplitter(
-        train_bars=train_bars, test_bars=test_bars, k_folds=k_folds, embargo_bars=embargo_bars
-    )
-    runner = WalkForwardRunner(splitter=splitter, replay_fn=run_replay)
-    config = strategy_config if strategy_config is not None else _default_wfa_config()
-    # S27 T1: ensure bars_per_year present (override если уже в strategy_config)
-    if "bars_per_year" not in config:
-        config = dict(config)
-        config["bars_per_year"] = bars_per_year
-    # S33 T4 (Item #10): pass symbol для error context
-    runner_result = runner.run(df=df, config=config, symbol=symbol)
-
-    # MC sign-flip on aggregated OOS returns
-    oos_trades_df = runner_result["aggregate"]["oos_trades_df"]
-    if oos_trades_df.empty:
-        mc_p = 1.0
-    else:
-        import numpy as np
-
-        raw = oos_trades_df["net_pnl"].astype(float).to_numpy()
-        returns_arr = np.asarray(raw, dtype=float) / 10000.0
-        mc_p = sign_flip_p_value(returns_arr, n_iterations=2000, seed=42)
-
-    # Per-fold trade extraction (S13 T5)
-    from src.risk.trade_history import TradeRecord as _TradeRecord
-
-    trades: list[_TradeRecord] = []
-    fold_sharpes: list[float] = []
-    for fold_data in runner_result["folds"]:
-        fold_sharpes.append(fold_data["oos_is_sharpe_ratio"])
-        fold_trades_df = fold_data.get("oos_trades_df")
-        if fold_trades_df is not None and not fold_trades_df.empty:
-            df_normalized = fold_trades_df.copy()
-            if (
-                "timestamp_open" in df_normalized.columns
-                and "entry_ts" not in df_normalized.columns
-            ):
-                df_normalized = df_normalized.rename(
-                    columns={
-                        "timestamp_open": "entry_ts",
-                        "timestamp_close": "exit_ts",
-                    }
-                )
-            from datetime import UTC as _UTC
-
-            for _col in ("entry_ts", "exit_ts"):
-                if _col in df_normalized.columns:
-                    col_series = pd.to_datetime(df_normalized[_col])
-                    if col_series.dt.tz is None:
-                        col_series = col_series.dt.tz_localize(_UTC)
-                    df_normalized[_col] = col_series
-            if "fees_paid" not in df_normalized.columns:
-                entry_fee = df_normalized.get("entry_fee", 0)
-                exit_fee = df_normalized.get("exit_fee", 0)
-                df_normalized["fees_paid"] = entry_fee + exit_fee
-            trades.extend(extract_trade_records(df_normalized, symbol=symbol))
-    return cast(list[object], trades), fold_sharpes, cast(dict[str, object], runner_result), mc_p
-
-
 def _cmd_wfa(args: argparse.Namespace) -> int:
     """Run Walk-Forward Analysis + report (S15 ADR 0030: multi-symbol aggregation).
 
@@ -609,16 +500,16 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     """
     import json
     import math
-    import statistics
 
-    from src.analytics.cross_trial_log import CrossTrialLog
+    from src.analytics.cross_trial_log import CrossTrialLog, default_pool_path
     from src.risk.trade_history import TradeRecord as _TradeRecord
 
     settings = Settings()  # noqa: F841 — reserved для future settings-driven WFA params
     symbols = _resolve_symbols(args)
 
     all_trades: list[_TradeRecord] = []
-    all_fold_sharpes: list[float] = []
+    all_fold_sharpes: list[float] = []  # OOS/IS ratios — acceptance gate + T6 input
+    all_fold_oos_sharpes: list[float] = []  # S55 QS-2: real annualized OOS Sharpes — DSR sigma_SR
     per_symbol_summary: dict[str, dict[str, object]] = {}
     mc_p_values: list[float] = []
 
@@ -630,7 +521,9 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         "30": 17520,
         "60": 8760,
         "120": 4380,
-        "240": 2190,
+        "240": int(
+            365.25 * 6
+        ),  # S55 QS-6: 2191 (365.25 family) — matches standalone runners (QS-2)
         "D": 365,
     }
     bars_per_year_cli = bars_per_year_map.get(interval_arg, 8760)
@@ -660,6 +553,11 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
 
         all_trades.extend(_cast(list[_TradeRecord], sym_trades))
         all_fold_sharpes.extend(sym_fold_sharpes)
+        # S55 QS-2 (ADR 0071): real annualized OOS Sharpes per fold (NOT the OOS/IS
+        # ratios above) — the canonical sigma_SR + aggregate input for DSR.
+        sym_aggregate = _cast(dict[str, object], sym_runner_result.get("aggregate", {}))
+        sym_fold_oos_sharpes = _cast(list[float], sym_aggregate.get("fold_oos_sharpes", []))
+        all_fold_oos_sharpes.extend(float(s) for s in sym_fold_oos_sharpes)
         mc_p_values.append(sym_mc_p)
         per_symbol_summary[symbol] = {
             "status": "ok",
@@ -690,23 +588,54 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     # Aggregate MC p-value: max (most conservative across symbols)
     mc_p = max(mc_p_values) if mc_p_values else 1.0
 
-    # S15 T0: DSR cross-trial sigma_SR (closes S14 Q2 carry-over)
-    trial_log_path = Path("data/cross_trial_sharpes.json")
+    # S15 T0 / S55 QS-2 (ADR 0071): DSR cross-trial sigma_SR.
+    # Pool path via default_pool_path() (env-redirectable) so a test run never
+    # mutates the tracked data/cross_trial_sharpes.json fixture (S55 test-hygiene).
+    trial_log_path = default_pool_path()
     trial_log = CrossTrialLog(path=trial_log_path)
+    # Informational: GLOBAL pool snapshot BEFORE this trial is persisted (for output).
     pre_existing_sharpes = trial_log.get_oos_sharpes()
 
-    # Aggregate OOS Sharpe для THIS sprint = mean of all fold sharpes across symbols
+    # Aggregate OOS Sharpe for THIS trial = mean of REAL annualized fold OOS Sharpes
+    # across symbols (NOT the OOS/IS ratios — those drive the acceptance gate + T6).
     aggregate_oos_sharpe = (
-        float(sum(all_fold_sharpes) / len(all_fold_sharpes)) if all_fold_sharpes else float("nan")
+        float(sum(all_fold_oos_sharpes) / len(all_fold_oos_sharpes))
+        if all_fold_oos_sharpes
+        else float("nan")
     )
-    cross_trial_sharpes = pre_existing_sharpes + [aggregate_oos_sharpe]
-    n_trials = len(cross_trial_sharpes)
 
-    if n_trials >= 2 and not math.isnan(aggregate_oos_sharpe):
-        sigma_sr_value = statistics.stdev(cross_trial_sharpes)
-        dsr_value = compute_dsr(trades=all_trades, n_trials=n_trials, sigma_sr=sigma_sr_value)
+    # Persist BEFORE the sigma_SR read so the candidate trial is included in the
+    # within-class variance pool (Bailey eq.13), matching research_wfa ordering.
+    # Namespaced strategy_class keeps _cmd_wfa entries from corrupting research-path
+    # sigma_SR and vice-versa (resolves the shared-log unit collision, ADR 0071).
+    if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
+        sprint_num = int(os.environ.get("SPRINT_N", "0"))
+        trial_log.append_trial(
+            sprint=sprint_num,
+            oos_sharpe=aggregate_oos_sharpe,
+            strategy_class=_WFA_STRATEGY_CLASS,
+        )
+
+    # S51 D5 two-level pool scoping: sigma_SR is WITHIN-CLASS (variance term, Bailey
+    # eq.13) — a cross-family OOS Sharpe must NOT poison it. N_trials stays GLOBAL
+    # (multiple-testing breadth, eq.12). De-annualize sigma_SR via sqrt(bars_per_year)
+    # so SR, SR* and sigma_SR share one frequency (wfa_reporter parity); compute_dsr's
+    # per-trade candidate + Lo (2002) eq.13 denom stay untouched.
+    sigma_sr_value = trial_log.sigma_sr(strategy_class=_WFA_STRATEGY_CLASS)
+    n_trials = trial_log.n_trials()
+    dsr_annualization_factor = math.sqrt(bars_per_year_cli)
+    if (
+        sigma_sr_value is not None
+        and not math.isnan(sigma_sr_value)
+        and not math.isnan(aggregate_oos_sharpe)
+    ):
+        dsr_value = compute_dsr(
+            trades=all_trades,
+            n_trials=n_trials,
+            sigma_sr=sigma_sr_value,
+            annualization_factor=dsr_annualization_factor,
+        )
     else:
-        sigma_sr_value = None
         dsr_value = compute_dsr(trades=all_trades, n_trials=1)
 
     # T1-T6 metrics aggregated across symbols
@@ -719,7 +648,9 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
         "30": 17520,
         "60": 8760,
         "120": 4380,
-        "240": 2190,
+        "240": int(
+            365.25 * 6
+        ),  # S55 QS-6: 2191 (365.25 family) — matches standalone runners (QS-2)
         "D": 365,
     }
     bars_per_year = bars_per_year_map_wfa[interval]
@@ -773,12 +704,9 @@ def _cmd_wfa(args: argparse.Namespace) -> int:
     dsr_pass = _nan_or_value(dsr_value) is not None and dsr_value > 0
     verdict = "PASS" if len(failed_criteria) == 0 and dsr_pass else "FAIL"
 
-    # S15 T0/T5: persist this trial AFTER measurement (для future DSR n_trials accumulation).
-    # Guard: only persist when real trades exist (skip CLI smoke tests с mocked extractor returning [] trades).
-    # S17 fix: sprint number now configurable via SPRINT_N env var (default 0 = unknown).
-    if not math.isnan(aggregate_oos_sharpe) and len(all_trades) > 0:
-        sprint_num = int(os.environ.get("SPRINT_N", "0"))
-        trial_log.append_trial(sprint=sprint_num, oos_sharpe=aggregate_oos_sharpe)
+    # NOTE (S55 QS-2): cross-trial persistence moved UP — the candidate trial is now
+    # appended BEFORE the within-class sigma_SR read (Bailey eq.13), with namespaced
+    # strategy_class. See the DSR block above.
 
     print(
         json.dumps(
@@ -860,8 +788,7 @@ def _cmd_monitor(args: argparse.Namespace) -> int:
         halt_rows: list[tuple[_Any, ...]] = []
         with contextlib.suppress(sqlite3.OperationalError):
             halt_rows = conn.execute(
-                "SELECT halt_ts, halt_reason, context FROM halt_log "
-                "ORDER BY halt_ts DESC LIMIT 5"
+                "SELECT halt_ts, halt_reason, context FROM halt_log ORDER BY halt_ts DESC LIMIT 5"
             ).fetchall()
 
         import json

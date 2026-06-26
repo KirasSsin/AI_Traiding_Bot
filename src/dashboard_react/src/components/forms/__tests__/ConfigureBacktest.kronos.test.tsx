@@ -84,3 +84,34 @@ describe('ConfigureBacktest — Kronos coverage (S54 T3)', () => {
     expect(execute).toBeDisabled()
   })
 })
+
+describe('ConfigureBacktest — optgroup display order (S55 DASH-05)', () => {
+  it('renders every strategy optgroup (incl. Тренд + ML / Прогноз) in the curated OPTGROUP_ORDER, not the unstable extras tail', async () => {
+    // Strategies spanning all five optgroups, supplied in a deliberately scrambled
+    // order so a correct render proves the curated ordering (not insertion order).
+    vi.mocked(api.getStrategies).mockResolvedValue({
+      kronos: { label: 'Kronos ML', optgroup: 'ML / Прогноз' },
+      supertrend: { label: 'SuperTrend', optgroup: 'Тренд' },
+      donchian: { label: 'Donchian', optgroup: 'Прорывы' },
+      ema: { label: 'EMA Crossover', optgroup: 'Тренд-следование' },
+      meanrev: { label: 'Mean Reversion', optgroup: 'Возврат к среднему' },
+    } as never)
+
+    const { container } = render(<ConfigureBacktest onResult={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('optgroup').length).toBe(5)
+    })
+
+    const labels = Array.from(container.querySelectorAll('optgroup')).map((g) =>
+      g.getAttribute('label'),
+    )
+    expect(labels).toEqual([
+      'Тренд-следование',
+      'Тренд',
+      'Возврат к среднему',
+      'Прорывы',
+      'ML / Прогноз',
+    ])
+  })
+})

@@ -3,6 +3,7 @@
 States: 12 base + 4 OCO-emulation (16 enum members; 5 conceptual halt-substates
 ride on HALTED + halt_reason: ReasonCode per ADR 0020 sub-decision 8).
 """
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -53,7 +54,9 @@ class ExecutionEvent(StrEnum):
     HALT_RESUME = "HALT_RESUME"
     COOLDOWN_DONE = "COOLDOWN_DONE"
     KILL_SWITCH = "KILL_SWITCH"
-    KILL_SWITCH_REQUESTED = "KILL_SWITCH_REQUESTED"  # ADR 0022 sub-decision 5 — operator HALT (NOT terminal)
+    KILL_SWITCH_REQUESTED = (
+        "KILL_SWITCH_REQUESTED"  # ADR 0022 sub-decision 5 — operator HALT (NOT terminal)
+    )
     MANUAL_RESET = "MANUAL_RESET"
     OCO_PARTIAL_TIMEOUT = "OCO_PARTIAL_TIMEOUT"
     # ADR 0021 sub-decision 2: HEAL-narrow + clean-exited reconcile outcomes
@@ -107,10 +110,19 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     # Sibling cancel path: TP fill or SL trigger → cancel sibling → FLAT
     (ExecutionState.OCO_ARMED, ExecutionEvent.SL_TRIGGERED): ExecutionState.EXIT_SIBLING_CANCELLING,
     (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCELLED): ExecutionState.FLAT,
-    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCEL_FAILED): ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
-    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.SIBLING_CANCELLED): ExecutionState.FLAT,
+    (
+        ExecutionState.EXIT_SIBLING_CANCELLING,
+        ExecutionEvent.SIBLING_CANCEL_FAILED,
+    ): ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
+    (
+        ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
+        ExecutionEvent.SIBLING_CANCELLED,
+    ): ExecutionState.FLAT,
     (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
-    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (
+        ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
+        ExecutionEvent.WS_RECONNECT,
+    ): ExecutionState.RECONCILING,
     (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH): ExecutionState.KILLED,
     # OVERRIDE legacy S5: TP_HIT/PARTIAL_FILL now route through bracket-aware paths
     (ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT): ExecutionState.EXIT_SIBLING_CANCELLING,
@@ -123,9 +135,21 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     # Flatten cascade from OCO_ARMED (sub-decision 10): emergency flatten on
     # reconcile divergence / risk halt invoked while bracket is armed.
     (ExecutionState.OCO_ARMED, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
+    # S55 PHASE6 TL-NEW-01: TL-01 added LONG_OPEN + OCO_ARMING to
+    # RuntimeManager._FLATTENABLE_STATES, so coordinator.flatten() can now fire a
+    # FLATTEN_FAILED event from either state. Without these rows the FSM raises
+    # IllegalTransitionError → run() request_halt(HALT_RUNTIME_CRASH) → a spurious
+    # second halt_log entry polluting the audit trail. These complete the FSM so a
+    # flatten-failure from LONG_OPEN/OCO_ARMING halts cleanly with the correct
+    # primary halt_reason (HALT_FLATTEN_FAILED) and a single halt_log row.
+    (ExecutionState.LONG_OPEN, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
+    (ExecutionState.OCO_ARMING, ExecutionEvent.FLATTEN_FAILED): ExecutionState.HALTED,
     # WS reconnect from new states
     (ExecutionState.OCO_ARMING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
-    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
+    (
+        ExecutionState.EXIT_SIBLING_CANCELLING,
+        ExecutionEvent.WS_RECONNECT,
+    ): ExecutionState.RECONCILING,
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.WS_RECONNECT): ExecutionState.RECONCILING,
     # Risk halt + kill switch from new states
     (ExecutionState.OCO_ARMING, ExecutionEvent.RISK_HALT): ExecutionState.HALTED,
@@ -154,8 +178,14 @@ TRANSITIONS: dict[tuple[ExecutionState, ExecutionEvent], ExecutionState] = {
     (ExecutionState.OCO_ARMING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.OCO_ARMED, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.EXIT_PENDING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
-    (ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
-    (ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
+    (
+        ExecutionState.EXIT_SIBLING_CANCELLING,
+        ExecutionEvent.KILL_SWITCH_REQUESTED,
+    ): ExecutionState.HALTED,
+    (
+        ExecutionState.EXIT_SIBLING_CANCEL_FAILED,
+        ExecutionEvent.KILL_SWITCH_REQUESTED,
+    ): ExecutionState.HALTED,
     (ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.PARTIAL_FILL, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,
     (ExecutionState.RECONCILING, ExecutionEvent.KILL_SWITCH_REQUESTED): ExecutionState.HALTED,

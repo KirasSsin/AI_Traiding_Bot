@@ -127,16 +127,27 @@ def test_entry_long_when_pred_above_threshold(base_time: datetime, tmp_path) -> 
 
 
 def test_exit_flat_when_pred_below_current(base_time: datetime, tmp_path) -> None:
+    """EXIT_FLAT_KRONOS fires on a below-current prediction WHILE LONG (TL-06).
+
+    The strategy must first be driven LONG (ENTRY) before an EXIT can fire — a
+    bare EXIT prediction on a FLAT strategy is suppressed (no phantom EXIT).
+    """
     cache = PredictionCache(tmp_path)
     strat = _make_strategy(cache)
-    bar = _make_bar(close_time=base_time, close=100.0)
-    _put_prediction(cache, bar, Decimal("99.0"))
-    sig = strat.on_bar(bar)
+    # Warm the ATR and drive an ENTRY first so the strategy is LONG.
+    last = _feed_closed_bars_with_range(strat, base_time, count=14, close=100.0)
+    entry_bar = _make_bar(close_time=last + timedelta(hours=1), close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, entry_bar, Decimal("101.00"))  # > 100.60 -> ENTRY_LONG
+    entry_sig = strat.on_bar(entry_bar)
+    assert entry_sig is not None and entry_sig.side == SignalSide.LONG
+
+    # Now a below-current prediction -> EXIT_FLAT_KRONOS (we are LONG).
+    exit_bar = _make_bar(close_time=entry_bar.close_time + timedelta(hours=1), close=100.0)
+    _put_prediction(cache, exit_bar, Decimal("99.0"))
+    sig = strat.on_bar(exit_bar)
     assert sig is not None
     assert sig.side == SignalSide.FLAT
     assert sig.reason == ReasonCode.EXIT_FLAT_KRONOS.value
-    # EXIT_FLAT fires before ATR has warmed — atr_14 must be _ZERO (locked design)
-    assert sig.atr_14 == Decimal("0")
 
 
 def test_no_signal_within_band(base_time: datetime, tmp_path) -> None:
@@ -353,3 +364,69 @@ def test_entry_blocked_when_atr_is_zero(base_time: datetime, tmp_path: Path) -> 
     _put_prediction(cache, entry_bar, Decimal("101.00"))  # > 100.60 → would-be ENTRY_LONG
     # Zero-ATR gate must block ENTRY (atr_14=0 means no valid SL/TP bracket).
     assert strat.on_bar(entry_bar) is None
+
+
+# ---------------------------------------------------------------------------
+# TL-06 — _current_side state machine (self-consistent signal contract)
+#
+# The strategy must NOT emit a redundant ENTRY while already LONG, nor a phantom
+# EXIT_FLAT while already FLAT. Previously on_bar was STATELESS and emitted on
+# EVERY qualifying bar (masked by external in_pos guards in runner + manager).
+# ---------------------------------------------------------------------------
+
+
+def _drive_entry(strat: KronosStrategy, cache: PredictionCache, base_time: datetime) -> datetime:
+    """Warm ATR + emit one ENTRY_LONG. Returns the ENTRY bar's close_time."""
+    last = _feed_closed_bars_with_range(strat, base_time, count=14, close=100.0)
+    entry_ct = last + timedelta(hours=1)
+    entry_bar = _make_bar(close_time=entry_ct, close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, entry_bar, Decimal("101.00"))  # > 100.60 -> ENTRY_LONG
+    sig = strat.on_bar(entry_bar)
+    assert sig is not None and sig.side == SignalSide.LONG
+    return entry_ct
+
+
+def test_second_consecutive_entry_condition_suppressed_while_long(
+    base_time: datetime, tmp_path: Path
+) -> None:
+    """Two consecutive ENTRY conditions -> only ONE ENTRY_LONG_KRONOS (TL-06)."""
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    entry_ct = _drive_entry(strat, cache, base_time)
+
+    # Second qualifying ENTRY bar while still LONG -> suppressed.
+    bar2 = _make_bar(close_time=entry_ct + timedelta(hours=1), close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, bar2, Decimal("101.00"))  # again > 100.60 -> would-be ENTRY
+    assert strat.on_bar(bar2) is None
+
+
+def test_exit_condition_while_flat_emits_nothing(base_time: datetime, tmp_path: Path) -> None:
+    """EXIT condition met but strategy is FLAT -> NO EXIT_FLAT_KRONOS (TL-06)."""
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+    bar = _make_bar(close_time=base_time, close=100.0)
+    _put_prediction(cache, bar, Decimal("99.0"))  # pred < current -> would-be EXIT_FLAT
+    assert strat.on_bar(bar) is None  # FLAT already -> no phantom exit
+
+
+def test_full_cycle_entry_exit_entry(base_time: datetime, tmp_path: Path) -> None:
+    """ENTRY -> EXIT -> ENTRY all fire when the side transitions correctly (TL-06)."""
+    cache = PredictionCache(tmp_path)
+    strat = _make_strategy(cache)
+
+    # 1. ENTRY (warms ATR, drives LONG).
+    entry_ct = _drive_entry(strat, cache, base_time)
+
+    # 2. EXIT (pred below current, we are LONG -> EXIT_FLAT).
+    exit_ct = entry_ct + timedelta(hours=1)
+    exit_bar = _make_bar(close_time=exit_ct, close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, exit_bar, Decimal("99.0"))
+    exit_sig = strat.on_bar(exit_bar)
+    assert exit_sig is not None and exit_sig.side == SignalSide.FLAT
+
+    # 3. ENTRY again (pred above threshold, we are FLAT -> ENTRY_LONG re-fires).
+    entry2_ct = exit_ct + timedelta(hours=1)
+    entry2_bar = _make_bar(close_time=entry2_ct, close=100.0, high=101.0, low=99.0)
+    _put_prediction(cache, entry2_bar, Decimal("101.00"))
+    entry2_sig = strat.on_bar(entry2_bar)
+    assert entry2_sig is not None and entry2_sig.side == SignalSide.LONG

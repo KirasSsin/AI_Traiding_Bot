@@ -42,9 +42,32 @@ Atomic write via tmp+rename. JSON для operator readability + git diff transpa
 from __future__ import annotations
 
 import json
+import os
 import statistics
 from pathlib import Path
 from typing import TypedDict
+
+# Production default pool location (repo-relative, resolved from cwd). Overridable
+# via the CROSS_TRIAL_LOG_PATH env var — see default_pool_path().
+_DEFAULT_POOL_PATH = "data/cross_trial_sharpes.json"
+
+# Env var that redirects the default pool path. Production leaves it unset
+# (default → data/cross_trial_sharpes.json). The test harness sets it to an
+# isolated tmp file (autouse _isolate_cross_trial_pool fixture) so a test run
+# never mutates the tracked data/cross_trial_sharpes.json fixture.
+_POOL_PATH_ENV = "CROSS_TRIAL_LOG_PATH"
+
+
+def default_pool_path() -> Path:
+    """Resolve the default cross-trial pool path.
+
+    Production default: ``data/cross_trial_sharpes.json`` (repo-relative, resolved
+    from cwd). Override via the ``CROSS_TRIAL_LOG_PATH`` env var. The override is the
+    single isolation seam used by the test harness to keep every runner's default
+    pool off the tracked repo fixture (test-hygiene invariant) without each test
+    needing to thread an explicit path or chdir.
+    """
+    return Path(os.environ.get(_POOL_PATH_ENV, _DEFAULT_POOL_PATH))
 
 
 class TrialEntry(TypedDict):

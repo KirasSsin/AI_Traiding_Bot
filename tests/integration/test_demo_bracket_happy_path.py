@@ -13,6 +13,7 @@ API drift notes vs plan draft (2026-04-23):
 - BybitFilters requires tick_size (plan draft omitted); provided here.
 - Entry order_id not stored on ExecutionStateRow; reconstructed via make_order_link_id.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -42,7 +43,13 @@ def _create_schema(conn: sqlite3.Connection) -> None:
             expected_oco_qty TEXT,
             arming_started_at TEXT,
             last_attempt_num INTEGER NOT NULL DEFAULT 1,
-            updated_at TEXT NOT NULL
+            updated_at TEXT NOT NULL,
+            halt_reason TEXT,
+            last_exit_reason TEXT,
+            last_reconcile_at TEXT,
+            bootstrap_at TEXT,
+            bracket_tp_price TEXT,
+            bracket_sl_trigger_price TEXT
         )
         """
     )
@@ -61,6 +68,7 @@ def demo_coordinator(tmp_path_factory):
     # Load settings from .env.demo; skip cleanly if file absent or creds missing.
     try:
         from src.platform.config import Settings
+
         settings = Settings(_env_file=".env.demo")
     except Exception as exc:
         pytest.skip(f"Cannot load .env.demo: {exc}")
@@ -68,6 +76,7 @@ def demo_coordinator(tmp_path_factory):
     # Guard: Settings has no bybit_demo_mode field; require explicit opt-in via env file
     # by checking a plain env var so we never accidentally hit mainnet.
     import os
+
     if os.getenv("BYBIT_DEMO_MODE", "").lower() not in ("1", "true"):
         pytest.skip(
             "Refusing to run: set BYBIT_DEMO_MODE=1 in .env.demo or environment "
@@ -147,9 +156,9 @@ def test_demo_happy_path_entry_arm_cancel_flatten(demo_coordinator):
             break
 
     row = repo.get(_SYMBOL)
-    assert row is not None and row.state == ExecutionState.LONG_OPEN, (
-        f"expected LONG_OPEN, got {row.state if row else 'None'}"
-    )
+    assert (
+        row is not None and row.state == ExecutionState.LONG_OPEN
+    ), f"expected LONG_OPEN, got {row.state if row else 'None'}"
 
     # Reconstruct entry orderLinkId from bracket_id (attempt=1, role=entry).
     # ExecutionStateRow does not store entry_order_id directly.
@@ -166,9 +175,9 @@ def test_demo_happy_path_entry_arm_cancel_flatten(demo_coordinator):
         (o["orderId"] for o in all_orders if o.get("orderLinkId") == entry_link_id),
         None,
     )
-    assert entry_order_id, (
-        f"Entry order with orderLinkId={entry_link_id!r} not found in open/history"
-    )
+    assert (
+        entry_order_id
+    ), f"Entry order with orderLinkId={entry_link_id!r} not found in open/history"
 
     fill = adapter.get_order(symbol=_SYMBOL, order_id=entry_order_id)
 

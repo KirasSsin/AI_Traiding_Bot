@@ -21,7 +21,16 @@ def mock_http_cls() -> MagicMock:
 def test_client_init_passes_credentials(mock_http_cls: MagicMock) -> None:
     with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
         _ = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
-    mock_http_cls.assert_called_once_with(testnet=True, api_key="k", api_secret="s")
+    # S55 B0 BYBIT-01: demo flag now passed explicitly (default False) so REST +
+    # private-WS resolve to the same Bybit account universe.
+    mock_http_cls.assert_called_once_with(testnet=True, demo=False, api_key="k", api_secret="s")
+
+
+def test_client_init_passes_demo_flag_explicitly(mock_http_cls: MagicMock) -> None:
+    """S55 B0 BYBIT-01: demo=True must propagate to pybit HTTP (env consistency)."""
+    with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
+        _ = BybitRESTClient(api_key="k", api_secret="s", testnet=False, demo=True)
+    mock_http_cls.assert_called_once_with(testnet=False, demo=True, api_key="k", api_secret="s")
 
 
 def test_get_server_time_returns_utc_datetime(mock_http_cls: MagicMock) -> None:
@@ -197,6 +206,63 @@ def test_get_klines_paginates_backward_for_large_range(mock_http_cls: MagicMock)
     # Verify oldest-first ordering
     for i in range(1, len(bars)):
         assert bars[i].open_time > bars[i - 1].open_time
+
+
+def test_get_klines_terminates_on_non_advancing_batch(mock_http_cls: MagicMock, caplog) -> None:
+    """S55 LOW BYBIT-06: a non-advancing batch (oldest_open_ms not strictly
+    decreasing) must terminate cleanly + log a no-progress gap warning, NOT loop
+    forever re-issuing the identical request.
+
+    Mock: every call returns a page whose oldest bar is FIXED at the same
+    in-range timestamp (clamped/dup page). Without a forward-progress guard the
+    loop re-issues the same request indefinitely. A hard call cap RAISES past N
+    calls so a missing guard fails fast (instead of hanging the suite).
+    """
+    import logging
+
+    base_open_ms = 1_700_000_000_000
+    step_ms = 3_600_000
+    start_ms = base_open_ms
+    end_ms = base_open_ms + 10 * step_ms
+    # A single in-range bar whose open_time stays fixed at end_ms - step (well
+    # above start_ms, so the start-coverage break never fires).
+    fixed_oldest = end_ms - step_ms
+
+    call_count = 0
+    hard_cap = 25
+
+    def fake_get_kline(**_kwargs: object) -> dict[str, object]:
+        nonlocal call_count
+        call_count += 1
+        if call_count > hard_cap:
+            raise AssertionError(
+                f"get_klines exceeded {hard_cap} calls — no forward-progress guard "
+                "(infinite REST loop on non-advancing batch)"
+            )
+        # Always the SAME oldest bar → cur_end never advances.
+        row = [str(fixed_oldest), "100.0", "101.0", "99.0", "100.5", "1.0", "100.5"]
+        return {"retCode": 0, "result": {"list": [row]}}
+
+    mock_http_cls.return_value.get_kline.side_effect = fake_get_kline
+    with patch("src.marketdata.bybit.rest.HTTP", mock_http_cls):
+        client = BybitRESTClient(api_key="k", api_secret="s", testnet=True)
+        with caplog.at_level(logging.WARNING):
+            bars = client.get_klines(
+                symbol="BTCUSDT",
+                interval="60",
+                start_ms=start_ms,
+                end_ms=end_ms,
+                limit_per_call=1000,
+            )
+
+    # Terminates within the cap (guard breaks on the non-advancing batch).
+    assert call_count <= hard_cap, f"did not terminate: {call_count} calls"
+    # Returns what it accumulated (the one in-range bar from the first page).
+    assert len(bars) >= 1
+    # Emits a structured no-progress warning for the gap-synthesizer.
+    assert any(
+        "no_forward_progress" in rec.getMessage() for rec in caplog.records
+    ), "expected a no-forward-progress gap warning"
 
 
 def test_get_klines_excludes_end_ms_boundary(mock_http_cls: MagicMock) -> None:

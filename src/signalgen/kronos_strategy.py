@@ -104,6 +104,10 @@ class KronosStrategy:
         # DRY). Kronos does NOT compute EMA/RSI/ADX — only ATR for SL/TP sizing.
         self._atr = _WilderATR(period=atr_period)
         self._last_atr: Decimal | None = None
+        # Self-consistent signal contract (TL-06): mirror the sibling strategies
+        # (donchian/atr_breakout/...) — only emit ENTRY when FLAT, only emit
+        # EXIT when LONG. Long-only FSM: state ∈ {FLAT, LONG} (never SHORT).
+        self._current_side: SignalSide = SignalSide.FLAT
 
     def on_bar(self, bar: Bar) -> Signal | None:
         """Evaluate the V3 rule on a closed bar via a cache lookup.
@@ -143,15 +147,21 @@ class KronosStrategy:
         pred_close = prediction[0]  # horizon = 1 -> single predicted close
         current_close = bar.close
 
-        if pred_close > current_close * (Decimal(1) + self._threshold):
+        # Entry rule (LONG): only when currently FLAT (no double-entry — TL-06).
+        if self._current_side == SignalSide.FLAT and pred_close > current_close * (
+            Decimal(1) + self._threshold
+        ):
             # Risk-safe: no ENTRY without a warmed ATR — the bracket SL/TP cannot
             # be sized from atr_14 == 0 (SL == entry or div-by-zero). Refuse.
             if self._last_atr is None or self._last_atr <= 0:
                 return None
+            self._current_side = SignalSide.LONG
             return self._build_signal(bar, SignalSide.LONG, ReasonCode.ENTRY_LONG_KRONOS)
-        if pred_close < current_close:
+        # Exit rule (FLAT): only when currently LONG (no phantom exit — TL-06).
+        if self._current_side == SignalSide.LONG and pred_close < current_close:
             # EXIT_FLAT only flattens an existing position — no SL sizing needed,
             # so it may fire even before the ATR has warmed up.
+            self._current_side = SignalSide.FLAT
             return self._build_signal(bar, SignalSide.FLAT, ReasonCode.EXIT_FLAT_KRONOS)
         return None
 

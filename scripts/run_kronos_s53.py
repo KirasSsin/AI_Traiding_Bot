@@ -36,7 +36,6 @@ WARNING (CC4): changing variant/tokenizer changes weights_hash → old cache ent
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import logging
 import os
@@ -53,6 +52,7 @@ import pandas as pd
 from src.backtest.kronos_runner import run_kronos_exploratory
 from src.ml.kronos_variant import KronosVariant, variant_by_name
 from src.ml.prediction_cache import CacheKey, PredictionCache, hash_params, median_ensemble
+from src.ml.weights_hash import compute_weights_hash
 
 logging.basicConfig(
     level=logging.INFO,
@@ -157,54 +157,16 @@ def _normalize_df(path: str) -> pd.DataFrame:
 def _compute_weights_hash(variant: KronosVariant) -> str:
     """Compute SHA-256 over HuggingFace cached weight files for the variant's repos.
 
-    Searches the HF cache under the default ``~/.cache/huggingface/`` tree for
-    files matching variant.model_id AND variant.tokenizer_id
-    (pytorch_model.bin / model.safetensors / model.ckpt). Both repos are
-    separate downloads for Kronos (unlike Chronos where they are the same).
-    All found weight files are sorted and hashed together for a combined
-    provenance digest (C4).
-
-    Falls back to SHA-256 of ``"model_id|tokenizer_id"`` when no files are
-    found (e.g. models not yet downloaded).
+    Thin re-export of :func:`src.ml.weights_hash.compute_weights_hash` (extracted
+    to a torch-free, unit-testable module — S55 TQ-05). Behavior is unchanged:
+    hashes all model + tokenizer weight files found in the HF cache; falls back
+    to a revision-pinned seed when none are downloaded (so distinct pinned
+    revisions never collide on the cache key — C4 revision dimension).
 
     WARNING (CC4): changing variant/tokenizer changes weights_hash -> old cache
     entries become MISS -> full rebuild required.
     """
-    model_id = variant.model_id
-    tokenizer_id = variant.tokenizer_id
-    hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
-    weight_extensions = {".bin", ".safetensors", ".ckpt", ".pt"}
-
-    weight_files: list[Path] = []
-    for repo_id in (model_id, tokenizer_id):
-        # Repo id "org/name" -> directory prefix "models--org--name"
-        repo_dir_name = "models--" + repo_id.replace("/", "--")
-        repo_dir = hf_cache / repo_dir_name
-        if repo_dir.exists():
-            for candidate in repo_dir.rglob("*"):
-                if candidate.is_file() and candidate.suffix in weight_extensions:
-                    weight_files.append(candidate)
-
-    if not weight_files:
-        fallback_seed = f"{model_id}|{tokenizer_id}"
-        _log.warning(
-            "No weight files found for %s / %s under %s; using ids as hash seed.",
-            model_id,
-            tokenizer_id,
-            hf_cache,
-        )
-        return hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
-
-    weight_files.sort()
-    h = hashlib.sha256()
-    for wf in weight_files:
-        _log.info("  hashing weights file: %s", wf)
-        with wf.open("rb") as fh:
-            for chunk in iter(lambda: fh.read(65536), b""):
-                h.update(chunk)
-    digest = h.hexdigest()
-    _log.info("weights_hash (%d files, model+tokenizer): %s", len(weight_files), digest)
-    return digest
+    return compute_weights_hash(variant)
 
 
 def _build_cache_for_combo(

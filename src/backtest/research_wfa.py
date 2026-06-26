@@ -25,7 +25,7 @@ from typing import Any, Callable, Protocol
 import numpy as np
 import pandas as pd
 
-from src.analytics.cross_trial_log import CrossTrialLog
+from src.analytics.cross_trial_log import CrossTrialLog, default_pool_path
 from src.analytics.dsr import compute_dsr_with_status
 from src.backtest.mc_permutation import sign_flip_p_value
 from src.backtest.strategy_metrics import compute_t1_t6_metrics
@@ -254,8 +254,10 @@ def run_research_wfa(
     )
 
     # DSR per ADR 0056 sigma_SR sourcing hierarchy + S51 D5 two-level pool scoping.
+    # None-default resolves via default_pool_path() (env-redirectable) so a test run
+    # never mutates the tracked data/cross_trial_sharpes.json fixture (S55 test-hygiene).
     if cross_trial_log_path is None:
-        cross_trial_log_path = Path("data/cross_trial_sharpes.json")
+        cross_trial_log_path = default_pool_path()
     trial_log = CrossTrialLog(path=cross_trial_log_path)
 
     # S44 T9 — append к cross-trial log (skip if no valid sharpe). S51 D5: tag the
@@ -309,10 +311,19 @@ def run_research_wfa(
         # >=3 within-class entries → finite class sigma; apply full global breadth.
         sigma_scope_status = "CLASS_SCOPED"
 
+    # S55 HIGH QS-1 single-scale units fix: stored fold Sharpes (→ sigma_sr) are
+    # ANNUALIZED via sqrt(bars_per_year / mean_holding); compute_dsr's internal
+    # candidate Sharpe is per-trade. Supply the representative annualization factor
+    # so compute_dsr de-annualizes sigma_sr to one frequency (Bailey eq.12/13).
+    # Uses the nominal _MEAN_HOLDING_BARS_PLACEHOLDER — the true per-trial holding is
+    # not derivable here (research trades carry no bar indices) and the residual is
+    # second-order vs the ~sqrt(bars_per_year)-magnitude correction (quant-stats S55).
+    dsr_annualization_factor = math.sqrt(bars_per_year / _MEAN_HOLDING_BARS_PLACEHOLDER)
     dsr_info = compute_dsr_with_status(
         trades=adapted_trades,
         n_trials=effective_n_trials,
         sigma_sr=effective_sigma,
+        annualization_factor=dsr_annualization_factor,
     )
     dsr_value = dsr_info["dsr"]
 

@@ -57,6 +57,7 @@ def compute_dsr(
     benchmark_sharpe: float = 0.0,
     n_trials: int = 1,
     sigma_sr: float | None = None,
+    annualization_factor: float | None = None,
     use_log: bool = True,
 ) -> float:
     """Compute Deflated Sharpe Ratio.
@@ -74,6 +75,19 @@ def compute_dsr(
         sigma_sr: cross-trial Sharpe std deviation (REQUIRED if n_trials > 1).
                   Caller computes sigma_sr = std([fold_sharpe_1, ..., fold_sharpe_K]).
                   S10 closes S9 NotImplementedError per ADR 0025 + pre-s10-backlog Q7.
+        annualization_factor: S55 HIGH QS-1 units fix. Bailey & López de Prado 2014
+                  eq.12/13 assume SR, SR* and sigma_SR share a SINGLE observation
+                  frequency. This module's internal candidate Sharpe (mean/std over
+                  per-trade returns) is UN-annualized, but callers source sigma_sr
+                  from ANNUALIZED fold/trial Sharpes (× sqrt(bars_per_year/
+                  mean_holding)). To restore single-frequency consistency, supply
+                  the same factor that annualized those fold Sharpes — sigma_sr is
+                  then DE-annualized (÷ factor) to the per-trade scale before eq.12,
+                  leaving Lo (2002) eq.13's per-trade denom untouched. None (default)
+                  = no scaling (n_trials=1 ignores sigma_sr entirely → no-op there).
+                  quant-stats-reviewer S55: scaling SR *up* into eq.13's denom would
+                  be mathematically invalid (frequency-sensitive), hence de-annualize
+                  sigma_sr instead.
         use_log: log returns если True (default), simple if False.
 
     Returns:
@@ -133,6 +147,14 @@ def compute_dsr(
             # produce sharpe_star < benchmark (DSR inflated rather than penalized).
             # Per quant-stats-reviewer T4 concern.
             raise ValueError(f"compute_dsr: sigma_sr must be >= 0, got {sigma_sr}")
+        # S55 HIGH QS-1 single-scale units fix (quant-stats-reviewer option B).
+        # The candidate `sharpe` above is per-trade (un-annualized); callers feed
+        # sigma_sr as stdev of ANNUALIZED fold Sharpes. De-annualize sigma_sr to the
+        # per-trade scale so SR, SR* and sigma_SR share one frequency (Bailey eq.12).
+        # Lo (2002) eq.13's per-trade denom (below) is left untouched — annualizing
+        # SR into it would be frequency-inconsistent (mathematically invalid).
+        if annualization_factor is not None and annualization_factor > 0:
+            sigma_sr = sigma_sr / annualization_factor
         gamma = 0.5772156649  # Euler-Mascheroni
         z1 = float(stats.norm.ppf(1.0 - 1.0 / n_trials))
         z2 = float(stats.norm.ppf(1.0 - 1.0 / (n_trials * math.e)))
@@ -156,6 +178,7 @@ def compute_dsr_with_status(
     trades: list[TradeRecord],
     n_trials: int = 1,
     sigma_sr: float | None = None,
+    annualization_factor: float | None = None,
     benchmark_sharpe: float = 0.0,
     use_log: bool = True,
 ) -> dict[str, Any]:
@@ -181,6 +204,7 @@ def compute_dsr_with_status(
         benchmark_sharpe=benchmark_sharpe,
         n_trials=n_trials,
         sigma_sr=sigma_sr,
+        annualization_factor=annualization_factor,
         use_log=use_log,
     )
     status = "UNDERPOWERED" if n < 30 else "GATE_ELIGIBLE"

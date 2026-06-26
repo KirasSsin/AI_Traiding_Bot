@@ -152,11 +152,36 @@ def test_hash_params_differs_on_value_change() -> None:
 
 
 def test_module_is_torch_free() -> None:
-    import sys
+    """prediction_cache must have NO top-level torch import (env-independent AST gate).
 
-    import src.ml.prediction_cache  # noqa: F401
+    A runtime ``"torch" not in sys.modules`` check is fragile: torch may already
+    be imported by an unrelated test or be installed locally (operator's ``.[ml]``
+    env). The durable guard parses the source and asserts no module-body
+    ``import torch`` / ``from torch ...`` — survives torch being installed,
+    mirrors Test B in test_ml_optional_dep.py.
+    """
+    import ast
+    import importlib.util
 
-    assert "torch" not in sys.modules
+    spec = importlib.util.find_spec("src.ml.prediction_cache")
+    assert spec is not None and spec.origin is not None
+    with open(spec.origin, encoding="utf-8") as fh:
+        tree = ast.parse(fh.read(), filename=spec.origin)
+
+    violations: list[str] = []
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "torch" or alias.name.startswith("torch."):
+                    violations.append(f"import {alias.name}")
+        elif (
+            isinstance(node, ast.ImportFrom)
+            and node.module
+            and (node.module == "torch" or node.module.startswith("torch."))
+        ):
+            violations.append(f"from {node.module} import ...")
+
+    assert violations == [], f"Top-level torch import in prediction_cache: {violations}"
 
 
 # ---------------------------------------------------------------------------
@@ -191,3 +216,83 @@ def test_put_empty_prediction_get_returns_empty_list(tmp_path: Path) -> None:
     # The artifact exists (non-None), but is an empty list.
     assert out is not None, "get after put([]) must return a list, not None"
     assert out == [], f"expected [] but got {out!r}"
+
+
+# ---------------------------------------------------------------------------
+# Atomicity: put() must stage to .tmp then os.replace (DI-06/SEC-S55-03/PY-5).
+# Mirrors the canonical tmp+os.replace idiom in src/marketdata/storage.py so a
+# crash mid-write never leaves a truncated artifact or a body without a matching
+# sidecar.
+# ---------------------------------------------------------------------------
+
+
+def test_put_uses_tmp_then_os_replace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """put() must os.replace BOTH body and sidecar from a .tmp staging path.
+
+    Spies on os.replace and asserts: (1) it is called for both final targets
+    (.json + .json.sha256), (2) every source is a .tmp path (never written
+    directly to the final name), and (3) the body (.json) is replaced LAST so a
+    crash never exposes a body whose sidecar is not yet in place.
+    """
+    import os
+
+    from src.ml import prediction_cache as pc_mod
+
+    calls: list[tuple[str, str]] = []
+    real_replace = os.replace
+
+    def spy_replace(src: object, dst: object, *args: object, **kwargs: object) -> None:
+        calls.append((str(src), str(dst)))
+        real_replace(src, dst, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(pc_mod.os, "replace", spy_replace)
+
+    cache = PredictionCache(tmp_path)
+    cache.put(_make_key(), _prediction())
+
+    dsts = [dst for _, dst in calls]
+    body = next(d for d in dsts if d.endswith(".json"))
+    sidecar = next(d for d in dsts if d.endswith(".json.sha256"))
+    assert body in dsts and sidecar in dsts, f"missing replace target: {calls}"
+    # Every staged source must be a .tmp file (never the final name written direct).
+    for src, _ in calls:
+        assert src.endswith(".tmp"), f"source not staged via .tmp: {src}"
+    # Body replaced LAST → if final body exists, its sidecar is already in place.
+    assert dsts.index(body) > dsts.index(
+        sidecar
+    ), f"body must be os.replace'd after sidecar, got order: {dsts}"
+
+
+def test_put_crash_before_body_replace_leaves_no_partial(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A crash during put() must never leave a partial final body artifact.
+
+    Inject a failure at the body os.replace step (the final commit). Afterwards
+    NO final ``.json`` artifact may exist, no ``.tmp`` files may litter the dir,
+    and get() returns MISS — the cache stays consistent.
+    """
+    import os
+
+    from src.ml import prediction_cache as pc_mod
+
+    cache = PredictionCache(tmp_path)
+    key = _make_key()
+    final_body = tmp_path / f"{key.digest()}.json"
+
+    real_replace = os.replace
+
+    def flaky_replace(src: object, dst: object, *args: object, **kwargs: object) -> None:
+        if str(dst) == str(final_body):
+            raise OSError("simulated crash before body commit")
+        real_replace(src, dst, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(pc_mod.os, "replace", flaky_replace)
+
+    with pytest.raises(OSError, match="simulated crash"):
+        cache.put(key, _prediction())
+
+    assert not final_body.exists(), "partial body artifact left after crash"
+    leftovers = [p.name for p in tmp_path.iterdir() if p.name.endswith(".tmp")]
+    assert leftovers == [], f"tmp files littered after crash: {leftovers}"
+    assert cache.get(key) is None, "cache must report MISS after a failed put"

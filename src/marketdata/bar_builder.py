@@ -44,20 +44,28 @@ class BarBuilder:
         self._last_confirmed_open_ms = open_ms
         return bar
 
-    def process_with_gap_fill(self, msg: dict[str, object]) -> tuple[Bar | None, Bar | None]:
-        """Process msg; if gap detected since last confirmed, emit synthetic
-        GAP bar + the real bar. Returns (first_gap_bar, real_bar).
+    def process_with_gap_fill(self, msg: dict[str, object]) -> tuple[list[Bar], Bar | None]:
+        """Process msg; if a multi-interval gap exists since the last confirmed
+        bar, emit one synthetic GAP bar per missing interval slot + the real bar.
+
+        Returns (gap_bars, real_bar). `gap_bars` is one DataQuality.GAP Bar for
+        each missing slot in chronological order (empty when contiguous). A single
+        missing interval yields exactly one GAP bar (back-compat). Emitting a
+        marker per missing slot prevents a silent multi-bar hole that would
+        corrupt downstream indicator lookback windows (DI-01).
         """
         open_ms = int(msg["start"])  # type: ignore[call-overload]
-        gap_bar: Bar | None = None
+        gap_bars: list[Bar] = []
         if (
             self._last_confirmed_open_ms is not None
             and open_ms > self._last_confirmed_open_ms + self._interval_ms
         ):
             gap_open_ms = self._last_confirmed_open_ms + self._interval_ms
-            gap_bar = self._synth_gap_bar(gap_open_ms)
+            while gap_open_ms < open_ms:
+                gap_bars.append(self._synth_gap_bar(gap_open_ms))
+                gap_open_ms += self._interval_ms
         real_bar = self.process(msg)
-        return gap_bar, real_bar
+        return gap_bars, real_bar
 
     def _check_order(self, open_ms: int) -> None:
         if self._last_confirmed_open_ms is None:

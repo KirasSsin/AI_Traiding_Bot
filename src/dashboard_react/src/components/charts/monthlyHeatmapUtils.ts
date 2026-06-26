@@ -1,17 +1,26 @@
-// M7 fix: pure monthly-return computation extracted for testability.
-// Monthly return = last_of_month - last_of_prev_month (prior-month-close baseline).
-// This partitions the total cumulative return without gaps or double-counting.
+// DASH-02 (S55) fix: pure monthly-return computation extracted for testability.
+// True monthly return = ratio of equity MULTIPLIERS, not a delta of compounded
+// cumulative percentages. The series is a COMPOUNDED cumulative equity_pct, so
+// subtracting two cumulative pcts (month_close - prev_close) systematically
+// overstates the period return — the further equity is from 0%, the worse:
+// at +800% cumulative a real ~5.6% month reads as ~+50% (≈9× overstatement).
 
 export interface MonthlyData {
   years: number[]
   cells: Map<number, Map<number, number>>  // year → month(0-11) → return%
 }
 
-/** Compute per-month PnL returns from a cumulative equity_pct series.
+/** Compute per-month PnL returns from a cumulative (compounded) equity_pct series.
  *
  * Algorithm: scan chronologically, track last equity_pct per (year, month).
- * Monthly return = month_close - prior_month_close.
- * Baseline for the first month = 0 (implied start before any trade).
+ * Convert to multipliers (mult_i = 1 + equity_pct_i/100) and take the ratio:
+ *   month return % = (mult_close / mult_prev_close - 1) * 100.
+ * Baseline for the first month = 1.0 (implied equity multiplier before the series),
+ * so the first cell = (mult_close / 1.0 - 1) * 100 = its cumulative at month-end.
+ *
+ * Note: per-month cells no longer SUM to the final cumulative — they COMPOUND
+ * (product of multipliers reconciles to the total). That is the correct behaviour
+ * for true period returns on a compounded curve.
  */
 export function computeMonthlyData(timestamps: number[], equityPct: number[]): MonthlyData {
   // Group samples by (year, month) — keep only the last equity_pct per group (month-close).
@@ -37,17 +46,19 @@ export function computeMonthlyData(timestamps: number[], equityPct: number[]): M
     }
   }
 
-  // Build cells map: year → month → return% using prior-month-close as baseline.
-  // prevClose starts at 0 (implied equity_pct before the series begins).
+  // Build cells map: year → month → return% using the prior-month-close
+  // MULTIPLIER as baseline. prevMult starts at 1.0 (implied equity multiplier
+  // before the series begins) so the first month's cell equals its cumulative.
   const cells = new Map<number, Map<number, number>>()
   let minYear = Infinity
   let maxYear = -Infinity
-  let prevClose = 0  // implicit start baseline
+  let prevMult = 1.0  // implicit start baseline multiplier (equity_pct = 0%)
 
   for (const entry of groups.values()) {
     const { year, month, last } = entry
-    const ret = last - prevClose  // pct-point delta from prior month's close
-    prevClose = last              // this month's close becomes next month's baseline
+    const mult = 1 + last / 100        // this month's close as an equity multiplier
+    const ret = (mult / prevMult - 1) * 100  // true period return on a compounded curve
+    prevMult = mult                    // this month's multiplier becomes next month's baseline
 
     if (year < minYear) minYear = year
     if (year > maxYear) maxYear = year

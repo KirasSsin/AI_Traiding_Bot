@@ -1,7 +1,8 @@
 """ADR 0020 sub-decision 8 — FSM v2 enum expansion (4 new states + 8 new events)."""
+
 from __future__ import annotations
 
-from src.execution.state_machine import ExecutionEvent, ExecutionState
+from src.execution.state_machine import TRANSITIONS, ExecutionEvent, ExecutionState, apply
 
 
 def test_new_states_present() -> None:
@@ -40,9 +41,6 @@ def test_legacy_oco_placed_kept_as_alias() -> None:
     assert ExecutionEvent.OCO_PLACED.value == "OCO_PLACED"
 
 
-from src.execution.state_machine import TRANSITIONS, apply
-
-
 def test_transitions_count_exact_v2() -> None:
     # S5 had 29; ADR 0020 sub-decision 8 adds 25 net new unique keys
     # (27 entries minus 2 override-existing keys → 29+25=54). Sub-decision 10
@@ -51,13 +49,21 @@ def test_transitions_count_exact_v2() -> None:
     # ADR 0022 sub-decision 5 (S8a) adds 11 new KILL_SWITCH_REQUESTED transitions (+PARTIAL_FILL) → 70.
     # S8b T1 fix-up adds 3 RISK_HALT rows for ENTRY_PENDING/EXIT_PENDING/RECONCILING → 73 (future ADR 0023).
     # S8b T7 fix-up adds (FLAT, RISK_HALT) → 74 — caught by property test (RuntimeManager.run idle-state halt path).
-    assert len(TRANSITIONS) == 74
+    # S55 PHASE6 TL-NEW-01 adds (LONG_OPEN, FLATTEN_FAILED) + (OCO_ARMING, FLATTEN_FAILED) → HALTED → 76
+    # (TL-01 made both states flattenable; completes the FSM so flatten-failure halts cleanly).
+    assert len(TRANSITIONS) == 76
 
 
 def test_exit_sibling_cancel_failed_has_ws_reconnect_and_kill() -> None:
     # Reviewer concern: retry-island state must support WS reconnect + kill.
-    assert apply(ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.WS_RECONNECT) == ExecutionState.RECONCILING
-    assert apply(ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH) == ExecutionState.KILLED
+    assert (
+        apply(ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.WS_RECONNECT)
+        == ExecutionState.RECONCILING
+    )
+    assert (
+        apply(ExecutionState.EXIT_SIBLING_CANCEL_FAILED, ExecutionEvent.KILL_SWITCH)
+        == ExecutionState.KILLED
+    )
 
 
 def test_long_open_to_oco_arming_on_tp_placed() -> None:
@@ -68,24 +74,51 @@ def test_oco_arming_to_oco_armed_on_sl_placed() -> None:
     assert apply(ExecutionState.OCO_ARMING, ExecutionEvent.SL_PLACED) == ExecutionState.OCO_ARMED
 
 
+def test_long_open_flatten_failed_to_halted() -> None:
+    # S55 PHASE6 TL-NEW-01: TL-01 made LONG_OPEN flattenable, so a flatten()
+    # cascade can now fire FLATTEN_FAILED from LONG_OPEN. The FSM must have the
+    # row or the transition raises IllegalTransitionError → spurious crash-halt.
+    assert apply(ExecutionState.LONG_OPEN, ExecutionEvent.FLATTEN_FAILED) == ExecutionState.HALTED
+
+
+def test_oco_arming_flatten_failed_to_halted() -> None:
+    # S55 PHASE6 TL-NEW-01: same for OCO_ARMING (also made flattenable by TL-01).
+    assert apply(ExecutionState.OCO_ARMING, ExecutionEvent.FLATTEN_FAILED) == ExecutionState.HALTED
+
+
 def test_oco_armed_to_sibling_cancelling_on_tp_hit() -> None:
-    assert apply(ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT) == ExecutionState.EXIT_SIBLING_CANCELLING
+    assert (
+        apply(ExecutionState.OCO_ARMED, ExecutionEvent.TP_HIT)
+        == ExecutionState.EXIT_SIBLING_CANCELLING
+    )
 
 
 def test_oco_armed_to_sibling_cancelling_on_sl_triggered() -> None:
-    assert apply(ExecutionState.OCO_ARMED, ExecutionEvent.SL_TRIGGERED) == ExecutionState.EXIT_SIBLING_CANCELLING
+    assert (
+        apply(ExecutionState.OCO_ARMED, ExecutionEvent.SL_TRIGGERED)
+        == ExecutionState.EXIT_SIBLING_CANCELLING
+    )
 
 
 def test_sibling_cancelling_to_flat_on_success() -> None:
-    assert apply(ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCELLED) == ExecutionState.FLAT
+    assert (
+        apply(ExecutionState.EXIT_SIBLING_CANCELLING, ExecutionEvent.SIBLING_CANCELLED)
+        == ExecutionState.FLAT
+    )
 
 
 def test_oco_armed_to_sl_residual_on_partial_fill() -> None:
-    assert apply(ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL) == ExecutionState.EXIT_SL_RESIDUAL
+    assert (
+        apply(ExecutionState.OCO_ARMED, ExecutionEvent.PARTIAL_FILL)
+        == ExecutionState.EXIT_SL_RESIDUAL
+    )
 
 
 def test_sl_residual_to_flat_on_residual_flattened() -> None:
-    assert apply(ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.RESIDUAL_FLATTENED) == ExecutionState.FLAT
+    assert (
+        apply(ExecutionState.EXIT_SL_RESIDUAL, ExecutionEvent.RESIDUAL_FLATTENED)
+        == ExecutionState.FLAT
+    )
 
 
 def test_oco_arming_to_halted_on_bracket_timeout() -> None:
@@ -93,4 +126,6 @@ def test_oco_arming_to_halted_on_bracket_timeout() -> None:
 
 
 def test_exit_pending_to_halted_on_flatten_failed() -> None:
-    assert apply(ExecutionState.EXIT_PENDING, ExecutionEvent.FLATTEN_FAILED) == ExecutionState.HALTED
+    assert (
+        apply(ExecutionState.EXIT_PENDING, ExecutionEvent.FLATTEN_FAILED) == ExecutionState.HALTED
+    )

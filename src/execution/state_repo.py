@@ -30,13 +30,18 @@ class ExecutionStateRow:
     last_exit_reason: str | None = None
     last_reconcile_at: str | None = None  # ISO-8601 UTC; updated each reconcile call
     bootstrap_at: str | None = None  # ISO-8601 UTC; set once per process startup
+    # S55 TL-01: planned exit prices persisted at start_bracket so the entry-Filled
+    # handler can arm the OCO legs after the fill (Decimal string; None until bracket open).
+    bracket_tp_price: Decimal | None = None
+    bracket_sl_trigger_price: Decimal | None = None
 
 
 _COLUMNS = (
     "symbol, state, position_qty, entry_price, oco_main_order_id, "
     "bracket_id, oco_tp_order_id, oco_sl_order_id, expected_oco_qty, "
     "arming_started_at, last_attempt_num, updated_at, "
-    "halt_reason, last_exit_reason, last_reconcile_at, bootstrap_at"
+    "halt_reason, last_exit_reason, last_reconcile_at, bootstrap_at, "
+    "bracket_tp_price, bracket_sl_trigger_price"
 )
 
 
@@ -49,7 +54,7 @@ class ExecutionStateRepo:
             self._conn.execute(
                 f"""
                 INSERT INTO execution_state ({_COLUMNS})
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(symbol) DO UPDATE SET
                     state=excluded.state,
                     position_qty=excluded.position_qty,
@@ -65,7 +70,9 @@ class ExecutionStateRepo:
                     halt_reason=excluded.halt_reason,
                     last_exit_reason=excluded.last_exit_reason,
                     last_reconcile_at=excluded.last_reconcile_at,
-                    bootstrap_at=excluded.bootstrap_at
+                    bootstrap_at=excluded.bootstrap_at,
+                    bracket_tp_price=excluded.bracket_tp_price,
+                    bracket_sl_trigger_price=excluded.bracket_sl_trigger_price
                 """,
                 (
                     row.symbol,
@@ -84,6 +91,12 @@ class ExecutionStateRepo:
                     row.last_exit_reason,
                     row.last_reconcile_at,
                     row.bootstrap_at,
+                    str(row.bracket_tp_price) if row.bracket_tp_price is not None else None,
+                    (
+                        str(row.bracket_sl_trigger_price)
+                        if row.bracket_sl_trigger_price is not None
+                        else None
+                    ),
                 ),
             )
 
@@ -168,4 +181,6 @@ def _row_to_dataclass(r: tuple[Any, ...]) -> ExecutionStateRow:
         last_exit_reason=r[13],
         last_reconcile_at=r[14],
         bootstrap_at=r[15],
+        bracket_tp_price=Decimal(r[16]) if r[16] is not None else None,
+        bracket_sl_trigger_price=Decimal(r[17]) if r[17] is not None else None,
     )

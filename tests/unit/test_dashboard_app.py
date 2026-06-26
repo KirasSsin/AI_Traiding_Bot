@@ -223,3 +223,65 @@ def test_backtest_impossible_date_returns_422(client: TestClient) -> None:
         },
     )
     assert r.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "symbol",
+    [
+        "../../../etc/passwd",  # classic path traversal
+        "BTC/../../",  # slash traversal
+        "BTCUSDT\n/evil",  # trailing-newline bypass (defeats ^...$ but not \A...\Z)
+        "BTCUSDT/evil",  # embedded slash
+        "BTCUSDT.parquet",  # dot — would escape allowlist
+        "btcusdt",  # lowercase — uppercase-allowlist bypass attempt
+        "BTC USDT",  # whitespace
+        "",  # empty
+        "A" * 21,  # too long (> 20)
+        "..%2f..%2fetc",  # url-encoded traversal
+    ],
+)
+def test_backtest_symbol_traversal_rejected_at_boundary(client: TestClient, symbol: str) -> None:
+    """SEC-S55-01 — attacker-controlled symbol (path traversal / bypass) → 422.
+
+    The symbol f-string-interpolates into the parquet read path in _load_ohlcv;
+    BacktestPayload.symbol must be validated against an anchored ([A-Z0-9]{1,20})
+    allowlist at the schema boundary BEFORE any path construction → 422, never disk
+    access. Mirrors the S49 H1 _RUN_ID_RE precedent. ANCHORED (\\A...\\Z) is required:
+    a substring ^...$ match would let 'BTCUSDT\\n/evil' through.
+    """
+    r = client.post(
+        "/api/backtest",
+        json={
+            "strategy_id": "mean_reversion_s17_relaxed",
+            "symbol": symbol,
+            "interval": "60",
+            "start": "2023-01-01",
+            "end": "2023-12-31",
+        },
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.parametrize("symbol", ["BTCUSDT", "ETHUSDT", "SOLUSDT"])
+def test_backtest_valid_symbol_accepted_by_validator(client: TestClient, symbol: str) -> None:
+    """SEC-S55-01 — well-formed symbols pass the allowlist validator.
+
+    They proceed past the schema boundary; a 404 (missing cached parquet) or
+    400/422 (locked-dimension mismatch) is fine — the point is the symbol itself
+    is NOT rejected as malformed (i.e. no traversal false-positive on valid input).
+    """
+    r = client.post(
+        "/api/backtest",
+        json={
+            "strategy_id": "mean_reversion_s17_relaxed",
+            "symbol": symbol,
+            "interval": "60",
+            "start": "2023-01-01",
+            "end": "2023-12-31",
+        },
+    )
+    # Reached business logic past the symbol allowlist; not a symbol-shape 422.
+    assert r.status_code in (200, 400, 404, 422)
+    if r.status_code == 422:
+        body = r.json()
+        assert "symbol" not in str(body).lower() or "allowlist" not in str(body).lower()

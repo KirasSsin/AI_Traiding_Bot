@@ -23,6 +23,10 @@ _BACKOFF_BASE_S = 0.5
 _BACKOFF_MAX_RETRIES = 5
 _BACKOFF_JITTER_FACTOR = 0.3
 
+# S55 LOW BYBIT-06 — generous backstop on get_klines backward-walk iterations
+# (secondary guard; the strict forward-progress check is the primary defense).
+_KLINES_MAX_ITERS = 100_000
+
 # Bybit V5 retryable rate-limit codes (per https://bybit-exchange.github.io/docs/v5/error)
 _RETRYABLE_RATE_LIMIT_CODES: frozenset[int] = frozenset(
     {
@@ -123,8 +127,23 @@ def _safe_extract_list(resp: dict[str, Any], context: str) -> list[Any]:
 class BybitRESTClient:
     """Wraps pybit V5 HTTP client with our domain-friendly return types."""
 
-    def __init__(self, api_key: str, api_secret: str, testnet: bool) -> None:
-        self._http = HTTP(testnet=testnet, api_key=api_key, api_secret=api_secret)
+    def __init__(self, api_key: str, api_secret: str, testnet: bool, demo: bool = False) -> None:
+        """Build the pybit HTTP client.
+
+        S55 B0 BLOCKER BYBIT-01: `demo` is now passed explicitly to pybit so the
+        REST host is resolved from the same (testnet, demo) pair as the private
+        WS consumer. Previously `demo` was omitted → REST always resolved to the
+        testnet exchange while the WS leg could route to MAINNET-demo, splitting
+        orders and their fill echoes across separate account universes.
+        """
+        self._testnet = testnet
+        self._demo = demo
+        self._http = HTTP(testnet=testnet, demo=demo, api_key=api_key, api_secret=api_secret)
+
+    @property
+    def endpoint(self) -> str:
+        """Resolved Bybit REST host (for startup-visibility logging)."""
+        return str(self._http.endpoint)
 
     def get_server_time(self) -> datetime:
         """Fetch Bybit server time as UTC datetime (seconds precision)."""
@@ -183,9 +202,31 @@ class BybitRESTClient:
             )
         domain_interval, step_ms = intervals[interval]
 
+        # S55 LOW BYBIT-06: defensive bounds on the backward-walk. Bybit V5 is
+        # end-anchored, so `cur_end` should strictly DECREASE each iteration. If a
+        # batch is non-advancing (clamped/dup page where oldest >= prev cur_end)
+        # the loop would otherwise re-issue the identical request forever (tight
+        # REST hammer; backoff only triggers on rate-limit codes). A strict
+        # forward-progress guard converts that into clean termination + a logged
+        # gap warning. _KLINES_MAX_ITERS is a generous secondary backstop.
         bars: list[Bar] = []
         cur_end = end_ms
+        iters = 0
         while cur_end > start_ms:
+            iters += 1
+            if iters > _KLINES_MAX_ITERS:
+                logger.warning(
+                    "klines.max_iters_exceeded",
+                    extra={
+                        "symbol": symbol,
+                        "interval": interval,
+                        "cur_end": cur_end,
+                        "start_ms": start_ms,
+                        "max_iters": _KLINES_MAX_ITERS,
+                    },
+                )
+                break
+            prev_cur_end = cur_end
             # Capture cur_end in closure via functools.partial to avoid B023 loop binding
             from functools import partial
 
@@ -237,5 +278,22 @@ class BybitRESTClient:
             oldest_open_ms = int(rows[0][0])
             if oldest_open_ms <= start_ms:
                 break  # covered start_ms
+            # S55 LOW BYBIT-06: strict forward-progress guard — cur_end MUST
+            # strictly decrease. A non-advancing batch (oldest >= prev cur_end)
+            # means the page is clamped/duplicated; continuing would re-issue the
+            # identical request forever. Break cleanly + log a gap for the
+            # gap-synthesizer instead.
+            if oldest_open_ms >= prev_cur_end:
+                logger.warning(
+                    "klines.no_forward_progress",
+                    extra={
+                        "symbol": symbol,
+                        "interval": interval,
+                        "oldest_open_ms": oldest_open_ms,
+                        "prev_cur_end": prev_cur_end,
+                        "start_ms": start_ms,
+                    },
+                )
+                break
             cur_end = oldest_open_ms
         return bars

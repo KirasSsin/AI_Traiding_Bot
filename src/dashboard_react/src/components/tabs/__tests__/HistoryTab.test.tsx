@@ -180,3 +180,110 @@ describe('HistoryTab — accordion expand (S48 T13)', () => {
     )
   })
 })
+
+// ─── S55 HIGH DASH-01 + DASH-04 — Kronos RAW_PRETRAIN_LEAKAGE_SUSPECTED ───────
+// Research verdict must render research cells (NOT WFA t1/t5/dsr) + verdict styling
+// non-red-fail + leakage caveat in summary.
+
+describe('HistoryTab — RAW_PRETRAIN_LEAKAGE_SUSPECTED (Kronos research verdict)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(apiClient.api.getRuns).mockResolvedValue([
+      {
+        run_id: 'kronos1',
+        cached: false,
+        request: {
+          strategy_id: 'kronos_ml_s52',
+          strategy_label: 'Kronos ML',
+          symbol: 'BTC',
+          interval: '300',
+          interval_label: '5m',
+          start: '2023-01-01',
+          end: '2023-12-31',
+        },
+        verdict: 'RAW_PRETRAIN_LEAKAGE_SUSPECTED' as const,
+        metrics: { sharpe: 1.15, n_trades: 42, total_pnl_pct: 8.3, win_rate: 0.55 },
+        dsr: null,
+        mc_p_value: null,
+        total_pnl_pct: 8.3,
+        n_trades: 42,
+        sharpe: 1.15,
+        win_rate: 0.55,
+      } as import('@/api/types').RunSummary,
+    ])
+    vi.mocked(apiClient.api.getRun).mockResolvedValue({
+      run_id: 'kronos1',
+      cached: false,
+      verdict: 'RAW_PRETRAIN_LEAKAGE_SUSPECTED' as const,
+      total_pnl_pct: 8.3,
+      n_trades: 42,
+      sharpe: 1.15,
+      win_rate: 0.55,
+      failed_criteria: [],
+      request: {
+        strategy_id: 'kronos_ml_s52',
+        strategy_label: 'Kronos ML',
+        symbol: 'BTC',
+        interval: '300',
+        interval_label: '5m',
+        start: '2023-01-01',
+        end: '2023-12-31',
+      },
+      trade_stats: {
+        win_rate: 0.55,
+        n_trades: 42,
+      } as import('@/api/types').BacktestResponse['trade_stats'],
+      warnings: [],
+      metrics: { sharpe: 1.15, n_trades: 42, total_pnl_pct: 8.3, win_rate: 0.55 },
+      equity_curve: { timestamps: [], equity_pct: [] },
+      bars_per_year: 8766,
+      acceptance_gate: null,
+      dsr: null,
+      dsr_pass: null,
+      mc_p_value: null,
+      wfa_params: null,
+      wfa_total_bars: 0,
+      fold_sharpe_ratios: [],
+      failed_folds: [],
+      trades_dump: [],
+      runner: 'test',
+    } as import('@/api/types').BacktestResponse)
+  })
+
+  it('row uses research cells (sharpe/n_trades/pnl populated, not WFA t1/t5/dsr blanks)', async () => {
+    render(<HistoryTab />)
+    await waitFor(() => expect(screen.getByText('Kronos ML')).toBeInTheDocument())
+
+    const row = screen.getByText('Kronos ML').closest('tr')!
+    // Research dispatch → sharpe from m.sharpe (1.15), n_trades 42, pnl% from total_pnl_pct
+    expect(row.textContent).toMatch(/1\.15/)
+    expect(row.textContent).toMatch(/42/)
+    expect(row.textContent).toMatch(/8\.3%/)
+  })
+
+  it('DASH-04: verdict cell uses research (raw) styling, NOT red-fail; no WFA-fail badge', async () => {
+    render(<HistoryTab />)
+    await waitFor(() => expect(screen.getByText('Kronos ML')).toBeInTheDocument())
+
+    const verdictCell = screen
+      .getByText('RAW_PRETRAIN_LEAKAGE_SUSPECTED')
+      .closest('td')!
+    // Raw/research class, not the fail class
+    expect(verdictCell.className).toMatch(/verdictRaw/)
+    expect(verdictCell.className).not.toMatch(/verdictFail/)
+    // No "WFA FAIL" badge text
+    expect(verdictCell.textContent).not.toMatch(/WFA FAIL/)
+  })
+
+  it('DASH-04: summary keeps leakage caveat (mentions leakage/look-ahead, not "не прошла WFA")', async () => {
+    render(<HistoryTab />)
+    await waitFor(() => expect(screen.getByText('Kronos ML')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByText('Kronos ML').closest('tr')!)
+
+    await waitFor(() =>
+      expect(screen.getByText(/leakage|утечк/i)).toBeInTheDocument()
+    )
+    expect(screen.queryByText(/не прошла WFA discipline/)).not.toBeInTheDocument()
+  })
+})

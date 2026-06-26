@@ -296,19 +296,10 @@ class ATRBreakoutStrategy:
         if self._current_side == SignalSide.LONG:
             atr_val = atr_stop_curr
 
-            # Priority 1: reverse ATR breakdown
-            # close[i-1] < close[i-2] - atr_breakout_mult * atr[i-2]
-            if prev_close < prev_prev_close - self._atr_breakout_mult * atr_at_prev_prev:
-                self._current_side = SignalSide.FLAT
-                self._entry_close = None
-                return self._build_signal(
-                    bar,
-                    SignalSide.FLAT,
-                    atr_val=atr_val,
-                    reason=ReasonCode.EXIT_FLAT_ATR_REVERSE,
-                )
-
-            # Priority 2: ATR stop intrabar
+            # Priority 1: ATR stop intrabar (checked BEFORE reverse breakdown to
+            # match the WFA-validated runner _backtest_single, which evaluates
+            # `if low[i] <= stop_price` before `elif exit_[i]`). On a same-bar
+            # double-exit live must book the stop, exactly like the backtest.
             # bar.low <= entry_close - atr_stop_mult * atr_stop[-1]
             if (
                 self._entry_close is not None
@@ -322,6 +313,18 @@ class ATRBreakoutStrategy:
                     SignalSide.FLAT,
                     atr_val=atr_val,
                     reason=ReasonCode.EXIT_FLAT_ATR_STOP_AB,
+                )
+
+            # Priority 2: reverse ATR breakdown
+            # close[i-1] < close[i-2] - atr_breakout_mult * atr[i-2]
+            if prev_close < prev_prev_close - self._atr_breakout_mult * atr_at_prev_prev:
+                self._current_side = SignalSide.FLAT
+                self._entry_close = None
+                return self._build_signal(
+                    bar,
+                    SignalSide.FLAT,
+                    atr_val=atr_val,
+                    reason=ReasonCode.EXIT_FLAT_ATR_REVERSE,
                 )
 
         return None

@@ -61,6 +61,28 @@ class Settings(BaseSettings):
     bybit_api_key: str = Field(..., min_length=8)
     bybit_api_secret: str = Field(..., min_length=8)
     testnet: bool = True
+    # S55 B0 BLOCKER BYBIT-01 — single source of truth for the Bybit account
+    # universe. pybit resolves the endpoint from the (testnet, demo) pair, NOT
+    # from an ad-hoc endpoint substring. REST (HTTP) and the private WS MUST be
+    # built from the SAME pair, otherwise orders (REST) and their fill echoes
+    # (WS) land in DIFFERENT account universes and the FSM never sees fills.
+    # Universe matrix (pybit 5.16):
+    #   testnet=True,  demo=False → api-testnet  / stream-testnet   (testnet exchange)
+    #   testnet=False, demo=True  → api-demo      / stream-demo      (MAINNET-demo, paper)
+    #   testnet=True,  demo=True  → api-demo-testnet / stream-demo-testnet
+    #   testnet=False, demo=False → api          / stream            (MAINNET live)
+    # Canonical S35 demo runtime = testnet exchange (testnet=True, demo=False),
+    # honouring ADR 0053 LOCKED pre-commit #1 ("δ is TESTNET ONLY, zero MAINNET").
+    demo: bool = Field(
+        default=False,
+        description=(
+            "Bybit demo-trading flag (pybit `demo=`). With testnet=False routes к "
+            "MAINNET-demo (api-demo / stream-demo, virtual capital on mainnet infra). "
+            "S55 B0 BYBIT-01: paired with `testnet` as the SINGLE source of truth — "
+            "both REST and private-WS clients are built from this pair so they never "
+            "diverge. Default False = testnet exchange when testnet=True."
+        ),
+    )
 
     # Runtime flags
     trading_enabled: bool = False

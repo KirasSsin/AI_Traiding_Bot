@@ -14,6 +14,43 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
         return yaml.safe_load(f) or {}
 
 
+def _wilder_atr(df: pd.DataFrame, period: int) -> np.ndarray:
+    """Wilder ATR (SMA-seed then recursion) — shared by volume_breakout + atr_breakout runners.
+
+    S55 PY-3: extracted byte-for-byte from the duplicated `_atr` in
+    volume_breakout_runner.py and atr_breakout_runner.py (DRY). Distinct from
+    `calculate_indicators`' EWM-based ATR (pandas ewm), from
+    signalgen.indicators.wilder_atr (Decimal), and from the incremental
+    atr_breakout_strategy._WilderATR / supertrend_runner._wilder_atr_vectorized —
+    those are intentionally different variants and MUST NOT be merged here.
+
+    Convention: prev_close[0] = close[0] so TR[0] = max(h-l, |h-c|, |l-c|) which
+    equals h-l for valid OHLC data. Wilder smoothing: SMA seed at index period-1,
+    then exponential recursion.
+
+    Returns array same length as df; NaN for indices < period-1.
+    """
+    high = df["high"].to_numpy(dtype=np.float64)
+    low = df["low"].to_numpy(dtype=np.float64)
+    close = df["close"].to_numpy(dtype=np.float64)
+    prev_close = np.concatenate([[close[0]], close[:-1]])
+    tr: np.ndarray = np.maximum.reduce(
+        [
+            high - low,
+            np.abs(high - prev_close),
+            np.abs(low - prev_close),
+        ]
+    )
+    atr_out = np.full_like(tr, np.nan)
+    if len(tr) < period:
+        return atr_out
+    # Wilder smoothing: first value = SMA of first `period` TRs, then exponential
+    atr_out[period - 1] = tr[:period].mean()
+    for i in range(period, len(tr)):
+        atr_out[i] = (atr_out[i - 1] * (period - 1) + tr[i]) / period
+    return atr_out
+
+
 def calculate_indicators(df: pd.DataFrame, cfg: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
     """
     Compute indicators + signal column for replay.

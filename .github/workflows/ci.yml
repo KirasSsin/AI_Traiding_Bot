@@ -72,16 +72,31 @@ jobs:
       - name: Playwright E2E tests
         run: cd src/dashboard_react && npx playwright test
 
-      - name: Ruff lint (informational baseline)
-        # Pre-existing baseline: ~169 errors на main (legacy code). Carry-over к S33+ cleanup.
-        # Strict guards trip ONLY на regression (count > 169).
+      - name: Ruff lint (src/ strict, tests/ pinned baseline)
+        # S55 PY-1: replaced blanket >200 threshold (let real regressions land green).
+        # src/ is clean (0 errors after S55 PY-2) → STRICT gate -gt 0, mirroring mypy.
+        # tests/ still carries a legacy baseline (93 errors) → pinned threshold -gt 93;
+        #   trips only on regression above current real count. Lower as cleanup lands.
+        # S55 PY-4: root entry scripts (app.py / run_backtest.py / download_btc_data_v4.py)
+        #   are DOCUMENTED-EXCLUDED via pyproject.toml [tool.ruff] extend-exclude (carry-over
+        #   lint debt). Explicit filenames bypass ruff exclude, so they are intentionally NOT
+        #   listed here — the exclusion is the documented governance, not an accidental gap.
         run: |
           set +e
-          ruff check src/ tests/ 2>&1 | tee ruff-output.txt
-          ERR_COUNT=$(grep -cE '^[A-Z]+[0-9]+' ruff-output.txt || echo 0)
-          echo "ruff errors: ${ERR_COUNT}"
-          if [ "${ERR_COUNT}" -gt 200 ]; then
-            echo "::error::Ruff regression — ${ERR_COUNT} errors > baseline 200"
+          # --- src/: STRICT (must stay 0) ---
+          ruff check src/ 2>&1 | tee ruff-src.txt
+          SRC_ERR=$(grep -cE '^[A-Z]+[0-9]+' ruff-src.txt || echo 0)
+          echo "ruff src/ errors: ${SRC_ERR}"
+          if [ "${SRC_ERR}" -gt 0 ]; then
+            echo "::error::Ruff src/ regression — ${SRC_ERR} errors > strict baseline 0"
+            exit 1
+          fi
+          # --- tests/: pinned baseline (legacy, cleanup tracked) ---
+          ruff check tests/ 2>&1 | tee ruff-tests.txt
+          TESTS_ERR=$(grep -cE '^[A-Z]+[0-9]+' ruff-tests.txt || echo 0)
+          echo "ruff tests/ errors: ${TESTS_ERR}"
+          if [ "${TESTS_ERR}" -gt 93 ]; then
+            echo "::error::Ruff tests/ regression — ${TESTS_ERR} errors > pinned baseline 93"
             exit 1
           fi
           exit 0
@@ -92,6 +107,11 @@ jobs:
       - name: Mypy --strict (informational baseline)
         # S33 T1: pre-existing mypy error fixed. New baseline = 0 errors.
         # CI passes if mypy errors == 0 (strict).
+        # S55 PY-4: scope is src/ only (mirrors pyproject packages=["src"]). Root entry
+        #   scripts are DOCUMENTED out-of-scope: app.py imports streamlit (untyped) +
+        #   has an unannotated fn → not --strict-clean; run_backtest.py is a thin loose
+        #   wrapper. Adding them would block CI on non-package research scripts. Excluded
+        #   on purpose, not by accident — fold in only after they pass --strict.
         run: |
           set +e
           mypy --strict src/ 2>&1 | tee mypy-output.txt

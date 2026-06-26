@@ -22,6 +22,7 @@ single deterministic Decimal vector is stored per key.
 
 import hashlib
 import json
+import os
 import warnings
 from dataclasses import asdict, dataclass
 from decimal import Decimal
@@ -122,14 +123,31 @@ class PredictionCache:
         (V4 determinism: same key → same stored bytes).
         """
         path = self._artifact_path(key)
+        sidecar = path.with_suffix(".json.sha256")
         body = json.dumps(
             {"prediction": [str(value) for value in prediction]},
             sort_keys=True,
             separators=(",", ":"),
         )
-        path.write_text(body)
-        sidecar = path.with_suffix(".json.sha256")
-        sidecar.write_text(_sha256(path))
+        # Atomic write (mirrors src/marketdata/storage.py): stage body+sidecar to
+        # .tmp, then os.replace (atomic rename on POSIX). The BODY is replaced
+        # LAST so the get() invariant holds — if the final artifact exists, its
+        # matching sidecar is already in place. A crash before the body replace
+        # leaves only a stray sidecar, which get() ignores (needs both files), so
+        # the cache never exposes a body without a valid checksum.
+        tmp_body = path.with_suffix(path.suffix + ".tmp")
+        tmp_sidecar = sidecar.with_suffix(".sha256.tmp")
+        try:
+            tmp_body.write_text(body)
+            tmp_sidecar.write_text(_sha256(tmp_body))
+            os.replace(tmp_sidecar, sidecar)
+            os.replace(tmp_body, path)
+        finally:
+            # tmps are gone after successful replaces; only matters on error.
+            if tmp_body.exists():
+                tmp_body.unlink(missing_ok=True)
+            if tmp_sidecar.exists():
+                tmp_sidecar.unlink(missing_ok=True)
 
     def get(self, key: CacheKey) -> list[Decimal] | None:
         """Return the cached prediction on hit, ``None`` on miss.

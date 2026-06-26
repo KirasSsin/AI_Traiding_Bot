@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, Fragment } from 'react'
 import { api } from '@/api/client'
 import type { RunSummary, BacktestResponse, Verdict } from '@/api/types'
 import { WfaFailBadge } from '../shared/WfaFailBadge'
+import { isResearchVerdict } from '@/utils/verdicts'
 import styles from './HistoryTab.module.css'
 
 // ─── helpers ─────────────────────────────────────────────────────────────
@@ -23,7 +24,9 @@ function verdictCellClass(verdict: Verdict): string {
     case 'WFA_PASS':
     case 'PASS':
       return styles.verdictPass ?? ''
+    // S55 DASH-04: research verdicts use raw (non-red-fail) styling.
     case 'RAW':
+    case 'RAW_PRETRAIN_LEAKAGE_SUSPECTED':
       return styles.verdictRaw ?? ''
     case 'WFA_FAIL_DATA':
       return styles.verdictWarn ?? ''
@@ -87,6 +90,15 @@ function renderSummary(details: BacktestResponse): string {
       `Стратегия "${preset}" — full-period backtest без WFA discipline. ` +
       `Total PnL ${totalPnl}%, win rate ${winRate}%. ` +
       `Подвержен look-ahead bias. Не basis для live decisions.`
+    )
+  }
+  // S55 DASH-04: Kronos exploratory verdict — НЕ failed WFA gate; сохраняем leakage caveat.
+  if (verdict === 'RAW_PRETRAIN_LEAKAGE_SUSPECTED') {
+    return (
+      `Стратегия "${preset}" — exploratory Kronos ML результат, НЕ failed WFA gate. ` +
+      `Total PnL ${totalPnl}%, win rate ${winRate}%. ` +
+      `Подозревается pretrain data leakage (утечка данных предобучения, look-ahead bias). ` +
+      `Не basis для live decisions — research-only, требует honest OOS валидации.`
     )
   }
   return `Verdict ${verdict ?? '—'}. Total PnL ${totalPnl}%.`
@@ -249,7 +261,9 @@ export function HistoryTab() {
             {safeRuns.map((run) => {
               const req = run.request
               const m = run.metrics
-              const isRaw = run.verdict === 'RAW'
+              // S55 HIGH DASH-01: research verdicts use research cells (sharpe/n_trades/pnl),
+              // not WFA t1/t5/dsr columns.
+              const isRaw = isResearchVerdict(run.verdict)
               const isExpanded = expandedRunId === run.run_id
               const details = expandedDetails[run.run_id]
               const err = expandError[run.run_id]

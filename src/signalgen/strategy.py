@@ -13,6 +13,7 @@ from uuid import uuid4
 import numpy as np
 
 from src.marketdata.models import Bar
+from src.risk.reason_codes import ReasonCode
 from src.signalgen.indicators import adx, atr, ema, minus_di, plus_di, rsi
 from src.signalgen.models import Signal, SignalSide
 
@@ -139,7 +140,7 @@ class EmaCrossoverAdxRsiStrategy:
                 bar,
                 SignalSide.LONG,
                 snapshot,
-                reason="ENTRY_LONG_EMA_CROSS_UP",
+                reason=ReasonCode.ENTRY_LONG_EMA_CROSS_UP.value,
             )
 
         # Exit rule (FLAT): если current LONG, и EMA flips down + -DI доминирует → FLAT.
@@ -152,7 +153,7 @@ class EmaCrossoverAdxRsiStrategy:
                     bar,
                     SignalSide.FLAT,
                     snapshot,
-                    reason="EXIT_FLAT_SIGNAL_FLIP",
+                    reason=ReasonCode.EXIT_FLAT_SIGNAL_FLIP.value,
                 )
 
         return None

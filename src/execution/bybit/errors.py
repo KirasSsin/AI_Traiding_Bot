@@ -29,6 +29,13 @@ _MAP: dict[int, ReasonCode] = {
     10002: ReasonCode.CLOCK_DRIFT,
     10003: ReasonCode.WRONG_API_KEY,
     10006: ReasonCode.RATE_LIMIT_HIT,
+    # S55 BYBIT-03 — order-frequency (170005) / order-count (170222) rate limits.
+    # _retry_with_backoff retries these; on EXHAUSTION the adapter re-wraps the
+    # rest BybitAPIError into adapter.BybitAPIError(reason=map_error(...)). They were
+    # UNKNOWN_ERROR before, so coordinator.flatten could not recognize the .reason
+    # (110072 short-circuit unreachable → fall-through to double-sell, BYBIT-02).
+    170005: ReasonCode.RATE_LIMIT_HIT,
+    170222: ReasonCode.RATE_LIMIT_HIT,
     10016: ReasonCode.EXCHANGE_MAINTENANCE,
     # 110001 stays REJECT_ORDER_ALREADY_TERMINAL — adapter.py line 213 pins this behaviour
     110001: ReasonCode.REJECT_ORDER_ALREADY_TERMINAL,

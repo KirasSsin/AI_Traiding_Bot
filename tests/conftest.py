@@ -1,8 +1,25 @@
 """Shared pytest fixtures. Populated in later sprints."""
+
 import os
 from decimal import Decimal
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _isolate_cross_trial_pool(monkeypatch, tmp_path_factory):
+    """Redirect the cross-trial DSR pool default to an isolated tmp file.
+
+    S55 test-hygiene: production writers (``_cmd_wfa``, ``research_wfa``) default the
+    pool to a cwd-relative ``data/cross_trial_sharpes.json``. Running a writer from
+    the repo-root cwd without an explicit path would mutate the TRACKED fixture,
+    leaving a dirty working tree. Pointing ``CROSS_TRIAL_LOG_PATH`` at a fresh tmp
+    file for every test makes that impossible — independent of cwd, mocking, or
+    market-data presence. Tests that assert pool contents set the env to their own
+    path (which overrides this default).
+    """
+    pool = tmp_path_factory.mktemp("xtrial") / "cross_trial_sharpes.json"
+    monkeypatch.setenv("CROSS_TRIAL_LOG_PATH", str(pool))
 
 
 def pytest_collection_modifyitems(config, items):
@@ -36,7 +53,12 @@ def fake_rest():
 
         def place_order(self, **kwargs):
             self.last_payload = kwargs
-            return self._maybe_error({"orderId": self.fake_order_id, "orderLinkId": kwargs.get("orderLinkId", "FAKE-LINK")})
+            return self._maybe_error(
+                {
+                    "orderId": self.fake_order_id,
+                    "orderLinkId": kwargs.get("orderLinkId", "FAKE-LINK"),
+                }
+            )
 
         def cancel_order(self, **kwargs):
             self.last_payload = kwargs

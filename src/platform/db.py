@@ -9,6 +9,24 @@ from pathlib import Path
 # atomic tracking INSERT (executescript does not accept SQL parameters).
 _MIGRATION_FILENAME_RE = re.compile(r"[A-Za-z0-9._-]+")
 
+# Leading integer version prefix, e.g. "0006" in "0006_trade_fills.sql".
+_MIGRATION_VERSION_RE = re.compile(r"^(\d+)_")
+
+
+def _migration_sort_key(filename: str) -> tuple[int, str]:
+    """Order migrations by parsed integer version, not raw string.
+
+    Zero-padding is inconsistent across the set ("001_initial" vs
+    "0006_trade_fills"), so lexicographic `sorted()` would place 4-digit
+    versions before 3-digit ones ('0006...' < '001...') and could apply a
+    FK-bearing migration before the table it references. Sorting on the parsed
+    integer prefix yields dependency-respecting order regardless of padding;
+    the raw filename is a deterministic tie-break for any colliding versions.
+    Files without a leading-integer prefix sort last (version -> infinity).
+    """
+    match = _MIGRATION_VERSION_RE.match(filename)
+    version = int(match.group(1)) if match else 2**63
+    return (version, filename)
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
@@ -21,7 +39,12 @@ def connect(db_path: Path) -> sqlite3.Connection:
 
 
 def init_db(db_path: Path, migrations_dir: Path) -> None:
-    """Apply all `.sql` migrations in lexicographic order.
+    """Apply all `.sql` migrations in integer-version order.
+
+    Files are ordered by their parsed leading integer prefix (see
+    `_migration_sort_key`), NOT raw string — zero-padding is inconsistent
+    across the set, so lexicographic sort would mis-order dependency-bearing
+    migrations (a FK/index migration could run before its referenced table).
 
     Each migration body + its schema_migrations tracking row are applied as a
     single atomic transaction: either both commit or both roll back. Prevents
@@ -38,7 +61,17 @@ def init_db(db_path: Path, migrations_dir: Path) -> None:
         applied = {
             row[0] for row in conn.execute("SELECT filename FROM schema_migrations").fetchall()
         }
-        for sql_file in sorted(migrations_dir.glob("*.sql")):
+        migration_files = sorted(
+            migrations_dir.glob("*.sql"), key=lambda p: _migration_sort_key(p.name)
+        )
+        # Deterministic-order assertion: dependency-bearing migrations must apply
+        # in non-decreasing integer-version order (guards against silent return
+        # to lexicographic ordering — DI-03).
+        versions = [_migration_sort_key(p.name)[0] for p in migration_files]
+        assert versions == sorted(versions), (
+            "migrations not in integer-version order: " f"{[p.name for p in migration_files]}"
+        )
+        for sql_file in migration_files:
             if sql_file.name in applied:
                 continue
             script_sql = sql_file.read_text(encoding="utf-8")

@@ -23,7 +23,11 @@ const INTERVAL_TO_KRONOS_TF: Record<string, string> = {
   'D': '1d',
 }
 
-const OPTGROUP_ORDER = ['Тренд-следование', 'Возврат к среднему', 'Прорывы']
+// S55 LOW DASH-05: curated optgroup display order. Must enumerate every optgroup
+// defined in STRATEGY_PRESETS (backtest_runner.py) — supertrend ('Тренд') and kronos
+// ('ML / Прогноз') were missing, so those groups fell through to the unstable
+// Object.keys() extras tail. Trend groups kept adjacent; ML / Прогноз listed last.
+const OPTGROUP_ORDER = ['Тренд-следование', 'Тренд', 'Возврат к среднему', 'Прорывы', 'ML / Прогноз']
 
 interface ConfigureBacktestProps {
   onResult: (result: BacktestResponse, initialBalance: number) => void

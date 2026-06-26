@@ -4,6 +4,7 @@
 // WFA: 8 rows with quote-currency amounts from trade_stats envelope.
 
 import type { BacktestResponse } from '@/api/types'
+import { isResearchVerdict } from '@/utils/verdicts'
 import styles from './TradesTable.module.css'
 
 interface TradesTableProps {
@@ -146,7 +147,9 @@ function WfaTradesTable({ result }: TradesTableProps) {
 // ─── public component ────────────────────────────────────────────────────
 
 export function TradesTable({ result }: TradesTableProps) {
-  if (result.verdict === 'RAW') {
+  // S55 HIGH DASH-01: research verdicts (RAW + RAW_PRETRAIN_LEAKAGE_SUSPECTED)
+  // → reduced research stats, NOT WFA quote-currency render.
+  if (isResearchVerdict(result.verdict)) {
     return <RawTradesTable result={result} />
   }
   return <WfaTradesTable result={result} />

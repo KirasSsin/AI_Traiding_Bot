@@ -102,17 +102,24 @@ class Reconciler:
             self._wallet_cache[coin] = Decimal(str(evt["walletBalance"]))
 
     def _fetch_exch_qty(self, symbol: str | None) -> Decimal:
-        """Fetch exchange qty: cache first, REST fallback on miss. ADR 0021 sub-decision 6."""
+        """Fetch exchange qty: cache first, REST fallback on miss. ADR 0021 sub-decision 6.
+
+        S55 ARCH-02: the wallet-cache read (the ONLY shared state ADR 0022 sub-decision 1
+        protects between this path and ``on_wallet_event``) is taken under the Lock; on a
+        cache miss the blocking REST ``get_wallet_balance`` runs with the Lock RELEASED so
+        a ~15.5s ``_retry_with_backoff`` sleep no longer holds the Lock (which would block
+        the Coordinator path that nests over it → WS SL-cancel starvation → phantom short).
+        """
         coin = self._base_coin or self._derive_base_coin(symbol)
-        if coin is not None:
+        if coin is None:
+            return Decimal("0")
+        with self._lock:
             cached = self._wallet_cache.get(coin)
-            if cached is not None:
-                return Decimal("0") if cached < self._dust_threshold else cached
-            snap = self._query.get_wallet_balance(coin=coin)
-            return (
-                Decimal("0") if snap.wallet_balance < self._dust_threshold else snap.wallet_balance
-            )
-        return Decimal("0")
+        if cached is not None:
+            return Decimal("0") if cached < self._dust_threshold else cached
+        # Cache miss → blocking REST fetch WITHOUT the Lock held (I/O hoisted out).
+        snap = self._query.get_wallet_balance(coin=coin)
+        return Decimal("0") if snap.wallet_balance < self._dust_threshold else snap.wallet_balance
 
     def fetch_exchange_state(self) -> ExchangeState:
         if self._base_coin is None or self._symbol is None:
@@ -295,24 +302,34 @@ class Reconciler:
         If expected_state is None → binary AGREE/DIVERGENCE (S6 behavior, preserved).
         If expected_state is provided → 4-valued with HEAL_ENTRY_FILLED/EXITED possible.
         ADR 0021 sub-decision 3.
-        """
-        with self._lock:
-            if expected_state is None:
-                # S6 binary path: cache-aware fetch, still uses constructor symbol for orders
-                sym_bin = local.symbol or self._symbol
-                exch_qty = self._fetch_exch_qty(sym_bin)
-                open_orders_bin = self._query.get_open_orders(symbol=sym_bin) if sym_bin else []
-                link_ids = tuple(o.get("orderLinkId", "") for o in open_orders_bin)
-                return self._binary_verdict(local, exch_qty, link_ids)
 
-            # New 4-valued path (ADR 0021)
-            sym = local.symbol or self._symbol
-            exch_qty = self._fetch_exch_qty(sym)
-            open_orders = self._query.get_open_orders(symbol=sym) if sym else []
-            get_order = getattr(self._query, "get_order", None)
-            entry_order = (
-                get_order(symbol=sym, order_id=local.entry_order_id)
-                if (local.entry_order_id and sym and get_order is not None)
-                else None
-            )
-            return self._classify(local, expected_state, exch_qty, open_orders, entry_order)
+        S55 ARCH-02 (lock-hoist): the blocking exchange-state fetch (get_wallet_balance /
+        get_open_orders / get_order — each a REST call that can sleep ~15.5s under
+        ``_retry_with_backoff`` on rate-limit codes) is performed FIRST with NO Reconciler
+        Lock held; the resulting snapshot is then fed to the PURE classifier. The classify
+        functions take ``(local, exch_qty, open_orders, entry_order) → verdict`` with no
+        I/O and no shared-state mutation, so they need no lock. Only the wallet-cache read
+        inside ``_fetch_exch_qty`` is Lock-guarded (the sole state ADR 0022 sub-decision 1
+        shares with ``on_wallet_event``). This removes the ~15.5s lock-hold window that —
+        through the Coordinator RLock nesting over this Lock — starved the WS-thread
+        ``on_order_event`` SL-cancel (0ms Triggered→Filled gap) → orphan TP self-fill →
+        phantom short on Spot. The verdict semantics are byte-identical; only the
+        lock-hold window changed.
+        """
+        sym = local.symbol or self._symbol
+        # --- I/O phase: blocking REST fetches, NO Lock held ---
+        exch_qty = self._fetch_exch_qty(sym)
+        open_orders = self._query.get_open_orders(symbol=sym) if sym else []
+        if expected_state is None:
+            # S6 binary path (preserved): verdict from qty drift + open-order link ids.
+            link_ids = tuple(o.get("orderLinkId", "") for o in open_orders)
+            return self._binary_verdict(local, exch_qty, link_ids)
+        # 4-valued path (ADR 0021): fetch terminal entry-order status, then classify.
+        get_order = getattr(self._query, "get_order", None)
+        entry_order = (
+            get_order(symbol=sym, order_id=local.entry_order_id)
+            if (local.entry_order_id and sym and get_order is not None)
+            else None
+        )
+        # --- Pure classify phase: no I/O, no shared-state mutation, no Lock needed ---
+        return self._classify(local, expected_state, exch_qty, open_orders, entry_order)

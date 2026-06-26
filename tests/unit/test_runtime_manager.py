@@ -190,8 +190,9 @@ def test_tick_sequence_kill_then_alive_then_poll_then_strategy(tmp_path):
         "bracket-id-stub",
     )[1]
     coord._symbol = "BTCUSDT"
-    coord._repo = MagicMock()
-    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+    coord.symbol = "BTCUSDT"
+    # S55 ARCH-03: manager reads FSM via public current_state(symbol), not _repo.
+    coord.current_state.return_value = ExecutionState.FLAT
     ws = MagicMock()
     ws.check_alive.side_effect = lambda **kw: (calls.append("check_alive"), True)[1]
     bar = _bar()
@@ -396,8 +397,8 @@ def test_tick_risk_rejects_skips_bracket(tmp_path):
 
     coord = MagicMock()
     coord._symbol = "BTCUSDT"
-    coord._repo = MagicMock()
-    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+    coord.symbol = "BTCUSDT"
+    coord.current_state.return_value = ExecutionState.FLAT
     bar = _bar()
     bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
     sig = MagicMock(side=SignalSide.LONG)
@@ -454,10 +455,9 @@ def test_tick_non_flat_state_skips_start_bracket(tmp_path):
 
     coord = MagicMock()
     coord._symbol = "BTCUSDT"
+    coord.symbol = "BTCUSDT"
     # Simulate FSM in ENTRY_PENDING — second LONG signal must NOT place new bracket.
-    row = MagicMock(state=ExecutionState.ENTRY_PENDING)
-    coord._repo = MagicMock()
-    coord._repo.get.return_value = row
+    coord.current_state.return_value = ExecutionState.ENTRY_PENDING
 
     bar = _bar()
     bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
@@ -480,6 +480,49 @@ def test_tick_non_flat_state_skips_start_bracket(tmp_path):
     # FSM non-FLAT short-circuits BEFORE risk.assess and before start_bracket
     risk.assess.assert_not_called()
     coord.start_bracket.assert_not_called()
+
+
+def test_tick_reads_fsm_via_public_current_state_not_repo(tmp_path):
+    """S55 ARCH-03: the FSM pre-check must go through the PUBLIC
+    Coordinator.current_state(symbol) — which reads the row under the Coordinator
+    RLock — instead of the private _repo.get(symbol) (TOCTOU outside the lock)."""
+    from src.execution.state_machine import ExecutionState
+    from src.runtime.manager import RuntimeManager
+    from src.signalgen.models import SignalSide
+
+    coord = MagicMock()
+    coord.symbol = "BTCUSDT"
+    coord.current_state.return_value = ExecutionState.FLAT
+    # Make any private _repo touch explode so the test fails if the manager
+    # reaches into the private repo instead of calling current_state().
+    coord._repo.get.side_effect = AssertionError("manager must not read _repo directly")
+
+    bar = _bar()
+    bs = MagicMock(poll=lambda: bar, consecutive_failures=0, should_halt=lambda **kw: False)
+    sig = MagicMock(side=SignalSide.LONG)
+    strat = MagicMock(on_bar=lambda b: sig)
+    risk = MagicMock()
+    risk.assess.return_value = MagicMock(
+        approved=True,
+        qty=Decimal("0.001"),
+        sl_price=Decimal("58000"),
+        tp_price=Decimal("65000"),
+    )
+
+    rm = RuntimeManager(
+        coordinator=coord,
+        reconciler=MagicMock(),
+        ws_consumer=MagicMock(check_alive=lambda **kw: True),
+        bar_source=bs,
+        strategy=strat,
+        risk_manager=risk,
+        settings=_settings(tmp_path),
+        shared_deps=_halt_gate_deps(),
+    )
+    rm._tick()
+
+    coord.current_state.assert_called_with("BTCUSDT")
+    coord.start_bracket.assert_called_once()
 
 
 def test_main_loop_exception_persists_halt_then_reraises(tmp_path):
@@ -573,8 +616,9 @@ def test_quality_detector_halts_on_consecutive_bar_deviation(tmp_path: Path) -> 
 
     coord = MagicMock()
     coord._symbol = "BTCUSDT"
-    # State row stays FLAT — strategy / risk path not relevant for this test
-    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+    coord.symbol = "BTCUSDT"
+    # State stays FLAT — strategy / risk path not relevant for this test
+    coord.current_state.return_value = ExecutionState.FLAT
 
     bar1 = _bar_close("100000", hour=0)
     bar2 = _bar_close("100600", hour=1)  # +0.6% from bar1.close
@@ -614,7 +658,8 @@ def test_quality_detector_within_threshold_continues_strategy(tmp_path: Path) ->
 
     coord = MagicMock()
     coord._symbol = "BTCUSDT"
-    coord._repo.get.return_value = MagicMock(state=ExecutionState.FLAT)
+    coord.symbol = "BTCUSDT"
+    coord.current_state.return_value = ExecutionState.FLAT
 
     bar1 = _bar_close("100000", hour=0)
     bar2 = _bar_close("100400", hour=1)  # +0.4%

@@ -5,7 +5,6 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-
 from src.execution.state_machine import ExecutionState
 from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
 
@@ -21,6 +20,7 @@ def conn(tmp_path: Path) -> sqlite3.Connection:
         "0003_execution_state.sql",
         "0004_execution_state_v2.sql",
         "0005_halt_persistence.sql",
+        "0007_bracket_exit_prices.sql",
     ):
         db.executescript((MIGRATIONS / name).read_text())
     return db

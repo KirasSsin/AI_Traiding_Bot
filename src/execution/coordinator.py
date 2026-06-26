@@ -11,10 +11,12 @@ S5 handle_ws_reconnect removed — ws-reconnect handling moves to Task 22 bootst
 from __future__ import annotations
 
 import logging
+import socket
 import threading
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -23,6 +25,7 @@ if TYPE_CHECKING:
 from src.execution.bracket import (
     BracketParams,
     build_bracket,
+    compute_oco_qty,
     make_flatten_link_id,
     make_order_link_id,
 )
@@ -38,6 +41,51 @@ from src.execution.state_repo import ExecutionStateRepo, ExecutionStateRow
 from src.risk.reason_codes import ReasonCode
 
 _log = logging.getLogger(__name__)
+
+
+class _SendOutcome(Enum):
+    """S55 BYBIT-02 — tri-state result of a flatten Market Sell attempt.
+
+    A flatten cascade fires up to two Market Sells with DIFFERENT orderLinkIds
+    (qty vs qty-step), so the S49 B1 / S51 D1 deterministic-orderLinkId dedupe does
+    NOT span the two attempts. Collapsing every failure to a single bool ``False``
+    therefore conflated two opposite situations:
+
+    * ``NOT_SENT`` — a SYNCHRONOUS rejection (param/balance/filter/rate-limit retCode
+      or any non-network error): the order never reached the matching engine, so
+      attempt-2 is safe.
+    * ``UNKNOWN`` — a NETWORK / I/O exception after submit: the order MAY have landed
+      server-side while the ack read failed. Firing attempt-2 (different orderLinkId)
+      risks a SECOND real Market Sell → oversell / phantom short on Spot. Must HALT for
+      operator reconciliation, never auto-retry.
+    * ``SENT_OK`` — the sell succeeded (incl. a 110072 duplicate proving a prior
+      idempotent submit already landed).
+    """
+
+    SENT_OK = auto()
+    NOT_SENT = auto()
+    UNKNOWN = auto()
+
+
+# S55 BYBIT-02 — exceptions whose occurrence means the order MAY already be on the
+# matching engine (the ack/response read failed at the transport layer). pybit's
+# _retry_with_backoff propagates these WITHOUT retrying (rest.py), so they surface here.
+# Treated as UNKNOWN outcome → HALT, never blind attempt-2. OSError covers stdlib
+# ConnectionError / socket.timeout (TimeoutError) / BrokenPipeError, etc.
+_NETWORK_UNKNOWN_EXC: tuple[type[BaseException], ...]
+try:  # pragma: no cover - import wiring only
+    import requests.exceptions as _req_exc
+    from pybit.exceptions import FailedRequestError as _PybitFailedRequest
+
+    _NETWORK_UNKNOWN_EXC = (
+        OSError,
+        socket.timeout,
+        _req_exc.RequestException,
+        _PybitFailedRequest,
+    )
+except Exception:  # pragma: no cover - defensive: missing optional transport deps
+    _NETWORK_UNKNOWN_EXC = (OSError, socket.timeout)
+
 
 _TERMINAL_STATES: frozenset[ExecutionState] = frozenset(
     {
@@ -99,11 +147,49 @@ class Coordinator:
         """
         return self._symbol
 
+    def current_state(self, symbol: str | None = None) -> ExecutionState | None:
+        """S55 ARCH-03: public, lock-protected FSM-state read for callers.
+
+        RuntimeManager's tick-loop pre-check previously read the persisted row via the
+        private ``coordinator._repo.get(symbol)`` — OUTSIDE the Coordinator RLock. Because
+        the pybit WS thread mutates the same row under the lock (entry-fill → arm, SL-trigger
+        → flatten), that cross-thread read was a TOCTOU: the manager could observe FLAT for
+        an instant after the WS thread had already begun a transition, racing a second
+        ``start_bracket`` against the one-open-order invariant. Reading the row HERE, under
+        ``self._lock``, makes the snapshot consistent with the single-writer FSM.
+
+        This is a PURE repo read (no I/O) — it does not reintroduce the S55 ARCH-02
+        lock-hoist hazard (which was about blocking REST fetches under the lock). The RLock
+        is reentrant, so a caller already holding it (e.g. an internal helper) does not
+        deadlock. ``symbol`` defaults to the Coordinator's own symbol; an explicit value is
+        accepted for API symmetry with the manager's call site.
+
+        Returns the current ExecutionState, or None when no row is persisted yet.
+        """
+        sym = symbol if symbol is not None else self._symbol
+        with self._lock:
+            row = self._repo.get(sym)
+            return row.state if row is not None else None
+
     def on_ws_reconnect(self) -> None:
         """ADR 0021 sub-decisions 1+2+3 — unified reconcile path.
 
         Called by WS consumer on disconnect AND by bootstrap.
         Routes through RECONCILING state; dispatches on verdict.
+
+        S55 ARCH-02 (lock-hoist): ``reconciler.reconcile`` does blocking REST fetches
+        (get_wallet_balance / get_open_orders / get_order) that sleep up to ~15.5s under
+        ``_retry_with_backoff`` on rate-limit codes. Previously that ran while the
+        Coordinator RLock was held, blocking the pybit WS thread's ``on_order_event``
+        (whose SL-trigger sibling-cancel must fire in the 0ms Bybit Spot Triggered→Filled
+        gap) → orphan TP self-fill → phantom short. The fix splits the flow into three
+        windows: (1) acquire the RLock briefly to validate state + move FLAT→RECONCILING +
+        snapshot ``local``; (2) RELEASE the RLock and run reconcile's blocking I/O off-lock
+        — the WS thread can now acquire the RLock during the fetch (it sees RECONCILING and
+        drops any stale order echo via the existing IllegalTransitionError guard, instead of
+        hanging for seconds); (3) re-acquire the RLock to apply the verdict transition. The
+        single-writer FSM invariant is preserved: every transition still happens under the
+        RLock. Verdict semantics are unchanged — only the lock-hold window narrowed.
         """
         with self._lock:
             row = self._repo.get(self._symbol)
@@ -115,7 +201,11 @@ class Coordinator:
                 return
             self._transition(ExecutionEvent.WS_RECONNECT)  # → RECONCILING
             local = self._build_local_state(row)
-            result = self._reconciler.reconcile(local, expected_state=state)
+
+        # I/O window: blocking REST fetches run with the RLock RELEASED (ARCH-02).
+        result = self._reconciler.reconcile(local, expected_state=state)
+
+        with self._lock:
             if result.verdict == "HEAL_ENTRY_FILLED":
                 self._apply_heal_entry_filled(result)
                 self._transition(ExecutionEvent.RECONCILE_ENTRY_FILLED)  # → LONG_OPEN
@@ -172,19 +262,49 @@ class Coordinator:
           2. Recover last_attempt_num from exchange evidence (S6 sub-decision 9).
           3. Delegate to on_ws_reconnect — reuses live reconcile path.
           4. Stamp bootstrap_at, mark _bootstrap_done = True.
+
+        S55 ARCH-02-REG-01 (lock-hoist completion): bootstrap previously wrapped
+        its WHOLE body — including ``_recover_attempt_num`` and
+        ``on_ws_reconnect`` — in one outer ``with self._lock:``. Because the RLock
+        is REENTRANT, on_ws_reconnect's window-2 release did NOT actually release
+        the lock while bootstrap held the outer acquisition, so the warm-start
+        path (the crash-recovery path) still held the RLock across BOTH blocking
+        REST sections — exactly the hazard ARCH-02 set out to remove. The body is
+        now split so the blocking REST I/O runs with the RLock RELEASED:
+          * a brief lock reads the row + handles the cold-start return;
+          * ``_recover_attempt_num`` fetches off-lock, then takes a narrow lock
+            only for its non-I/O ``last_attempt_num`` upsert;
+          * ``on_ws_reconnect`` runs OUTSIDE the lock — its own 3-window locking
+            now actually releases during reconcile's REST I/O;
+          * a brief lock stamps ``bootstrap_at`` + sets ``_bootstrap_done``.
+        The single-writer FSM invariant is preserved — every state mutation still
+        happens under the RLock; verdict semantics are byte-identical (only the
+        lock-hold window narrowed). on_ws_reconnect already drops a stale WS echo
+        via its RECONCILING interlock, so a WS event interleaving bootstrap's
+        off-lock fetch cannot tear FSM state.
         """
         with self._lock:
             row = self._repo.get(self._symbol)
             if row is None:
                 self._bootstrap_done = True
                 return
-            self._recover_attempt_num(row)
-            self.on_ws_reconnect()
+
+        # Off-lock REST I/O (recover + reconcile); each takes its own narrow lock.
+        self._recover_attempt_num(row)
+        self.on_ws_reconnect()
+
+        with self._lock:
             self._upsert_fields(bootstrap_at=_now_iso())
             self._bootstrap_done = True
 
     def _recover_attempt_num(self, row: ExecutionStateRow) -> None:
-        """Extracted from pre-S7 bootstrap body (ADR 0020 sub-decision 9)."""
+        """Extracted from pre-S7 bootstrap body (ADR 0020 sub-decision 9).
+
+        S55 ARCH-02-REG-01: the blocking REST fetches (get_open_orders /
+        get_order_history) run with the RLock RELEASED; only the non-I/O
+        ``last_attempt_num`` upsert is taken under a narrow lock, preserving the
+        single-writer FSM invariant.
+        """
         if row.bracket_id is None:
             return
         open_orders = self._adapter.get_open_orders(symbol=self._symbol)
@@ -194,7 +314,8 @@ class Coordinator:
             candidates=list(open_orders) + list(history),
         )
         if max_attempt > row.last_attempt_num:
-            self._upsert_fields(last_attempt_num=max_attempt)
+            with self._lock:
+                self._upsert_fields(last_attempt_num=max_attempt)
 
     @staticmethod
     def _extract_max_attempt(*, bracket_id: str, candidates: list[dict[str, Any]]) -> int:
@@ -268,6 +389,10 @@ class Coordinator:
                     arming_started_at=None,
                     last_attempt_num=1,
                     updated_at=_now_iso(),
+                    # S55 TL-01: persist planned exit prices so on_order_event can arm
+                    # the OCO legs once the entry fills (arm_oco needs both prices).
+                    bracket_tp_price=tp_price,
+                    bracket_sl_trigger_price=sl_trigger_price,
                 )
             )
             return bracket_id
@@ -306,7 +431,12 @@ class Coordinator:
             try:
                 if role == "entry":
                     if status == "Filled":
-                        self._transition(ExecutionEvent.ENTRY_FILLED)
+                        self._transition(ExecutionEvent.ENTRY_FILLED)  # ENTRY_PENDING → LONG_OPEN
+                        # S55 TL-01: arm the OCO bracket immediately on entry fill
+                        # (ADR 0020 sub-decision 1: TP+SL legs placed после Filled).
+                        # Without this the position stays LONG_OPEN with no SL/TP —
+                        # an unbounded-loss defect. arm_oco re-enters self._lock (RLock).
+                        self._arm_oco_after_entry_fill(evt)
                     # PartiallyFilled / other entry statuses: no-op (Spot Market BUY
                     # fills atomically; defensive against future SDK changes).
                     return
@@ -329,6 +459,64 @@ class Coordinator:
                     link_id,
                 )
 
+    def _arm_oco_after_entry_fill(self, evt: dict[str, Any]) -> None:
+        """S55 TL-01: arm the OCO bracket from an entry-Filled WS event.
+
+        Computes the fee-aware OCO qty (ADR 0020 sub-decision 6 / G5) from the
+        fill echo — Spot Buy fees are deducted from the base coin, so the
+        sellable qty is ``cumExecQty - cumExecFee`` floored to the lot step —
+        then places the TP Limit + SL Stop-Market legs at the prices persisted
+        by start_bracket. Runs under the lock already held by on_order_event
+        (arm_oco re-enters the same RLock).
+
+        Fail-closed: if the planned prices or fill qty are missing/invalid (e.g.
+        an entry-fill echo arriving on a bracket whose prices were not persisted),
+        HALT instead of leaving a naked LONG position with no stop-loss.
+        """
+        row = self._repo.get(self._symbol)
+        if row is None or row.bracket_tp_price is None or row.bracket_sl_trigger_price is None:
+            _log.error(
+                "arm_after_fill.missing_bracket_prices symbol=%s bracket_id=%s",
+                self._symbol,
+                row.bracket_id if row is not None else None,
+            )
+            self._set_halt(
+                reason=ReasonCode.HALT_OCO_ARM_TIMEOUT,
+                last_event=ExecutionEvent.RISK_HALT,
+                extra={"arm_path": "entry_fill", "cause": "missing_bracket_prices"},
+            )
+            self._transition(ExecutionEvent.RISK_HALT)
+            return
+        cum_exec_qty = Decimal(str(evt.get("cumExecQty") or "0"))
+        cum_exec_fee = Decimal(str(evt.get("cumExecFee") or "0"))
+        fee_currency = str(evt.get("feeCurrency") or "")
+        oco_qty = compute_oco_qty(
+            cum_exec_qty=cum_exec_qty,
+            cum_exec_fee=cum_exec_fee,
+            fee_currency=fee_currency,
+            base_coin=self._base_coin,
+            qty_step=self._qty_step(),
+        )
+        if oco_qty <= Decimal("0"):
+            _log.error(
+                "arm_after_fill.zero_oco_qty symbol=%s cum_exec_qty=%s cum_exec_fee=%s",
+                self._symbol,
+                cum_exec_qty,
+                cum_exec_fee,
+            )
+            self._set_halt(
+                reason=ReasonCode.HALT_OCO_ARM_TIMEOUT,
+                last_event=ExecutionEvent.RISK_HALT,
+                extra={"arm_path": "entry_fill", "cause": "zero_oco_qty"},
+            )
+            self._transition(ExecutionEvent.RISK_HALT)
+            return
+        self.arm_oco(
+            tp_price=row.bracket_tp_price,
+            sl_trigger_price=row.bracket_sl_trigger_price,
+            oco_qty=oco_qty,
+        )
+
     def _handle_sl_partial(self, evt: dict[str, Any]) -> None:
         """ADR 0020 sub-decision 7: SL IOC partial → flatten residual via Market Sell.
 
@@ -347,18 +535,40 @@ class Coordinator:
         row = self._repo.get(self._symbol)
         if row is not None and row.oco_tp_order_id is not None:
             self._best_effort_cancel(row.oco_tp_order_id)
-        leaves_qty = Decimal(evt.get("leavesQty", "0"))
-        if leaves_qty <= 0:
+        raw_leaves_qty = Decimal(evt.get("leavesQty", "0"))
+        if raw_leaves_qty <= 0:
             self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
             return
-        # S49 B1: deterministic orderLinkId — idempotency key so a _retry_with_backoff
-        # re-submission (on 170005/170222 after the Sell already landed) is deduped by
-        # Bybit instead of executing a second Market Sell. Stable per bracket attempt.
-        residual_link_id: str | None = None
-        if row is not None and row.bracket_id is not None:
-            residual_link_id = make_flatten_link_id(
-                bracket_id=row.bracket_id, kind="res", attempt=row.last_attempt_num
+        # S55 BYBIT-05: step-floor the raw leavesQty before the residual Sell. A raw qty
+        # that is not a multiple of the lot step is rejected by the venue's LOT_SIZE
+        # filter → a spurious HALT_FLATTEN_FAILED. After flooring, a sub-min residual is
+        # unrecoverable dust (the position is effectively flat — the venue will not accept
+        # an order below min_order_qty): treat it as RESIDUAL_FLATTENED rather than firing
+        # a sell that can only reject and HALT.
+        qty_step = self._qty_step()
+        leaves_qty = self._step_floor(raw_leaves_qty, qty_step)
+        if leaves_qty <= Decimal("0") or leaves_qty < self._min_order_qty():
+            _log.info(
+                "flatten.ioc_residual_dust symbol=%s raw_leaves_qty=%s floored=%s min_qty=%s",
+                self._symbol,
+                raw_leaves_qty,
+                leaves_qty,
+                self._min_order_qty(),
             )
+            self._transition(ExecutionEvent.RESIDUAL_FLATTENED)
+            return
+        # S49 B1 / S55 BYBIT-04: deterministic orderLinkId — idempotency key so a
+        # _retry_with_backoff re-submission (on 170005/170222 after the Sell already
+        # landed) is deduped by Bybit instead of executing a second Market Sell.
+        # Stable per bracket attempt; when bracket_id is None (e.g. a residual on a row
+        # with no active bracket), fall back to the symbol so the key stays deterministic
+        # and the Sell NEVER carries orderLinkId=None (a None id defeats dedupe).
+        flatten_key = row.bracket_id if row is not None and row.bracket_id else self._symbol
+        residual_link_id = make_flatten_link_id(
+            bracket_id=flatten_key[:24],
+            kind="res",
+            attempt=row.last_attempt_num if row is not None else 1,
+        )
         try:
             self._adapter.place_order(
                 symbol=self._symbol,
@@ -502,22 +712,48 @@ class Coordinator:
             # fall back to symbol so the key stays deterministic.
             row = self._repo.get(self._symbol)
             flatten_key = row.bracket_id if row is not None and row.bracket_id else self._symbol
-            if self._try_place_market_sell(qty, link_id=self._emg_link_id(flatten_key, 1)):
+            trigger_reason = reason.value if hasattr(reason, "value") else str(reason)
+
+            outcome = self._try_place_market_sell(qty, link_id=self._emg_link_id(flatten_key, 1))
+            if outcome is _SendOutcome.SENT_OK:
                 return
+            # S55 BYBIT-02: attempt-1's outcome is UNKNOWN (network/I/O after submit) —
+            # the order may already be live. Attempt-2 carries a DIFFERENT orderLinkId,
+            # so Bybit can't dedupe it → a second real Market Sell. HALT instead and let
+            # an operator reconcile the true position (no blind double-sell).
+            if outcome is _SendOutcome.UNKNOWN:
+                self._halt_flatten(trigger_reason, cause="attempt1_unknown_outcome")
+                return
+
             retry_qty = self._step_floor(qty - qty_step, qty_step)
-            if retry_qty > Decimal("0") and self._try_place_market_sell(
-                retry_qty, link_id=self._emg_link_id(flatten_key, 2)
-            ):
-                return
-            self._set_halt(
-                reason=ReasonCode.HALT_FLATTEN_FAILED,
-                last_event=ExecutionEvent.FLATTEN_FAILED,
-                extra={
-                    "flatten_path": "emergency",
-                    "trigger_reason": reason.value if hasattr(reason, "value") else str(reason),
-                },
-            )
-            self._transition(ExecutionEvent.FLATTEN_FAILED)
+            if retry_qty > Decimal("0"):
+                outcome = self._try_place_market_sell(
+                    retry_qty, link_id=self._emg_link_id(flatten_key, 2)
+                )
+                if outcome is _SendOutcome.SENT_OK:
+                    return
+                if outcome is _SendOutcome.UNKNOWN:
+                    self._halt_flatten(trigger_reason, cause="attempt2_unknown_outcome")
+                    return
+
+            self._halt_flatten(trigger_reason, cause="both_attempts_not_sent")
+
+    def _halt_flatten(self, trigger_reason: str, *, cause: str) -> None:
+        """S55 BYBIT-02 — HALT the emergency-flatten cascade (FLATTEN_FAILED → HALTED).
+
+        ``cause`` distinguishes the unknown-outcome HALT (operator must reconcile a
+        possibly-live order) from the both-attempts-rejected HALT.
+        """
+        self._set_halt(
+            reason=ReasonCode.HALT_FLATTEN_FAILED,
+            last_event=ExecutionEvent.FLATTEN_FAILED,
+            extra={
+                "flatten_path": "emergency",
+                "trigger_reason": trigger_reason,
+                "cause": cause,
+            },
+        )
+        self._transition(ExecutionEvent.FLATTEN_FAILED)
 
     def _best_effort_cancel(self, order_id: str) -> None:
         """Best-effort cancel for stale arm_oco legs.
@@ -550,18 +786,29 @@ class Coordinator:
         """
         return make_flatten_link_id(bracket_id=flatten_key[:24], kind="emg", attempt=attempt)
 
-    def _try_place_market_sell(self, qty: Decimal, *, link_id: str | None = None) -> bool:
+    def _try_place_market_sell(self, qty: Decimal, *, link_id: str | None = None) -> _SendOutcome:
+        """S55 BYBIT-02 — place a flatten Market Sell, returning a TRI-STATE outcome.
+
+        Returns:
+            SENT_OK   — the sell landed (incl. a 110072 duplicate of a prior idempotent
+                        submit) → flatten stops the cascade.
+            NOT_SENT  — a synchronous rejection (retCode / non-network error): nothing
+                        reached the engine → flatten may safely try attempt-2.
+            UNKNOWN   — a network / I/O exception after submit: the order may already be
+                        live server-side → flatten must HALT, NOT fire attempt-2 (a
+                        different orderLinkId would dodge dedupe → double-sell).
+        """
         try:
             self._adapter.place_order(
                 symbol=self._symbol, side="Sell", qty=qty, order_link_id=link_id
             )
-            return True
+            return _SendOutcome.SENT_OK
         except BybitAPIError as exc:
             # S51 D1: 110072 (OrderLinkedID duplicate) — this emergency-flatten
             # Market Sell, placed with this SAME deterministic link_id, already
-            # landed server-side. The sell succeeded → return True so flatten()
-            # stops the cascade (no second sell, no HALT). Pin on retCode==110072
-            # to avoid swallowing a different error. Mirrors the 110001 pattern.
+            # landed server-side. The sell succeeded → SENT_OK so flatten() stops
+            # the cascade (no second sell, no HALT). Pin on retCode==110072 to avoid
+            # swallowing a different error. Mirrors the 110001 pattern.
             if exc.ret_code == 110072 and exc.reason is AdapterReasonCode.REJECT_DUPLICATE_ORDER:
                 _log.info(
                     "flatten.market_sell_duplicate symbol=%s qty=%s ret_code=%s link_id=%s",
@@ -570,20 +817,56 @@ class Coordinator:
                     exc.ret_code,
                     link_id,
                 )
-                return True
+                return _SendOutcome.SENT_OK
+            # Any other BybitAPIError is a SYNCHRONOUS non-zero-retCode rejection
+            # (or a re-wrapped rate-limit exhaustion, S55 BYBIT-03): the matching
+            # engine refused the order → nothing landed → NOT_SENT (safe attempt-2).
+            _log.warning(
+                "flatten.market_sell_rejected symbol=%s qty=%s ret_code=%s",
+                self._symbol,
+                qty,
+                exc.ret_code,
+                exc_info=True,
+            )
+            return _SendOutcome.NOT_SENT
+        except _NETWORK_UNKNOWN_EXC:
+            # S55 BYBIT-02: transport-layer failure AFTER submit. The order may have
+            # reached Bybit while the ack read failed → UNKNOWN outcome. Do NOT auto-fire
+            # attempt-2 (it carries a different orderLinkId → no dedupe → second real
+            # Market Sell → oversell). flatten() escalates to HALT for operator recon.
+            _log.error(
+                "flatten.market_sell_unknown_outcome symbol=%s qty=%s link_id=%s",
+                self._symbol,
+                qty,
+                link_id,
+                exc_info=True,
+            )
+            return _SendOutcome.UNKNOWN
+        except Exception:  # noqa: BLE001 — non-network failure; nothing landed → safe attempt-2
+            # NOTE (S55 PHASE6 BYBIT-08 carry): a place_order exception raised AFTER the
+            # REST round-trip landed the order with retCode==0 (e.g. a response schema-shift
+            # KeyError while building OrderAck from resp["result"]) is misclassified here as
+            # NOT_SENT → flatten fires attempt-2 → double-sell. The clean fix is adapter-level
+            # (wrap the post-retCode==0 OrderAck construction in all 3 place_* variants to
+            # raise a typed AmbiguousOrderOutcome → map to UNKNOWN), NOT a coordinator-level
+            # type split (a post-submit KeyError and a pre-submit error are both generic
+            # Exception). Tracked as a follow-up; current retry-with-qty-step design preserved.
             _log.warning(
                 "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
             )
-            return False
-        except Exception:  # noqa: BLE001 — best-effort flatten Market Sell; caller retries/halts on False
-            _log.warning(
-                "flatten.market_sell_failed symbol=%s qty=%s", self._symbol, qty, exc_info=True
-            )
-            return False
+            return _SendOutcome.NOT_SENT
 
     def _qty_step(self) -> Decimal:
-        step: Decimal = self._adapter._filters.step_size
+        # S55 ARCH-03: read the lot-step via the adapter's PUBLIC step_size property
+        # instead of the private _adapter._filters.step_size attribute leak.
+        step: Decimal = self._adapter.step_size
         return step
+
+    def _min_order_qty(self) -> Decimal:
+        # S55 BYBIT-05: venue minimum-order-qty via the adapter's PUBLIC accessor —
+        # used to classify a step-floored residual as unrecoverable dust.
+        min_qty: Decimal = self._adapter.min_order_qty
+        return min_qty
 
     @staticmethod
     def _step_floor(value: Decimal, step: Decimal) -> Decimal:
@@ -679,6 +962,8 @@ class Coordinator:
                 last_exit_reason=current.last_exit_reason,
                 last_reconcile_at=current.last_reconcile_at,
                 bootstrap_at=current.bootstrap_at,
+                bracket_tp_price=current.bracket_tp_price,
+                bracket_sl_trigger_price=current.bracket_sl_trigger_price,
             )
         )
 

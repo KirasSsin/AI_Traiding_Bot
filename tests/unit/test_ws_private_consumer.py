@@ -363,6 +363,98 @@ def test_on_execution_raw_processes_dict_data_as_single_event(caplog) -> None:
     fill_recorder.on_fill_event.assert_called_once_with({"execId": "abc"})
 
 
+def test_dispatch_failure_log_is_field_allowlisted(caplog) -> None:
+    """S55 LOW SEC-S55-04: a dispatch-failure log must NOT dump the full payload.
+
+    Post-handshake order events carry order data (symbol/qty/price/fees) — no
+    credentials, but at mainnet the full ``%r`` dump is needless verbosity. The
+    log line must carry only an allowlisted summary (orderId/status/symbol), not
+    the full dict with price/qty/fee fields.
+    """
+    import logging
+
+    coord = MagicMock()
+    coord.on_order_event.side_effect = RuntimeError("boom")  # force dispatch failure
+    consumer = BybitPrivateWSConsumer(
+        api_key="k",
+        api_secret="s",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=coord,
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+    msg = {
+        "topic": "order",
+        "data": [
+            {
+                "orderId": "oid-secret-99",
+                "orderStatus": "Filled",
+                "symbol": "BTCUSDT",
+                "qty": "0.123",
+                "price": "62500.55",
+                "cumExecFee": "0.0000099",
+                "feeCurrency": "BTC",
+                "avgPrice": "62499.0",
+            }
+        ],
+    }
+    with caplog.at_level(logging.ERROR):
+        consumer._on_order_raw(msg)
+
+    blob = " ".join(rec.getMessage() for rec in caplog.records)
+    # Allowlisted identity fields present.
+    assert "oid-secret-99" in blob
+    assert "BTCUSDT" in blob
+    # Order DATA fields (price/qty/fee) MUST NOT appear in the log.
+    assert "62500.55" not in blob, "price leaked into dispatch-failure log"
+    assert "0.123" not in blob, "qty leaked into dispatch-failure log"
+    assert "0.0000099" not in blob, "fee leaked into dispatch-failure log"
+    assert "avgPrice" not in blob, "raw payload key leaked into dispatch-failure log"
+
+
+def test_missing_fee_fields_log_is_field_allowlisted(caplog) -> None:
+    """S55 LOW SEC-S55-04: the missing-fee-fields ERROR must not dump the full item.
+
+    Keep ``status`` + the ``missing`` list, but the dropped item must be summarized
+    to allowlisted identity fields (orderId/symbol/status) — never the full dict
+    with avgPrice/qty.
+    """
+    import logging
+
+    coord = MagicMock()
+    consumer = BybitPrivateWSConsumer(
+        api_key="k",
+        api_secret="s",
+        endpoint="wss://stream-testnet.bybit.com/v5/private",
+        coordinator=coord,
+        reconciler=MagicMock(),
+        fill_recorder=MagicMock(),
+    )
+    msg = {
+        "data": [
+            {
+                "orderId": "oid-drop-7",
+                "orderStatus": "Filled",
+                "symbol": "ETHUSDT",
+                "cumExecQty": "0.5",
+                # cumExecFee / feeCurrency MISSING -> dropped
+                "avgPrice": "2500.99",
+            }
+        ]
+    }
+    with caplog.at_level(logging.ERROR):
+        consumer._on_order_raw(msg)
+
+    coord.on_order_event.assert_not_called()
+    blob = " ".join(rec.getMessage() for rec in caplog.records)
+    assert "oid-drop-7" in blob
+    assert "ETHUSDT" in blob
+    assert "cumExecFee" in blob  # the missing-field name is still reported
+    # Order DATA fields MUST NOT leak.
+    assert "2500.99" not in blob, "avgPrice leaked into missing-fee log"
+    assert "avgPrice" not in blob, "raw payload key leaked into missing-fee log"
+
+
 def test_ws_consumer_repr_does_not_contain_api_secret() -> None:
     """S39 T13 M4 security: __repr__ MUST never expose api_key or api_secret."""
     consumer = BybitPrivateWSConsumer(

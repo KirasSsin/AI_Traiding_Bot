@@ -70,16 +70,44 @@ def test_mock_satisfies_protocol() -> None:
     assert isinstance(adapter, KronosAdapter)
 
 
-def test_model_adapter_raises_clean_importerror_without_torch() -> None:
+def _force_kronos_deps_absent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Deterministically make ``KronosModelAdapter.__init__`` raise ImportError.
+
+    torch + the ``third_party/kronos`` submodule MAY be installed locally
+    (operator added ``.[ml]`` for the M4 Kronos run); CI is torch-free. These
+    tests assert the torch-ABSENT contract, so we force absence regardless of
+    env:
+
+    1. Null ``torch`` in ``sys.modules`` → any ``import torch`` raises ImportError.
+       ``__init__`` does ``from model import ...`` and the kronos ``model``
+       package imports torch at top level (model/kronos.py:3), so the import
+       chain fails → the clean two-step ImportError is re-raised.
+    2. Evict any cached ``model`` / ``model.*`` submodules so the import is NOT
+       served from cache (a prior test may have instantiated the real adapter).
+    """
+    import sys
+
+    monkeypatch.setitem(sys.modules, "torch", None)
+    for name in list(sys.modules):
+        if name == "model" or name.startswith("model."):
+            monkeypatch.delitem(sys.modules, name, raising=False)
+
+
+def test_model_adapter_raises_clean_importerror_without_torch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.ml.kronos_variant import KRONOS_MINI
 
+    _force_kronos_deps_absent(monkeypatch)
     with pytest.raises(ImportError) as exc_info:
         KronosModelAdapter(variant=KRONOS_MINI)
     assert "[ml]" in str(exc_info.value)
 
 
-def test_model_adapter_syspath_rolled_back_on_importerror() -> None:
-    """After ImportError (torch absent) kronos_root must NOT remain in sys.path (FIX 2)."""
+def test_model_adapter_syspath_rolled_back_on_importerror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """After ImportError (torch forced absent) kronos_root must NOT remain in sys.path (FIX 2)."""
     import os
     import sys
 
@@ -90,21 +118,29 @@ def test_model_adapter_syspath_rolled_back_on_importerror() -> None:
     kronos_root = os.path.normpath(
         os.path.join(os.path.dirname(_ka_module.__file__), "..", "..", "third_party", "kronos")
     )
+    # Snapshot whether kronos_root was already present so we assert the *delta*
+    # (the adapter must clean up only what IT inserted).
+    preexisting = kronos_root in sys.path
 
+    _force_kronos_deps_absent(monkeypatch)
     with pytest.raises(ImportError):
         KronosModelAdapter(variant=KRONOS_MINI)
 
-    assert (
-        kronos_root not in sys.path
-    ), f"kronos_root leaked into sys.path after ImportError: {kronos_root}"
+    if not preexisting:
+        assert (
+            kronos_root not in sys.path
+        ), f"kronos_root leaked into sys.path after ImportError: {kronos_root}"
 
 
-def test_model_adapter_accepts_variant_and_raises_two_step_hint() -> None:
+def test_model_adapter_accepts_variant_and_raises_two_step_hint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.ml.kronos_adapter import KronosModelAdapter
     from src.ml.kronos_variant import KRONOS_BASE
 
-    # torch/Kronos absent here → __init__ must raise ImportError with the
+    # Force torch/Kronos absent → __init__ must raise ImportError with the
     # two-step operator instruction (submodule init + pip install ml).
+    _force_kronos_deps_absent(monkeypatch)
     with pytest.raises(ImportError) as exc:
         KronosModelAdapter(variant=KRONOS_BASE, device="cpu")
     msg = str(exc.value)

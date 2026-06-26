@@ -167,8 +167,11 @@ def _run_donchian_wfa(
 
     n_trades_raw = len(trades)
 
-    # Trial-level mean of fold OOS Sharpes для cross-trial pooling per ADR 0056
-    # (clarifies arithmetic mean of fold OOS Sharpes vs pooled trade-level OOS Sharpe).
+    # Mean of per-fold OOS/IS Sharpe RATIOS (fold_sharpes := oos_is_sharpe_ratio,
+    # walk_forward.py:130). S55 QS-3: used ONLY as a `math.isnan` reachability guard
+    # for the CLASS_SCOPED DSR branch below — it is NOT a cross-trial pool input
+    # (donchian_runner has no append_trial; a future donchian writer must persist the
+    # real annualized OOS Sharpe from fold oos_metrics["Sharpe Ratio"], NOT this ratio).
     trial_mean_fold_oos_sharpe = (
         float(sum(fold_sharpes) / len(fold_sharpes)) if fold_sharpes else float("nan")
     )
@@ -201,8 +204,17 @@ def _run_donchian_wfa(
         and not math.isnan(trial_mean_fold_oos_sharpe)
     ):
         # CLASS_SCOPED: >=3 within-class entries → apply GLOBAL N_trials breadth.
+        # S55 QS-3 (ADR 0071 follow-up) DSR units fix: sigma_sr is the stdev of
+        # ANNUALIZED class-scoped OOS Sharpes (replay_engine bar-returns ×
+        # sqrt(bars_per_year)), but compute_dsr's internal candidate Sharpe is
+        # per-trade. Pass annualization_factor=sqrt(bars_per_year) so sigma_sr is
+        # de-annualized to one frequency (Bailey & López de Prado 2014 eq.12/13 —
+        # wfa_reporter parity; Lo eq.13 per-trade denom untouched).
         dsr_info = compute_dsr_with_status(
-            trades=trades, n_trials=N_TRIALS_LOCKED, sigma_sr=sigma_sr
+            trades=trades,
+            n_trials=N_TRIALS_LOCKED,
+            sigma_sr=sigma_sr,
+            annualization_factor=math.sqrt(bars_per_year),
         )
     else:
         # INSUFFICIENT_CLASS_HISTORY / EMPTY: <3 within-class entries → n_trials=1,
@@ -291,8 +303,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--start", default="2023-01-01")
     parser.add_argument("--end", default="2026-04-26")
     parser.add_argument("--interval-label", default="4h")
-    # 4H bars: 6 per day → 6 * 365 = 2190.
-    parser.add_argument("--bars-per-year", type=int, default=2190)
+    # 4H bars: 6 per day → int(365.25 * 6) = 2191 (S55 QS-2: 365.25 family, matches atr_breakout/volume_breakout).
+    parser.add_argument("--bars-per-year", type=int, default=2191)
     # Per S33 T4 CC6 (b) — 4H WFA window: train=1000/test=250.
     parser.add_argument("--wfa-train", type=int, default=1000)
     parser.add_argument("--wfa-test", type=int, default=250)

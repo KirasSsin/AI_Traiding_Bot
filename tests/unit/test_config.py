@@ -115,9 +115,7 @@ def test_live_trading_requires_mainnet() -> None:
 def test_live_trading_requires_trading_enabled() -> None:
     """live_trading=True requires trading_enabled=True."""
     with pytest.raises(ValidationError, match="live_trading requires trading_enabled"):
-        Settings(
-            **{**_BASE, "trading_enabled": False, "live_trading": True, "testnet": False}
-        )
+        Settings(**{**_BASE, "trading_enabled": False, "live_trading": True, "testnet": False})
 
 
 def test_settings_strategy_params_defaults() -> None:
@@ -222,9 +220,7 @@ def test_config_hash_excludes_hmac_key() -> None:
 def test_config_hash_excludes_paths_and_observability() -> None:
     """Path / log-level / sentry changes do not invalidate overrides."""
     s1 = Settings(**_BASE)
-    s2 = Settings(
-        **{**_BASE, "log_level": "DEBUG", "sentry_dsn": "https://example/1"}
-    )
+    s2 = Settings(**{**_BASE, "log_level": "DEBUG", "sentry_dsn": "https://example/1"})
     assert s1.config_hash() == s2.config_hash()
 
 
@@ -245,3 +241,17 @@ def test_settings_heal_overridable_via_env(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("HEAL_MAX_AGE_SECONDS", "1800")
     s = Settings(**_BASE)
     assert s.heal_max_age_seconds == 1800
+
+
+def test_demo_flag_defaults_false() -> None:
+    """S55 B0 BYBIT-01: `demo` defaults False → testnet exchange when testnet=True."""
+    s = Settings(_env_file=None, **_BASE)
+    assert s.demo is False
+    assert s.testnet is True  # default — canonical S35 demo env = testnet exchange
+
+
+def test_demo_flag_settable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """S55 B0 BYBIT-01: `demo` is the single source of truth, env-overridable."""
+    monkeypatch.setenv("DEMO", "true")
+    s = Settings(**_BASE)
+    assert s.demo is True

@@ -9,23 +9,18 @@ Test B: No source file OUTSIDE src/ml/ contains a top-level `import torch` /
 
 import ast
 import importlib
+import importlib.util
 import os
-import sys
+
+import pytest
 
 
+@pytest.mark.skipif(
+    importlib.util.find_spec("torch") is not None,
+    reason="torch installed in this env; torch-absent isolation N/A (CI is torch-free)",
+)
 def test_core_imports_without_torch() -> None:
-    """Test A: core modules import cleanly with torch absent."""
-    # Verify torch is genuinely absent (the whole point of this test).
-    assert "torch" not in sys.modules, "torch must not be pre-imported"
-    try:
-        # If torch IS installed, we can't falsify isolation here — skip gracefully.
-        import pytest
-        import torch  # noqa: F401
-
-        pytest.skip("torch is installed in this env; isolation test N/A")
-    except ImportError:
-        pass  # Expected: torch absent — proceed to import checks.
-
+    """Test A: core modules import cleanly with torch absent (torch-free CI)."""
     modules_under_test = [
         "src.signalgen",
         "src.signalgen.strategy",

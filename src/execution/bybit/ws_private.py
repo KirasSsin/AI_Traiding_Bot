@@ -10,6 +10,24 @@ from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
+# S55 LOW SEC-S55-04: bounded field allowlist for log payloads. Post-handshake
+# order/fill events carry order DATA (qty/price/fees) — never credentials, but
+# the full %r dump is needless verbosity at mainnet. Logs summarize each item to
+# these identity-only keys (whichever exist), never the full dict.
+_LOG_PAYLOAD_ALLOWLIST = ("orderId", "status", "orderStatus", "symbol")
+
+
+def _summarize_for_log(payload: Any) -> dict[str, Any]:
+    """Bounded allowlist summary of a WS payload for safe logging.
+
+    Returns only the identity fields in ``_LOG_PAYLOAD_ALLOWLIST`` that exist on
+    the payload (via ``.get``), so a malformed / non-dict payload still logs
+    safely without dumping qty/price/fee fields.
+    """
+    if not isinstance(payload, dict):
+        return {"_type": type(payload).__name__}
+    return {k: payload.get(k) for k in _LOG_PAYLOAD_ALLOWLIST if k in payload}
+
 
 class _CoordinatorProto(Protocol):
     def on_order_event(self, evt: dict[str, Any]) -> None: ...
@@ -44,7 +62,21 @@ class BybitPrivateWSConsumer:
         coordinator: _CoordinatorProto,
         reconciler: _ReconcilerProto,
         fill_recorder: _FillRecorderProto,  # NEW S9 Q3 B1
+        testnet: bool | None = None,
+        demo: bool | None = None,
     ) -> None:
+        """S55 B0 BLOCKER BYBIT-01: pybit env flags are now explicit.
+
+        Previously `start()` derived the pybit `(testnet, demo)` flags by
+        substring-matching the ad-hoc `endpoint` string (`"testnet" in endpoint`,
+        `"demo" in endpoint`). That heuristic silently routed the WS to
+        MAINNET-demo when the caller passed `"demo.bybit.com"` with a testnet
+        REST client, splitting orders and fills across account universes.
+
+        `testnet` / `demo` are now the authoritative source. When both are None
+        (legacy callers / tests passing only `endpoint`), they fall back to the
+        substring heuristic so existing behaviour is preserved.
+        """
         self._api_key = api_key
         self._api_secret = api_secret
         self._endpoint = endpoint
@@ -52,6 +84,10 @@ class BybitPrivateWSConsumer:
         self._reconciler = reconciler
         self._fill_recorder = fill_recorder  # NEW
         self._ws: Any | None = None  # pybit WebSocket handle (lazy, untyped)
+        # Resolve explicit pybit env flags; fall back to endpoint substring only
+        # when the caller did not supply them (backward-compat).
+        self._testnet: bool = ("testnet" in endpoint) if testnet is None else testnet
+        self._demo: bool = ("demo" in endpoint) if demo is None else demo
 
     def __repr__(self) -> str:
         """S39 T13 M4 — redact secrets from repr (security hardening)."""
@@ -73,9 +109,11 @@ class BybitPrivateWSConsumer:
         """
         from pybit.unified_trading import WebSocket  # deferred import
 
+        # S55 B0 BYBIT-01: use the explicit (testnet, demo) flags resolved in
+        # __init__ — NOT a substring match on the endpoint string.
         self._ws = WebSocket(
-            testnet="testnet" in self._endpoint,
-            demo="demo" in self._endpoint,
+            testnet=self._testnet,
+            demo=self._demo,
             channel_type="private",
             api_key=self._api_key,
             api_secret=self._api_secret,
@@ -164,6 +202,10 @@ class BybitPrivateWSConsumer:
             )
 
     def _on_order_raw(self, msg: dict[str, Any]) -> None:
+        # S55 LOW SEC-S55-04: track the in-flight item so a dispatch failure logs
+        # an allowlisted summary of THAT item (orderId/status/symbol), not the
+        # full raw payload (qty/price/fees).
+        current_item: Any = None
         try:
             data = msg.get("data")
             # S47 T11 M3 — isinstance guard: pybit V3 may emit data as dict (single-event);
@@ -185,12 +227,17 @@ class BybitPrivateWSConsumer:
                 )
                 return
             for item in events:
+                current_item = item
                 evt = self._parse_order(item)
                 if evt is None:
                     continue  # dropped (logged in parser)
                 self._coordinator.on_order_event(evt)
         except Exception:
-            logger.exception("order event dispatch failed; dropping msg=%r", msg)
+            # S55 LOW SEC-S55-04: bounded allowlist summary instead of full %r dump.
+            logger.exception(
+                "order event dispatch failed; dropping item=%r",
+                _summarize_for_log(current_item),
+            )
 
     def _on_wallet_raw(self, msg: dict[str, Any]) -> None:
         try:
@@ -254,11 +301,12 @@ class BybitPrivateWSConsumer:
         if status in self._FILLED_STATUSES:
             missing = [f for f in self._REQUIRED_FEE_FIELDS if f not in item]
             if missing:
+                # S55 LOW SEC-S55-04: allowlisted item summary instead of full %r.
                 logger.error(
                     "order event %s missing required fee fields %s; dropping item=%r",
                     status,
                     missing,
-                    item,
+                    _summarize_for_log(item),
                 )
                 return None
         return dict(item)
