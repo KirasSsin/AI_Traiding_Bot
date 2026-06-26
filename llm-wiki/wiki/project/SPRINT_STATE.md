@@ -1,16 +1,16 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-26  # S55 SHIPPED locally (squash 9f66382, tag v0.1.0-alpha.55) — git push pending network
+updated: 2026-06-26  # S55 SHIPPED to origin (main 2c31c07, tag v0.1.0-alpha.55)
 sprint: 55
-phase: 9-close
+phase: between-sprints
 branch: main
 tag: v0.1.0-alpha.55
 ---
 
 ## Текущий статус
 
-**S55 SHIPPED локально** — squash-merge `9f66382` на `main` + annotated tag `v0.1.0-alpha.55`. ⚠️ **`git push origin main --tags` ОЖИДАЕТ сети** (среда без доступа к github.com + GITHUB_TOKEN истёк). Feature-ветка `feature/sprint-55-full-audit-refactor` (72 granular commits) сохранена для recovery. Operator: восстановить gh auth → `git push origin main --tags`.
+**S55 SHIPPED to origin** — squash-merge на `main` (`2c31c07`) + tag `v0.1.0-alpha.55` запушены на GitHub (`KirasSsin/AI_Traiding_Bot`). gh auth = Keychain (gho_ token, scopes repo+workflow). Feature-ветка `feature/sprint-55-full-audit-refactor` (72 granular commits) — local-only, можно удалить или запушить для истории. **Auth-note:** harness впрыскивает протухший `GITHUB_TOKEN` env — для git remote ops в каждой Bash-команде `unset GITHUB_TOKEN GH_TOKEN` (тогда берётся Keychain). Touch reviewer-agent ДО push (standalone call) при изменённом ADR.
 
 **S55 = full-project audit + refactor.** Workflow `w1hxvgkoa` (120 агентов, 9 измерений, 2× skeptic-verified) нашёл 43 подтверждённых дефекта на shipped main (tag alpha.54). Все исправлены через strict TDD + 2 раунда re-review (PHASE 6 + 6.2), которые вскрыли 7 follow-up'ов. Детали по каждому finding → [[sprints/sprint-55-full-audit-refactor]].
 
