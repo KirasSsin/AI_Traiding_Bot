@@ -191,6 +191,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/adr-agent-sync-hook]] — PreToolUse hook на git push: блокирует пуш при drift'е ADR vs agent prompts.
 - [[project/components/adr-index-sync-hook]] — PreToolUse git push hook: блокирует пуш если новый ADR не упомянут в `wiki/index.md`. Mirror of adr-agent-sync-check (Bucket C6).
 - [[project/components/wiki-broken-link-hook]] — PreToolUse git push hook: блокирует пуш если changed wiki files содержат broken `[[link]]` refs (Bucket C7, pre-S9).
+- [[project/components/hooks-selfcheck-hook]] — 🆕 S57 guard-the-guards: `bash -n` всех хуков; SessionStart-баннер + fail-CLOSED блок push при битом хуке (единственный fail-closed хук кита). KIT-007.
 - [[project/components/data-quality]] — REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1). 0.5% threshold, per-bar cadence, no WS kline subscription needed.
 - [[project/components/fill-history]] — per-fill audit log (FillRecord + FillHistoryRepository + FK trade_history + WS execution topic source) (S9 Q3 B1).
 - [[project/components/fill-recorder-adapter]] — Bridges Bybit V5 WS execution events → FillHistoryRepository. 2-layer pattern (audit + best-effort DB). Closes `_NoopFillRecorder` stub (S12 Q5).

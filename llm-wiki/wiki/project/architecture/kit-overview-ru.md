@@ -16,6 +16,10 @@ sources:
   - https://docs.claude.com/en/code/best-practices
 ---
 
+<!-- AUTO:kit-inventory (генерируется kit/kit-inventory.sh — НЕ править руками) -->
+> **Инвентарь кита (авто, 2026-07-02):** агентов **15** (~/.claude/agents) · проектных скиллов **8** (.claude/skills) · superpowers-скиллов **14** · хуков подключено: PreToolUse(Bash) **7** + UserPromptSubmit **2** + SessionStart **2**; sh-файлов хуков на диске **9**.
+<!-- /AUTO:kit-inventory -->
+
 # Kit Overview (RU) — single source of truth
 
 > **TL;DR:** 1-страничный gateway ко всем настройкам kit'а. Detail в linked docs.
@@ -157,7 +161,7 @@ Detail: [[tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]
 | `llm-wiki/wiki/project/SPRINT_STATE.md` | Living sprint state — FIRST READ |
 | `kit-overview-ru.md` (this) | Single source of truth gateway |
 | `sprint-flow-ru.md` | 9-фаз обязательный процесс |
-| `tooling-inventory-ru.md` | Catalog (9 agents + 26 skills + 6 MCP + 6 hooks + cascade) |
+| `tooling-inventory-ru.md` | Catalog (агенты/скиллы/хуки — счётчики в AUTO-блоке вверху этой страницы; + 8 MCP + cascade) |
 | `CLAUDE.md` (repo root) | Bootstrap anchor (English) |
 | `llm-wiki/CLAUDE.md` | Wiki maintainer rules + skills hierarchy |
 | `~/.claude/CLAUDE.md` | Global rules + token economy |
@@ -211,9 +215,9 @@ Detail: [[sprint-flow-ru]]
 5. ✅ Auto mode permissions — documented (Section 14)
 6. ✅ Sandboxing — documented (Section 14)
 7. ✅ MCP servers — 8 active (post-S32d: +sqlite-trading + fetch)
-8. ✅ Hooks — 7 push + 2 UserPromptSubmit + 1 SessionStart active mechanical enforcement
+8. ✅ Hooks — 7 PreToolUse(Bash) + 2 UserPromptSubmit + 2 SessionStart (S57: +hooks-selfcheck guard-the-guards; точные числа — AUTO-блок)
 9. ✅ Skills — 36 mapped к kit flow (post-S32c)
-10. ✅ Subagents — 11 reviewer agents (post-S32d: +dashboard-reviewer + bybit-api-reviewer)
+10. ✅ Subagents — 15 агентов: 10 ревьюеров + trader-expert + doc-kit (doc-writer / doc-reviewer-depth / doc-linker, S56) + frontend-developer
 11. ✅ Plugins — 4 curated (Section 15)
 12. ✅ `/clear` discipline — anti-pattern documented
 13. ✅ `/btw` для side questions — Section 18
@@ -248,7 +252,7 @@ Full history: [[../architecture/current-state#карта-спринтов-sprint
 ## Связанные документы
 
 - [[sprint-flow-ru]] — обязательный 9-фаз процесс с per-phase HARD-GATEs
-- [[tooling-inventory-ru]] — full catalog (9 agents + 26 skills + 6 MCP + 6 hooks + cascade)
+- [[tooling-inventory-ru]] — full catalog (счётчики — AUTO-блок вверху страницы; + cascade)
 - [[development-workflow]] — MASTER SOP (English, complementary detail)
 - [[../decisions/0017-review-agent-harness]] — review agents matrix policy
 - [[../decisions/0041-sprint-28-process-enforcement]] — process enforcement ADR

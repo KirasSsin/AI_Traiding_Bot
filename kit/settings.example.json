@@ -1,0 +1,121 @@
+{
+  "env": {
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
+  },
+  "model": "claude-sonnet-4-6",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/adr-agent-sync-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/adr-index-sync-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/wiki-broken-link-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/sprint-flow-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/phase-advance.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/sprint-state-freshness-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/hooks-selfcheck.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/Apple/.claude/hooks/caveman-activate.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading caveman mode..."
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/hooks-selfcheck.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/Apple/.claude/hooks/caveman-mode-tracker.js\"",
+            "timeout": 5,
+            "statusMessage": "Tracking caveman mode..."
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/context-budget-warn.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"/Users/Apple/.claude/hooks/caveman-statusline.sh\""
+  },
+  "enabledPlugins": {
+    "agent-skills@addy-agent-skills": true,
+    "caveman@caveman": true,
+    "claude-mem@thedotmack": true,
+    "superpowers@superpowers-marketplace": true,
+    "warp@claude-code-warp": true
+  },
+  "extraKnownMarketplaces": {
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    },
+    "addy-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "claude-code-warp": {
+      "source": {
+        "source": "github",
+        "repo": "warpdotdev/claude-code-warp"
+      }
+    }
+  },
+  "skipWorkflowUsageWarning": true,
+  "agentPushNotifEnabled": true
+}

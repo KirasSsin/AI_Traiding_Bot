@@ -2920,3 +2920,8 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Canonical: states=16 events=30 transitions=74→76 (TL-NEW-01) reason_codes=67. ADR 0071. New: data_loading.py / _cache_io.py / weights_hash.py / migration 0007.
 - Gates: unit pytest 1694/0, integration 103, mypy --strict 0/101, ruff src/ clean, frontend vitest 51/51 + tsc/lint/build.
 - Carry: BYBIT-08 (adapter-level typed AmbiguousOrderOutcome — own ADR). Detail → sprints/sprint-55-full-audit-refactor.md.
+
+## [2026-07-02] ship | S57 — Kit Ground Truth & Basis (kit-maintenance, mega-run 1/7)
+- Фаза 0 mega-run: 8 аудитов → UNIFIED-BACKLOG (21 CONFIRMED-запись) + VERIFICATION-LEDGER (24 проверки) + OPERATOR-QUEUE. «Спринт 75» = WRONG (max alpha.55 везде); S56 docs (128 стр) не закрыт — на chore-ветке, мердж = S59 шаг 0.
+- S57: секрет из settings.json (плюс найден+удалён апрельский .bak с полным токеном — улов security-auditor), kit/ в git (30 файлов), hooks-selfcheck fail-CLOSED (первый в ките), kit-inventory.sh AUTO-блоки + drift-guard, docs_broken_link_scan.py (S59 фундамент).
+- Ревью: architecture APPROVE / security REQUEST_CHANGES → устранено в спринте. unit 1650/0. Тег v0.1.0-alpha.57 локально; push в конце прогона.

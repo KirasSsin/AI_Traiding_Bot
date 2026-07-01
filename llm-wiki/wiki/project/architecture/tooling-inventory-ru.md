@@ -13,6 +13,10 @@ sources:
   - project/decisions/0041-sprint-28-process-enforcement.md
 ---
 
+<!-- AUTO:kit-inventory (генерируется kit/kit-inventory.sh — НЕ править руками) -->
+> **Инвентарь кита (авто, 2026-07-02):** агентов **15** (~/.claude/agents) · проектных скиллов **8** (.claude/skills) · superpowers-скиллов **14** · хуков подключено: PreToolUse(Bash) **7** + UserPromptSubmit **2** + SessionStart **2**; sh-файлов хуков на диске **9**.
+<!-- /AUTO:kit-inventory -->
+
 # Tooling Inventory (RU)
 
 > Полный каталог: что используем / когда / зачем / как.
@@ -488,7 +492,7 @@ Mechanical enforcement, не optional reminders.
 
 ## 12. Skills × Phase integration map (S29)
 
-Полная карта 26 skills × kit flow phases. Source of truth для "какой skill в какой фазе":
+Полная карта 30 skills × kit flow phases (S57 sync). Source of truth для "какой skill в какой фазе":
 
 | Skill | Type | Phase | Trigger | Status |
 |-------|------|-------|---------|--------|
@@ -518,10 +522,14 @@ Mechanical enforcement, не optional reminders.
 | `superpowers:using-git-worktrees` | superpowers | cross | Sandbox/parallel sprint | 🆕 S29 |
 | `superpowers:writing-skills` | superpowers | cross | New project skill creation | 🆕 S29 |
 | `superpowers:using-superpowers` | superpowers | meta | Session start auto-load | ✅ |
+| `hook-test` | project | explicit `/hook-test` | Регресс-прогон хуков в env -i sandbox | ✅ |
+| `autoresearch-iterate` | project | «autoresearch» (bypass kit) | Итеративный research-цикл стратегий | 🆕 S45+ |
+| `ponytail` | project | 4 (перед кодом) | Minimal-code decision ladder | 🆕 S56 (ADR 0072) |
+| `ponytail-audit` | project | 5/6 | Over-engineering аудит диффа | 🆕 S56 (ADR 0072) |
 
-**Total integration: 26 skills (13 superpowers + 5 project + 8 agent-skills).**
+**Total integration: 30 skills (14 superpowers + 8 project + 8 agent-skills).**
 
-S29 added 7 NEW superpowers skills к existing 6 = full 13 superpowers integrated.
+S29 added 7 NEW superpowers skills к existing 6 = full 13; superpowers 5.1.0 = 14 (`using-git-worktrees` учтён). S56–S57: project skills 5→8 (autoresearch-iterate, ponytail, ponytail-audit — ADR 0072).
 
 ## 13. LLMWiki ↔ Claude-mem cascade rule (S30 ADR 0043)
 

@@ -1,66 +1,53 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-06-26  # S55 SHIPPED to origin (main 2c31c07, tag v0.1.0-alpha.55)
-sprint: 55
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.55
+updated: 2026-07-02  # S57 kit-maintenance in progress (mega-run S57–S63)
+sprint: 57
+phase: 4-execution
+branch: feature/sprint-57-kit-ground-truth
+tag: v0.1.0-alpha.55  # последний shipped
 ---
 
 ## Текущий статус
 
-**S55 SHIPPED to origin** — squash-merge на `main` (`2c31c07`) + tag `v0.1.0-alpha.55` запушены на GitHub (`KirasSsin/AI_Traiding_Bot`). gh auth = Keychain (gho_ token, scopes repo+workflow). Feature-ветка `feature/sprint-55-full-audit-refactor` (72 granular commits) — local-only, можно удалить или запушить для истории. **Auth-note:** harness впрыскивает протухший `GITHUB_TOKEN` env — для git remote ops в каждой Bash-команде `unset GITHUB_TOKEN GH_TOKEN` (тогда берётся Keychain). Touch reviewer-agent ДО push (standalone call) при изменённом ADR.
+**Mega-run S57–S63 (kit-maintenance, оператор ушёл — автономный прогон).** Фаза 0 (MERGE & VERIFY 8 аудитов) завершена: 15 CONFIRMED / 3 STALE / 6 WRONG. Артефакты: [[UNIFIED-BACKLOG-S57]], [[VERIFICATION-LEDGER]], [[OPERATOR-QUEUE]] (OQ-1 = ротация токена, ждёт оператора). Решения оператора: без остановок; модели = матрица §4.1; S63 = только рекомендации; git push один в конце прогона.
 
-**S55 = full-project audit + refactor.** Workflow `w1hxvgkoa` (120 агентов, 9 измерений, 2× skeptic-verified) нашёл 43 подтверждённых дефекта на shipped main (tag alpha.54). Все исправлены через strict TDD + 2 раунда re-review (PHASE 6 + 6.2), которые вскрыли 7 follow-up'ов. Детали по каждому finding → [[sprints/sprint-55-full-audit-refactor]].
+**S57 «Ground Truth & Basis»** — план [[plans/2026-07-02-sprint-57-kit-ground-truth]]. Задачи: T1 secret-out, T2 kit/ в репо, T3 hooks-selfcheck (fail-CLOSED), T4 kit-inventory.sh (count-drift), T5 link-scan lib.
 
-**Исправлено:** 2 BLOCKER (TL-01 live-runtime никогда не вооружал OCO + сбрасывал exit-сигналы → unbounded-loss; BYBIT-01 REST/WS в разных Bybit-окружениях → fill loop сломан) + 9 HIGH (TL-02, BYBIT-02/03, ARCH-02, QS-1 DSR de-annualization, DI-01/02, SEC-S55-01 path-traversal, DASH-01) + 15 MEDIUM (TL-03/04, ARCH-03, BYBIT-04/05, DI-03/04, DASH-02/03, QS-2 ADR 0071, TQ-01..06) + 17 LOW (ARCH-05, TL-06/07, QS-2-bars, DI-06/SEC-03/PY-5, SEC-04, PY-1..4, TQ-07/08, DASH-04/05, BYBIT-06) + bonus QS-3 (donchian DSR twin).
+**Важно для следующей сессии (если обрыв):** S56 (docs 128 страниц) НЕ закрыт — корпус на `chore/kit-integrate-headroom-ponytail` (+9 коммитов над main); мердж = S59 шаг 0. «Спринт 75» не существовал (проверено). Auth: `unset GITHUB_TOKEN GH_TOKEN` перед git remote ops (Keychain gho_).
 
-**PHASE 6/6.2 follow-up (re-review):** SEC-BYBIT01-INCOMPLETE (HIGH — `demo=` на всех 4 RESTClient sites + AST gate), ARCH-02-REG-01 (HIGH — bootstrap освобождает RLock через REST I/O), ARCH-03-REGRESSION (HIGH — integration `_FakeAdapter` props; integration не в default gate), TL-NEW-01 (MEDIUM — 2 новых FSM-перехода), DASH-03-GAP-01 (MEDIUM — Kronos atomic writes через `_cache_io.py`), QS-6 (MEDIUM — `__main__` 4H bars→2191), NEW-LOW-01 (DRY consolidation).
+**S55 shipped** (main `2c31c07`, tag alpha.55). Канонические счётчики: states=16, events=30, transitions=76, reason_codes=67. ADRs 72. Детали → [[sprints/sprint-55-full-audit-refactor]].
 
-**Канонические счётчики:** states=16, events=30, **transitions=76** (74→76: TL-NEW-01 +2 `FLATTEN_FAILED→HALTED`), reason_codes=67. ADRs 71 (0071 _cmd_wfa DSR units). Sprint pages 59.
+## Carry (не трогаем в mega-run: src/ денежного ядра заморожен)
 
-**Финальные gates:** unit pytest 1694 passed / 0 failed, integration 103 passed, mypy --strict 0/101, ruff src/ clean, frontend vitest 51/51 + tsc/lint/build clean. 70 commits, 106 files, +7189/-956.
-
-**Готово к ship `v0.1.0-alpha.55`.**
-
-## Carry (post-S55)
-
-- **BYBIT-08** (MEDIUM, pre-existing) — `coordinator._try_place_market_sell` bare `except` классифицирует post-retCode==0 OrderAck-parse failure как NOT_SENT → flatten attempt-2 → double-sell. Правильный fix = adapter-level typed `AmbiguousOrderOutcome` через 3 `place_*` варианта (coordinator type-split сломал бы intended retry-with-qty-step). Нужен свой ADR/sprint.
-- atr_breakout ATR-index offset (D4, HIGH) — own ADR+WFA до live. ADR 0064.
-- D5 forfeit-N policy (operator escalation).
-- Track B Kronos signal enrichment — DEFER до forward paper-trade.
-- Forward paper-trade harness → единственная валидная Kronos-валидация.
-- Test-hygiene: тесты пишут в tracked `data/cross_trial_sharpes.json` вместо tmp_path (spawn'нут follow-up в B2 run).
-- Permanently deferred: 12mo MAINNET ADR / live trade feed widget / M4 __repr__ redaction.
+- **BYBIT-08** (MEDIUM) — adapter-level typed `AmbiguousOrderOutcome`, свой ADR/спринт.
+- atr_breakout ATR-index offset (ADR 0064) — own ADR+WFA до live.
+- D5 forfeit-N policy; Track B Kronos enrichment — DEFER; forward paper-trade harness.
+- Test-hygiene: тесты пишут в tracked `data/cross_trial_sharpes.json`.
 
 ---
 
-## Phase tracking (S55)
+## Phase tracking (S57)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | operator: full-project audit + refactor via workflow, thinking + effort max |
-| 2 Brainstorm | skipped (operator-specified scope) | — |
-| 3 Plan | done | 2026-05-30-sprint-55-audit-refactor.md (batched B0..B4) |
-| 4 Execute | done | 43 findings + QS-3, sequential TDD, per-fix commit |
-| 5 Verify | done | unit 1694/0, integration 103, mypy 0/101, ruff clean, frontend 51/51 + build |
-| 6 Review | done | 2 rounds (9 reviewers + adversarial verify); 7 follow-ups fixed, BYBIT-08 carried |
-| 7 Sync | done | sprint-55 page + canonical counts 74→76 + current-state/index/log + ADR 0071 |
-| 8 Ship | done (local) | squash-merge 9f66382 → main, tag v0.1.0-alpha.55. Remote push pending network/gh-auth. |
-| 9 Close | done | SPRINT_STATE between-sprints + log ship entry |
+| 1 Orient | done | Фаза 0 mega-run = orient; SPRINT_STATE+git verified, chapter marked |
+| 2 Brainstorm | skipped (approved backlog) | торговых вопросов нет; trader-expert не нужен |
+| 3 Plan | done | plans/2026-07-02-sprint-57-kit-ground-truth.md |
+| 4 Execute | done | T1–T5, per-task коммиты (5) |
+| 5 Verify | done | grep=0, kit=30 files, selfcheck red/green, inventory idempotent, scanner red/green, unit 1650/0 |
+| 6 Review | done | arch APPROVE (+drift-guard сделан); security REQUEST_CHANGES → BLOCKER (.bak с токеном) устранён, все фиксы re-verified |
+| 7 Sync | done | hooks-selfcheck-hook.md + index + AUTO-блоки канонов |
+| 8 Ship | done (local) | sprint-57 page + squash-merge + tag v0.1.0-alpha.57 (push в конце прогона) |
+| 9 Close | done | → сразу S58 «Gates» |
 
 ---
 
 ## История спринтов (где искать)
 
-- **`wiki/project/sprints/sprint-NN-<slug>.md`** — canonical per-sprint
-- **`wiki/log.md`** — chronological ship journal
-- **`wiki/project/architecture/current-state.md`** — sprint history + canonical counts
-- **Pre-trim archive (S46):** [[archive/SPRINT_STATE-archive-part-1]] + [[archive/SPRINT_STATE-archive-part-2]]. Source git `cbf3328`.
-
----
+- `wiki/project/sprints/sprint-NN-<slug>.md` — canonical per-sprint; `wiki/log.md` — journal; `current-state.md` — counts.
+- Pre-trim archive (S46): [[archive/SPRINT_STATE-archive-part-1]] / [[archive/SPRINT_STATE-archive-part-2]].
 
 ## Правила файла
 
-**BUDGET ≤ 6 KB BINDING.** History → `log.md` + `sprint-NN.md`. Инструкции → repo CLAUDE.md.
+**BUDGET ≤ 6 KB BINDING.** History → `log.md` + `sprint-NN.md`.
