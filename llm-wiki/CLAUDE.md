@@ -213,17 +213,9 @@ Example (S32e split): `tooling-inventory-ru.md` (60KB) → `tooling-inventory-ru
 
 ---
 
-## Anti-waste tool patterns (BINDING — detail в `~/.claude/CLAUDE.md` sections 9b/9c)
+## Anti-waste tool patterns (BINDING)
 
-### Path verification before Read
-- Project root spelling: **`AI_Traiding_Bot`** (NOT `_Tool`/`_Trader`/`_Trading`).
-- `.claude/agent-memory/<agent>/MEMORY.md` (**project-local**) — auto-created on first WRITE. Read failure = expected.
-- Don't-retry rule: Read miss → `ls <parent>` OR surface "path missing". Max 1 retry.
-- Hook bash quirk: ALWAYS `bash -n <script>` after editing `~/.claude/hooks/*.sh`.
-
-### Edit-after-Read invariant (CRITICAL)
-
-**THE FORMULA:** Read × N (parallel batch) THEN Edit × N (parallel batch). NEVER skip Read step. Each unread Edit = 3× cost.
+Единственная полная копия — repo `CLAUDE.md` («Anti-waste tool patterns» таблица). Ядро: Read×N batch THEN Edit×N batch (Edit-after-Read); root spelling `AI_Traiding_Bot`; MEMORY.md may-not-exist; `bash -n` после правки хука; max 1 retry на Read miss.
 
 ---
 
@@ -241,14 +233,12 @@ Example (S32e split): `tooling-inventory-ru.md` (60KB) → `tooling-inventory-ru
 
 **MASTER SOP (English):** [[wiki/project/architecture/development-workflow]]
 **Русская версия (BINDING per ADR 0041):** [[wiki/project/architecture/sprint-flow-ru]] — 9 фаз с per-phase HARD-GATEs
-**Tooling catalog (RU):** [[wiki/project/architecture/tooling-inventory-ru]] (Sections 1-13) + [[wiki/project/architecture/tooling-inventory-ru-part-2]] (Sections 14-24, S32e split) — 11 agents + 36 skills + 8 MCP + 7+2+1 hooks + cascade
+**Tooling catalog (RU):** [[wiki/project/architecture/tooling-inventory-ru]] (Sections 1-13) + [[wiki/project/architecture/tooling-inventory-ru-part-2]] (Sections 14-24, S32e split) — agents/skills/MCP/hooks + cascade (живые числа в current-state.md)
 **Kit audit (S32e):** [[wiki/project/architecture/kit-audit-2026-04-27]] — usage analysis: ALL components NEEDED, no removals
 **Kit overview (RU):** [[wiki/project/architecture/kit-overview-ru]] — 1-page single source of truth (S31)
 **Wiki-first rule:** читай `wiki/project/components/<name>.md` ДО сырого ADR.
 
-**Active hooks (S30+):**
-- `sprint-flow-check.sh` — блокирует push на `feature/sprint-NN-*` без plan file
-- `phase-advance.sh` — блокирует `gh pr merge` если SPRINT_STATE Phase 5 != "done"/"skipped"
+**Active hooks:** живой список = `ls kit/hooks/*.sh` (17+ после S57-S62: state-integrity, review-gate KIT-003, docs-staleness/broken-link, hooks-selfcheck, skill-manifest и др.). Ключевые гейты: `sprint-flow-check.sh` (push без plan file → блок), `phase-advance.sh` (merge без Phase 5 done → блок), `review-gate.sh` (money-diff без review-sNN.md → блок).
 
 **Cascade rule (BINDING per ADR 0043):** wiki → mem-search → grep → raw. Skip wiki check = anti-pattern. Detail [[wiki/project/architecture/tooling-inventory-ru#13-llmwiki--claude-mem-cascade-rule-s30-adr-0043]].
 
@@ -259,31 +249,22 @@ Example (S32e split): `tooling-inventory-ru.md` (60KB) → `tooling-inventory-ru
 5 layers (detail в [[wiki/project/architecture/kit-overview-ru]] + [[wiki/project/architecture/tooling-inventory-ru]]):
 
 ```
-L5: Domain reviewers (9) — trading-logic / quant-stats / data-integrity / python / trader-expert / architecture / security-auditor / test-engineer / doc-reviewer
-L4: Discipline (agent-skills 21) + Caveman (compression)
-L3: Process (Superpowers 13) — brainstorm/plan/execute/ship
+L5: Domain reviewers (18 — kit/agents/, живой счёт ls)
+L4: Discipline (agent-skills) + Caveman (compression)
+L3: Process (Superpowers) — brainstorm/plan/execute/ship
 L2: Project knowledge (этот wiki) — wiki/ source of truth; Docs/ immutable
 L1: Memory continuity (claude-mem MCP + ccd_session MCP)
 ```
 
 **Conflict resolution + Phase mapping + Trigger cascade tables:** [[wiki/project/architecture/tooling-inventory-ru#tldr--decision-matrix-сначала-это]]
 
-**Token economy:**
-| Принцип | Правило | Выигрыш |
-|---------|---------|---------|
-| Wiki-first cascade | wiki → mem → grep → raw | 4-7× меньше токенов |
-| Model dispatch | haiku=mechanical, sonnet=standard, opus=judgment | до 50× экономия |
-| mem-search first (cascade STEP 2) | До чтения файлов — verify "did we solve X?" | секунды vs minutes |
-| Parallel reviewers | Multiple Agent calls в одном message | 2-3× быстрее |
-| caveman-compress | One-time CLAUDE.md/agent prompts compress | ~47% per session |
-| `/btw` для side questions | Side question без context pollution | answer dismissed, не enters history |
-| `/clear` между unrelated tasks | Reset context entirely | prevents kitchen-sink session |
+**Token economy:** wiki-first cascade (4-7× меньше) · model dispatch haiku/sonnet/opus · mem-search first · parallel reviewers · `/btw` side-questions · `/clear` между задачами. Полные правила — repo `CLAUDE.md` (Minimum behavior + Anti-waste таблица).
 
 ---
 
 ## Связь с review-агентами
 
-L5 reviewers (9 после S30) вызываются после `DONE` subagent'а, до merge. Формат отчёта: `Blockers / Concerns / Verified / Follow-ups for wiki`. `Follow-ups for wiki` → триггер wiki-update в том же спринте.
+L5 reviewers (18) вызываются после `DONE` subagent'а, до merge. Формат отчёта: `Blockers / Concerns / Verified / Follow-ups for wiki`. `Follow-ups for wiki` → триггер wiki-update в том же спринте.
 
 Полная матрица "спринт → агенты": [[wiki/project/architecture/tooling-inventory-ru#1-domain-reviewer-agents-9----claudeagents]]
 
@@ -309,7 +290,7 @@ L5 reviewers (9 после S30) вызываются после `DONE` subagent'
 
 ## Anthropic best practices alignment (selective adoption)
 
-**Adopted:** 3 CLAUDE.md layers / hooks (6 mechanical) / custom subagents (9) / project-level skills (5) / verify your work / plan-first / specific context / specific MCP / gh CLI / tool restriction.
+**Adopted:** 3 CLAUDE.md layers / mechanical hooks / custom subagents / project-level skills / verify your work / plan-first / specific context / specific MCP / gh CLI / tool restriction.
 
 **Selectively adopted:** AskUserQuestion (trader-expert PHASE 2) / `/clear` discipline / `/btw` (S31) / `/rewind` (S31) / `--continue` (S31) / `verification-before-completion` (S29) / Memory directory subagents (`memory: project`, S30 TIER A all 9 agents).
 

@@ -4,7 +4,7 @@
 
 ## ⚠️ BEFORE ANY SPRINT WORK — kit flow обязателен (BINDING per ADR 0041 + ADR 0042)
 
-Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip". 26 skills integrated (13 superpowers + 5 project + 8 agent-skills).
+Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip". Живой список скиллов: `ls .claude/skills/` (project) + superpowers + agent-skills плагины — не доверяй числам в доках.
 
 | Phase | Primary skill(s) | Optional/sub-skills | HARD-GATE |
 |-------|------------------|---------------------|-----------|
@@ -31,7 +31,7 @@
 4. Optional: commit `docs(sprint): SPRINT_STATE update phase=4 task=Tx done`
 
 **Полный процесс на русском:** [`llm-wiki/wiki/project/architecture/sprint-flow-ru.md`](llm-wiki/wiki/project/architecture/sprint-flow-ru.md)
-**Каталог tooling (9 agents + 26 skills × phases mapped + cascade):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
+**Каталог tooling (agents/skills/hooks × phases + cascade):** [`llm-wiki/wiki/project/architecture/tooling-inventory-ru.md`](llm-wiki/wiki/project/architecture/tooling-inventory-ru.md)
 
 ### LLMWiki ↔ Claude-mem cascade rule (BINDING per ADR 0043 — token economy)
 
@@ -76,30 +76,14 @@ STEP 4: Read raw + offset (full content)
 - ❌ 🆕 (S46 post-ship 2026-05-11) **Appending historical sprint sections к SPRINT_STATE.md** — file accumulated 86 KB / 1239 lines с S5-S45 history blocks → exceeded 25k Read tool limit, blocked session-start orient. **BUDGET ≤ 6 KB BINDING.** SPRINT_STATE = current sprint state + roadmap ONLY. History → `wiki/log.md` (chronological journal) + `wiki/project/sprints/sprint-NN-<slug>.md` (canonical per-sprint). PHASE 9 close: trim `Текущий статус` к concise current-sprint bullets, NEVER append "## SN SHIPPED" sections.
 - ❌ 🆕 (S48 Bug I 2026-05-11) **Англицизмы в чате с operator** ("Bucket", "scope", "Recommended", "concern") — нарушение Language rules CLAUDE.md section. Использовать русские эквиваленты per Запрещённые англицизмы table (CLAUDE.md). Технические термины (ADR/PHASE/file paths/function names) оставить.
 
-### Token-saver commands (per Anthropic best practices)
-
-| Command | Use case |
-|---------|----------|
-| `/btw <question>` | Side question — answer dismissed, не enters history |
-| `/rewind` (Esc+Esc) | Restore previous state — experimental approach failed |
-| `/clear` | Reset context — switching unrelated tasks |
-| `/compact <instructions>` | Controlled summarization — approaching limit |
-| `claude --continue` | Resume последнюю session |
-| `claude --resume` | Choose из recent sessions |
-| `claude -p "<prompt>"` | Non-interactive (CI/CD, batch operations) |
-| `--allowedTools` | Scoped permissions для batch ops |
-
-Detail: [[llm-wiki/wiki/project/architecture/tooling-inventory-ru.md#18-token-saver-commands-binding--best-practices]]
-
 ## ПЕРВОЕ ДЕЙСТВИЕ КАЖДОЙ СЕССИИ (обязательно, до всего остального)
 
 ```
 1. Read: llm-wiki/wiki/project/SPRINT_STATE.md
    → sprint N, phase X, completed tasks, next_action
-2. Read: llm-wiki/CLAUDE.md
-   → wiki workflow + 5-layer skills hierarchy + token economy + trigger cascade
-3. git branch --show-current && git log --oneline -3
-4. mcp__ccd_session__mark_chapter "Sprint N — session resume"
+   (llm-wiki/CLAUDE.md подтянется автоматически как child-memory — НЕ читать отдельно)
+2. git branch --show-current && git log --oneline -3
+3. mcp__ccd_session__mark_chapter "Sprint N — session resume"
 ```
 
 **Если `SPRINT_STATE.md` говорит `phase = 4-execution` и есть `in_progress` task:**
@@ -126,44 +110,24 @@ git status → pytest tests/unit -x -q → продолжай с next_action
 | `llm-wiki/CLAUDE.md` | Wiki maintainer rules + 5-layer skills hierarchy + trigger cascade |
 | `llm-wiki/wiki/project/architecture/development-workflow.md` | MASTER SOP — 9-phase sprint lifecycle |
 | `llm-wiki/wiki/project/architecture/sprint-flow-ru.md` | Russian обязательный 9-фаз процесс с per-phase HARD-GATEs (S28 BINDING) |
-| `llm-wiki/wiki/project/architecture/tooling-inventory-ru.md` | Catalog: 11 reviewer agents + 36 skills + 8 MCP + 7+2+1 hooks + cascade rule (Sections 1-13 + part-2 Sections 14-24) |
+| `llm-wiki/wiki/project/architecture/tooling-inventory-ru.md` | Catalog: agents + skills + MCP + hooks + cascade rule (живые числа — в current-state.md, не тут) |
 | `llm-wiki/wiki/index.md` | Wiki catalog (all pages) |
 | `llm-wiki/wiki/log.md` | Chronological sprint journal |
-| `llm-wiki/wiki/project/decisions/` | ADRs (0001-0023) |
+| `llm-wiki/wiki/project/decisions/` | ADRs (живой счёт: `ls \| wc -l`) |
 | `llm-wiki/wiki/project/components/` | Component docs (wiki-first reads before raw ADR) |
 | `llm-wiki/wiki/project/sprints/sprint-NN-<slug>.md` | **Canonical sprint summary** — "что было сделано в спринте N". HARD-GATE creation per dev-workflow.md PHASE 8 step 5. Read для понимания исторического контекста. |
 | `llm-wiki/wiki/project/pre-s{N}-backlog.md` | Pre-sprint backlog — gaps + bugs to discharge before brainstorm S{N}. Создаётся когда post-sprint audit находит actionable items. Закрывается → удаляется. |
 | `llm-wiki/wiki/project/mental-map.md` | "Where to look for X" decision tree — first-hit для open-ended queries. Заменяет blind grep. |
 | `llm-wiki/wiki/project/components/README.md` | 27 components grouped в 9 domain clusters. Reverse lookup ("I'm reading X — what's related?"). |
-| `.claude/skills/<name>/SKILL.md` | **Project-level workflow skills** (5 total: sprint-orient, sprint-finish, wiki-update, brainstorm-init, hook-test). Auto-trigger по description match — заменяют hardcoded inline workflow logic. См. `llm-wiki/wiki/index.md` "Workflow Skills" section. |
-| `~/.claude/agents/<name>.md` | **L5 reviewer agents** (11: trading-logic, quant-stats, data-integrity, python, trader-expert, architecture-reviewer, security-auditor, test-engineer, doc-reviewer, dashboard-reviewer, bybit-api-reviewer) — user-level, outside repo. ADR 0017 review-agent harness. |
+| `.claude/skills/<name>/SKILL.md` | **Project-level workflow skills** — живой список `ls .claude/skills/`. Auto-trigger по description match; полная процедура в SKILL.md (progressive disclosure), НЕ дублировать inline здесь или в dev-workflow.md. |
+| `kit/agents/<name>.md` + зеркало `~/.claude/agents/` | **L5 reviewer agents** (18; живой счёт `ls kit/agents \| wc -l`). ADR 0017 harness; гигиена тел — memory `agent-body-hygiene`. |
 
 ## Project constraints (short form)
 
 - **Python**: 3.12 (pyproject.toml). Venv: `.venv/` at repo root.
 - **Test cmd**: `pytest -x -q` (unit), `pytest -m integration` (opt-in), `pytest -m property`.
 - **Branch**: feature/<sprint-N-slug>. PR to main. Conventional commits.
-- **Current state**: Sprint 38 COMPLETE (tag `v0.1.0-alpha.38`). S39 between sprints / autoresearch mode.
-
-## Workflow skills (project-level, `.claude/skills/`)
-
-**5 skills заменяют hardcoded inline workflow logic:**
-
-| Skill | Trigger | Replaces |
-|-------|---------|----------|
-| `sprint-orient` | Session start, `/clear`, "где мы", "ориентируйся" | PHASE 1 inline orient sequence |
-| `sprint-finish` | "ship", "финишируем", subagent-driven completion | PHASE 8 HARD-GATE checklist |
-| `wiki-update` | After src/ change, "sync docs" | PHASE 8 step 5a inline canonical counts sync |
-| `brainstorm-init` | "брейнштурм", scope questions surface | PHASE 2 step 3a-3f binding protocol |
-| `hook-test` (explicit only) | `/hook-test` invocation | Manual env -i sandbox commands |
-
-**ВАЖНО:** skills auto-trigger по description match. Inline workflow logic в этом CLAUDE.md и в `dev-workflow.md` теперь references к SKILL.md, НЕ дублируется. Полная procedure — в `.claude/skills/<name>/SKILL.md` per progressive disclosure.
-
-**PHASE 2 binding protocol полностью реализован в `brainstorm-init` skill** (structured questionnaire → trader-expert ROUND 1 → iterative justify ROUND 2 на REVISE-disagreement → CONFIRM_REVISE/CHANGED BINDING → backlog persistence + user escalation).
-
-**PHASE 8 HARD-GATE checklist полностью в `sprint-finish` skill** (sprint-NN.md mandatory, canonical counts sync, orphan-audit grep includes tests/, index.md ADR sync).
-
-**Anti-pattern:** дублировать workflow steps inline в этом файле OR в dev-workflow.md — skills are single source of truth.
+- **Current state**: ТОЛЬКО из `SPRINT_STATE.md` (single source) — не доверяй снапшоту в любом другом файле.
 
 ## Python venv discipline (MANDATORY for all Bash invocations)
 
@@ -177,17 +141,7 @@ System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' fro
 - NEVER bare `python` / `python3` — fails or returns wrong-Python results.
 - When dispatching subagent that may run Python — explicitly include venv path in brief.
 
-**Recurring violations 2026-05-11:** S47 retro showed multiple `python -c "import yaml..."` calls failing с `command not found: python` exit 127. Pattern fix:
-
-| ❌ DON'T | ✓ DO |
-|---|---|
-| `python -c "..."` | `.venv/bin/python -c "..."` |
-| `python -m uvicorn ...` | `.venv/bin/uvicorn ...` |
-| `pytest ...` | `.venv/bin/pytest ...` |
-| `mypy ...` | `.venv/bin/mypy ...` |
-| `ruff ...` | `.venv/bin/ruff ...` |
-
-Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; ..."` OR use `python3` which IS available на macOS (system Python 3.9, не для project code, OK для stdlib-only checks like yaml/json/regex). Rule: stdlib-only validation → `python3` OK; project code import → MUST `.venv/bin/python`.
+Same for tools: `.venv/bin/pytest` / `.venv/bin/mypy` / `.venv/bin/ruff` / `.venv/bin/uvicorn`. Stdlib-only validation (yaml/json/regex) → `python3` OK; project code import → MUST `.venv/bin/python`.
 
 ## Language rules (BINDING — пересмотрено 2026-05-09)
 
@@ -233,14 +187,6 @@ Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; .
 - Commit messages — English (Conventional Commits standard)
 - Code blocks — English
 
-**Анти-пример (S48 brainstorm violation 2026-05-11):**
-
-> "В рамках S48 у нас 22 tasks across 5 buckets. Critical concerns про FailAnalysisTab broken — recommend split: S48 critical bugs + S49 polish."
-
-**Должно быть:**
-
-> "В рамках S48 у нас 22 задачи в 5 блоках. Критические замечания про сломанный FailAnalysisTab — рекомендую разделение: S48 критичные баги + S49 полировка."
-
 ## Kit cycle MANDATORY (BINDING per ADR 0041 — пересмотрено 2026-05-09)
 
 ВСЕГДА следовать 9-фазовому kit cycle (PHASE 1-9 per `dev-workflow.md`), КРОМЕ:
@@ -276,10 +222,10 @@ Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; .
 ## Skills hierarchy (5 layers — detail в `llm-wiki/CLAUDE.md`)
 
 ```
-L5: Domain reviewers     (trading-logic / quant-stats / data-integrity / python-reviewer / trader-expert / architecture-reviewer / security-auditor / test-engineer / doc-reviewer / dashboard-reviewer / bybit-api-reviewer)
+L5: Domain reviewers (18 агентов — kit/agents/)
 L4: Agent Skills + Caveman (depth checklists, compression)
-L3: Superpowers          (brainstorm → plan → subagent-driven → TDD → finishing)
-L2: llm-wiki             (source of truth — read THIS BEFORE raw files)
+L3: Superpowers (brainstorm → plan → subagent-driven → TDD → finishing)
+L2: llm-wiki (source of truth — read THIS BEFORE raw files)
 L1: claude-mem + ccd_session (session bookends + chapter marks)
 ```
 
@@ -317,20 +263,9 @@ Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` 
 | **zsh quirks** (S65) | glob без совпадений = fail ("no matches found") → кавычки/`2>/dev/null`; `$N[` парсится как array-math ("bad math expression") → кавычки или `bash -c`. | retry |
 | **git-checkout-clobber** (S65) | НЕ `git checkout -- <file>` / `git checkout <ref> -- <file>` при uncommitted правках — stash/commit сначала (единственный класс с ПОТЕРЕЙ РАБОТЫ). | потеря работы + восстановление |
 
-**Uvicorn background test pattern (S47 lesson — port collision):**
-```bash
-lsof -ti:8000 | xargs kill -9 2>/dev/null || true   # kill leftover
-.venv/bin/uvicorn src.dashboard.app:create_app --factory --port 8000 &
-APP_PID=$!
-sleep 2
-# ... curl tests ...
-kill $APP_PID 2>/dev/null; wait $APP_PID 2>/dev/null
-```
-Alternative: `--port 0` (random port) + extract from uvicorn stdout — more robust for parallel test runs.
-
 **ADR-agent-sync pre-push (S47 lesson):** если ADR changed → `touch ~/.claude/agents/<reviewer>.md` BEFORE push. See `sprint-finish` Step 6b.
 
-Полные правила: `~/.claude/CLAUDE.md` sections 9b + 9c, `llm-wiki/CLAUDE.md` "Anti-waste tool patterns". Полная таксономия token-waste (S65): `llm-wiki/wiki/project/components/error-taxonomy.md`.
+Эта таблица = единственная полная копия anti-waste правил (в `~/.claude/CLAUDE.md` и `llm-wiki/CLAUDE.md` — только ссылки сюда). Полная таксономия token-waste (S65): `llm-wiki/wiki/project/components/error-taxonomy.md` (uvicorn port-collision pattern — там же).
 
 ---
 
