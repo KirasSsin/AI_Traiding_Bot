@@ -105,7 +105,14 @@ sprint: <N>
 phase: 8-ship
 branch: feature/sprint-<N>-<slug>
 tag: v0.1.0-alpha.<N>
+last_task_sha: <short HEAD>   # S61: точка восстановления auto-resume
 ```
+
+**S61 MEDIUM #2 — backup-net warm check (перед тегом):** восстановление state работает только если есть хоть один бэкап (иначе `state-integrity` при повреждении не имеет из чего чинить). Коммит Step 6 сам создаёт бэкап (state-backup.sh на staged SPRINT_STATE.md), поэтому проверить ПОСЛЕ него:
+```bash
+ls llm-wiki/wiki/project/state/.backup/SPRINT_STATE.*.md 2>/dev/null | wc -l   # MUST ≥ 1
+```
+`0` → state-backup.sh не сработал (проверь подключение хука в settings.json) → STOP до тега.
 
 ### Step 6b: Pre-push hook preparation (prevents adr-agent-sync-check.sh blocking)
 

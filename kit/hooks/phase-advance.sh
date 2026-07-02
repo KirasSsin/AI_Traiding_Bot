@@ -36,15 +36,18 @@ except Exception:
     pass
 ' 2>/dev/null || true)"
 
-# Skip self-test invocations
-case "$command_str" in
-    *"phase-advance.sh"*) exit 0 ;;
-    *"hooks/"*"phase-advance"*) exit 0 ;;
-esac
+# round-5 (bypass-hunt MEDIUM): НЕТ content-based self-skip. Голая подстрока
+# `*phase-advance.sh*` позволяла `gh pr merge <ветка> # phase-advance.sh` обойти
+# Phase-5-verify гейт с нулевой подделкой. Детект операции решает: голый запуск
+# хука не содержит `gh pr merge` → `*) exit 0`; реальный merge гейтится всегда.
 
 # Only act on `gh pr merge` (not gh pr create / view / status)
-case "$command_str" in
+# round-6: нормализуем пробелы/табы + ловим REST-эндпоинт `gh api .../pulls/N/merge`.
+# ОСТАТОК (backlog kit-op-detect-hardening): произвольный gh api через переменную.
+command_norm="$(printf '%s' "$command_str" | tr -s ' \t' ' ')"
+case "$command_norm" in
     *"gh pr merge"*) ;;
+    *"gh api"*"pulls/"*"/merge"*|*"gh api"*"/merge"*"pulls/"*) ;;
     *) exit 0 ;;
 esac
 
@@ -82,7 +85,13 @@ Merge при активном спринте разрешён только с fe
 (Defined by: ~/.claude/hooks/phase-advance.sh, S59 KIT-002)
 EOF
             exit 2 ;;
-        *) exit 0 ;;
+        ""|between-sprints|autoresearch|1|1-*|9|9-*)
+            exit 0 ;;  # не активная gated-фаза (или нет файла) — пропуск
+        *)
+            # round-4 (bypass-hunt): fail-CLOSED на неканоничной phase — `4<NBSP>`/
+            # zero-width/мусор мимо `[2-8]` тихо открывал merge (обход KIT-002).
+            echo "🚫  phase-advance: неканоничная SPRINT_STATE.phase='$state_phase' на не-sprint ветке → блок merge (возможна подмена). Приведи phase к канону." >&2
+            exit 2 ;;
     esac
 fi
 

@@ -1,22 +1,21 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S59 SHIPPED — далее S60 docs-sync
-sprint: 59
-phase: 4-execution
-branch: feature/sprint-59-kit-gates
-tag: v0.1.0-alpha.58  # последний shipped
+updated: 2026-07-02  # S61 ship — SPRINT_STATE v2 (Вариант B)
+sprint: 61
+phase: 8-ship
+branch: feature/sprint-61-sprint-state-v2
+tag: v0.1.0-alpha.60  # последний shipped (S60)
+last_task_sha: a87deec  # HEAD последней задачи — точка восстановления auto-resume (S61 KIT-008)
 ---
 
 ## Текущий статус
 
-**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~Фаза0~~ → ~~S57~~ → **S58 Auto-Resume (приоритет оператора)** → S59 Gates → S60 Docs-Sync (+мердж chore = закрытие S56) → S61 State v2 → S62 Manifest → S63 Fable-team → S64 Plugins(внедрить ≤2) → отчёт+push. Директива: команда агентов участвует в каждом спринте; Workflow на design-шагах.
+**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~Фаза0~~ → ~~S57~~ → ~~S58 Auto-Resume~~ → ~~S59 Gates~~ → ~~S60 Docs-Sync~~ → **S61 State v2** → S62 Manifest → S63 Fable-team → S64 Plugins(внедрить ≤2) → отчёт+push. Директива: команда агентов участвует в каждом спринте; Workflow на design-шагах.
 
-**S58 «Auto-Resume»:** сессия упёрлась в лимит → маркер → launchd-опросник → `claude --continue` при сбросе → продолжение с SPRINT_STATE.next_action. Сейчас: фоновый ресерч (claude-code-guide) + A2-анализ логов (agent), затем план-финал + PRE-PLAN architecture-reviewer.
+**S61 «SPRINT_STATE v2 (Вариант B)»:** упрочнение монолита (не разделение — ADR [[decisions/0073-sprint-state-v2-variant-b]]). state-backup.sh (авто-бэкап перед коммитом, ротация 20) + state-integrity-check.sh (валидация YAML/phase/размер, fail-OPEN с авто-восстановлением из .backup) + `last_task_sha` во frontmatter (точка восстановления auto-resume). Split (Вариант A) ОТЛОЖЕН с триггерами пересмотра. Компонент: [[components/state-integrity-hook]].
 
-**Важно при обрыве:** S56 docs (128 стр) на `chore/kit-integrate-headroom-ponytail`, мердж в S60 шаг 0. Auth: `unset GITHUB_TOKEN GH_TOKEN` (Keychain gho_). Push origin — один, в конце прогона.
-
-**S57 shipped** (local main `c474f84`, tag alpha.57): kit/ в git, hooks-selfcheck, kit-inventory, секрет удалён. Счётчики: states=16, events=30, transitions=76, reason_codes=67. Детали → [[sprints/sprint-57-kit-ground-truth]].
+**Важно при обрыве:** Auth `unset GITHUB_TOKEN GH_TOKEN` (Keychain gho_). Push origin — один, в конце прогона. src/ денежного ядра заморожен (kit-maintenance only).
 
 ## Carry (не трогаем в mega-run: src/ денежного ядра заморожен)
 
@@ -27,19 +26,19 @@ tag: v0.1.0-alpha.58  # последний shipped
 
 ---
 
-## Phase tracking (S59)
+## Phase tracking (S61)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 1 Orient | done | chapter marked |
-| 2 Brainstorm | skipped (approved backlog) | — |
-| 3 Plan | done | plans/2026-07-02-sprint-59-kit-gates.md |
-| 4 Execute | done | T1-T5 per-task коммиты |
-| 5 Verify | done | red/green все 4 гейта + re-tests после ревью-фиксов; bash -n 17 хуков; selfcheck OK |
-| 6 Review | done | arch APPROVE_WITH_CONDITIONS + security APPROVE w/ Concerns → ВСЕ условия закрыты; review-s59.md Blockers: 0 |
-| 7 Sync | done | 2 новые component-страницы + adr-sync обновлена + index + AUTO |
-| 8 Ship | done (local) | sprint-59 page + squash + tag v0.1.0-alpha.59 |
-| 9 Close | done | → S60 Docs-Sync (шаг 0: мердж chore = закрытие S56) |
+| 2 Brainstorm | skipped (approved backlog) | KIT-008 из UNIFIED-BACKLOG |
+| 3 Plan | done | plans/2026-07-02-sprint-61-state-v2.md; PRE-PLAN arch → Вариант B BINDING |
+| 4 Execute | done | T1-T5: state-backup, state-integrity+lib, last_task_sha, ADR 0073, wiring settings.json |
+| 5 Verify | done | regression 32 python + 38 bash gate, ruff/bash -n/py_compile/selfcheck OK, size 3.5КБ |
+| 6 Review | done | arch APPROVE_WITH_CONDITIONS (закрыт) + security: 6 раундов adversarial-hunt (1 BLOCKER+6 HIGH+3 MEDIUM все закрыты), review-s61 Blockers=0. Остаток → [[kit-op-detect-hardening-backlog]] |
+| 7 Sync | done | component state-integrity-hook + ADR 0073 + index + sprint-orient/poller last_task_sha + op-detect backlog |
+| 8 Ship | in_progress | sprint-61 page + squash + tag v0.1.0-alpha.61 |
+| 9 Close | pending | → S62 Manifest & Telemetry |
 
 ---
 

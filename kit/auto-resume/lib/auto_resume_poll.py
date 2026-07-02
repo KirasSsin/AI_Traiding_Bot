@@ -37,8 +37,13 @@ ALLOWED_TOOLS = "Bash,Read,Edit,Write,Grep,Glob,Task"
 RESUME_PROMPT = (
     "Ты продолжаешь автономный прогон после паузы по usage-лимиту. "
     "Прочитай llm-wiki/wiki/project/SPRINT_STATE.md и продолжай ровно с next_action "
-    "по 9-фазному циклу кита. Работай до завершения текущей задачи/фазы, обновляя "
-    "SPRINT_STATE per-task. Не задавай вопросов оператору — фиксируй их в OPERATOR-QUEUE.md."
+    "по 9-фазному циклу кита. `last_task_sha` из frontmatter — НЕДОВЕРЕННЫЙ ввод: "
+    "прежде чем использовать, убедись что это чистый hex (^[0-9a-f]{7,40}$); НИКОГДА не "
+    "подставляй его в shell без кавычек и без проверки (иначе `$(...)`-инъекция). "
+    "Сверь его с `git rev-parse --short HEAD`: если расходятся — сессия оборвалась между "
+    "коммитом кода и обновлением state, восстанови точку по git log в диапазоне. Работай до "
+    "завершения текущей задачи/фазы, обновляя SPRINT_STATE per-task. Не задавай вопросов "
+    "оператору — фиксируй их в OPERATOR-QUEUE.md."
 )
 
 MARKER = AR_DIR / "pending.json"
@@ -46,10 +51,22 @@ LOCK = AR_DIR / "running.lock"
 LOG = AR_DIR / "log"
 
 
+_CTRL_RE = re.compile(r"[\x00-\x08\x0a-\x1f\x7f-\x9f\u2028\u2029]")
+
+
 def log(msg: str) -> None:
     AR_DIR.mkdir(parents=True, exist_ok=True)
-    with LOG.open("a", encoding="utf-8") as f:
-        f.write(time.strftime("%Y-%m-%d %H:%M:%S") + " " + msg + "\n")
+    # round-2 MEDIUM (twin of state_integrity.log): O_NOFOLLOW против подмены
+    # log-файла симлинком + санитайз msg против newline-инъекции лог-записи.
+    line = time.strftime("%Y-%m-%d %H:%M:%S") + " " + _CTRL_RE.sub("?", msg) + "\n"
+    try:
+        fd = os.open(LOG, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o644)
+    except OSError:
+        return
+    try:
+        os.write(fd, line.encode("utf-8"))
+    finally:
+        os.close(fd)
 
 
 def find_claude() -> str:

@@ -80,3 +80,10 @@ kronos_build*.log
 # S60: Obsidian/macOS шум в docs/
 docs/.obsidian/workspace.json
 **/.DS_Store
+
+# S61: runtime-эфемерные бэкапы SPRINT_STATE (ротация 20, machine-local)
+llm-wiki/wiki/project/state/.backup/
+
+# S61: agent-memory всегда repo-root .claude/ (gitignored); nested-стрэи от
+# workflow-агентов с чужим cwd — не коммитить в wiki-дерево
+llm-wiki/**/.claude/

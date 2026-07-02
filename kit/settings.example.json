@@ -11,6 +11,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$HOME/.claude/hooks/state-integrity-check.sh"
+          },
+          {
+            "type": "command",
             "command": "$HOME/.claude/hooks/adr-agent-sync-check.sh"
           },
           {
@@ -52,6 +56,10 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/docs-broken-link-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/state-backup.sh"
           }
         ]
       }
@@ -68,6 +76,10 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/hooks-selfcheck.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/state-integrity-check.sh"
           }
         ]
       }

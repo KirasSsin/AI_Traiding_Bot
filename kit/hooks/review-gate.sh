@@ -26,20 +26,36 @@ except Exception:
     pass
 ' 2>/dev/null || true)"
 
-# Skip self-test — УЗКИЙ матч только на явный запуск скрипта (security M-3:
-# голая подстрока позволяла дописать "# per review-gate.sh" к merge и скипнуться)
-case "$command_str" in
-    *"hooks/review-gate.sh"*|*"bash "*"review-gate.sh"*) exit 0 ;;
-esac
+# round-5 (bypass-hunt HIGH): НЕТ content-based self-skip. Любой self-skip по
+# подстроке имени скрипта позволял `gh pr merge <деньги> # bash review-gate.sh`
+# (или `&& bash ./review-gate.sh`) обойти гейт с НУЛЕВОЙ подделкой артефактов —
+# self-skip срабатывал раньше детекта операции. Теперь ДЕТЕКТ ОПЕРАЦИИ РЕШАЕТ:
+# голый запуск хука не содержит `gh pr merge`/`git merge ` → падает в `*) exit 0`;
+# реальный merge гейтится всегда, независимо от упоминания имени хука в комменте.
+# Тестировать гейт — прямым вызовом (hook-test), payload через stdin, НЕ inline.
 
 # Событие: gh pr merge ИЛИ git merge (любая форма ссылки — S59 review fix HIGH-1:
 # merge по sha/переименованной ветке раньше тихо обходил гейт)
+# round-6 (bypass-hunt): нормализуем пробелы/табы + срезаем git-глобалки `-c/-C X`
+# перед детектом. `gh   pr   merge` (пробелы), `git -c http.x=y merge` (глобалка
+# между git и субкомандой) иначе минули бы подстроку. `gh api .../pulls/N/merge`
+# (REST-эндпоинт мерджа) детектим отдельно.
+# ОСТАТОК (backlog: kit-op-detect-hardening security-спринт per auditor root-fix
+# «classify on resolved argv + key off branch/diff»): inline-alias `git -c
+# alias.z=merge z` (z = алиас, не резолвится без git config) и произвольный
+# `gh api` через переменную — подстрокой не ловятся. Денежный контур при этом
+# защищён diff-детектом review-gate (primary money-path check ниже).
+command_norm="$(printf '%s' "$command_str" | tr -s ' \t' ' ')"
+command_argv="$(printf '%s' "$command_norm" | sed -E 's/git( -[cC] [^ ]+)+ /git /g')"
 is_merge=0
-case "$command_str" in
+case "$command_argv" in
     *"git merge-base"*|*"git merge-tree"*|*"git merge-file"*) exit 0 ;;  # plumbing ≠ merge
     *"gh pr merge"*|*"git merge "*|*"git merge") is_merge=1 ;;
-    *) exit 0 ;;
 esac
+case "$command_norm" in
+    *"gh api"*"pulls/"*"/merge"*|*"gh api"*"/merge"*"pulls/"*) is_merge=1 ;;  # REST-мердж
+esac
+[ "$is_merge" = "1" ] || exit 0
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 [ -n "$repo_root" ] || exit 0
@@ -82,7 +98,13 @@ if [ "$merge_ref" = "main" ] || [ "$merge_ref" = "master" ]; then
         [2-8]|[2-8]-*)
             echo "🚫  review-gate: merge с '$merge_ref' при активном спринте (phase=$state_phase). Запусти merge со sprint-ветки (или укажи её/sha в команде)." >&2
             exit 2 ;;
-        *) exit 0 ;;
+        ""|between-sprints|autoresearch|1|1-*|9|9-*)
+            exit 0 ;;  # не активная gated-фаза — merge с main допустим
+        *)
+            # round-4 (bypass-hunt): fail-CLOSED на неканоничной phase — `4<NBSP>`/
+            # zero-width/мусор мимо `[2-8]` тихо снимал M-2 (merge-from-main guard).
+            echo "🚫  review-gate: неканоничная SPRINT_STATE.phase='$state_phase' при merge с '$merge_ref' → блок (возможна подмена). Приведи phase к канону." >&2
+            exit 2 ;;
     esac
 fi
 

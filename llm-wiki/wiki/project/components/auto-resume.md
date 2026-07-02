@@ -46,5 +46,6 @@ tail -20 ~/.claude/auto-resume/log      # журнал решений
 ## Related
 
 - [[hooks-selfcheck-hook]] — сторож синтаксиса, покрывает и limit-marker.sh
+- [[state-integrity-hook]] — S61: `last_task_sha` даёт poller точную точку восстановления при обрыве между коммитом и обновлением state
 - [[../kit-weakpoints-from-history]] — обоснование (102ч простоя)
 - [[../plans/2026-07-02-sprint-58-auto-resume]] — план + PRE-PLAN вердикт

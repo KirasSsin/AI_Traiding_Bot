@@ -241,3 +241,4 @@ Return single markdown report:
 - All options have serious downsides + no engineering criterion separates them — needs operator preference.
 
 In all cases: list under "Cross-cutting concerns" → user OR delegate к trader-expert via brainstorm-init flow.
+<!-- ADR 0073: SPRINT_STATE v2 Variant B — state hardening, split deferred -->

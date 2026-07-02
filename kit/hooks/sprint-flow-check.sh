@@ -35,15 +35,19 @@ except Exception:
     pass
 ' 2>/dev/null || true)"
 
-# Skip self-test invocations
-case "$command_str" in
-    *"sprint-flow-check.sh"*) exit 0 ;;
-    *"hooks/"*"flow-check"*) exit 0 ;;
-esac
+# round-5 (bypass-hunt MEDIUM): НЕТ content-based self-skip. Голая подстрока
+# `*sprint-flow-check.sh*` позволяла `git push ... # sprint-flow-check.sh` обойти
+# plan-file гейт с нулевой подделкой. Детект операции решает: голый запуск хука
+# не содержит `git push` → `*) exit 0`; реальный push гейтится всегда.
 
 # Only act on git push
-case "$command_str" in
-    *"git push"*|*"git  push"*) ;;
+# round-6: нормализуем пробелы/табы + срезаем git-глобалки `-c/-C X` — `git   push`
+# и `git -c http.x=y push` иначе минули бы детект.
+# ОСТАТОК (backlog kit-op-detect-hardening): inline-alias `git -c alias.p=push p`.
+command_norm="$(printf '%s' "$command_str" | tr -s ' \t' ' ')"
+command_argv="$(printf '%s' "$command_norm" | sed -E 's/git( -[cC] [^ ]+)+ /git /g')"
+case "$command_argv" in
+    *"git push"*) ;;
     *) exit 0 ;;
 esac
 
@@ -91,7 +95,15 @@ Required action — ОДНО из:
 (Defined by: ~/.claude/hooks/sprint-flow-check.sh, S59 KIT-002)
 EOF
             exit 2 ;;
-        *) exit 0 ;;  # between-sprints / autoresearch / нет файла — пропуск
+        ""|between-sprints|autoresearch|1|1-*|9|9-*)
+            exit 0 ;;  # не активная gated-фаза (или нет файла) — пропуск
+        *)
+            # round-4 (bypass-hunt): НЕ открывать гейт на неканоничной phase.
+            # `4<NBSP>`/zero-width/мусор мимо `[2-8]` тихо падал в exit 0 (fail-open),
+            # обходя KIT-002. Гейт САМ валидирует phase (repairer-хук — параллельный
+            # side-channel, не барьер; cold-net его не спасает). Fail-CLOSED.
+            echo "🚫  sprint-flow-check: неканоничная SPRINT_STATE.phase='$state_phase' на не-sprint ветке → блок (возможна подмена unicode/zero-width). Приведи phase к канону." >&2
+            exit 2 ;;
     esac
 fi
 

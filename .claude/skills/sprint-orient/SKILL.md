@@ -27,7 +27,8 @@ Order matters: SPRINT_STATE first (gives sprint+phase+branch+tag в 30 lines), t
    ```
    Read /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/SPRINT_STATE.md
    ```
-   Extract: sprint number, phase, branch, tag, "Следующее действие" section.
+   Extract: sprint number, phase, branch, tag, `last_task_sha` (S61 — HEAD последней задачи для точной точки восстановления auto-resume), "Следующее действие" section.
+   Если `last_task_sha` != текущий `git rev-parse --short HEAD` → сессия оборвалась после коммита кода, но до обновления state; сверься с git log между ними.
 
 2. **Verify git state matches SPRINT_STATE:**
    ```bash

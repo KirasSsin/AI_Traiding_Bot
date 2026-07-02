@@ -17,7 +17,7 @@ sources:
 ---
 
 <!-- AUTO:kit-inventory (генерируется kit/kit-inventory.sh — НЕ править руками) -->
-> **Инвентарь кита (авто, 2026-07-02):** агентов **15** (~/.claude/agents) · проектных скиллов **9** (.claude/skills) · superpowers-скиллов **14** · хуков подключено: PreToolUse(Bash) **11** + UserPromptSubmit **2** + SessionStart **2**; sh-файлов хуков на диске **14**.
+> **Инвентарь кита (авто, 2026-07-02):** агентов **15** (~/.claude/agents) · проектных скиллов **9** (.claude/skills) · superpowers-скиллов **14** · хуков подключено: PreToolUse(Bash) **13** + UserPromptSubmit **2** + SessionStart **3**; sh-файлов хуков на диске **16**.
 <!-- /AUTO:kit-inventory -->
 
 # Kit Overview (RU) — single source of truth
