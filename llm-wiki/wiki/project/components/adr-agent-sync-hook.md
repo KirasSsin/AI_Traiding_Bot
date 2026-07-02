@@ -85,46 +85,39 @@ Hook **намеренно** fail-open в следующих случаях:
 
 Fail-**closed** (exit 2 + stderr + block) только когда:
 - ADR-коммит есть в диапазоне пуша.
-- `~/.claude/agents/` не существует или пуст.
-- max mtime агентов **строго меньше** времени последнего ADR-коммита.
+- `~/.claude/agents/` не существует или пуст → блок (exit 2).
+- Номер изменённого ADR (`NNNN`) НЕ найден строкой `ADR NNNN` ни в одном теле агента.
 
 Принцип: лучше пропустить edge case, чем сломать работу пользователя в неродственных репах.
 
+## Механизм: content-check (S59 KIT-009, НЕ mtime)
+
+**mtime-механизм отменён в S59.** `touch` больше НЕ обходит хук. Для каждого изменённого ADR (`NNNN` из имени файла) хук `grep`'ает анкерованный `ADR[[:space:]-]*NNNN` в телах `~/.claude/agents/*.md`. Обоснование (A2-анализ): 58 из 75 исторических блоков этого хука были touch-ритуалом без реального обновления знаний агента — чистый шум. Голое 4-значное число НЕ засчитывается (108 цифровых серий уже живут в телах — нужен осознанный маркер `ADR`).
+
 ## Acknowledge flow (если ADR не требует agent-update)
 
-Если ADR не затрагивает ни одного агента (например, чисто организационный — 0001 "use ADR format"), пользователь подтверждает:
+Впиши строку `ADR NNNN: <одна фраза сути>` в тело релевантного ревьюера (даже для чисто-организационного ADR — это осознанный ack, что агент «знает» про решение):
 
-```bash
-touch ~/.claude/agents/trading-logic-reviewer.md
-git push
+```
+ADR 0077: tiered пины opus/sonnet/haiku + effort в frontmatter
 ```
 
-Это продвигает mtime выше времени ADR-коммита, и hook пропускает push. Это явный ack, а не обход.
+Правило выбора агента: деньги→security-auditor, торг.логика→trading-logic-reviewer, математика→quant-stats-reviewer, данные→data-integrity-reviewer, архитектура→architecture-reviewer.
 
 ## Output example (блокировка)
 
 ```
-🚫  ADR ↔ Agent prompt sync check FAILED
+🚫  ADR ↔ Agent prompt sync check FAILED (KIT-009 content-check, S59)
 
-ADR files changed in commits being pushed:
-    - llm-wiki/wiki/project/decisions/0017-review-agent-harness.md
+ADR в пуше, чей номер НЕ упомянут ни в одном агент-промпте:
+    - 0017-review-agent-harness.md
 
-Latest ADR commit time:    2026-04-22 21:15:03 +04
-Latest agent prompt mtime: 2026-04-22 20:54:11 +04
-
-Agent prompts in /Users/Apple/.claude/agents/ have not been updated since the ADR change.
-
-Required action — one of:
-  1) Update the relevant reviewer prompt(s) under ~/.claude/agents/ so they
-     reflect the new ADR (e.g. new Kelly phases, new reason codes,
-     changed walk-forward params), then retry push.
-  2) If the ADR change does not affect any agent prompt, acknowledge by
-     touching any prompt to advance its mtime:
-         touch ~/.claude/agents/trading-logic-reviewer.md
-     then retry push.
+Required action:
+  Впиши "ADR 0017: <суть>" в тело релевантного ревьюера (НЕ touch).
+  touch mtime закрыт в S59.
 
 (Defined by: llm-wiki/wiki/project/components/adr-agent-sync-hook.md
- Policy:     ADR 0017 — review-agent harness)
+ Policy:     ADR 0017 + S59 KIT-009)
 ```
 
 ## Caveats

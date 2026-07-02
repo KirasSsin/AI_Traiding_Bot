@@ -47,6 +47,8 @@ Root cause: kit invocation = polite reminder в CLAUDE.md, не enforcement.
 
 ## Обзор фаз (9)
 
+**Кого/на какой модели+effort звать в каждой фазе → [[phase-dispatch-ru]]** (канон, ADR 0077 — контроллер следует КАЖДЫЙ спринт).
+
 | Фаза | Название | Триггер | HARD-GATE | Артефакт |
 |------|----------|---------|-----------|----------|
 | 1 | Orient | Старт сессии / `/clear` | SPRINT_STATE прочитан + git verified | `mcp__ccd_session__mark_chapter` |

@@ -1,27 +1,25 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S67 SHIPPED (alpha.67) — Desktop Auto-Resume; push отложен (оператор)
-sprint: 67
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.67  # последний shipped (S67)
-last_task_sha: c1d2232  # squash S67 на main — точка восстановления auto-resume
+updated: 2026-07-02  # S68 PHASE 3 (plan) — Boot-слой; полный kit-цикл
+sprint: 68
+phase: 3-plan
+branch: feature/sprint-68-boot-layer
+tag: v0.1.0-alpha.67  # последний shipped (S67); push отложен
+last_task_sha: c1d2232  # S67 squash на main — точка восстановления
 ---
 
 ## Текущий статус
 
-**Mega-run v2 (S57–S66) ЗАВЕРШЁН** + пост-прогон **S67**. Все отгружены локально (теги alpha.57…alpha.67). **Push отложен** (оператор — накопить, один push позже; `unset GITHUB_TOKEN GH_TOKEN`).
+**S68 «Boot-слой» — PHASE 6 (review), Ship pending.** Ветка `feature/sprint-68-boot-layer`. Execute+Verify+Sync ГОТОВО: все 10 задач (T1-T10) исполнены, механика GREEN (hooks bash -n, mirror diff=0, settings valid), sprint-68 страница есть. **next_action:** дождаться security-auditor вердикта по батч-Б (settings/launchd/claude-mem removal-diff) → если APPROVE → PHASE 8 Ship (tag alpha.68, push отложен) → PHASE 9 Close → **S69 «Гейты по-настоящему»**. Live-изменения вне git: backups `.bak-s68-fe1a24b` (settings, claude-mem) + `~/com.kit.auto-resume.plist.removed-s68-fe1a24b`.
 
-**S67 SHIPPED** (main `c1d2232`, tag alpha.67): Desktop Auto-Resume — gate-only `auto_resume_gate.py` (GO/WAIT/NONE/STALE/FOREIGN, C2-guardы + first_ts ceiling) + Desktop Scheduled Task `kit-desktop-auto-resume` (cron `*/30` MSK). Закрыл пересмотренный OQ-4 (desktop, не CLI). security-auditor APPROVE 0 blockers, 20/20 tests. Детали → [[sprints/sprint-67-desktop-auto-resume]].
+**Этой сессией (на main, до S68-ветки):** ADR 0077 tiered пины (5 opus / 11 sonnet / 2 haiku + effort, суперседит 0076 uniform) + скилл `kit-conventions` + CLAUDE.md компрессия (105→52KB always-on) + валидация 18 тел агентов + Desktop 43.8KB удалён. Часть S68 pre-done (см. plan «Pre-done»).
 
-**Uniform fable-5** (ADR 0076, `857c6a3` на main): 18 агентов = claude-fable-5; frontend-design + Context7 активированы. OPERATOR-QUEUE: OQ-2/5/6/7 закрыты, OQ-1 отложен.
+**Ранее:** Mega-run v2 (S57-S66) + S67 Desktop Auto-Resume отгружены локально (alpha.57…alpha.67, **push отложен**). Deep-research кита ЗАВЕРШЁН (47 находок → план S68-S70) [[kit-deep-research-2026-07-02]].
 
-**Deep-research кита ЗАВЕРШЁН** (`945c4e6`+`93b1229`): 47 confirmed (18 HIGH) → 47 вердиктов → план **S68-S70** в [[kit-deep-research-2026-07-02]]; арбитраж отведённых — 0 потерь. **next_action:** (1) дождаться/перезапустить log-validation workflow (resumeFromRunId `wf_ba3b2ff5-d18`, скрипт `kit-research-log-validation-*.js` в session workflows/scripts/; если журнал пуст — свежий запуск, 3 агента, дёшево) → влить coverage-матрицу + новые находки в отчёт; (2) по «запускай S68» — kit-цикл S68 «Boot-слой» по плану отчёта.
+**Carry:** KIT-OD-1 (op-detect argv, поднят в S69), KIT-OD-2, tuning A/B (ADR 0074→S70 probe), docs/ бэкфилл. OQ: 1 (токен), 4 (закрыт S67), 5, 6 (закрыт ADR 0077), 7 (закрыт).
 
-**Carry (после прогона / оператору):** KIT-OD-1 (op-detect argv-классификация, выделенный security-спринт), KIT-OD-2 (tamper review↔diff), current-state→AUTO-блок kit-inventory, docs/ бэкфилл S57-63 + repoint source_files→kit/, tuning A/B (ADR 0074). OQ: 1 (токен), 4 (CLI /login), 5 (reload агентов), 6 (doc-writer тир), 7 (Frontend Design).
-
-**Важно при обрыве:** Auth `unset GITHUB_TOKEN GH_TOKEN` (Keychain gho_). Push origin — один, в конце прогона. src/ заморожен (kit-maintenance). SPRINT_STATE стейджить ОТДЕЛЬНО от commit (иначе state-backup не увидит staged).
+**Важно при обрыве:** Auth `unset GITHUB_TOKEN GH_TOKEN`. Push origin — один, в конце. src/ заморожен. SPRINT_STATE стейджить ОТДЕЛЬНО от commit. **Агенты грузятся при старте сессии → ADR 0077 пины активны в НОВОЙ сессии** (эта на fable-5-реестре).
 
 ## Carry (не трогаем в mega-run: src/ денежного ядра заморожен)
 
@@ -32,19 +30,19 @@ last_task_sha: c1d2232  # squash S67 на main — точка восстанов
 
 ---
 
-## Phase tracking (S67 — Desktop Auto-Resume)
+## Phase tracking (S68 — Boot-слой)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter S67 marked |
-| 2 Brainstorm | skipped | директива ясна (OQ-4 verdict → desktop path) |
-| 3 Plan | done | plan + техстраница auto-resume (doc-first); ветка feature/sprint-67 |
-| 4 Execute | done | T1 gate helper + T2 20 tests (fable-5 TDD via Workflow), T3 consumer-контракт git, T4 Scheduled Task через MCP |
-| 5 Verify | done | 20/20 pytest, ruff clean, dry-run NONE/GO/FOREIGN/WAIT |
-| 6 Review | done | security-auditor (fable-5) APPROVE 0 blockers; C-A/C-B/C-C закрыты; review в sprint-67 |
-| 7 Sync | done | auto-resume component + sprint-67 + index + current-state (sprint pages 69) |
-| 8 Ship | done | squash main c1d2232 + tag v0.1.0-alpha.67 (push отложен) |
-| 9 Close | done | между спринтами; auto-resume боевой (первый тик gate → NONE, мутаций нет) |
+| 1 Orient | done | chapter S68 marked |
+| 2 Brainstorm | done | = 47 панельных вердиктов deep-research (research-evidence/); 0 открытых scope-вопросов |
+| 3 Plan | done | plan-файл [[plans/2026-07-02-sprint-68-boot-layer]]; техстраница = Фаза 7 (kit-meta) |
+| 4 Execute | done | все 10 задач T1-T10 исполнены, per-task commits |
+| 5 Verify | done | hooks bash -n OK, mirror diff=0, settings valid, caveman single-fire |
+| 6 Review | in-progress | security-auditor батч-Б (removal-diff) — async |
+| 7 Sync | done | sprint-68 page + kit-inventory AUTO + tooling-inventory pointer |
+| 8 Ship | pending | tag alpha.68 после security APPROVE |
+| 9 Close | — | → S69 |
 
 ---
 

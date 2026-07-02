@@ -54,7 +54,7 @@ Repo `CLAUDE.md` держит 3-строчные сводки (always-on пов�
 
 | Pattern | Rule | Cost on miss |
 |---------|------|--------------|
-| **Edit-after-Read** | Read × N batch THEN Edit × N batch (never skip STEP 1). **После мутирующего tool (kit-inventory AUTO-regen / ruff --fix / скрипт-правка / hook, тронувшего файл) — re-Read перед Edit** (иначе "modified since read"). | 3× per unread file |
+| **Edit-after-Read** | Read × N batch THEN Edit × N batch (never skip STEP 1). **После ЧУЖОГО мутирующего tool (kit-inventory AUTO-regen / ruff --fix / скрипт / hook) — re-Read перед Edit** (иначе "modified since read"). **НЕ re-Read файл, который САМ только что записал** (D5-05 — уже в контексте; Edit/Write вернул бы ошибку при провале). | 3× per unread file / лишний Read |
 | **Path verification** | `AI_Traiding_Bot` exact spelling (NOT `_Tool`/`_Trader`/`_Trading`). Verify via `pwd` если doubt. Don't-retry on Read miss (max 1 retry → `ls <parent>` OR surface "path missing"). | hallucination compounds |
 | **MEMORY.md tolerance** | `.claude/agent-memory/<agent>/MEMORY.md` (**project-local**, NOT `~/.claude/agent-memory/`) may NOT exist (created on first WRITE). Read failure = expected. | wasted Read |
 | **Hook bash quirk** | `bash -n <script>` after editing `~/.claude/hooks/*.sh` / `kit/hooks/*.sh`. Triple-backtick inside `<<'PYEOF'` heredoc ломается молча — extract python в `kit/hooks/lib/<name>.py`. | push fails → debug cycle |
@@ -79,6 +79,6 @@ kill $APP_PID 2>/dev/null; wait $APP_PID 2>/dev/null
 ```
 Alternative: `--port 0` (random) + extract from stdout — robust для parallel runs.
 
-**ADR-agent-sync pre-push (S47):** ADR changed → `touch ~/.claude/agents/<reviewer>.md` BEFORE push. See `sprint-finish` Step 6b.
+**ADR-agent-sync pre-push (S59 KIT-009 content-check):** ADR changed → впиши строку `ADR NNNN: <суть>` в ТЕЛО релевантного ревьюера ПЕРЕД push. Хук grep'ает текст `ADR NNNN` в `~/.claude/agents/*.md` — `touch` mtime НЕ проходит (мёртв с S59). See `sprint-finish` Step 6.
 
 Полная таксономия token-waste (S65, 9 классов): `llm-wiki/wiki/project/components/error-taxonomy.md`.

@@ -45,6 +45,7 @@ _(пусто — v0.2+)_
 - [[project/architecture/gap-analysis]] — 24 расхождения current vs MVP v0.1 с приоритетами P0/P1/P2.
 - [[project/architecture/migration-plan]] — 10 спринтов, 3-4 месяца, local-first; Docker/deploy → v0.2.
 - [[project/architecture/development-workflow]] — Superpowers pipeline (7 скиллов) маппится на 10 спринтов v0.1.
+- [[project/architecture/phase-dispatch-ru]] 🆕 (S68) — **канон фаза→агент→модель+effort** (ADR 0077): кого/на чём звать в каждой из 9 фаз. Контроллер следует КАЖДЫЙ спринт. Работа ТОЛЬКО по спринтам.
 - [[project/architecture/kit-audit-2026-04-27]] 🆕 (S32e) — Kit usage audit findings post-S32 series: 11 agents + 10 hooks + 8 MCP + 5 project skills + ~50 plugin skills usage analysis. Conclusion: ALL NEEDED.
 - [[project/architecture/tooling-inventory-ru-part-2]] 🆕 (S32e split) — Tooling inventory Part 2 (Sections 14-24: Permission modes / Plugin curation / CLI tools / Status line / Token-saver / Non-interactive / Corpus scheme / Schedule wire / Corpus bridges research).
 - [[project/sprint-metrics]] 🆕 (S32d) — sprint metrics tracking: per-sprint table (tasks/bugs/review iterations/pytest count/КУ avg/time/КУ/час) + trends rolling 5 + update protocol.
@@ -54,6 +55,7 @@ _(пусто — v0.2+)_
 
 - [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
 - [[project/kit-deep-research-2026-07-02]] 🆕 — Deep-research кита (fable-5, 8 измерений → adversarial verify → 11 панелей): 47 подтверждённых слабых мест (18 HIGH), часовая карта принуждения, план S68-S70. Сырые данные: research-evidence/kit-deep-research/.
+- [[project/sprints/sprint-68-boot-layer]] 🆕 — S68 «Boot-слой»: токен-кровотечение + мёртвые ритуалы + канон-дрейф. 10 задач: T4 touch→content-check (8 поверхностей), T5 kit-inventory AUTO +ADR/tier-счётчики, T6 global CLAUDE.md→проект-scope, T7 ancestor-scan WARN, T9 error-taxonomy миф-поправка, **T10 phase-dispatch канон** (фаза→агент→модель, ADR 0077, «только спринты»), T1 launchd-краш-луп unload, T2 caveman-дубли+warp off, T3 claude-mem 5/3, T8 typo-tree delete. security-auditor APPROVE 0 blockers. ~20k ток/сессию экономия. Тег alpha.68.
 - [[project/sprints/sprint-67-desktop-auto-resume]] 🆕 — S67: Desktop Auto-Resume — gate-only helper (`auto_resume_gate.py`, GO/WAIT/NONE/STALE/FOREIGN) + Desktop Scheduled Task (`kit-desktop-auto-resume`, cron */30) → авто-продолжение в desktop без CLI (OQ-4). security-auditor APPROVE 0 blockers (20/20 tests). Тег alpha.67.
 - [[project/sprints/sprint-66-plugins]] 🆕 — S66 (финал mega-run): ресерч Claude Code плагинов + внедрён Context7 MCP (docs, токен-экономия); Frontend Design → оператору (OQ-7). Тег alpha.66. Отчёт [[project/plugins-research]].
 - [[project/sprints/sprint-65-error-harvest]] 🆕 — S65: таксономия token-waste ошибок (9 классов) → skill workflow-authoring + anti-waste паттерны + message-hints. Дизайн fable-5. Тег alpha.65.

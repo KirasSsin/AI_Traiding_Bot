@@ -52,6 +52,22 @@ if [ -n "$_repo" ] && [ -f "$_repo/docs/manifest.json" ] && [ -f "$_repo/kit/hoo
   fi
 fi
 
+# S68 D7-02: ancestor-scan — CLAUDE.md на walk-up пути (между parent(repo) и $HOME)
+# авто-грузится Claude Code КАЖДУЮ сессию + каждому сабагенту = скрытый boot-tax.
+# Прецедент: Desktop/CLAUDE.md 43.8KB мёртвого аудита (~13.3k токенов/сессию).
+# WARN-only. repo-root CLAUDE.md и $HOME/.claude/CLAUDE.md НЕ на этом пути — не флагаем.
+ancestor_warn=""
+if [ -n "$_repo" ]; then
+  _d="$(dirname "$_repo")"
+  while [ "$_d" != "/" ] && [ "$_d" != "$HOME" ]; do
+    if [ -f "$_d/CLAUDE.md" ]; then
+      _sz=$(wc -c < "$_d/CLAUDE.md" 2>/dev/null | tr -d ' ' || echo 0)
+      ancestor_warn="$ancestor_warn $_d/CLAUDE.md(${_sz}B)"
+    fi
+    _d="$(dirname "$_d")"
+  done
+fi
+
 if [ -n "$broken" ]; then
   msg="HOOKS-SELFCHECK: битые хуки (fail-OPEN дыра в обороне):$broken. Прогони bash -n по каждому и почини ДО git push."
   if [ "$is_push" -eq 1 ]; then
@@ -62,4 +78,5 @@ if [ -n "$broken" ]; then
   exit 0
 fi
 [ -z "$manifest_warn" ] || echo "HOOKS-SELFCHECK WARN: $manifest_warn"
+[ -z "$ancestor_warn" ] || echo "HOOKS-SELFCHECK WARN: walk-up CLAUDE.md (boot-tax, грузится каждую сессию):$ancestor_warn — рассмотри архив+удаление с walk-up пути"
 exit 0

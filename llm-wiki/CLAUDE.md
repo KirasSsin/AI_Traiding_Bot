@@ -205,7 +205,11 @@ Append-only. Парсится через `grep "^## \[" log.md`.
 Hard-limit ~25k токенов (~90KB). Безопасный порог = **50KB**.
 Если > 50KB: `Read` с `offset`+`limit` (1500–2000 строк) ИЛИ `Grep` + offset.
 
-**Banned-from-full-read** список → `~/.claude/CLAUDE.md` section 9 (10+ files: Docs/00-All.md / sprint plans / log.md).
+**Banned-from-full-read** (только Grep + offset Read, НЕ полный Read — источник истины этого списка ЗДЕСЬ, не в глобальном):
+- `llm-wiki/Docs/00-All.md` + `Docs/reference/Mimo_bot/00-All.md` (~350k tok каждый)
+- `llm-wiki/Docs/MVP/FINAL-CONSOLIDATED.md` + `Docs/reference/Mimo_bot/FINAL-CONSOLIDATED-DOCUMENT.md.md` (~30k)
+- Sprint-планы > 50KB: `wiki/project/plans/` S2/S6/S7/S8a/S9/S10/S11/S47/S48 (67-130KB)
+- `wiki/log.md` (~51KB append-only — `tail -100` / offset)
 
 **Wiki-страницы** держим < 50KB. Если близко — `<topic>.md` index + `<topic>-part-N.md`.
 Example (S32e split): `tooling-inventory-ru.md` (60KB) → `tooling-inventory-ru.md` (41KB Sections 1-13) + `tooling-inventory-ru-part-2.md` (24KB Sections 14-24).

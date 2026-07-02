@@ -4,17 +4,17 @@
 
 ## ⚠️ BEFORE ANY SPRINT WORK — kit flow обязателен (BINDING per ADR 0041 + ADR 0042)
 
-Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip". Живой список скиллов: `ls .claude/skills/` (project) + superpowers + agent-skills плагины — не доверяй числам в доках.
+**Работа над проектом идёт ТОЛЬКО через спринты (9 фаз).** Ad-hoc правки вне спринта = анти-паттерн. Каждый спринт = идентичный набор фаз; в каждой фазе — одни и те же агенты на одних и тех же моделях/effort. **Кого/на чём звать в фазе N → [`phase-dispatch-ru.md`](llm-wiki/wiki/project/architecture/phase-dispatch-ru.md)** (канон, ADR 0077). Любая работа касающаяся sprint = MUST follow 9 phases. NO shortcuts. NO "очевидно skip". Живой список скиллов: `ls .claude/skills/` (project) + superpowers + agent-skills плагины — не доверяй числам в доках.
 
 | Phase | Primary skill(s) | Optional/sub-skills | HARD-GATE |
 |-------|------------------|---------------------|-----------|
 | 1 Orient | `sprint-orient` (project) | — | Chapter marked + SPRINT_STATE read |
 | 2 Brainstorm | `brainstorm-init` (project) → `trader-expert` | `superpowers:brainstorming` (non-trading scope) | `pre-s{N}-backlog.md` |
 | 3 Plan | `superpowers:writing-plans` | `agent-skills:planning-and-task-breakdown` (DEPTH ref) | **Hook `sprint-flow-check.sh` блокирует push без plan file** |
-| 4 Execute | `superpowers:subagent-driven-development` (code) OR `superpowers:executing-plans` (docs) + `superpowers:test-driven-development` | `superpowers:systematic-debugging` (bug sub-flow), `superpowers:dispatching-parallel-agents` (parallel reviewers), `agent-skills:context-engineering` (briefs > 200 слов) | Per-task TDD + per-task SPRINT_STATE update |
+| 4 Execute | `superpowers:subagent-driven-development` (code) OR `superpowers:executing-plans` (docs) + `superpowers:test-driven-development` | `superpowers:systematic-debugging` (bug sub-flow), `superpowers:dispatching-parallel-agents` (parallel reviewers), `agent-skills:context-engineering` (briefs > 200 слов), `ponytail` (минимальный код перед импл, ADR 0072) | Per-task TDD + per-task SPRINT_STATE update |
 | 5 Verify | `superpowers:verification-before-completion` | pytest + mypy + canonical counts | All GREEN per checklist + 🔒 **Hook `phase-advance.sh` (S30+) блокирует merge если Phase 5 status != "done"/"skipped"** |
-| 6 Review | Domain reviewer (L5: trading-logic / quant-stats / data-integrity / architecture / python) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | **`security-auditor` (money/API/override) + `test-engineer` (new modules / coverage gaps) + `doc-reviewer` (post wiki-update)** 🆕 (S30) + `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening` | Blockers addressed |
-| 7 Sync | `wiki-update` (project) | — | Block 1↔Block 2 sync |
+| 6 Review | Domain reviewer (L5: trading-logic / quant-stats / data-integrity / architecture / python) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | **`security-auditor` (money/API/override) + `test-engineer` (new modules / coverage gaps) + `doc-reviewer` (post wiki-update)** 🆕 (S30) + `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening`, `ponytail-audit` (over-engineering scan, ADR 0072) | Blockers addressed |
+| 7 Sync | `wiki-update` (project, llm-wiki RU) | `docs-update` (project, docs/ RU — S56 конвейер doc-writer→depth→linker, затронутые страницы) | Block 1↔Block 2 sync |
 | 8 Ship | `sprint-finish` (project) → `superpowers:finishing-a-development-branch` | `agent-skills:git-workflow-and-versioning`, `agent-skills:shipping-and-launch` | tag v0.1.0-alpha.N |
 | 9 Close | SPRINT_STATE between-sprints + log session-end | — | — |
 
@@ -193,7 +193,7 @@ L1: claude-mem + ccd_session (session bookends + chapter marks)
 
 ## Read tool guard (большие файлы)
 
-Hard-limit ~25k токенов = ~90KB. Если файл > 50KB — `Read` с `offset`+`limit` или `Grep`-first. Полный список banned-from-full-read файлов → `~/.claude/CLAUDE.md` секция 9.
+Hard-limit ~25k токенов = ~90KB. Если файл > 50KB — `Read` с `offset`+`limit` или `Grep`-first. Полный список banned-from-full-read файлов → `llm-wiki/CLAUDE.md` секция «Read tool guard».
 
 **Universal split pattern (BINDING — operator decision 2026-05-11):** любой wiki/state/ADR file приближающийся к 50KB → split к indexed parts (НЕ truncate, НЕ overwrite-with-loss):
 
@@ -209,7 +209,7 @@ Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` 
 
 ## Anti-waste tool patterns (BINDING — CRITICAL)
 
-Ядро (always-on): **Read×N batch THEN Edit×N batch** (после мутирующего tool — re-Read перед Edit); `.venv/bin/python` never bare `python` (project code); `bash -n` после правки хука; `AI_Traiding_Bot` exact spelling; ADR changed → `touch ~/.claude/agents/<reviewer>.md` перед push.
+Ядро (always-on): **Read×N batch THEN Edit×N batch** (после мутирующего tool — re-Read перед Edit); `.venv/bin/python` never bare `python` (project code); `bash -n` после правки хука; `AI_Traiding_Bot` exact spelling; ADR changed → впиши `ADR NNNN: <суть>` в ТЕЛО ревьюера перед push (S59 content-check; `touch` mtime мёртв).
 
 Полная таблица (13 классов: workflow-парс, op-detect false-fire, zsh-квирки, git-checkout-clobber, uvicorn port-collision, invisible-chars, …) → скилл `kit-conventions` (грузи перед multi-file Edit / запуском project-Python / правкой хука). Таксономия S65: `llm-wiki/wiki/project/components/error-taxonomy.md`.
 

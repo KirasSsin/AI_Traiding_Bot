@@ -116,25 +116,24 @@ ls llm-wiki/wiki/project/state/.backup/SPRINT_STATE.*.md 2>/dev/null | wc -l   #
 
 ### Step 6b: Pre-push hook preparation (prevents adr-agent-sync-check.sh blocking)
 
-**Run BEFORE `git push`:**
+**Run BEFORE `git push`** (S59 KIT-009 — **content-check**, mtime-touch мёртв):
 
 ```bash
-# 1. If any ADR (llm-wiki/wiki/project/decisions/*.md) changed in sprint commits:
+# 1. Какие ADR изменились в диапазоне пуша:
 git diff --name-only main..HEAD -- 'llm-wiki/wiki/project/decisions/*.md'
 
-# 2. If output non-empty → touch a relevant agent prompt to acknowledge sync:
-touch ~/.claude/agents/trading-logic-reviewer.md
-# OR more specific agent if ADR is domain-specific:
-# touch ~/.claude/agents/architecture-reviewer.md   # for architecture ADRs
-# touch ~/.claude/agents/security-auditor.md        # for security ADRs
-# touch ~/.claude/agents/dashboard-reviewer.md      # for dashboard ADRs
+# 2. Для КАЖДОГО номера NNNN впиши строку "ADR NNNN: <суть>" в ТЕЛО
+#    релевантного ревьюера (деньги→security-auditor / торг.логика→trading-logic-
+#    reviewer / математика→quant-stats / данные→data-integrity / арх→architecture).
+#    Хук grep'ает "ADR NNNN" в ~/.claude/agents/*.md. touch mtime НЕ засчитывается.
 
-# 3. Verify: latest agent mtime >= latest ADR commit time
-stat -f '%m %N' ~/.claude/agents/*.md | sort -nr | head -3
-git log -1 --format='%ct %ci' -- 'llm-wiki/wiki/project/decisions/'
+# 3. Verify: номер каждого changed-ADR присутствует в теле агента:
+for n in $(git diff --name-only main..HEAD -- 'llm-wiki/wiki/project/decisions/*.md' | grep -oE '[0-9]{4}'); do
+  grep -rlqE "ADR[[:space:]-]*$n" ~/.claude/agents/*.md || echo "MISSING: ADR $n не упомянут ни в одном агенте";
+done
 ```
 
-If agent mtime < ADR commit time → `adr-agent-sync-check.sh` blocks push → retry required.
+Если номер не упомянут → `adr-agent-sync-check.sh` blocks push. Правь ТЕЛО агента (не touch).
 Pre-emptive touch = 0 retries.
 
 ### Step 6c: HARD-GATE — Skill-firing manifest (S62 P1-MANIFEST)
@@ -177,10 +176,10 @@ mcp__ccd_session__mark_chapter "Sprint <N> ship complete"
 
 ## Hook interactions (ожидать)
 
-- **adr-agent-sync-check.sh** fires при push: если ADR changed → MUST `touch ~/.claude/agents/trading-logic-reviewer.md` если ADR не affects agents (acknowledge)
+- **adr-agent-sync-check.sh** fires при push: если ADR changed → впиши строку `ADR NNNN: <суть>` в ТЕЛО релевантного ревьюера (S59 content-check; touch mtime мёртв)
 - **adr-index-sync-check.sh** fires при push: если new ADR не в index.md → BLOCKS
 
-Pre-emptively touch reviewer prompt + verify index sync ДО push чтобы не loop через hook errors.
+Pre-emptively впиши `ADR NNNN` в тело ревьюера + verify index sync ДО push чтобы не loop через hook errors.
 
 ## Anti-patterns
 

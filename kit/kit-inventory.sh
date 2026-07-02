@@ -14,10 +14,18 @@ PRE=$(jq '.hooks.PreToolUse[0].hooks | length' "$SETTINGS")
 UPS=$(jq '.hooks.UserPromptSubmit[0].hooks | length' "$SETTINGS")
 SS=$(jq '.hooks.SessionStart[0].hooks | length' "$SETTINGS")
 HOOK_FILES=$(ls -1 "$HOME/.claude/hooks/"*.sh 2>/dev/null | wc -l | tr -d ' ')
+# S68 D7-04/SKW-01: ADR/страницы + агент-тиры (де-дрейф канонов, источник — диск)
+DECISIONS=$(ls -1 "$REPO_ROOT/llm-wiki/wiki/project/decisions/"*.md 2>/dev/null | wc -l | tr -d ' ')
+SPRINTS=$(ls -1 "$REPO_ROOT/llm-wiki/wiki/project/sprints/"*.md 2>/dev/null | wc -l | tr -d ' ')
+COMPONENTS=$(ls -1 "$REPO_ROOT/llm-wiki/wiki/project/components/"*.md 2>/dev/null | grep -vc README || true)
+OPUS=$(grep -h '^model:' "$REPO_ROOT/kit/agents/"*.md 2>/dev/null | grep -c opus || true)
+SONNET=$(grep -h '^model:' "$REPO_ROOT/kit/agents/"*.md 2>/dev/null | grep -c sonnet || true)
+HAIKU=$(grep -h '^model:' "$REPO_ROOT/kit/agents/"*.md 2>/dev/null | grep -c haiku || true)
 TODAY=$(date +%Y-%m-%d)
 
 BLOCK="<!-- AUTO:kit-inventory (генерируется kit/kit-inventory.sh — НЕ править руками) -->
 > **Инвентарь кита (авто, ${TODAY}):** агентов **${AGENTS}** (~/.claude/agents) · проектных скиллов **${SKILLS}** (.claude/skills) · superpowers-скиллов **${SP}** · хуков подключено: PreToolUse(Bash) **${PRE}** + UserPromptSubmit **${UPS}** + SessionStart **${SS}**; sh-файлов хуков на диске **${HOOK_FILES}**.
+> ADR **${DECISIONS}** · sprint-страниц **${SPRINTS}** · component-страниц **${COMPONENTS}** · агент-тиры (ADR 0077): opus-4.8 **${OPUS}** / sonnet-5 **${SONNET}** / haiku-4.5 **${HAIKU}**.
 <!-- /AUTO:kit-inventory -->"
 
 python3 "$REPO_ROOT/kit/hooks/lib/kit_inventory_update.py" "$BLOCK" \
@@ -25,7 +33,7 @@ python3 "$REPO_ROOT/kit/hooks/lib/kit_inventory_update.py" "$BLOCK" \
   "$REPO_ROOT/llm-wiki/wiki/project/architecture/tooling-inventory-ru.md" \
   "$@"
 
-echo "kit-inventory: agents=${AGENTS} skills=${SKILLS} superpowers=${SP} hooks=${PRE}+${UPS}+${SS} (files=${HOOK_FILES})"
+echo "kit-inventory: agents=${AGENTS} skills=${SKILLS} superpowers=${SP} hooks=${PRE}+${UPS}+${SS} (files=${HOOK_FILES}) ADR=${DECISIONS} sprints=${SPRINTS} components=${COMPONENTS} tiers=opus${OPUS}/sonnet${SONNET}/haiku${HAIKU}"
 
 # Drift-guard (S57 review issue #2): зеркало kit/ vs живой ~/.claude — WARN, не блок.
 drift=0

@@ -98,14 +98,15 @@ Example:
 
 Anti-pattern: guessing slug from memory → `0014-walk-forward` (truncated) → `wiki-broken-link-check.sh` blocks push.
 
-### Step 6: Touch agent prompt если ADR changed
+### Step 6: Впиши `ADR NNNN` в тело ревьюера если ADR changed
 
 ```bash
-# Если editing wiki/project/decisions/NNNN-*.md
-touch ~/.claude/agents/trading-logic-reviewer.md
+# Если editing wiki/project/decisions/NNNN-*.md — впиши строку
+# "ADR NNNN: <суть>" в ТЕЛО релевантного ревьюера (напр. trading-logic-reviewer.md).
+# Хук grep'ает текст, НЕ mtime — touch больше не проходит (S59 KIT-009).
 ```
 
-Acknowledges adr-agent-sync-check hook (per ADR 0017).
+Satisfies adr-agent-sync-check content-check (ADR 0017 + S59 KIT-009).
 
 ### Step 7: Commit с conventional message
 

@@ -14,7 +14,8 @@ sources:
 ---
 
 <!-- AUTO:kit-inventory (генерируется kit/kit-inventory.sh — НЕ править руками) -->
-> **Инвентарь кита (авто, 2026-07-02):** агентов **18** (~/.claude/agents) · проектных скиллов **10** (.claude/skills) · superpowers-скиллов **14** · хуков подключено: PreToolUse(Bash) **14** + UserPromptSubmit **2** + SessionStart **3**; sh-файлов хуков на диске **17**.
+> **Инвентарь кита (авто, 2026-07-03):** агентов **18** (~/.claude/agents) · проектных скиллов **11** (.claude/skills) · superpowers-скиллов **14** · хуков подключено: PreToolUse(Bash) **14** + UserPromptSubmit **2** + SessionStart **3**; sh-файлов хуков на диске **17**.
+> ADR **77** · sprint-страниц **70** · component-страниц **61** · агент-тиры (ADR 0077): opus-4.8 **5** / sonnet-5 **11** / haiku-4.5 **2**.
 <!-- /AUTO:kit-inventory -->
 
 # Tooling Inventory (RU)
@@ -59,7 +60,9 @@ sources:
 
 ---
 
-## 1. Domain Reviewer Agents (9) — `~/.claude/agents/`
+## 1. Domain Reviewer Agents — `~/.claude/agents/` (живой счёт → AUTO-блок выше)
+
+> ⚠️ **Модель/effort каждого агента — ТОЛЬКО [[phase-dispatch-ru]] + `kit/PINNED_VERSIONS.md`** (канон ADR 0077: 5 opus-4.8 / 11 sonnet-5 / 2 haiku-4.5). Строки «**Модель:**» в карточках ниже могут быть STALE (S30-эра «sonnet 4.6») — НЕ источник истины, дispatch по frontmatter агента.
 
 L5 layer per ADR 0017 + S30 expansion (ADR 0043). Custom agents с project-specific knowledge. Все имеют `memory: project` (institutional knowledge в `.claude/agent-memory/<agent>/MEMORY.md`).
 
@@ -423,8 +426,8 @@ Mechanical enforcement, не optional reminders.
 
 ### 8.1 adr-agent-sync-check.sh
 - **Trigger:** PreToolUse on git push
-- **Block если:** ADR `wiki/project/decisions/*.md` changed BUT ни один `~/.claude/agents/*.md` updated
-- **Fix:** `touch ~/.claude/agents/<reviewer>.md` (или Python `os.utime` для force mtime ahead)
+- **Block если:** номер изменённого ADR (`NNNN`) НЕ упомянут строкой `ADR NNNN` ни в одном `~/.claude/agents/*.md` (S59 KIT-009 content-check, НЕ mtime)
+- **Fix:** впиши `ADR NNNN: <суть>` в тело релевантного ревьюера (touch mtime мёртв с S59)
 
 ### 8.2 adr-index-sync-check.sh
 - **Trigger:** PreToolUse on git push
