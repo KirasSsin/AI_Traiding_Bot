@@ -2953,4 +2953,10 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 ## [2026-07-02] ship | S63 — Fable-5 Team (mega-run 7/8)
 - Matrix §4.1: architecture-reviewer + trader-expert → fable-5 (security уже). 3 новых read-only advisory-агента на fable-5 (kit-auditor — аудит целостности 8 измерений; merge-analyst — pre-merge риск; release-manager — ship-чеклист), **спроектированы через Workflow** (architecture-reviewer ×4, директива оператора «команда через workflow»). ADR 0075 pin-policy v2 + `kit/PINNED_VERSIONS.md` реестр; frontend-developer opus-4-7 (stale) → opus alias.
 - Ревью arch+security (оба fable-5) APPROVE_WITH_CONDITIONS: arch HIGH (kit-auditor без pin-audit измерения хотя ADR назначает; PINNED мисклассифицировал 6 пинов) + security HIGH (secret-echo: kit-auditor grep -n/diff печатали полный токен в транскрипт) — ВСЕ закрыты в спринте. Smoke: kit-auditor логика нашла 3 реальных pre-ship issue.
-- Агенты: 15→18. Тег v0.1.0-alpha.63 локально. → S64 Plugins & Best Practices (финал).
+- Агенты: 15→18. Тег v0.1.0-alpha.63 локально. → S64.
+
+## [2026-07-02] ship | S64 — LLM-Wiki Audit & Doc-Flow (mega-run, вставка перед плагинами по директиве оператора)
+- Директива оператора: doc-first (техстраница llm-wiki RU → код → пользовательские docs/ RU); все агенты = kit fable-5 через Workflow; session-restore от техдоков; минимум токенов. Провалидировано (2 спринта: S64 wiki, S65 errors; docs/=WARN).
+- Аудит llm-wiki через Workflow (kit-auditor + architecture-reviewer + doc-reviewer-depth, все fable-5): HIGH-дрейф current-state.md (счётчики мертвы с ~S52/S55: agents 11→18, hooks 7→14, ADR 71→75, sprints 59→65, components 51→60) синхронизирован + указатель на AUTO-блок; ROOT CAUSE docs/ (source_files→~/.claude вместо kit/ → staleness слеп к киту).
+- Правило doc-first: repo CLAUDE.md (полный текст) + sprint-flow-ru (чеклисты Фаз 3/7) + sprint-orient (шаг 4b tech-doc priming) + skill-manifest (3b advisory). docs-staleness → WARN (exit 2→0, docs/=WARN per оператор); docs-broken-link остаётся БЛОК. docs/-страница «эволюция кита S57-64» (dogfood).
+- Ревью arch APPROVE_WITH_CONDITIONS (2 HIGH: висячий указатель на HARD-GATE + само-нарушение docs-sync-gate/docs-update BLOCK→WARN — закрыты). idea-документ: ADOPT lint/index/log (уже есть), REJECT qmd/Dataview/Marp (YAGNI). Тег v0.1.0-alpha.64 локально. → S65 Error-Harvest.
