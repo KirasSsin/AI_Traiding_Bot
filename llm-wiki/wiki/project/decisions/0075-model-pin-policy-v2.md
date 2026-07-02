@@ -1,14 +1,14 @@
 ---
 title: "0075. Model pin-policy v2 — когда пинить версию vs алиас"
 type: decision
-status: accepted
+status: superseded
 created: 2026-07-02
 updated: 2026-07-02
 ---
 
 # 0075. Model pin-policy v2 (S63)
 
-**Status:** accepted (S63)
+**Status:** superseded by [[0076-model-pin-uniform-fable5]] (оператор 2026-07-02 — uniform fable-5, mixed-tier отменён)
 **Date:** 2026-07-02
 
 ## Контекст (P2-PINPOLICY)

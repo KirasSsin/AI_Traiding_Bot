@@ -46,7 +46,7 @@ sources:
 | Reason codes | **67** | `src/risk/reason_codes.py` `ReasonCode` enum | S52 T4 (+2 ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS, reason_codes 65→67) |
 | Component pages | **60** | `wiki/project/components/*.md` (excl. README.md cluster index) | S64 sync (S57-S63 kit-компоненты) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
-| ADRs | **75** | `wiki/project/decisions/*.md` (0001-0075) | S64 sync (последний 0075-model-pin-policy-v2) |
+| ADRs | **76** | `wiki/project/decisions/*.md` (0001-0076) | 0076 uniform fable-5 (оператор 2026-07-02, суперседит 0075) |
 | Sprint pages | **65** | `wiki/project/sprints/sprint-*.md` (…sprint-63-fable-team) | S64 sync (S57-S63) |
 | Reviewer/kit agents | **18** | `~/.claude/agents/` = `kit/agents/` (S57 mirror) | S64 sync (S63 +3: kit-auditor/merge-analyst/release-manager) |
 | Active push hooks | **14** | `~/.claude/hooks/` (PreToolUse Bash); sh-файлов 17 | S64 sync (S57-S63 gates+state+cascade) |

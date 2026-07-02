@@ -132,9 +132,13 @@
     "agent-skills@addy-agent-skills": true,
     "caveman@caveman": true,
     "claude-mem@thedotmack": true,
+    "frontend-design@claude-plugins-official": true,
     "superpowers@superpowers-marketplace": true,
     "warp@claude-code-warp": true
   },
+  "enabledMcpjsonServers": [
+    "context7"
+  ],
   "extraKnownMarketplaces": {
     "thedotmack": {
       "source": {

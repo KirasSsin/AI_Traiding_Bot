@@ -2,7 +2,7 @@
 name: doc-writer
 description: Пишет человеко-понятную документацию проекта AI Trading Bot в docs/ (Obsidian, русский) ИЗ исходного кода. Use proactively когда нужно наполнить страницу docs/ описанием компонента / стратегии / алгоритма / расчёта так, чтобы понял НЕ-программист и НЕ-трейдер. Адаптация sa-content-writer из кита Wiki-SA под наш trading-домен.
 tools: Read, Write, Edit, Grep, Glob, Bash
-model: claude-sonnet-5
+model: claude-fable-5
 memory: project
 color: blue
 ---

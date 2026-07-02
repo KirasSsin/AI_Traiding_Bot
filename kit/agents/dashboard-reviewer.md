@@ -1,7 +1,7 @@
 ---
 name: dashboard-reviewer
 description: Reviews src/dashboard/ FastAPI + vanilla JS code (S25/S26 backtest comparison UI). Use after dashboard module changes OR before merge sprints touching src/dashboard/. Checks: FastAPI endpoint correctness, Jinja2/JS data flow, look-ahead bias prevention, TESTNET enforcement, security (XSS/CSRF/secrets), trader-spec compliance (TIER 1 + TIER 2 metrics + 4 mandatory warnings + Sortino anomaly guard).
-model: claude-sonnet-5
+model: claude-fable-5
 memory: project
 tools: [Read, Grep, Glob, Bash]
 ---

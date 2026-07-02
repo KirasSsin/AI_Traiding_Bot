@@ -244,3 +244,4 @@ In all cases: list under "Cross-cutting concerns" → user OR delegate к trader
 <!-- ADR 0073: SPRINT_STATE v2 Variant B — state hardening, split deferred -->
 <!-- ADR 0074: runtime-tuning (AUTOCOMPACT_PCT / MAX_THINKING) — обоснование + A/B методика -->
 <!-- ADR 0075: model pin-policy v2 — версия vs алиас + триггер ревью + PINNED_VERSIONS реестр -->
+<!-- ADR 0076: uniform fable-5 pin — все агенты claude-fable-5, суперседит 0075 mixed-tier (оператор) -->

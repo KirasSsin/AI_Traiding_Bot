@@ -21,36 +21,40 @@ updated: 2026-07-02
 
 Proof-of-done: `grep -c ghp_ ~/.claude/settings.json` → `0` (выполнено прогоном) + токен отозван в UI GitHub (только ты).
 
-## OQ-2 [OPEN] Решение по S63-плагинам после прогона
-По твоему ответу: «фиксируем варианты, в конце посмотрим». Отчёт будет в `llm-wiki/wiki/project/plugins-research-s63.md`. После прочтения выбери ≤2 кандидата — интеграция отдельным спринтом.
+**Оператор (2026-07-02): сделаю позже.** Остаётся OPEN; `gh` Keychain-auth (`gho_…`) работает, прогон не блокирован. Напоминание при следующем kit-спринте.
 
-## OQ-4 [OPEN] Логин CLI в подписку — БЕЗ этого Auto-Resume (S58) не боеспособен
+## OQ-2 [CLOSED] Решение по плагинам — отчёт (fix: файл `plugins-research.md`, НЕ `-s63`)
+Оператор: «файла нет» — ссылка `plugins-research-s63.md` была неверна. Правильный путь: **[[plugins-research]]** = `llm-wiki/wiki/project/plugins-research.md`. Итог отчёта: внедрён **Context7 MCP** (docs библиотек, токен-экономия); **Frontend Design** → OQ-7 (оператор: «устанавливай всё» → ставим); дубли (code-review / security-guidance / commit-commands) отклонены осознанно (кит зрелый: L5-ревьюеры + superpowers покрывают).
 
-Headless-вызов `claude -p` (ядро авто-резюма) отвечает «Credit balance is too low» даже в чистом окружении: логин CLI указывает на Console-аккаунт без API-кредитов, а не на твою Max-подписку (десктоп-приложение логинится отдельно).
+## OQ-4 [OPEN → S67] Auto-Resume для desktop (CLI-путь отклонён оператором)
 
-Шаги (~2 минуты):
-1. Открой Terminal → `claude` (интерактивно) → команда `/login` → выбери вход по подписке (Claude account с Max), НЕ Console/API-key.
-2. Проверка одной командой:
-   `cd /tmp && claude -p "Say OK" --output-format json --model haiku | grep -o '"is_error":[a-z]*'`
-   Ожидание: `"is_error":false`.
-3. Пост-проверка прав (Ship-гейт C-2 из PRE-PLAN ревью S58) —两 команды:
-   `cd /tmp/perm-probe && claude -p "Create probe1.txt with word OK using Write tool" --output-format json --model haiku; ls probe1.txt` → файла быть НЕ должно;
-   `claude -p "Create probe2.txt with word OK using Write tool" --output-format json --model haiku --allowedTools Write; ls probe2.txt` → файл должен появиться.
-   Оба результата скинь мне (или просто напиши «OQ-4 done, A=no file, B=file») — я закрою гейт в спринт-странице.
+Оператор: «не пользуюсь claude CLI, работаю только через Claude Code **desktop** on Mac. Нужна функция: лимит закончился → наступил новый период → работа продолжается автоматически».
 
-До OQ-4 механизм S58 установлен и протестирован на моках; боевой E2E ждёт логина. Безопасная деградация: при нерабочем биллинге поллер логирует STILL_LIMITED/NO_PROGRESS и эскалирует, ничего не ломая.
+**Verdict** (research claude-code-guide fable-5, источники code.claude.com/docs — детали [[components/auto-resume]] секция «Desktop Auto-Resume»):
+- Нативного «та же desktop-сессия сама возобновляется при сбросе лимита» **НЕТ** — open feature request `anthropics/claude-code#35744`.
+- НО хуки/skills/settings общие desktop↔CLI (`~/.claude/`) → наш `StopFailure` `limit-marker.sh` (C1) **уже работает в desktop**.
+- Реалистичный desktop-native путь: C1-маркер + **Desktop local Scheduled Task** (Settings → Routines → Local) стартует свежую видимую sidebar-сессию по расписанию → читает `SPRINT_STATE.next_action` → продолжает. Всё в GUI, без CLI-логина.
 
-## OQ-5 [OPEN] Перезапуск сессии для 3 новых агентов (S63)
+**Старый CLI-`/login`-гейт СНЯТ** (не используешь CLI). launchd-C2 остаётся опциональным headless-треком (результаты в git, не в твоём окне).
 
-kit-auditor / merge-analyst / release-manager созданы в `~/.claude/agents/` (frontmatter валиден, model=fable-5). Реестр агентов грузится на старте сессии — **свежесозданные не dispatchable в текущей сессии**. После любого перезапуска CLI они станут доступны как subagent_type. Проверка: `claude` → спроси «list available agents» ИЛИ dispatch «kit-auditor: прогони аудит кита». Смоук в S63 сделан по логике вручную (нашёл 3 реальных pre-ship issue).
+**Следующий шаг:** kit-мини-спринт **S67 «Desktop Auto-Resume»** — реализовать Scheduled Task (UI ИЛИ через scheduled-tasks MCP) + условие «Keep computer awake». Recurring автономную задачу НЕ создаю без явного ОК. Скажи «делаем S67» — запущу по kit-циклу.
 
-## OQ-6 [OPEN] doc-writer на sonnet-5 — намеренно?
+## OQ-5 [CLOSED] Перезапуск сессии для 3 новых агентов (S63)
 
-ADR 0075 pin-policy: 5 из 6 fable-5-пинов judgment-heavy (обосновано). `doc-writer=claude-sonnet-5` — дешёвый тир для draft-генерации доков. Подтверди: намеренный тир ИЛИ gap миграции fable-5? Если намеренно — оставляю; иначе подниму до fable-5 в след. kit-спринте. (Записано в `kit/PINNED_VERSIONS.md`.)
+Оператор: «норм». Подтверждено 2026-07-02: kit-auditor / merge-analyst / release-manager в живом `~/.claude/agents/` И **dispatchable в текущей сессии** (reload состоялся — видны в available agent types; git-sync-валидация уже отработала 4× kit-auditor на fable-5). Реестр загружен, смоук-путь открыт.
 
-## OQ-7 [OPEN] Frontend Design plugin — устанавливать? (S66)
+## OQ-6 [CLOSED] doc-writer → fable-5 (оператор: «все агенты на fable-5 умышленно»)
 
-Ресерч плагинов (S66, [[plugins-research]]): внедрён Context7 MCP (docs библиотек, токен-экономия). 2-й кандидат **Frontend Design** (Anthropic, 829k инсталлов — #1) генерирует UI. Полезен ТОЛЬКО если планируется работа над `src/dashboard` UI. Не устанавливаю без твоего решения (не core-trading, YAGNI). Если нужен — скажи, добавлю. Context7 активируется на reload сессии («use context7» в промпте при работе с pybit/pandas).
+Оператор: «Пока все агенты на fable-5 умышленно — токенов много, нужна глубокая проработка». **Выполнено 2026-07-02:** `doc-writer` поднят `claude-sonnet-5` → `claude-fable-5` в обоих деревьях (`kit/agents/doc-writer.md` + живой `~/.claude/agents/doc-writer.md`) + `kit/PINNED_VERSIONS.md`. Применится на reload сессии.
+
+**Оператор (2026-07-02): ВСЕ агенты на fable-5 max** (safety-fallback → opus-4.8 max приемлем). **Выполнено:** 18 агентов = `claude-fable-5` в обоих деревьях (`diff -rq` clean) + `PINNED_VERSIONS.md` переписан + **ADR 0076** (суперседит 0075 mixed-tier). 6 money-ревьюеров подняты sonnet→fable; 3 экс-алиаса (frontend-developer / python-reviewer / doc-reviewer) → fable. Применится на reload.
+
+## OQ-7 [CLOSED] Frontend Design plugin + Context7 (оператор: «устанавливай всё»)
+
+**Выполнено 2026-07-02:**
+- `frontend-design@claude-plugins-official` установлен (`claude plugin install`, scope: user; в `enabledPlugins`). Для будущей работы над `src/dashboard` UI.
+- **Context7 MCP активирован:** `enabledMcpjsonServers: ["context7"]` в `~/.claude/settings.json` (project `.mcp.json` требовал ручного approval — снято). Шаблон `kit/settings.example.json` синхронизирован (+frontend-design +context7).
+- Активация обоих — на reload desktop-сессии. Использование Context7: «use context7» в промпте при работе с pybit/pandas/FastAPI.
 
 ## OQ-3 [CLOSED] Нумерация спринтов «был 75»
 Расследовано: `git tag` max = `v0.1.0-alpha.55`; `sprints/` max = 55; grep `sprint 7[0-9]` по 121MB транскрипта сессии и логам session-export — 0 совпадений. S56 (docs-спринт) не закрыт — корпус на ветке `chore/kit-integrate-headroom-ponytail`. Вывод: 75 не существовало; нумерация прогона S57+ корректна. Если помнишь контекст «75» — скажи, проверю точечно.

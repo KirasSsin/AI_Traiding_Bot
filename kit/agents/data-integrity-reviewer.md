@@ -2,7 +2,7 @@
 name: data-integrity-reviewer
 description: Reviews market-data ingest, OHLCV invariants, SQLite WAL schema and migrations, Parquet writers, gap/dedup/OOO handling, and event-sourcing persistence for the AI Trading Bot v0.1. MUST BE USED after changes to src/marketdata/, src/platform/storage/, migrations/, or order/fill persistence paths.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-sonnet-5
+model: claude-fable-5
 memory: project
 ---
 

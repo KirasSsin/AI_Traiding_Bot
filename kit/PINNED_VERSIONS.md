@@ -1,30 +1,31 @@
-# PINNED_VERSIONS — реестр явных пинов моделей (ADR 0075)
+# PINNED_VERSIONS — реестр явных пинов моделей (ADR 0076 uniform, суперседит ADR 0075)
 
-Источник истины «почему этот агент на этой версии». kit-auditor diff'ает против этого файла; пин без строки здесь = cargo-cult (findable-stale). Обновлять при смене пина + `last-reviewed` при ревью-триггере (новый платформенный дефолт).
+**Директива оператора 2026-07-02:** ВСЕ агенты на `claude-fable-5` (max-качество, токен-бюджет не ограничен, нужна глубокая проработка). При срабатывании safety-правила fable-5 → авто-переключение на `claude-opus-4-8` max — **приемлемо** (оператор). Uniform-политика заменяет смешанные тиры ADR 0075.
 
-| Agent | Model pin | Reason | Last-reviewed |
+Источник истины «какая версия у агента». kit-auditor diff'ает против этого файла; пин без строки здесь = findable-stale. Все 18 агентов = `claude-fable-5`.
+
+| Agent | Model pin | Роль (контекст) | Last-reviewed |
 |---|---|---|---|
-| architecture-reviewer | claude-fable-5 | judgment-heavy, high-blast (кросс-модульные решения кита); Matrix §4.1 | 2026-07-02 |
-| trader-expert | claude-fable-5 | judgment-heavy (PHASE 2 доменные вердикты); Matrix §4.1 | 2026-07-02 |
-| security-auditor | claude-fable-5 | judgment-heavy, high-blast (money/secret/bypass — S61 нашёл BLOCKER) | 2026-07-02 |
-| doc-linker | claude-fable-5 | семантические связи (opus-класс для качества графа) | 2026-07-02 |
-| doc-reviewer-depth | claude-fable-5 | построчная сверка docs против кода (точность) | 2026-07-02 |
-| doc-writer | claude-sonnet-5 | draft-качество, не judgment-heavy — тир дешевле. **OQ-6: подтвердить намеренность** | 2026-07-02 |
-| trading-logic-reviewer | claude-sonnet-5 | standard-тир money-код ревью, воспроизводимость вердиктов | 2026-07-02 |
-| quant-stats-reviewer | claude-sonnet-5 | standard-тир math/stat ревью, воспроизводимость | 2026-07-02 |
-| data-integrity-reviewer | claude-sonnet-5 | standard-тир storage/schema ревью | 2026-07-02 |
-| dashboard-reviewer | claude-sonnet-5 | standard-тир UI ревью | 2026-07-02 |
-| bybit-api-reviewer | claude-sonnet-5 | standard-тир API-protocol ревью | 2026-07-02 |
-| test-engineer | claude-sonnet-5 | standard-тир test-strategy | 2026-07-02 |
-| kit-auditor | claude-fable-5 | judgment-heavy kit-integrity (S63) | 2026-07-02 |
-| merge-analyst | claude-fable-5 | judgment-heavy pre-merge риск (S63) | 2026-07-02 |
-| release-manager | claude-fable-5 | judgment-heavy ship-оркестрация (S63) | 2026-07-02 |
+| architecture-reviewer | claude-fable-5 | judgment-heavy кросс-модульные решения кита | 2026-07-02 |
+| trader-expert | claude-fable-5 | PHASE 2 доменные вердикты | 2026-07-02 |
+| security-auditor | claude-fable-5 | money/secret/bypass (S61 нашёл BLOCKER) | 2026-07-02 |
+| doc-linker | claude-fable-5 | семантические связи графа docs | 2026-07-02 |
+| doc-reviewer-depth | claude-fable-5 | построчная сверка docs против кода | 2026-07-02 |
+| doc-writer | claude-fable-5 | генерация доков (OQ-6: поднят с sonnet) | 2026-07-02 |
+| trading-logic-reviewer | claude-fable-5 | money-код ревью (uniform: поднят с sonnet) | 2026-07-02 |
+| quant-stats-reviewer | claude-fable-5 | math/stat ревью (uniform: поднят с sonnet) | 2026-07-02 |
+| data-integrity-reviewer | claude-fable-5 | storage/schema ревью (uniform: поднят с sonnet) | 2026-07-02 |
+| dashboard-reviewer | claude-fable-5 | UI ревью (uniform: поднят с sonnet) | 2026-07-02 |
+| bybit-api-reviewer | claude-fable-5 | API-protocol ревью (uniform: поднят с sonnet) | 2026-07-02 |
+| test-engineer | claude-fable-5 | test-strategy (uniform: поднят с sonnet) | 2026-07-02 |
+| kit-auditor | claude-fable-5 | kit-integrity аудит (S63) | 2026-07-02 |
+| merge-analyst | claude-fable-5 | pre-merge риск-профиль (S63) | 2026-07-02 |
+| release-manager | claude-fable-5 | ship-оркестрация (S63) | 2026-07-02 |
+| frontend-developer | claude-fable-5 | UI-разработка (uniform: поднят с opus-алиаса) | 2026-07-02 |
+| python-reviewer | claude-fable-5 | Python lint/idioms (uniform: поднят с haiku) | 2026-07-02 |
+| doc-reviewer | claude-fable-5 | wiki consistency (uniform: поднят с haiku) | 2026-07-02 |
 
-**ВАЖНО (arch HIGH #2 fix):** `claude-sonnet-5` — это ЯВНЫЙ версионный пин, НЕ алиас `sonnet`. Все явные пины `claude-*-N` перечислены в таблице выше (иначе pin-аудит kit-auditor пометит их UNREGISTERED). Строки ниже — ТОЛЬКО настоящие алиасы (без версии).
+**Все пины = явный версионный пин `claude-fable-5`** (НЕ алиас). Алиасов больше нет — uniform-политика.
 
-## Настоящие алиасы (авто-трек дефолта, без версии — не пинятся)
-- `frontend-developer` → `opus` (было `claude-opus-4-7` stale — S63 fix; не kit-work, low-maintenance).
-- `python-reviewer`, `doc-reviewer` → `haiku` (механический lint-style / consistency).
-
-## Правило (ADR 0075)
-PIN версию → judgment-heavy + причина записана. Алиас → механическое/low-risk. Пин без причины здесь = stale по умолчанию.
+## Правило (ADR 0076 — uniform, суперседит ADR 0075 mixed-tier)
+Все агенты = `claude-fable-5`. Нет дешёвых тиров/алиасов. Safety-fallback `claude-fable-5` → `claude-opus-4-8` max приемлем (оператор 2026-07-02). Новый агент → `claude-fable-5` по умолчанию. Ревью-триггер пина: смена платформенного дефолта fable-5 ИЛИ явная директива оператора о смене политики.

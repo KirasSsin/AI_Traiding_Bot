@@ -28,7 +28,7 @@ Headless-вызов: `claude -p "<resume-промпт>" --resume <sid> --output-
 
 - **Mac спит / крышка закрыта → launchd не тикает.** Для ночных прогонов: `caffeinate -is` или Energy Settings «Prevent sleep». Это ограничение macOS, не бага.
 - **Operator-race:** оператор вернулся в живую сессию во время headless-хода → два писателя. Смягчение: MIN_AGE 300с + lock; полного abort-канала нет (принятое ограничение, PRE-PLAN MEDIUM).
-- **OQ-4 (боевой гейт):** CLI-логин сейчас на Console-аккаунте без кредитов («Credit balance is too low») — до `/login` в подписку механизм в холостом режиме (лог STILL_LIMITED, эскалация штатная, ничего не ломает). Пост-логин: permission-probe A/B из OPERATOR-QUEUE закрывает Ship-гейт C-2.
+- **OQ-4 (пересмотрено — desktop-путь, 2026-07-02):** оператор работает ТОЛЬКО в Claude Code desktop (не CLI), поэтому CLI-`/login`-гейт снят с критического пути. Хуки/skills/settings общие для desktop и CLI (`~/.claude/`) → C1 (`StopFailure` `limit-marker.sh`) СРАБАТЫВАЕТ в desktop. Но launchd-C2 запускает headless-сессию, отдельную от desktop-списка. Boевой desktop-native путь → секция «Desktop Auto-Resume» ниже. launchd-C2 остаётся как опциональный background-трек (headless, результаты в git).
 - Reset-время лимита не machine-readable (в тексте «resets 3pm (TZ)», таймзона плавала) → фиксированный опрос 600с вместо парсинга.
 
 ## Проверено (S58, red/green)
@@ -42,6 +42,21 @@ C1: rate_limit → маркер с полными полями; billing_error/м
 ./kit/auto-resume/install.sh uninstall  # снять launchd-агент (kill-switch)
 tail -20 ~/.claude/auto-resume/log      # журнал решений
 ```
+
+## Desktop Auto-Resume (OQ-4, verdict research 2026-07-02)
+
+**Проблема:** оператор в desktop-приложении; launchd-опросник C2 запускает headless `claude -p` — отдельную от desktop сессию (docs: CLI и desktop делят конфиг/CLAUDE.md, но история сессий раздельная). Для чисто-desktop оператора headless-продолжение идёт «в фоне», не в его окне.
+
+**Verdict** (claude-code-guide fable-5, источники code.claude.com/docs): нативного «та же сессия сама возобновляется при сбросе лимита» НЕТ — open feature request `anthropics/claude-code#35744` (смежные #36320/#26775/#18980/#47276 закрыты как duplicate, НЕ completed).
+
+**Реалистичный desktop-native путь (рекомендуется):**
+1. **C1 готов** — `StopFailure`-матчер `rate_limit` (`limit-marker.sh`) работает и в desktop (shared `~/.claude/settings.json`). Маркер пишется.
+2. **Desktop local Scheduled Task** (Settings → Routines → Local, Desktop-фича): каждые 30–60 мин — «прочитай `~/.claude/auto-resume/pending.json`; если есть и время сброса прошло → прочитай SPRINT_STATE.md, продолжи `next_action`; иначе сразу стоп». По расписанию desktop стартует СВЕЖУЮ видимую sidebar-сессию, ре-ориентация через `sprint-orient` (опора — `SPRINT_STATE.next_action`, per-task протокол).
+3. **Условия:** app открыт + Mac не спит (Settings → Desktop app → General → «Keep computer awake»). Пропущенный запуск = один catch-up на пробуждении. Запуск до сброса лимита ошибётся — следующий подхватит.
+
+**Плюсы:** всё в GUI, без CLI-логина (снимает старый CLI-гейт OQ-4). Лимит plan-usage общий на все поверхности — routines/cloud его не обходят.
+
+**Реализация:** отдельный kit-мини-спринт **S67 «Desktop Auto-Resume»** — заменить/дополнить launchd desktop-scheduled-task (создаётся в UI ИЛИ через scheduled-tasks MCP). Recurring-задачу не создаю без явного ОК (автономный процесс).
 
 ## Related
 
