@@ -3002,3 +3002,10 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Скилл kit-conventions: полные Language rules (канал×язык + запрещённые англицизмы) + anti-waste таблица (13 классов) вынесены из repo CLAUDE.md (progressive disclosure). CLAUDE.md → компактные сводки + указатель на скилл в 2 точках (language + anti-waste). Repo CLAUDE.md 24.9→20.1KB; оба указателя авто-триггерят скилл.
 - PINNED_VERSIONS переписан (3 тира + effort + причина). index.md 0077-строка + 0076 superseded. architecture-reviewer body-комментарий 0076→0077.
 - Верификация: 18/18 YAML валидны (haiku без effort, остальные с effort), зеркало diff=0, скилл виден системой.
+
+## 2026-07-03 — S68 «Boot-слой» SHIPPED (alpha.68, полный kit-цикл)
+- 10 задач: T4 touch→S59 content-check (8 поверхностей, вкл. 2 свежих ошибки сессии) · T5 kit-inventory AUTO +ADR/sprint/component/model-tier счётчики + phase table +3 скилла · T6 global CLAUDE.md проект-banned-list→проект-scope + kit-team-agents→ADR0077 · T7 ancestor-scan WARN (Desktop boot-tax рецидив, смоук-верифицирован) · T9 error-taxonomy миф 151×→~2 (149=region-block HTML) + класс 10/11 · **T10 phase-dispatch канон** (фаза→агент→модель+effort ADR0077, «только спринты» — директива оператора) · T1 launchd C2 unload (56 TCC-трейсбеков, мёртв; S67 desktop заменил) · T2 caveman-дубли снят (плагин их даёт) + warp off · T3 claude-mem 50→5/10→3 · T8 typo-tree AI_Traiding_Tool delete.
+- Pre-done сессии (на main): ADR 0077 tiered пины + kit-conventions skill + CLAUDE.md 105→52KB + Desktop 43.8KB.
+- security-auditor APPROVE 0 blockers (14 PreToolUse гейтов byte-identical; C2 провабельно мёртв; StopFailure+S67 continuity целы). skill-manifest OK. ~20k ток/сессию экономия.
+- Live вне git (backups): settings/claude-mem `.bak-s68-fe1a24b`, plist `.removed-s68-fe1a24b`.
+- next: S69 «Гейты по-настоящему» (6 HIGH). Push отложен (накопить).
