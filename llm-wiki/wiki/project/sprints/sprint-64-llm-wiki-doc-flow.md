@@ -24,7 +24,7 @@ status: stable
 | T3 | docs-staleness-check.sh → **WARN** (exit 2→0, docs/=WARN per оператор); docs-broken-link остаётся БЛОК (гигиена) | red-check: WARN печатается |
 | T4 | sprint-orient шаг 4b: восстановление от техдоков llm-wiki (components/README + ≤2 страницы, токен-бюджет) | skill обновлён |
 | T5 | Вердикт по idea-документу «LLM Wiki»: ADOPT lint(=kit-auditor)/index/log (уже есть, 0 нового); REJECT qmd(=wiki-sa MCP)/Dataview/Marp (YAGNI) | зафиксировано |
-| T6 | Пользовательская docs/ страница [[../../../docs/10-как-работает-кит/evolyutsiya-kita-s57-s64|эволюция кита S57-64]] (dogfood нового правила; source_files→kit/, не ~/.claude) | docs/ страница создана |
+| T6 | Пользовательская docs/ страница «эволюция кита S57-64» (docs/10-как-работает-кит/evolyutsiya-kita-s57-s64.md) (dogfood нового правила; source_files→kit/, не ~/.claude) | docs/ страница создана |
 
 ## Корневая причина (doc-reviewer-depth)
 `docs/manifest.json` + frontmatter `source_files:` пользовательских страниц указывали на `~/.claude/...` (вне git), а не на версионированный `kit/` (S57) — поэтому docs-staleness не срабатывал на правки кита. Новая docs/-страница S64 задаёт правильный паттерн (`source_files: kit/...`). **Массовый repoint существующих docs/-страниц + бэкфилл S57-S63 контента → follow-up** (большая переводческо-писательская работа, отдельный docs-спринт).
@@ -41,4 +41,4 @@ status: stable
 - kit-auditor + doc-reviewer-depth (fable-5): аудит llm-wiki + ROOT CAUSE docs/ (source_files→~/.claude вместо kit/). Blockers: 0.
 
 ## Related
-[[../plans/2026-07-02-sprint-64-llm-wiki-doc-flow]] · [[../../../docs/10-как-работает-кит/evolyutsiya-kita-s57-s64|user-docs эволюция]] · [[kit-overview-ru]] · [[../KIT-MASTER-PLAN]]
+[[../plans/2026-07-02-sprint-64-llm-wiki-doc-flow]] · user-docs эволюция (docs/10-как-работает-кит/evolyutsiya-kita-s57-s64.md) · [[kit-overview-ru]] · [[../KIT-MASTER-PLAN]]
