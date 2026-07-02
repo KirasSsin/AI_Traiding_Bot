@@ -4,7 +4,7 @@ type: component
 tags: [kit, auto-resume, launchd, continuity, hooks]
 created: 2026-07-02
 updated: 2026-07-02
-sources: [kit/auto-resume/, kit/hooks/limit-marker.sh, kit/hooks/lib/auto_resume_marker.py]
+sources: [kit/auto-resume/, kit/auto-resume/lib/auto_resume_gate.py, kit/auto-resume/desktop-task-prompt.md, kit/hooks/limit-marker.sh, kit/hooks/lib/auto_resume_marker.py]
 status: stable
 ---
 
@@ -56,7 +56,7 @@ tail -20 ~/.claude/auto-resume/log      # журнал решений
 
 **Плюсы:** всё в GUI, без CLI-логина (снимает старый CLI-гейт OQ-4). Лимит plan-usage общий на все поверхности — routines/cloud его не обходят.
 
-**Реализация:** отдельный kit-мини-спринт **S67 «Desktop Auto-Resume»** — заменить/дополнить launchd desktop-scheduled-task (создаётся в UI ИЛИ через scheduled-tasks MCP). Recurring-задачу не создаю без явного ОК (автономный процесс).
+**Реализовано (S67, alpha.67):** gate-only helper `kit/auto-resume/lib/auto_resume_gate.py` (решение `GO/WAIT/NONE/STALE/FOREIGN`, C2-guardы + `first_ts` wall-clock ceiling, без headless `claude`; 20/20 tests) + Desktop Scheduled Task `kit-desktop-auto-resume` (cron `*/30 * * * *` MSK, создан через `scheduled-tasks` MCP). Контракт consumer'а в git: `kit/auto-resume/desktop-task-prompt.md` (GO-only, свежая сессия, НЕ `--resume` sid). security-auditor APPROVE 0 blockers (C-A контракт / C-B ceiling / C-C git-зеркало закрыты). Управление: `scheduled-tasks` MCP `list`/`update_scheduled_task enabled=false`. Детали → [[../sprints/sprint-67-desktop-auto-resume]].
 
 ## Related
 

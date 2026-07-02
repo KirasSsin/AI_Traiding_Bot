@@ -47,7 +47,7 @@ sources:
 | Component pages | **60** | `wiki/project/components/*.md` (excl. README.md cluster index) | S64 sync (S57-S63 kit-компоненты) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
 | ADRs | **76** | `wiki/project/decisions/*.md` (0001-0076) | 0076 uniform fable-5 (оператор 2026-07-02, суперседит 0075) |
-| Sprint pages | **65** | `wiki/project/sprints/sprint-*.md` (…sprint-63-fable-team) | S64 sync (S57-S63) |
+| Sprint pages | **69** | `wiki/project/sprints/sprint-*.md` (…sprint-67-desktop-auto-resume) | S67 sync (S64-S67: doc-flow/error-harvest/plugins/desktop-resume) |
 | Reviewer/kit agents | **18** | `~/.claude/agents/` = `kit/agents/` (S57 mirror) | S64 sync (S63 +3: kit-auditor/merge-analyst/release-manager) |
 | Active push hooks | **14** | `~/.claude/hooks/` (PreToolUse Bash); sh-файлов 17 | S64 sync (S57-S63 gates+state+cascade) |
 | UserPromptSubmit hooks | **2** | `~/.claude/settings.json` (caveman + context-budget) | S32d +context-budget-warn.sh |
