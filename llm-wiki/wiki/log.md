@@ -2935,3 +2935,12 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - 4 гейта: KIT-002 branch-bypass (phase-источник истины, прецедент S56 закрыт), KIT-003 review-gate (деньги не мержатся без review-sNN.md Blockers:0), KIT-009 ADR-sync по содержимому (touch мёртв; было 58/75 блоков = touch-шум), KIT-013 per-task WARN.
 - Ревью: architecture (HIGH: sha-merge обход — закрыт) + security (main-merge, self-skip, sprint-scoped row — закрыты). Same-session forgery = принятая граница, tamper-evidence → S62.
 - Механических гейтов: 2 → 6 блокирующих + 2 WARN. Тег v0.1.0-alpha.59 локально. → S60.
+
+## [2026-07-02] ship | S60 — Docs-Sync Gate (mega-run 4/8)
+- Шаг 0: мердж chore/kit-integrate-headroom-ponytail (закрытие S56 — 128 стр docs/, 71 битая ссылка починена fan-out воркфлоу). KIT-004 docs-staleness (source_files → привязанная страница; escape [docs-ignore] per-file), KIT-016 docs-broken-link (каноника 00-10), manifest.json обратный индекс (140 источников/328 привязок), скилл docs-update.
+- Ревью: architecture APPROVE_WITH_CONDITIONS (HIGH range-wide [docs-ignore] + manifest-cache — закрыты) / security APPROVE. Тег v0.1.0-alpha.60 локально. → S61.
+
+## [2026-07-02] ship | S61 — SPRINT_STATE v2 (Вариант B) (mega-run 5/8)
+- Упрочнение монолита (не split): state-backup (авто-бэкап перед коммитом, ротация 20) + state-integrity (валидация + fail-OPEN авто-восстановление из .backup) + last_task_sha (точка восстановления auto-resume). ADR 0073: Вариант A отложен с триггерами пересмотра (blast radius 17 читателей, боль ≤6КБ закрыта).
+- **6 раундов adversarial bypass-hunt** (Workflow, security-auditor lens'ы + refutation): 1 BLOCKER (symlink-exfil) + 6 HIGH (parser-differential, NBSP unicode-ws, gate fail-open, self-skip decoy, op-detect структурный) + 3 MEDIUM — ВСЕ закрыты + regression (32 python + 38 bash). Нашли то, что 2 sequential-ревьюера пропустили. Остаток (op-detect argv-классификация, body-table forgery) → [[project/kit-op-detect-hardening-backlog]] + S62 tamper-evidence.
+- Гейты закалены на обоих слоях: validator reject + phase-гейты fail-CLOSED + self-skip убран + op-detect норм. Тег v0.1.0-alpha.61 локально. → S62 Manifest & Telemetry.
