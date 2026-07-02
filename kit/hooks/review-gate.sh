@@ -3,7 +3,9 @@
 #
 # Claude Code PreToolUse hook (Bash). Событие: `gh pr merge` ИЛИ локальный
 # `git merge` sprint-ветки. Если diff затрагивает денежные пути
-# (src/signalgen|execution|risk|backtest, override) — требуем артефакты Фазы 6:
+# (src/signalgen|execution|risk|backtest, override.py) — требуем артефакты Фазы 6.
+# NB: override матчится только как */override.py (S60: docs-страница про override
+# давала ложное срабатывание — money-path обязан быть в src/):
 #   1) строка "| 6 Review | done |" в SPRINT_STATE.md
 #   2) файл llm-wiki/wiki/project/reviews/review-sNN.md со строкой "Blockers: 0"
 # Иначе exit 2. Обоснование: S55 — доменные ревьюеры поймали 2 BLOCKER
@@ -34,7 +36,8 @@ esac
 # merge по sha/переименованной ветке раньше тихо обходил гейт)
 is_merge=0
 case "$command_str" in
-    *"gh pr merge"*|*"git merge"*) is_merge=1 ;;
+    *"git merge-base"*|*"git merge-tree"*|*"git merge-file"*) exit 0 ;;  # plumbing ≠ merge
+    *"gh pr merge"*|*"git merge "*|*"git merge") is_merge=1 ;;
     *) exit 0 ;;
 esac
 
@@ -87,7 +90,7 @@ fi
 # NB: база "main" захардкожена под этот репозиторий; в repo с "master" хук
 # тихо неприменим (review issue #4 — задокументировано).
 money_files="$(git -C "$repo_root" diff --name-only "main...$merge_ref" 2>/dev/null \
-    | grep -E '^src/(signalgen|execution|risk|backtest)/|override' || true)"
+    | grep -E '^src/(signalgen|execution|risk|backtest)/|(^|/)override\.py$' || true)"
 [ -n "$money_files" ] || exit 0  # денежное ядро не тронуто — гейт не нужен
 
 # Номер спринта: из ветки, иначе из SPRINT_STATE

@@ -195,6 +195,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/auto-resume]] — 🆕 S58 авто-возобновление после usage-лимита: StopFailure-хук → маркер → launchd-опросник (600с) → `claude -p --resume` с проверкой прогресса. Закрывает ~102ч исторического простоя.
 - [[project/components/review-gate-hook]] — 🆕 S59 KIT-003: мердж денежных путей заблокирован без `| 6 Review | done |` + `reviews/review-sNN.md` (Blockers: 0).
 - [[project/components/pertask-state-warn-hook]] — 🆕 S59 KIT-013: WARN при коммите src/ без обновления SPRINT_STATE (per-task протокол Фазы 4).
+- [[project/components/docs-sync-gate]] — 🆕 S60 KIT-004/016: docs/ самообновляется с кодом. Правка src/kit без обновления привязанной страницы (frontmatter source_files) → БЛОК; битые wiki-ссылки каноники → БЛОК; скилл docs-update. Задача №3 оператора закрыта.
 - [[project/components/data-quality]] — REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1). 0.5% threshold, per-bar cadence, no WS kline subscription needed.
 - [[project/components/fill-history]] — per-fill audit log (FillRecord + FillHistoryRepository + FK trade_history + WS execution topic source) (S9 Q3 B1).
 - [[project/components/fill-recorder-adapter]] — Bridges Bybit V5 WS execution events → FillHistoryRepository. 2-layer pattern (audit + best-effort DB). Closes `_NoopFillRecorder` stub (S12 Q5).

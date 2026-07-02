@@ -42,6 +42,16 @@ for h in "$HOOKS_DIR"/*.sh; do
   fi
 done
 
+# S60 (security LOW-1): дрейф docs/manifest.json vs frontmatter source_files.
+# WARN-only (не в fail-CLOSED зоне) — manifest это кэш, а не барьер.
+manifest_warn=""
+_repo="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -n "$_repo" ] && [ -f "$_repo/docs/manifest.json" ] && [ -f "$_repo/kit/hooks/lib/docs_manifest.py" ]; then
+  if ! python3 "$_repo/kit/hooks/lib/docs_manifest.py" "$_repo/docs" --check >/dev/null 2>&1; then
+    manifest_warn="docs/manifest.json устарел vs source_files — прогони: python3 kit/hooks/lib/docs_manifest.py docs"
+  fi
+fi
+
 if [ -n "$broken" ]; then
   msg="HOOKS-SELFCHECK: битые хуки (fail-OPEN дыра в обороне):$broken. Прогони bash -n по каждому и почини ДО git push."
   if [ "$is_push" -eq 1 ]; then
@@ -51,4 +61,5 @@ if [ -n "$broken" ]; then
   echo "$msg"
   exit 0
 fi
+[ -z "$manifest_warn" ] || echo "HOOKS-SELFCHECK WARN: $manifest_warn"
 exit 0

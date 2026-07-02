@@ -76,3 +76,7 @@ src/dashboard_react/tsconfig.tsbuildinfo
 
 # Kronos build logs (runtime, operator M4)
 kronos_build*.log
+
+# S60: Obsidian/macOS шум в docs/
+docs/.obsidian/workspace.json
+**/.DS_Store

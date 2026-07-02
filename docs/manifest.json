@@ -1,0 +1,610 @@
+{
+  ".claude/skills/autoresearch-iterate/SKILL.md": [
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  ".claude/skills/brainstorm-init/SKILL.md": [
+    "10-как-работает-кит/faza-1-2-orient-brainstorm.md",
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  ".claude/skills/hook-test/SKILL.md": [
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  ".claude/skills/sprint-finish/SKILL.md": [
+    "10-как-работает-кит/faza-7-8-9-sync-ship-close.md",
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  ".claude/skills/sprint-orient/SKILL.md": [
+    "10-как-работает-кит/faza-1-2-orient-brainstorm.md",
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  ".claude/skills/wiki-update/SKILL.md": [
+    "10-как-работает-кит/faza-3-4-plan-execute.md",
+    "10-как-работает-кит/faza-7-8-9-sync-ship-close.md",
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  "/Users/Apple/.claude/settings.json": [
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "CLAUDE.md": [
+    "10-как-работает-кит/ekonomiya-tokenov.md",
+    "10-как-работает-кит/obzor-kita.md"
+  ],
+  "README.md": [
+    "00-обзор/infrastructure-ready-no-edge.md",
+    "00-обзор/what-is-this-bot.md"
+  ],
+  "llm-wiki/CLAUDE.md": [
+    "10-как-работает-кит/obzor-kita.md"
+  ],
+  "llm-wiki/Docs/12-bot-specification.md.md": [
+    "00-обзор/what-is-this-bot.md"
+  ],
+  "llm-wiki/wiki/project/SPRINT_STATE.md": [
+    "10-как-работает-кит/faza-1-2-orient-brainstorm.md",
+    "10-как-работает-кит/faza-7-8-9-sync-ship-close.md"
+  ],
+  "llm-wiki/wiki/project/architecture/acceptance-criteria.md": [
+    "00-обзор/infrastructure-ready-no-edge.md",
+    "06-бэктест-и-валидация/acceptance-gates-t1-t6.md"
+  ],
+  "llm-wiki/wiki/project/architecture/current-state-part-2.md": [
+    "00-обзор/strategies-and-50-sprint-results.md"
+  ],
+  "llm-wiki/wiki/project/architecture/current-state.md": [
+    "00-обзор/infrastructure-ready-no-edge.md",
+    "00-обзор/what-is-this-bot.md"
+  ],
+  "llm-wiki/wiki/project/architecture/development-workflow.md": [
+    "10-как-работает-кит/ekonomiya-tokenov.md",
+    "10-как-работает-кит/faza-1-2-orient-brainstorm.md",
+    "10-как-работает-кит/faza-3-4-plan-execute.md",
+    "10-как-работает-кит/faza-5-6-verify-review.md",
+    "10-как-работает-кит/faza-7-8-9-sync-ship-close.md",
+    "10-как-работает-кит/obzor-kita.md"
+  ],
+  "llm-wiki/wiki/project/architecture/kit-overview-ru.md": [
+    "10-как-работает-кит/ekonomiya-tokenov.md",
+    "10-как-работает-кит/obzor-kita.md",
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  "llm-wiki/wiki/project/architecture/sprint-flow-ru.md": [
+    "10-как-работает-кит/faza-1-2-orient-brainstorm.md",
+    "10-как-работает-кит/faza-3-4-plan-execute.md",
+    "10-как-работает-кит/faza-5-6-verify-review.md",
+    "10-как-работает-кит/faza-7-8-9-sync-ship-close.md",
+    "10-как-работает-кит/obzor-kita.md"
+  ],
+  "llm-wiki/wiki/project/architecture/tooling-inventory-ru-part-2.md": [
+    "10-как-работает-кит/ekonomiya-tokenov.md"
+  ],
+  "llm-wiki/wiki/project/architecture/tooling-inventory-ru.md": [
+    "10-как-работает-кит/ekonomiya-tokenov.md",
+    "10-как-работает-кит/skilly-rabochie-protsedury.md"
+  ],
+  "llm-wiki/wiki/project/decisions/0017-review-agent-harness.md": [
+    "10-как-работает-кит/faza-5-6-verify-review.md"
+  ],
+  "llm-wiki/wiki/project/decisions/0068-sprint-52-kronos-integration.md": [
+    "02-стратегии/kronos-data-leakage.md",
+    "02-стратегии/kronos-signal-rule.md",
+    "02-стратегии/kronos-what-is-it.md"
+  ],
+  "llm-wiki/wiki/project/plans/2026-06-26-sprint-56-project-docs.md": [
+    "10-как-работает-кит/faza-3-4-plan-execute.md"
+  ],
+  "llm-wiki/wiki/project/sprints/sprint-23-honest-close-v05.md": [
+    "00-обзор/infrastructure-ready-no-edge.md",
+    "00-обзор/strategies-and-50-sprint-results.md"
+  ],
+  "llm-wiki/wiki/project/sprints/sprint-50-supertrend.md": [
+    "00-обзор/strategies-and-50-sprint-results.md"
+  ],
+  "llm-wiki/wiki/project/sprints/sprint-52-kronos.md": [
+    "00-обзор/strategies-and-50-sprint-results.md"
+  ],
+  "migrations/0003_execution_state.sql": [
+    "01-как-работает-бот/storage-and-database.md",
+    "05-исполнение-ордеров/execution-state-persistence-and-halt-audit.md"
+  ],
+  "migrations/0004_execution_state_v2.sql": [
+    "01-как-работает-бот/storage-and-database.md",
+    "05-исполнение-ордеров/execution-state-persistence-and-halt-audit.md"
+  ],
+  "migrations/0005_halt_persistence.sql": [
+    "01-как-работает-бот/storage-and-database.md",
+    "05-исполнение-ордеров/execution-state-persistence-and-halt-audit.md"
+  ],
+  "migrations/0006_trade_fills.sql": [
+    "01-как-работает-бот/storage-and-database.md"
+  ],
+  "migrations/0007_bracket_exit_prices.sql": [
+    "01-как-работает-бот/storage-and-database.md",
+    "05-исполнение-ордеров/execution-state-persistence-and-halt-audit.md"
+  ],
+  "migrations/001_initial.sql": [
+    "01-как-работает-бот/storage-and-database.md"
+  ],
+  "migrations/002_risk.sql": [
+    "01-как-работает-бот/storage-and-database.md"
+  ],
+  "migrations/003_trade_history_unique.sql": [
+    "01-как-работает-бот/storage-and-database.md"
+  ],
+  "migrations/004_money_columns_text.sql": [
+    "01-как-работает-бот/storage-and-database.md"
+  ],
+  "scripts/run_kronos_s53.py": [
+    "02-стратегии/kronos-cache-build-script.md",
+    "02-стратегии/kronos-offline-predict-cache.md"
+  ],
+  "src/__main__.py": [
+    "01-как-работает-бот/data-backfill-command.md",
+    "01-как-работает-бот/end-to-end-overview.md",
+    "01-как-работает-бот/reconcile-and-monitor-commands.md",
+    "01-как-работает-бот/run-modes-testnet-live-reconcile.md",
+    "01-как-работает-бот/safety-stops-and-halts.md",
+    "01-как-работает-бот/startup-and-wiring.md",
+    "01-как-работает-бот/wfa-validation-command.md",
+    "04-риск-менеджмент/kill-switch-emergency-stop.md"
+  ],
+  "src/analytics/cross_trial_log.py": [
+    "03-индикаторы-и-расчёты/cross-trial-log.md",
+    "03-индикаторы-и-расчёты/dsr-metric.md",
+    "06-бэктест-и-валидация/deflated-sharpe-ratio.md"
+  ],
+  "src/analytics/dsr.py": [
+    "03-индикаторы-и-расчёты/dsr-metric.md",
+    "06-бэктест-и-валидация/deflated-sharpe-ratio.md"
+  ],
+  "src/backtest/__init__.py": [
+    "06-бэктест-и-валидация/what-is-backtest-overview.md"
+  ],
+  "src/backtest/atr_breakout_runner.py": [
+    "06-бэктест-и-валидация/atr-breakout-strategy.md",
+    "06-бэктест-и-валидация/research-kernel-execution-model.md"
+  ],
+  "src/backtest/data_collector.py": [
+    "06-бэктест-и-валидация/single-symbol-wfa-and-data-loading.md"
+  ],
+  "src/backtest/data_loading.py": [
+    "06-бэктест-и-валидация/single-symbol-wfa-and-data-loading.md"
+  ],
+  "src/backtest/donchian_runner.py": [
+    "03-индикаторы-и-расчёты/donchian-channel-indicator.md",
+    "03-индикаторы-и-расчёты/tstat-oos-is-metrics.md",
+    "06-бэктест-и-валидация/donchian-runner-and-reference-run.md"
+  ],
+  "src/backtest/indicators.py": [
+    "03-индикаторы-и-расчёты/atr-indicator.md",
+    "03-индикаторы-и-расчёты/bollinger-bands-indicator.md",
+    "03-индикаторы-и-расчёты/donchian-channel-indicator.md",
+    "03-индикаторы-и-расчёты/ema-rsi-indicators.md",
+    "06-бэктест-и-валидация/indicators-and-signals.md",
+    "06-бэктест-и-валидация/volume-breakout-strategy.md",
+    "06-бэктест-и-валидация/wilder-atr-and-stops.md"
+  ],
+  "src/backtest/kronos_runner.py": [
+    "02-стратегии/kronos-backtest-runner.md",
+    "02-стратегии/kronos-data-leakage.md",
+    "06-бэктест-и-валидация/kronos-exploratory-runner.md"
+  ],
+  "src/backtest/mc_permutation.py": [
+    "03-индикаторы-и-расчёты/mc-permutation-test.md",
+    "06-бэктест-и-валидация/monte-carlo-permutation.md"
+  ],
+  "src/backtest/replay.py": [
+    "06-бэктест-и-валидация/what-is-backtest-overview.md"
+  ],
+  "src/backtest/replay_engine.py": [
+    "06-бэктест-и-валидация/replay-engine-bar-by-bar.md",
+    "06-бэктест-и-валидация/replay-engine-metrics.md",
+    "06-бэктест-и-валидация/what-is-backtest-overview.md"
+  ],
+  "src/backtest/reporter.py": [
+    "06-бэктест-и-валидация/reporter-and-artifacts.md"
+  ],
+  "src/backtest/research_runner_envelope.py": [
+    "06-бэктест-и-валидация/kronos-exploratory-runner.md",
+    "06-бэктест-и-валидация/research-kernel-execution-model.md"
+  ],
+  "src/backtest/research_wfa.py": [
+    "03-индикаторы-и-расчёты/tstat-oos-is-metrics.md",
+    "06-бэктест-и-валидация/walk-forward-analysis.md",
+    "06-бэктест-и-валидация/what-is-backtest-overview.md"
+  ],
+  "src/backtest/strategy_metrics.py": [
+    "03-индикаторы-и-расчёты/max-drawdown-winrate-rr.md",
+    "03-индикаторы-и-расчёты/sharpe-sortino-metrics.md",
+    "03-индикаторы-и-расчёты/tstat-oos-is-metrics.md",
+    "06-бэктест-и-валидация/acceptance-gates-t1-t6.md",
+    "06-бэктест-и-валидация/replay-engine-metrics.md"
+  ],
+  "src/backtest/supertrend_runner.py": [
+    "03-индикаторы-и-расчёты/supertrend-indicator.md",
+    "06-бэктест-и-валидация/supertrend-strategy.md",
+    "06-бэктест-и-валидация/wilder-atr-and-stops.md"
+  ],
+  "src/backtest/trade_extractor.py": [
+    "06-бэктест-и-валидация/trade-extractor-and-records.md"
+  ],
+  "src/backtest/vector_backtest.py": [
+    "06-бэктест-и-валидация/vector-backtest-fast-approximation.md"
+  ],
+  "src/backtest/volume_breakout_runner.py": [
+    "06-бэктест-и-валидация/research-kernel-execution-model.md",
+    "06-бэктест-и-валидация/volume-breakout-strategy.md"
+  ],
+  "src/backtest/walk_forward.py": [
+    "03-индикаторы-и-расчёты/mc-permutation-test.md",
+    "03-индикаторы-и-расчёты/tstat-oos-is-metrics.md",
+    "06-бэктест-и-валидация/acceptance-gates-t1-t6.md",
+    "06-бэктест-и-валидация/walk-forward-analysis.md"
+  ],
+  "src/backtest/wfa_reporter.py": [
+    "06-бэктест-и-валидация/wfa-reporter-three-sharpe-series.md"
+  ],
+  "src/config_loader.py": [
+    "01-как-работает-бот/configuration-and-settings.md"
+  ],
+  "src/dashboard/_cache_io.py": [
+    "08-дашборд/caching-and-security.md"
+  ],
+  "src/dashboard/_kronos_dispatch.py": [
+    "02-стратегии/kronos-backtest-runner.md",
+    "02-стратегии/kronos-dashboard-dispatch.md",
+    "08-дашборд/kronos-ml-strategy.md"
+  ],
+  "src/dashboard/account_service.py": [
+    "08-дашборд/account-balance.md"
+  ],
+  "src/dashboard/app.py": [
+    "08-дашборд/caching-and-security.md",
+    "08-дашборд/dashboard-overview.md",
+    "08-дашборд/history-tab.md",
+    "08-дашборд/run-backtest-form.md"
+  ],
+  "src/dashboard/backtest_runner.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "08-дашборд/breakout-strategies.md",
+    "08-дашборд/caching-and-security.md",
+    "08-дашборд/dsr-and-mc.md",
+    "08-дашборд/ema-crossover-strategy.md",
+    "08-дашборд/equity-chart-and-drawdown.md",
+    "08-дашборд/mean-reversion-strategy.md",
+    "08-дашборд/run-backtest-form.md",
+    "08-дашборд/strategies-overview.md",
+    "08-дашборд/verdict-and-warnings.md",
+    "08-дашборд/wfa-methodology.md"
+  ],
+  "src/dashboard/glossary_data.py": [
+    "08-дашборд/breakout-strategies.md",
+    "08-дашборд/dsr-and-mc.md",
+    "08-дашборд/ema-crossover-strategy.md",
+    "08-дашборд/glossary-tab.md",
+    "08-дашборд/kronos-ml-strategy.md",
+    "08-дашборд/mean-reversion-strategy.md",
+    "08-дашборд/metrics-table-tiers.md",
+    "08-дашборд/strategies-overview.md",
+    "08-дашборд/trade-statistics.md",
+    "08-дашборд/verdict-and-warnings.md"
+  ],
+  "src/dashboard/strategy_descriptions.py": [
+    "08-дашборд/breakout-strategies.md",
+    "08-дашборд/ema-crossover-strategy.md",
+    "08-дашборд/fail-analysis-tab.md",
+    "08-дашборд/mean-reversion-strategy.md",
+    "08-дашборд/strategies-overview.md"
+  ],
+  "src/dashboard/wfa_criterion_explanations.py": [
+    "03-индикаторы-и-расчёты/dsr-metric.md",
+    "03-индикаторы-и-расчёты/max-drawdown-winrate-rr.md",
+    "03-индикаторы-и-расчёты/mc-permutation-test.md",
+    "03-индикаторы-и-расчёты/sharpe-sortino-metrics.md",
+    "03-индикаторы-и-расчёты/tstat-oos-is-metrics.md",
+    "08-дашборд/dsr-and-mc.md",
+    "08-дашборд/fail-analysis-tab.md",
+    "08-дашборд/metrics-table-tiers.md",
+    "08-дашборд/wfa-methodology.md"
+  ],
+  "src/dashboard_react/src/api/types.ts": [
+    "08-дашборд/account-balance.md",
+    "08-дашборд/dashboard-overview.md",
+    "08-дашборд/documentation-tab.md",
+    "08-дашборд/wfa-methodology.md"
+  ],
+  "src/dashboard_react/src/components/charts/EquityChart.tsx": [
+    "08-дашборд/equity-chart-and-drawdown.md"
+  ],
+  "src/dashboard_react/src/components/charts/MonthlyHeatmap.tsx": [
+    "08-дашборд/monthly-heatmap.md"
+  ],
+  "src/dashboard_react/src/components/forms/ConfigureBacktest.tsx": [
+    "08-дашборд/kronos-ml-strategy.md",
+    "08-дашборд/run-backtest-form.md"
+  ],
+  "src/dashboard_react/src/components/metrics/MetricsTable.tsx": [
+    "08-дашборд/metrics-table-tiers.md"
+  ],
+  "src/dashboard_react/src/components/metrics/TradesTable.tsx": [
+    "08-дашборд/trade-statistics.md"
+  ],
+  "src/dashboard_react/src/components/metrics/VerdictPanel.tsx": [
+    "08-дашборд/verdict-and-warnings.md"
+  ],
+  "src/dashboard_react/src/components/shared/FailAnalysisTab.tsx": [
+    "08-дашборд/fail-analysis-tab.md"
+  ],
+  "src/dashboard_react/src/components/tabs/DocumentationTab.tsx": [
+    "08-дашборд/documentation-tab.md"
+  ],
+  "src/dashboard_react/src/components/tabs/GlossaryTab.tsx": [
+    "08-дашборд/glossary-tab.md"
+  ],
+  "src/dashboard_react/src/components/tabs/HistoryTab.tsx": [
+    "08-дашборд/history-tab.md"
+  ],
+  "src/dashboard_react/src/utils/verdicts.ts": [
+    "08-дашборд/verdict-and-warnings.md"
+  ],
+  "src/execution/bracket.py": [
+    "05-исполнение-ордеров/coordinator-orchestration.md",
+    "05-исполнение-ордеров/emergency-flatten-and-residual.md",
+    "05-исполнение-ордеров/oco-bracket-emulation.md",
+    "05-исполнение-ордеров/order-lifecycle-overview.md"
+  ],
+  "src/execution/bybit/adapter.py": [
+    "05-исполнение-ордеров/bybit-order-adapter.md",
+    "05-исполнение-ордеров/oco-bracket-emulation.md",
+    "05-исполнение-ордеров/order-lifecycle-overview.md",
+    "05-исполнение-ордеров/reconcile-as-truth.md"
+  ],
+  "src/execution/bybit/errors.py": [
+    "05-исполнение-ордеров/bybit-order-adapter.md",
+    "05-исполнение-ордеров/emergency-flatten-and-residual.md"
+  ],
+  "src/execution/bybit/ws_private.py": [
+    "05-исполнение-ордеров/bybit-private-websocket.md",
+    "05-исполнение-ордеров/order-lifecycle-overview.md"
+  ],
+  "src/execution/coordinator.py": [
+    "05-исполнение-ордеров/coordinator-orchestration.md",
+    "05-исполнение-ордеров/emergency-flatten-and-residual.md",
+    "05-исполнение-ордеров/order-lifecycle-overview.md",
+    "05-исполнение-ордеров/reconcile-as-truth.md"
+  ],
+  "src/execution/models.py": [
+    "05-исполнение-ордеров/execution-state-machine.md"
+  ],
+  "src/execution/reconciler.py": [
+    "05-исполнение-ордеров/order-lifecycle-overview.md",
+    "05-исполнение-ордеров/reconcile-as-truth.md"
+  ],
+  "src/execution/state_machine.py": [
+    "05-исполнение-ордеров/coordinator-orchestration.md",
+    "05-исполнение-ордеров/execution-state-machine.md",
+    "05-исполнение-ордеров/order-lifecycle-overview.md"
+  ],
+  "src/execution/state_repo.py": [
+    "05-исполнение-ордеров/execution-state-persistence-and-halt-audit.md"
+  ],
+  "src/marketdata/bar_builder.py": [
+    "07-данные/bar-builder-ws.md"
+  ],
+  "src/marketdata/bybit/rest.py": [
+    "05-исполнение-ордеров/bybit-rest-client-and-backoff.md",
+    "07-данные/bybit-rest-source.md"
+  ],
+  "src/marketdata/bybit/ws.py": [
+    "07-данные/bybit-ws-consumer.md"
+  ],
+  "src/marketdata/clock.py": [
+    "07-данные/clock-drift-monitor.md"
+  ],
+  "src/marketdata/filters.py": [
+    "05-исполнение-ордеров/bybit-order-adapter.md",
+    "07-данные/bybit-filters.md"
+  ],
+  "src/marketdata/gaps.py": [
+    "07-данные/data-pipeline.md"
+  ],
+  "src/marketdata/models.py": [
+    "07-данные/bar-model.md"
+  ],
+  "src/marketdata/pipeline.py": [
+    "07-данные/data-pipeline.md"
+  ],
+  "src/marketdata/quality.py": [
+    "07-данные/data-quality-detector.md"
+  ],
+  "src/marketdata/storage.py": [
+    "07-данные/parquet-storage.md"
+  ],
+  "src/ml/kronos_adapter.py": [
+    "02-стратегии/kronos-ml-strategy.md",
+    "02-стратегии/kronos-mock-adapter.md",
+    "02-стратегии/kronos-offline-predict-cache.md",
+    "02-стратегии/kronos-security-weights-hash.md",
+    "02-стратегии/kronos-what-is-it.md"
+  ],
+  "src/ml/kronos_variant.py": [
+    "02-стратегии/kronos-ml-strategy.md",
+    "02-стратегии/kronos-security-weights-hash.md",
+    "02-стратегии/kronos-what-is-it.md"
+  ],
+  "src/ml/prediction_cache.py": [
+    "02-стратегии/kronos-ml-strategy.md",
+    "02-стратегии/kronos-offline-predict-cache.md"
+  ],
+  "src/ml/weights_hash.py": [
+    "02-стратегии/kronos-security-weights-hash.md"
+  ],
+  "src/platform/config.py": [
+    "00-обзор/what-is-this-bot.md",
+    "01-как-работает-бот/configuration-and-settings.md",
+    "01-как-работает-бот/run-modes-testnet-live-reconcile.md",
+    "01-как-работает-бот/safety-stops-and-halts.md",
+    "04-риск-менеджмент/circuit-breakers-drawdown-flash.md",
+    "04-риск-менеджмент/manual-override-resume.md",
+    "04-риск-менеджмент/position-sizing-kelly.md"
+  ],
+  "src/platform/db.py": [
+    "01-как-работает-бот/storage-and-database.md"
+  ],
+  "src/platform/logging.py": [
+    "01-как-работает-бот/logging-and-observability.md"
+  ],
+  "src/risk/__init__.py": [
+    "04-риск-менеджмент/risk-overview-decision-pipeline.md"
+  ],
+  "src/risk/circuit_breakers.py": [
+    "04-риск-менеджмент/circuit-breakers-drawdown-flash.md"
+  ],
+  "src/risk/equity_tracker.py": [
+    "04-риск-менеджмент/equity-tracking.md",
+    "04-риск-менеджмент/halt-gate-precommitted-criteria.md"
+  ],
+  "src/risk/fill_history.py": [
+    "04-риск-менеджмент/trade-fill-history.md"
+  ],
+  "src/risk/fill_recorder_adapter.py": [
+    "04-риск-менеджмент/trade-fill-history.md"
+  ],
+  "src/risk/halt_gate.py": [
+    "01-как-работает-бот/safety-stops-and-halts.md",
+    "04-риск-менеджмент/halt-gate-precommitted-criteria.md"
+  ],
+  "src/risk/kelly.py": [
+    "04-риск-менеджмент/position-sizing-kelly.md"
+  ],
+  "src/risk/manager.py": [
+    "04-риск-менеджмент/risk-overview-decision-pipeline.md"
+  ],
+  "src/risk/models.py": [
+    "04-риск-менеджмент/circuit-breakers-drawdown-flash.md",
+    "04-риск-менеджмент/reason-codes-assessment-output.md",
+    "04-риск-менеджмент/risk-overview-decision-pipeline.md"
+  ],
+  "src/risk/override.py": [
+    "04-риск-менеджмент/manual-override-resume.md"
+  ],
+  "src/risk/reason_codes.py": [
+    "02-стратегии/signal-architecture.md",
+    "04-риск-менеджмент/kill-switch-emergency-stop.md",
+    "04-риск-менеджмент/reason-codes-assessment-output.md",
+    "04-риск-менеджмент/trade-fill-history.md"
+  ],
+  "src/risk/resume_cb.py": [
+    "04-риск-менеджмент/manual-override-resume.md"
+  ],
+  "src/risk/sizing.py": [
+    "04-риск-менеджмент/position-sizing-kelly.md"
+  ],
+  "src/risk/state_repo.py": [
+    "01-как-работает-бот/safety-stops-and-halts.md",
+    "04-риск-менеджмент/equity-tracking.md"
+  ],
+  "src/risk/trade_history.py": [
+    "04-риск-менеджмент/halt-gate-precommitted-criteria.md",
+    "04-риск-менеджмент/trade-fill-history.md",
+    "06-бэктест-и-валидация/trade-extractor-and-records.md"
+  ],
+  "src/runtime/bar_source.py": [
+    "01-как-работает-бот/data-backfill-command.md",
+    "01-как-работает-бот/end-to-end-overview.md",
+    "01-как-работает-бот/main-loop-tick.md",
+    "07-данные/bar-source-live.md"
+  ],
+  "src/runtime/manager.py": [
+    "01-как-работает-бот/end-to-end-overview.md",
+    "01-как-работает-бот/logging-and-observability.md",
+    "01-как-работает-бот/main-loop-tick.md",
+    "01-как-работает-бот/reconcile-and-monitor-commands.md",
+    "01-как-работает-бот/safety-stops-and-halts.md",
+    "01-как-работает-бот/startup-and-wiring.md",
+    "04-риск-менеджмент/halt-gate-precommitted-criteria.md",
+    "04-риск-менеджмент/kill-switch-emergency-stop.md",
+    "05-исполнение-ордеров/order-lifecycle-overview.md"
+  ],
+  "src/signalgen/atr_breakout_strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/atr-breakout-strategy.md",
+    "03-индикаторы-и-расчёты/atr-indicator.md"
+  ],
+  "src/signalgen/bollinger_bands.py": [
+    "02-стратегии/mean-reversion-strategy.md",
+    "02-стратегии/technical-indicators.md",
+    "03-индикаторы-и-расчёты/bollinger-bands-indicator.md"
+  ],
+  "src/signalgen/donchian_strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/donchian-breakout-strategy.md",
+    "03-индикаторы-и-расчёты/atr-indicator.md",
+    "03-индикаторы-и-расчёты/donchian-channel-indicator.md",
+    "06-бэктест-и-валидация/donchian-runner-and-reference-run.md"
+  ],
+  "src/signalgen/indicators.py": [
+    "02-стратегии/donchian-breakout-strategy.md",
+    "02-стратегии/ema-crossover-strategy.md",
+    "02-стратегии/mean-reversion-strategy.md",
+    "02-стратегии/technical-indicators.md",
+    "02-стратегии/volume-breakout-strategy.md",
+    "03-индикаторы-и-расчёты/adx-indicator.md",
+    "03-индикаторы-и-расчёты/atr-indicator.md",
+    "03-индикаторы-и-расчёты/ema-rsi-indicators.md"
+  ],
+  "src/signalgen/kronos_strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/kronos-data-leakage.md",
+    "02-стратегии/kronos-ml-strategy.md",
+    "02-стратегии/kronos-signal-rule.md"
+  ],
+  "src/signalgen/mean_reversion_strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/mean-reversion-strategy.md",
+    "03-индикаторы-и-расчёты/bollinger-bands-indicator.md",
+    "03-индикаторы-и-расчёты/ema-rsi-indicators.md"
+  ],
+  "src/signalgen/models.py": [
+    "02-стратегии/signal-architecture.md"
+  ],
+  "src/signalgen/strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/ema-crossover-strategy.md",
+    "03-индикаторы-и-расчёты/adx-indicator.md"
+  ],
+  "src/signalgen/supertrend_strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/supertrend-strategy.md",
+    "03-индикаторы-и-расчёты/atr-indicator.md",
+    "03-индикаторы-и-расчёты/supertrend-indicator.md"
+  ],
+  "src/signalgen/volume_breakout_strategy.py": [
+    "00-обзор/strategies-and-50-sprint-results.md",
+    "02-стратегии/volume-breakout-strategy.md",
+    "03-индикаторы-и-расчёты/atr-indicator.md"
+  ],
+  "~/.claude/hooks/adr-agent-sync-check.sh": [
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "~/.claude/hooks/adr-index-sync-check.sh": [
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "~/.claude/hooks/context-budget-warn.sh": [
+    "10-как-работает-кит/ekonomiya-tokenov.md",
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "~/.claude/hooks/phase-advance.sh": [
+    "10-как-работает-кит/faza-5-6-verify-review.md",
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "~/.claude/hooks/sprint-flow-check.sh": [
+    "10-как-работает-кит/faza-3-4-plan-execute.md",
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "~/.claude/hooks/sprint-state-freshness-check.sh": [
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ],
+  "~/.claude/hooks/wiki-broken-link-check.sh": [
+    "10-как-работает-кит/khuki-mehanicheskie-barery.md"
+  ]
+}

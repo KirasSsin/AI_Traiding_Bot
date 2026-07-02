@@ -255,6 +255,14 @@ Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; .
 
 **Auto-Resume (S58):** упёрся в usage-лимит → хук StopFailure пишет маркер, launchd-опросник возобновляет прогон через `claude -p --resume` при сбросе. НЕ отключать хук StopFailure и не удалять `~/.claude/auto-resume/` — это контур непрерывности. Опора механизма = актуальный `next_action` в SPRINT_STATE (per-task протокол). Детали: `llm-wiki/wiki/project/components/auto-resume.md`; управление: `kit/auto-resume/install.sh status|uninstall`.
 
+## Docs-Sync Gate (BINDING, S60)
+
+Любая правка `src/**` ИЛИ `kit/**` обязана в ТОМ ЖЕ пуше обновить привязанные страницы `docs/` (привязка — frontmatter `source_files:` каждой страницы; кэш `docs/manifest.json`). Принуждение:
+- `docs-staleness-check.sh` → git push: источник изменён, страница нет → БЛОК. Escape: `[docs-ignore]` в коммите для тривиальных правок (формат/комменты/type hints).
+- `docs-broken-link-check.sh` → git push: битые `[[ссылки]]` в каноничном корпусе docs/ (00-10) → БЛОК.
+
+Фаза 7 (Sync) = `wiki-update` (llm-wiki/) + `docs-update` (docs/, S56-конвейер, только затронутые страницы). При правке кита — тоже (kit/ под git с S57). НЕ вписывать секреты в docs/ (страницы под git). Anti-pattern: «обновлю доки потом» — хук не пустит.
+
 ## Minimum behavior
 
 - Read before edit. TDD strict (RED→GREEN→COMMIT).

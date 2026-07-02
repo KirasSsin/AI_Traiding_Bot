@@ -44,6 +44,14 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/pertask-state-warn.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/docs-staleness-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/docs-broken-link-check.sh"
           }
         ]
       }

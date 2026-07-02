@@ -59,3 +59,11 @@ verification: см. VERIFICATION-LEDGER.md — в работу идут толь
 
 ## S63-research (фиксация, БЕЗ установки — решение оператора)
 Кандидаты на верификацию: serena (LSP), context-mode, git-mcp, usage-monitor/claude-code-costs, context7, atomic-commits, no-leak hook, sequential-thinking, security-sweep, code-graph/Graphify, AutoMem. Выход: отчёт с вердиктами живости/совместимости/экономии → оператор решает.
+
+## Дополнено S60 (ревью-находки → будущее)
+| ID | Что | Sev | Куда |
+|---|---|---|---|
+| KIT-022 | docs_manifest: WARN на malformed frontmatter (present but unparseable) | LOW | S62 |
+| KIT-023 | Docs-Sync coverage-gap: 43% src + весь kit/ без source_files bindings — INFO-warn на orphan-изменения | MEDIUM | future |
+| KIT-024 | money_core docs page без домен-ревьюера = prose-only; кандидат на review-gate-style гейт | MEDIUM | future |
+| KIT-025 | docs-staleness heredoc → external lib .py (P1-BASHN консистентность; backticks отсутствуют — не активный баг) | LOW | S62 |

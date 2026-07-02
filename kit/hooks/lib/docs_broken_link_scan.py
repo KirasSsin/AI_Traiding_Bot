@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
+INLINE_CODE_RE = re.compile(r"`[^`]*`")
 
 
 def collect_targets(root: Path) -> set[str]:
@@ -36,7 +37,9 @@ def iter_links(md_file: Path):
             continue
         if in_code:
             continue
-        for m in LINK_RE.finditer(line):
+        # Инлайн-код-спаны `...` — примеры синтаксиса, не навигация (S60)
+        scrubbed = INLINE_CODE_RE.sub("", line)
+        for m in LINK_RE.finditer(scrubbed):
             yield i, m.group(1)
 
 
