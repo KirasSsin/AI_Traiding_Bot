@@ -17,6 +17,8 @@ last_task_sha: c1d2232  # squash S67 на main — точка восстанов
 
 **Uniform fable-5** (ADR 0076, `857c6a3` на main): 18 агентов = claude-fable-5; frontend-design + Context7 активированы. OPERATOR-QUEUE: OQ-2/5/6/7 закрыты, OQ-1 отложен.
 
+**Deep-research кита ЗАВЕРШЁН** (`945c4e6`+`93b1229`): 47 confirmed (18 HIGH) → 47 вердиктов → план **S68-S70** в [[kit-deep-research-2026-07-02]]; арбитраж отведённых — 0 потерь. **next_action:** (1) дождаться/перезапустить log-validation workflow (resumeFromRunId `wf_ba3b2ff5-d18`, скрипт `kit-research-log-validation-*.js` в session workflows/scripts/; если журнал пуст — свежий запуск, 3 агента, дёшево) → влить coverage-матрицу + новые находки в отчёт; (2) по «запускай S68» — kit-цикл S68 «Boot-слой» по плану отчёта.
+
 **Carry (после прогона / оператору):** KIT-OD-1 (op-detect argv-классификация, выделенный security-спринт), KIT-OD-2 (tamper review↔diff), current-state→AUTO-блок kit-inventory, docs/ бэкфилл S57-63 + repoint source_files→kit/, tuning A/B (ADR 0074). OQ: 1 (токен), 4 (CLI /login), 5 (reload агентов), 6 (doc-writer тир), 7 (Frontend Design).
 
 **Важно при обрыве:** Auth `unset GITHUB_TOKEN GH_TOKEN` (Keychain gho_). Push origin — один, в конце прогона. src/ заморожен (kit-maintenance). SPRINT_STATE стейджить ОТДЕЛЬНО от commit (иначе state-backup не увидит staged).
