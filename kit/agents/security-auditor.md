@@ -2,7 +2,8 @@
 name: security-auditor
 description: Security engineer — vulnerability detection, threat modeling, secure coding для AI Trading Bot v0.1. MUST BE USED before any change touching money paths, API keys, override.py, signing/HMAC, withdrawal/transfer code, Mainnet integration, или kit config (settings/hooks — секреты и auth-bypass; целостность/counts там владеет kit-auditor). NOT for trading logic (trading-logic-reviewer), math (quant-stats-reviewer), generic Python (python-reviewer).
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-opus-4-8
+effort: high
 memory: project
 ---
 

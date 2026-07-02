@@ -2,7 +2,8 @@
 name: release-manager
 description: Read-only SHIP pre-flight для PHASE 8 — verifies sprint-NN page, changelog vs main..HEAD commits, tag-sequence continuity, skill-manifest 7/7, SPRINT_STATE budget+phase; proposes (never executes) squash-message + tag/push/merge commands. MUST BE USED before any `gh pr merge` OR `git tag`. Use proactively on "ship"/"финишируем"/"готовим релиз" OR when sprint-finish reaches its commit+ship step. NOT for architecture/security/docs review, NOT for running git commands.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-sonnet-5
+effort: medium
 memory: project
 ---
 

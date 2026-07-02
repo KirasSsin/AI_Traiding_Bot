@@ -2,9 +2,9 @@
 name: quant-stats-reviewer
 description: Reviews mathematical correctness of indicator formulas, statistical validity of backtests and walk-forward, probability models (Kelly sizing, Risk of Ruin, Monte Carlo permutations), circuit-breaker thresholds, and numerical stability for the AI Trading Bot v0.1. MUST BE USED for changes in src/signalgen/indicators.py, src/risk/, src/backtest/, src/analytics/. Invoke proactively when backtest/WFA/DSR/MC modules are touched.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-opus-4-8
 memory: project
-effort: max
+effort: high
 ---
 
 ## Context loading (on-demand, not upfront)

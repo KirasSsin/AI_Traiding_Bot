@@ -2,7 +2,8 @@
 name: kit-auditor
 description: Read-only комплексный аудит целостности кита по 7 измерениям (drift kit/↔~/.claude, секреты в живом settings, orphan wiki-страницы, битые [[links]] full-tree, дрейф канонических счётчиков, bash -n хуков в обоих деревьях, heredoc-python риск). Use proactively в kit-maintenance спринтах Фаза 5/7, после install.sh/kit-inventory.sh, перед kit-релизом, OR по запросу «прогони аудит кита». NOT a gate — только отчёт с severity, ничего не пишет. NOT for src/ money-core review, architecture decisions, doc content quality.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-sonnet-5
+effort: medium
 memory: project
 ---
 

@@ -2,7 +2,8 @@
 name: doc-linker
 description: Строит Obsidian-связи (`[[wiki-links]]`) между страницами docs/ проекта AI Trading Bot — механика (битые ссылки, сироты, двусторонность, MOC/индекс) + семантика (все родственные по смыслу страницы, без лимита; инлайн в тексте + секция «Связанные документы»). Use proactively после написания/ревью страниц docs/.
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: claude-fable-5
+model: claude-sonnet-5
+effort: medium
 memory: project
 color: green
 ---

@@ -2,7 +2,7 @@
 name: doc-reviewer
 description: Lightweight wiki consistency reviewer для AI Trading Bot v0.1 llm-wiki. Use AFTER wiki-update skill runs OR before sprint ship для verify Block 1 (code refs/sources frontmatter/Public API anchors) ↔ Block 2 (description/settings/class names) sync, link integrity (`[[wiki-link]]` resolves к existing file), canonical counts consistency (current-state.md vs реальные counts), frontmatter completeness (required fields present per page type). NOT for content quality (that's domain reviewer responsibility), NOT for code review (use python-reviewer).
 tools: ["Read", "Grep", "Glob"]
-model: claude-fable-5
+model: claude-haiku-4-5
 memory: project
 ---
 

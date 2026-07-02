@@ -143,49 +143,11 @@ System macOS Python = **3.9** → `ImportError: cannot import name 'StrEnum' fro
 
 Same for tools: `.venv/bin/pytest` / `.venv/bin/mypy` / `.venv/bin/ruff` / `.venv/bin/uvicorn`. Stdlib-only validation (yaml/json/regex) → `python3` OK; project code import → MUST `.venv/bin/python`.
 
-## Language rules (BINDING — пересмотрено 2026-05-09)
+## Language rules (BINDING)
 
-| Канал | Язык | Rationale |
-|-------|------|-----------|
-| **Чат с operator** (responses, questions, sprint reports) | **Русский** | User-facing |
-| **ADR** в `llm-wiki/wiki/project/decisions/*.md` | **Русский** | User reads directly |
-| **Wiki pages** в `llm-wiki/wiki/` (components, sprints, architecture, strategies) | **Русский** | User-facing knowledge base |
-| **Sprint summaries / brainstorm verdicts / plan files** | **Русский** | User reviews |
-| **Subagent inter-communication** (briefs to agents, agent prompts/responses) | **English** | Productivity boost — agents trained на English; внутренний канал |
-| **Code / identifiers / file paths** | **English** | Tooling convention |
-| **Code comments в `src/`** | **English** | Production standard |
-| **Code comments в `research/`** | **Russian OK** | Research toy paradigm |
-| **Commit messages** | **English** | Conventional Commits standard |
-| **Error messages в коде** | **English** | Logging standard |
+**Чат с operator / ADR / wiki / sprint-страницы / plan-файлы = русский** (оператор читает напрямую). **Inter-agent briefs / code / identifiers / commit messages / error strings = English.** `research/` комментарии — Russian OK. Технические термины (пути, code blocks, имена функций/библиотек) — как есть внутри русского.
 
-Технические термины (file paths, code blocks, error strings, command names, library names) — оставлять как есть (без перевода) внутри русского текста.
-
-### Запрещённые англицизмы → русские эквиваленты (S48 Bug I)
-
-В чате с operator (НЕ inter-agent) использовать русские слова вместо английских non-tech terms:
-
-| ❌ Англицизм (drop) | ✓ Русский эквивалент |
-|---|---|
-| Bucket | Блок / Группа |
-| scope | объём / охват |
-| tasks | задачи |
-| Recommended / Recommendation | Рекомендация |
-| concern / concerns | замечание / замечания |
-| split | разделение |
-| diff | разница |
-| review | ревью / проверка |
-| feedback | обратная связь |
-| backlog | бэклог (можно оставить — устоявшийся) |
-| roadmap | дорожная карта / план |
-
-**Технические термины ОСТАВИТЬ как есть:**
-- ADR, PHASE, BLOCKER, WFA, DSR, MC, FSM, RAW, PASS, FAIL, verdict
-- File paths (`MetricsTable.tsx`, `wfa_criterion_explanations.py`)
-- Function/class names (`get_glossary`, `useStrategyContext`)
-- Library names (React, Vite, pybit, FastAPI)
-- Error strings exact quote
-- Commit messages — English (Conventional Commits standard)
-- Code blocks — English
+Полный канал×язык + таблица запрещённых англицизмов (bucket→блок, scope→объём, concern→замечание, …) → скилл `kit-conventions` (грузи перед operator-facing текстом при сомнении).
 
 ## Kit cycle MANDATORY (BINDING per ADR 0041 — пересмотрено 2026-05-09)
 
@@ -247,25 +209,9 @@ Existing examples: `tooling-inventory-ru.md` + `tooling-inventory-ru-part-2.md` 
 
 ## Anti-waste tool patterns (BINDING — CRITICAL)
 
-| Pattern | Rule | Cost on miss |
-|---------|------|--------------|
-| **Edit-after-Read** | Read × N batch THEN Edit × N batch (never skip STEP 1). **После мутирующего tool (kit-inventory AUTO-regen / ruff --fix / hook, тронувшего файл) — re-Read перед Edit** (иначе "modified since read"). | 3× per unread file |
-| **Path verification** | `AI_Traiding_Bot` exact spelling. Verify via `pwd` если doubt. Don't-retry on Read miss (max 1 retry). | hallucination compounds |
-| **MEMORY.md tolerance** | `.claude/agent-memory/<agent>/MEMORY.md` (**project-local**, NOT `~/.claude/agent-memory/`) may NOT exist (created on first WRITE). | wasted Read |
-| **Hook bash quirk** | `bash -n <script>` after editing `~/.claude/hooks/*.sh`. Triple-backtick inside heredoc fails. | push fails → debug cycle |
-| **Uvicorn port collision** | Kill leftover process before `--port 8000 &` start (S47 lesson). | kill + restart retry |
-| **Pre-commit ruff retry** | ruff --fix modifies but doesn't re-stage. First commit fails, second succeeds. Expected 1-retry pattern. | 1 extra commit attempt |
-| **Bare `python` exit 127** | `python` command не на PATH macOS (только `python3` system OR `.venv/bin/python` venv). For project code → ALWAYS `.venv/bin/python`. For stdlib-only check (yaml/json) → `python3` OK. NEVER bare `python`. | command not found retry |
-| **`.pre-commit-config.yaml` unstaged** | Editing pre-commit config → MUST stage it BEFORE OR с next commit. Pre-commit framework blocks ANY commit с error "Your pre-commit configuration is unstaged" если config dirty. Either commit config alone first OR include в same `git add` batch. | commit blocked retry |
-| **Workflow-парс** (S65, 151×) | Plain JS, named schema consts (не inline deep literals), НЕ TS-аннотации/генерики, НЕ вложенные backticks в template (→ `[...].join()`). Гайд: `.claude/skills/workflow-authoring/SKILL.md`. Свежесозданный агент не dispatchable до reload реестра. | весь workflow-запуск падает |
-| **Invisible/control chars** (S65) | unicode/regex payload строить через `python3` (chr()/escape) или файл, НЕ literal-paste в Edit `old_string` / Bash command. | Edit "String not found" / Bash reject + round-trips |
-| **Op-detect false-fire** (S65) | Текст с литералом `gh pr merge`/`git push` НЕ передавать через Bash (grep/echo/heredoc/комменты) — использовать Edit/Write/Grep tools. Root fix → KIT-OD-1 backlog. | гейт-блок + разбор |
-| **zsh quirks** (S65) | glob без совпадений = fail ("no matches found") → кавычки/`2>/dev/null`; `$N[` парсится как array-math ("bad math expression") → кавычки или `bash -c`. | retry |
-| **git-checkout-clobber** (S65) | НЕ `git checkout -- <file>` / `git checkout <ref> -- <file>` при uncommitted правках — stash/commit сначала (единственный класс с ПОТЕРЕЙ РАБОТЫ). | потеря работы + восстановление |
+Ядро (always-on): **Read×N batch THEN Edit×N batch** (после мутирующего tool — re-Read перед Edit); `.venv/bin/python` never bare `python` (project code); `bash -n` после правки хука; `AI_Traiding_Bot` exact spelling; ADR changed → `touch ~/.claude/agents/<reviewer>.md` перед push.
 
-**ADR-agent-sync pre-push (S47 lesson):** если ADR changed → `touch ~/.claude/agents/<reviewer>.md` BEFORE push. See `sprint-finish` Step 6b.
-
-Эта таблица = единственная полная копия anti-waste правил (в `~/.claude/CLAUDE.md` и `llm-wiki/CLAUDE.md` — только ссылки сюда). Полная таксономия token-waste (S65): `llm-wiki/wiki/project/components/error-taxonomy.md` (uvicorn port-collision pattern — там же).
+Полная таблица (13 классов: workflow-парс, op-detect false-fire, zsh-квирки, git-checkout-clobber, uvicorn port-collision, invisible-chars, …) → скилл `kit-conventions` (грузи перед multi-file Edit / запуском project-Python / правкой хука). Таксономия S65: `llm-wiki/wiki/project/components/error-taxonomy.md`.
 
 ---
 

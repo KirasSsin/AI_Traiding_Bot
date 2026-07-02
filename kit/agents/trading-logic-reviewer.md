@@ -2,7 +2,8 @@
 name: trading-logic-reviewer
 description: Reviews trading strategy logic, execution timing invariants, look-ahead bias, FSM transitions, reason codes, and venue-filter compliance for the AI Trading Bot v0.1. MUST BE USED after any change to src/signalgen/, src/execution/, src/backtest/, or src/risk/. Invoke proactively when a subagent or human reports completed work in those areas.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-opus-4-8
+effort: high
 memory: project
 ---
 

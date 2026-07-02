@@ -2,7 +2,7 @@
 name: python-reviewer
 description: Expert Python code reviewer specializing in PEP 8 compliance, Pythonic idioms, type hints, security, and performance. Use for all Python code changes. MUST BE USED for Python projects.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-haiku-4-5
 memory: project
 ---
 

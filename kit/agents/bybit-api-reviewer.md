@@ -1,7 +1,8 @@
 ---
 name: bybit-api-reviewer
 description: Reviews Bybit V5 Spot API integration code for correctness — rate limits, order param validation (qty precision/price tick/TIF), WebSocket schema, error code handling, pagination, HMAC SHA256 signing. Use after any change touching src/execution/bybit/, src/marketdata/ Bybit code, or pybit V5 client invocations. Specialization beyond trading-logic-reviewer (которая фокусируется на business logic, не API protocol correctness).
-model: claude-fable-5
+model: claude-sonnet-5
+effort: high
 memory: project
 tools: [Read, Grep, Glob, Bash, WebFetch]
 ---

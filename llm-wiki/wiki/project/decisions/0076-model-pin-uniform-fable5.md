@@ -1,14 +1,14 @@
 ---
-title: "0076. Model pin — uniform claude-fable-5 (суперседит 0075 mixed-tier)"
+title: "0076. Model pin — uniform claude-fable-5 (superseded by 0077 tiered v3)"
 type: decision
-status: accepted
+status: superseded
 created: 2026-07-02
 updated: 2026-07-02
 ---
 
 # 0076. Uniform fable-5 pin-policy
 
-**Status:** accepted (оператор 2026-07-02)
+**Status:** superseded by [[0077-model-pin-tiered-v3]] (оператор 2026-07-02 — пересмотр цели: минимум токенов при максимуме результата → tiered opus/sonnet/haiku)
 **Date:** 2026-07-02
 **Supersedes:** [[0075-model-pin-policy-v2]]
 

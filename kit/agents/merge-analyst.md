@@ -2,7 +2,8 @@
 name: merge-analyst
 description: Read-only PRE-MERGE diff analyst for kit-maintenance sprints. Classifies changed-file contours (money-core / kit-hooks / docs / tests / wiki), predicts which mechanical gates (review-gate.sh KIT-003, phase-advance.sh, adr-agent-sync-check.sh, docs-staleness-check.sh, skill-manifest.sh) will and will not fire on the current diff, and surfaces gaps a human would otherwise only find by manually replaying each hook. Produces a human-readable risk-profile + checklist that complements (does not replace) review-gate.sh's own artifact contract. Use proactively BEFORE a PR-merge / branch-merge on kit-maintenance sprints OR when sprint-finish reaches its merge/ship step — merge-analyst surfaces gaps first, then the mechanical gates (review-gate / skill-manifest) enforce.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-sonnet-5
+effort: medium
 memory: project
 ---
 

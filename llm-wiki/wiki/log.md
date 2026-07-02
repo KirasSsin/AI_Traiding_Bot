@@ -2996,3 +2996,9 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Глобальный: убраны мёртвые правила (docs/PROJECT.md не существует; «покажи токены»; «спроси замечания после каждого шага»).
 - llm-wiki/CLAUDE.md: 9 agents→18 (×3 места), хуки 2→17 живым списком, дубли token-economy/anti-waste → ссылки на repo (единственная полная копия).
 - Итог: 105.6KB → 57.0KB (−46%) налога на каждую сессию и каждого сабагента. Grep стейл-остатков: CLEAN.
+
+## 2026-07-02 — kit-maintenance: ADR 0077 tiered v3 пины + скилл kit-conventions (директива оператора)
+- ADR 0077 (суперседит 0076 uniform): 18 агентов → 5 opus-4.8-high (security/trading-logic/quant-stats/architecture/trader-expert) + 11 sonnet-5 (high: data-integrity/bybit/test-engineer/doc-writer/frontend; medium: kit-auditor/dashboard/depth/linker/merge/release) + 2 haiku-4.5 (python-reviewer/doc-reviewer, без effort). effort=frontmatter-baseline + Workflow-dispatch-override для 4 эскалаций. max=только ручная. ~8× дешевле uniform (обоснование из офиц. effort-доков: high=дефолт-sweet-spot, xhigh=30мин-агентик, max=overthinking-риск).
+- Скилл kit-conventions: полные Language rules (канал×язык + запрещённые англицизмы) + anti-waste таблица (13 классов) вынесены из repo CLAUDE.md (progressive disclosure). CLAUDE.md → компактные сводки + указатель на скилл в 2 точках (language + anti-waste). Repo CLAUDE.md 24.9→20.1KB; оба указателя авто-триггерят скилл.
+- PINNED_VERSIONS переписан (3 тира + effort + причина). index.md 0077-строка + 0076 superseded. architecture-reviewer body-комментарий 0076→0077.
+- Верификация: 18/18 YAML валидны (haiku без effort, остальные с effort), зеркало diff=0, скилл виден системой.

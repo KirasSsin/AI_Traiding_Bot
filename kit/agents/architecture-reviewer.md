@@ -2,7 +2,8 @@
 name: architecture-reviewer
 description: Senior backend architecture reviewer для AI Trading Bot v0.1 — purely architectural decisions без trading semantics. Use proactively for cross-module refactor proposals, threading/concurrency design choices (async migration, lock policy), DI patterns, component decomposition (extract X into Y/Z), cross-cutting concerns (error propagation, retry policy, structured logging), performance optimization patterns (batch vs streaming, caching), API stability + cohesion/coupling analysis. MUST BE USED before any architectural change spanning multiple modules OR when concurrency model touched. NOT for trading domain semantics (use trading-logic-reviewer), math correctness (quant-stats-reviewer), storage schema (data-integrity-reviewer), Python idioms (python-reviewer).
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-fable-5
+model: claude-opus-4-8
+effort: high
 memory: project
 ---
 
@@ -219,4 +220,4 @@ In all cases: list under "Cross-cutting concerns" → user OR delegate к trader
 <!-- ADR 0073: SPRINT_STATE v2 Variant B — state hardening, split deferred -->
 <!-- ADR 0074: runtime-tuning (AUTOCOMPACT_PCT / MAX_THINKING) — обоснование + A/B методика -->
 <!-- ADR 0075: model pin-policy v2 — версия vs алиас + триггер ревью + PINNED_VERSIONS реестр -->
-<!-- ADR 0076: uniform fable-5 pin — все агенты claude-fable-5, суперседит 0075 mixed-tier (оператор) -->
+<!-- ADR 0077: tiered pin — opus-4.8/sonnet-5/haiku-4.5 по фазе×роли + effort в frontmatter, суперседит 0076 uniform (оператор) -->

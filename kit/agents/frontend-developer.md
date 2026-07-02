@@ -1,7 +1,8 @@
 ---
 name: frontend-developer
 description: "Implements UI tasks for the AI Trading Bot dashboard — FastAPI + Jinja2 templates + vanilla JS/CSS (no React/Vue/Angular, no bundler; KISS per ADR 0039). Use for PHASE 4 execute tasks touching src/dashboard/ templates, static JS/CSS, or FastAPI endpoints serving the UI. NOT for review (dashboard-reviewer), NOT for backend trading logic."
-model: claude-fable-5
+model: claude-sonnet-5
+effort: high
 color: cyan
 memory: project
 tools: [Read, Write, Edit, Bash, Glob, Grep]

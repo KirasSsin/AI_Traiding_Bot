@@ -2,7 +2,8 @@
 name: test-engineer
 description: QA engineer specialized в test strategy, test writing, coverage analysis для AI Trading Bot v0.1. MUST BE USED для new modules без tests, coverage gaps detected, property-based test design (DSR/Kelly/MC math invariants), test pyramid optimization, OR когда existing tests miss bugs (S27 audit revealed 4 formula bugs survived 25 sprints — better test design might've caught earlier). NOT for trading logic correctness (use trading-logic-reviewer), math correctness (use quant-stats-reviewer), test infrastructure setup (use python-reviewer).
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit"]
-model: claude-fable-5
+model: claude-sonnet-5
+effort: high
 memory: project
 ---
 

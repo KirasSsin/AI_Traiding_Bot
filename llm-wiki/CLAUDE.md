@@ -215,7 +215,7 @@ Example (S32e split): `tooling-inventory-ru.md` (60KB) → `tooling-inventory-ru
 
 ## Anti-waste tool patterns (BINDING)
 
-Единственная полная копия — repo `CLAUDE.md` («Anti-waste tool patterns» таблица). Ядро: Read×N batch THEN Edit×N batch (Edit-after-Read); root spelling `AI_Traiding_Bot`; MEMORY.md may-not-exist; `bash -n` после правки хука; max 1 retry на Read miss.
+Полная таблица (13 классов) → скилл `kit-conventions`. Ядро: Read×N batch THEN Edit×N batch (Edit-after-Read); root spelling `AI_Traiding_Bot`; `.venv/bin/python` never bare; `bash -n` после правки хука; max 1 retry на Read miss.
 
 ---
 

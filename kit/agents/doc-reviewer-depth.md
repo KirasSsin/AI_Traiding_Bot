@@ -2,7 +2,8 @@
 name: doc-reviewer-depth
 description: Глубинное ревью документации docs/ проекта AI Trading Bot на ТОЧНОСТЬ против исходного кода. Use proactively после написания страницы docs/ — проверяет КАЖДОЕ техническое утверждение/число/формулу против фактического src/ (Read+Grep+пересчёт Bash), ловит «уверенно-но-неверно». Адаптация sa-content-reviewer-opus из кита Wiki-SA под наш домен.
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: claude-fable-5
+model: claude-sonnet-5
+effort: medium
 memory: project
 color: red
 ---
