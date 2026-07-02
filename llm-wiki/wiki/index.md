@@ -53,6 +53,7 @@ _(пусто — v0.2+)_
 ## Project — Sprints
 
 - [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
+- [[project/kit-deep-research-2026-07-02]] 🆕 — Deep-research кита (fable-5, 8 измерений → adversarial verify → 11 панелей): 47 подтверждённых слабых мест (18 HIGH), часовая карта принуждения, план S68-S70. Сырые данные: research-evidence/kit-deep-research/.
 - [[project/sprints/sprint-67-desktop-auto-resume]] 🆕 — S67: Desktop Auto-Resume — gate-only helper (`auto_resume_gate.py`, GO/WAIT/NONE/STALE/FOREIGN) + Desktop Scheduled Task (`kit-desktop-auto-resume`, cron */30) → авто-продолжение в desktop без CLI (OQ-4). security-auditor APPROVE 0 blockers (20/20 tests). Тег alpha.67.
 - [[project/sprints/sprint-66-plugins]] 🆕 — S66 (финал mega-run): ресерч Claude Code плагинов + внедрён Context7 MCP (docs, токен-экономия); Frontend Design → оператору (OQ-7). Тег alpha.66. Отчёт [[project/plugins-research]].
 - [[project/sprints/sprint-65-error-harvest]] 🆕 — S65: таксономия token-waste ошибок (9 классов) → skill workflow-authoring + anti-waste паттерны + message-hints. Дизайн fable-5. Тег alpha.65.
