@@ -1,12 +1,12 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S61 SHIPPED (alpha.61) — далее S62 Manifest & Telemetry
-sprint: 61
-phase: between-sprints
-branch: main
+updated: 2026-07-02  # S62 Manifest & Telemetry — ship
+sprint: 62
+phase: 8-ship
+branch: feature/sprint-62-manifest-telemetry
 tag: v0.1.0-alpha.61  # последний shipped (S61)
-last_task_sha: 35ae188  # squash S61 на main — точка восстановления auto-resume
+last_task_sha: 498adbc  # HEAD последней задачи — точка восстановления auto-resume
 ---
 
 ## Текущий статус
@@ -30,19 +30,19 @@ last_task_sha: 35ae188  # squash S61 на main — точка восстанов
 
 ---
 
-## Phase tracking (S61)
+## Phase tracking (S62)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 1 Orient | done | chapter marked |
-| 2 Brainstorm | skipped (approved backlog) | KIT-008 из UNIFIED-BACKLOG |
-| 3 Plan | done | plans/2026-07-02-sprint-61-state-v2.md; PRE-PLAN arch → Вариант B BINDING |
-| 4 Execute | done | T1-T5: state-backup, state-integrity+lib, last_task_sha, ADR 0073, wiring settings.json |
-| 5 Verify | done | regression 32 python + 38 bash gate, ruff/bash -n/py_compile/selfcheck OK, size 3.5КБ |
-| 6 Review | done | arch APPROVE_WITH_CONDITIONS (закрыт) + security: 6 раундов adversarial-hunt (1 BLOCKER+6 HIGH+3 MEDIUM все закрыты), review-s61 Blockers=0. Остаток → [[kit-op-detect-hardening-backlog]] |
-| 7 Sync | done | component state-integrity-hook + ADR 0073 + index + sprint-orient/poller last_task_sha + op-detect backlog |
-| 8 Ship | done | squash main 35ae188 + tag v0.1.0-alpha.61 |
-| 9 Close | done | SPRINT_STATE between-sprints + log; → S62 Manifest & Telemetry |
+| 2 Brainstorm | skipped (approved backlog) | P1-MANIFEST/CASCADE/TUNING + tamper-evidence |
+| 3 Plan | done | plans/2026-07-02-sprint-62-manifest-telemetry.md |
+| 4 Execute | done | T1 manifest, T2 tamper, T3 cascade, T4 ADR 0074, T5 KIT-022 fix+KIT-025 audit, T6 wiring |
+| 5 Verify | done | red/green (tamper/cascade/KIT-022/HIGH#1), 17 хуков bash -n, ruff, selfcheck, S61 regression intact |
+| 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH+MED закрыты) + security (HIGH #1 origin-strip закрыт, MED#2→backlog), review-s62 Blockers=0 |
+| 7 Sync | done | component manifest-telemetry + ADR 0074 + sprint-62 + index |
+| 8 Ship | in_progress | manifest check + squash + tag v0.1.0-alpha.62 |
+| 9 Close | pending | → S63 Fable-5 Team |
 
 ---
 

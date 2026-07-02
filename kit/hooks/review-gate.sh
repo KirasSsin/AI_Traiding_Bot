@@ -66,6 +66,19 @@ sprint_state="$repo_root/llm-wiki/wiki/project/SPRINT_STATE.md"
 # резолвящийся как git-commit (sha / переименованная ветка / тег); (3) текущая
 # ветка (gh pr merge). Не определили → ГРОМКИЙ warn + fail-open (не силент).
 merge_ref="$(printf '%s' "$command_str" | grep -oE 'feature/sprint-[0-9]+[a-z]?-[A-Za-z0-9._-]+' | head -1 || true)"
+# security S62 HIGH #1: grep срезает `origin/` — `git merge origin/feature/sprint-NN`
+# давал НЕрезолвящийся локальный ref → diff main...ref падал → money_files пусто →
+# силент exit 0, tamper не запускался. Валидируем: не резолвится → пробуем origin/,
+# иначе СБРАСЫВАЕМ merge_ref (пусть сработает sha-fallback / current-branch ниже).
+if [ -n "$merge_ref" ]; then
+    if git -C "$repo_root" rev-parse --verify --quiet "${merge_ref}^{commit}" >/dev/null 2>&1; then
+        :
+    elif git -C "$repo_root" rev-parse --verify --quiet "origin/${merge_ref}^{commit}" >/dev/null 2>&1; then
+        merge_ref="origin/${merge_ref}"
+    else
+        merge_ref=""
+    fi
+fi
 if [ -z "$merge_ref" ]; then
     case "$command_str" in
         *"git merge"*)
@@ -134,12 +147,26 @@ review_status="$(echo "$review_line" | awk -F'|' '{gsub(/^ +| +$/, "", $3); prin
 review_file="$repo_root/llm-wiki/wiki/project/reviews/review-s${sprint_num}.md"
 
 ok=1
+tamper=""
 case "$review_status" in
     "done"|"skipped"*) ;;
     *) ok=0 ;;
 esac
 if [ ! -f "$review_file" ] || ! grep -qiE '^ *\**Blockers\**[: ] *\**0\**' "$review_file"; then
     ok=0
+fi
+# T2 (S62 KIT-TAMPER, закрывает остаток S59/S61): review-артефакт должен быть
+# ЗАКОММИЧЕН в диапазоне мерджа — не просто лежать в рабочем дереве (same-session
+# forgery: сессия пишет review-sNN.md без запуска ревьюеров и без коммита-в-range).
+# Плюс схема: ≥1 reviewer-строка (architecture/security/domain).
+review_rel="llm-wiki/wiki/project/reviews/review-s${sprint_num}.md"
+if [ -f "$review_file" ]; then
+    if [ -z "$(git -C "$repo_root" log --oneline "main..$merge_ref" -- "$review_rel" 2>/dev/null | head -1)" ]; then
+        ok=0; tamper="review-артефакт не закоммичен в диапазоне main..$merge_ref (same-session подделка?)"
+    fi
+    if ! grep -qiE 'reviewer|architecture|security|Reviewers|ревьюер' "$review_file"; then
+        ok=0; tamper="${tamper}${tamper:+; }review-артефакт без строки ревьюера (схема не валидна)"
+    fi
 fi
 
 if [ "$ok" -eq 0 ]; then
@@ -154,7 +181,8 @@ $(echo "$money_files" | sed 's/^/    /' | head -10)
 Требуется ОБА артефакта:
   1. SPRINT_STATE.md: строка "| 6 Review | done | ... |"   (сейчас: "${review_status:-нет строки}")
   2. $review_file
-     со строкой "Blockers: 0" (список ревьюеров + вердикты)
+     со строкой "Blockers: 0" + строкой ревьюера, ЗАКОММИЧЕННЫЙ в диапазоне мерджа
+${tamper:+     ⚠️  tamper-evidence: $tamper}
 
 Обоснование: в S55 доменные ревьюеры поймали 2 BLOCKER (unbounded-loss OCO,
 testnet/mainnet рассинхрон), прошедшие ручное ревью. Фаза 6 обязательна.

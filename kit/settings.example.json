@@ -60,6 +60,19 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/state-backup.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/cascade-read-check.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/cascade-read-check.sh"
           }
         ]
       }

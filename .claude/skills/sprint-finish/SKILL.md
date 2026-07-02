@@ -137,6 +137,17 @@ git log -1 --format='%ct %ci' -- 'llm-wiki/wiki/project/decisions/'
 If agent mtime < ADR commit time → `adr-agent-sync-check.sh` blocks push → retry required.
 Pre-emptive touch = 0 retries.
 
+### Step 6c: HARD-GATE — Skill-firing manifest (S62 P1-MANIFEST)
+
+**Перед merge/tag, НА sprint-ветке** (main..HEAD = коммиты спринта, SPRINT_STATE Phase 5 = done):
+```bash
+bash kit/skill-manifest.sh <N>
+```
+Проверяет наблюдаемые артефакты 7 фаз (plan-файл / коммиты спринта / Phase-5 done /
+review-sNN.md Blockers:0+ревьюер / components/ тронуты / sprint-NN страница / тег).
+`exit 1` (есть ✗) → STOP, добери недостающий артефакт. Философия: «скилл выстрелил»
+(ненаблюдаемо) → «артефакт скилла появился» (наблюдаемо). Запускать ДО `git tag`.
+
 ### Step 7: Commit + ship
 
 Use `superpowers:finishing-a-development-branch` skill → push branch + gh pr create + squash-merge + tag.

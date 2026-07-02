@@ -19,7 +19,10 @@ import sys
 from pathlib import Path
 
 FM_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
-SRC_RE = re.compile(r"^source_files:\s*(.+)$", re.MULTILINE)
+# KIT-022: только горизонтальный пробел после колона (не \s — иначе жадно
+# пересекает \n и хватает первый элемент block-list как мусор `- a.py`).
+# Block-list форма → нет матча → WARN ниже. Поддерживаем inline `a, b, c`.
+SRC_RE = re.compile(r"^source_files:[ \t]*(.+)$", re.MULTILINE)
 
 
 def parse_sources(md: Path) -> list[str]:
@@ -30,11 +33,24 @@ def parse_sources(md: Path) -> list[str]:
     fm = m.group(1)
     sm = SRC_RE.search(fm)
     if not sm:
+        # KIT-022 (S62): 'source_files' присутствует, но не распознан (напр.
+        # многострочный block-list, который single-line SRC_RE не ловит) —
+        # автор ХОТЕЛ привязку, а она молча теряется → staleness-гейт слеп к
+        # этой странице. WARN, не молчание.
+        if "source_files" in fm:
+            print(
+                f"⚠️  docs-manifest: {md} — 'source_files' во frontmatter, "
+                "но не распознан (нужен inline `source_files: a, b, c`)",
+                file=sys.stderr,
+            )
         return []
     raw = sm.group(1).strip()
     # Поддержка inline-списка "a, b, c" и flow-списка "[a, b]"
     raw = raw.strip("[]")
-    return [s.strip().strip("'\"") for s in raw.split(",") if s.strip()]
+    result = [s.strip().strip("'\"") for s in raw.split(",") if s.strip()]
+    if not result:
+        print(f"⚠️  docs-manifest: {md} — 'source_files' пуст после парсинга", file=sys.stderr)
+    return result
 
 
 def build(root: Path) -> dict[str, list[str]]:

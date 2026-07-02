@@ -27,7 +27,9 @@ source: S61 adversarial bypass-hunt rounds 4-6
 1. Классифицировать по РАЗОБРАННОМУ argv: первый не-флаг токен после `git` = субкоманда (merge/pull/push); `gh` с `pr merge` ИЛИ `api` на путь `/pulls/*/merge` = merge. Резолв git-алиасов (`git config --get alias.X`) перед классификацией.
 2. **Ключевать гейт от состояния ветки/диффа, а не только от строки команды** — так опечатка/непрямая форма команды не разоружает барьер. (Пересекается с S62 tamper-evidence и с идеей server-side branch protection на remote как последним рубежом.)
 
-**KIT-OD-2 (из S61, отложено) — body-table/artifact-forgery.** phase-advance Phase-5-строка `| 5 Verify | done |` и review-gate `Blockers: 0` / review-sNN.md — markdown, который гейты grep'ают, но state_integrity НЕ валидирует. Forged-valid-backup с поддельным телом таблицы проходит. → S62 tamper-evidence (подпись/hash артефактов + commit-in-range).
+**KIT-OD-2 (из S61; ЧАСТИЧНО закрыто S62) — body-table/artifact-forgery.** phase-advance Phase-5-строка `| 5 Verify | done |` и review-gate `Blockers: 0` / review-sNN.md — markdown, который гейты grep'ают, но state_integrity НЕ валидирует.
+- **S62 T2 сделал:** review-sNN.md обязан быть ЗАКОММИЧЕН в диапазоне `main..merge_ref` + строка ревьюера (не рабочее дерево) — планка поднята с эфемерного файла до аудируемого коммита.
+- **Остаток (security S62 MEDIUM #2):** commit-in-range НЕ привязывает ревью к диффу. Обходы (оба PROVEN RC=0): (а) committed-forgery — review-sNN.md с прозой «security/reviewer/Blockers: 0», закоммиченный вручную, проходит; (б) temporal-coverage — честное ревью, закоммиченное ДО money-коммита (не покрывало его), проходит. **Fix:** требовать чтобы review-коммит был потомком money-коммитов ИЛИ подпись артефакта против sha диффа. Money-ядро заморожено → process-integrity, не money-safety.
 
 ## Приоритет
 Money-контур защищён diff-детектом → это process-integrity, не прямой money-safety. Планировать после S62 (manifest/tamper-evidence даёт часть инфраструктуры). Не блокирует mega-run.
