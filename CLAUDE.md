@@ -253,6 +253,8 @@ Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; .
 - ❌ Code на feature/sprint-* branch без plan file (hook `sprint-flow-check.sh` БЛОКИРУЕТ push)
 - ❌ Merge sprint без Phase 5 status="done" (hook `phase-advance.sh` БЛОКИРУЕТ)
 
+**Auto-Resume (S58):** упёрся в usage-лимит → хук StopFailure пишет маркер, launchd-опросник возобновляет прогон через `claude -p --resume` при сбросе. НЕ отключать хук StopFailure и не удалять `~/.claude/auto-resume/` — это контур непрерывности. Опора механизма = актуальный `next_action` в SPRINT_STATE (per-task протокол). Детали: `llm-wiki/wiki/project/components/auto-resume.md`; управление: `kit/auto-resume/install.sh status|uninstall`.
+
 ## Minimum behavior
 
 - Read before edit. TDD strict (RED→GREEN→COMMIT).

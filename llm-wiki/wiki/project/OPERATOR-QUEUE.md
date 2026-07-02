@@ -24,5 +24,21 @@ Proof-of-done: `grep -c ghp_ ~/.claude/settings.json` → `0` (выполнен�
 ## OQ-2 [OPEN] Решение по S63-плагинам после прогона
 По твоему ответу: «фиксируем варианты, в конце посмотрим». Отчёт будет в `llm-wiki/wiki/project/plugins-research-s63.md`. После прочтения выбери ≤2 кандидата — интеграция отдельным спринтом.
 
+## OQ-4 [OPEN] Логин CLI в подписку — БЕЗ этого Auto-Resume (S58) не боеспособен
+
+Headless-вызов `claude -p` (ядро авто-резюма) отвечает «Credit balance is too low» даже в чистом окружении: логин CLI указывает на Console-аккаунт без API-кредитов, а не на твою Max-подписку (десктоп-приложение логинится отдельно).
+
+Шаги (~2 минуты):
+1. Открой Terminal → `claude` (интерактивно) → команда `/login` → выбери вход по подписке (Claude account с Max), НЕ Console/API-key.
+2. Проверка одной командой:
+   `cd /tmp && claude -p "Say OK" --output-format json --model haiku | grep -o '"is_error":[a-z]*'`
+   Ожидание: `"is_error":false`.
+3. Пост-проверка прав (Ship-гейт C-2 из PRE-PLAN ревью S58) —两 команды:
+   `cd /tmp/perm-probe && claude -p "Create probe1.txt with word OK using Write tool" --output-format json --model haiku; ls probe1.txt` → файла быть НЕ должно;
+   `claude -p "Create probe2.txt with word OK using Write tool" --output-format json --model haiku --allowedTools Write; ls probe2.txt` → файл должен появиться.
+   Оба результата скинь мне (или просто напиши «OQ-4 done, A=no file, B=file») — я закрою гейт в спринт-странице.
+
+До OQ-4 механизм S58 установлен и протестирован на моках; боевой E2E ждёт логина. Безопасная деградация: при нерабочем биллинге поллер логирует STILL_LIMITED/NO_PROGRESS и эскалирует, ничего не ломая.
+
 ## OQ-3 [CLOSED] Нумерация спринтов «был 75»
 Расследовано: `git tag` max = `v0.1.0-alpha.55`; `sprints/` max = 55; grep `sprint 7[0-9]` по 121MB транскрипта сессии и логам session-export — 0 совпадений. S56 (docs-спринт) не закрыт — корпус на ветке `chore/kit-integrate-headroom-ponytail`. Вывод: 75 не существовало; нумерация прогона S57+ корректна. Если помнишь контекст «75» — скажи, проверю точечно.

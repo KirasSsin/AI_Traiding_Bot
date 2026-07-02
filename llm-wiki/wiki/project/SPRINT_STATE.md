@@ -1,22 +1,22 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S57 kit-maintenance in progress (mega-run S57–S63)
-sprint: 57
-phase: 4-execution
-branch: feature/sprint-57-kit-ground-truth
-tag: v0.1.0-alpha.55  # последний shipped
+updated: 2026-07-02  # S58 auto-resume (приоритет оператора) — mega-run v2 (S57 shipped)
+sprint: 58
+phase: 3-plan
+branch: feature/sprint-58-auto-resume
+tag: v0.1.0-alpha.57  # последний shipped
 ---
 
 ## Текущий статус
 
-**Mega-run S57–S63 (kit-maintenance, оператор ушёл — автономный прогон).** Фаза 0 (MERGE & VERIFY 8 аудитов) завершена: 15 CONFIRMED / 3 STALE / 6 WRONG. Артефакты: [[UNIFIED-BACKLOG-S57]], [[VERIFICATION-LEDGER]], [[OPERATOR-QUEUE]] (OQ-1 = ротация токена, ждёт оператора). Решения оператора: без остановок; модели = матрица §4.1; S63 = только рекомендации; git push один в конце прогона.
+**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~Фаза0~~ → ~~S57~~ → **S58 Auto-Resume (приоритет оператора)** → S59 Gates → S60 Docs-Sync (+мердж chore = закрытие S56) → S61 State v2 → S62 Manifest → S63 Fable-team → S64 Plugins(внедрить ≤2) → отчёт+push. Директива: команда агентов участвует в каждом спринте; Workflow на design-шагах.
 
-**S57 «Ground Truth & Basis»** — план [[plans/2026-07-02-sprint-57-kit-ground-truth]]. Задачи: T1 secret-out, T2 kit/ в репо, T3 hooks-selfcheck (fail-CLOSED), T4 kit-inventory.sh (count-drift), T5 link-scan lib.
+**S58 «Auto-Resume»:** сессия упёрлась в лимит → маркер → launchd-опросник → `claude --continue` при сбросе → продолжение с SPRINT_STATE.next_action. Сейчас: фоновый ресерч (claude-code-guide) + A2-анализ логов (agent), затем план-финал + PRE-PLAN architecture-reviewer.
 
-**Важно для следующей сессии (если обрыв):** S56 (docs 128 страниц) НЕ закрыт — корпус на `chore/kit-integrate-headroom-ponytail` (+9 коммитов над main); мердж = S59 шаг 0. «Спринт 75» не существовал (проверено). Auth: `unset GITHUB_TOKEN GH_TOKEN` перед git remote ops (Keychain gho_).
+**Важно при обрыве:** S56 docs (128 стр) на `chore/kit-integrate-headroom-ponytail`, мердж в S60 шаг 0. Auth: `unset GITHUB_TOKEN GH_TOKEN` (Keychain gho_). Push origin — один, в конце прогона.
 
-**S55 shipped** (main `2c31c07`, tag alpha.55). Канонические счётчики: states=16, events=30, transitions=76, reason_codes=67. ADRs 72. Детали → [[sprints/sprint-55-full-audit-refactor]].
+**S57 shipped** (local main `c474f84`, tag alpha.57): kit/ в git, hooks-selfcheck, kit-inventory, секрет удалён. Счётчики: states=16, events=30, transitions=76, reason_codes=67. Детали → [[sprints/sprint-57-kit-ground-truth]].
 
 ## Carry (не трогаем в mega-run: src/ денежного ядра заморожен)
 
@@ -27,19 +27,19 @@ tag: v0.1.0-alpha.55  # последний shipped
 
 ---
 
-## Phase tracking (S57)
+## Phase tracking (S58)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | Фаза 0 mega-run = orient; SPRINT_STATE+git verified, chapter marked |
-| 2 Brainstorm | skipped (approved backlog) | торговых вопросов нет; trader-expert не нужен |
-| 3 Plan | done | plans/2026-07-02-sprint-57-kit-ground-truth.md |
-| 4 Execute | done | T1–T5, per-task коммиты (5) |
-| 5 Verify | done | grep=0, kit=30 files, selfcheck red/green, inventory idempotent, scanner red/green, unit 1650/0 |
-| 6 Review | done | arch APPROVE (+drift-guard сделан); security REQUEST_CHANGES → BLOCKER (.bak с токеном) устранён, все фиксы re-verified |
-| 7 Sync | done | hooks-selfcheck-hook.md + index + AUTO-блоки канонов |
-| 8 Ship | done (local) | sprint-57 page + squash-merge + tag v0.1.0-alpha.57 (push в конце прогона) |
-| 9 Close | done | → сразу S58 «Gates» |
+| 1 Orient | done | chapter marked; ветка auto-resume |
+| 2 Brainstorm | done | ресерч claude-code-guide + A2 (102ч простоя); PRE-PLAN arch APPROVE_WITH_CONDITIONS |
+| 3 Plan | done | plans/2026-07-02-sprint-58-auto-resume.md + условия C-1..C-3 вписаны |
+| 4 Execute | done | T1-T4, per-task коммиты; C-1/C-3 закрыты в коде |
+| 5 Verify | done | 7 мок-сценариев + hardening (badsid/malformed) green; plutil/bash -n/py_compile OK; launchd loaded, kickstart чистый |
+| 6 Review | done | security APPROVE (LOW×3 исправлены в спринте) + arch post-impl APPROVE (условия закрыты) |
+| 7 Sync | done | component page + index + CLAUDE.md + AUTO-блоки; kit-drift clean |
+| 8 Ship | done (local) | sprint-58 page + squash-merge + tag v0.1.0-alpha.58 |
+| 9 Close | done | OQ-4 оператору (CLI /login) → сразу S59 Gates |
 
 ---
 

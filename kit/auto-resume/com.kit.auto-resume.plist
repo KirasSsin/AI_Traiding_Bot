@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kit.auto-resume</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/Apple/.claude/auto-resume/bin/auto-resume-poller.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>600</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/Apple/.claude/auto-resume/launchd.out</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/Apple/.claude/auto-resume/launchd.err</string>
+  <key>UserInteractionAllowed</key>
+  <true/>
+</dict>
+</plist>

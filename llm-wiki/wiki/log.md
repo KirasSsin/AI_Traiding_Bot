@@ -2925,3 +2925,8 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Фаза 0 mega-run: 8 аудитов → UNIFIED-BACKLOG (21 CONFIRMED-запись) + VERIFICATION-LEDGER (24 проверки) + OPERATOR-QUEUE. «Спринт 75» = WRONG (max alpha.55 везде); S56 docs (128 стр) не закрыт — на chore-ветке, мердж = S59 шаг 0.
 - S57: секрет из settings.json (плюс найден+удалён апрельский .bak с полным токеном — улов security-auditor), kit/ в git (30 файлов), hooks-selfcheck fail-CLOSED (первый в ките), kit-inventory.sh AUTO-блоки + drift-guard, docs_broken_link_scan.py (S59 фундамент).
 - Ревью: architecture APPROVE / security REQUEST_CHANGES → устранено в спринте. unit 1650/0. Тег v0.1.0-alpha.57 локально; push в конце прогона.
+
+## [2026-07-02] ship | S58 — Auto-Resume & Continuity (mega-run 2/8, приоритет оператора)
+- Механизм «лимит → сам продолжил»: StopFailure-хук → маркер → launchd 600с → `claude -p --resume` с 4-значным outcome (прогресс = sha256(SPRINT_STATE)+HEAD). Закрывает ~102ч исторического простоя (27 остановок, A2-анализ логов).
+- PRE-PLAN + post-impl architecture APPROVE (условия C-1..C-3 закрыты), security APPROVE (plist без секретов endorsed; LOW×3 захарденены в спринте). Гейт OQ-4: CLI /login в подписку — оператору.
+- Тег v0.1.0-alpha.58 локально. → S59 Gates.

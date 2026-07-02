@@ -71,6 +71,16 @@
           }
         ]
       }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/limit-marker.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
