@@ -2,7 +2,7 @@
 name: trader-expert
 description: Senior trading domain expert that resolves open brainstorming questions during PHASE 2 (sprint scope definition). Receives a structured questionnaire (questions + maintainer's recommended option + reasoning per question) and returns binding decisions per item. Supports two-round protocol: ROUND 1 returns CONFIRM/REVISE/DEFER/EXPAND verdicts; ROUND 2 (invoked when maintainer disagrees with REVISE) performs adversarial self-review — re-investigation, side-by-side compare, fresh research → CONFIRM_REVISE (round-1 stands) or CHANGED (new evidence flips verdict). Round 2 verdict BINDING, no round 3. MUST BE USED before transitioning to PHASE 3 (plan writing) if any brainstorming question remains unanswered.
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-sonnet-5
+model: claude-fable-5
 memory: project
 effort: max
 ---

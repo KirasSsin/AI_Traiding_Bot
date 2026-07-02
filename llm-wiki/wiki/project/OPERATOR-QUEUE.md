@@ -40,5 +40,13 @@ Headless-вызов `claude -p` (ядро авто-резюма) отвечае�
 
 До OQ-4 механизм S58 установлен и протестирован на моках; боевой E2E ждёт логина. Безопасная деградация: при нерабочем биллинге поллер логирует STILL_LIMITED/NO_PROGRESS и эскалирует, ничего не ломая.
 
+## OQ-5 [OPEN] Перезапуск сессии для 3 новых агентов (S63)
+
+kit-auditor / merge-analyst / release-manager созданы в `~/.claude/agents/` (frontmatter валиден, model=fable-5). Реестр агентов грузится на старте сессии — **свежесозданные не dispatchable в текущей сессии**. После любого перезапуска CLI они станут доступны как subagent_type. Проверка: `claude` → спроси «list available agents» ИЛИ dispatch «kit-auditor: прогони аудит кита». Смоук в S63 сделан по логике вручную (нашёл 3 реальных pre-ship issue).
+
+## OQ-6 [OPEN] doc-writer на sonnet-5 — намеренно?
+
+ADR 0075 pin-policy: 5 из 6 fable-5-пинов judgment-heavy (обосновано). `doc-writer=claude-sonnet-5` — дешёвый тир для draft-генерации доков. Подтверди: намеренный тир ИЛИ gap миграции fable-5? Если намеренно — оставляю; иначе подниму до fable-5 в след. kit-спринте. (Записано в `kit/PINNED_VERSIONS.md`.)
+
 ## OQ-3 [CLOSED] Нумерация спринтов «был 75»
 Расследовано: `git tag` max = `v0.1.0-alpha.55`; `sprints/` max = 55; grep `sprint 7[0-9]` по 121MB транскрипта сессии и логам session-export — 0 совпадений. S56 (docs-спринт) не закрыт — корпус на ветке `chore/kit-integrate-headroom-ponytail`. Вывод: 75 не существовало; нумерация прогона S57+ корректна. Если помнишь контекст «75» — скажи, проверю точечно.

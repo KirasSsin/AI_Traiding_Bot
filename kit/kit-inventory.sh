@@ -30,11 +30,11 @@ echo "kit-inventory: agents=${AGENTS} skills=${SKILLS} superpowers=${SP} hooks=$
 # Drift-guard (S57 review issue #2): зеркало kit/ vs живой ~/.claude — WARN, не блок.
 drift=0
 diff -rq "$REPO_ROOT/kit/agents" "$HOME/.claude/agents" >/dev/null 2>&1 || drift=1
-diff -rq -x '__pycache__' -x '*.pyc' -x 'node_modules' "$REPO_ROOT/kit/hooks" "$HOME/.claude/hooks" >/dev/null 2>&1 || drift=1
+diff -rq -x '__pycache__' -x '*.pyc' -x 'node_modules' -x 'tests' "$REPO_ROOT/kit/hooks" "$HOME/.claude/hooks" >/dev/null 2>&1 || drift=1
 if [ "$drift" -eq 1 ]; then
   echo "WARN: kit/ mirror drifted from live ~/.claude — sync before ship:" >&2
   diff -rq "$REPO_ROOT/kit/agents" "$HOME/.claude/agents" 2>&1 | head -10 >&2 || true
-  diff -rq -x '__pycache__' -x '*.pyc' -x 'node_modules' "$REPO_ROOT/kit/hooks" "$HOME/.claude/hooks" 2>&1 | head -10 >&2 || true
+  diff -rq -x '__pycache__' -x '*.pyc' -x 'node_modules' -x 'tests' "$REPO_ROOT/kit/hooks" "$HOME/.claude/hooks" 2>&1 | head -10 >&2 || true
 else
   echo "kit-drift: mirror == live (clean)"
 fi

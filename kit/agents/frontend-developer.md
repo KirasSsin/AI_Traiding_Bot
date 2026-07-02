@@ -1,7 +1,7 @@
 ---
 name: frontend-developer
 description: "Use when building complete frontend applications across React, Vue, and Angular frameworks requiring multi-framework expertise and full-stack integration."
-model: claude-opus-4-7
+model: opus
 color: cyan
 memory: project
 tools: [Read, Write, Edit, Bash, Glob, Grep]

@@ -1,12 +1,12 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S62 SHIPPED (alpha.62) — далее S63 Fable-5 Team
-sprint: 62
-phase: between-sprints
-branch: main
+updated: 2026-07-02  # S63 Fable-5 Team — ship
+sprint: 63
+phase: 8-ship
+branch: feature/sprint-63-fable-team
 tag: v0.1.0-alpha.62  # последний shipped (S62)
-last_task_sha: f5b8943  # squash S62 на main — точка восстановления auto-resume
+last_task_sha: 042f33d  # HEAD последней задачи — точка восстановления auto-resume
 ---
 
 ## Текущий статус
@@ -34,19 +34,19 @@ last_task_sha: f5b8943  # squash S62 на main — точка восстанов
 
 ---
 
-## Phase tracking (S62)
+## Phase tracking (S63)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter marked |
-| 2 Brainstorm | skipped (approved backlog) | P1-MANIFEST/CASCADE/TUNING + tamper-evidence |
-| 3 Plan | done | plans/2026-07-02-sprint-62-manifest-telemetry.md |
-| 4 Execute | done | T1 manifest, T2 tamper, T3 cascade, T4 ADR 0074, T5 KIT-022 fix+KIT-025 audit, T6 wiring |
-| 5 Verify | done | red/green (tamper/cascade/KIT-022/HIGH#1), 17 хуков bash -n, ruff, selfcheck, S61 regression intact |
-| 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH+MED закрыты) + security (HIGH #1 origin-strip закрыт, MED#2→backlog), review-s62 Blockers=0 |
-| 7 Sync | done | component manifest-telemetry + ADR 0074 + sprint-62 + index |
-| 8 Ship | done | manifest 6/6 ✓ + squash main f5b8943 + tag v0.1.0-alpha.62 |
-| 9 Close | done | SPRINT_STATE between-sprints + log; → S63 Fable-5 Team |
+| 1 Orient | done | chapter marked; agent-пины инвентаризованы |
+| 2 Brainstorm | skipped (approved backlog) | Matrix §4.1 + pin-policy + 3 новых агента |
+| 3 Plan | done | plans/2026-07-02-sprint-63-fable-team.md |
+| 4 Execute | done | T1 пины fable5, T2 ADR 0075+registry+frontend fix, T3-T5 3 агента (design workflow), T6 smoke, T7 inventory 18 |
+| 5 Verify | done | frontmatter 3/3, kit-drift clean (18), audit-block bash -n, selfcheck |
+| 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH: pin-dimension+PINNED-misclass закрыты) + security (HIGH secret-echo закрыт), review-s63 Blockers=0 |
+| 7 Sync | done | component + ADR 0075 + sprint-63 + index + kit-inventory AUTO |
+| 8 Ship | in_progress | manifest + squash + tag v0.1.0-alpha.63 |
+| 9 Close | pending | → S64 Plugins & Best Practices |
 
 ---
 

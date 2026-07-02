@@ -2,7 +2,7 @@
 name: architecture-reviewer
 description: Senior backend architecture reviewer для AI Trading Bot v0.1 — purely architectural decisions без trading semantics. Use proactively for cross-module refactor proposals, threading/concurrency design choices (async migration, lock policy), DI patterns, component decomposition (extract X into Y/Z), cross-cutting concerns (error propagation, retry policy, structured logging), performance optimization patterns (batch vs streaming, caching), API stability + cohesion/coupling analysis. MUST BE USED before any architectural change spanning multiple modules OR when concurrency model touched. NOT for trading domain semantics (use trading-logic-reviewer), math correctness (quant-stats-reviewer), storage schema (data-integrity-reviewer), Python idioms (python-reviewer).
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: claude-sonnet-5
+model: claude-fable-5
 memory: project
 ---
 
