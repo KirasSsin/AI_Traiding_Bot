@@ -1,19 +1,21 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S66 SHIPPED (alpha.66) — mega-run завершён; финал = отчёт + push
-sprint: 66
+updated: 2026-07-02  # S67 SHIPPED (alpha.67) — Desktop Auto-Resume; push отложен (оператор)
+sprint: 67
 phase: between-sprints
 branch: main
-tag: v0.1.0-alpha.66  # последний shipped (S66) — ФИНАЛ прогона
-last_task_sha: 77cb996  # squash S66 на main — точка восстановления auto-resume
+tag: v0.1.0-alpha.67  # последний shipped (S67)
+last_task_sha: c1d2232  # squash S67 на main — точка восстановления auto-resume
 ---
 
 ## Текущий статус
 
-**Mega-run v2 ЗАВЕРШЁН** (план = [[KIT-MASTER-PLAN]]). ~~S57~~…~~S66~~ отгружены локально (теги alpha.57…alpha.66). **Финал (осталось):** (1) `kit-upgrade-report.md` — сводка S57-S66; (2) **ОДИН** git push origin (весь прогон локально; `unset GITHUB_TOKEN GH_TOKEN`).
+**Mega-run v2 (S57–S66) ЗАВЕРШЁН** + пост-прогон **S67**. Все отгружены локально (теги alpha.57…alpha.67). **Push отложен** (оператор — накопить, один push позже; `unset GITHUB_TOKEN GH_TOKEN`).
 
-**S66 SHIPPED** (main `77cb996`, tag alpha.66): ресерч Claude Code плагинов → внедрён Context7 MCP (`.mcp.json`, docs библиотек, токен-экономия, reversible); Frontend Design → оператору (OQ-7); дубли отклонены (кит зрелый). Детали → [[sprints/sprint-66-plugins]] · [[plugins-research]].
+**S67 SHIPPED** (main `c1d2232`, tag alpha.67): Desktop Auto-Resume — gate-only `auto_resume_gate.py` (GO/WAIT/NONE/STALE/FOREIGN, C2-guardы + first_ts ceiling) + Desktop Scheduled Task `kit-desktop-auto-resume` (cron `*/30` MSK). Закрыл пересмотренный OQ-4 (desktop, не CLI). security-auditor APPROVE 0 blockers, 20/20 tests. Детали → [[sprints/sprint-67-desktop-auto-resume]].
+
+**Uniform fable-5** (ADR 0076, `857c6a3` на main): 18 агентов = claude-fable-5; frontend-design + Context7 активированы. OPERATOR-QUEUE: OQ-2/5/6/7 закрыты, OQ-1 отложен.
 
 **Carry (после прогона / оператору):** KIT-OD-1 (op-detect argv-классификация, выделенный security-спринт), KIT-OD-2 (tamper review↔diff), current-state→AUTO-блок kit-inventory, docs/ бэкфилл S57-63 + repoint source_files→kit/, tuning A/B (ADR 0074). OQ: 1 (токен), 4 (CLI /login), 5 (reload агентов), 6 (doc-writer тир), 7 (Frontend Design).
 
@@ -28,19 +30,19 @@ last_task_sha: 77cb996  # squash S66 на main — точка восстанов
 
 ---
 
-## Phase tracking (S66 — финал)
+## Phase tracking (S67 — Desktop Auto-Resume)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter marked |
-| 2 Brainstorm | skipped | директива v2 (внедрить ≤2) |
-| 3 Plan | done | web-ресерч + tech-страница plugins-research (doc-first) |
-| 4 Execute | done | T1 ресерч, T2 фильтр (дубли отклонены), T3 Context7 в .mcp.json, T4 Frontend Design → OQ-7 |
-| 5 Verify | done | .mcp.json валиден (3 сервера), Context7 v3.2.2 на npm, не дублирует |
-| 6 Review | done | low-risk (ресерч+1 MCP, reversible); review в sprint-66; Blockers=0 |
-| 7 Sync | done | plugins-research + sprint-66 + OQ-7 + index |
-| 8 Ship | done | manifest 7/7 + squash main 77cb996 + tag v0.1.0-alpha.66 |
-| 9 Close | done | mega-run завершён; → ФИНАЛ: kit-upgrade-report + один push origin |
+| 1 Orient | done | chapter S67 marked |
+| 2 Brainstorm | skipped | директива ясна (OQ-4 verdict → desktop path) |
+| 3 Plan | done | plan + техстраница auto-resume (doc-first); ветка feature/sprint-67 |
+| 4 Execute | done | T1 gate helper + T2 20 tests (fable-5 TDD via Workflow), T3 consumer-контракт git, T4 Scheduled Task через MCP |
+| 5 Verify | done | 20/20 pytest, ruff clean, dry-run NONE/GO/FOREIGN/WAIT |
+| 6 Review | done | security-auditor (fable-5) APPROVE 0 blockers; C-A/C-B/C-C закрыты; review в sprint-67 |
+| 7 Sync | done | auto-resume component + sprint-67 + index + current-state (sprint pages 69) |
+| 8 Ship | done | squash main c1d2232 + tag v0.1.0-alpha.67 (push отложен) |
+| 9 Close | done | между спринтами; auto-resume боевой (первый тик gate → NONE, мутаций нет) |
 
 ---
 

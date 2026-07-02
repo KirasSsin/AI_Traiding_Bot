@@ -2973,3 +2973,7 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 
 ## [2026-07-02] mega-run-complete | S57-S66 done, отчёт kit-upgrade-report.md
 - 10 спринтов отгружены (alpha.57..alpha.66). Агенты 15→18, хуки 7→14, скиллы 5→10, ADR 71→75. 1 BLOCKER + 6+ HIGH закрыты (6-раундовый adversarial-hunt на самом ките). src/ не тронут. Осталось: KIT-OD-1/OD-2, current-state→AUTO, docs/ бэкфилл, tuning A/B, OQ-1/4/5/6/7. → один push origin.
+
+## [2026-07-02] ship | S67 Desktop Auto-Resume (alpha.67)
+- gate-only auto_resume_gate.py (GO/WAIT/NONE/STALE/FOREIGN, C2 guards + first_ts ceiling) + Desktop Scheduled Task kit-desktop-auto-resume (cron */30 MSK, scheduled-tasks MCP). fable-5 TDD via Workflow. security-auditor APPROVE 0 blockers (C-A/C-B/C-C closed). 20/20 tests. squash main c1d2232. Push отложен (оператор).
+- Также: uniform fable-5 (ADR 0076, 857c6a3) — 18 агентов claude-fable-5; frontend-design + Context7 активированы; git-sync cleanup (9 веток удалены).
