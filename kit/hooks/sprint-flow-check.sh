@@ -67,7 +67,32 @@ fi
 
 # Match: feature/sprint-NN-<slug> OR feature/sprint-NNa-<slug> (e.g. sprint-08c)
 if [[ ! "$current_branch" =~ ^feature/sprint-([0-9]+[a-z]?)-.+$ ]]; then
-    exit 0  # not sprint branch, skip
+    # KIT-002 (S59): источник истины «идёт ли спринт» — SPRINT_STATE.phase, не имя ветки.
+    # Активная фаза 2..8 на не-sprint ветке = обход гейтов (прецедент S56 на chore/*) → БЛОК.
+    state_phase="$(grep -m1 '^phase:' "$repo_root/llm-wiki/wiki/project/SPRINT_STATE.md" 2>/dev/null \
+        | sed 's/^phase:[[:space:]]*//;s/[[:space:]]*#.*$//;s/[[:space:]]*$//' || true)"
+    case "$state_phase" in
+        [2-8]|[2-8]-*)
+            cat >&2 <<EOF
+
+🚫  Sprint flow check FAILED (KIT-002 branch-bypass guard, S59)
+
+Branch: $current_branch — НЕ sprint-ветка,
+но SPRINT_STATE.phase = "$state_phase" → спринт активен.
+
+Гейты кита работают только на ветках feature/sprint-NN-<slug>.
+Прецедент: S56 целиком прошёл на chore/* мимо всех гейтов.
+
+Required action — ОДНО из:
+  1. Перенеси работу: git branch -m $current_branch feature/sprint-NN-<slug>
+  2. Если спринт реально закрыт — обнови SPRINT_STATE.md: phase: between-sprints
+  3. Если это autoresearch — phase: autoresearch
+
+(Defined by: ~/.claude/hooks/sprint-flow-check.sh, S59 KIT-002)
+EOF
+            exit 2 ;;
+        *) exit 0 ;;  # between-sprints / autoresearch / нет файла — пропуск
+    esac
 fi
 
 sprint_num="${BASH_REMATCH[1]}"

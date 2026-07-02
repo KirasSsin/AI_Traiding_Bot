@@ -2930,3 +2930,8 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Механизм «лимит → сам продолжил»: StopFailure-хук → маркер → launchd 600с → `claude -p --resume` с 4-значным outcome (прогресс = sha256(SPRINT_STATE)+HEAD). Закрывает ~102ч исторического простоя (27 остановок, A2-анализ логов).
 - PRE-PLAN + post-impl architecture APPROVE (условия C-1..C-3 закрыты), security APPROVE (plist без секретов endorsed; LOW×3 захарденены в спринте). Гейт OQ-4: CLI /login в подписку — оператору.
 - Тег v0.1.0-alpha.58 локально. → S59 Gates.
+
+## [2026-07-02] ship | S59 — Gates: принуждение вместо дисциплины (mega-run 3/8)
+- 4 гейта: KIT-002 branch-bypass (phase-источник истины, прецедент S56 закрыт), KIT-003 review-gate (деньги не мержатся без review-sNN.md Blockers:0), KIT-009 ADR-sync по содержимому (touch мёртв; было 58/75 блоков = touch-шум), KIT-013 per-task WARN.
+- Ревью: architecture (HIGH: sha-merge обход — закрыт) + security (main-merge, self-skip, sprint-scoped row — закрыты). Same-session forgery = принятая граница, tamper-evidence → S62.
+- Механических гейтов: 2 → 6 блокирующих + 2 WARN. Тег v0.1.0-alpha.59 локально. → S60.

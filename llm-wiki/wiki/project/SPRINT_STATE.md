@@ -1,11 +1,11 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S58 auto-resume (приоритет оператора) — mega-run v2 (S57 shipped)
-sprint: 58
-phase: 3-plan
-branch: feature/sprint-58-auto-resume
-tag: v0.1.0-alpha.57  # последний shipped
+updated: 2026-07-02  # S59 SHIPPED — далее S60 docs-sync
+sprint: 59
+phase: 4-execution
+branch: feature/sprint-59-kit-gates
+tag: v0.1.0-alpha.58  # последний shipped
 ---
 
 ## Текущий статус
@@ -27,19 +27,19 @@ tag: v0.1.0-alpha.57  # последний shipped
 
 ---
 
-## Phase tracking (S58)
+## Phase tracking (S59)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter marked; ветка auto-resume |
-| 2 Brainstorm | done | ресерч claude-code-guide + A2 (102ч простоя); PRE-PLAN arch APPROVE_WITH_CONDITIONS |
-| 3 Plan | done | plans/2026-07-02-sprint-58-auto-resume.md + условия C-1..C-3 вписаны |
-| 4 Execute | done | T1-T4, per-task коммиты; C-1/C-3 закрыты в коде |
-| 5 Verify | done | 7 мок-сценариев + hardening (badsid/malformed) green; plutil/bash -n/py_compile OK; launchd loaded, kickstart чистый |
-| 6 Review | done | security APPROVE (LOW×3 исправлены в спринте) + arch post-impl APPROVE (условия закрыты) |
-| 7 Sync | done | component page + index + CLAUDE.md + AUTO-блоки; kit-drift clean |
-| 8 Ship | done (local) | sprint-58 page + squash-merge + tag v0.1.0-alpha.58 |
-| 9 Close | done | OQ-4 оператору (CLI /login) → сразу S59 Gates |
+| 1 Orient | done | chapter marked |
+| 2 Brainstorm | skipped (approved backlog) | — |
+| 3 Plan | done | plans/2026-07-02-sprint-59-kit-gates.md |
+| 4 Execute | done | T1-T5 per-task коммиты |
+| 5 Verify | done | red/green все 4 гейта + re-tests после ревью-фиксов; bash -n 17 хуков; selfcheck OK |
+| 6 Review | done | arch APPROVE_WITH_CONDITIONS + security APPROVE w/ Concerns → ВСЕ условия закрыты; review-s59.md Blockers: 0 |
+| 7 Sync | done | 2 новые component-страницы + adr-sync обновлена + index + AUTO |
+| 8 Ship | done (local) | sprint-59 page + squash + tag v0.1.0-alpha.59 |
+| 9 Close | done | → S60 Docs-Sync (шаг 0: мердж chore = закрытие S56) |
 
 ---
 

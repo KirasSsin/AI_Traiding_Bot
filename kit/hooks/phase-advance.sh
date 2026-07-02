@@ -66,7 +66,24 @@ if [ -z "$current_branch" ]; then
 fi
 
 if [[ ! "$current_branch" =~ ^feature/sprint-([0-9]+[a-z]?)-.+$ ]]; then
-    exit 0  # not sprint branch, skip
+    # KIT-002 (S59): активный спринт (phase 2..8) на не-sprint ветке → merge заблокирован.
+    state_phase="$(grep -m1 '^phase:' "$sprint_state_path" 2>/dev/null \
+        | sed 's/^phase:[[:space:]]*//;s/[[:space:]]*#.*$//;s/[[:space:]]*$//' || true)"
+    case "$state_phase" in
+        [2-8]|[2-8]-*)
+            cat >&2 <<EOF
+
+🚫  Phase advance check FAILED (KIT-002 branch-bypass guard, S59)
+
+Branch: $current_branch — НЕ sprint-ветка, но SPRINT_STATE.phase = "$state_phase".
+Merge при активном спринте разрешён только с feature/sprint-NN-* веток.
+Действия: переименуй ветку ИЛИ закрой спринт (phase: between-sprints).
+
+(Defined by: ~/.claude/hooks/phase-advance.sh, S59 KIT-002)
+EOF
+            exit 2 ;;
+        *) exit 0 ;;
+    esac
 fi
 
 sprint_num="${BASH_REMATCH[1]}"

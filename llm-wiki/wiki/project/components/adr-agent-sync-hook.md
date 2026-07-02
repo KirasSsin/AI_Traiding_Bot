@@ -3,14 +3,16 @@ title: ADR ↔ Agent prompt sync hook
 type: component
 tags: [infrastructure, hooks, review-agents, process, superpowers]
 created: 2026-04-22
-updated: 2026-04-22
-sources: []
+updated: 2026-07-02
+sources: [kit/hooks/adr-agent-sync-check.sh]
 status: stable
 ---
 
 # ADR ↔ Agent prompt sync hook
 
-**TL;DR:** Claude Code `PreToolUse` hook на Bash. Срабатывает перед `git push`. Если в пушимых коммитах изменялся любой `llm-wiki/wiki/project/decisions/NNNN-*.md`, то mtime хотя бы одного `~/.claude/agents/*.md` должен быть ≥ времени последнего ADR-коммита. Иначе push блокируется. Операционализация ADR [[../decisions/0017-review-agent-harness]].
+**TL;DR:** Claude Code `PreToolUse` hook на Bash. Срабатывает перед `git push`. Если в пушимых коммитах изменялся любой `llm-wiki/wiki/project/decisions/NNNN-*.md`, **номер `NNNN` обязан встречаться в теле хотя бы одного `~/.claude/agents/*.md`** (S59 KIT-009: содержательная проверка; прежний mtime-механизм с `touch`-подтверждением упразднён — A2-анализ показал, что 58 из 75 исторических блоков были touch-ритуалом без обновления знаний). Иначе push блокируется. Операционализация ADR [[../decisions/0017-review-agent-harness]].
+
+> ⚠️ Диаграмма/примеры ниже описывают историческую mtime-механику (S8c–S58) — сохранены как контекст; актуальная логика = grep номера ADR по телам агентов.
 
 ## Purpose
 

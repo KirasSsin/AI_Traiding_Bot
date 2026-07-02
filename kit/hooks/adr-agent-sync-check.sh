@@ -87,45 +87,17 @@ if [ -z "$adr_changed" ]; then
     exit 0
 fi
 
-# Latest ADR commit time in the range (unix epoch seconds).
-latest_adr_ts="$(git -C "$repo_root" log -1 --format='%ct' "$base"..HEAD -- "$adr_dir_rel" 2>/dev/null || true)"
-if [ -z "$latest_adr_ts" ]; then
-    exit 0
-fi
-
-# Latest mtime of any agent prompt.
+# KIT-009 (S59): содержательная проверка вместо mtime. `touch` больше НЕ обходит:
+# номер каждого изменённого ADR (NNNN из имени файла) обязан встречаться в теле
+# хотя бы одного агент-промпта (осознанное подтверждение «агент знает про ADR»).
+# Обоснование: A2-анализ — 58 из 75 исторических блоков этого хука были
+# touch-ритуалом без реального обновления знаний агентов (чистый шум).
 if [ ! -d "$AGENTS_DIR" ]; then
     cat >&2 <<EOF
 
 🚫  ADR ↔ Agent prompt sync check FAILED
 
-ADR files changed in commits being pushed:
-$(printf '%s\n' "$adr_changed" | sed 's/^/    - /')
-
-But $AGENTS_DIR does not exist. Create the directory and the
-corresponding reviewer prompt(s), or touch an existing prompt to acknowledge
-that no agent update is needed.
-
-(Defined by: llm-wiki/wiki/project/components/adr-agent-sync-hook.md)
-EOF
-    exit 2
-fi
-
-# macOS `stat -f '%m'` is seconds since epoch. Linux would need `stat -c '%Y'`.
-# We detect BSD vs GNU stat via uname.
-if [ "$(uname)" = "Darwin" ]; then
-    latest_agent_mtime="$(find "$AGENTS_DIR" -type f -name '*.md' -exec stat -f '%m' {} + 2>/dev/null | sort -nr | head -1)"
-else
-    latest_agent_mtime="$(find "$AGENTS_DIR" -type f -name '*.md' -printf '%T@\n' 2>/dev/null | cut -d. -f1 | sort -nr | head -1)"
-fi
-
-if [ -z "$latest_agent_mtime" ]; then
-    cat >&2 <<EOF
-
-🚫  ADR ↔ Agent prompt sync check FAILED
-
-ADR files changed but no agent prompts exist in $AGENTS_DIR.
-
+ADR files changed but $AGENTS_DIR does not exist.
 $(printf '%s\n' "$adr_changed" | sed 's/^/    - /')
 
 (Defined by: llm-wiki/wiki/project/components/adr-agent-sync-hook.md)
@@ -133,39 +105,44 @@ EOF
     exit 2
 fi
 
-if [ "$latest_agent_mtime" -lt "$latest_adr_ts" ]; then
-    # Format timestamps for the message.
-    if [ "$(uname)" = "Darwin" ]; then
-        adr_time_h="$(date -r "$latest_adr_ts" '+%Y-%m-%d %H:%M:%S %Z')"
-        agent_time_h="$(date -r "$latest_agent_mtime" '+%Y-%m-%d %H:%M:%S %Z')"
-    else
-        adr_time_h="$(date -d "@$latest_adr_ts" '+%Y-%m-%d %H:%M:%S %Z')"
-        agent_time_h="$(date -d "@$latest_agent_mtime" '+%Y-%m-%d %H:%M:%S %Z')"
+missing=""
+for adr_path in $adr_changed; do
+    # Пропуск ADR, отсутствующих в HEAD (add-then-delete в одном диапазоне;
+    # review issue #5 — diff base..HEAD такой файл не показывает вовсе)
+    if ! git -C "$repo_root" cat-file -e "HEAD:$adr_path" 2>/dev/null; then
+        continue
     fi
+    adr_base="$(basename "$adr_path")"
+    adr_num="$(printf '%s' "$adr_base" | grep -oE '^[0-9]{4}' || true)"
+    [ -n "$adr_num" ] || continue
+    # Анкерованный матч "ADR 0071"/"ADR-0071"/"ADR0071" (review issue #2:
+    # голое 4-значное число ловит случайные совпадения — 108 цифровых серий
+    # уже живут в телах агентов; нужен осознанный маркер)
+    if ! grep -rlqE "ADR[[:space:]-]*${adr_num}" "$AGENTS_DIR"/*.md 2>/dev/null; then
+        missing="$missing $adr_base"
+    fi
+done
 
+if [ -n "$missing" ]; then
     cat >&2 <<EOF
 
-🚫  ADR ↔ Agent prompt sync check FAILED
+🚫  ADR ↔ Agent prompt sync check FAILED (KIT-009 content-check, S59)
 
-ADR files changed in commits being pushed:
-$(printf '%s\n' "$adr_changed" | sed 's/^/    - /')
+ADR в пуше, чей номер НЕ упомянут ни в одном агент-промпте ($AGENTS_DIR):
+$(printf '%s\n' $missing | sed 's/^/    - /')
 
-Latest ADR commit time:    $adr_time_h
-Latest agent prompt mtime: $agent_time_h
-
-Agent prompts in $AGENTS_DIR have not been updated since the ADR change.
-
-Required action — one of:
-  1) Update the relevant reviewer prompt(s) under $AGENTS_DIR so they
-     reflect the new ADR (e.g. new Kelly phases, new reason codes,
-     changed walk-forward params), then retry push.
-  2) If the ADR change does not affect any agent prompt, acknowledge by
-     touching any prompt to advance its mtime:
-         touch $AGENTS_DIR/trading-logic-reviewer.md
-     then retry push.
+Required action:
+  Впиши в релевантного ревьюера (напр. trading-logic-reviewer.md) строку
+  в форме "ADR NNNN" (именно с префиксом ADR), например:
+      "ADR NNNN: <одна строка сути решения>"
+  Голое число без префикса ADR не засчитывается (анти-совпадение).
+  Просто touch файла НЕ проходит (mtime-обход закрыт в S59).
+  Не знаешь, какой агент релевантен? Правило: деньги→security-auditor,
+  торговая логика→trading-logic-reviewer, математика→quant-stats-reviewer,
+  данные→data-integrity-reviewer, архитектура→architecture-reviewer.
 
 (Defined by: llm-wiki/wiki/project/components/adr-agent-sync-hook.md
- Policy:     ADR 0017 — review-agent harness)
+ Policy:     ADR 0017 + S59 KIT-009)
 EOF
     exit 2
 fi
