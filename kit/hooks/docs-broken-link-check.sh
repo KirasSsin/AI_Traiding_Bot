@@ -20,12 +20,14 @@ except Exception:
     pass
 ' 2>/dev/null || true)"
 
-case "$command_str" in
-    *"docs-broken-link-check"*) exit 0 ;;
-esac
-case "$command_str" in
-    *"git push"*|*"git  push"*) ;;
-    *) exit 0 ;;
+# S69 T8/T9 (KIT-OD-1 + zero-forgery): push-детект по резолвнутому argv (lib/op_detect.py).
+# substring '*git push*' false-fire'ил и пропускал `git -c x=y push`; self-skip по имени
+# хука УБРАН. PARSE_ERROR → substring fallback.
+op_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/op_detect.py"
+case "$(printf '%s' "$command_str" | python3 "$op_lib" push 2>/dev/null || echo PARSE_ERROR)" in
+    GATE) ;;                                                        # git push — гейтим ниже
+    allow|skip) exit 0 ;;                                            # не push
+    *) case "$command_str" in *"git push"*|*"git  push"*) ;; *) exit 0 ;; esac ;;  # fallback
 esac
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"

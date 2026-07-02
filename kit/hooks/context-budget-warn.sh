@@ -50,17 +50,22 @@ size_kb=$(du -k "$transcript_path" 2>/dev/null | cut -f1 || echo 0)
 # Convert к integer (defensive против leading whitespace)
 size_kb=$((size_kb + 0))
 
+msg=""
 if [ "$size_kb" -gt "$URGENT_KB" ]; then
-    echo "" >&2
-    echo "🔴 Context URGENT: transcript ${size_kb}KB (>${URGENT_KB}KB ≈ 80% context window)." >&2
-    echo "   Recommend: /compact <focus topic> OR /clear для new task." >&2
-    echo "   Continued work без compact = risk session crash на next reply." >&2
-    echo "" >&2
+    msg="🔴 Context URGENT: transcript ${size_kb}KB (>${URGENT_KB}KB ≈ 80% context window).
+   Recommend: /compact <focus topic> OR /clear для new task.
+   Continued work без compact = risk session crash на next reply."
 elif [ "$size_kb" -gt "$WARN_KB" ]; then
-    echo "" >&2
-    echo "🟡 Context warning: transcript ${size_kb}KB (>${WARN_KB}KB ≈ 60% context window)." >&2
-    echo "   Consider /compact soon если task continues long." >&2
-    echo "" >&2
+    msg="🟡 Context warning: transcript ${size_kb}KB (>${WARN_KB}KB ≈ 60% context window).
+   Consider /compact soon если task continues long."
+fi
+
+# S69 T2 (D7-01): WARN на stderr (оператор) + additionalContext на stdout (МОДЕЛЬ).
+# UserPromptSubmit exit-0 stderr модели невидим — подсказка про /compact была немой.
+if [ -n "$msg" ]; then
+    printf '\n%s\n\n' "$msg" >&2
+    emit_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/emit_context.py"
+    printf '%s' "$msg" | python3 "$emit_lib" UserPromptSubmit 2>/dev/null || true
 fi
 
 exit 0

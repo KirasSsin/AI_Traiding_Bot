@@ -35,31 +35,52 @@ except Exception:
 # Тестировать гейт — прямым вызовом (hook-test), payload через stdin, НЕ inline.
 
 # Событие: gh pr merge ИЛИ git merge (любая форма ссылки — S59 review fix HIGH-1:
-# merge по sha/переименованной ветке раньше тихо обходил гейт)
-# round-6 (bypass-hunt): нормализуем пробелы/табы + срезаем git-глобалки `-c/-C X`
-# перед детектом. `gh   pr   merge` (пробелы), `git -c http.x=y merge` (глобалка
-# между git и субкомандой) иначе минули бы подстроку. `gh api .../pulls/N/merge`
-# (REST-эндпоинт мерджа) детектим отдельно.
-# ОСТАТОК (backlog: kit-op-detect-hardening security-спринт per auditor root-fix
-# «classify on resolved argv + key off branch/diff»): inline-alias `git -c
-# alias.z=merge z` (z = алиас, не резолвится без git config) и произвольный
-# `gh api` через переменную — подстрокой не ловятся. Денежный контур при этом
-# защищён diff-детектом review-gate (primary money-path check ниже).
-command_norm="$(printf '%s' "$command_str" | tr -s ' \t' ' ')"
-command_argv="$(printf '%s' "$command_norm" | sed -E 's/git( -[cC] [^ ]+)+ /git /g')"
+# merge по sha/переименованной ветке раньше тихо обходил гейт).
+# S69 T9 (KIT-OD-1) root-fix: детект по РЕЗОЛВНУТОМУ argv (lib/op_detect.py, shlex),
+# не по подстроке. Раньше 'git merge'/'gh pr merge' в тексте (сообщение коммита,
+# grep-паттерн, echo) ложно гейтили. op_detect токенизирует с учётом кавычек,
+# режет по shell-операторам, срезает env-присвоения + git-глобалки `-c/-C X`,
+# классифицирует program+subcommand → GATE/skip/allow. `gh api .../pulls/N/merge`
+# (REST-мердж) тоже ловится. Непарсимый ввод → PARSE_ERROR → откат на substring.
+# ОСТАТОК (документирован): inline-alias `git -c alias.z=merge z` и полностью
+# переменные команды (`$CMD`) статически не резолвятся → allow; денежный контур
+# при этом защищён diff-детектом review-gate (primary money-path check ниже).
+op_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/op_detect.py"
+op_verdict="$(printf '%s' "$command_str" | python3 "$op_lib" merge 2>/dev/null || echo PARSE_ERROR)"
 is_merge=0
-case "$command_argv" in
-    *"git merge-base"*|*"git merge-tree"*|*"git merge-file"*) exit 0 ;;  # plumbing ≠ merge
-    *"gh pr merge"*|*"git merge "*|*"git merge") is_merge=1 ;;
-esac
-case "$command_norm" in
-    *"gh api"*"pulls/"*"/merge"*|*"gh api"*"/merge"*"pulls/"*) is_merge=1 ;;  # REST-мердж
+case "$op_verdict" in
+    GATE)  is_merge=1 ;;
+    skip)  exit 0 ;;                 # git merge-base/-tree/-file — plumbing, не merge
+    allow) exit 0 ;;                 # операции merge нет
+    *)  # PARSE_ERROR / нет python3 — откат на консервативный substring (S65)
+        command_norm="$(printf '%s' "$command_str" | tr -s ' \t' ' ')"
+        command_argv="$(printf '%s' "$command_norm" | sed -E 's/git( -[cC] [^ ]+)+ /git /g')"
+        case "$command_argv" in
+            *"git merge-base"*|*"git merge-tree"*|*"git merge-file"*) exit 0 ;;
+            *"gh pr merge"*|*"git merge "*|*"git merge") is_merge=1 ;;
+        esac
+        case "$command_norm" in
+            *"gh api"*"pulls/"*"/merge"*|*"gh api"*"/merge"*"pulls/"*) is_merge=1 ;;
+        esac
+        ;;
 esac
 [ "$is_merge" = "1" ] || exit 0
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 [ -n "$repo_root" ] || exit 0
-sprint_state="$repo_root/llm-wiki/wiki/project/SPRINT_STATE.md"
+# S69 T7 (LOG9-02 split-brain): SPRINT_STATE берём из КАНОНИЧНОГО checkout (main
+# worktree через git-common-dir), не из локального worktree-чекаута — worktrees +
+# 2-й клон дают параллельные SPRINT_STATE, гейт слеп к чужим. В main repo
+# common-dir=".git" → canon_root==repo_root. git diff/branch/review_file остаются
+# на repo_root (merge физически там; review-артефакт валидируется git-log-in-range).
+canon_root="$repo_root"
+common_dir="$(git -C "$repo_root" rev-parse --git-common-dir 2>/dev/null || true)"
+if [ -n "$common_dir" ]; then
+    case "$common_dir" in /*) ;; *) common_dir="$repo_root/$common_dir" ;; esac
+    _cr="$(cd "$(dirname "$common_dir")" 2>/dev/null && pwd -P || true)"
+    [ -n "$_cr" ] && canon_root="$_cr"
+fi
+sprint_state="$canon_root/llm-wiki/wiki/project/SPRINT_STATE.md"
 [ -f "$sprint_state" ] || exit 0
 
 # Ссылка для диффа. Порядок: (1) sprint-ветка в команде; (2) любой токен команды,

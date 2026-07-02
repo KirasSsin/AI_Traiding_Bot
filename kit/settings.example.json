@@ -4,6 +4,12 @@
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
   },
   "model": "claude-sonnet-4-6",
+  "permissions": {
+    "deny": [
+      "Write(**/AI_Traiding_Tool/**)",
+      "Edit(**/AI_Traiding_Tool/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

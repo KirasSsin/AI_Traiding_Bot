@@ -1,19 +1,25 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-03  # S68 SHIPPED (alpha.68) — Boot-слой; S69 следующий
-sprint: 68
-phase: between-sprints
-branch: main
-tag: v0.1.0-alpha.68  # последний shipped (S68); push отложен
-last_task_sha: eda9c28  # S68 squash на main — точка восстановления
+updated: 2026-07-03  # S69 PHASE 8 (ship) — review APPROVE, tag alpha.69
+sprint: 69
+phase: 8-ship
+branch: feature/sprint-69-gates
+tag: v0.1.0-alpha.69  # S69 ship; push отложен до конца mega-run
+last_task_sha: fba270c  # S69 Phase-6 fix (op_detect combined-flag)
 ---
 
 ## Текущий статус
 
-**S68 «Boot-слой» SHIPPED** (main `eda9c28`, tag alpha.68): 10 задач полным 9-фаз циклом; security-auditor APPROVE 0 blockers; skill-manifest OK; ~20k ток/сессию экономия. Ключевое: **T10 phase-dispatch канон** [[architecture/phase-dispatch-ru]] (фаза→агент→модель+effort, ADR 0077, «работа ТОЛЬКО по спринтам»). Детали → [[sprints/sprint-68-boot-layer]].
+**S69 «Гейты по-настоящему» — PHASE 4 (execute).** Ветка `feature/sprint-69-gates`. Plan: [[plans/2026-07-03-sprint-69-gates]] (grounding: review-gate УЖЕ ловит git merge S59-62 — не трогаем; phase-advance имел gh-pr-merge-only gap — фикс). **T1 D1-01 DONE+TESTED** (9f06657): phase-advance принуждает Phase-5 на локальном `git merge --squash` (наш реальный ship, молчал 10 спринтов) + M-4 sprint-binding + markdown-tolerance. **T9 KIT-OD-1 DONE+TESTED** (5716605): `lib/op_detect.py` — argv-классификация (shlex tokenize + split по shell-операторам + strip env/git-глобалок) заменила substring-детект; false-fire на «git merge»/«gh pr merge» в тексте команды устранён (workaround «не литерал в Bash» СНЯТ), floor money-path сохранён (PARSE_ERROR→substring fallback). S61 harness 28 regression + 7 false-fire GREEN, live-synced+dogfooded.
 
-**next_action → S69 «Гейты по-настоящему»** (6 HIGH, план в [[kit-deep-research-2026-07-02]] раздел S69): D1-01 Phase-5/6 гейт на РЕАЛЬНОМ ship-пути (git merge, не только gh pr merge — молчали 10 спринтов); D7-01 4 немых WARN-хука → additionalContext; D3-01 state-backup git-нормализация; MEM-03 consolidate-memory в sprint-finish; D2-03 release-manager+merge-analyst вшить; D5-02/SKW-05 skill-manifest advisory; LOG9-02 multi-checkout split-brain (git-common-dir); KIT-OD-1 argv op-detect. **+S69 carry (security-auditor S68):** standing `alwaysAllowedReasons` Write-allow для typo-пути `AI_Traiding_Tool` → permission-hardening (LOG9-04-смежно). Live-backups S68: `.bak-s68-fe1a24b` + `~/com.kit.auto-resume.plist.removed-s68-fe1a24b`.
+**DONE this session:** T9 (op_detect.py argv), **T3** (state-backup commit-op detect, self-skip removed), **T2** (4 WARN-хука → additionalContext через lib/emit_context.py; probe: PreToolUse/PostToolUse/UserPromptSubmit все инжектят на exit-0). Live-synced после каждой.
+
+**DONE this session:** T9 (op_detect.py argv), T3 (state-backup commit-op), T2 (4 WARN→additionalContext), **T8+T9** (op_detect push/commit по 8 гейтам + self-skip forgery снят — доказано live: grep с 'git push' больше не блокируется, `git -c push` bypass закрыт), **T7** (LOG9-02 split-brain — гейты читают КАНОНИЧНЫЙ SPRINT_STATE через git-common-dir; доказано: из stray-worktree sprint-67 гейт видит main sprint-69). Live-synced после каждой.
+
+**ВСЕ 11 задач execute DONE** (T1 T9 T3 T2 T8 T7 T6 T4 T5 T10 T11). Итог: `op_detect.py` (argv merge/push/commit) + `emit_context.py` (WARN→additionalContext) — 2 новых lib; 10 хуков переведены на argv-детект + self-skip forgery снят; git-common-dir split-brain защита в гейтах; skill-manifest Phase-2/9+Skill-fires+anchor+3b kit; sprint-finish 6a(consolidate N%5)+6d(release-manager/merge-analyst); hook-test harness-primary; review-sNN контракт; permission deny-guard.
+
+**next_action:** Phase 5 verify (harness 40+ GREEN + все bash -n + skill-manifest + security test 32/32) → **Phase 6 security-auditor gate-bypass-hunt CRITICAL** (money-path не ослаблен — только усилен) + доменные ревьюеры параллельно → review-s69.md → Phase 7 sync (component-страница op-detect + counts) → Phase 8 ship alpha.69 → Phase 9 close → S70. Push origin — в самом конце (директива оператора: слить в github). Live-backups S68: `.bak-s68-fe1a24b`. Stray worktrees обезврежены T7.
 
 **Этой сессией (на main, до S68-ветки):** ADR 0077 tiered пины (5 opus / 11 sonnet / 2 haiku + effort, суперседит 0076 uniform) + скилл `kit-conventions` + CLAUDE.md компрессия (105→52KB always-on) + валидация 18 тел агентов + Desktop 43.8KB удалён. Часть S68 pre-done (см. plan «Pre-done»).
 
@@ -32,19 +38,21 @@ last_task_sha: eda9c28  # S68 squash на main — точка восстанов
 
 ---
 
-## Phase tracking (S68 — Boot-слой)
+## Phase tracking (S69 — Гейты по-настоящему)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter S68 marked |
-| 2 Brainstorm | done | = 47 панельных вердиктов deep-research (research-evidence/); 0 открытых scope-вопросов |
-| 3 Plan | done | plan-файл [[plans/2026-07-02-sprint-68-boot-layer]]; техстраница = Фаза 7 (kit-meta) |
-| 4 Execute | done | все 10 задач T1-T10 исполнены, per-task commits |
-| 5 Verify | done | hooks bash -n OK, mirror diff=0, settings valid, caveman single-fire |
-| 6 Review | done | security-auditor батч-Б APPROVE 0 blockers ([[reviews/review-s68]]) |
-| 7 Sync | done | sprint-68 page + kit-inventory AUTO + tooling-inventory pointer |
-| 8 Ship | done | squash main eda9c28 + tag v0.1.0-alpha.68 (push отложен) |
-| 9 Close | done | между спринтами; S69 next_action записан |
+| 1 Orient | done | chapter S69 marked + git branch feature/sprint-69-gates |
+| 2 Brainstorm | done | 47 панельных вердиктов + per-hook grounding (review-gate уже done, phase-advance gap real) |
+| 3 Plan | done | plan-файл [[plans/2026-07-03-sprint-69-gates]] с verified-scope |
+| 4 Execute | done | ВСЕ 11: T1 T9 T3 T2 T8 T7 T6 T4 T5 T10 T11 (op_detect+emit_context libs, 10 хуков argv, split-brain, manifest, sprint-finish 6a/6d, hook-test, contracts, deny-guard) |
+| 5 Verify | done | harness ALL PASS + security 32/32 + 17/17 hooks bash -n + source==live + libs ruff/compile clean; 3b doc-first ✓; src/ frozen (mypy GREEN) |
+| 6 Review | done | security-auditor 2 прохода (2 BLOCKER separator+sh-c закрыты, APPROVE) + python 2 blockers (gh -R, /merges закрыты). review-s69.md Blockers:0. money-path same-or-stronger. Итог фикс fba270c |
+| 7 Sync | done | sprint-69 page + op-detect-hardening component + index + count 62 + log SHIPPED. skill-manifest OK 7/7 |
+| 8 Ship | in_progress | squash-merge feature/sprint-69-gates → main + tag alpha.69 |
+| 9 Close | — | → S70 |
+
+**S68 (SHIPPED alpha.68):** 10 задач, security APPROVE, ~20k ток/сессию. → [[sprints/sprint-68-boot-layer]].
 
 ---
 

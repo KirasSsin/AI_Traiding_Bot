@@ -44,7 +44,7 @@ sources:
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **76** | `src/execution/state_machine.py` `TRANSITIONS` dict | S55 TL-NEW-01 (+2: (LONG_OPEN, FLATTEN_FAILED)→HALTED + (OCO_ARMING, FLATTEN_FAILED)→HALTED; ранее S8b T7 ADR 0023 = 74) |
 | Reason codes | **67** | `src/risk/reason_codes.py` `ReasonCode` enum | S52 T4 (+2 ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS, reason_codes 65→67) |
-| Component pages | **60** | `wiki/project/components/*.md` (excl. README.md cluster index) | S64 sync (S57-S63 kit-компоненты) |
+| Component pages | **62** | `wiki/project/components/*.md` (excl. README.md cluster index) | S69 sync (+op-detect-hardening; +1 pre-existing drift) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
 | ADRs | **76** | `wiki/project/decisions/*.md` (0001-0076) | 0076 uniform fable-5 (оператор 2026-07-02, суперседит 0075) |
 | Sprint pages | **69** | `wiki/project/sprints/sprint-*.md` (…sprint-67-desktop-auto-resume) | S67 sync (S64-S67: doc-flow/error-harvest/plugins/desktop-resume) |

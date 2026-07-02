@@ -114,6 +114,19 @@ ls llm-wiki/wiki/project/state/.backup/SPRINT_STATE.*.md 2>/dev/null | wc -l   #
 ```
 `0` → state-backup.sh не сработал (проверь подключение хука в settings.json) → STOP до тега.
 
+### Step 6a: consolidate-memory (ТОЛЬКО при N%5==0) — MEM-03 (S69)
+
+**BINDING когда N кратно 5** (S70, S75, …): прогнать консолидацию памяти ДО манифеста (Step 6c). За 35 спринтов (S32→S67) не исполнялась ни разу — индексы/дубликаты/устаревшие факты копились без жизненного цикла.
+
+```bash
+[ "$(( <N> % 5 ))" -eq 0 ] && echo "N%5==0 → consolidate-memory ОБЯЗАН" || echo "skip (N%5!=0)"
+```
+
+При N%5==0:
+1. Invoke skill `anthropic-skills:consolidate-memory` — рефлексивный проход по memory-каталогу (merge дубликатов, fix устаревших фактов, prune индекса).
+2. Записать в `wiki/log.md`: `## [YYYY-MM-DD] consolidate-memory | sprint N — M merged / K pruned`.
+3. Продолжить Step 6b/6c. Это advisory-строка манифеста (`9 Close`), **НЕ** жёсткий gate (MEM-03 false-STOP класс — не блокировать ship из-за консолидации).
+
 ### Step 6b: Pre-push hook preparation (prevents adr-agent-sync-check.sh blocking)
 
 **Run BEFORE `git push`** (S59 KIT-009 — **content-check**, mtime-touch мёртв):
@@ -146,6 +159,15 @@ bash kit/skill-manifest.sh <N>
 review-sNN.md Blockers:0+ревьюер / components/ тронуты / sprint-NN страница / тег).
 `exit 1` (есть ✗) → STOP, добери недостающий артефакт. Философия: «скилл выстрелил»
 (ненаблюдаемо) → «артефакт скилла появился» (наблюдаемо). Запускать ДО `git tag`.
+
+### Step 6d: release-manager + merge-analyst dispatch (D2-03, S69)
+
+**Вшито в ship-флоу** (0 диспатчей за 4 ship-цикла до S69 — агенты существовали, но никуда не звались). Оба **read-only** (ничего не пушат/тегают/мержат), запускать перед Step 7:
+
+1. **merge-analyst** (PRE-MERGE diff): классифицирует контуры diff (money-core / kit-hooks / docs / tests / wiki), предсказывает какие механические гейты сработают (review-gate / phase-advance / skill-manifest / docs-staleness) и какие НЕ сработают, выдаёт risk-profile + чеклист «что человек нашёл бы только вручную». Дополняет (не заменяет) гейты.
+2. **release-manager** (SHIP pre-flight): проверяет sprint-NN страницу, changelog vs `main..HEAD`, непрерывность tag-последовательности, skill-manifest 7/7, SPRINT_STATE budget+phase; предлагает (НЕ выполняет) squash-message + tag/push/merge команды. Вердикт **READY_TO_SHIP / NOT_READY** → записать в `sprints/sprint-<N>.md` (секция «Ship pre-flight»).
+
+Находки обоих адресуй ДО Step 7. `NOT_READY` / нерешённый blocker merge-analyst → STOP.
 
 ### Step 7: Commit + ship
 

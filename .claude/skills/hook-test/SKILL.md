@@ -1,6 +1,6 @@
 ---
 name: hook-test
-description: Test PreToolUse hook scripts (adr-agent-sync-check, adr-index-sync-check, future hooks) для AI Trading Bot v0.1 без false-positive triggering. Use ONLY when explicitly invoked via /hook-test (disable-model-invocation=true). Uses bash sandbox env -i isolation чтобы избежать hook chain self-trigger.
+description: Test PreToolUse hook scripts (gate + WARN hooks) для AI Trading Bot v0.1 без false-positive triggering. Use ONLY when explicitly invoked via /hook-test (disable-model-invocation=true). Primary = S61 regression harness; manual payloads через env -i + python3-конкатенацию.
 disable-model-invocation: true
 ---
 
@@ -8,115 +8,72 @@ disable-model-invocation: true
 
 ## When to use
 
-**Explicit invocation only** (disable-model-invocation: true) — model не auto-trigger. User invokes via `/hook-test` ИЛИ explicit "test the hook script".
+**Explicit invocation only** (disable-model-invocation: true — model не auto-trigger). User invokes via `/hook-test` ИЛИ "test the hook script".
 
 Triggers:
-- After editing `~/.claude/hooks/<hook>.sh` script — verify changes work
-- After adding new PreToolUse hook (e.g., new sync-check)
-- Debugging hook false-positive OR false-negative
+- After editing `kit/hooks/<hook>.sh` (source) OR `~/.claude/hooks/<hook>.sh` (live) — verify changes.
+- After adding a new PreToolUse hook.
+- Debugging a hook false-positive OR false-negative.
 
-## Why explicit invocation
+## Тестовая пирамида (S69 SKW-04 — PRIMARY = харнесс)
 
-Past pain S8c T11: testing `adr-index-sync-check.sh` triggered `adr-agent-sync-check.sh` (sister hook) одновременно — false-positive cascade. Self-test guard added 2026-04-25 (skip if `$command_str` references hook script paths). But manual invocation still safer — env -i isolation bypasses ALL hooks для clean test.
+1. **PRIMARY — регресс-харнесс (ВСЕГДА первым, покрывает 40+ кейсов):**
+   ```bash
+   bash kit/hooks/tests/test_phase_gate_canon.sh                    # canonical phase + op-detect argv + false-fire
+   .venv/bin/python kit/hooks/tests/test_state_integrity_security.py  # STANDALONE скрипт (не pytest); 32/32 PASS = exit 0
+   ```
+   Харнесс реплицирует parse+detect хуков и покрывает: canonical phase (zero-width/мусор → BLOCK), op-detect argv (merge/push/commit), false-fire на литералах в кавычках, `git -c x=y` bypass, plumbing exclusion (`git merge-base`). **Все PASS — до любого manual-теста.**
 
-## Steps (imperative)
+2. **MANUAL — единичный сценарий** (когда харнесс не покрывает): env -i изоляция + payload через stdin (ниже).
 
-### Step 1: Identify hook + payload
+## Почему self-skip больше нет (S69 T8)
 
-```bash
-# Hooks live в ~/.claude/hooks/
-ls ~/.claude/hooks/*.sh
+Старые хуки имели self-skip (`*<hook-name>*) exit 0`), чтобы test-инвокация не ложно триггерила соседние хуки. **T8 его удалил** (zero-forgery: `git push … # <hook>.sh` разоружал гейт нулевой подделкой). Теперь детект операции — по РЕЗОЛВНУТОМУ argv (`lib/op_detect.py`, shlex): литерал `git push`/`git merge`/`git commit` внутри кавычек/echo/аргумента **инертен**, а голый `bash <hook>.sh` не классифицируется как операция. Значит test-инвокация проходит корректно БЕЗ self-skip.
 
-# Hook receives JSON via stdin per Claude Code protocol:
-# {"tool_input": {"command": "..."}, ...}
-```
+## Manual invocation (env -i isolation + python3-конкатенация)
 
-Pick test scenarios:
-- Positive case (hook should BLOCK) — e.g., real `git push` с violation
-- Negative case (hook should ALLOW) — e.g., non-push command
-- Edge case (hook self-test scenario) — verify guard skips
-
-### Step 2: Build JSON payload per scenario
+**Строй команду с op-литералом через python3-конкатенацию**, чтобы твоя ВНЕШНЯЯ Bash-команда не содержала `git push`/`git merge` как текст (иначе ЖИВОЙ хук сработает на ТВОЙ tool-call — op_detect его пропустит, но конкатенация надёжнее и не зависит от порядка синка):
 
 ```bash
-# Real git push (positive — hook should run check)
-PAYLOAD='{"tool_input":{"command":"git push origin main"}}'
-
-# Non-push command (negative — hook should allow exit 0)
-PAYLOAD='{"tool_input":{"command":"ls -la"}}'
-
-# Hook self-reference (guard test — should skip exit 0 silently)
-PAYLOAD='{"tool_input":{"command":"echo test | bash ~/.claude/hooks/adr-agent-sync-check.sh"}}'
-```
-
-### Step 3: Sandboxed invocation (env -i isolation)
-
-```bash
-# env -i strips environment → prevents PreToolUse hook chain triggering
-env -i HOME="$HOME" PATH="/usr/bin:/bin:/usr/sbin:/sbin" bash -c "
+env -i HOME="$HOME" PATH="/usr/bin:/bin:/usr/sbin:/sbin" bash -c '
   cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot
-  echo '$PAYLOAD' | bash ~/.claude/hooks/<hook-name>.sh
-  echo \"EXIT_CODE: \$?\"
-"
-```
-
-Expected exit codes (per Claude Code hook protocol):
-- **0** — allow tool call (success OR skip)
-- **2** — block tool call + show stderr к user
-- Other — fail-open (Claude Code proceeds)
-
-### Step 4: Verify expected behavior
-
-| Scenario | Expected exit | Expected stderr |
-|----------|--------------|-----------------|
-| Real `git push` без violation | 0 | (empty OR success message) |
-| Real `git push` с violation (e.g., new ADR not in index) | 2 | Block message |
-| Non-push command | 0 | (empty — case skips) |
-| Hook self-test invocation | 0 | (empty — guard skips) |
-
-If exit code OR stderr deviates → hook bug. Investigate.
-
-### Step 5: Document test result
-
-Per test scenario:
-- Date tested
-- Hook script + version (git log)
-- Payload variant
-- Expected vs actual exit code
-- Pass / FAIL
-
-Append к `wiki/project/components/<hook-name>.md` "Verification" section.
-
-## Anti-patterns (НЕ делать)
-
-- ❌ Test hook through real `git push` (triggers sister hooks + actual remote push side effects)
-- ❌ Test без env -i isolation (PreToolUse hook chain может re-trigger)
-- ❌ Modify hook script без test scenarios pass (silent regression risk)
-- ❌ Skip negative + edge case tests (positive-only = incomplete coverage)
-- ❌ Auto-invoke this skill (disable-model-invocation: true — explicit only)
-
-## Real example (S8c T11 testing)
-
-```bash
-# Test adr-index-sync-check.sh с dummy ADR scenario
-env -i HOME="$HOME" PATH="/usr/bin:/bin" bash -c '
-  cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot
-  echo "{\"tool_input\":{\"command\":\"git push origin test-branch\"}}" | \
-    bash ~/.claude/hooks/adr-index-sync-check.sh
+  # "git push" собирается в python, не в тексте Bash-команды:
+  payload="$(python3 -c '"'"'import json;print(json.dumps({"tool_input":{"command":"git "+"push origin main"}}))'"'"')"
+  printf "%s" "$payload" | bash kit/hooks/<hook>.sh
   echo "EXIT: $?"
 '
 ```
 
-Expected: exit 2 (новый ADR на test-branch + не в index.md → blocked).
+`env -i` срезает окружение → цепочка PreToolUse-хуков не re-триггерит на вложенном `bash`.
 
-Real result: exit 0 в test environment (no test-branch ADR diff). Validates hook logic correctly skips pure git push без ADR changes.
+## Exit-code table по классам хуков
+
+| Класс | Хуки | Block (exit 2) | Allow (exit 0) | Канал WARN |
+|---|---|---|---|---|
+| **Money/phase gate** | review-gate, phase-advance | Phase 5/6 != done ИЛИ money-diff без артефактов Фазы 6 | не merge / не активная фаза / артефакты на месте | stderr при блоке |
+| **Push gate** | sprint-flow-check, adr-agent-sync, adr-index-sync, wiki-broken-link, docs-broken-link, sprint-state-freshness | нет plan / ADR не в index / битая ссылка / stale state | не push / нет нарушения | stderr при блоке |
+| **WARN (advisory)** | docs-staleness, pertask-state-warn, cascade-read, context-budget | НИКОГДА (всегда exit 0) | всегда | stderr + `additionalContext` (S69 T2 — модель слышит) |
+| **State/backup** | state-backup, state-integrity | integrity: exit 2 при доказанном повреждении | не commit / целостно | — |
+
+Другой ненулевой код → fail-OPEN (Claude Code продолжает). Политика: fail-OPEN на инфра, fail-CLOSED только при доказанном нарушении.
+
+## Verify
+
+Positive (block) / negative (allow) / edge — сверь exit-код + stderr против таблицы. Отклонение → баг хука, investigate (не «подправь тест под результат»).
+
+## Anti-patterns (НЕ делать)
+
+- ❌ Тестировать хук через реальный `git push`/`git merge` (remote side-effects + триггерит соседей).
+- ❌ Пропустить PRIMARY-харнесс, сразу manual (харнесс = регресс-сеть 40+ кейсов).
+- ❌ Manual-payload с ЛИТЕРАЛОМ `git push`/`git merge` в тексте Bash-команды (строй через python3-конкатенацию).
+- ❌ Полагаться на self-skip (удалён в T8 — его больше нет; детект по argv).
+- ❌ Менять хук без прогона харнесса (silent regression risk).
+- ❌ Auto-invoke (disable-model-invocation: true — только явно).
 
 ## Related kit references
 
-- Hook scripts location: `~/.claude/hooks/*.sh` (user-level, outside repo)
-- Hook registration: `~/.claude/settings.json` PreToolUse Bash hooks array
-- Wiki documentation:
-  - `wiki/project/components/adr-agent-sync-hook.md`
-  - `wiki/project/components/adr-index-sync-hook.md`
-- Self-test guard added 2026-04-25 — see Caveats section в both hook wiki pages
-- Claude Code hook protocol: stdin = JSON, exit 2 = block, other non-zero = fail-open
+- Регресс-харнесс: `kit/hooks/tests/test_phase_gate_canon.sh` (S61, расширен S69 op_detect) + `test_state_integrity_security.py`
+- op-detect: `kit/hooks/lib/op_detect.py` (argv-классификация merge/push/commit; shlex + shell-operator split)
+- WARN→additionalContext: `kit/hooks/lib/emit_context.py` (S69 T2 — немой WARN → слышимый модели)
+- Hook scripts: `kit/hooks/*.sh` (source) → `~/.claude/hooks/*.sh` (live mirror via `kit/install.sh`)
+- Claude Code hook protocol: stdin=JSON, exit 2=block, other non-zero=fail-open, `hookSpecificOutput.additionalContext`=model-visible (exit 0)

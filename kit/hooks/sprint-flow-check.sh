@@ -41,14 +41,16 @@ except Exception:
 # не содержит `git push` → `*) exit 0`; реальный push гейтится всегда.
 
 # Only act on git push
-# round-6: нормализуем пробелы/табы + срезаем git-глобалки `-c/-C X` — `git   push`
-# и `git -c http.x=y push` иначе минули бы детект.
-# ОСТАТОК (backlog kit-op-detect-hardening): inline-alias `git -c alias.p=push p`.
-command_norm="$(printf '%s' "$command_str" | tr -s ' \t' ' ')"
-command_argv="$(printf '%s' "$command_norm" | sed -E 's/git( -[cC] [^ ]+)+ /git /g')"
-case "$command_argv" in
-    *"git push"*) ;;
-    *) exit 0 ;;
+# S69 T9 (KIT-OD-1): push-детект по резолвнутому argv (lib/op_detect.py) — заменяет
+# tr+sed+substring. substring false-fire'ил на литерале 'git push' в тексте команды
+# (grep/echo/commit-msg ложно гейтились); op_detect токенизирует с учётом кавычек,
+# ловит `git -c x=y push`/env-prefix и игнорит литерал в кавычках. Self-skip уже снят
+# в round-5. PARSE_ERROR → substring fallback.
+op_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/op_detect.py"
+case "$(printf '%s' "$command_str" | python3 "$op_lib" push 2>/dev/null || echo PARSE_ERROR)" in
+    GATE) ;;                                                        # git push — гейтим ниже
+    allow|skip) exit 0 ;;                                            # не push
+    *) case "$command_str" in *"git push"*|*"git  push"*) ;; *) exit 0 ;; esac ;;  # fallback
 esac
 
 # --- locate repo -------------------------------------------------------------

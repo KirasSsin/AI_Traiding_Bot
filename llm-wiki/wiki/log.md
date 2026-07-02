@@ -3009,3 +3009,15 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - security-auditor APPROVE 0 blockers (14 PreToolUse гейтов byte-identical; C2 провабельно мёртв; StopFailure+S67 continuity целы). skill-manifest OK. ~20k ток/сессию экономия.
 - Live вне git (backups): settings/claude-mem `.bak-s68-fe1a24b`, plist `.removed-s68-fe1a24b`.
 - next: S69 «Гейты по-настоящему» (6 HIGH). Push отложен (накопить).
+
+## 2026-07-03 — S69 «Гейты» PHASE 4 старт, T1 flagship done
+- Grounding (per-hook, merge-analyst урок): review-gate УЖЕ ловит локальную интеграцию S59-62 (не трогаем); phase-advance имел gh-pr-only разрыв — Phase-5 verify молча пропускалась на нашем реальном ship-пути (локальный squash) 10 спринтов.
+- T1 D1-01 (9f06657): phase-advance порт op-detection review-gate + merge-ref sprint-extraction + M-4 sprint-binding + markdown-tolerance статус-ячейки. S61 harness +4 кейса GREEN, behavioral dry-run 5/5 (BLOCK стейл-спринт/ALLOW совпадающий/skip plumbing).
+- ⚠️ T1 расширил op-detect substring-поверхность → мой же commit с merge-словом в тексте заблокировался. KIT-OD-1 (argv-парсинг) поднят в СЛЕДУЮЩИЙ приоритет. Workaround: не merge/push-литералы в Bash (Edit/Write/Grep).
+- Замечен stray .claude/worktrees/strange-cerf-743771/ = живое LOG9-02 split-brain (T7 git-common-dir).
+- Остаток S69: T9/T2-T8/T10/T11 + Phase 6 security-auditor gate-bypass-hunt. Затем S70.
+
+## [2026-07-03] S69 SHIPPED — Гейты по-настоящему (alpha.69)
+- Все 11 задач execute done. 2 новых lib: `op_detect.py` (классификация операций) + `emit_context.py` (WARN→model additionalContext). 10 хуков на op-detect + self-skip forgery снят. git-common-dir split-brain (T7). skill-manifest Phase-2/9+anchor+3b kit (T6). sprint-finish 6a consolidate(N%5) + 6d release-manager/merge-analyst (T4/T5). hook-test harness-primary + review-sNN контракт (T11). permission deny-guard (T10).
+- **Phase 6 CRITICAL:** security-auditor нашёл 2 money-path BLOCKER (регресс): (1) shlex-argv separator-bypass `echo hi;git merge` минул оба гейта; (2) combined short-flag `bash -lc "git merge"`. python-reviewer +2 (gh -R не ловился, `/merges` false-positive). Ответ: op_detect РЕДИЗАЙН shlex-argv → quote-strip skeleton. review-s69.md APPROVE Blockers:0, money-path same-or-stronger.
+- Verify: harness 70 кейсов GREEN + security 32/32 + 17/17 bash -n. Урок: op-detect на shlex-токенах уязвим к separator-glue; quote-strip+substring-floor провабильно безопаснее для money-gate.

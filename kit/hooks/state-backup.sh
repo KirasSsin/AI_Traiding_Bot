@@ -11,10 +11,16 @@ import json,sys
 try: print(json.load(sys.stdin).get("tool_input",{}).get("command",""))
 except Exception: print("")' 2>/dev/null || true)
 
-case "$cmd" in
-    *"state-backup"*) exit 0 ;;
-    *"git commit"*) ;;
-    *) exit 0 ;;
+# S69 T3 (KIT-008 git-нормализация): детект `git commit` по резолвнутому argv
+# (lib/op_detect.py) — substring '*git commit*' пропускал `git -c x=y commit` и
+# env-prefix, из-за чего SPRINT_STATE молча не бэкапился. Self-skip по имени файла
+# УБРАН (S69 T8 zero-forgery): op_detect не примет голый `bash state-backup.sh` за
+# commit, зато `git commit -m "…state-backup…"` теперь бэкапится (self-skip глотал).
+op_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/op_detect.py"
+case "$(printf '%s' "$cmd" | python3 "$op_lib" commit 2>/dev/null || echo PARSE_ERROR)" in
+    GATE) ;;                                                  # git commit — бэкапим ниже
+    allow|skip) exit 0 ;;                                     # не commit
+    *) case "$cmd" in *"git commit"*) ;; *) exit 0 ;; esac ;; # PARSE_ERROR → substring fallback
 esac
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"

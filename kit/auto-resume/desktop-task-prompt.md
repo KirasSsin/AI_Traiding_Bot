@@ -13,6 +13,12 @@ Gate (`auto_resume_gate.py`) печатает РОВНО один токен: `G
 
 ## Промпт задачи (RU, self-contained)
 
+<!-- SYNC-BLOCK:START — S69 D3-04: блок ниже = ЗЕРКАЛО живой Scheduled Task
+     (~/.claude/scheduled-tasks/kit-desktop-auto-resume/SKILL.md). При ЛЮБОЙ правке
+     промпта ОБЯЗАТЕЛЬНО `update_scheduled_task` (scheduled-tasks MCP) — иначе дрейф
+     зеркало↔задача ломает контур авто-резюма. Автоматическая WARN-сверка зеркало↔живая
+     задача в hooks-selfcheck — deferred LOW (нужна live-интроспекция Scheduled Task). -->
+
 ```
 Ты — плановая задача авто-продолжения автономного прогона AI Trading Bot (Claude Code desktop).
 Репозиторий: /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot
@@ -34,6 +40,8 @@ Gate (`auto_resume_gate.py`) печатает РОВНО один токен: `G
   f. Вопросов оператору НЕ задавай → фиксируй в llm-wiki/wiki/project/OPERATOR-QUEUE.md.
   g. Auth перед git: unset GITHUB_TOKEN GH_TOKEN. Push в origin — ТОЛЬКО по явной директиве оператора.
 ```
+
+<!-- SYNC-BLOCK:END — конец зеркала промпта Scheduled Task -->
 
 ## Управление
 ```bash

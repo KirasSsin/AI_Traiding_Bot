@@ -21,6 +21,8 @@ import re
 import sys
 from pathlib import Path
 
+import emit_context  # sibling lib module (lib/ is sys.path[0] when run as python3 <lib>)
+
 THRESHOLD = 50 * 1024
 # review MEDIUM #3: авторитет списка banned — ~/.claude/CLAUDE.md §9. Здесь —
 # defense-in-depth на случай файла, переименованного НИЖЕ 50КБ но всё ещё
@@ -35,12 +37,13 @@ BANNED_SUBSTR = ("FINAL-CONSOLIDATED", "00-All")
 
 def _warn(path: str, size: int, how: str) -> None:
     kb = size // 1024
-    print(
+    msg = (
         f"⚠️  CASCADE-WARN: {how} крупного файла {path} (~{kb}КБ > 50КБ). "
         "Read tool лимит ~25k токенов — превышение провалит turn. "
-        "Читай через offset+limit ИЛИ Grep нужной секции (каскад wiki→mem→grep→read, ADR 0043).",
-        file=sys.stderr,
+        "Читай через offset+limit ИЛИ Grep нужной секции (каскад wiki→mem→grep→read, ADR 0043)."
     )
+    print(msg, file=sys.stderr)  # user-visible
+    emit_context.emit("PreToolUse", msg)  # S69 T2: model-visible additionalContext
 
 
 def _is_banned(p: Path) -> bool:

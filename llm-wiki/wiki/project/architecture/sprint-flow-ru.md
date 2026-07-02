@@ -444,6 +444,26 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 - ✅ Concerns acknowledged (даже если не fix)
 - ❌ Skip review если "тривиально" — нет такого правила
 
+### Артефакт-контракт: `review-s{NN}.md` (S69 D2-07 — механические потребители)
+
+Фаза 6 производит **проверяемый артефакт**, читаемый двумя механическими гейтами. Раньше контракт жил только в тексте ошибки хука — теперь задокументирован:
+
+- **Путь:** `llm-wiki/wiki/project/reviews/review-s<N>.md`
+- **Обязательные якоря:**
+  - строка `Blockers: 0` (регекс `^ *\**Blockers\**[: ] *\**0\**` — толерантен к markdown-жирному `**Blockers: 0**`)
+  - ≥1 строка ревьюера (`reviewer` / `architecture` / `security` / `ревьюер`) — схема-валидация
+- **Коммит-в-диапазоне:** артефакт ДОЛЖЕН быть закоммичен в диапазоне мерджа (`git log main..<merge-ref> -- <путь>`); рабочий файл без коммита = same-session подделка (S62 KIT-TAMPER).
+- **Дубль в SPRINT_STATE:** строка `| 6 Review | done | … |` (M-4: засчитывается только если SPRINT_STATE ведёт ЭТОТ спринт).
+
+**Механические потребители:**
+
+| Потребитель | Что проверяет | При отсутствии |
+|---|---|---|
+| `review-gate.sh` (KIT-003) | money-diff (`src/{signalgen,execution,risk,backtest}`, `override.py`) → оба артефакта + коммит-в-range + схема | **exit 2** — блок merge |
+| `skill-manifest.sh` (Phase 6 row) | `Blockers:0` + строка ревьюера | `✗` → exit 1 (STOP до тега) |
+
+Скелет: `## Reviewers`, `Blockers: 0`, `## Concerns`, `## Verified`. Пиши RU (оператор валидирует).
+
 ### Skip когда
 - Pure docs change (нет src/ touch)
 - < 50 LoC + tests pass — может только domain reviewer (no parallel)
@@ -508,6 +528,10 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 5. HARD-GATE — orphan-audit grep includes tests/
 6. HARD-GATE — new ADRs в index.md
 7. SPRINT_STATE → 8-ship
+7a. (N%5==0) consolidate-memory ДО манифеста — Step 6a (MEM-03, S69)
+7b. skill-manifest.sh N — per-phase артефакты (Step 6c)
+7c. merge-analyst (PRE-MERGE risk-profile) + release-manager (READY_TO_SHIP →
+    sprints/sprint-N.md), оба read-only — Step 6d (D2-03, S69)
 8. git push
 9. gh pr create
 10. gh pr merge --squash --delete-branch
@@ -535,6 +559,10 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 3. mark_chapter "Sprint N — ship complete"
 4. git commit -m "docs(sprint): SPRINT_STATE → between-sprints alpha.N"
 5. (Каждые 5 спринтов OR при >30 observations в claude-mem) — invoke `anthropic-skills:consolidate-memory`:
+   - **S69 MEM-03 амендмент:** при N%5==0 консолидация исполняется РАНЬШЕ — внутри
+     `sprint-finish` **Фазы 8 (Step 6a)**, ДО skill-manifest, а не откладывается на Close.
+     За 35 спринтов (S32→S67) шаг Phase-9 ни разу не исполнился → перенесён в ship-флоу.
+     Здесь (Phase 9) — только verify, что консолидация прошла (advisory).
    - Trigger check: sprint number divisible by 5 (S35, S40, S45, ...) OR
                     `mcp__plugin_claude-mem_mcp-search__list_corpora` показывает >30 observations
    - Procedure: reflective pass over claude-mem corpus → organize learnings в structured chunks по категориям

@@ -36,18 +36,15 @@ except Exception:
     pass
 ' 2>/dev/null || true)"
 
-# --- skip self-test invocations ----------------------------------------------
-# Test invocations include hook script path в command (echo|bash hook.sh).
-# Без guard'а каждое test invocation triggers hook ложно.
-case "$command_str" in
-    *"sprint-state-freshness-check.sh"*) exit 0 ;;
-    *"hooks/"*"freshness-check"*) exit 0 ;;
-esac
-
-# --- only check on git push commands -----------------------------------------
-case "$command_str" in
-    *"git push"*) ;;
-    *) exit 0 ;;
+# --- push-детект по резолвнутому argv (S69 T8/T9 KIT-OD-1 + zero-forgery) ------
+# substring '*git push*' false-fire'ил (литерал в тексте команды ложно гейтил) и
+# пропускал `git -c x=y push`. Self-skip по имени хука УБРАН: голый `bash <hook>.sh`
+# / hook-test-payload op_detect не примет за push. PARSE_ERROR → substring fallback.
+op_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/op_detect.py"
+case "$(printf '%s' "$command_str" | python3 "$op_lib" push 2>/dev/null || echo PARSE_ERROR)" in
+    GATE) ;;                                                        # git push — гейтим ниже
+    allow|skip) exit 0 ;;                                            # не push
+    *) case "$command_str" in *"git push"*|*"git  push"*) ;; *) exit 0 ;; esac ;;  # fallback
 esac
 
 # --- file must exist (fail open if missing) ----------------------------------

@@ -211,6 +211,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/manifest-telemetry]] — 🆕 S62: skill-firing manifest (артефакт вместо надежды) + cascade-WARN (full-read banned) + tamper-evidence review-артефакта (закрыт остаток S59/S61) + KIT-022 fix.
 - [[project/components/kit-team-agents]] — 🆕 S63: 3 read-only advisory-агента на fable-5 (kit-auditor / merge-analyst / release-manager) + pin-policy. Read-only = дисциплина промпта, хук главнее отчёта.
 - [[project/components/error-taxonomy]] — 🆕 S65: 9 классов token-waste ошибок прогона + превентивные паттерны (skill workflow-authoring, anti-waste, message-hints). Экономия токенов.
+- [[project/components/op-detect-hardening]] — 🆕 S69: argv-классификация операций в гейтах (`lib/op_detect.py`, shlex) вместо substring — убирает false-fire на литерале + `git -c` bypass; немой WARN → модель (`lib/emit_context.py` additionalContext); git-common-dir split-brain защита.
 - [[project/components/data-quality]] — REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1). 0.5% threshold, per-bar cadence, no WS kline subscription needed.
 - [[project/components/fill-history]] — per-fill audit log (FillRecord + FillHistoryRepository + FK trade_history + WS execution topic source) (S9 Q3 B1).
 - [[project/components/fill-recorder-adapter]] — Bridges Bybit V5 WS execution events → FillHistoryRepository. 2-layer pattern (audit + best-effort DB). Closes `_NoopFillRecorder` stub (S12 Q5).

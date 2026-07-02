@@ -13,7 +13,7 @@
 | 3 Plan | `superpowers:writing-plans` | `agent-skills:planning-and-task-breakdown` (DEPTH ref) | **Hook `sprint-flow-check.sh` блокирует push без plan file** |
 | 4 Execute | `superpowers:subagent-driven-development` (code) OR `superpowers:executing-plans` (docs) + `superpowers:test-driven-development` | `superpowers:systematic-debugging` (bug sub-flow), `superpowers:dispatching-parallel-agents` (parallel reviewers), `agent-skills:context-engineering` (briefs > 200 слов), `ponytail` (минимальный код перед импл, ADR 0072) | Per-task TDD + per-task SPRINT_STATE update |
 | 5 Verify | `superpowers:verification-before-completion` | pytest + mypy + canonical counts | All GREEN per checklist + 🔒 **Hook `phase-advance.sh` (S30+) блокирует merge если Phase 5 status != "done"/"skipped"** |
-| 6 Review | Domain reviewer (L5: trading-logic / quant-stats / data-integrity / architecture / python) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | **`security-auditor` (money/API/override) + `test-engineer` (new modules / coverage gaps) + `doc-reviewer` (post wiki-update)** 🆕 (S30) + `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening`, `ponytail-audit` (over-engineering scan, ADR 0072) | Blockers addressed |
+| 6 Review | Domain reviewer (L5: trading-logic / quant-stats / data-integrity / architecture / python) + `superpowers:requesting-code-review` (brief format) + `superpowers:receiving-code-review` (feedback processing) | **`security-auditor` (money/API/override) + `test-engineer` (new modules / coverage gaps) + `doc-reviewer` (post wiki-update)** 🆕 (S30) + `superpowers:dispatching-parallel-agents`, `agent-skills:code-review-and-quality`, `agent-skills:security-and-hardening`, `ponytail-audit` (over-engineering scan, ADR 0072) | Blockers addressed + **артефакт `reviews/review-s{N}.md`** (`Blockers: 0` + строка ревьюера, закоммичен в range) — контракт: [`sprint-flow-ru.md` Phase 6](llm-wiki/wiki/project/architecture/sprint-flow-ru.md); механич. потребители: `review-gate.sh`/`skill-manifest.sh` |
 | 7 Sync | `wiki-update` (project, llm-wiki RU) | `docs-update` (project, docs/ RU — S56 конвейер doc-writer→depth→linker, затронутые страницы) | Block 1↔Block 2 sync |
 | 8 Ship | `sprint-finish` (project) → `superpowers:finishing-a-development-branch` | `agent-skills:git-workflow-and-versioning`, `agent-skills:shipping-and-launch` | tag v0.1.0-alpha.N |
 | 9 Close | SPRINT_STATE between-sprints + log session-end | — | — |
@@ -190,6 +190,17 @@ L3: Superpowers (brainstorm → plan → subagent-driven → TDD → finishing)
 L2: llm-wiki (source of truth — read THIS BEFORE raw files)
 L1: claude-mem + ccd_session (session bookends + chapter marks)
 ```
+
+### Два режима принуждения (S69 D5-02 — BINDING)
+
+Скиллы (L3-L4, progressive disclosure) грузятся по **description-match** — это работает в **ИНТЕРАКТИВНОМ** режиме (оператор шлёт промпты; ~65 срабатываний/сессию). В **АВТОНОМНОМ** режиме (multi-task прогон, subagent-driven, auto-resume) скиллы почти не грузятся (мега-ран S57-66: 0 из ~80 ожидаемых). Поэтому дисциплина держится на **разных механизмах**:
+
+| Режим | Что принуждает фазы |
+|---|---|
+| **interactive** | Скиллы (по description) + хуки-гейты + `skill-manifest.sh` |
+| **autonomous** | **Артефакт-гейты** (хуки `sprint-flow-check`/`phase-advance`/`review-gate` + `skill-manifest.sh` per-phase артефакты) — наблюдаемый прокси «фаза отработала». Скиллы = advisory. |
+
+**Правило:** не полагайся на «скилл загрузится» в автономе — полагайся на **артефакт** (plan-файл, review-sNN.md, sprint-NN.md, Phase-строки SPRINT_STATE). `skill-manifest.sh` строка `Skill-fire` = advisory-напоминание об этом.
 
 ## Read tool guard (большие файлы)
 

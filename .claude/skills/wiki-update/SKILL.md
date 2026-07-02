@@ -1,6 +1,6 @@
 ---
 name: wiki-update
-description: After src/ change, identify wiki pages requiring sync для AI Trading Bot v0.1. Use proactively after editing src/ files OR finishing TDD task. Walks code → docs dependency graph (component pages, ADRs, current-state.md, mental-map.md, Invariants tables) and flags drift. Per Block 1↔Block 2 sync rule.
+description: After src/ OR kit/ OR .claude/skills/ change, identify wiki pages requiring sync для AI Trading Bot v0.1. Use proactively after editing src/ files, kit/ hooks/scripts, project skills, OR finishing TDD task. Walks code → docs dependency graph (component pages, ADRs, current-state.md, mental-map.md, Invariants tables) and flags drift. Per Block 1↔Block 2 sync rule.
 ---
 
 # Wiki Update — code → docs sync after edits
@@ -9,6 +9,7 @@ description: After src/ change, identify wiki pages requiring sync для AI Tra
 
 Project: AI Trading Bot v0.1 (llm-wiki pattern, code = canonical, docs follow). Triggers:
 - After editing any `src/*.py` file (especially `src/execution/`, `src/risk/`, `src/runtime/`)
+- After editing `kit/**` (hooks/scripts) OR `.claude/skills/**` — S69 SKW-05: kit-maintenance спринты тоже синхронят техстраницы llm-wiki (`components/`, `architecture/`)
 - After completing TDD task (RED → GREEN → COMMIT) before next task
 - Before sprint finish (PHASE 8 step 5a HARD-GATE)
 - When user says "update wiki", "sync docs", "что обновить в вики"
@@ -25,8 +26,8 @@ Block 1 (Code refs) и Block 2 (Description) MUST sync в same commit. Edit Bloc
 
 ```bash
 cd /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot
-git diff --name-only HEAD~1..HEAD -- 'src/*.py' 'src/**/*.py'
-git status --short -- 'src/*.py' 'src/**/*.py'
+git diff --name-only HEAD~1..HEAD -- 'src/*.py' 'src/**/*.py' 'kit/**' '.claude/skills/**'
+git status --short -- 'src/*.py' 'src/**/*.py' 'kit/**' '.claude/skills/**'
 ```
 
 Если pure src/ rename — also note для broader wiki refs scan.

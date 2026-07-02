@@ -40,19 +40,17 @@ except Exception:
     pass
 ' 2>/dev/null || true)"
 
-# Skip if this is a hook self-test invocation (echo/printf JSON piped к hook
-# script для testing). Real `git push` commands don't reference hook script
-# paths. Без этого guard'а каждое test invocation ($ echo '...git push...' |
-# bash hook.sh) ложно triggers hook через PreToolUse Bash matcher.
-case "$command_str" in
-    *"adr-agent-sync-check.sh"*|*"adr-index-sync-check.sh"*) exit 0 ;;
-    *"hooks/"*"sync-check"*) exit 0 ;;
-esac
-
-# Only act on git push. Allow any other command through.
-case "$command_str" in
-    *"git push"*|*"git  push"*) ;;
-    *) exit 0 ;;
+# S69 T8/T9 (KIT-OD-1 + zero-forgery): push-детект по резолвнутому argv
+# (lib/op_detect.py). substring '*git push*' false-fire'ил (литерал в тексте команды
+# ложно гейтил) и пропускал `git -c x=y push`. Self-skip по имени хука УБРАН:
+# `git push … # <hook>.sh` больше не разоружает гейт нулевой подделкой; голый
+# `bash <hook>.sh` / hook-test-payload op_detect не примет за push (литерал внутри
+# echo-аргумента инертен). PARSE_ERROR → substring fallback.
+op_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/op_detect.py"
+case "$(printf '%s' "$command_str" | python3 "$op_lib" push 2>/dev/null || echo PARSE_ERROR)" in
+    GATE) ;;                                                        # git push — гейтим ниже
+    allow|skip) exit 0 ;;                                            # не push
+    *) case "$command_str" in *"git push"*|*"git  push"*) ;; *) exit 0 ;; esac ;;  # fallback
 esac
 
 # --- locate repo + range -----------------------------------------------------
