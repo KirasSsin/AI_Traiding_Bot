@@ -1,17 +1,21 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S62 Manifest & Telemetry — ship
+updated: 2026-07-02  # S62 SHIPPED (alpha.62) — далее S63 Fable-5 Team
 sprint: 62
-phase: 8-ship
-branch: feature/sprint-62-manifest-telemetry
-tag: v0.1.0-alpha.61  # последний shipped (S61)
-last_task_sha: 498adbc  # HEAD последней задачи — точка восстановления auto-resume
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.62  # последний shipped (S62)
+last_task_sha: f5b8943  # squash S62 на main — точка восстановления auto-resume
 ---
 
 ## Текущий статус
 
-**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~Фаза0~~ → ~~S57~~ → ~~S58 Auto-Resume~~ → ~~S59 Gates~~ → ~~S60 Docs-Sync~~ → ~~S61 State v2~~ → **S62 Manifest** → S63 Fable-team → S64 Plugins(внедрить ≤2) → отчёт+push. Директива: команда агентов участвует в каждом спринте; Workflow на design-шагах.
+**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~Фаза0~~ → ~~S57~~ → ~~S58 Auto-Resume~~ → ~~S59 Gates~~ → ~~S60 Docs-Sync~~ → ~~S61 State v2~~ → ~~S62 Manifest~~ → **S63 Fable-team** → S64 Plugins(внедрить ≤2) → отчёт+push. Директива: максимум fable-5 kit-агентов через Workflow (основной луп opus 4.8 дороже); команда агентов участвует в каждом спринте.
+
+**S62 SHIPPED** (main `f5b8943`, tag alpha.62): skill-firing manifest (P1-MANIFEST, догфуд 6/6 ✓) + cascade-WARN (P1-CASCADE) + tamper-evidence review-артефакта (T2, закрыл эфемерность S59/S61) + ADR 0074 tuning + KIT-022 fix. Security HIGH #1 (origin-strip auth-bypass money-гейта, живой с S59) закрыт. Остаток → [[kit-op-detect-hardening-backlog]] (KIT-OD-1 argv, KIT-OD-2 T2-binding). Детали → [[sprints/sprint-62-manifest-telemetry]].
+
+**S63 «Fable-5 Team» (следующий):** Matrix §4.1 (trader-expert + architecture-reviewer → fable-5), ADR pin-policy v2 (когда пинить vs алиас + триггер ревью при смене платформенного дефолта), новые агенты kit-auditor/merge-analyst/release-manager, смоук-тесты агентов. Директива оператора: kit-агенты уже на fable-5 max (для доработки кита).
 
 **S61 SHIPPED** (main `35ae188`, tag alpha.61): SPRINT_STATE v2 Вариант B — state-backup + state-integrity (fail-OPEN restore) + last_task_sha. Закалка по 6 раундам adversarial bypass-hunt (1 BLOCKER + 6 HIGH + 3 MEDIUM закрыты; 32 python + 38 bash regression). Остаток → [[kit-op-detect-hardening-backlog]] + S62 tamper-evidence. Детали → [[sprints/sprint-61-state-v2]].
 
@@ -41,8 +45,8 @@ last_task_sha: 498adbc  # HEAD последней задачи — точка в
 | 5 Verify | done | red/green (tamper/cascade/KIT-022/HIGH#1), 17 хуков bash -n, ruff, selfcheck, S61 regression intact |
 | 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH+MED закрыты) + security (HIGH #1 origin-strip закрыт, MED#2→backlog), review-s62 Blockers=0 |
 | 7 Sync | done | component manifest-telemetry + ADR 0074 + sprint-62 + index |
-| 8 Ship | in_progress | manifest check + squash + tag v0.1.0-alpha.62 |
-| 9 Close | pending | → S63 Fable-5 Team |
+| 8 Ship | done | manifest 6/6 ✓ + squash main f5b8943 + tag v0.1.0-alpha.62 |
+| 9 Close | done | SPRINT_STATE between-sprints + log; → S63 Fable-5 Team |
 
 ---
 
