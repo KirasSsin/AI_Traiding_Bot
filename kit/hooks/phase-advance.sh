@@ -138,6 +138,10 @@ Branch: $current_branch (sprint $sprint_num)
 SPRINT_STATE: $sprint_state_path
 Phase 5 (Verify) status: "$status"
 
+Если это FALSE-FIRE (литерал 'gh pr merge' в тексте команды, а не реальный merge —
+напр. python/echo/grep со строкой) — перепиши команду через Edit/Write/Grep tools
+без литерала. Это op-detect substring (S65 known; root fix → KIT-OD-1 backlog).
+
 Required: Phase 5 must be "done" OR "skipped" before merge.
 - "done" — pytest + mypy + canonical counts passed
 - "skipped (...)" — explicit skip с reason (e.g., docs-only sprint)

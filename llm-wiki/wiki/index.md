@@ -53,6 +53,7 @@ _(пусто — v0.2+)_
 ## Project — Sprints
 
 - [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
+- [[project/sprints/sprint-65-error-harvest]] 🆕 — S65: таксономия token-waste ошибок (9 классов) → skill workflow-authoring + anti-waste паттерны + message-hints. Дизайн fable-5. Тег alpha.65.
 - [[project/sprints/sprint-64-llm-wiki-doc-flow]] 🆕 — S64: аудит llm-wiki (fable-5 команда) + правило doc-first (техстраница RU → код → docs/ RU); docs/=WARN; current-state дрейф синк. Тег alpha.64.
 - [[project/sprints/sprint-63-fable-team]] 🆕 — S63: 3 kit-агента (kit-auditor/merge-analyst/release-manager) + pin-policy ADR 0075. Тег alpha.63.
 - [[project/sprints/sprint-62-manifest-telemetry]] 🆕 — S62 (mega-run 6/8): skill-firing manifest + cascade-WARN + tamper-evidence + KIT-022 + tuning ADR. Тег alpha.62.
@@ -204,6 +205,7 @@ Project-level skills заменяют hardcoded inline workflow logic (per Anthr
 - [[project/components/state-integrity-hook]] — 🆕 S61 KIT-008: SPRINT_STATE v2 (Вариант B) — авто-бэкап + integrity-check с авто-восстановлением + last_task_sha. Crash-durability для auto-resume, blast radius 0 (split отложен, ADR 0073).
 - [[project/components/manifest-telemetry]] — 🆕 S62: skill-firing manifest (артефакт вместо надежды) + cascade-WARN (full-read banned) + tamper-evidence review-артефакта (закрыт остаток S59/S61) + KIT-022 fix.
 - [[project/components/kit-team-agents]] — 🆕 S63: 3 read-only advisory-агента на fable-5 (kit-auditor / merge-analyst / release-manager) + pin-policy. Read-only = дисциплина промпта, хук главнее отчёта.
+- [[project/components/error-taxonomy]] — 🆕 S65: 9 классов token-waste ошибок прогона + превентивные паттерны (skill workflow-authoring, anti-waste, message-hints). Экономия токенов.
 - [[project/components/data-quality]] — REST-vs-REST consecutive bar deviation detector → HALT_DATA_QUALITY (S9 Q1). 0.5% threshold, per-bar cadence, no WS kline subscription needed.
 - [[project/components/fill-history]] — per-fill audit log (FillRecord + FillHistoryRepository + FK trade_history + WS execution topic source) (S9 Q3 B1).
 - [[project/components/fill-recorder-adapter]] — Bridges Bybit V5 WS execution events → FillHistoryRepository. 2-layer pattern (audit + best-effort DB). Closes `_NoopFillRecorder` stub (S12 Q5).

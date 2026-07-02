@@ -1,12 +1,12 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S64 SHIPPED (alpha.64) — далее S65 Error-Harvest
-sprint: 64
-phase: between-sprints
-branch: main
+updated: 2026-07-02  # S65 Error-Harvest — ship
+sprint: 65
+phase: 8-ship
+branch: feature/sprint-65-error-harvest
 tag: v0.1.0-alpha.64  # последний shipped (S64)
-last_task_sha: 598729a  # squash S64 на main — точка восстановления auto-resume
+last_task_sha: 997c8b2  # HEAD последней задачи — точка восстановления auto-resume
 ---
 
 ## Текущий статус
@@ -28,19 +28,19 @@ last_task_sha: 598729a  # squash S64 на main — точка восстанов
 
 ---
 
-## Phase tracking (S64)
+## Phase tracking (S65)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter marked; директивы оператора в память |
-| 2 Brainstorm | skipped (validated plan) | оператор провалидировал: 2 спринта, docs/=WARN |
-| 3 Plan | in_progress | plans/2026-07-02-sprint-64-llm-wiki-doc-flow.md + audit-workflow |
-| 4 Execute | done | T1 аудит+синк, T2 doc-first (CLAUDE.md+sprint-flow-ru+orient+manifest 3b), T3 docs/ WARN, T4 orient 4b, T5 idea-verdict, T6 docs/-страница |
-| 5 Verify | done | bash -n + WARN red-check + selfcheck + drift clean + счётчики 18/14 |
-| 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH закрыты) + kit-auditor + doc-reviewer-depth (все fable-5), review-s64 Blockers=0 |
-| 7 Sync | done | current-state синк + sprint-64 + review + index + docs-sync-gate/docs-update → WARN |
-| 8 Ship | done | manifest 7/7 + squash main 598729a + tag v0.1.0-alpha.64 |
-| 9 Close | done | SPRINT_STATE trim + log; → S65 Error-Harvest |
+| 1 Orient | done | chapter marked |
+| 2 Brainstorm | skipped (validated) | таксономия из ground truth прогона |
+| 3 Plan | done | plan + tech-страница error-taxonomy (doc-first) |
+| 4 Execute | done | T1 taxonomy, T2 design-workflow fable-5, T3 skill workflow-authoring + anti-waste +5 + message-hints, T4 carry |
+| 5 Verify | done | 38-case gate regression PASS, bash -n оба гейта, selfcheck, drift clean, skills 9→10 |
+| 6 Review | done | design-workflow (arch + kit-auditor fable-5) = дизайн+coverage; review-s65 Blockers=0 |
+| 7 Sync | done | sprint-65 + review + index + error-taxonomy |
+| 8 Ship | in_progress | manifest + squash + tag v0.1.0-alpha.65 |
+| 9 Close | pending | → S66 Plugins |
 
 ---
 

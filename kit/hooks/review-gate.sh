@@ -174,6 +174,9 @@ if [ "$ok" -eq 0 ]; then
 
 🚫  Review gate FAILED (KIT-003, S59) — денежное ядро без артефактов Фазы 6
 
+Если FALSE-FIRE (литерал 'gh pr merge'/'git merge' в тексте команды, не реальный
+merge) — перепиши команду через Edit/Write/Grep tools без литерала (S65; KIT-OD-1).
+
 Merge ref: $merge_ref (sprint $sprint_num)
 Затронуты денежные пути:
 $(echo "$money_files" | sed 's/^/    /' | head -10)
