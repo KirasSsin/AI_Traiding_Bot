@@ -1,0 +1,92 @@
+{
+ "covered": [
+  {
+   "log_problem": "adr-agent-sync-check blocked-push loop — the single biggest gate-friction source: ~74 real block events (66 in main transcripts across 4 sessions + ~8 in sidechain agent transcripts), bursts up to 16 blocks/day (2026-04-26), still firing 2026-06-26; touch-ritual retries visible (9 'Cancelled: parallel tool call Bash(touch ~/.claude/agents...)' collaterals)",
+   "log_evidence": "PreToolUse:Bash hook error: [$HOME/.claude/hooks/adr-agent-sync-check.sh]: ADR ↔ Agent prompt sync check FAILED ... 0071-sprint-55-cmd-wfa-dsr-units.md | Latest agent prompt mtime: 2026-06-20 (dcd43726 2026-06-26T10:41); per-day: 04-26=16, 04-27=8, 05-10=8, 06-26=4",
+   "fixed_by": "S59 KIT-009 (content-check, shipped) + S68 D1-02/SKW-02/D2-02/MEM-06 (touch→content-check swept from all 6 teaching surfaces incl. sprint-finish Step 6b and auto-memory github-push-auth)"
+  },
+  {
+   "log_problem": "Phase 5/6 gates silent on the real ship path: phase-advance produced its last block 2026-05-30 (gh-pr-merge era S47-S50) and zero events during the S57-S67 local-squash-merge ships; review-gate.sh has NEVER fired",
+   "log_evidence": "grep 'review-gate.sh]' over 507MB transcripts + all sidechains = 0 lines; phase-advance blocks only 2026-05-11..2026-05-30 (4 events, b8009145)",
+   "fixed_by": "S69 D1-01 (Phase-5 block in review-gate for git merge path) + D1-04 (M-4 sprint-binding port)"
+  },
+  {
+   "log_problem": "Mechanical tool-retry classes (token waste): edit-before-read 59, string-not-found 37, file-not-found 25, modified-since-read 18, zsh-glob 6, agent-not-in-registry 4 ('trading-logic-reviewer not found. Available: claude-code-guide, Explore...'), bare-python 3, gh-not-found 2, real workflow-parse ~2",
+   "log_evidence": "is_error tool_result classification, b8009145 dominant: '<tool_use_error>File has not been read yet...', '<tool_use_error>String to replace not found in file...', 'Exit code 127 command not found: gh'",
+   "fixed_by": "S65 error-taxonomy.md + repo CLAUDE.md anti-waste table (shipped 2026-07-02; discipline-class by design — taxonomy states harness pre-validation is not mechanizable)"
+  },
+  {
+   "log_problem": "Usage-limit stops broke autonomous execution mid-sprint (subagents blocked at Task 7/8, controller degraded to inline; operator had to type 'Продолжаем')",
+   "log_evidence": "b8009145: 'Субагенты заблокированы (usage limit до 19:00). Продолжаю Task 8 напрямую.'; 'You're out of extra usage · resets 7pm (Asia/Tbilisi)' — 46 mention-lines",
+   "fixed_by": "S58 auto-resume (StopFailure marker + launchd) + S67 Desktop Auto-Resume; infra confirmed live: ~/.claude/auto-resume/log MARKER error=rate_limit 2026-07-02 11:54 + pending.json written"
+  },
+  {
+   "log_problem": "caveman hook double-injection token burn in long sessions",
+   "log_evidence": "591 'caveman' lines in mega-run transcript b8009145 vs ≤38 in every other session",
+   "fixed_by": "S68 D8-01 (remove manual duplicate SessionStart/UserPromptSubmit registrations from settings.json) + D8-04 (warp disable)"
+  },
+  {
+   "log_problem": "wiki-sa MCP dead weight with disconnect churn in every Desktop session",
+   "log_evidence": "main.log: 16× '[LocalMcpServerManager] wiki-sa disconnected' + 6× lam_mcp_server_disconnected telemetry; 0 tool calls in transcripts",
+   "fixed_by": "S68 D8-03 (move wiki-sa out of user scope to the Wiki-SA vault)"
+  },
+  {
+   "log_problem": "Autocompact churn in mega-run — 65 lossy compaction events in one session (AUTOCOMPACT_PCT_OVERRIDE=50 unvalidated)",
+   "log_evidence": "65× compact_boundary entries in b8009145 (only session with any)",
+   "fixed_by": "S70 D7-06 one-session knob-validity probe (grep compact_boundary/preTokens), replacing the 2-sprint ADR 0074 A/B"
+  },
+  {
+   "log_problem": "Oversized Read attempts rejected by harness while cascade-read-check stayed silent (WARN to stderr = invisible)",
+   "log_evidence": "b8009145: 'File content (28868 tokens) exceeds maximum allowed tokens (25000)' + second at 29540 tokens; 0 audible guard output",
+   "fixed_by": "S69 D7-01 (4 WARN hooks moved to hookSpecificOutput.additionalContext, probe-first)"
+  },
+  {
+   "log_problem": "43.8KB stale pre-S57 audit auto-loads as ancestor CLAUDE.md every session (~13.3k tokens boot tax)",
+   "log_evidence": "wc -c /Users/Apple/Desktop/CLAUDE.md = 43839; its full P0-BRANCH/P0-SECRET text is embedded in this very session's system context",
+   "fixed_by": "S68 D7-02+MEM-02 (archive to llm-wiki + ≤10-line stub + ancestor-scan WARN in hooks-selfcheck)"
+  }
+ ],
+ "uncovered": [
+  {
+   "log_problem": "Parallel-batch collateral cancellation: one failing call in a parallel batch cancels all sibling tool calls, multiplying every primary error's cost — the largest un-named token-waste class in the mega-run (~92 events; top collaterals: git add ×39, cd ×22, .venv/bin ×14, touch ×9)",
+   "log_evidence": "97 raw '<tool_use_error>Cancelled: parallel tool call Bash(...)' lines in b8009145; e.g. 'Cancelled: parallel tool call Bash(git add s...' — absent from error-taxonomy.md's 9 classes and from all S68-S70 items",
+   "severity": "MEDIUM",
+   "proposed_fix": "Add class 10 to error-taxonomy.md + anti-waste rule: mutating/gate-sensitive Bash calls run solo or sequential; only independent read-only calls batched. Zero-code, one-doc change — fits the S68 tiny-batch."
+  },
+  {
+   "log_problem": "Region-block network failure loop degrading the Desktop/web app that S67 Desktop Auto-Resume depends on: fetches redirected to app-unavailable-in-region, JSON endpoints returning HTML, auth polling backing off",
+   "log_evidence": "claude.ai-web.log: 4830 blocked-fetch lines ('Access to fetch at https://www.anthropic.com/app-unavailable-in-region'); main.log+main2.log: 149× 'SyntaxError: Unexpected token '<', \"<!DOCTYPE\"' (growthbook/blocklist); 15× '[sessions-bridge] Poll error, backing off: 529 Authentication service is temporarily unavailable'",
+   "severity": "MEDIUM",
+   "proposed_fix": "Operator-environment fix, not kit code: stable VPN/network profile for the Desktop app host + add a Desktop-connectivity check to the S67 Scheduled Task preamble (resume is pointless while the app is region-blocked). Route to OPERATOR-QUEUE."
+  },
+  {
+   "log_problem": "Worktree/cwd lifecycle friction during autonomous runs: checkout of 'main' inside worktrees, EnterWorktree state confusion, and shells stuck in deleted directories",
+   "log_evidence": "b8009145: 'fatal: main is already used by worktree at /Users/.../AI_Traiding_Bot' ×3, '<tool_use_error>No-op: there is no active EnterWorktree session' ×1, 2026-07-01T18:06-18:08: 'python: realpath: .venv/bin/: Operation not permitted' + 'fatal: Unable to read current working directory' ×6",
+   "severity": "LOW",
+   "proposed_fix": "Two anti-waste rows: (a) never checkout main from a worktree — use detached or the worktree's own branch; (b) after worktree removal, cd to repo root before next command (stale cwd = EPERM cascade)."
+  },
+  {
+   "log_problem": "Harness long-tail quirks with no taxonomy entry: foreground-sleep blocks, stale background-task IDs, and permission stalls in unattended mode",
+   "log_evidence": "'<tool_use_error>Blocked: sleep 60 followed by: gh pr checks...' ×4; '<tool_use_error>No task found with ID: abbe12a8...' ×3; 'Permission to use Bash with command rm -rf ... has been denied' ×2 + 'Tool permission request failed: Error: Tool permission stream closed before response received' (2a557a47, 2026-07-02)",
+   "severity": "LOW",
+   "proposed_fix": "Extend error-taxonomy with: run_in_background/Monitor instead of foreground sleep; re-list tasks before referencing IDs; for scheduled autonomous runs pre-approve an allowlist (or bypassPermissions in the Scheduled Task) so a permission prompt can never stall an unattended session."
+  }
+ ],
+ "fix_gaps": [
+  {
+   "plan_item": "S69 D1-01+D1-04 — Phase-5 gate on real ship path + M-4 sprint-binding port into phase-advance.sh/skill-manifest.sh",
+   "gap": "Design hardens WHERE the gate listens and WHICH sprint the table belongs to, but not HOW the status cell is parsed: awk extracts the raw cell and case-matches literal 'done'|'skipped', so markdown emphasis ('**done**') or stray formatting still produces a false BLOCK — a proven, operator-visible failure mode the plan never mentions. Porting the same brittle parse into review-gate's new Phase-5 check would replicate it on the primary path.",
+   "evidence": "Real false-block 2026-05-11T10:08:18: 'Phase 5 (Verify) status: \"**done**\" ... Phase advance check FAILED' (4 min after the legit \"**in_progress**\" block — operator had to strip bold to pass); current kit/hooks/phase-advance.sh:126-131 still awk -F'|' + case \"done\"|\"skipped\"* with no */whitespace normalization"
+  },
+  {
+   "plan_item": "S65 error-taxonomy class 1 (workflow TS-parse, '151× Unexpected token') — carried into S68-S70 as settled",
+   "gap": "The 151× count is misattributed: 149 of the matches are Desktop-app fetch errors (JSON endpoints returning region-block HTML), not workflow-script parse failures — real transcript workflow-parse events ≈2 (plus 4 quote-lines). The workflow-authoring guide fixes the real-but-small class; the dominant signature behind the number is the uncovered network problem, and future audits re-citing '151×' would validate the wrong fix.",
+   "evidence": "main.log: 100 + main2.log: 49 — all 'SyntaxError: Unexpected token '<', \"<!DOCTYPE\"' (growthbook/blocklist/statsig fetch); transcripts contain only 6 'Invalid workflow script' lines, of which 4 in b8009145 (2 real error events) and 2 are prompt quotes of the S65 finding itself (68b6ddf2/2a557a47, 2026-07-02)"
+  },
+  {
+   "plan_item": "S69 D1-01 (review-gate extends to git merge) with op-detect root-fix KIT-OD-1 left in backlog, not scheduled in S68-S70",
+   "gap": "Extending substring-based op-detect to the merge path widens the false-fire surface (error-taxonomy class 5: gates FAILED on innocuous commands containing git-op literals) while the argv-parse root fix stays unscheduled — the plan adds new match patterns to a matcher whose false-fire class it acknowledges but defers. Every workflow-dispatched agent that echoes/greps text with merge literals becomes a new block candidate.",
+   "evidence": "error-taxonomy.md class 5 ('op-detect substring матчит литерал ... в тексте команды → KIT-OD-1 (argv)') + repo CLAUDE.md anti-waste row 'Op-detect false-fire (S65)'; S68-S70 plan text contains no KIT-OD-1 task; logs show 0 review-gate events today, so post-D1-01 every substring hit — true or false — is net-new block volume with no regression baseline for the false-fire case"
+  }
+ ]
+}

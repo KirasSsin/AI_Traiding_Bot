@@ -106,6 +106,29 @@ DEFER/REJECT: отсутствуют — все 47 = CONFIRM/REVISE; откло�
 - SKW-03 (MED): ponytail/ponytail-audit — advisory-first (ADR 0072 держит их Optional): строки phase table (уже в батче SKW-01 из S68), чеклист Phase 6 в sprint-flow-ru («ponytail-audit: N findings» в review-sNN.md), advisory «6b Lean» в skill-manifest — НЕ fail
 
 
+
+## Валидация по логам session-export (2-я проверка оператора)
+
+Coverage-матрица (kit-auditor) + fresh-eyes hunt (security-auditor) по 26MB логов + 507MB транскриптов. Сырьё: research-evidence/kit-deep-research/log-validation.json.
+
+**Покрыто планом: 9 проблем** (главные: adr-sync blocked-push ~74 блока → S59+S68; Phase5/6 гейты молчали весь mega-run — review-gate НИ РАЗУ не сработал за 507MB → S69 D1-01; 65 lossy-компакций → S70 probe; 43.8KB boot-tax → S68).
+
+**Непокрыто (добавлено в план):**
+- [MEDIUM] Параллельный батч: 1 фейл отменяет соседей — ~92 события (git add ×39) → **S68**: класс 10 таксономии + правило «мутирующие Bash соло»
+- [MEDIUM] Region-block сеть (4830 blocked-fetch; 149 SyntaxError = HTML вместо JSON) → **OQ-8**: VPN-профиль хоста + connectivity-check в S67 Scheduled Task
+- [LOW×2] worktree/cwd трение; sleep/stale-task-id/permission-stall → **S68**: строки таксономии
+
+**Дыры в дизайне фиксов (панели не доглядели):**
+- S69 D1-01/D1-04: парсер статус-ячейки должен терпеть markdown (`**done**`) — иначе ложный блок (доказанный класс)
+- Таксономия S65: «151× workflow parse-fail» — миф, 149 = region-block HTML; реальных ~2. Поправить счёт
+- Расширение substring op-detect на git merge расширяет false-fire поверхность → **KIT-OD-1 (argv-парсинг) поднят в S69** из бэклога
+
+**Fresh-eyes hunt — 4 новых (LOG9):**
+- **LOG9-01 [HIGH]** C2 launchd-поллер МЁРТВ в проде: TCC PermissionError краш-луп (27+ трейсбеков в launchd.err, маркер лежал необработанным) → **S68**: try/except + лог «нужен Full Disk Access»; desktop-путь S67 не затронут (living session имеет доступ)
+- **LOG9-02 [HIGH]** Multi-checkout split-brain: worktrees + второй клон = 4 параллельных SPRINT_STATE, гейты слепы к чужим → **S69**: git-common-dir check в гейтах
+- **LOG9-03 [MEDIUM]** Галлюцинированное дерево памяти AI_Traiding_Tool (wrong-project writes, стоячий always-allow) → **S68**: merge+delete + WARN в hooks-selfcheck
+- **LOG9-04 [MEDIUM]** Mega-run шёл под bypassPermissions → **S67 Scheduled Task НЕ получает bypass**: allowlist + acceptEdits (амендмент к uncovered-фиксу)
+
 ## Арбитраж отведённых находок (контрольный пере-скан обоих прогонов)
 
 Пере-скан журналов двух workflow-прогонов (python-extractor): finder'ы 8/8 без дублей (55 находок), панельные вердикты 47/47, потерь нет. 8 находок отведены verify-скептиками; арбитраж контроллера:
