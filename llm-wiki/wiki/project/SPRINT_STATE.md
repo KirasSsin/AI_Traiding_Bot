@@ -17,7 +17,7 @@ last_task_sha: 22248bf  # S69 squash-ship на main
 
 **next_action:** S70 Phase 2 brainstorm (`brainstorm-init` → trader-expert: A/B probe scope + метрика + held-out) → Phase 3 plan (техстраница llm-wiki ДО кода; ветка `feature/sprint-70-*`) → execute.
 
-**⚠️ PUSH-TO-GITHUB (pending, директива оператора «слей в github»):** main = 12 коммитов ahead origin (S58…S69 локальные ships), теги alpha.57…alpha.69 НЕ запушены. Выполнить: `unset GITHUB_TOKEN GH_TOKEN; git push origin main --follow-tags` (один раз). Если обрыв до push — это ПЕРВОЕ действие возобновления.
+**✅ PUSH-TO-GITHUB DONE** (2026-07-03): `a70a765` → origin/main (S58…S69 ships + tag alpha.69), integrated origin PR #71 (cascade exec-bit) через merge. origin == local. Auth: `unset GITHUB_TOKEN GH_TOKEN`.
 
 **Carry (src/ money-core заморожен):** BYBIT-08 (typed AmbiguousOrderOutcome), atr_breakout ATR-offset (ADR 0064), D5 forfeit-N, Track B Kronos. Test-hygiene: тесты пишут в tracked `data/cross_trial_sharpes.json`. OQ: 1 (токен), 5.
 
