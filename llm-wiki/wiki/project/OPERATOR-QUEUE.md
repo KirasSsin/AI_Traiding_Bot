@@ -48,5 +48,9 @@ kit-auditor / merge-analyst / release-manager созданы в `~/.claude/agent
 
 ADR 0075 pin-policy: 5 из 6 fable-5-пинов judgment-heavy (обосновано). `doc-writer=claude-sonnet-5` — дешёвый тир для draft-генерации доков. Подтверди: намеренный тир ИЛИ gap миграции fable-5? Если намеренно — оставляю; иначе подниму до fable-5 в след. kit-спринте. (Записано в `kit/PINNED_VERSIONS.md`.)
 
+## OQ-7 [OPEN] Frontend Design plugin — устанавливать? (S66)
+
+Ресерч плагинов (S66, [[plugins-research]]): внедрён Context7 MCP (docs библиотек, токен-экономия). 2-й кандидат **Frontend Design** (Anthropic, 829k инсталлов — #1) генерирует UI. Полезен ТОЛЬКО если планируется работа над `src/dashboard` UI. Не устанавливаю без твоего решения (не core-trading, YAGNI). Если нужен — скажи, добавлю. Context7 активируется на reload сессии («use context7» в промпте при работе с pybit/pandas).
+
 ## OQ-3 [CLOSED] Нумерация спринтов «был 75»
 Расследовано: `git tag` max = `v0.1.0-alpha.55`; `sprints/` max = 55; grep `sprint 7[0-9]` по 121MB транскрипта сессии и логам session-export — 0 совпадений. S56 (docs-спринт) не закрыт — корпус на ветке `chore/kit-integrate-headroom-ponytail`. Вывод: 75 не существовало; нумерация прогона S57+ корректна. Если помнишь контекст «75» — скажи, проверю точечно.

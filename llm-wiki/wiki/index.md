@@ -53,6 +53,7 @@ _(пусто — v0.2+)_
 ## Project — Sprints
 
 - [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
+- [[project/sprints/sprint-66-plugins]] 🆕 — S66 (финал): ресерч Claude Code плагинов + внедрён Context7 MCP (docs, токен-экономия); Frontend Design → оператору (OQ-7). Тег alpha.66. Отчёт [[project/plugins-research]].
 - [[project/sprints/sprint-65-error-harvest]] 🆕 — S65: таксономия token-waste ошибок (9 классов) → skill workflow-authoring + anti-waste паттерны + message-hints. Дизайн fable-5. Тег alpha.65.
 - [[project/sprints/sprint-64-llm-wiki-doc-flow]] 🆕 — S64: аудит llm-wiki (fable-5 команда) + правило doc-first (техстраница RU → код → docs/ RU); docs/=WARN; current-state дрейф синк. Тег alpha.64.
 - [[project/sprints/sprint-63-fable-team]] 🆕 — S63: 3 kit-агента (kit-auditor/merge-analyst/release-manager) + pin-policy ADR 0075. Тег alpha.63.

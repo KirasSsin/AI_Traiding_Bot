@@ -1,12 +1,12 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S65 SHIPPED (alpha.65) — далее S66 Plugins (финал)
-sprint: 65
-phase: between-sprints
-branch: main
+updated: 2026-07-02  # S66 Plugins (финал) — ship
+sprint: 66
+phase: 8-ship
+branch: feature/sprint-66-plugins
 tag: v0.1.0-alpha.65  # последний shipped (S65)
-last_task_sha: 20d81c2  # squash S65 на main — точка восстановления auto-resume
+last_task_sha: 20d81c2  # HEAD последней задачи — точка восстановления auto-resume
 ---
 
 ## Текущий статус
@@ -28,19 +28,19 @@ last_task_sha: 20d81c2  # squash S65 на main — точка восстанов
 
 ---
 
-## Phase tracking (S65)
+## Phase tracking (S66 — финал)
 
 | Phase | Status | Notes |
 |---|---|---|
 | 1 Orient | done | chapter marked |
-| 2 Brainstorm | skipped (validated) | таксономия из ground truth прогона |
-| 3 Plan | done | plan + tech-страница error-taxonomy (doc-first) |
-| 4 Execute | done | T1 taxonomy, T2 design-workflow fable-5, T3 skill workflow-authoring + anti-waste +5 + message-hints, T4 carry |
-| 5 Verify | done | 38-case gate regression PASS, bash -n оба гейта, selfcheck, drift clean, skills 9→10 |
-| 6 Review | done | design-workflow (arch + kit-auditor fable-5) = дизайн+coverage; review-s65 Blockers=0 |
-| 7 Sync | done | sprint-65 + review + index + error-taxonomy |
-| 8 Ship | done | manifest 7/7 + squash main 20d81c2 + tag v0.1.0-alpha.65 |
-| 9 Close | done | SPRINT_STATE + log; → S66 Plugins (финал) |
+| 2 Brainstorm | skipped | директива v2 (внедрить ≤2) |
+| 3 Plan | done | web-ресерч + tech-страница plugins-research (doc-first) |
+| 4 Execute | done | T1 ресерч, T2 фильтр (дубли отклонены), T3 Context7 в .mcp.json, T4 Frontend Design → OQ-7 |
+| 5 Verify | done | .mcp.json валиден (3 сервера), Context7 v3.2.2 на npm, не дублирует |
+| 6 Review | done | low-risk (ресерч+1 MCP, reversible); review в sprint-66; Blockers=0 |
+| 7 Sync | done | plugins-research + sprint-66 + OQ-7 + index |
+| 8 Ship | in_progress | manifest + squash + tag v0.1.0-alpha.66 |
+| 9 Close | done-next | → ФИНАЛ: kit-upgrade-report + один push origin |
 
 ---
 
