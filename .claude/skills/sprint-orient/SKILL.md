@@ -49,6 +49,13 @@ Order matters: SPRINT_STATE first (gives sprint+phase+branch+tag в 30 lines), t
    ```
    Get live FSM/reason codes/components/sprints counts (canonical-counts table near top).
 
+4b. **Tech-doc priming — первоисточник восстановления (S64 doc-first, BINDING):**
+   Восстановление контекста задачи отталкивается от ТЕХдокументов llm-wiki, не только SPRINT_STATE.
+   - Из `SPRINT_STATE` next_action + Phase-4 таблицы определи домен текущей задачи.
+   - Read `llm-wiki/wiki/project/components/README.md` — cluster reverse-lookup «задача X → компоненты».
+   - Read 1-2 релевантные `components/*.md` ИЛИ `architecture/*.md` (каждая <50KB; **лимит ≤2 страницы** — токен-бюджет).
+   - Если техстраницы для домена НЕТ → это doc-first gap, отметь (Фаза 3 обязана её создать ДО кода).
+
 5. **mem-search для prior decisions если user has specific concern:**
    ```
    mcp__plugin_claude-mem_mcp-search__smart_search "<topic>"

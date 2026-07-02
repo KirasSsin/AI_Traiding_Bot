@@ -22,6 +22,14 @@ sources:
 > Hook `~/.claude/hooks/sprint-flow-check.sh` блокирует push на ветку
 > `feature/sprint-NN-*` без plan file в `wiki/project/plans/`.
 >
+> **Doc-first (BINDING, S64):** Фаза 3 обязана создать/обновить ТЕХстраницу
+> `llm-wiki/wiki/project/(components|architecture)/**` (RU) ДО кода (Фазы 4);
+> Фаза 7 обновляет пользовательские `docs/` (RU). Гейт docs/=WARN. Полный текст
+> правила — repo `CLAUDE.md` секция «Doc-first + Docs-Sync Gate»; принуждение —
+> `skill-manifest.sh` строка «3b Doc-1st» (advisory) + Doc-first чеклист Фаз 3/7 ниже
+> (дисциплина, не hook-блок); docs/-гейт `docs-staleness-check.sh` = WARN.
+> Anti-pattern: код раньше техстраницы; техстраница задним числом в Фазе 7.
+>
 > Catalog tooling: [[tooling-inventory-ru]]
 
 ## Зачем мы это делаем
@@ -208,7 +216,12 @@ Anti-pattern: skip idea-refine на vague idea → trader-expert получае�
 - ✅ Pattern: `^[0-9]{4}-[0-9]{2}-[0-9]{2}-sprint-N-.+\.md$`
 - ❌ Hook `sprint-flow-check.sh` БЛОКИРУЕТ push на feature/sprint-* branch без plan file
 
+### Doc-first чеклист (S64 — advisory, принуждение = skill-manifest.sh «3b Doc-1st»)
+- ✅ ТЕХстраница `llm-wiki/wiki/project/(components|architecture)/**` (RU) создана/обновлена ДО кода (в одном коммите с plan-файлом)
+- ⚠️ Если спринт тронет `src/**` без техстраницы → `skill-manifest.sh` печатает WARN-строку 3b (не блок; артефакт-проверка ловит наличие, не порядок)
+
 ### Anti-patterns
+- ❌ Код раньше техстраницы llm-wiki; техстраница задним числом в Фазе 7
 - ❌ "TBD", "TODO", "implement later" placeholders в plan
 - ❌ "Add appropriate error handling" (vague — needs explicit list)
 - ❌ "Similar to Task N" (repeat code — engineer может читать out of order)
@@ -440,6 +453,11 @@ python -c "from src.execution.state_machine import TRANSITIONS, ExecutionState, 
 ### Триггер
 - Phase 6 review passed
 - Code changes требуют wiki update
+
+### Doc-first чеклист Фазы 7 (S64)
+- ✅ `wiki-update` — техстраницы `llm-wiki/` (RU) синхронизированы с кодом
+- ✅ `docs-update` — пользовательские `docs/` (RU) обновлены/созданы для затронутых сущностей (гейт `docs-staleness-check.sh` = WARN)
+- ✅ current-state.md счётчики синхронизированы (либо верь AUTO-блоку kit-overview-ru)
 
 ### Procedure
 **Использовать skill:** `.claude/skills/wiki-update/SKILL.md`

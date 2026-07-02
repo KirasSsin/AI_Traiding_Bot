@@ -102,20 +102,20 @@ PYEOF
 
 cat >&2 <<EOF
 
-🚫  Docs staleness check FAILED (KIT-004, S60)
+⚠️  Docs staleness WARN (KIT-004, S60; docs/=WARN per оператор S64)
 
 Источник изменён, а привязанная страница docs/ — нет (устареет):
 $(printf '%s\n' "$report" | sed 's/^/    /' | head -20)
 
-Required action — ОДНО из:
+Пуш НЕ заблокирован — реши осознанно. Рекомендация — ОДНО из:
   1. Обнови страницы через скилл docs-update (doc-writer → depth → linker),
      закоммить в тот же пуш.
   2. Тривиальная правка (формат/коммент/type hint, docs не нужен) —
      добавь [docs-ignore] в сообщение коммита.
 
 Привязка «источник → страница» — frontmatter source_files: каждой docs-страницы
-(кэш docs/manifest.json). Правило Docs-Sync Gate (CLAUDE.md).
+(кэш docs/manifest.json). Правило Doc-first + Docs-Sync Gate (CLAUDE.md, S64).
 
-(Defined by: ~/.claude/hooks/docs-staleness-check.sh, S60 KIT-004)
+(Defined by: ~/.claude/hooks/docs-staleness-check.sh, S60 KIT-004 / S64 WARN)
 EOF
-exit 2
+exit 0

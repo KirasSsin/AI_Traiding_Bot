@@ -28,6 +28,16 @@ echo "── Skill-firing manifest: sprint $N ──"
 if have_glob "$W/plans/*sprint-$N-*${SLUG}*.md"; then row "3 Plan" 1 "plan-файл есть"
 else row "3 Plan" 0 "нет plans/*sprint-$N-*${SLUG}*.md"; fi
 
+# Phase 3b — doc-first (S64 advisory, НЕ вклад в exit 1): если спринт тронул src/**,
+# он ОБЯЗАН тронуть техстраницу llm-wiki components/architecture (техдок ДО кода).
+touched_src="$(git -C "$repo_root" diff --name-only "main..HEAD" 2>/dev/null | grep -cE '^src/' || true)"
+touched_tech="$(git -C "$repo_root" diff --name-only "main..HEAD" 2>/dev/null | grep -cE 'llm-wiki/wiki/project/(components|architecture)/' || true)"
+if [ "${touched_src:-0}" -ge 1 ] && [ "${touched_tech:-0}" -eq 0 ]; then
+    printf '  · %-10s %s\n' "3b Doc-1st" "src/ тронут без техстраницы llm-wiki (doc-first WARN, не блок)"
+elif [ "${touched_src:-0}" -ge 1 ]; then
+    printf '  ✓ %-10s %s\n' "3b Doc-1st" "техстраница llm-wiki обновлена с кодом"
+fi
+
 # Phase 4 — коммиты спринта (эвристика: ≥1 коммит с (s$N) в диапазоне main..HEAD)
 # review HIGH #2: якорим границу после $N — иначе `sprint-62` матчит `sprint-620`
 # (тот же класс, что S59 substring-collision).

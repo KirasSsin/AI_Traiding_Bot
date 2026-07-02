@@ -53,6 +53,8 @@ _(пусто — v0.2+)_
 ## Project — Sprints
 
 - [[project/sprints/README|sprints/ README]] — назначение директории + шаблон sprint-page.
+- [[project/sprints/sprint-64-llm-wiki-doc-flow]] 🆕 — S64: аудит llm-wiki (fable-5 команда) + правило doc-first (техстраница RU → код → docs/ RU); docs/=WARN; current-state дрейф синк. Тег alpha.64.
+- [[project/sprints/sprint-63-fable-team]] 🆕 — S63: 3 kit-агента (kit-auditor/merge-analyst/release-manager) + pin-policy ADR 0075. Тег alpha.63.
 - [[project/sprints/sprint-62-manifest-telemetry]] 🆕 — S62 (mega-run 6/8): skill-firing manifest + cascade-WARN + tamper-evidence + KIT-022 + tuning ADR. Тег alpha.62.
 - [[project/sprints/sprint-61-state-v2]] 🆕 — S61 (mega-run 5/8): SPRINT_STATE v2 Вариант B + 6-раундовая security-закалка (1 BLOCKER + 6 HIGH). Тег alpha.61.
 - [[project/sprints/sprint-01-foundation]] — S1 (2026-04-20): DDD skeleton + platform + models + storage; tag `v0.1.0-alpha.1`.

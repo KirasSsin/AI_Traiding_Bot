@@ -90,7 +90,7 @@ Append-only event log в SQLite с PK `(aggregate_id, version)`. Аггрега�
 
 ## Риски v0.1
 
-- **Статистический** — overfitting; 5 лет BTC 1H позволяют протестировать не более ~45 конфигураций по границе MinBTL Bailey–López de Prado 2014. См. [[../../trading/concepts/minimum-backtest-length]].
+- **Статистический** — overfitting; 5 лет BTC 1H позволяют протестировать не более ~45 конфигураций по границе MinBTL (Bailey–López de Prado 2014).
 - **Рыночный** — режимный сдвиг; Hudson & Urquhart (2021) показывают затухание простых MA-правил на BTC после 2017, OOS-Sharpe отрицателен.
 - **Операционный** — неверный API-ключ, rate-limit, IP-бан HTTP 418.
 

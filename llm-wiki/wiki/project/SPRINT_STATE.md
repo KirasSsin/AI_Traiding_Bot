@@ -1,17 +1,17 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S63 SHIPPED (alpha.63) — далее S64 Plugins & Best Practices (финал)
-sprint: 63
-phase: between-sprints
-branch: main
+updated: 2026-07-02  # S64 LLM-Wiki Audit & Doc-Flow — ship
+sprint: 64
+phase: 8-ship
+branch: feature/sprint-64-llm-wiki-doc-flow
 tag: v0.1.0-alpha.63  # последний shipped (S63)
-last_task_sha: 7d5f5e5  # squash S63 на main — точка восстановления auto-resume
+last_task_sha: 7d5f5e5  # HEAD последней задачи — точка восстановления auto-resume
 ---
 
 ## Текущий статус
 
-**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~Фаза0~~ → ~~S57~~ → ~~S58~~ → ~~S59~~ → ~~S60~~ → ~~S61~~ → ~~S62~~ → ~~S63 Fable-team~~ → **S64 Plugins(внедрить ≤2)** → отчёт+push. Директива: максимум fable-5 kit-агентов через Workflow; команда агентов в каждом спринте.
+**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~S57~~…~~S63~~ → **S64 LLM-Wiki Audit & Doc-Flow** → S65 Error-Harvest → S66 Plugins(≤2) → отчёт+push. Директивы (BINDING, оператор 2026-07-02): (1) doc-first — техдоки llm-wiki RU → код → пользовательские docs/ RU, гейт docs/=WARN; (2) все вызываемые агенты = kit fable-5 через Workflow (основной луп opus 4.8 дорогой — минимизировать); (3) session-restore от техдоков llm-wiki; (4) минимум токенов.
 
 **S63 SHIPPED** (main `7d5f5e5`, tag alpha.63): 3 read-only advisory-агента на fable-5 (kit-auditor / merge-analyst / release-manager), спроектированы через Workflow; ADR 0075 pin-policy + `kit/PINNED_VERSIONS.md`; Matrix §4.1 (arch+trader→fable-5); frontend-developer opus-4-7→opus. Ревью arch+security APPROVE_WITH_CONDITIONS (pin-dimension, PINNED-misclass, secret-echo HIGHs закрыты). OQ-5 (агенты dispatchable после reload), OQ-6 (doc-writer тир). Детали → [[sprints/sprint-63-fable-team]].
 
@@ -38,19 +38,19 @@ last_task_sha: 7d5f5e5  # squash S63 на main — точка восстанов
 
 ---
 
-## Phase tracking (S63)
+## Phase tracking (S64)
 
 | Phase | Status | Notes |
 |---|---|---|
-| 1 Orient | done | chapter marked; agent-пины инвентаризованы |
-| 2 Brainstorm | skipped (approved backlog) | Matrix §4.1 + pin-policy + 3 новых агента |
-| 3 Plan | done | plans/2026-07-02-sprint-63-fable-team.md |
-| 4 Execute | done | T1 пины fable5, T2 ADR 0075+registry+frontend fix, T3-T5 3 агента (design workflow), T6 smoke, T7 inventory 18 |
-| 5 Verify | done | frontmatter 3/3, kit-drift clean (18), audit-block bash -n, selfcheck |
-| 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH: pin-dimension+PINNED-misclass закрыты) + security (HIGH secret-echo закрыт), review-s63 Blockers=0 |
-| 7 Sync | done | component + ADR 0075 + sprint-63 + index + kit-inventory AUTO |
-| 8 Ship | done | manifest 7/7 + squash main 7d5f5e5 + tag v0.1.0-alpha.63 |
-| 9 Close | done | SPRINT_STATE between-sprints + log; → S64 Plugins & Best Practices |
+| 1 Orient | done | chapter marked; директивы оператора в память |
+| 2 Brainstorm | skipped (validated plan) | оператор провалидировал: 2 спринта, docs/=WARN |
+| 3 Plan | in_progress | plans/2026-07-02-sprint-64-llm-wiki-doc-flow.md + audit-workflow |
+| 4 Execute | done | T1 аудит+синк, T2 doc-first (CLAUDE.md+sprint-flow-ru+orient+manifest 3b), T3 docs/ WARN, T4 orient 4b, T5 idea-verdict, T6 docs/-страница |
+| 5 Verify | done | bash -n + WARN red-check + selfcheck + drift clean + счётчики 18/14 |
+| 6 Review | done | arch APPROVE_WITH_CONDITIONS (2 HIGH закрыты) + kit-auditor + doc-reviewer-depth (все fable-5), review-s64 Blockers=0 |
+| 7 Sync | done | current-state синк + sprint-64 + review + index + docs-sync-gate/docs-update → WARN |
+| 8 Ship | in_progress | manifest + squash + tag v0.1.0-alpha.64 |
+| 9 Close | pending | → S65 Error-Harvest |
 
 ---
 

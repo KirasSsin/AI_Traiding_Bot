@@ -255,13 +255,17 @@ Validation тулзы (yaml/json check) → `.venv/bin/python -c "import yaml; .
 
 **Auto-Resume (S58):** упёрся в usage-лимит → хук StopFailure пишет маркер, launchd-опросник возобновляет прогон через `claude -p --resume` при сбросе. НЕ отключать хук StopFailure и не удалять `~/.claude/auto-resume/` — это контур непрерывности. Опора механизма = актуальный `next_action` в SPRINT_STATE (per-task протокол). Детали: `llm-wiki/wiki/project/components/auto-resume.md`; управление: `kit/auto-resume/install.sh status|uninstall`.
 
-## Docs-Sync Gate (BINDING, S60)
+## Doc-first + Docs-Sync Gate (BINDING, S60/S64)
 
-Любая правка `src/**` ИЛИ `kit/**` обязана в ТОМ ЖЕ пуше обновить привязанные страницы `docs/` (привязка — frontmatter `source_files:` каждой страницы; кэш `docs/manifest.json`). Принуждение:
-- `docs-staleness-check.sh` → git push: источник изменён, страница нет → БЛОК. Escape: `[docs-ignore]` в коммите для тривиальных правок (формат/комменты/type hints).
-- `docs-broken-link-check.sh` → git push: битые `[[ссылки]]` в каноничном корпусе docs/ (00-10) → БЛОК.
+**Порядок документации в каждом спринте** (директива оператора 2026-07-02):
 
-Фаза 7 (Sync) = `wiki-update` (llm-wiki/) + `docs-update` (docs/, S56-конвейер, только затронутые страницы). При правке кита — тоже (kit/ под git с S57). НЕ вписывать секреты в docs/ (страницы под git). Anti-pattern: «обновлю доки потом» — хук не пустит.
+1. **Фаза 3 (Plan) — техническая страница llm-wiki ДО кода.** План обязан создать/обновить техстраницу `llm-wiki/wiki/project/**` (components/ или architecture/, на **РУССКОМ** — оператор валидирует) в том же коммите, что plan-файл. Нет техстраницы → Фаза 4 (код) не начинается. Принуждение: `skill-manifest.sh` строка «3b Doc-first» (advisory) + HARD-GATE Фазы 3 в `sprint-flow-ru.md`.
+2. **Фаза 7 (Sync) — пользовательские `docs/` ПОСЛЕ кода.** `wiki-update` (llm-wiki/, RU) + `docs-update` (docs/, RU, S56-конвейер doc-writer→depth→linker, только затронутые страницы).
+3. **Гейт `docs/` = WARN (не блок, решение оператора S64):**
+   - `docs-staleness-check.sh` → git push: источник (`src/**`/`kit/**`) с привязкой `source_files:` изменён, страница нет → **WARN** (список «источник → страница», пуш НЕ блокируется — реши осознанно). Escape `[docs-ignore]` для тривиального.
+   - `docs-broken-link-check.sh` → git push: битые `[[ссылки]]` в каноничном корпусе docs/ (00-10) → **БЛОК** (остаётся жёстким — это гигиена, не покрытие).
+
+**Язык:** llm-wiki + docs/ + sprint-страницы = **русский** (валидация оператором). Код/идентификаторы/inter-agent = English. Anti-pattern: «код раньше техстраницы» / «техстраница задним числом в Фазе 7». НЕ вписывать секреты в docs/ (под git).
 
 ## Minimum behavior
 

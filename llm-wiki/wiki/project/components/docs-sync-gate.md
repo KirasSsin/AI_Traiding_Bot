@@ -16,7 +16,7 @@ status: stable
 
 | Файл | Роль |
 |---|---|
-| `docs-staleness-check.sh` (KIT-004) | git push: источник изменён, привязанная страница нет → БЛОК. Escape `[docs-ignore]` для тривиального. quotepath-safe (кириллица) |
+| `docs-staleness-check.sh` (KIT-004) | git push: источник изменён, привязанная страница нет → **WARN** (S64: docs/=WARN, решение оператора; пуш не блокируется). Escape `[docs-ignore]` для тривиального. quotepath-safe (кириллица) |
 | `docs-broken-link-check.sh` (KIT-016) | git push с тронутыми docs/: битые навигационные wiki-ссылки каноники (00-10) → БЛОК |
 | `docs_manifest.py` | обратный индекс `source_files:` frontmatter → `docs/manifest.json` (кэш для staleness, быстро без YAML-парсинга в bash). 140 источников/328 привязок |
 | `docs_broken_link_scan.py` | скан wiki-ссылок: пути/alias/якоря; игнор код-блоков И инлайн-код-примеров |

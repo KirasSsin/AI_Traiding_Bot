@@ -36,18 +36,20 @@ sources:
 
 ## Canonical counts (live, MUST be kept current per dev-workflow.md PHASE 8 step 5a HARD-GATE)
 
+> **Живые счётчики кита (агенты/хуки/скиллы) — авто:** [[kit-overview-ru]] AUTO-блок (`kit/kit-inventory.sh`, регенерируется). Эта таблица — ручной синк в Фазе 7 (S64 doc-first); при расхождении верь AUTO-блоку. FSM/reason-code money-счётчики — из живого кода (проба в sprint-finish).
+
 | Метрика | Значение | Источник истины | Последнее обновление |
 |---------|----------|-----------------|-------------|
 | FSM states | **16** | `src/execution/state_machine.py` `ExecutionState` enum | S6 (ADR 0020) |
 | FSM events | **30** | `src/execution/state_machine.py` `ExecutionEvent` enum | S8a (ADR 0022, +KILL_SWITCH_REQUESTED) |
 | FSM transitions | **76** | `src/execution/state_machine.py` `TRANSITIONS` dict | S55 TL-NEW-01 (+2: (LONG_OPEN, FLATTEN_FAILED)→HALTED + (OCO_ARMING, FLATTEN_FAILED)→HALTED; ранее S8b T7 ADR 0023 = 74) |
 | Reason codes | **67** | `src/risk/reason_codes.py` `ReasonCode` enum | S52 T4 (+2 ENTRY_LONG_KRONOS + EXIT_FLAT_KRONOS, reason_codes 65→67) |
-| Component pages | **51** | `wiki/project/components/*.md` (excl. README.md cluster index) | S52 T10 (+3: kronos-strategy + kronos-adapter + prediction-cache) |
+| Component pages | **60** | `wiki/project/components/*.md` (excl. README.md cluster index) | S64 sync (S57-S63 kit-компоненты) |
 | Architecture pages | **+2 NEW S32e** | `wiki/project/architecture/{kit-audit-2026-04-27,tooling-inventory-ru-part-2}.md` | unchanged S33 |
-| ADRs | **71** | `wiki/project/decisions/*.md` (0001-0071) | S55 (ADR 0071 `_cmd_wfa` DSR units accepted) |
-| Sprint pages | **59** | `wiki/project/sprints/sprint-*.md` (sprint-01..sprint-55 + sprint-08a/b/c + sprint-32b/c/d/e, minus S24+S26) | S55 (sprint-55-full-audit-refactor) |
-| Reviewer agents | **11** | `~/.claude/agents/` (out-of-repo) | S32d +1 (bybit-api-reviewer sonnet) |
-| Active push hooks | **7** | `~/.claude/hooks/` (PreToolUse Bash) | unchanged S32d |
+| ADRs | **75** | `wiki/project/decisions/*.md` (0001-0075) | S64 sync (последний 0075-model-pin-policy-v2) |
+| Sprint pages | **65** | `wiki/project/sprints/sprint-*.md` (…sprint-63-fable-team) | S64 sync (S57-S63) |
+| Reviewer/kit agents | **18** | `~/.claude/agents/` = `kit/agents/` (S57 mirror) | S64 sync (S63 +3: kit-auditor/merge-analyst/release-manager) |
+| Active push hooks | **14** | `~/.claude/hooks/` (PreToolUse Bash); sh-файлов 17 | S64 sync (S57-S63 gates+state+cascade) |
 | UserPromptSubmit hooks | **2** | `~/.claude/settings.json` (caveman + context-budget) | S32d +context-budget-warn.sh |
 | MCP servers | **8** | settings.json + .mcp.json | unchanged S32d |
 | CI gates | **YES** | `.github/workflows/ci.yml` (push к main + PR) | S32b (validated 3rd PR S32d) |

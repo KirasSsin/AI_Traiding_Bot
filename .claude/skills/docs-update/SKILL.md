@@ -1,6 +1,6 @@
 ---
 name: docs-update
-description: После изменения src/ или kit/ синхронизирует ТОЛЬКО затронутые страницы docs/ (пользовательская документация) через конвейер doc-writer→doc-reviewer-depth→doc-linker. Use proactively в Фазе 7 (Sync) параллельно wiki-update, ИЛИ когда docs-staleness-check.sh заблокировал push. Инкрементально (не полный ребилд) — экономия токенов. S60, симметрия к wiki-update.
+description: После изменения src/ или kit/ синхронизирует ТОЛЬКО затронутые страницы docs/ (пользовательская документация) через конвейер doc-writer→doc-reviewer-depth→doc-linker. Use proactively в Фазе 7 (Sync) параллельно wiki-update, ИЛИ когда docs-staleness-check.sh выдал WARN (S64: docs/=WARN). Инкрементально (не полный ребилд) — экономия токенов. S60, симметрия к wiki-update.
 ---
 
 # docs-update — инкрементальная синхронизация docs/ с кодом
@@ -10,7 +10,7 @@ description: После изменения src/ или kit/ синхронизи
 ## Когда
 
 - Фаза 7 (Sync) любого спринта, тронувшего `src/**` или `kit/**` — параллельно `wiki-update`.
-- Реактивно: `docs-staleness-check.sh` заблокировал push (источник изменён, страница отстала).
+- Реактивно: `docs-staleness-check.sh` выдал WARN (источник изменён, страница отстала; S64 docs/=WARN, не блок).
 - НЕ запускать при `[docs-ignore]`-правках (формат/комменты/type hints).
 
 ## Шаги
@@ -45,7 +45,7 @@ cd docs && python3 ~/.claude/hooks/lib/docs_broken_link_scan.py . | grep -E '^(0
 
 ## HARD-GATE (в Фазе 7)
 
-Перед Ship: `docs-staleness-check.sh` clean + `docs-broken-link-check.sh` clean. Иначе push заблокирован — это принуждение Docs-Sync Gate.
+Перед Ship: `docs-broken-link-check.sh` clean (битые ссылки = БЛОК). `docs-staleness-check.sh` = WARN (S64: docs/=WARN — реши осознанно, не блок).
 
 ## Анти-паттерны
 - ❌ Полный ребилд всех 128 страниц вместо затронутых (токен-разбазаривание).
