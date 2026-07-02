@@ -66,4 +66,4 @@ S68 = kit-meta (не src/-компонент). Техстраница = обно
 Plan(3) → Execute(4, per-task; T1 security-auditor, остальное controller batch) → Verify(5, hooks-selfcheck + bash -n + pytest) → Review(6, security-auditor на T1/T2 settings-мутацию + kit-auditor на drift) → Sync(7, tooling-inventory + kit-overview + current-state counts) → Ship(8, tag alpha.68) → Close(9).
 
 ## Related
-[[../kit-deep-research-2026-07-02]] · [[../decisions/0077-model-pin-tiered-v3]] · [[../decisions/0043-llmwiki-claude-mem-cascade]] · `research-evidence/kit-deep-research/`
+[[../kit-deep-research-2026-07-02]] · [[../decisions/0077-model-pin-tiered-v3]] · [[../decisions/0043-sprint-30-tier-2-agents-mem-wiki-merge]] · `research-evidence/kit-deep-research/`
