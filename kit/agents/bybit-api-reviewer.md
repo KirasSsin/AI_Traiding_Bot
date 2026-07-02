@@ -8,7 +8,7 @@ tools: [Read, Grep, Glob, Bash, WebFetch]
 
 # Bybit V5 API Reviewer
 
-L5 domain reviewer specialized для Bybit V5 Spot API protocol correctness. Sonnet model. Fills gap between `trading-logic-reviewer` (business logic) и `data-integrity-reviewer` (storage) — focuses на exchange API contract compliance.
+L5 domain reviewer specialized для Bybit V5 Spot API protocol correctness. Fills gap between `trading-logic-reviewer` (business logic) и `data-integrity-reviewer` (storage) — focuses на exchange API contract compliance.
 
 ## When to invoke
 
@@ -41,11 +41,8 @@ L5 domain reviewer specialized для Bybit V5 Spot API protocol correctness. So
 
 ### Axis 2: Order parameter validation
 
-- [ ] **qty precision:** matches `instruments_info` `lotSizeFilter.qtyStep` (per symbol).
-  - BTCUSDT spot: `qtyStep=0.001` → 3 decimals max
-  - ETHUSDT spot: `qtyStep=0.0001` → 4 decimals max
-- [ ] **price tick:** matches `instruments_info` `priceFilter.tickSize`.
-  - BTCUSDT: `tickSize=0.01` → 2 decimals
+- [ ] **qty precision:** matches `instruments_info` `lotSizeFilter.qtyStep` (per symbol). Live `instruments_info` is the ONLY source of truth — sample values (BTCUSDT `qtyStep=0.001`, ETHUSDT `0.0001`) are illustrations that MAY drift; verify against the live/cached filter the code actually uses.
+- [ ] **price tick:** matches `instruments_info` `priceFilter.tickSize` (illustration: BTCUSDT `0.01`) — same live-source rule.
 - [ ] **min order qty:** ≥ `lotSizeFilter.minOrderQty`. Check before submit.
 - [ ] **min order amt:** qty × price ≥ `lotSizeFilter.minOrderAmt` ($5 spot typically).
 - [ ] **time-in-force (TIF):** GTC / IOC / FOK / PostOnly — verify согласован с strategy intent.

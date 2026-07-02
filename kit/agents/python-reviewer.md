@@ -6,18 +6,9 @@ model: claude-fable-5
 memory: project
 ---
 
-## Sprint context priming (MANDATORY — load BEFORE any review)
+## Context loading (minimal — this is a lint-class review)
 
-Before any Python review, load canonical state:
-
-1. `Read /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/SPRINT_STATE.md`
-2. Read `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/log.md` last ~80 lines via offset
-3. `Read /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/architecture/current-state.md` (stack table + canonical counts)
-4. `Read /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/mental-map.md` (если открытая Python concern касается специфичного domain)
-5. `Read /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/components/README.md` (cluster index для понимания module boundaries)
-6. `Bash ls /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/pre-s*-backlog.md 2>/dev/null`
-
-If any source missing → surface as Concern.
+Read `MEMORY.md` first, then go straight to the diff. No wiki priming needed: your checks are code-local (idioms, types, stack rules below). Read a wiki/component page only if a specific finding needs domain context to judge.
 
 ## Persistent memory (`memory: project`)
 
@@ -31,26 +22,9 @@ When invoked:
 3. Focus on modified `.py` files
 4. Begin review immediately
 
-## Path discipline (file references)
+## Op discipline
 
-When citing or referencing files in output:
-1. Use absolute paths from project root: `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/<rel>` (or the equivalent for the active project). Do NOT abbreviate to relative paths in output unless the surrounding context unambiguously locates them.
-2. Verify file existence via `Bash ls <path>` BEFORE citing in output. Do not infer paths from naming conventions (e.g., the file may be `override.py`, not `override_store.py` despite class name `OverrideStore`).
-3. If the maintainer brief references a path that does not exist, search for the real one (`Glob` or `Bash ls`) and use it. Do not silently substitute a guess. If you cannot find it, surface "path missing" as a Concern.
-4. When citing line numbers, format as `path:LINE` or `path:START-END` so the reader can `Read offset=LINE` directly.
-5. **Project root spelling — exact:** `AI_Traiding_Bot` (NOT `_Tool`, `_Trader`, `_Trading`). Common typo class. Verify via `pwd` если doubt.
-6. **MEMORY.md tolerance:** `.claude/agent-memory/<agent>/MEMORY.md` (project-local, relative к repo root — NOT `~/.claude/agent-memory/`) may NOT exist on first dispatch — file auto-created on first WRITE. Read failure = expected, не error. Continue task; write MEMORY at end with new institutional knowledge.
-7. **Don't-retry rule:** Read failure (file missing OR path typo) → DO NOT retry с varying paths (compounds hallucination + wastes tokens). First miss → `ls <parent>` to find truth OR surface "path missing" as Concern. Max 1 retry per file ref.
-
-## Python venv discipline (Bash invocations)
-
-When running Python via `Bash` for inspection (REPL probes, AST queries, transition counts, import checks):
-1. Project requires Python **3.12** (uses `StrEnum`, PEP 604 unions, modern `pydantic-settings`). System Python on macOS = 3.9 → `ImportError: cannot import name 'StrEnum' from 'enum'`. Bare `python` does not exist on PATH (exit 127).
-2. ALWAYS use one of these patterns — never bare `python` / `python3`:
-   - Activate venv: `source /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/activate && python -c "..."`
-   - Direct path: `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/python -c "..."`
-3. Same rule for tools: use `.venv/bin/pytest`, `.venv/bin/mypy`, `.venv/bin/ruff` — or activate first.
-4. If venv missing — surface as Concern, do NOT fall back to system Python (results will be wrong).
+Full rules live in CLAUDE.md (auto-loaded for every subagent): absolute paths + verify-before-cite (project root `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot` — exact spelling), `.venv/bin/python` / `.venv/bin/ruff` / `.venv/bin/mypy` never bare `python`, >50KB files via Grep + offset Read. Agent-specific: `.claude/agent-memory/python-reviewer/MEMORY.md` may not exist until first write — expected, max 1 retry on Read miss.
 
 ## Review Priorities
 

@@ -160,32 +160,9 @@ Issues spanning multiple questions: e.g., "Q3 + Q7 together imply a new FSM stat
 Items where you genuinely cannot decide because they involve product/business choice (capital allocation, regulatory, partnerships, operator policy). One bullet each, with the specific question to ask the user.
 ```
 
-## Path discipline (file references)
+## Op discipline
 
-When citing or referencing files in output:
-1. Use absolute paths from project root: `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/<rel>`. Do NOT abbreviate to relative paths in output unless the surrounding context unambiguously locates them.
-2. Verify file existence via `Bash ls <path>` BEFORE citing in output. Do not infer paths from naming conventions (e.g., the file may be `override.py`, not `override_store.py` despite class name `OverrideStore`).
-3. If the maintainer brief references a path that does not exist, search for the real one (`Glob` or `Bash ls`) and use it. Do not silently substitute a guess. If you cannot find it, surface it as an open question for the maintainer.
-4. When citing line numbers, format as `path:LINE` or `path:START-END` so the reader can `Read offset=LINE` directly.
-5. **Project root spelling — exact:** `AI_Traiding_Bot` (NOT `_Tool`, `_Trader`, `_Trading`). Common typo class. Verify via `pwd` если doubt.
-6. **MEMORY.md tolerance:** `.claude/agent-memory/<agent>/MEMORY.md` (project-local, relative к repo root — NOT `~/.claude/agent-memory/`) may NOT exist on first dispatch — file auto-created on first WRITE. Read failure = expected, не error. Continue task; write MEMORY at end with new institutional knowledge.
-7. **Don't-retry rule:** Read failure (file missing OR path typo) → DO NOT retry с varying paths (compounds hallucination + wastes tokens). First miss → `ls <parent>` to find truth OR surface "path missing" as Concern. Max 1 retry per file ref.
-
-## Python venv discipline (Bash invocations)
-
-When running Python via `Bash` for inspection (REPL probes, AST queries, transition counts, import checks):
-1. Project requires Python **3.12** (uses `StrEnum`, PEP 604 unions, modern `pydantic-settings`). System Python on macOS = 3.9 → `ImportError: cannot import name 'StrEnum' from 'enum'`. Bare `python` does not exist on PATH (exit 127).
-2. ALWAYS use one of these patterns — never bare `python` / `python3`:
-   - Activate venv: `source /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/activate && python -c "..."`
-   - Direct path: `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.venv/bin/python -c "..."`
-3. Same rule for tools: use `.venv/bin/pytest`, `.venv/bin/mypy`, `.venv/bin/ruff` — or activate first.
-4. If venv missing — surface as Concern, do NOT fall back to system Python (results will be wrong).
-
-## Reading large files (overflow guard)
-
-Read tool hard limit ~25k tokens (~90KB markdown / ~80KB code). For files > 50KB use Grep + offset Read, never full Read. Banned-from-full-read list:
-- `Docs/00-All.md`, `Docs/reference/Mimo_bot/00-All.md` (~350k each)
-- `wiki/project/plans/2026-04-21-sprint-2-bybit-venue-migration.md` (~28k)
+Full rules live in CLAUDE.md (auto-loaded for every subagent): absolute paths + verify-before-cite (project root `/Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot` — exact spelling), `.venv/bin/python` never bare `python`, >50KB files via Grep + offset Read. Agent-specific: `.claude/agent-memory/trader-expert/MEMORY.md` may not exist until first write — expected, max 1 retry on Read miss. Path miss in a maintainer brief → search via Glob/ls, surface as open question if not found.
 
 ## Scope boundaries
 

@@ -2982,3 +2982,10 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Research: 47 confirmed → план S68-S70 (945c4e6), арбитраж 8 отведённых — 0 потерь (93b1229). Оператор уходит офлайн.
 - In-flight: log-validation workflow wf_ba3b2ff5-d18 (coverage-матрица логов + fresh-eyes hunt). Resume: Workflow scriptPath kit-research-log-validation-*.js + resumeFromRunId; журнал в subagents/workflows/. Если убит сетью — свежий перезапуск дёшев (3 агента).
 - Далее: вердикт оператора «запускай S68» → kit-цикл S68 Boot-слой.
+
+## 2026-07-02 — kit-maintenance: валидация логики 18 агентов (директива оператора, вне спринта)
+- Прочитаны все 18 kit/agents против официальных sub-agents доков + 9-фазового цикла.
+- frontend-developer: переписан полностью (был чужой шаблон: несуществующий context-manager, JSON-протокол, React/Vue/Angular vs реальный FastAPI+Jinja2+vanilla).
+- Убраны рассинхроны тело↔frontmatter (model/effort в телах 5 агентов), стейл-снапшоты чисел (42/59/16 codes, 762 tests S8c, 38 components, FSM 16/30/76, React dashboard) → живые пробники.
+- Priming-диета: 6-7 обязательных чтений/диспатч → условные (7 diff-ревьюеров); CLAUDE.md-дубли (path/venv/read-guard ~2.5KB×6) → 3-строчный Op discipline; description-диета kit-auditor 2.6KB→0.5KB, security-auditor, release-manager.
+- Итог: 204KB→180KB статики; минус 4-6 обязательных чтений на каждый диспатч ревьюера. Зеркало ~/.claude/agents синхронизировано (diff=0). effort:max в frontmatter quant-stats/trader-expert оставлен до применения v3 (решение оператора «потом»).
