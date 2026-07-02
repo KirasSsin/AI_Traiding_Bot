@@ -20,3 +20,11 @@ Do NOT retry with random edits. Re-check rules 1→2→3 in order (TS annotation
 
 ## Model / agent directive (operator, kit mega-run)
 Dispatch project kit agents (architecture-reviewer, security-auditor, kit-auditor, etc.) — pinned fable-5 — via Workflow for the heavy analysis; keep the main loop light. See [[../../../llm-wiki/wiki/project/components/kit-team-agents]].
+
+## Phase-checkpoint persistence (BINDING — operator directive 2026-07-02, limit-kill survival)
+Usage-limit can kill a run mid-phase (S-deep-research: 30 panels + synthesize died at once). Two layers of survival:
+1. **Journal (free, automatic):** every COMPLETED `agent()` call is journaled; `Workflow({scriptPath, resumeFromRunId})` replays them at zero token cost, re-running only failed/new calls. Resume, never relaunch: relaunch = full re-pay. Do NOT edit any agent() call that already succeeded (prompt/opts change = cache miss for it and everything after).
+2. **Disk checkpoint per phase (explicit, add to every multi-phase script):** after each phase barrier, dump the phase result to a repo file via a minimal Write-agent, e.g.:
+   `await agent('Write this JSON verbatim to <REPO>/llm-wiki/wiki/project/research-evidence/<run>-<phase>.json (create dirs): ' + JSON.stringify(phaseResult).slice(0, 200000), {label: 'checkpoint:<phase>', effort: 'low'})`
+   Cost: один дешёвый вызов на фазу; выигрыш: результат фазы читается с диска даже если журнал недоступен (новая сессия, другой runId) и виден оператору немедленно.
+3. **Controller duty:** the moment a workflow returns, FIRST Write the full result to disk (git-tracked), THEN analyze. Result-in-notification is context-volatile; disk is not.

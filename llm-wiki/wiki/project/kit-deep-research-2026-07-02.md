@@ -1,0 +1,125 @@
+---
+title: "Kit Deep-Research 2026-07-02 — слабые места, вердикты панелей, план S68+"
+type: research
+created: 2026-07-02
+updated: 2026-07-02
+status: stable
+---
+
+# Kit Deep-Research — итоговый отчёт
+
+Методика: 8 измерений (fable-5 finders: kit-auditor/security-auditor/general) -> adversarial verify (refute-by-default) -> 8+3 brainstorm-панелей (architecture-reviewer/kit-auditor/security-auditor, протокол Фазы 2) -> синтез. 55 находок -> 47 confirmed (18 HIGH) -> 47 вердиктов (23 CONFIRM + 24 REVISE). Сырые данные: [research-evidence/kit-deep-research/](research-evidence/kit-deep-research/) (confirmed.json, finders.json, panels-*.json, synthesis.json).
+
+## Executive summary
+
+Итог глубокого исследования кита: 47 подтверждённых находок (18 HIGH / 18 MEDIUM / 11 LOW), все 47 вердиктов вынесены — 23 CONFIRM + 24 REVISE, ни одна находка не отклонена целиком.
+
+ЧТО УЖЕ ОТЛИЧНО (честно): ядро принуждения S61-S62 спроектировано верно и работает — op-detect с нормализацией команд, review-gate по денежным путям с M-4 sprint-binding, регресс-харнесс на 38 кейсов, state-integrity restore, fail-CLOSED guard-the-guards (hooks-selfcheck). Дисциплины doc-first, archive-before-trim, kit-зеркалирование в git и философия P1-MANIFEST («скилл выстрелил» = «артефакт появился») — подтверждены исследованием как правильное направление: там, где гейт стоит на реальном пути, он реально ловит.
+
+ЧТО РЕАЛЬНО СЛАБО — семь кластеров:
+1. Гейты слушают не тот путь. Реальный ship с S57 = локальный squash-merge, а phase-advance/review-gate слушают только gh pr merge → два флагманских МЕХ-барьера (Фазы 5-6) молча выключены на фактическом пути уже 10 спринтов (D1-01). Плюс stale-таблица прошлого спринта удовлетворяет гейт (D1-04), а self-skip лазейка осталась в 9 хуках, включая 5 блокирующих (D1-03).
+2. Кит учит ритуалам, которые его же хуки отвергают. Touch-ритуал (S59 заменён на content-check) живёт на 6 поверхностях, включая канонический sprint-finish Step 6b → гарантированный блок пуша на каждом ADR-спринте (D1-02/SKW-02/D2-02/MEM-06).
+3. WARN-слой нем. 4 хука (cascade-read, context-budget, docs-staleness, pertask-state) пишут в stderr при exit 0 — модель этого канала не получает, все 4 сторожа = no-op (D7-01).
+4. Токен-кровотечение. 43.8KB устаревшего пре-S57 аудита на Desktop авто-грузится каждую сессию (~13.3k токенов, 41% бута — D7-02/MEM-02); caveman-хуки задублированы (~45k за мега-ран — D8-01); claude-mem инжектит ~6.3k/сессию при мёртвом с 24.04 observer и ~0 retrieval (D5-03/MEM-01); warp — 89,766 пустых вызовов (D8-04); суммарный boot-payload 105.6KB с дрейфующими дублями (MEM-07).
+5. В автономном режиме скиллы мертвы: 0 из ~80 ожидаемых срабатываний за мега-ран S57-S66 (D5-02). Ответ кита — artifact-gates — верен, но манифест не полон (нет Фазы 2/9, ложный ✓ Фазы 7, слеп к kit/** — D1-05/D1-06/SKW-05).
+6. Память без жизненного цикла: split-brain пути agent-memory (D2-01), индексы без бюджета и сироты без индекса (D2-04/MEM-05), consolidate-memory НИ РАЗУ за 35 спринтов (MEM-03), merge-analyst/release-manager вообще никуда не вшиты (D2-03).
+7. Boot-канон противоречит живому киту: model-dispatch таблицы против ADR 0076 во всех boot-файлах (D7-03), счётчики «5 скиллов/11 агентов/S38» (SKW-01/D7-04/MEM-04), dashboard-reviewer отрицает существующий React (D2-05).
+
+Суммарный эффект фиксов: ~20k+ токенов экономии на каждую сессию, гейты Фаз 5-6 снова МЕХ на реальном пути, все 9 фаз получают наблюдаемый артефакт или барьер. Объём работ: 3 kit-спринта (S68-S70), большинство фиксов tiny/small.
+
+DEFER/REJECT: отсутствуют — все 47 = CONFIRM/REVISE; отклонены/отложены только под-варианты внутри REVISE-дизайнов: D1-01 (расширение op-detect на git merge — отклонено, блокировало бы легитимный ship), D2-04 (KIT-020-manifest-проверка — механизм не существует), MEM-03 (жёсткая manifest-строка — false-STOP класс), SKW-06 (отключение плагина-двойника — потеряли бы consolidate-memory), MEM-08 (код в state-integrity — несоразмерно риску), D5-03 путь «б» (полный вынос инжекции — отложен как триггер), D8-05 (возврат sqlite-trading — отложен до разморозки money-core), D7-06/D2-08 (2-спринтовый A/B ADR 0074 — заменён дешёвыми probe).
+
+## Часовая карта (механизм -> принуждение СЕЙЧАС -> ПОСЛЕ)
+
+# Кит как часы: каждая шестерёнка, принуждение СЕЙЧАС → ПОСЛЕ
+
+Легенда: МЕХ = хук физически блокирует; МЕХ* = блокирует, но с дырой; HARD = HARD-GATE внутри скилла; МЯГ = дисциплина/описание; ОТСУТ = не покрыто.
+
+## Девять фаз
+
+| Шестерёнка | Механизм | СЕЙЧАС | ПОСЛЕ | Находки |
+|---|---|---|---|---|
+| 1 Orient | sprint-orient | МЯГ | МЯГ (осознанно; двойной «4b» и лимиты ≤2KB→≤6KB починены) | SKW-07 |
+| 2 Brainstorm | brainstorm-init → pre-sNN-backlog | МЯГ (строки в манифесте нет — спека P1-MANIFEST не доделана) | HARD (строка манифеста: backlog существует ИЛИ легально закрыт по git log) | D1-05 |
+| 3 Plan | sprint-flow-check.sh + 3b Doc-first | МЕХ (но 3b считает только ^src/ — kit-спринты невидимы) | МЕХ (3b видит ^(src|kit)/) | SKW-05 |
+| 4 Execute | TDD + per-task SPRINT_STATE; pertask-state-warn | МЯГ (WARN уходит в stderr — модель его не слышит) | МЯГ-слышимый (additionalContext) + advisory «Skill fires» телеметрия | D7-01, D5-02 |
+| 5 Verify | phase-advance.sh | МЕХ* — слушает только gh pr merge; реальный ship с S57 = локальный squash-merge МИМО гейта; stale-таблица прошлого спринта проходит | МЕХ на обоих путях (блок Фазы 5 в review-gate для git merge) + M-4 sprint-binding | D1-01, D1-04 |
+| 6 Review | review-gate.sh (money-paths, S62) | МЕХ* — та же дыра локального merge; контракт review-sNN.md существует только в тексте ошибки хука | МЕХ + контракт артефакта задокументирован в sprint-flow-ru + advisory «6b Lean» (ponytail-audit) | D1-01, D2-07, SKW-03 |
+| 7 Sync | wiki-update/docs-update + broken-link БЛОК + staleness WARN | МЕХ (link-гейт) / фактически ОТСУТ для staleness (WARN нем) + ложный ✓ манифеста (components/ матчит React-компоненты) + kit/** слеп | МЕХ + слышимый WARN + анкер ^llm-wiki/wiki/project/components/ + триггеры на kit/** | D7-01, D1-06, D1-07, SKW-05 |
+| 8 Ship | sprint-finish HARD + skill-manifest + adr-agent-sync МЕХ | HARD* — Step 6b учит мёртвому touch-ритуалу (гарантированный блок + retry-цикл каждый ADR-спринт); release-manager/merge-analyst не вшиты (0 диспатчей за 4 ship-цикла) | HARD + content-check инструкция (зеркало логики хука) + Step 6d release-manager (вердикт READY_TO_SHIP в sprint-NN.md) | D1-02/SKW-02/D2-02/MEM-06, D2-03 |
+| 9 Close | consolidate-memory кратно 5 | ОТСУТ — 0 исполнений за 35 спринтов (S32→S67) | HARD (исполнение внутри sprint-finish ДО манифеста при N%5==0) + advisory-строка манифеста | MEM-03, D1-05 |
+
+## Сквозные механизмы
+
+| Слой | СЕЙЧАС | ПОСЛЕ | Находки |
+|---|---|---|---|
+| Guard-the-guards (hooks-selfcheck, SessionStart) | МЕХ (bash -n, fail-CLOSED) | МЕХ + WARN-панель: parent-CLAUDE.md >10KB, orphan agent-memory, claude-mem health, desktop-prompt sync | MEM-02, MEM-05, MEM-01, D3-04 |
+| Self-skip лазейка | Дыра: 9 хуков со своим именем в case-skip (5 блокирующих) = zero-forgery bypass | Закрыта свипом, кейсы в регресс-харнессе | D1-03 |
+| Crash-durability (state-backup → state-integrity) | МЕХ* — молча пропускает git commit -a/-am и git -c … commit → снапшоты не создаются | МЕХ полный (нормализация tr+sed по образцу review-gate) | D3-01 |
+| WARN-канал (4 хука) | ОТСУТ фактически: stderr + exit 0 — канал, который модель не получает | МЯГ-слышимый: hookSpecificOutput.additionalContext БЕЗ permissionDecision (probe-first) | D7-01 |
+| Каноны/инвентарь (kit-inventory AUTO-блоки) | МЕХ на 2 wiki-страницы; boot-файлы дрейфуют (S38, 5 скиллов, 11 агентов, dispatch-таблицы против ADR 0076) | МЕХ на 5+ поверхностей: repo CLAUDE.md, llm-wiki/CLAUDE.md, index.md, AUTO:agent-models, счётчик ADR | SKW-01, D7-04, MEM-04, D7-03 |
+| Память L1 (claude-mem) | Сломана: observer мёртв с 2026-04-24, БД 4.7GB, инжект ~6.3k/сессию, retrieval за 2.5 мес ≈ 4 вызова; «mem-search first» мёртв | Observer починен + инжект 50→5/10→3 + каскад STEP 2 демотирован в on-demand (поправка к ADR 0043) + healthcheck | MEM-01, D5-03 |
+| Память L3 (agent-memory) | Split-brain: 3 doc-агента пишут в ~/.claude/, harness грузит .claude/ — два расходящихся дерева; без индексов и бюджетов | Один каталог + MEMORY.md-индексы + бюджет ≤6KB индекс / ≤12KB + WARN | D2-01, D2-04, MEM-05 |
+| Boot-слой инструкций | 105.6KB на сессию, дрейфующие дубли, 43.8KB мёртвого аудита на Desktop (~13.3k токенов) | Стаб ≤10 строк + архив + дедуп (канон = error-taxonomy, boot-копия = repo CLAUDE.md) | D7-02/MEM-02, MEM-07 |
+| Скиллы (progressive disclosure) | В интерактиве работают (65 fires); в автономе ОТСУТ (0 из ~80) | Кодифицировано: interactive = skills, autonomous = artifact-gates; телеметрия advisory; двойники помечены | D5-02, SKW-06 |
+| MCP/плагины | Балласт: caveman ×2 регистрация, warp 89,766 вызовов, wiki-sa (0 использований), fetch (0), sqlite (1) | Только рабочее: context7 + урезанный claude-mem; всё снятое — со снимком для отката | D8-01, D8-03, D8-04, D8-05 |
+| UI-контур ревью | ОТСУТ валидного контракта: dashboard-reviewer утверждает «vanilla JS», React существует с S46 | МЯГ-валидный: контракт по ADR 0066 (FastAPI + React/TSX), frontend-developer де-сирочен или снят | D2-05 |
+
+**Пружина часов после фиксов:** каждая из 9 фаз имеет либо механический барьер на РЕАЛЬНОМ пути исполнения, либо проверяемый артефакт в манифесте; немых шестерёнок (WARN в никуда, гейт не на том событии, ритуал против хука) не остаётся.
+
+## План спринтов
+
+### S68 — Boot-слой: стоимость и правда — токен-кровотечение, мёртвые ритуалы, канон-дрейф (9 HIGH, почти всё tiny/small, зависимостей нет)
+
+- D7-02+MEM-02 (HIGH×2): Desktop CLAUDE.md 43.8KB → архив в llm-wiki (status: superseded) + RU-стаб ≤10 строк + ancestor-scan WARN в hooks-selfcheck — экономия ~13.3k токенов КАЖДУЮ сессию
+- D8-01+D8-04 (HIGH+MED): удалить ручные дубли caveman-хуков из settings.json (SessionStart+UserPromptSubmit, с diff-assert выживших selfcheck/state-integrity/context-budget) + enabledPlugins warp=false — один коммит, live + kit/settings.example.json
+- D5-03+MEM-01 (HIGH×2): claude-mem — OBSERVATIONS 50→5, SESSION_COUNT 10→3; диагностика/починка observer (мёртв с 2026-04-24); healthcheck-WARN в hooks-selfcheck; ADR-поправка к 0043: каскад STEP 2 = on-demand, не first
+- D1-02+SKW-02+D2-02+MEM-06 (HIGH×3+MED): touch-ритуал → content-check на всех 6 поверхностях: sprint-finish Step 6b (канон), wiki-update Step 6, repo CLAUDE.md anti-waste, tooling-inventory:427, components/adr-agent-sync-hook.md, auto-memory github-push-auth
+- D7-03+D2-09 (HIGH+LOW): свип model-dispatch против ADR 0076 — scoped-исключение в глобальном ~/.claude/CLAUDE.md (НЕ замена — другие проекты), однострочники в repo/llm-wiki CLAUDE.md, зачистка stale-prose в телах агентов + kit-team-agents.md → указатель на PINNED_VERSIONS.md
+- SKW-01+D7-04+MEM-04 (HIGH+MED×2): kit-inventory расширить на repo CLAUDE.md + llm-wiki/CLAUDE.md + wiki/index.md (AUTO-блоки, счётчик ADR, имена скиллов, AUTO:agent-models); де-номеровать ВСЕ литеральные счётчики boot-строк; «Sprint 38» → указатель на SPRINT_STATE; phase table += ponytail/ponytail-audit/docs-update
+- MEM-07 (MED): дедуп anti-waste правил — канон = error-taxonomy.md, операционная boot-копия = repo CLAUDE.md, llm-wiki/CLAUDE.md → 2-строчный указатель, ~/.claude/CLAUDE.md §9b/9c сжать до универсального ядра ~15 строк
+- D8-03+D8-05 (MED+LOW): wiki-sa из user-scope → scope Wiki-SA vault (через claude mcp CLI, backup вне репо + удалить после верификации); .mcp.json: убрать fetch + sqlite-trading, оставить context7; снимки удалённого JSON в sprint-страницу для отката
+- Tiny-батч LOW: D1-07+D2-11 (WARN-семантика docs-update:52 + docs-sync-gate.md:33) · MEM-08 (OQ-carry в SPRINT_STATE:20 + строка-сверка в kit-auditor) · SKW-07 (двойной 4b в sprint-orient + ≤2KB→≤6KB ×2) · SKW-06 (двойники skills — пометки в overrides-таблицах, плагин НЕ трогать) · D5-05 (правило «no read-back после своего Edit» в anti-waste + класс в error-taxonomy)
+
+### S69 — Гейты по-настоящему — принуждение на реальном ship-пути, слышимый WARN-канал, полный манифест (6 HIGH; D1-01 и D7-01 задают порядок)
+
+- D1-01+D1-04 (HIGH+MED): Phase-5 гейт на РЕАЛЬНОМ ship-пути — блок Фазы 5 в review-gate.sh для git merge (sprint_num/state_sprint выше money-path early-exit; merge_ref=feature/sprint-* ИЛИ активная phase 2-8) + порт M-4 sprint-binding в phase-advance.sh и skill-manifest.sh (stale-таблица прошлого спринта не засчитывается)
+- D3-01 (HIGH): state-backup.sh — нормализация git-команды (tr+sed по образцу review-gate:48-49) + покрытие git commit -a/-am и git -c … commit → S61 crash-durability снапшоты реально создаются
+- MEM-03 (HIGH): consolidate-memory исполнять внутри sprint-finish ДО вызова skill-manifest при N%5==0 (амендмент sprint-flow-ru:535,549 — «не позже Фазы 8») + запись в log.md; НЕ жёсткая manifest-строка (false-STOP класс)
+- D2-03 (HIGH): release-manager + merge-analyst вшить в sprint-finish — новый Step 6d (вердикт READY_TO_SHIP/READY_WITH_CONDITIONS секцией в sprint-NN.md; merge-analyst условно) + точки диспатча в sprint-flow-ru/tooling-inventory вместо «proactively»
+- D7-01 (HIGH): capability-probe (~15 мин) → перевести 4 немых WARN-хука (cascade-read, context-budget, docs-staleness, pertask-state) на hookSpecificOutput.additionalContext БЕЗ permissionDecision (авто-аппрув = обход permission-флоу, запрещён); fallback = PostToolUse
+- D5-02+D1-05+D1-06+SKW-05 (HIGH+MED×3): апгрейд skill-manifest — advisory «Skill fires» + mem-retrievals по транскрипту; строка Phase-2 (backlog есть ИЛИ легально удалён по git log) + advisory Phase-9; анкер Phase-7 ^llm-wiki/wiki/project/components/; 3b считает ^(src|kit)/; триггер wiki-update += kit/** и .claude/skills/**; кодификация двух режимов в CLAUDE.md (interactive=skills, autonomous=artifact-gates)
+- D1-03 (MED): свип self-skip из 9 хуков (adr-agent-sync, adr-index-sync, wiki-broken-link вкл. ультра-широкий паттерн, docs-broken-link, docs-staleness, sprint-state-freshness, state-integrity, state-backup, pertask-state-warn) — zero-forgery bypass закрыт, kit + живое зеркало
+- SKW-04 (MED): hook-test переписать — primary = S61-харнесс (test_phase_gate_canon.sh 38 кейсов + pytest test_state_integrity_security.py); ручные payload'ы через python3-конкатенацию (без op-detect литералов в Bash); таблица exit-кодов по классам хуков
+- D2-07 (MED): контракт артефакта Фазы 6 задокументировать — подсекция review-s{NN}.md в sprint-flow-ru Phase 6 (анкер «Blockers: 0», путь, механические потребители review-gate/skill-manifest) + строка в repo CLAUDE.md phase table
+- D3-04 (LOW): SYNC-BLOCK маркеры в kit/auto-resume/desktop-task-prompt.md (только зеркало) + WARN-сверка зеркало↔живой Scheduled Task в hooks-selfcheck
+
+### S70 — Память, агенты и структура — жизненный цикл памяти, контракты агентов, две дешёвые пробы вместо дорогого A/B (D2-01 строго ПЕРВЫМ)
+
+- D2-01 (HIGH, первым — до консолидации): split-brain память — repoint doc-writer:73/doc-linker:39/doc-reviewer-depth:40 с hardcode ~/.claude/agent-memory на стандартную «MEMORY.md tolerance» формулировку (шаблон data-integrity-reviewer:36) + контракт-секция «Память агентов» в kit-team-agents.md
+- D2-04+MEM-05 (HIGH+MED): жизненный цикл agent-memory — MEMORY.md = только индекс (1 строка/шард, ≤150 chars), бюджеты ≤6KB индекс / ≤12KB; сгенерировать индексы для trader-expert (10 файлов, 44KB) и doc-reviewer (3); WARN в hooks-selfcheck (orphan-память, разбухший индекс); drift-guard в kit-inventory + advisory-дименсия kit-auditor (НЕ KIT-020-манифест — механизма не существует)
+- D2-05 (MED): контракт UI-ревью — dashboard-reviewer переписать под FastAPI + React/TSX (ADR 0066 суперсидит vanilla-JS ADR 0039), frontend-developer де-сиротить или снять; kit-overview-ru:~122 + tooling-inventory секция 1, оба дерева
+- D2-06 (MED): kit-auditor — дименсия 8 (model-pin registry) вписать в контракт: :49/:71/:143 «7»→«8», слот «### 8» в output-схеме, сжать 2.6KB description
+- D5-04 (MED): index.md 97.5KB → split по universal pattern — root сохраняет «Project — Decisions» (adr-index-sync-check.sh:64 и sprint-finish Step 5 не трогаем) + Sprints/Components если <30KB; холодные каталоги (Trading/Experiments/Queries) → index-part-N.md; size-guard WARN
+- D2-08 (MED): effort/thinking-budget — ground truth через Context7/официальные docs (probe только при неоднозначности); вердикт-секция в kit-overview-ru; выровнять конвенцию 18 агентов (S63-агенты без «effort: max» вопреки KIT-015)
+- D7-06 (MED): autocompact knob-validity probe (одноразовая сессия, НЕ спринт): bulk-Read до ~110-120k токенов → grep compact_boundary/preTokens по транскрипту; мёртвая ручка → удалить env-КЛЮЧ из обоих settings; живая → короткий ADR с цифрами (заменяет 2-спринтовый A/B из ADR 0074)
+- SKW-03 (MED): ponytail/ponytail-audit — advisory-first (ADR 0072 держит их Optional): строки phase table (уже в батче SKW-01 из S68), чеклист Phase 6 в sprint-flow-ru («ponytail-audit: N findings» в review-sNN.md), advisory «6b Lean» в skill-manifest — НЕ fail
+
+## Proof-команды (verification-before-completion)
+
+- `wc -c /Users/Apple/Desktop/CLAUDE.md  # D7-02/MEM-02: было 43839 → стаб ≤1000 байт; архив: ls llm-wiki/wiki/project/archive/desktop-claude-md-pre-s57-audit.md`
+- `jq '[.hooks.SessionStart[].hooks[].command] + [.hooks.UserPromptSubmit[].hooks[].command] | map(select(test("caveman")))' ~/.claude/settings.json  # D8-01: [] — дубли удалены; выжившие: та же выборка по test("selfcheck|state-integrity|context-budget") → непусто`
+- `jq '.enabledPlugins["warp@claude-code-warp"]' ~/.claude/settings.json  # D8-04: false (disable, не uninstall)`
+- `jq -r '.CLAUDE_MEM_CONTEXT_OBSERVATIONS, .CLAUDE_MEM_CONTEXT_SESSION_COUNT' ~/.claude-mem/settings.json  # D5-03: 5 и 3 (было 50/10)`
+- `sqlite3 ~/.claude-mem/claude-mem.db 'SELECT max(created_at) FROM observations;'  # MEM-01: дата свежее 14 дней — observer-конвейер ожил (был мёртв с 2026-04-24)`
+- `grep -rn 'touch' .claude/skills/sprint-finish/SKILL.md .claude/skills/wiki-update/SKILL.md CLAUDE.md | grep -c 'agents'  # D1-02/SKW-02/D2-02/MEM-06: 0 — touch-ритуал выметен со всех 6 поверхностей`
+- `grep -rn 'haiku=mechanical\|opus for judgment\|sonnet default' CLAUDE.md llm-wiki/CLAUDE.md  # D7-03: 0 строк — dispatch-таблицы заменены указателем на ADR 0076`
+- `grep -c 'AUTO:kit-inventory' CLAUDE.md llm-wiki/CLAUDE.md llm-wiki/wiki/index.md && bash kit/kit-inventory.sh && git diff --stat -- CLAUDE.md llm-wiki/CLAUDE.md  # SKW-01/D7-04/MEM-04: маркеры есть в каждом файле + повторный прогон даёт пустой diff (идемпотентно)`
+- `PAYLOAD=$(python3 -c 'import json;print(json.dumps({"tool_input":{"command":"git me"+"rge --squash feature/sprint-69-x"}}))'); echo "$PAYLOAD" | bash kit/hooks/review-gate.sh; echo "exit=$?"  # D1-01: при SPRINT_STATE Phase 5 != done → exit=2 — локальный merge-путь ПОД гейтом (payload через конкатенацию, без op-detect литерала)`
+- `PAYLOAD=$(python3 -c 'import json;print(json.dumps({"tool_input":{"command":"git co"+"mmit -am test"}}))'); echo "$PAYLOAD" | bash kit/hooks/state-backup.sh; echo "exit=$?"; find . -name '*backup*' -mmin -1 | head -3  # D3-01: exit=0 + свежий снапшот появился (раньше -am молча пропускался)`
+- `bash kit/hooks/tests/test_phase_gate_canon.sh  # D1-03/D1-04/SKW-04: регресс-харнесс — все кейсы PASS, включая новые кейсы M-4-binding, Phase-5-на-merge и удалённого self-skip`
+- `bash kit/skill-manifest.sh 69  # D1-05/D1-06/D5-02/SKW-05: в выводе есть строки «2 Brainstorm», «9 Close» (advisory), «Skill fires» (advisory); kit-спринт без src/ НЕ даёт ложный «✓ 7 Sync»`
+- `grep -rn '/Users/Apple/.claude/agent-memory' kit/agents/ ~/.claude/agents/ | wc -l  # D2-01: 0 — hardcode-путь второго дерева памяти удалён из всех промптов`
+- `jq '.mcpServers | keys' .mcp.json; jq '.mcpServers | has("wiki-sa")' ~/.claude.json  # D8-05: ["context7"]; D8-03: false (wiki-sa ушёл из user-scope)`
+- `wc -c llm-wiki/wiki/index.md  # D5-04: было 97517 → root < 50000, части: ls llm-wiki/wiki/index-part-*.md`
+- `grep -n 'consolidate-memory' llm-wiki/wiki/log.md | tail -1  # MEM-03: запись с датой ship первого N%5==0 спринта после фикса (S70) — впервые за 35 спринтов`

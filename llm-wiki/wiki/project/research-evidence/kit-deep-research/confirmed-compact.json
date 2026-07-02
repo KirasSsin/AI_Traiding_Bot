@@ -1,0 +1,284 @@
+[
+ {
+  "id": "D1-01",
+  "title": "Phase-5 verify gate (phase-advance.sh) does not cover the local git-merge ship path that has been the STANDARD since S57 — Phase 5 enforcement silently degraded from MEX to discipline-only",
+  "severity": "HIGH",
+  "mechanism": "phase-advance.sh (Phase 5 gate) vs actual S57-S67 ship practice"
+ },
+ {
+  "id": "D1-02",
+  "title": "sprint-finish SKILL.md Step 6b still teaches the mtime `touch` ritual that KIT-009 (S59) explicitly de-fanged — guaranteed blocked-push retry loop on every ADR-touching sprint",
+  "severity": "HIGH",
+  "mechanism": "sprint-finish skill (Phase 8) vs adr-agent-sync-check.sh (Phase 7 push gate) — doc/mechanism drift inside the kit's cent"
+ },
+ {
+  "id": "D1-03",
+  "title": "Round-5 self-skip removal incomplete: 9 of 12 Bash-matcher hooks retain content-based self-skip, including 5 BLOCKING gates; wiki-broken-link's pattern is broad enough to disarm accidentally",
+  "severity": "MEDIUM",
+  "mechanism": "S61 round-5 bypass-hunt fix (self-skip = zero-forgery bypass) — applied only to sprint-flow-check / phase-advance / revi"
+ },
+ {
+  "id": "D1-04",
+  "title": "Phase-5 'done' row not bound to sprint number in phase-advance and skill-manifest — stale table from a previous sprint satisfies the gate (review-gate's M-4 guard was not propagated)",
+  "severity": "MEDIUM",
+  "mechanism": "phase-advance.sh Phase-5 row parse + skill-manifest.sh Phase-5 row; SPRINT_STATE staleness after crashed/un-reset sessio"
+ },
+ {
+  "id": "D1-05",
+  "title": "skill-manifest covers phases 3-8 only: Phase-2 backlog row (in the P1-MANIFEST spec) and Phase-9 KIT-020 consolidate check (assigned S61) were never implemented and never documented as dropped",
+  "severity": "MEDIUM",
+  "mechanism": "kit/skill-manifest.sh (S62 P1-MANIFEST implementation) vs its own spec and UNIFIED-BACKLOG assignments"
+ },
+ {
+  "id": "D1-06",
+  "title": "Manifest Phase-7 pattern unanchored: `components/` matches src/dashboard_react/src/components/ — frontend-only diff yields false «✓ 7 Sync components/ или docs/ обновлены»",
+  "severity": "LOW",
+  "mechanism": "skill-manifest.sh Phase-7 row (hollow-artifact check)"
+ },
+ {
+  "id": "D1-07",
+  "title": "docs-update SKILL.md contradicts itself on staleness gate semantics (WARN per S64 at lines 13/48 vs «не пустит push» at line 52)",
+  "severity": "LOW",
+  "mechanism": "docs-update skill (Phase 7) internal consistency vs S64 operator decision docs/=WARN"
+ },
+ {
+  "id": "D7-01",
+  "title": "All WARN-tier token-economy hooks emit on a channel the model never receives (stderr + exit 0) — 4 guards are silent no-ops [CONFIRMED]",
+  "severity": "HIGH",
+  "mechanism": "cascade-read-check (P1-CASCADE/KIT-011), context-budget-warn (KIT-018), docs-staleness-check (S64 operator WARN decision"
+ },
+ {
+  "id": "D7-02",
+  "title": "Stale 43.8KB ancestor /Users/Apple/Desktop/CLAUDE.md auto-loads into every session — ~13.3k tokens (41% of boot) of outdated kit audit contradicting shipped state [CONFIRMED]",
+  "severity": "HIGH",
+  "mechanism": "Claude Code loads CLAUDE.md from every ancestor directory of cwd. The repo lives under /Users/Apple/Desktop/, and /Users"
+ },
+ {
+  "id": "D7-03",
+  "title": "Model-dispatch guidance contradicting ADR 0076 (uniform fable-5) survives in every boot file and both canon wiki pages [CONFIRMED]",
+  "severity": "HIGH",
+  "mechanism": "ADR 0076 (accepted 2026-07-02) pinned ALL 18 agents to claude-fable-5 and abolished aliases ('Алиасов (sonnet/haiku/opus"
+ },
+ {
+  "id": "D7-04",
+  "title": "KIT-006 fix incomplete: kit-inventory AUTO-blocks cover only 2 wiki pages — boot CLAUDE.md files still ship wrong counters and wrong sprint state [CONFIRMED]",
+  "severity": "MEDIUM",
+  "mechanism": "kit-inventory.sh regenerates AUTO-blocks only in kit-overview-ru.md and tooling-inventory-ru.md (kit/kit-inventory.sh:24"
+ },
+ {
+  "id": "D7-06",
+  "title": "ADR 0074 A/B would burn 2 sprints measuring a knob logs suggest is inert, and its MAX_THINKING tier-scaling arm contradicts ADR 0076 [CONFIRMED]",
+  "severity": "MEDIUM",
+  "mechanism": "ADR 0074 (proposed) fixes methodology: AUTOCOMPACT 50 vs 65 across 2 comparable sprints; MAX_THINKING '10000 vs масштаб "
+ },
+ {
+  "id": "D8-01",
+  "title": "Caveman hooks double-registered (plugin.json + manual copies in settings.json): every prompt and every session start injects duplicate context (~45k tokens wasted in main mega-run session alone)",
+  "severity": "HIGH",
+  "mechanism": "The caveman plugin registers SessionStart:caveman-activate.js and UserPromptSubmit:caveman-mode-tracker.js via its own p"
+ },
+ {
+  "id": "D8-03",
+  "title": "wiki-sa MCP (3659-doc Obsidian search) mounted user-globally, injected into every session of this project, used 0 times in 2.5 months",
+  "severity": "MEDIUM",
+  "mechanism": "wiki-sa is configured in global ~/.claude.json mcpServers ('/opt/homebrew/bin/qmd mcp') — user scope, so it connects in "
+ },
+ {
+  "id": "D8-04",
+  "title": "warp plugin enabled user-wide: 89,766 recorded hook invocations with zero possible function in the operator's desktop/scheduled environment",
+  "severity": "MEDIUM",
+  "mechanism": "warp@claude-code-warp (enabledPlugins true, ~/.claude/settings.json:136 area) registers hooks on 6 events including Post"
+ },
+ {
+  "id": "D8-05",
+  "title": "sqlite-trading and fetch MCP servers in committed .mcp.json are dead weight: 1 call in 2.5 months and 0 calls ever, respectively",
+  "severity": "LOW",
+  "mechanism": ".mcp.json:1-14 spawns mcp-server-sqlite (uvx, --db-path data/bot.db) and mcp-server-fetch (uvx) at every interactive ses"
+ },
+ {
+  "id": "SKW-01",
+  "title": "Repo CLAUDE.md and wiki index.md — the primary auto-loaded skill-wiring surfaces — still describe the 5-skill/11-agent/S38 kit; 5 of 10 project skills absent from the phase mapping",
+  "severity": "HIGH",
+  "mechanism": "description-trigger reliability / wiring-surface drift (dimension a)"
+ },
+ {
+  "id": "SKW-02",
+  "title": "sprint-finish Step 6b and wiki-update Step 6 still teach the mtime 'touch reviewer.md' ritual that S59 KIT-009 explicitly closed — following either skill guarantees a blocked push on every ADR-bearing sprint",
+  "severity": "HIGH",
+  "mechanism": "SKILL.md drifted from what the kit now does (dimension d)"
+ },
+ {
+  "id": "SKW-03",
+  "title": "ponytail and ponytail-audit (accepted ADR 0072, PHASE 4 / PHASE 5-6 triggers) have zero recorded firings across 10 sprints — adopted but dormant",
+  "severity": "MEDIUM",
+  "mechanism": "dead/sleeping skills + description-trigger reliability (dimensions c+a)"
+ },
+ {
+  "id": "SKW-04",
+  "title": "hook-test skill drifted on four axes: scope frozen at 2 of 17 hooks, documents the self-skip guard S61 removed, its Bash payloads false-fire the op-detect gates, and it ignores the S61 regression suites",
+  "severity": "MEDIUM",
+  "mechanism": "SKILL.md drifted from what the kit now does (dimension d)"
+ },
+ {
+  "id": "SKW-05",
+  "title": "llm-wiki doc-first wiring is blind to kit/**: wiki-update triggers/steps are hardwired to src/*.py and skill-manifest's 3b advisory counts only ^src/ — kit-maintenance sprints (the current entire workload) get no llm-wiki sync trigger at all",
+  "severity": "MEDIUM",
+  "mechanism": "description-trigger reliability — too-narrow description (dimension a)"
+ },
+ {
+  "id": "SKW-06",
+  "title": "Two identically-described twins of brainstorming and verification-before-completion are registered simultaneously (superpowers:* and anthropic-skills:*) — kit overrides and phase table bind only to the superpowers names",
+  "severity": "LOW",
+  "mechanism": "overlap/shadowing between plugins (dimension b)"
+ },
+ {
+  "id": "SKW-07",
+  "title": "sprint-orient has two different steps both numbered '4b' (tech-doc priming and Phase-tracking-table guard), and external references to 'шаг 4b' are now ambiguous",
+  "severity": "LOW",
+  "mechanism": "progressive-disclosure hygiene / internal consistency (dimension e)"
+ },
+ {
+  "id": "D5-02-SKILLS-DEAD-IN-AUTONOMOUS",
+  "title": "В автономном mega-run S57–S66 процессные скиллы не выстрелили НИ РАЗУ (0 из ~80 ожидаемых по BINDING-таблице фаз на 10 спринтов); интерактивная база — 65 fires; artifact-manifest S62 по построению этого не видит",
+  "severity": "HIGH",
+  "mechanism": "progressive disclosure (auto-fire по description match) отказывает в queue-driven автономном режиме: контроллер читает S"
+ },
+ {
+  "id": "D5-03-CLAUDE-MEM-INJECT-VS-USE",
+  "title": "claude-mem: ~6 341 токенов инжектится на КАЖДЫЙ session start, а retrieval за 2.5 месяца по всем 12 сессиям — 4 вызова; BINDING cascade STEP 2 («mem-search first») мёртв на практике",
+  "severity": "HIGH",
+  "mechanism": "SessionStart-инжекция памяти оплачивается всегда, использование — почти никогда; правило каскада (ADR 0043, продублирова"
+ },
+ {
+  "id": "D5-04-INDEX-MD-BUDGET-BREACH",
+  "title": "llm-wiki/wiki/index.md = 97.5KB — 195% собственного BINDING-лимита «wiki-страницы < 50KB», при этом это самый горячий файл кита (обязательные правки каждый спринт) и рост запланирован (S64: докаталогизировать ~110 страниц); size-guard'а нет",
+  "severity": "MEDIUM",
+  "mechanism": "правило «< 50KB → split на part-N» (llm-wiki/CLAUDE.md Read tool guard; ~/.claude/CLAUDE.md §9.5) не принуждается ни одн"
+ },
+ {
+  "id": "D5-05-READBACK-AFTER-OWN-EDIT",
+  "title": "Read-back собственных успешных Edit/Write вопреки подсказке harness «file state is current in your context — no need to Read it back»: 22 чистых случая за один 11-часовой mega-run",
+  "severity": "LOW",
+  "mechanism": "verify-привычка контроллера: после успешной записи файл перечитывается «для проверки», хотя harness явно сообщает, что с"
+ },
+ {
+  "id": "D3-01",
+  "title": "state-backup.sh silently skips `git commit -a`/`-am` and `git -c … commit` → S61 crash-durability backup never created",
+  "severity": "HIGH",
+  "mechanism": "state-backup.sh (KIT-008/S61) is the sole writer of the .backup snapshots that state-integrity's auto-restore depends on"
+ },
+ {
+  "id": "D3-04",
+  "title": "Desktop scheduled-task prompt: git mirror in sync now, but no mechanical sync gate between mirror and live task",
+  "severity": "LOW",
+  "mechanism": "The auto-resume consumer contract lives in two places: git mirror kit/auto-resume/desktop-task-prompt.md and the live ta"
+ },
+ {
+  "id": "MEM-01",
+  "title": "claude-mem observation pipeline мёртв с 2026-04-24 — cascade STEP 2 (BINDING ADR 0043) обязывает искать в пустом слое; БД 4.7 GB сырых промптов",
+  "severity": "HIGH",
+  "mechanism": "claude-mem plugin (layer 2): observer-конвейер, таблица observations, smart_search как обязательный STEP 2 каскада wiki→"
+ },
+ {
+  "id": "MEM-02",
+  "title": "Устаревший пре-S57 аудит (43.8 KB) лежит в /Users/Apple/Desktop/CLAUDE.md и авто-грузится в каждую сессию, противореча уже починенному киту",
+  "severity": "HIGH",
+  "mechanism": "Parent-directory CLAUDE.md как always-loaded instruction memory (Claude Code загружает CLAUDE.md всех родительских катал"
+ },
+ {
+  "id": "MEM-03",
+  "title": "Phase-9 HARD-GATE consolidate-memory ни разу не выполнен за 35 спринтов (S32→S67); проверка KIT-020 в manifest так и не реализована",
+  "severity": "HIGH",
+  "mechanism": "Каденция consolidate-memory «каждые 5 спринтов OR >30 observations» (sprint-flow-ru Phase 9) + её принуждение через skil"
+ },
+ {
+  "id": "MEM-04",
+  "title": "Boot-загружаемые инструкции (repo CLAUDE.md, llm-wiki/CLAUDE.md, ~/.claude/CLAUDE.md) противоречат живому киту — вне покрытия kit-inventory AUTO-блоков (residual gap KIT-006)",
+  "severity": "MEDIUM",
+  "mechanism": "kit-inventory.sh AUTO-блоки как анти-drift механизм (S57 KIT-006) vs фактическое покрытие файлов, загружаемых каждый сеа"
+ },
+ {
+  "id": "MEM-05",
+  "title": "Agent-memory без гигиены: trader-expert и doc-reviewer накопили эпизодические файлы БЕЗ MEMORY.md-индекса (память невидима при dispatch), а разросшиеся индексы (doc-writer 20.8 KB / 155 файлов) не имеют бюджета",
+  "severity": "MEDIUM",
+  "mechanism": "Layer 3: .claude/agent-memory/<agent>/ — MEMORY.md auto-load при dispatch; прочие файлы достижимы только через индекс"
+ },
+ {
+  "id": "MEM-06",
+  "title": "Мёртвый ритуал mtime-touch для adr-agent-sync живёт в 3 слоях памяти, хотя S59 (KIT-009) заменил mtime на content-check",
+  "severity": "MEDIUM",
+  "mechanism": "Согласованность процедурной памяти (auto-memory / repo CLAUDE.md / sprint-finish SKILL.md) с живым хуком adr-agent-sync-"
+ },
+ {
+  "id": "MEM-07",
+  "title": "Одни и те же anti-waste правила скопированы в 3-4 boot-слоя и уже дрейфуют независимо (S65-дополнения есть только в repo-копии); суммарный boot-payload инструкций 105.6 KB",
+  "severity": "MEDIUM",
+  "mechanism": "Дублирование фактов между always-loaded слоями: ~/.claude/CLAUDE.md §9b/9c, repo CLAUDE.md anti-waste таблица, llm-wiki/"
+ },
+ {
+  "id": "MEM-08",
+  "title": "SPRINT_STATE.md внутренне противоречив по OQ-статусам: строка 18 объявляет OQ-4/5/6/7 закрытыми, строка 20 несёт их же как открытый carry",
+  "severity": "LOW",
+  "mechanism": "SPRINT_STATE.md (layer 4, FIRST READ каждой сессии) vs OPERATOR-QUEUE.md как источник статусов"
+ },
+ {
+  "id": "D2-01",
+  "title": "Split-brain agent memory: 3 doc-kit agents hardcode ~/.claude/agent-memory/ absolute paths while memory:project loads .claude/agent-memory/ — two divergent memory trees actively written in parallel",
+  "severity": "HIGH",
+  "mechanism": "memory:project wiring vs in-prompt memory path instructions (doc-writer, doc-linker, doc-reviewer-depth)"
+ },
+ {
+  "id": "D2-02",
+  "title": "sprint-finish Step 6b and root CLAUDE.md still teach the mtime `touch` ritual that S59 KIT-009 content-check explicitly rejects — guaranteed gate block on every ship with a new ADR",
+  "severity": "HIGH",
+  "mechanism": "consumer contract drift: sprint-finish skill / CLAUDE.md anti-waste table vs adr-agent-sync-check.sh (S59)"
+ },
+ {
+  "id": "D2-03",
+  "title": "merge-analyst and release-manager (S63) are wired into nothing: 0 references in sprint-finish/CLAUDE.md/hooks/manifest, no memory trace after 4 subsequent ship cycles — their 'MUST BE USED before gh pr merge / git tag' contract is hope, not guarantee",
+  "severity": "HIGH",
+  "mechanism": "phase wiring / description-only triggering (dimension c orphans + kit's own P1-MANIFEST philosophy not applied)"
+ },
+ {
+  "id": "D2-04",
+  "title": "Agent memory lifecycle unmanaged: index-less orphan files (trader-expert 10 files, doc-reviewer 3 files, no MEMORY.md) and noise-bloated indexes (architecture-reviewer 19.6KB with ~22 one-off S56 entries) loaded/read every dispatch",
+  "severity": "HIGH",
+  "mechanism": "memory:project content lifecycle — no index requirement, no budget, no consolidation pass for agent memories"
+ },
+ {
+  "id": "D2-05",
+  "title": "UI contour has no valid reviewer contract: dashboard-reviewer's prompt asserts 'vanilla JS (no React/Vue/etc)' while src/dashboard_react/ exists, and frontend-developer — the only React-capable agent — is a full orphan with a generic non-project description",
+  "severity": "MEDIUM",
+  "mechanism": "description trigger scope (dimension a) + orphan wiring (dimension c) for the dashboard/React contour"
+ },
+ {
+  "id": "D2-06",
+  "title": "kit-auditor self-contract inconsistent after dim-8 patch: body runs '7 dimensions' and reports '1-7' while a #8 model-pin audit command exists — plus a 2.6KB description that is documentation-in-trigger-field",
+  "severity": "MEDIUM",
+  "mechanism": "report-format/scope contract inside the audit agent + description registry token cost (dimension a/d)"
+ },
+ {
+  "id": "D2-07",
+  "title": "Phase 6 artifact producer contract exists only in hook error text: no Phase 6 procedure (sprint-flow-ru, CLAUDE.md) documents review-sNN.md / 'Blockers: 0', and reviewer output formats don't emit the grep-able line",
+  "severity": "MEDIUM",
+  "mechanism": "report-format contract between reviewer agents and mechanical consumers review-gate.sh / skill-manifest.sh (dimension d)"
+ },
+ {
+  "id": "D2-08",
+  "title": "effort/thinking-budget convention split three ways; S63 kit-team agents shipped without the 'effort: max' their spec (KIT-015) required",
+  "severity": "LOW",
+  "mechanism": "frontmatter contract consistency (dimension b — what each agent receives)"
+ },
+ {
+  "id": "D2-09",
+  "title": "Post-ADR-0076 stale model claims inside agent bodies and the kit-team component page (uniform fable-5 not propagated to prose)",
+  "severity": "LOW",
+  "mechanism": "agent prompt/body self-consistency + component-page drift (the count-drift class the kit fights)"
+ },
+ {
+  "id": "D2-11",
+  "title": "docs-update SKILL.md contradicts itself on staleness gate strength (S64 WARN vs 'не пустит push')",
+  "severity": "LOW",
+  "mechanism": "skill-side consumer contract of the docs pipeline (doc-writer→depth→linker) drift after S64 decision"
+ }
+]

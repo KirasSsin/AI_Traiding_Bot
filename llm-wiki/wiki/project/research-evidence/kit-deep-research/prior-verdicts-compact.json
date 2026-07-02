@@ -1,0 +1,79 @@
+[
+ {
+  "finding_id": "D2-11",
+  "verdict": "CONFIRM",
+  "fix_design": "One-line Edit in /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.claude/skills/docs-update/SKILL.md, line 52. Replace: «- ❌ «Обновлю docs потом» — staleness-хук не пустит push.» → «- ❌ «Обновлю docs потом» — staleness-хук выдаст WARN (S64: docs/=WARN, не блок) — реши осознанно сейчас, не откладывай.» Mechanism: plain Edit; skill files are in-repo (.claude/skills/), no kit/ mirror exists (verified: kit/ contains agents/hooks/auto-resume only), so single file, no install.sh resync needed. Doc-first: no separate llm-wiki tech page required — this IS a documentation-consistency fix enforcing a",
+  "sprint_size": "tiny",
+  "rationale": "Verified live: line 52 reproduces verbatim and contradicts lines 3/13/48 in the same BINDING skill file; ground truth (docs-staleness-check.sh WARN + exit 0, S64 operator decision) sides with the WARN wording, so line 52 is factually false. Repo-wide sweep confirms it is the sole remaining occurrenc"
+ },
+ {
+  "finding_id": "D1-07",
+  "verdict": "REVISE",
+  "fix_design": "Proposed one-line fix is correct but incomplete: the same pre-S64 block-semantics residue exists in 3 sibling locations (verified live). Sweep all in one tiny change, doc-first order:\n\n1. llm-wiki tech page FIRST (doc-first, RU): /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/llm-wiki/wiki/project/components/docs-sync-gate.md:33 — test-history line «src без страницы → блок» → «src без страницы → WARN (S64)». Line 19 already correct, не трогать.\n\n2. /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.claude/skills/docs-update/SKILL.md:52 — reword anti-pattern to WARN semantics: «❌ „Обновлю ",
+  "sprint_size": "tiny",
+  "rationale": "Textual contradiction reproduced exactly: SKILL.md:13,48 state WARN (S64) while :52 asserts blocking; hook ground truth is unconditional exit 0 with «Пуш НЕ заблокирован — реши осознанно» (lines 110,121). No security impact — stale text OVERSTATES enforcement (opposite of fail-open), money paths and"
+ },
+ {
+  "finding_id": "D2-05",
+  "verdict": "REVISE",
+  "fix_design": "Two contracts, one per role — no split-review, no retire.\n\n(1) Doc-first (llm-wiki RU, same commit as plan): update agent rows in kit-overview-ru.md (line ~122 «vanilla JS» → «FastAPI backend + React/TSX (src/dashboard_react/), legacy frozen») and tooling-inventory-ru.md section 1; cite ADR 0066 (S46 React migration) as the superseding decision over ADR 0039's vanilla-JS KISS clause.\n\n(2) Rewrite kit/agents/dashboard-reviewer.md + ~/.claude/agents/dashboard-reviewer.md (mirror, both trees, diff-clean): description → «Reviews UI contour: src/dashboard/ (FastAPI backend: app.py, services) + src/",
+  "sprint_size": "small",
+  "rationale": "Finding fully reproduces (verified live: dashboard-reviewer.md:3,25 vanilla-JS denial; src/dashboard/ backend-only; dashboard_react/ + dashboard_legacy/ exist; ADR 0066 shipped S46 with no agent sync; kit-overview-ru.md:122 double drift; frontend-developer verbatim third-party template; both mirrors"
+ },
+ {
+  "finding_id": "D2-06",
+  "verdict": "REVISE",
+  "fix_design": "One agent file, two trees, doc already leads. (1) Edit kit/agents/kit-auditor.md: [a] :49 'IN SCOPE — 7 audit dimensions' → 8, and ADD scope item '8. Model-pin registry audit' — every explicit claude-<tier>-<ver> pin in kit/agents/*.md must have a row in kit/PINNED_VERSIONS.md; per ADR 0076 expectation = uniform claude-fable-5, any non-fable explicit pin = drift; last-reviewed older ~10 sprints = WARN (diagnostic command already exists at :124-133 — only contract text is missing); [b] :71 'Run all 7 dimensions' → 8; [c] :143 output Summary '<list of 1-7>' → '1-8'; [d] ADD '### 8. Model-pin reg",
+  "sprint_size": "small",
+  "rationale": "Verified independently at HEAD: all 7 stale '7'-mentions present (lines 3, 49, 71, 143, 192, 196, 204), dim-8 exists only as command block :124-133, output schema has no ### 8 slot, both trees byte-identical (never patched since S63 creation), not backlogged anywhere. ADR 0076:32 explicitly makes di"
+ },
+ {
+  "finding_id": "D2-07",
+  "verdict": "REVISE",
+  "fix_design": "Docs-only, two files, zero hook/agent changes. (1) llm-wiki/wiki/project/architecture/sprint-flow-ru.md Phase 6 section (lines 383-448, RU): add subsection '### Артефакт Фазы 6 — review-s{NN}.md (обязателен для money-diff мерджа)' before the HARD-GATE block. Content: path llm-wiki/wiki/project/reviews/review-s{NN}.md; consumed MECHANICALLY by review-gate.sh (blocks gh pr merge when diff touches money paths) and skill-manifest.sh (Phase 8 STOP row '6 Review'); three mechanical requirements: [a] literal summary line 'Blockers: 0' (anchored regex ^ *\\**Blockers\\**[: ] *\\**0\\** — a '### Blockers' ",
+  "sprint_size": "tiny",
+  "rationale": "Residual defect confirmed at HEAD: the BINDING Phase 6 procedure (sprint-flow-ru.md 383-448) and root CLAUDE.md row 6 say only 'Blockers addressed' with zero mention of the artifact, while Phase 5 documents its enforcing hook explicitly — the asymmetry is real and the consumers (review-gate.sh:155/1"
+ },
+ {
+  "finding_id": "D2-03",
+  "verdict": "REVISE",
+  "fix_design": "Doc-first (Фаза 3, RU): обновить llm-wiki/wiki/project/architecture/sprint-flow-ru.md (чеклист Фазы 8: шаг release-manager + условный шаг merge-analyst) и строки триггеров агентов в tooling-inventory (точки диспетча вместо 'proactively'). Код, 2 файла: (1) /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.claude/skills/sprint-finish/SKILL.md — новый Step 6d (после 6c skill-manifest, до Step 7): dispatch release-manager (fable-5 per ADR 0076), вердикт READY_TO_SHIP/READY_WITH_CONDITIONS + условия вставить секцией '## Ship pre-flight (release-manager)' в СУЩЕСТВУЮЩУЮ страницу sprints/sprint-NN",
+  "sprint_size": "small",
+  "rationale": "Находка воспроизведена полностью: 0 ссылок в скиллах/CLAUDE.md/хуках/манифесте, контракты 'MUST BE USED' дословны, sprint-finish Step 7 идёт мимо обоих агентов, memory-dir дифференциал (kit-auditor есть, эти двое нет) доказывает 0/4 срабатываний за alpha.64-67. Это точный класс P1-MANIFEST ('надежда"
+ },
+ {
+  "finding_id": "D2-02",
+  "verdict": "REVISE",
+  "fix_design": "Direction verified and correct, but grep sweep shows the touch-ritual survives in SIX living consumer surfaces, not three — a partial fix re-seeds the drift. Sprint task (doc-first order):\n\nT1 (doc-first, RU tech page): llm-wiki/wiki/project/components/adr-agent-sync-hook.md — body contradicts its own S59 TL;DR. Rewrite: (a) 'Fail-closed' bullets — replace mtime condition with «номер изменённого ADR не встречается анкерованно (regex ADR[[:space:]-]*NNNN) ни в одном ~/.claude/agents/*.md»; (b) section «Acknowledge flow» (lines ~93-101, blesses touch as «явный ack») → content-ack: строка «ADR NN",
+  "sprint_size": "small",
+  "rationale": "Confirmed deterministic failure: PHASE 8 single-source-of-truth skill (sprint-finish Step 6b, plus root CLAUDE.md and auto-memory) teaches the mtime touch ritual that kit/hooks/adr-agent-sync-check.sh (byte-identical live) explicitly rejects since S59 KIT-009 — a brand-new ADR number cannot pre-exis"
+ },
+ {
+  "finding_id": "D1-06",
+  "verdict": "CONFIRM",
+  "fix_design": "Файл: kit/skill-manifest.sh, строка 61 — заменить `grep -qE 'components/|^docs/'` на `grep -qE '^llm-wiki/wiki/project/components/|^docs/'`. Семантика ряда НЕ меняется: совпадение → ✓, нет совпадения → advisory `·` (никогда fail=1); kit-only спринт по-прежнему получает `·`. Live-зеркала нет (проверено: ~/.claude/hooks/skill-manifest.sh отсутствует; единственный вызов — `bash kit/skill-manifest.sh <N>` из .claude/skills/sprint-finish/SKILL.md:144), синхронизация не нужна. Doc-first: одна строка в llm-wiki/wiki/project/components/manifest-telemetry.md (RU) — уточнить, что якорь Phase-7 = `^llm-w",
+  "sprint_size": "tiny",
+  "rationale": "Дефект воспроизведён детерминированно: unanchored `components/` матчит 12+ трекаемых файлов src/dashboard_react/src/components/** → любой UI-спринт класса S48 получает ложный жёсткий «✓ 7 Sync» при нулевом wiki/docs-sync. Ложный ✓ хуже честного advisory `·` — он уничтожает единственное назначение ря"
+ },
+ {
+  "finding_id": "D1-05",
+  "verdict": "REVISE",
+  "fix_design": "Один kit-maintenance таск, 3 файла. ДОК-ПЕРВЫМ (RU): обновить llm-wiki/wiki/project/components/manifest-telemetry.md — секция «Покрытие фаз»: манифест = фазы 2-8 + advisory 9; зафиксировать, почему фаза 9 не может быть блокирующей (манифест вызывается sprint-finish в Фазе 8, ДО Фазы 9 — sprint-finish/SKILL.md:144). КОД: kit/skill-manifest.sh — (a) row «2 Brainstorm» ПЕРЕД блоком Phase 3: ✓ если [ -f \"$W/pre-s$N-backlog.md\" ] ИЛИ `git -C $repo_root log --oneline -n1 --all -- \"llm-wiki/wiki/project/pre-s$N-backlog.md\"` непуст (правило «закрывается → удаляется» из repo CLAUDE.md — файл легально и",
+  "sprint_size": "tiny",
+  "rationale": "Факт подтверждён полностью: скрипт (75 строк, прочитан целиком) покрывает 3-8+tag; KIT-020 (UNIFIED-BACKLOG-S57.md:36) явно назначал manifest-проверку в S61 и нигде не записан как dropped — это тот самый анти-паттерн «stated-not-encoded / silent drop», который манифест строился устранять. REVISE, а "
+ },
+ {
+  "finding_id": "D1-02",
+  "verdict": "REVISE",
+  "fix_design": "Механизм: заменить touch-ритуал на content-check-инструкцию (зеркало логики хука KIT-009) ЕДИНОЙ формулировкой на всех ОПЕРАТИВНЫХ поверхностях; исторический корпус не трогать. Канонический носитель процедуры — sprint-finish Step 6b, остальные поверхности получают одну строку + указатель на него.\n\n1) `.claude/skills/sprint-finish/SKILL.md`:\n   - Step 6b (строки 117-138) переписать: для каждого ADR в `git diff --name-only main..HEAD -- 'llm-wiki/wiki/project/decisions/*.md'` извлечь NNNN (`basename | grep -oE '^[0-9]{4}'`) и проверить `grep -rlqE \"ADR[[:space:]-]*${num}\" ~/.claude/agents/*.md`;",
+  "sprint_size": "small",
+  "rationale": "Факты воспроизведены полностью: Step 6b (117-138) учит touch+stat-mtime ритуалу, а kit/hooks/adr-agent-sync-check.sh:90-139 (KIT-009 S59) — content-check, stderr прямо говорит «Просто touch НЕ проходит»; kit↔live хук byte-identical, гейт реально принуждает (ADR 0073-0076 уже вписаны в тела агентов)."
+ },
+ {
+  "finding_id": "D2-08",
+  "verdict": "REVISE",
+  "fix_design": "Шаг 0 (doc-first): техстраница-вердикт в llm-wiki RU — секция «effort/thinking-budget: проверенный механизм» в kit-overview-ru.md (+ указатель из tooling-inventory-ru.md). Шаг 1 (ground truth, дёшево): установить, поддерживает ли харнесс frontmatter-ключ `effort` — Context7 MCP (внедрён S66) / официальные docs Claude Code «subagents frontmatter fields» + release notes; ADR 0074 сам хеджирует «если харнесс позволяет» — кит не знает. Шаг 2 (probe, ТОЛЬКО если docs неоднозначны): scratch-агент в 2 вариантах (с/без `effort: max`), одинаковый фиксированный reasoning-промпт, 3 повтора; сравнить thin",
+  "sprint_size": "small",
+  "rationale": "Все факты воспроизведены против обоих деревьев: трёхсторонний раскол конвенции реален (frontmatter ×2, проза ×3, ничего ×3 у S63-агентов вопреки KIT-015), PINNED_VERSIONS не покрывает effort, ADR 0074 подтверждает что харнесс-поддержка неизвестна, плюс co-located stale «sonnet 4.6». Security-импакта"
+ }
+]

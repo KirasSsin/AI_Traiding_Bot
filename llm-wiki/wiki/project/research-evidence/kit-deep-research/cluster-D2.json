@@ -1,0 +1,29 @@
+[
+ {
+  "id": "D2-01",
+  "title": "Split-brain agent memory: 3 doc-kit agents hardcode ~/.claude/agent-memory/ absolute paths while memory:project loads .claude/agent-memory/ — two divergent memory trees actively written in parallel",
+  "severity": "HIGH",
+  "mechanism": "memory:project wiring vs in-prompt memory path instructions (doc-writer, doc-linker, doc-reviewer-depth)",
+  "evidence": "kit/agents/doc-writer.md:73, doc-linker.md:39, doc-reviewer-depth.md:40 all instruct: «Абсолютный путь: /Users/Apple/.claude/agent-memory/<name>/MEMORY.md ... дописывай в ## Личные уроки», while frontmatter says memory: project (harness dir = /Users/Apple/Desktop/Vibe_Code/Bot/AI_Traiding_Bot/.claude/agent-memory/<name>/). Both trees exist and DIVERGE: ~/.claude/agent-memory/doc-writer/MEMORY.md = 5371b/10 entries (mtime Jul 1 21:04:31) vs project MEMORY.md = 20841b/140 entries (mtime Jul 1 21:04:59 — 28 seconds apart, same dispatch wave); doc-linker: user tree 11925b (Jul 1 22:07) vs project 9277b (Jul 2 04:10), entirely different cluster entries. ~/.claude/agent-memory/doc-reviewer-depth/ does NOT exist, so its prompt's «читай релевантный шард перед ревью» always misses the real 8-file/724KB project shard set. Root CLAUDE.md anti-waste table claims ~/.claude/agent-memory/ is 'empty stub dirs' — false: 51 files live there for doc-writer+doc-linker.",
+  "why_weak": "Every dispatch auto-loads only the project-tree MEMORY.md, so lessons the agents dutifully write to the prompt-specified user tree (e.g. hook-branch-gating, no-verify-not-git-hook traps) are invisible to all future dispatches, and vice-versa — the memory guarantee is silently halved and lessons get re-learned (token waste). depth's shard-read step fails on a nonexistent dir every review.",
+  "proposed_direction": "Repoint the three prompts (both kit/agents/ mirror and live ~/.claude/agents/) to project-local .claude/agent-memory/<name>/; one-time merge of the two trees per agent (union of index entries + shard files); delete/quarantine the user-tree copies; fix the 'empty stub dirs' claim in root CLAUDE.md; add a kit-auditor dimension check 'agent prompt memory-path == memory:project dir'."
+ },
+ {
+  "id": "D2-04",
+  "title": "Agent memory lifecycle unmanaged: index-less orphan files (trader-expert 10 files, doc-reviewer 3 files, no MEMORY.md) and noise-bloated indexes (architecture-reviewer 19.6KB with ~22 one-off S56 entries) loaded/read every dispatch",
+  "severity": "HIGH",
+  "mechanism": "memory:project content lifecycle — no index requirement, no budget, no consolidation pass for agent memories",
+  "evidence": ".claude/agent-memory/trader-expert/ = 10 files (project_context.md + s42..s51 brainstorm notes, up to 10.8KB each) with NO MEMORY.md → the auto-loaded index is empty, so the PHASE 2 binding-verdict agent re-learns project context every sprint; same for doc-reviewer (3 review files S43-S45, no MEMORY.md). KIT-021 closed this as 'не ошибка если агент не писал' — disproven: both agents DID write, only the index is missing. Opposite failure: .claude/agent-memory/architecture-reviewer/MEMORY.md = 19596b/45 lines, of which ~22 entries (lines 16-37, ~14KB) are one-off S56 per-page doc-review verdicts duplicating their own shard files — dead weight (~4-5k tokens) on every dispatch of the kit's most-dispatched reviewer (pre-plan gate + every kit sprint review); doc-writer MEMORY.md = 20841b × per-page batch dispatch (S60 ran 128 pages). No budget exists for agent MEMORY.md (SPRINT_STATE has a 6KB gate; agent memory has none; '≤200 lines' appears only in some prompts and misses byte bloat — 45 lines/19.6KB passes).",
+  "why_weak": "Both failure modes defeat the purpose of memory: index-less files are unreachable knowledge (re-derived at token cost), fat indexes are un-curated history injected into every dispatch. consolidate-memory (KIT-020) only covers main-thread memory at sprint%5, not the 16 agent dirs.",
+  "proposed_direction": "One-time pass: build MEMORY.md indexes for trader-expert/doc-reviewer; move architecture-reviewer's S56 one-off entries into a single s56-doc-reviews.md shard with one index line. Standing rule: agent MEMORY.md = index-only, byte budget (e.g. ≤6KB like SPRINT_STATE), enforced as a kit-auditor dimension or kit-inventory WARN; extend the sprint%5 consolidate-memory manifest check to agent-memory dirs."
+ },
+ {
+  "id": "D2-09",
+  "title": "Post-ADR-0076 stale model claims inside agent bodies and the kit-team component page (uniform fable-5 not propagated to prose)",
+  "severity": "LOW",
+  "mechanism": "agent prompt/body self-consistency + component-page drift (the count-drift class the kit fights)",
+  "evidence": "kit/agents/doc-linker.md:10 body: «**Model (S56, 2026-06-27):** `opus` (максимальная модель...)» while its own frontmatter (:7) = model: claude-fable-5. llm-wiki/wiki/project/components/kit-team-agents.md:29 (updated 2026-07-02): «Все 3 + arch/trader/security/doc-linker/doc-reviewer-depth = claude-fable-5 ... frontend-developer opus-4-7(stale)→`opus`» — contradicts ADR 0076 («ВСЕ агенты (18) = claude-fable-5», supersedes 0075) and kit/PINNED_VERSIONS.md («frontend-developer | claude-fable-5 | uniform»). grep '0076' across llm-wiki/wiki/project/components/ → zero pages reference the superseding ADR.",
+  "why_weak": "An agent whose body asserts a different model than its frontmatter feeds itself contradictory context every dispatch, and the component page (wiki-first read target) reports a pin policy that no longer exists — next session planning model dispatch from wiki gets the superseded answer.",
+  "proposed_direction": "Sweep agent bodies for model prose after any pin change (add to kit-inventory.sh or kit-auditor dim-8: body 'model' mentions must match frontmatter); update kit-team-agents.md pins section to point at ADR 0076/PINNED_VERSIONS instead of hardcoding a list."
+ }
+]
