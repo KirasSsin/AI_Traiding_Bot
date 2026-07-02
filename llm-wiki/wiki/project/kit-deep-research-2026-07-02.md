@@ -97,13 +97,26 @@ DEFER/REJECT: отсутствуют — все 47 = CONFIRM/REVISE; откло�
 ### S70 — Память, агенты и структура — жизненный цикл памяти, контракты агентов, две дешёвые пробы вместо дорогого A/B (D2-01 строго ПЕРВЫМ)
 
 - D2-01 (HIGH, первым — до консолидации): split-brain память — repoint doc-writer:73/doc-linker:39/doc-reviewer-depth:40 с hardcode ~/.claude/agent-memory на стандартную «MEMORY.md tolerance» формулировку (шаблон data-integrity-reviewer:36) + контракт-секция «Память агентов» в kit-team-agents.md
-- D2-04+MEM-05 (HIGH+MED): жизненный цикл agent-memory — MEMORY.md = только индекс (1 строка/шард, ≤150 chars), бюджеты ≤6KB индекс / ≤12KB; сгенерировать индексы для trader-expert (10 файлов, 44KB) и doc-reviewer (3); WARN в hooks-selfcheck (orphan-память, разбухший индекс); drift-guard в kit-inventory + advisory-дименсия kit-auditor (НЕ KIT-020-манифест — механизма не существует)
+- D2-04+MEM-05+D7-07 (HIGH+MED×2): жизненный цикл agent-memory — MEMORY.md = только индекс (1 строка/шард, ≤150 chars), бюджеты ≤6KB индекс / ≤12KB; сгенерировать индексы для trader-expert (10 файлов, 44KB) и doc-reviewer (3); WARN в hooks-selfcheck (orphan-память, разбухший индекс); drift-guard в kit-inventory + advisory-дименсия kit-auditor (НЕ KIT-020-манифест — механизма не существует)
 - D2-05 (MED): контракт UI-ревью — dashboard-reviewer переписать под FastAPI + React/TSX (ADR 0066 суперсидит vanilla-JS ADR 0039), frontend-developer де-сиротить или снять; kit-overview-ru:~122 + tooling-inventory секция 1, оба дерева
 - D2-06 (MED): kit-auditor — дименсия 8 (model-pin registry) вписать в контракт: :49/:71/:143 «7»→«8», слот «### 8» в output-схеме, сжать 2.6KB description
 - D5-04 (MED): index.md 97.5KB → split по universal pattern — root сохраняет «Project — Decisions» (adr-index-sync-check.sh:64 и sprint-finish Step 5 не трогаем) + Sprints/Components если <30KB; холодные каталоги (Trading/Experiments/Queries) → index-part-N.md; size-guard WARN
 - D2-08 (MED): effort/thinking-budget — ground truth через Context7/официальные docs (probe только при неоднозначности); вердикт-секция в kit-overview-ru; выровнять конвенцию 18 агентов (S63-агенты без «effort: max» вопреки KIT-015)
 - D7-06 (MED): autocompact knob-validity probe (одноразовая сессия, НЕ спринт): bulk-Read до ~110-120k токенов → grep compact_boundary/preTokens по транскрипту; мёртвая ручка → удалить env-КЛЮЧ из обоих settings; живая → короткий ADR с цифрами (заменяет 2-спринтовый A/B из ADR 0074)
 - SKW-03 (MED): ponytail/ponytail-audit — advisory-first (ADR 0072 держит их Optional): строки phase table (уже в батче SKW-01 из S68), чеклист Phase 6 в sprint-flow-ru («ponytail-audit: N findings» в review-sNN.md), advisory «6b Lean» в skill-manifest — НЕ fail
+
+
+## Арбитраж отведённых находок (контрольный пере-скан обоих прогонов)
+
+Пере-скан журналов двух workflow-прогонов (python-extractor): finder'ы 8/8 без дублей (55 находок), панельные вердикты 47/47, потерь нет. 8 находок отведены verify-скептиками; арбитраж контроллера:
+
+| ID | Вердикт арбитража |
+|---|---|
+| D7-07 (конфликт 1:1) | Факты точны (20.8KB memory-инжект/диспатч, корпус 502 файла без лимита) — **evidence влит в S70 задачу D2-04+MEM-05** (бюджеты ≤6KB индекс / ≤12KB) |
+| D3-02 | Материальная часть (state-backup bare substring) покрыта D3-01 (S69) + KIT-OD-1 |
+| D7-05, D8-02, D8-06, D2-10, D3-03, D5-01 | Отводы корректны (документированные решения; Context7 доказан LIVE-вызовом; хуки параллельны per docs; operator принял fallback) |
+
+Сырьё: research-evidence/kit-deep-research/dropped-for-adjudication.json.
 
 ## Proof-команды (verification-before-completion)
 
