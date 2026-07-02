@@ -2965,3 +2965,11 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Директива оператора: искоренить token-waste ошибки прогона. Таксономия 9 классов из ground truth S57-64 + grep (151× Unexpected token): workflow TS-parse, Edit-до-Read, file-modified, string-not-found (unicode), hook false-fire (op-detect литерал), bash (python/glob/checkout-clobber), zsh math, control-chars, agent-registry.
 - Дизайн размещения через Workflow fable-5 (architecture-reviewer + kit-auditor — «Fable ловит баги»): новый skill `.claude/skills/workflow-authoring/SKILL.md` (parse-safe: plain JS, named schemas, no TS/вложенные-backticks, registry-check); CLAUDE.md anti-waste +5 строк + re-Read-после-мутирующего-tool + указатель на таксономию; message-hint «FALSE-FIRE → Edit/Grep» в phase-advance/review-gate. НЕ дублировать покрытое (Edit-до-Read, bare-python — отклонено). op-detect матчер НЕ трогать (риск-асимметрия: false-fire=токены vs false-negative=разоружённый money-гейт) → root KIT-OD-1.
 - Ирония: класс 1 (workflow TS-parse) словлен LIVE при дизайне его же фикса (вложенные backticks в template). 38-case gate regression intact; skills 9→10. Тег v0.1.0-alpha.65 локально. → S66 Plugins (финал).
+
+## [2026-07-02] ship | S66 — Plugins & Best Practices (ФИНАЛ mega-run)
+- Web-ресерч Claude Code плагинов по инсталлам/звёздам: Frontend Design 829k, Superpowers 752k (уже в ките), Context7 348k. Наш кит зрелый — большинство дублирует (code-review/security-guidance/commit-commands = наши L5-reviewers + sprint-finish).
+- Внедрён **Context7 MCP** в `.mcp.json` (project-scoped, reversible): up-to-date docs библиотек (pybit/pandas) → токен-экономия на API-итерациях. Node v25 ✓, пакет v3.2.2 ✓. Frontend Design → OQ-7 (dashboard UI, решение оператора). Директива v2 «≤2» соблюдена (1 внедрён + 1 оператору).
+- Тег v0.1.0-alpha.66 локально. **Mega-run S57-S66 ЗАВЕРШЁН.** Финал: kit-upgrade-report.md написан → один git push origin.
+
+## [2026-07-02] mega-run-complete | S57-S66 done, отчёт kit-upgrade-report.md
+- 10 спринтов отгружены (alpha.57..alpha.66). Агенты 15→18, хуки 7→14, скиллы 5→10, ADR 71→75. 1 BLOCKER + 6+ HIGH закрыты (6-раундовый adversarial-hunt на самом ките). src/ не тронут. Осталось: KIT-OD-1/OD-2, current-state→AUTO, docs/ бэкфилл, tuning A/B, OQ-1/4/5/6/7. → один push origin.

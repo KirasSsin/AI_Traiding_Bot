@@ -1,21 +1,21 @@
 ---
 title: Sprint State — живое состояние проекта
 type: state
-updated: 2026-07-02  # S66 Plugins (финал) — ship
+updated: 2026-07-02  # S66 SHIPPED (alpha.66) — mega-run завершён; финал = отчёт + push
 sprint: 66
-phase: 8-ship
-branch: feature/sprint-66-plugins
-tag: v0.1.0-alpha.65  # последний shipped (S65)
-last_task_sha: 20d81c2  # HEAD последней задачи — точка восстановления auto-resume
+phase: between-sprints
+branch: main
+tag: v0.1.0-alpha.66  # последний shipped (S66) — ФИНАЛ прогона
+last_task_sha: 77cb996  # squash S66 на main — точка восстановления auto-resume
 ---
 
 ## Текущий статус
 
-**Mega-run v2 (автономный прогон, план = [[KIT-MASTER-PLAN]]).** Порядок: ~~S57~~…~~S65~~ → **S66 Plugins(≤2)** → отчёт+push (финал). Директивы (BINDING, оператор 2026-07-02): (1) doc-first — техдоки llm-wiki RU → код → docs/ RU, гейт docs/=WARN; (2) все вызываемые агенты = kit fable-5 через Workflow; (3) session-restore от техдоков llm-wiki; (4) минимум токенов. История → log.md + sprints/.
+**Mega-run v2 ЗАВЕРШЁН** (план = [[KIT-MASTER-PLAN]]). ~~S57~~…~~S66~~ отгружены локально (теги alpha.57…alpha.66). **Финал (осталось):** (1) `kit-upgrade-report.md` — сводка S57-S66; (2) **ОДИН** git push origin (весь прогон локально; `unset GITHUB_TOKEN GH_TOKEN`).
 
-**S65 SHIPPED** (main `20d81c2`, tag alpha.65): таксономия 9 классов token-waste ошибок → skill workflow-authoring (parse-safe) + CLAUDE.md anti-waste +5 строк + message-hints в phase-advance/review-gate (матчер не тронут, 38-case regression intact). Дизайн fable-5 (arch+kit-auditor). Root op-detect → KIT-OD-1. Детали → [[sprints/sprint-65-error-harvest]].
+**S66 SHIPPED** (main `77cb996`, tag alpha.66): ресерч Claude Code плагинов → внедрён Context7 MCP (`.mcp.json`, docs библиотек, токен-экономия, reversible); Frontend Design → оператору (OQ-7); дубли отклонены (кит зрелый). Детали → [[sprints/sprint-66-plugins]] · [[plugins-research]].
 
-**S66 «Plugins & Best Practices» (ФИНАЛ):** ресерч популярных Claude Code плагинов по звёздам GitHub, валидация совместимости, **внедрить ≤2** лучших (директива v2) с токен-метрикой, отчёт `plugins-research.md` (OQ-2). Затем kit-upgrade-report.md (сводка S57-S66) + **ОДИН** git push origin (весь прогон локально до сюда). Carry: current-state→AUTO-блок, docs/ бэкфилл+repoint→kit/, KIT-OD-1 (op-detect argv).
+**Carry (после прогона / оператору):** KIT-OD-1 (op-detect argv-классификация, выделенный security-спринт), KIT-OD-2 (tamper review↔diff), current-state→AUTO-блок kit-inventory, docs/ бэкфилл S57-63 + repoint source_files→kit/, tuning A/B (ADR 0074). OQ: 1 (токен), 4 (CLI /login), 5 (reload агентов), 6 (doc-writer тир), 7 (Frontend Design).
 
 **Важно при обрыве:** Auth `unset GITHUB_TOKEN GH_TOKEN` (Keychain gho_). Push origin — один, в конце прогона. src/ заморожен (kit-maintenance). SPRINT_STATE стейджить ОТДЕЛЬНО от commit (иначе state-backup не увидит staged).
 
@@ -39,8 +39,8 @@ last_task_sha: 20d81c2  # HEAD последней задачи — точка в
 | 5 Verify | done | .mcp.json валиден (3 сервера), Context7 v3.2.2 на npm, не дублирует |
 | 6 Review | done | low-risk (ресерч+1 MCP, reversible); review в sprint-66; Blockers=0 |
 | 7 Sync | done | plugins-research + sprint-66 + OQ-7 + index |
-| 8 Ship | in_progress | manifest + squash + tag v0.1.0-alpha.66 |
-| 9 Close | done-next | → ФИНАЛ: kit-upgrade-report + один push origin |
+| 8 Ship | done | manifest 7/7 + squash main 77cb996 + tag v0.1.0-alpha.66 |
+| 9 Close | done | mega-run завершён; → ФИНАЛ: kit-upgrade-report + один push origin |
 
 ---
 
