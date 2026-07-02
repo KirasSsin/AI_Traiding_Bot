@@ -220,4 +220,4 @@ In all cases: list under "Cross-cutting concerns" → user OR delegate к trader
 <!-- ADR 0073: SPRINT_STATE v2 Variant B — state hardening, split deferred -->
 <!-- ADR 0074: runtime-tuning (AUTOCOMPACT_PCT / MAX_THINKING) — обоснование + A/B методика -->
 <!-- ADR 0075: model pin-policy v2 — версия vs алиас + триггер ревью + PINNED_VERSIONS реестр -->
-<!-- ADR 0077: tiered pin — opus-4.8/sonnet-5/haiku-4.5 по фазе×роли + effort в frontmatter, суперседит 0076 uniform (оператор) -->
+<!-- ADR 0077: tiered pin — opus-4.8/sonnet-5/haiku-4.5 по фазе×роли + effort в frontmatter, суперседит ADR 0076 uniform (оператор) -->
