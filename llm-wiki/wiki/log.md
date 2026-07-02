@@ -2989,3 +2989,10 @@ Next session = operator decides v0.7+ direction (no pre-commitment в этом s
 - Убраны рассинхроны тело↔frontmatter (model/effort в телах 5 агентов), стейл-снапшоты чисел (42/59/16 codes, 762 tests S8c, 38 components, FSM 16/30/76, React dashboard) → живые пробники.
 - Priming-диета: 6-7 обязательных чтений/диспатч → условные (7 diff-ревьюеров); CLAUDE.md-дубли (path/venv/read-guard ~2.5KB×6) → 3-строчный Op discipline; description-диета kit-auditor 2.6KB→0.5KB, security-auditor, release-manager.
 - Итог: 204KB→180KB статики; минус 4-6 обязательных чтений на каждый диспатч ревьюера. Зеркало ~/.claude/agents синхронизировано (diff=0). effort:max в frontmatter quant-stats/trader-expert оставлен до применения v3 (решение оператора «потом»).
+
+## 2026-07-02 — kit-maintenance: CLAUDE.md-слои по официальным best-practices (директива оператора)
+- Desktop/CLAUDE.md (43.8KB стейл аудит-отчёт S56-эры на walk-up пути!) → архив llm-wiki/wiki/project/research-evidence/, удалён с пути. Грузился каждую сессию+каждому сабагенту.
+- Repo CLAUDE.md: вычищены стейл-факты (Sprint 38, ADR 0001-0023, 5 скиллов/11 агентов при реальных 10/18) → живые пробники; убран лишний Read llm-wiki/CLAUDE.md из сессия-старта (child-memory грузится сам); token-saver таблица, S47/S48-нарративы, uvicorn-паттерн → ссылки.
+- Глобальный: убраны мёртвые правила (docs/PROJECT.md не существует; «покажи токены»; «спроси замечания после каждого шага»).
+- llm-wiki/CLAUDE.md: 9 agents→18 (×3 места), хуки 2→17 живым списком, дубли token-economy/anti-waste → ссылки на repo (единственная полная копия).
+- Итог: 105.6KB → 57.0KB (−46%) налога на каждую сессию и каждого сабагента. Grep стейл-остатков: CLEAN.
